@@ -24,6 +24,35 @@ FROM
 			aef.facility_id = af_id
 			AND aef.field_name = 'facility_type'
 			AND aef.value -> matched_values_key IS NOT NULL
+			AND (
+				EXISTS (
+					SELECT
+						1
+					FROM
+						api_facilityclaim af2
+					WHERE
+						af2.id = aef.facility_claim_id
+						AND af2.status = 'APPROVED'
+				)
+				OR aef.facility_list_item_id IN (
+					SELECT
+						afm.facility_list_item_id
+					FROM
+						api_facilitymatch afm
+					JOIN api_facilitylistitem afli
+						ON afli.id = afm.facility_list_item_id
+					JOIN api_source source
+						ON source.id = afli.source_id
+					WHERE
+						afm.facility_id = af_id
+						AND afm.status IN (
+							'AUTOMATIC', 'CONFIRMED', 'MERGED'
+						)
+						AND afm.is_active = TRUE
+						AND afli.facility_id = af_id
+						AND source.is_active = TRUE
+				)
+			)
 	) AS standardized
 	WHERE
 		raw->>2 IS NOT NULL

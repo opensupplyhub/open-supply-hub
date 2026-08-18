@@ -79,6 +79,37 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         self.assertNotIn("cement mixing", facility_index.processing_type)
 
+    def test_matched_types_not_indexed_from_inactive_source(self):
+        self.source.is_active = False
+        self.source.save()
+
+        self._create_facility_type_extended_field(
+            ["Office / HQ"],
+            [
+                [
+                    "FACILITY_TYPE",
+                    "EXACT",
+                    "Office / HQ",
+                    "Office / HQ",
+                ]
+            ],
+        )
+        self._create_processing_type_extended_field(
+            ["Assembly"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Assembly",
+                ]
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("Office / HQ", facility_index.facility_type)
+        self.assertNotIn("Assembly", facility_index.processing_type)
+
     def test_skipped_matching_raw_facility_type_indexed(self):
         # Non-apparel SKIPPED_MATCHING stores the raw value in slot 3 only;
         # facility_type slot 2 is null, so the raw value must be indexed from
