@@ -163,8 +163,7 @@ function FilterSidebarSearchTab({
     }
 
     const handleSearchClick = () => {
-        const pendingQueryIsValid =
-            facilityProcessingTaxonomyRef.current?.commitPendingQuery?.();
+        const pendingQueryIsValid = facilityProcessingTaxonomyRef.current?.commitPendingQuery?.();
         if (pendingQueryIsValid === false) {
             return;
         }
