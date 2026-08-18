@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from botocore.exceptions import ProfileNotFound
 from django.contrib.gis.geos import Point
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -170,6 +171,23 @@ class TestSubmissionQualityProcessor(APITestCase):
 
     def test_llm_failure_fails_open(self):
         with self._patch_evaluate(None):
+            result = self._submit(self.contributor, self.base_input_data)
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+
+    def test_service_construction_failure_fails_open(self):
+        # SubmissionQualityService builds its bedrock client lazily
+        # inside evaluate()'s fail-open handler, so an environment where
+        # the client cannot even be constructed (e.g. ProfileNotFound
+        # from a misconfigured BEDROCK_AWS_PROFILE) skips the check
+        # instead of aborting the whole submission with an unhandled
+        # exception. Unlike the tests above, evaluate() is deliberately
+        # not patched here.
+        with patch(
+            'api.services.submission_quality_service.boto3.session.Session',
+            side_effect=ProfileNotFound(profile='nonexistent'),
+        ):
             result = self._submit(self.contributor, self.base_input_data)
 
         self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)

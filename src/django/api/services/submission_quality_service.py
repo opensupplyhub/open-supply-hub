@@ -42,9 +42,10 @@ INVOKE_TIMEOUT_SECONDS = 5.0
 # The system-level framing of the model call - overall task, strictness,
 # tone. Overridable per environment so the check can be tuned (e.g. made
 # more or less aggressive while watching false-positive rates) with an
-# ECS task-definition change rather than a release. Read at service
-# construction, not module import, so a change takes effect on restart
-# and tests can patch the environment. What each check MEANS deliberately
+# ECS task-definition change rather than a release. Read when the agent
+# is first built (lazily, on the first evaluate() call), not at module
+# import, so a change takes effect on restart and tests can patch the
+# environment. What each check MEANS deliberately
 # stays in the Field descriptions on SubmissionQualityVerdicts below:
 # those are structurally coupled to the output schema and to the
 # processor's warning mapping, so making them config would let prompt
@@ -123,48 +124,69 @@ class SubmissionQualityService:
     BEDROCK_SUBMISSION_QUALITY_MODEL_ID above); swapping the provider
     means replacing the BedrockConverseModel construction only.
 
-    Fails open: any error, timeout, or output that does not validate
-    against the schema is logged and returns None so the caller skips the
-    warning rather than blocking a legitimate submission.
+    Fails open: any error building the underlying bedrock client or
+    agent, any error or timeout during the call, and any output that does
+    not validate against the schema is logged and returns None so the
+    caller skips the warning rather than blocking a legitimate
+    submission.
     '''
 
     def __init__(self):
-        bedrock_client = boto3.session.Session(
-            profile_name=BEDROCK_AWS_PROFILE,
-        ).client(
-            'bedrock-runtime',
-            region_name=BEDROCK_AWS_REGION,
-            config=Config(
-                connect_timeout=INVOKE_TIMEOUT_SECONDS,
-                read_timeout=INVOKE_TIMEOUT_SECONDS,
-                # One attempt total: boto3's default retries would stack
-                # on top of the timeout and block the submission request.
-                retries={'max_attempts': 1},
-            ),
-        )
-        self._agent = Agent(
-            BedrockConverseModel(
-                SUBMISSION_QUALITY_MODEL_ID,
-                provider=BedrockProvider(bedrock_client=bedrock_client),
-            ),
-            output_type=SubmissionQualityVerdicts,
-            # `or` rather than a getenv default: .env.sample ships the
-            # var set-but-empty, which must mean "use the default" too.
-            instructions=(
-                os.getenv(_INSTRUCTIONS_ENV_VAR) or _DEFAULT_INSTRUCTIONS
-            ),
-            # No re-prompting on output that fails schema validation - a
-            # retry is a second synchronous model call in the request
-            # path. An invalid output raises instead, and evaluate()
-            # fails open.
-            retries=0,
-        )
+        # No client or agent is built here: the contribution pipeline
+        # constructs this service for every contribution request -
+        # including API and PATCH requests the check never evaluates -
+        # so construction must be free and must have no failure modes.
+        # See _get_agent.
+        self._agent: Optional[Agent] = None
+
+    def _get_agent(self) -> Agent:
+        # Built lazily on first use rather than in __init__, so that a
+        # construction error (e.g. a misconfigured BEDROCK_AWS_PROFILE
+        # raising ProfileNotFound when the client resolves the profile)
+        # lands in evaluate()'s fail-open handler instead of escaping
+        # while the contribution pipeline is being assembled and
+        # aborting the submission - and so requests that never invoke
+        # the check skip the boto3 session/client construction entirely.
+        if self._agent is None:
+            bedrock_client = boto3.session.Session(
+                profile_name=BEDROCK_AWS_PROFILE,
+            ).client(
+                'bedrock-runtime',
+                region_name=BEDROCK_AWS_REGION,
+                config=Config(
+                    connect_timeout=INVOKE_TIMEOUT_SECONDS,
+                    read_timeout=INVOKE_TIMEOUT_SECONDS,
+                    # One attempt total: boto3's default retries would
+                    # stack on top of the timeout and block the
+                    # submission request.
+                    retries={'max_attempts': 1},
+                ),
+            )
+            self._agent = Agent(
+                BedrockConverseModel(
+                    SUBMISSION_QUALITY_MODEL_ID,
+                    provider=BedrockProvider(bedrock_client=bedrock_client),
+                ),
+                output_type=SubmissionQualityVerdicts,
+                # `or` rather than a getenv default: .env.sample ships
+                # the var set-but-empty, which must mean "use the
+                # default" too.
+                instructions=(
+                    os.getenv(_INSTRUCTIONS_ENV_VAR) or _DEFAULT_INSTRUCTIONS
+                ),
+                # No re-prompting on output that fails schema validation
+                # - a retry is a second synchronous model call in the
+                # request path. An invalid output raises instead, and
+                # evaluate() fails open.
+                retries=0,
+            )
+        return self._agent
 
     def evaluate(
         self, name: str, address: str, country_name: str
     ) -> Optional[SubmissionQualityVerdicts]:
         try:
-            result = self._agent.run_sync(
+            result = self._get_agent().run_sync(
                 'Evaluate this production location submission.\n'
                 f'Name: {name}\n'
                 f'Address: {address}\n'

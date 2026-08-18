@@ -1,6 +1,7 @@
 import os
 from unittest.mock import patch
 
+from botocore.exceptions import ProfileNotFound
 from django.test import TestCase
 from pydantic_ai import models
 from pydantic_ai.messages import ModelResponse, TextPart
@@ -39,11 +40,14 @@ def _text_only_response(messages, info):
 
 class TestSubmissionQualityService(TestCase):
     def setUp(self):
-        # Avoid constructing a real bedrock-runtime client (which would
-        # resolve AWS credentials); every test overrides the agent's
-        # model, so the client is never used.
+        # The agent is built lazily on first use, so force the build
+        # here under a patched boto3 to avoid constructing a real
+        # bedrock-runtime client (which would resolve AWS credentials);
+        # every test overrides the agent's model, so the client is
+        # never used.
         with patch('api.services.submission_quality_service.boto3'):
             self.service = SubmissionQualityService()
+            self.service._get_agent()
 
     def _evaluate_with_model(self, model):
         with self.service._agent.override(model=model):
@@ -110,16 +114,57 @@ class TestSubmissionQualityService(TestCase):
         result = self._evaluate_with_model(FunctionModel(_raise_runtime_error))
         self.assertIsNone(result)
 
+    def test_init_builds_no_client(self):
+        # The contribution pipeline constructs this service for every
+        # contribution request - including API and PATCH requests the
+        # check never evaluates - so construction must do no boto3 work
+        # (and therefore has no failure modes).
+        with patch(
+            'api.services.submission_quality_service.boto3'
+        ) as mock_boto3:
+            SubmissionQualityService()
+        mock_boto3.session.Session.assert_not_called()
+
+    def test_client_construction_error_fails_open(self):
+        # A misconfigured environment - e.g. BEDROCK_AWS_PROFILE naming
+        # a profile that does not exist - raises when the bedrock client
+        # is built, which happens lazily inside evaluate(); it must skip
+        # the check, not abort the submission.
+        service = SubmissionQualityService()
+        with patch(
+            'api.services.submission_quality_service.boto3.session.Session',
+            side_effect=ProfileNotFound(profile='nonexistent'),
+        ):
+            result = service.evaluate(
+                name='n', address='a', country_name='c'
+            )
+        self.assertIsNone(result)
+
+    def test_agent_construction_error_fails_open(self):
+        service = SubmissionQualityService()
+        with patch(
+            'api.services.submission_quality_service.boto3'
+        ), patch(
+            'api.services.submission_quality_service.Agent',
+            side_effect=RuntimeError('bad agent configuration'),
+        ):
+            result = service.evaluate(
+                name='n', address='a', country_name='c'
+            )
+        self.assertIsNone(result)
+
     def _instructions_sent_to_model(self, env_value):
-        # Instructions are read at service construction, so build a fresh
-        # service under the patched environment, then capture what the
-        # agent actually sends to the model. The capture raises so the
-        # run stops there; evaluate() failing open is irrelevant here.
+        # Instructions are read when the agent is built, so force the
+        # lazy build under the patched environment, then capture what
+        # the agent actually sends to the model. The capture raises so
+        # the run stops there; evaluate() failing open is irrelevant
+        # here.
         env = {'SUBMISSION_QUALITY_INSTRUCTIONS': env_value}
         with patch.dict(os.environ, env), patch(
             'api.services.submission_quality_service.boto3'
         ):
             service = SubmissionQualityService()
+            service._get_agent()
 
         captured = {}
 
