@@ -1861,7 +1861,11 @@ export const isShortAddress = value => {
     return value.trim().length < SLC_FORM_CONSTRAINTS.MIN_ADDRESS_LENGTH;
 };
 
-const EMBEDDED_SEPARATOR_PATTERN = /[,\\/&]|\band\b/i;
+// Only the vertical bar is blocked: it is the backend's own multi-value
+// join character, so a value containing it would be re-split downstream.
+// Commas, slashes, ampersands, and "and" appear in legitimate single
+// values (e.g. "Cut & Sew") and are allowed.
+const EMBEDDED_SEPARATOR_PATTERN = /\|/;
 
 export const hasEmbeddedSeparator = fieldValue => {
     if (!Array.isArray(fieldValue)) return false;
@@ -1933,7 +1937,7 @@ const SLC_ARRAY_FIELD_TESTS = Object.freeze({
     }),
     'no-embedded-separators': Object.freeze({
         message: ({ label }) =>
-            `${label} must be entered as separate values. Remove any comma, slash, ampersand, backslash, or "and" used to combine multiple values, and add each one separately instead.`,
+            `${label} must be entered as separate values. Remove any vertical bar ("|") used to combine multiple values, and add each one separately instead.`,
         test: value => !hasEmbeddedSeparator(value),
     }),
 });
@@ -1975,21 +1979,24 @@ const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
             'max-char-count',
         ],
     }),
+    // no-embedded-separators runs before latin-characters-only: the
+    // Latin check also rejects '|', and a pipe should get the specific
+    // "enter as separate values" message, not the Latin-characters one.
     productType: Object.freeze({
         type: 'array',
         tests: [
+            'no-embedded-separators',
             'latin-characters-only',
             'max-product-type-count',
-            'no-embedded-separators',
         ],
     }),
     locationType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only', 'no-embedded-separators'],
+        tests: ['no-embedded-separators', 'latin-characters-only'],
     }),
     processingType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only', 'no-embedded-separators'],
+        tests: ['no-embedded-separators', 'latin-characters-only'],
     }),
     numberOfWorkers: Object.freeze({
         type: 'text',

@@ -2575,13 +2575,13 @@ describe('slcValidationSchema', () => {
         );
     });
 
-    it('fails when a product type value contains an embedded separator', async () => {
+    it('fails when a product type value contains a vertical bar', async () => {
         const data = {
             name: 'Valid Name',
             address: '123 Street',
             country: { value: 'AI', label: 'Anguilla' },
             productType: [
-                { label: 'Assembly, Cut and Sew', value: 'Assembly, Cut and Sew' },
+                { label: 'Assembly|Cut and Sew', value: 'Assembly|Cut and Sew' },
             ],
         };
         await expect(slcValidationSchema.validate(data)).rejects.toThrow(
@@ -2589,13 +2589,13 @@ describe('slcValidationSchema', () => {
         );
     });
 
-    it('fails when a location type value contains an embedded separator', async () => {
+    it('fails when a location type value contains a vertical bar', async () => {
         const data = {
             name: 'Valid Name',
             address: '123 Street',
             country: { value: 'AI', label: 'Anguilla' },
             locationType: [
-                { label: 'Office/Warehouse', value: 'Office/Warehouse' },
+                { label: 'Office|Warehouse', value: 'Office|Warehouse' },
             ],
         };
         await expect(slcValidationSchema.validate(data)).rejects.toThrow(
@@ -2603,18 +2603,38 @@ describe('slcValidationSchema', () => {
         );
     });
 
-    it('fails when a processing type value contains an embedded separator', async () => {
+    it('fails when a processing type value contains a vertical bar', async () => {
         const data = {
             name: 'Valid Name',
             address: '123 Street',
             country: { value: 'AI', label: 'Anguilla' },
             processingType: [
-                { label: 'Dyeing & Finishing', value: 'Dyeing & Finishing' },
+                { label: 'Dyeing|Finishing', value: 'Dyeing|Finishing' },
             ],
         };
         await expect(slcValidationSchema.validate(data)).rejects.toThrow(
             'Processing type(s) must be entered as separate values.'
         );
+    });
+
+    it('passes when type values contain commas, slashes, ampersands, or "and"', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            productType: [
+                { label: 'Assembly, Cut and Sew', value: 'Assembly, Cut and Sew' },
+            ],
+            locationType: [
+                { label: 'Office/Warehouse', value: 'Office/Warehouse' },
+            ],
+            processingType: [
+                { label: 'Dyeing & Finishing', value: 'Dyeing & Finishing' },
+            ],
+        };
+        await expect(
+            slcValidationSchema.validate(data)
+        ).resolves.toBeTruthy();
     });
 
     // Number of workers field.
@@ -3269,13 +3289,23 @@ describe('hasEmbeddedSeparator', () => {
         expect(hasEmbeddedSeparator(values)).toBe(false);
     });
 
+    // Only the vertical bar (the backend's multi-value join character) is
+    // treated as an embedded separator; these all appear in legitimate
+    // single values.
     it.each([
         ['comma', 'Assembly, Cut and Sew'],
         ['slash', 'Assembly/Cut'],
         ['backslash', 'Assembly\\Cut'],
         ['ampersand', 'Assembly & Sew'],
         ['the word "and"', 'Assembly and Sew'],
-    ])('returns true when a label contains a %s separator', (_, label) => {
+    ])('returns false when a label contains a %s', (_, label) => {
+        expect(hasEmbeddedSeparator([{ label, value: label }])).toBe(false);
+    });
+
+    it.each([
+        ['bare', 'Assembly|Cut'],
+        ['spaced', 'Assembly | Cut'],
+    ])('returns true when a label contains a %s vertical bar', (_, label) => {
         expect(hasEmbeddedSeparator([{ label, value: label }])).toBe(true);
     });
 });
