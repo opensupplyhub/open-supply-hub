@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import openpyxl
 import pandas as pd
 import pytest
 
@@ -167,6 +168,24 @@ def test_transform_raises_for_unsupported_extension(tmp_path):
         ContribotWorkbook(
             work_dir=tmp_path, source_path=source, list_id="99"
         ).transform()
+
+
+def test_transform_csv_equals_prefixed_value_is_string_cell(tmp_path):
+    csv_path = tmp_path / "list.csv"
+    csv_path.write_text(
+        'country,name,address\nBangladesh,=1+1,1 Main St\n',
+    )
+
+    dest = ContribotWorkbook(
+        work_dir=tmp_path, source_path=csv_path, list_id="101"
+    ).transform()
+
+    wb = openpyxl.load_workbook(dest, data_only=False)
+    cell = wb.active["B2"]
+    assert cell.data_type == "s"
+    assert cell.value == "'=1+1"
+    assert wb.active["A2"].value == "Bangladesh"
+    assert wb.active["C2"].value == "1 Main St"
 
 
 def test_init_requires_list_id(tmp_path):

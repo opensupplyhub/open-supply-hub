@@ -76,5 +76,10 @@ class ContribotWorkbook:
         if df.empty:
             raise ValueError(f"CSV has no data rows: {csv_path.name}")
 
+        df = df.map(
+            lambda value: f"'{value}"
+            if isinstance(value, str) and value.startswith("=")
+            else value
+        )
         xlsx_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_excel(xlsx_path, index=False, engine="openpyxl")
