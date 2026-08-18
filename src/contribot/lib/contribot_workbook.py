@@ -52,14 +52,8 @@ class ContribotWorkbook:
         """
         csv_path = self._source_path
         try:
-            raw = csv_path.read_bytes()
-        except OSError as exc:
-            raise ValueError(f"Could not read CSV {csv_path.name}: {exc}") from exc
-
-        if not raw.strip():
-            raise ValueError(f"CSV file is empty: {csv_path.name}")
-
-        try:
+            if csv_path.stat().st_size == 0:
+                raise ValueError(f"CSV file is empty: {csv_path.name}")
             df = pd.read_csv(
                 csv_path,
                 encoding="utf-8-sig",
@@ -68,6 +62,8 @@ class ContribotWorkbook:
                 dtype=str,
                 keep_default_na=False,
             )
+        except OSError as exc:
+            raise ValueError(f"Could not read CSV {csv_path.name}: {exc}") from exc
         except UnicodeDecodeError as exc:
             raise ValueError(f"CSV is not valid UTF-8: {csv_path.name}") from exc
         except pd.errors.EmptyDataError as exc:

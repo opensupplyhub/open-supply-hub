@@ -114,7 +114,7 @@ def test_transform_raises_for_whitespace_only_csv(tmp_path):
     csv_path = tmp_path / "list.csv"
     csv_path.write_bytes(b"  \n\n")
 
-    with pytest.raises(ValueError, match="CSV file is empty"):
+    with pytest.raises(ValueError, match="CSV has no data rows"):
         ContribotWorkbook(
             work_dir=tmp_path, source_path=csv_path, list_id="99"
         ).transform()
