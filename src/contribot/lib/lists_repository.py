@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any, Optional
 
 import boto3
@@ -13,6 +14,9 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 STATUS_PENDING = "PENDING"
+STATUS_PROCESSING = "PROCESSING"
+STATUS_PROCESSED = "PROCESSED"
+STATUS_FAILED = "FAILED"
 # Reserved hash-key item that stores the id__gt watermark (not a facility list).
 CURSOR_LIST_ID = "__CURSOR__"
 
@@ -88,6 +92,74 @@ class ListsRepository:
                 )
                 return
             raise
+
+    def get_list(self, list_id: int | str) -> Optional[dict[str, Any]]:
+        """Return the facility-list row for ``list_id``, or None when absent."""
+        response = self._table.get_item(Key={"list_id": str(list_id)})
+        return response.get("Item")
+
+    def update_list(
+        self,
+        list_id: int | str,
+        *,
+        status: Optional[str] = None,
+        report_url: Optional[str] = None,
+        num_lines: Optional[int] = None,
+        num_errors: Optional[int] = None,
+        error_ratio: Optional[float] = None,
+        finished_at: Optional[str] = None,
+    ) -> None:
+        """Update provided fields on a facility-list row.
+
+        Only non-``None`` keyword arguments are written. When ``status`` is
+        ``PROCESSED`` or ``FAILED`` and ``finished_at`` is omitted, ``finished_at``
+        is set to the current UTC timestamp.
+        """
+        values: dict[str, Any] = {}
+        names: dict[str, str] = {}
+        assignments: list[str] = []
+
+        if status is not None:
+            names["#status"] = "status"
+            values[":status"] = status
+            assignments.append("#status = :status")
+            if finished_at is None and status in (
+                STATUS_PROCESSED,
+                STATUS_FAILED,
+            ):
+                finished_at = datetime.now(timezone.utc).isoformat()
+
+        if report_url is not None:
+            values[":report_url"] = report_url
+            assignments.append("report_url = :report_url")
+
+        if num_lines is not None:
+            values[":num_lines"] = num_lines
+            assignments.append("num_lines = :num_lines")
+
+        if num_errors is not None:
+            values[":num_errors"] = num_errors
+            assignments.append("num_errors = :num_errors")
+
+        if error_ratio is not None:
+            values[":error_ratio"] = Decimal(str(error_ratio))
+            assignments.append("error_ratio = :error_ratio")
+
+        if finished_at is not None:
+            values[":finished_at"] = finished_at
+            assignments.append("finished_at = :finished_at")
+
+        if not assignments:
+            raise ValueError("update_list requires at least one field to update")
+
+        kwargs: dict[str, Any] = {
+            "Key": {"list_id": str(list_id)},
+            "UpdateExpression": "SET " + ", ".join(assignments),
+            "ExpressionAttributeValues": values,
+        }
+        if names:
+            kwargs["ExpressionAttributeNames"] = names
+        self._table.update_item(**kwargs)
 
     def put_list(
         self,

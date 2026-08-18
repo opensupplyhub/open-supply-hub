@@ -17,7 +17,7 @@ resource "aws_lambda_function" "alert_batch_failures" {
   environment {
     variables = {
       ENVIRONMENT                      = var.environment
-      ROLLBAR_SERVER_SIDE_ACCESS_TOKEN = var.rollbar_server_side_access_token
+      ROLLBAR_SERVER_SIDE_ACCESS_TOKEN = local.rollbar_server_side_access_token
     }
   }
 
@@ -79,7 +79,7 @@ resource "aws_lambda_function" "alert_sfn_failures" {
   environment {
     variables = {
       ENVIRONMENT                      = var.environment
-      ROLLBAR_SERVER_SIDE_ACCESS_TOKEN = var.rollbar_server_side_access_token
+      ROLLBAR_SERVER_SIDE_ACCESS_TOKEN = local.rollbar_server_side_access_token
     }
   }
 
