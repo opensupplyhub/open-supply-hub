@@ -26,6 +26,29 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+data "aws_iam_policy_document" "ecs_task_execution_secretsmanager" {
+  count = length(local.ecs_secretsmanager_secret_arns) > 0 ? 1 : 0
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "secretsmanager:GetSecretValue",
+      "secretsmanager:DescribeSecret",
+    ]
+
+    resources = local.ecs_secretsmanager_secret_arns
+  }
+}
+
+resource "aws_iam_role_policy" "ecs_task_execution_secretsmanager" {
+  count = length(local.ecs_secretsmanager_secret_arns) > 0 ? 1 : 0
+
+  name   = "ecs${local.short}TaskExecutionSecretsManager"
+  role   = aws_iam_role.ecs_task_execution_role.name
+  policy = data.aws_iam_policy_document.ecs_task_execution_secretsmanager[0].json
+}
+
 data "aws_iam_policy_document" "ses_send_email" {
   statement {
     effect = "Allow"
