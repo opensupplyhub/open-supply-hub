@@ -555,32 +555,6 @@ jobs:
           LIST_S3_BUCKET: opensupplyhub-${{ steps.get_env_name.outputs.lowercase }}-files-eu-west-1
           RESET_LISTS_FOLDER: "api/fixtures/list_files/"
 
-  update_services:
-    needs: restore_database
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
-    steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
-        id: get_env_name
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ vars.ENV_NAME }}
-      - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
-        run: |
-          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Django service update failed"; exit 1; }
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-      - name: Update ECS Dedupe Hub Service with new Image for ${{ vars.ENV_NAME }}
-        run: |
-          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }}DD --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Dedupe Hub service update failed"; exit 1; }
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-
   post_deploy:
     needs: restore_database
     runs-on: ubuntu-latest
