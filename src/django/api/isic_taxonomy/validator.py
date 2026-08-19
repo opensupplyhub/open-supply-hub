@@ -232,6 +232,87 @@ def _validate_label_characters(
             ))
 
 
+def _validate_section_label_consistency(
+    row_number: int,
+    parsed: _ParsedRow,
+    section_labels: dict[str, str],
+    errors: list[IsicTaxonomyError],
+) -> None:
+    if not parsed.section_code:
+        return
+
+    previous_label = section_labels.get(parsed.section_code)
+    if previous_label and previous_label != parsed.section_label:
+        errors.append(IsicTaxonomyError(
+            row=row_number,
+            column='section_label',
+            message=(
+                f'Section "{parsed.section_code}" has inconsistent '
+                f'labels: "{previous_label}" vs "{parsed.section_label}".'
+            ),
+        ))
+    else:
+        section_labels[parsed.section_code] = parsed.section_label
+
+
+def _validate_division_label_consistency(
+    row_number: int,
+    parsed: _ParsedRow,
+    division_labels: dict[tuple[str, str], str],
+    errors: list[IsicTaxonomyError],
+) -> None:
+    if not parsed.section_code or not parsed.division_code:
+        return
+
+    division_key = (parsed.section_code, parsed.division_code)
+    previous_label = division_labels.get(division_key)
+    if previous_label and previous_label != parsed.division_label:
+        errors.append(IsicTaxonomyError(
+            row=row_number,
+            column='division_label',
+            message=(
+                f'Division "{parsed.division_code}" in section '
+                f'"{parsed.section_code}" has inconsistent labels: '
+                f'"{previous_label}" vs "{parsed.division_label}".'
+            ),
+        ))
+    else:
+        division_labels[division_key] = parsed.division_label
+
+
+def _validate_group_label_consistency(
+    row_number: int,
+    parsed: _ParsedRow,
+    group_labels: dict[tuple[str, str, str], str],
+    errors: list[IsicTaxonomyError],
+) -> None:
+    if (
+        not parsed.section_code
+        or not parsed.division_code
+        or not parsed.group_code
+    ):
+        return
+
+    group_key = (
+        parsed.section_code,
+        parsed.division_code,
+        parsed.group_code,
+    )
+    previous_label = group_labels.get(group_key)
+    if previous_label and previous_label != parsed.group_label:
+        errors.append(IsicTaxonomyError(
+            row=row_number,
+            column='group_label',
+            message=(
+                f'Group "{parsed.group_code}" in division '
+                f'"{parsed.division_code}" has inconsistent labels: '
+                f'"{previous_label}" vs "{parsed.group_label}".'
+            ),
+        ))
+    else:
+        group_labels[group_key] = parsed.group_label
+
+
 def _validate_label_consistency(
     row_number: int,
     parsed: _ParsedRow,
@@ -240,55 +321,15 @@ def _validate_label_consistency(
     group_labels: dict[tuple[str, str, str], str],
     errors: list[IsicTaxonomyError],
 ) -> None:
-    if parsed.section_code:
-        previous_label = section_labels.get(parsed.section_code)
-        if previous_label and previous_label != parsed.section_label:
-            errors.append(IsicTaxonomyError(
-                row=row_number,
-                column='section_label',
-                message=(
-                    f'Section "{parsed.section_code}" has inconsistent '
-                    f'labels: "{previous_label}" vs "{parsed.section_label}".'
-                ),
-            ))
-        else:
-            section_labels[parsed.section_code] = parsed.section_label
-
-    if parsed.section_code and parsed.division_code:
-        division_key = (parsed.section_code, parsed.division_code)
-        previous_label = division_labels.get(division_key)
-        if previous_label and previous_label != parsed.division_label:
-            errors.append(IsicTaxonomyError(
-                row=row_number,
-                column='division_label',
-                message=(
-                    f'Division "{parsed.division_code}" in section '
-                    f'"{parsed.section_code}" has inconsistent labels: '
-                    f'"{previous_label}" vs "{parsed.division_label}".'
-                ),
-            ))
-        else:
-            division_labels[division_key] = parsed.division_label
-
-    if parsed.section_code and parsed.division_code and parsed.group_code:
-        group_key = (
-            parsed.section_code,
-            parsed.division_code,
-            parsed.group_code,
-        )
-        previous_label = group_labels.get(group_key)
-        if previous_label and previous_label != parsed.group_label:
-            errors.append(IsicTaxonomyError(
-                row=row_number,
-                column='group_label',
-                message=(
-                    f'Group "{parsed.group_code}" in division '
-                    f'"{parsed.division_code}" has inconsistent labels: '
-                    f'"{previous_label}" vs "{parsed.group_label}".'
-                ),
-            ))
-        else:
-            group_labels[group_key] = parsed.group_label
+    _validate_section_label_consistency(
+        row_number, parsed, section_labels, errors
+    )
+    _validate_division_label_consistency(
+        row_number, parsed, division_labels, errors
+    )
+    _validate_group_label_consistency(
+        row_number, parsed, group_labels, errors
+    )
 
 
 def _validate_duplicate_class_code(

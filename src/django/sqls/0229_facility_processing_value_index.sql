@@ -151,6 +151,9 @@ CREATE OR REPLACE
 PROCEDURE recompute_facility_processing_values()
 LANGUAGE plpgsql
 AS $body$
+DECLARE
+	facility_type_kind CONSTANT TEXT := 'facility_type';
+	processing_type_kind CONSTANT TEXT := 'processing_type';
 
 BEGIN
 TRUNCATE api_facility_processing_value;
@@ -165,7 +168,7 @@ SELECT
 FROM
 	(
 	SELECT
-		'facility_type'::TEXT AS kind,
+		facility_type_kind AS kind,
 		raw_value AS value
 	FROM
 		api_facilityindex fi
@@ -176,7 +179,7 @@ FROM
 	UNION ALL
 
 	SELECT
-		'processing_type'::TEXT AS kind,
+		processing_type_kind AS kind,
 		raw_value AS value
 	FROM
 		api_facilityindex fi
@@ -198,29 +201,33 @@ FUNCTION handle_facility_index_processing_value_trigger()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $body$
+DECLARE
+	facility_type_kind CONSTANT TEXT := 'facility_type';
+	processing_type_kind CONSTANT TEXT := 'processing_type';
+
 BEGIN
 	IF TG_OP = 'INSERT' THEN
 		CALL apply_facility_processing_value_delta(
-			'facility_type', '{}'::VARCHAR[], NEW.facility_type
+			facility_type_kind, '{}'::VARCHAR[], NEW.facility_type
 		);
 		CALL apply_facility_processing_value_delta(
-			'processing_type', '{}'::VARCHAR[], NEW.processing_type
+			processing_type_kind, '{}'::VARCHAR[], NEW.processing_type
 		);
 		RETURN NEW;
 	ELSIF TG_OP = 'UPDATE' THEN
 		CALL apply_facility_processing_value_delta(
-			'facility_type', OLD.facility_type, NEW.facility_type
+			facility_type_kind, OLD.facility_type, NEW.facility_type
 		);
 		CALL apply_facility_processing_value_delta(
-			'processing_type', OLD.processing_type, NEW.processing_type
+			processing_type_kind, OLD.processing_type, NEW.processing_type
 		);
 		RETURN NEW;
 	ELSE
 		CALL apply_facility_processing_value_delta(
-			'facility_type', OLD.facility_type, '{}'::VARCHAR[]
+			facility_type_kind, OLD.facility_type, '{}'::VARCHAR[]
 		);
 		CALL apply_facility_processing_value_delta(
-			'processing_type', OLD.processing_type, '{}'::VARCHAR[]
+			processing_type_kind, OLD.processing_type, '{}'::VARCHAR[]
 		);
 		RETURN OLD;
 	END IF;

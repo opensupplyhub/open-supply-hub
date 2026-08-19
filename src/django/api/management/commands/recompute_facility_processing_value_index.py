@@ -24,7 +24,9 @@ class Command(BaseCommand):
 
         with connection.cursor() as cursor:
             cursor.execute('CALL recompute_facility_processing_values();')
-            cursor.execute('SELECT COUNT(*) FROM {}'.format(TABLE))
+            cursor.execute(
+                'SELECT COUNT(*) FROM api_facility_processing_value'
+            )
             value_count = cursor.fetchone()[0]
 
         logger.info(
