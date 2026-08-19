@@ -55,6 +55,14 @@ class Source(models.Model):
         help_text=('Should a facility or facility match be created from the '
                    'facility data')
     )
+    is_anonymized = models.BooleanField(
+        null=False,
+        default=False,
+        help_text=('True if the data from this source should be shown '
+                   'without identifying the contributor. Unlike is_public, '
+                   'the contributed data (names, addresses, sectors, '
+                   'extended fields) remains visible.')
+    )
     origin_source = models.CharField(
         choices=OriginSource.CHOICES,
         blank=True,

@@ -141,11 +141,13 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                 if item['location_lng'] is not None else None,
                 'contributor_id': get_contributor_id(
                     item['contributor'],
-                    user_can_see_detail,
+                    user_can_see_detail
+                    and not item.get('is_anonymized', False),
                     masked),
                 'contributor_name': get_contributor_name(
                     item['contributor'],
-                    user_can_see_detail,
+                    user_can_see_detail
+                    and not item.get('is_anonymized', False),
                     masked),
                 'notes': None,
             }
