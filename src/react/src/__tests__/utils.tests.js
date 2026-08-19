@@ -21,6 +21,7 @@ const {
     makeLogDownloadUrl,
     makeGetFacilitiesURLWithQueryString,
     makeGetTaxonomyCountsURL,
+    makeGetProcessingTypeSuggestionsURL,
     getValueFromObject,
     createQueryStringFromSearchFilters,
     allFiltersAreEmpty,
@@ -200,6 +201,22 @@ it('creates an API URL for getting taxonomy counts', () => {
     );
     expect(makeGetTaxonomyCountsURL('isic4')).toEqual(
         '/api/taxonomy-counts/?kind=isic4',
+    );
+});
+
+it('creates an API URL for getting processing type suggestions', () => {
+    expect(makeGetProcessingTypeSuggestionsURL()).toEqual(
+        '/api/processing-type-suggestions/?q=',
+    );
+    expect(
+        makeGetProcessingTypeSuggestionsURL('dyeing', [
+            'Final Product Assembly',
+            'Textile or Material Production',
+        ]),
+    ).toEqual(
+        '/api/processing-type-suggestions/?q=dyeing' +
+            '&facility_type=Final+Product+Assembly' +
+            '&facility_type=Textile+or+Material+Production',
     );
 });
 

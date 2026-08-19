@@ -1,15 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import {
-    getFacilityProcessingSearchIndex,
-    getFacilityProcessingVisibleRows,
-} from '../../data/facilityProcessingSearchIndex';
 import { getIsic4SearchIndex } from '../../data/isic4SearchIndex';
 
 const TAXONOMY_SOURCE_FILES = [
-    '../../data/facilityProcessingTaxonomy.js',
-    '../../data/facilityProcessingSearchIndex.js',
     '../../data/isic4SearchIndex.js',
     '../../data/taxonomySearchIndex.js',
 ];
@@ -50,61 +44,12 @@ const SAMPLE_ISIC_TAXONOMY = Object.freeze({
 });
 
 describe('taxonomy search index', () => {
-    test('builds the facility processing search index once per module load', () => {
-        const first = getFacilityProcessingSearchIndex();
-        const second = getFacilityProcessingSearchIndex();
-
-        expect(first).toBe(second);
-        expect(first.groups.length).toBeGreaterThan(0);
-    });
-
     test('builds the ISIC search index once per module load', () => {
         const first = getIsic4SearchIndex(SAMPLE_ISIC_TAXONOMY, 'test');
         const second = getIsic4SearchIndex(SAMPLE_ISIC_TAXONOMY, 'test');
 
         expect(first).toBe(second);
         expect(first.flatNodes.length).toBeGreaterThan(0);
-    });
-
-    test('assigns namespaced count keys for facility and processing nodes', () => {
-        const { groups } = getFacilityProcessingSearchIndex();
-        const printingGroup = groups.find(
-            group =>
-                group.facilityNode.label ===
-                'Printing, Product Dyeing and Laundering',
-        );
-
-        expect(printingGroup.facilityNode.countKey).toBe(
-            'facility_type:Printing, Product Dyeing and Laundering',
-        );
-        expect(
-            printingGroup.processingNodes.find(
-                node =>
-                    node.label === 'Printing, Product Dyeing and Laundering',
-            ).countKey,
-        ).toBe('processing_type:Printing, Product Dyeing and Laundering');
-    });
-
-    test('filtering "material" returns parent facility types and nested processing matches', () => {
-        const { groups } = getFacilityProcessingSearchIndex();
-        const { rows } = getFacilityProcessingVisibleRows(groups, 'material');
-
-        const parentLabels = rows
-            .filter(row => row.depth === 0)
-            .map(row => row.node.label);
-        const childLabels = rows
-            .filter(row => row.depth === 1)
-            .map(row => row.node.label);
-
-        expect(parentLabels).toContain('Raw Material Processing or Production');
-        expect(parentLabels).toContain('Textile or Material Production');
-        expect(childLabels).toEqual(
-            expect.arrayContaining([
-                'Material Creation',
-                'Material Production',
-                'Textile or Material Production',
-            ]),
-        );
     });
 
     test('taxonomy modules do not import spreadsheet parsers at build time', () => {

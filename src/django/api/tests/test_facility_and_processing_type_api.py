@@ -174,6 +174,36 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         self.assertIn("custom facility label", facility_index.facility_type)
 
+    def test_placeholder_matched_value_not_indexed(self):
+        # Contributors upload the literal string "null" instead of leaving the
+        # field empty; it reaches matched_values and used to be indexed as a
+        # type of its own.
+        self._create_processing_type_extended_field(
+            ["null"],
+            [["PROCESSING_TYPE", "SKIPPED_MATCHING", None, "null"]],
+        )
+        self._create_facility_type_extended_field(
+            ["null"],
+            [["PROCESSING_TYPE", "SKIPPED_MATCHING", None, "null"]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("null", facility_index.processing_type)
+        self.assertNotIn("null", facility_index.facility_type)
+
+    def test_placeholder_raw_value_not_indexed(self):
+        self._create_processing_type_extended_field(
+            ["N/A", "cement mixing"],
+            [
+                [None, None, None, None],
+                [None, None, None, None],
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("N/A", facility_index.processing_type)
+        self.assertIn("cement mixing", facility_index.processing_type)
+
     def test_processing_type_indexed_when_tagged_as_facility_type(self):
         # "Final Product Assembly" is both a facility type and a processing
         # type, so the taxonomy matcher tags it FACILITY_TYPE even when it is

@@ -6,6 +6,13 @@ AS $Body$
 DECLARE
 	matched_values_key CONSTANT TEXT := 'matched_values';
 	raw_values_key CONSTANT TEXT := 'raw_values';
+	-- Placeholders contributors upload instead of leaving the field empty,
+	-- plus legacy production types that are not part of the taxonomy. Kept in
+	-- sync with the exclusions of the api_facility_processing_value table.
+	excluded_values CONSTANT TEXT[] := ARRAY[
+		'null', 'none', 'n/a', 'na', 'unknown', 'other', '-',
+		'denim services', 'boarding'
+	];
 BEGIN
 	RETURN QUERY
 SELECT
@@ -138,13 +145,13 @@ FROM
 		matched.idx = raw_vals.raw_idx
 		AND matched.matched->>2 IS NULL
 		AND raw_vals.raw_value IS NOT NULL
-		AND btrim(raw_vals.raw_value) <> ''
-		AND lower(btrim(raw_vals.raw_value)) NOT IN (
-			'other', 'denim services', 'boarding'
-		)
 ) AS value1
 WHERE
-	raw1 IS NOT NULL;
+	raw1 IS NOT NULL
+	AND btrim(raw1) <> ''
+	-- Placeholders reach the index through both branches: 'null' arrives as a
+	-- standardized matched value, the rest mostly as unmatched raw values.
+	AND lower(btrim(raw1)) <> ALL (excluded_values);
 END;
 
 $Body$;

@@ -26,6 +26,9 @@ import {
     startFetchFacilityProcessingTypeOptions,
     failFetchFacilityProcessingTypeOptions,
     completeFetchFacilityProcessingTypeOptions,
+    startFetchProcessingTypeSuggestions,
+    failFetchProcessingTypeSuggestions,
+    completeFetchProcessingTypeSuggestions,
     startFetchTaxonomyCounts,
     failFetchTaxonomyCounts,
     completeFetchTaxonomyCounts,
@@ -81,6 +84,12 @@ const initialState = Object.freeze({
         error: null,
     }),
     facilityProcessingType: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    processingTypeSuggestions: Object.freeze({
+        query: null,
         data: null,
         fetching: false,
         error: null,
@@ -301,6 +310,44 @@ export default createReducer(
                     data: { $set: payload },
                 },
             }),
+        [startFetchProcessingTypeSuggestions]: (state, query) =>
+            update(state, {
+                processingTypeSuggestions: {
+                    query: { $set: query },
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        /*
+        The typeahead fires a request per debounced keystroke, so responses can
+        arrive out of order. Anything that does not answer the query currently
+        in flight is dropped rather than allowed to overwrite fresher results.
+        */
+        [failFetchProcessingTypeSuggestions]: (state, { query, error }) => {
+            if (state.processingTypeSuggestions.query !== query) {
+                return state;
+            }
+
+            return update(state, {
+                processingTypeSuggestions: {
+                    fetching: { $set: false },
+                    error: { $set: error },
+                },
+            });
+        },
+        [completeFetchProcessingTypeSuggestions]: (state, { query, data }) => {
+            if (state.processingTypeSuggestions.query !== query) {
+                return state;
+            }
+
+            return update(state, {
+                processingTypeSuggestions: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: data },
+                },
+            });
+        },
         [startFetchTaxonomyCounts]: (state, kind) =>
             update(state, {
                 taxonomyCounts: {

@@ -1,10 +1,4 @@
 export {
-    getFacilityProcessingNodeId,
-    getFacilityProcessingSearchIndex,
-    getFacilityProcessingVisibleRows,
-} from './facilityProcessingSearchIndex';
-
-export {
     getIsic4FilterValue,
     getIsic4NodeId,
     getIsic4SearchIndex,

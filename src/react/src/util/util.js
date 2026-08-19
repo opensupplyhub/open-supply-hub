@@ -215,6 +215,14 @@ export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
 export const makeGetTaxonomyCountsURL = kind =>
     `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
+export const makeGetProcessingTypeSuggestionsURL = (
+    query = '',
+    facilityTypes = [],
+) =>
+    `/api/processing-type-suggestions/?${querystring.stringify({
+        q: query,
+        facility_type: facilityTypes,
+    })}`;
 export const makeGetTaxonomyConfigURL = () => '/api/taxonomy-config/';
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';

@@ -14,25 +14,37 @@ jest.mock(
     }),
 );
 
-jest.mock('../../components/Filters/HierarchicalTaxonomySearch', () => ({
+jest.mock('../../components/Filters/ProcessingTypeSearch', () => ({
     __esModule: true,
     default: () => (
-        <div data-testid="facility-processing-search">
-            Facility processing search
-        </div>
+        <div data-testid="processing-type-search">Processing type search</div>
     ),
-    TAXONOMY_KINDS: {
-        FACILITY_PROCESSING: 'facility_processing',
-        ISIC4: 'isic4',
-    },
 }));
 
 jest.mock('../../components/Filters/StyledSelect', () => ({
     __esModule: true,
-    default: ({ label }) => <div>{label}</div>,
+    default: ({ label, name, options }) => (
+        <div>
+            {label}
+            <ul data-testid={`options-${name}`}>
+                {(options || []).map(option => (
+                    <li key={option.value}>{option.label}</li>
+                ))}
+            </ul>
+        </div>
+    ),
 }));
 
+const FACILITY_PROCESSING_TYPE_OPTIONS = [
+    {
+        facilityType: 'Final Product Assembly',
+        processingTypes: ['Assembly', 'Cutting'],
+    },
+    { facilityType: 'Textile or Material Production', processingTypes: ['Knitting'] },
+];
+
 const createPreloadedState = ({
+    facilityProcessingTypeOptions = FACILITY_PROCESSING_TYPE_OPTIONS,
     facilityType = [],
     processingType = [],
     isic4 = [],
@@ -47,8 +59,18 @@ const createPreloadedState = ({
             fetching: false,
             error: null,
         },
+        facilityProcessingType: {
+            data: facilityProcessingTypeOptions,
+            fetching: false,
+            error: null,
+        },
+        processingTypeSuggestions: {
+            query: null,
+            data: null,
+            fetching: false,
+            error: null,
+        },
         taxonomyCounts: {
-            facility_processing: { data: null },
             isic4: { data: null },
         },
         numberOfWorkers: {
@@ -175,6 +197,19 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
                 ),
             ).toBeInTheDocument();
         });
+    });
+
+    test('offers every facility type even when a processing type is selected', () => {
+        const { getByTestId } = renderComponent(
+            createPreloadedState({
+                processingType: [{ value: 'Knitting', label: 'Knitting' }],
+            }),
+        );
+
+        const options = getByTestId('options-FACILITY_TYPE');
+
+        expect(options).toHaveTextContent('Final Product Assembly');
+        expect(options).toHaveTextContent('Textile or Material Production');
     });
 
     test('shows the combine checkbox when enabled and all selections exist', () => {

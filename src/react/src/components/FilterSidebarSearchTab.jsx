@@ -135,7 +135,7 @@ function FilterSidebarSearchTab({
     partnerContributors,
 }) {
     const filterListHeight = useFilterListHeight();
-    const facilityProcessingTaxonomyRef = useRef(null);
+    const processingTypeSearchRef = useRef(null);
 
     const extendedFields = [
         contributorTypes,
@@ -163,7 +163,7 @@ function FilterSidebarSearchTab({
     }
 
     const handleSearchClick = () => {
-        const pendingQueryIsValid = facilityProcessingTaxonomyRef.current?.commitPendingQuery?.();
+        const pendingQueryIsValid = processingTypeSearchRef.current?.commitPendingQuery?.();
         if (pendingQueryIsValid === false) {
             return;
         }
@@ -234,7 +234,7 @@ function FilterSidebarSearchTab({
                         </FeatureFlag>
                     </ShowOnly>
                     <FilterSidebarExtendedSearch
-                        ref={facilityProcessingTaxonomyRef}
+                        ref={processingTypeSearchRef}
                     />
                 </div>
             </div>
