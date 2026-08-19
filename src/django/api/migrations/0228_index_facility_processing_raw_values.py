@@ -34,7 +34,7 @@ def revert_indexing_functions(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0225_create_isic_taxonomy_config'),
+        ('api', '0227_create_isic_taxonomy_config'),
     ]
 
     operations = [

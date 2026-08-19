@@ -12,11 +12,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* `0224_add_isic_to_facility_index.py` - Adds `isic_section`, `isic_division`, `isic_group`, and `isic_class` array columns to `FacilityIndex`, plus SQL helpers to extract normalized ISIC Rev 4 codes from `isic_4` extended fields during indexing.
-* `0225_create_isic_taxonomy_config.py` - Creates the singleton `IsicTaxonomyConfig` table with an inactive default row. No taxonomy is published until staff upload and publish via Django admin.
-* `0226_index_facility_processing_raw_values.py` - Replaces `index_facility_type()` and `index_processing_type()` so unmatched raw contributor values from profile-visible ExtendedFields are indexed for search, while keeping standardized taxonomy slots from `matched_values`.
 * `0224_add_anonymize_slc_sources_switch.py` - Adds the `anonymize_slc_sources` waffle switch, active by default. See OSDEV-3142.
 * `0225_add_is_anonymized_to_source.py` - Adds the `Source.is_anonymized` boolean column (default `False`) and replaces the facility index functions `index_contributors`, `index_created_from_info`, `index_contributors_id`, `index_item_sectors`, `index_facility_names`, `index_facility_addresses`, `index_facility_list_items`, and `index_extended_fields` so anonymized sources keep their contributed data indexed while their contributor attribution is hidden. No backfill or reindex is required: no existing source is anonymized, the recomputed attribution values are unchanged for existing rows, and serializers read the new JSON keys with safe defaults. See OSDEV-3142.
+* `0226_add_isic_to_facility_index.py` - Adds `isic_section`, `isic_division`, `isic_group`, and `isic_class` array columns to `FacilityIndex`, plus SQL helpers to extract normalized ISIC Rev 4 codes from `isic_4` extended fields during indexing.
+* `0227_create_isic_taxonomy_config.py` - Creates the singleton `IsicTaxonomyConfig` table with an inactive default row. No taxonomy is published until staff upload and publish via Django admin.
+* `0228_index_facility_processing_raw_values.py` - Replaces `index_facility_type()` and `index_processing_type()` so unmatched raw contributor values from profile-visible ExtendedFields are indexed for search, while keeping standardized taxonomy slots from `matched_values`.
 
 #### Schema changes
 * [OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) - `FacilityIndex` now stores normalized ISIC Rev 4 codes at section, division, group, and class levels so facilities can be filtered and counted by ISIC category.
