@@ -555,8 +555,6 @@ jobs:
           LIST_S3_BUCKET: opensupplyhub-${{ steps.get_env_name.outputs.lowercase }}-files-eu-west-1
           RESET_LISTS_FOLDER: "api/fixtures/list_files/"
 
-<<<<<<< HEAD
-=======
   update_services:
     needs: restore_database
     runs-on: ubuntu-latest
@@ -583,7 +581,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
->>>>>>> 86fba256 (Addressing comments)
   post_deploy:
     needs: restore_database
     runs-on: ubuntu-latest
