@@ -142,4 +142,3 @@ module "database_enc" {
   project     = var.project
   environment = var.environment
 }
-

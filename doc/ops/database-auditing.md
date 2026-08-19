@@ -29,11 +29,10 @@ classes. Both variables carry `validation` blocks: neither `pgaudit` nor
 with anything else.
 
 `rds_pgaudit_log` ships as `none` and is flipped to `ddl,role` by
-[OSDEV-3236](https://opensupplyhub.atlassian.net/browse/OSDEV-3236). That split
-is not a preference — see Rollout below. Until OSDEV-3236 ships, the Vanta test
-`aws-rds-pgaudit-enabled` still fails.
+[OSDEV-3236](https://opensupplyhub.atlassian.net/browse/OSDEV-3236), a second
+commit in the same release. That split is not a preference — see Rollout below.
 
-Once phase 2 lands, `ddl,role` records schema changes (`CREATE`/`ALTER`/`DROP` of tables, indexes,
+`ddl,role` records schema changes (`CREATE`/`ALTER`/`DROP` of tables, indexes,
 functions) and privilege changes (`GRANT`, `REVOKE`, `CREATE`/`ALTER`/`DROP
 ROLE`). It does **not** record `SELECT`, `INSERT`, `UPDATE`, or `DELETE`.
 Adding `read` or `write` would multiply log volume on the ingestion path, so
@@ -69,7 +68,7 @@ an instance on its own for a parameter change — not even during the maintenanc
 window. Every environment runs `rds_multi_az = false`, so each reboot is a hard
 restart with roughly 30-120 seconds of downtime, not a failover.
 
-### Phase 1 — load the library, create the extension (this release)
+### Phase 1 — load the library, create the extension
 
 1. Apply Terraform. Both parameters land on the parameter group as
    `pending-reboot`, with `pgaudit.log` at `none`.
@@ -99,16 +98,42 @@ restart with roughly 30-120 seconds of downtime, not a failover.
    SELECT extname FROM pg_extension WHERE extname = 'pgaudit';
    ```
 
-Run phase 1 on Development, then Staging, before Production.
-
 ### Phase 2 — turn auditing on ([OSDEV-3236](https://opensupplyhub.atlassian.net/browse/OSDEV-3236))
 
-Tracked separately, because it must not ship until phase 1 has completed in the
-environment being changed. It flips the `rds_pgaudit_log` default to `ddl,role`,
-which is applied by another Terraform apply and another reboot, then verified by
-running a harmless DDL statement and confirming the audit record carries a
-populated `OBJECT_TYPE` and `OBJECT_NAME`. Full acceptance criteria are on that
-ticket.
+A separate commit that flips the `rds_pgaudit_log` default to `ddl,role`. It
+must not be applied to an environment until phase 1 has completed there.
+
+5. Run **Deploy to AWS** with `deploy-mode` set to `terraform-plan-and-apply`,
+   on the OSDEV-3236 commit. That applies the parameter change without
+   rebuilding images, updating the ECS services, or running migrations — the app
+   is already deployed and unchanged.
+
+   Check the plan (uploaded to `s3://<settings-bucket>/terraform/`) before
+   approving: it should show `aws_db_parameter_group.default` changing and
+   nothing else. In particular there should be no `aws_ecs_task_definition` or
+   `aws_ecs_service` changes. That mode pins `image_tag` to the tag the ECS
+   service is already running precisely so this stays true — without the pin,
+   terraform would point the live services at images the skipped build jobs
+   never pushed. A non-empty diff for the dedupe-hub, kafka or logstash task
+   definitions means those services had drifted onto a different tag than the
+   app; check before approving.
+
+6. Reboot the instance again, as in step 2.
+
+7. Verify:
+
+   ```sql
+   SHOW shared_preload_libraries;   -- expect rdsutils,pg_stat_statements,pgaudit
+   SHOW pgaudit.log;                -- expect ddl,role
+   SELECT extname FROM pg_extension WHERE extname = 'pgaudit';
+   ```
+
+   Then run a harmless DDL statement and confirm the audit record in the
+   PostgreSQL log carries a populated `OBJECT_TYPE` and `OBJECT_NAME` — that is
+   what proves phase 1 landed before phase 2. Finally, re-run the Vanta test
+   `aws-rds-pgaudit-enabled` and confirm the environment passes.
+
+Run the full sequence on Development, then Staging, before Production.
 
 > If the `pgaudit` extension is ever dropped and needs recreating, set
 > `pgaudit.log` back to `none` first — pgaudit raises an error otherwise. That

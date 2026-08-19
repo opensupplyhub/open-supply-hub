@@ -20,11 +20,15 @@ on:
         - Production
         - RBA
         default: Development
-      deploy-plan-only:
-        description: 'Plan only'
+      deploy-mode:
+        description: 'How much of the workflow to run. The terraform- modes stop early and never touch the running services: terraform-plan produces a plan and stops (previously "Plan only"); terraform-plan-and-apply also applies it, skipping the image build, service update, migrations and OpenSearch steps, with image_tag pinned to what the ECS service is already running.'
         required: false
-        type: boolean
-        default: false
+        type: choice
+        options:
+        - full
+        - terraform-plan
+        - terraform-plan-and-apply
+        default: full
       restore-db:
         description: 'Restore database to original state (Reset database for Development and restore anon dump for Test and Pre-prod)'
         required: false
@@ -101,6 +105,40 @@ jobs:
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
 
+      # # A terraform-plan-and-apply run skips the image build jobs, so planning with this
+      # commit's SHA would register task definitions pointing at images that
+      # were never pushed -- and aws_ecs_service.task_definition tracks
+      # aws_ecs_task_definition.arn, so terraform apply itself would move the
+      # live services onto them. Pin image_tag to the tag the service is
+      # already running instead, so the plan contains no task-definition change.
+      - name: Pin image tag to the running service for ${{ vars.ENV_NAME }}
+        if: ${{ inputs.deploy-mode == 'terraform-plan-and-apply' }}
+        run: |
+          set -euo pipefail
+          task_definition="$(aws ecs describe-services \
+            --cluster "${{ vars.CLUSTER }}" \
+            --services "${{ vars.SERVICE_NAME }}" \
+            --query 'services[0].taskDefinition' \
+            --output text)"
+          if [ -z "$task_definition" ] || [ "$task_definition" = "None" ]; then
+            echo "Could not read the running task definition for ${{ vars.SERVICE_NAME }}."
+            exit 1
+          fi
+          image="$(aws ecs describe-task-definition \
+            --task-definition "$task_definition" \
+            --query 'taskDefinition.containerDefinitions[?name==`django`].image' \
+            --output text)"
+          running_tag="${image##*:}"
+          if [ -z "$running_tag" ] || [ "$running_tag" = "$image" ]; then
+            echo "Could not parse an image tag out of '$image'."
+            exit 1
+          fi
+          echo "Pinning image_tag to the running tag: $running_tag"
+          echo "GIT_COMMIT=$running_tag" >> "$GITHUB_ENV"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
       - name: Terraform Plan for ${{ vars.ENV_NAME }}
         run: ./deployment/infra plan
         env:
@@ -132,7 +170,7 @@ jobs:
 
   detach-waf-if-needed:
     needs: init-and-plan
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     steps:
@@ -183,7 +221,7 @@ jobs:
     needs: [init-and-plan, detach-waf-if-needed]
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -244,7 +282,7 @@ jobs:
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -300,7 +338,7 @@ jobs:
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -416,7 +454,7 @@ jobs:
     needs: [build_and_push_react_app, build_and_push_docker_image]
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -438,7 +476,7 @@ jobs:
     needs: create_kafka_topic
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -464,7 +502,7 @@ jobs:
     # project is managed by deployment/terraform/codebuild_github_runner.
     runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if:  ${{ inputs.deploy-plan-only == false }}
+    if:  ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -517,11 +555,40 @@ jobs:
           LIST_S3_BUCKET: opensupplyhub-${{ steps.get_env_name.outputs.lowercase }}-files-eu-west-1
           RESET_LISTS_FOLDER: "api/fixtures/list_files/"
 
+<<<<<<< HEAD
+=======
+  update_services:
+    needs: restore_database
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
+    steps:
+      - name: Get Environment Name for ${{ vars.ENV_NAME }}
+        id: get_env_name
+        uses: Entepotenz/change-string-case-action-min-dependencies@v1
+        with:
+          string: ${{ vars.ENV_NAME }}
+      - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
+        run: |
+          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Django service update failed"; exit 1; }
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+      - name: Update ECS Dedupe Hub Service with new Image for ${{ vars.ENV_NAME }}
+        run: |
+          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }}DD --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Dedupe Hub service update failed"; exit 1; }
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
+>>>>>>> 86fba256 (Addressing comments)
   post_deploy:
     needs: restore_database
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -542,7 +609,7 @@ jobs:
     needs: post_deploy
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -609,7 +676,7 @@ jobs:
     needs: clear_opensearch
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
