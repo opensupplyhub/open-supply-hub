@@ -116,6 +116,50 @@ resource "aws_iam_role_policy" "s3_read_write_files_bucket" {
   policy = data.aws_iam_policy_document.s3_read_write_files_bucket.json
 }
 
+# Lets the Django app task invoke models via Bedrock for the SLC
+# submission quality check (SubmissionQualityProcessor), using the task's
+# IAM role rather than a long-lived API key. The set of invocable models
+# is variable-driven so that swapping the model is a tfvars + env-var
+# change (BEDROCK_SUBMISSION_QUALITY_MODEL_ID), not a policy rewrite -
+# keep the two in sync, because an env var pointing at an ungranted model
+# is denied invisibly (the check fails open). The inference profile
+# resources are scoped to this account and the profile's home region; the
+# underlying foundation-model resources must allow every region a profile
+# can route to, per AWS's guidance for cross-region inference profiles,
+# hence the region wildcard.
+#
+# The inference-profile region is pinned (default eu-west-1) to match the
+# app's BEDROCK_AWS_REGION default (the region the Bedrock client actually
+# invokes in), not var.aws_region. The eu.* profiles are only invocable
+# from EU regions, so tying this ARN to var.aws_region would silently
+# break the check on any non-EU deployment.
+data "aws_iam_policy_document" "bedrock_invoke_submission_quality_model" {
+  statement {
+    effect = "Allow"
+
+    resources = concat(
+      [
+        for profile in var.bedrock_submission_quality_inference_profiles :
+        "arn:aws:bedrock:${var.bedrock_submission_quality_region}:${data.aws_caller_identity.current.account_id}:inference-profile/${profile}"
+      ],
+      [
+        for model in var.bedrock_submission_quality_foundation_models :
+        "arn:aws:bedrock:*::foundation-model/${model}"
+      ],
+    )
+
+    actions = [
+      "bedrock:InvokeModel",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "bedrock_invoke_submission_quality_model" {
+  name   = "BedrockInvokeSubmissionQualityModel"
+  role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.bedrock_invoke_submission_quality_model.json
+}
+
 #
 # ALB IAM resources
 #

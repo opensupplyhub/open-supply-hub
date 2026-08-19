@@ -91,6 +91,11 @@ is_database_private_link_provider = true
 # Staging/RBA set aws_chatbot_manage_channel_configuration = false.
 aws_chatbot_manage_channel_configuration = true
 
+# Owns the account-level AWS Budget for Bedrock spend (account shared
+# with Staging/RBA, which leave manage_bedrock_cost_budget at its
+# default of false).
+manage_bedrock_cost_budget = true
+
 waf_enabled = true
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1TPjKeAnUgyIppdhAECREwYL"

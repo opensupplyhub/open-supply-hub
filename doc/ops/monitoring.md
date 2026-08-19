@@ -159,6 +159,20 @@ Both alarms: `evaluation_periods = 1`; `alarm_actions` / `ok_actions` / `insuffi
 
 `aws-ecs-service-autoscaling` raises/lowers desired count on ECS `CPUUtilization` high/low. Those alarms drive scaling policies; they are **not** wired to the global SNS topic unless `sns_topic_arn` is passed (currently omitted). Treat them as capacity signals, not pages.
 
+### Bedrock (SLC submission quality check)
+
+Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check makes one Bedrock (Claude Haiku) call per new SLC submission — organic volume is tens of calls per **week**. There is deliberately no in-app cap on these calls: per-user volume is bounded by the endpoint's `DataUploadThrottle` (30/minute), and runaway volume (a frontend retry loop, scripted submissions across accounts) is caught by monitoring instead, accepting a bounded-spend risk rather than risking the check or submissions being silently degraded by a cap.
+
+| Alarm | Metric | Period | Pages when |
+| --- | --- | ---: | --- |
+| `alarm…BedrockInvocations` | `Invocations` (`AWS/Bedrock`, no `ModelId` dimension — covers all models/callers) | 3600s | Sum > `bedrock_invocations_alarm_hourly_threshold` (default **100/hour**, orders of magnitude above organic volume) |
+
+`treat_missing_data = notBreaching`: zero calls in an hour is the normal state, so no insufficient-data pages. Bedrock metrics land in the calling region, so the alarm only sees traffic where the app's `BEDROCK_AWS_REGION` matches the env's `aws_region`.
+
+A monthly AWS Budget on Bedrock spend (`budget…Bedrock`, limit `bedrock_cost_budget_monthly_limit_usd`, default **$25**) alerts at 80% actual and 100% forecasted through the same SNS → Chatbot → Slack path. Budgets are account-wide, so only the account-owner envs create one (`manage_bedrock_cost_budget = true` — Test and Production today, mirroring the Chatbot ownership pattern).
+
+The Django app also logs per-call token usage (`Submission quality check tokens: input=… output=…`) to CloudWatch Logs for verifying actual consumption against expectations (~640 tokens/call).
+
 ## Suggested triage order
 
 When BetterStack liveness is green but users report errors, or when RDS / Memcached alarms fire:
