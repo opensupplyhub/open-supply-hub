@@ -115,6 +115,8 @@ class FacilityIndexExtendedFieldListSerializer:
         # the masking by inference.
         if is_contribution_masked(contributor, self.masked_contributors):
             return False
+        if extended_field.get('is_anonymized'):
+            return False
         return contributor.get('id') == claimant_contributor_id
 
     def _get_verified_count(self, extended_field: dict) -> int:

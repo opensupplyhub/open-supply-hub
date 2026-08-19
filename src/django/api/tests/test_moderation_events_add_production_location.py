@@ -3,8 +3,12 @@ from unittest.mock import patch
 
 from django.test import override_settings
 from django.core import mail
+from waffle.testutils import override_switch
 
 from api.constants import APIV1MatchTypes
+from api.moderation_event_actions.approval.event_approval_template import (
+    ANONYMIZE_SLC_SOURCES_SWITCH,
+)
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -205,6 +209,39 @@ class ModerationEventsAddProductionLocationTest(
         )
 
     def test_creation_of_source(self):
+        # The anonymize_slc_sources switch is active by default, so a source
+        # created for an approved SLC event is anonymized: its data stays
+        # public and active, but it is not attributed to the contributor.
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        source = Source.objects.get(contributor=self.contributor)
+
+        self.assert_source_creation(source, is_anonymized=True)
+
+    @override_switch(ANONYMIZE_SLC_SOURCES_SWITCH, active=False)
+    def test_creation_of_source_with_anonymization_disabled(self):
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        source = Source.objects.get(contributor=self.contributor)
+
+        self.assert_source_creation(source)
+
+    def test_creation_of_source_for_api_moderation_event(self):
+        self.moderation_event.source = ModerationEvent.Source.API
+        self.moderation_event.save()
+
         self.login_as_superuser()
         response = self.client.post(
             self.get_url(),

@@ -10,7 +10,8 @@ def format_download_date(date):
 
 def get_download_contribution(source, match_is_active, user_can_see_detail):
     contribution = '[Unknown Contributor]'
-    is_visible = source.is_active and source.is_public and match_is_active
+    is_visible = (source.is_active and source.is_public
+                  and not source.is_anonymized and match_is_active)
     source_name = "API" if source.source_type == "SINGLE" else "List"
 
     if source and source.contributor:
