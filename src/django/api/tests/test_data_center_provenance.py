@@ -39,6 +39,62 @@ class ExtractProvenanceTest(SimpleTestCase):
                 result = extract_provenance({'date_of_source': partial})
                 self.assertEqual(result, {'date_of_source': partial})
 
+    def test_values_are_trimmed(self):
+        result = extract_provenance({'source_name': '  US EPA FRS  '})
+        self.assertEqual(result, {'source_name': 'US EPA FRS'})
+
+    def test_oversized_values_are_omitted(self):
+        # Longer than the FacilityListItem columns allow; must never reach
+        # the database.
+        result = extract_provenance(
+            {
+                'source_name': 'X' * 501,
+                'information_source_type': 'Y' * 201,
+                'source_link': f'https://example.com/{"z" * 2000}',
+                'notes': 'kept',
+            }
+        )
+        self.assertEqual(result, {'notes': 'kept'})
+
+    def test_non_string_values_are_omitted(self):
+        result = extract_provenance(
+            {
+                'source_name': 123,
+                'information_source_type': ['a', 'b'],
+                'notes': {'a': 1},
+                'data_collection_methodology': 'kept',
+            }
+        )
+        self.assertEqual(result, {'data_collection_methodology': 'kept'})
+
+    def test_valid_urls_are_kept(self):
+        for url in [
+            'https://example.com/dc?id=1,2',
+            'http://example.com/permit.pdf',
+        ]:
+            with self.subTest(url=url):
+                self.assertEqual(
+                    extract_provenance({'source_link': url}),
+                    {'source_link': url},
+                )
+
+    def test_invalid_or_unsafe_urls_are_omitted(self):
+        # A non-http(s) scheme must not be stored, since the value is
+        # rendered as a clickable link.
+        for url in [
+            'not a url at all',
+            'javascript:alert(1)',
+            'ftp://example.com/file',
+            'example.com/dc',
+        ]:
+            with self.subTest(url=url):
+                self.assertEqual(
+                    extract_provenance(
+                        {'source_link': url, 'source_name': 'X'}
+                    ),
+                    {'source_name': 'X'},
+                )
+
     def test_invalid_date_of_source_is_omitted(self):
         for invalid in ['June 2024', '2024-13', '2024-02-30', '15/06/2024']:
             with self.subTest(invalid=invalid):

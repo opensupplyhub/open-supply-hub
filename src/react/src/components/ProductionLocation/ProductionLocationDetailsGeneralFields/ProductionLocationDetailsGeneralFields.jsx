@@ -144,7 +144,7 @@ const ProductionLocationDetailsGeneralFields = ({
                             {group.label}
                         </Typography>
                         <IconComponent
-                            title={`${group.label} information for this production location. ${group.description}`}
+                            title={group.description}
                             icon={InfoOutlined}
                             className={classes.infoIcon}
                         />

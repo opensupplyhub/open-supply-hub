@@ -81,6 +81,19 @@ describe('DataCenterFields', () => {
         expect(screen.getByLabelText('Capacity units')).toBeInTheDocument();
     });
 
+    test('dimensionless ratios do not render a units input', () => {
+        // PUE is a ratio with no pue_units field on the backend.
+        renderDataCenterFields(makeContributionForm());
+        fireEvent.click(screen.getByTestId('data-center-section-Utility Usage'));
+
+        expect(
+            screen.getByLabelText('Power Usage Effectiveness (PUE)'),
+        ).toBeInTheDocument();
+        expect(
+            screen.queryByLabelText('Power Usage Effectiveness (PUE) units'),
+        ).not.toBeInTheDocument();
+    });
+
     test('typing in an input updates the Formik field', () => {
         const contributionForm = makeContributionForm();
         renderDataCenterFields(contributionForm);

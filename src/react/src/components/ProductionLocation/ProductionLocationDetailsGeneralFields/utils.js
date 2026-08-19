@@ -443,12 +443,14 @@ const buildDataCenterDataPoint = (data, field) => {
 };
 
 // Data-center attribute fields. Returns
-// [{ label, fields: [...] }] with empty fields/groups dropped. Only meaningful
+// [{ label, description, fields: [...] }] with empty fields/groups dropped.
+// `description` feeds the section tooltip on the details page. Only meaningful
 // for data centers; callers gate on `properties.is_data_center`.
 export const getDataCenterFieldGroups = data => {
     if (!data) return [];
     return DATA_CENTER_FIELD_GROUPS.map(group => ({
         label: group.label,
+        description: group.description,
         fields: group.fields
             .map(field => buildDataCenterDataPoint(data, field))
             .filter(Boolean),

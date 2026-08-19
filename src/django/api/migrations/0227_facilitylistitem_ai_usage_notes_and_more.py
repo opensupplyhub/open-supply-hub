@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0225_add_is_anonymized_to_source'),
+        ('api', '0226_add_slc_submission_quality_check_switch'),
     ]
 
     operations = [

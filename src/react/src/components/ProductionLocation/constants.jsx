@@ -134,11 +134,17 @@ export const ORDERED_GENERAL_FIELD_KEYS = Object.freeze([
  * fields are intentionally excluded (they live on FacilityListItem, not on
  * extended_fields). Each field reads `properties.extended_fields.<key>`;
  * `unitsField` combines a measure with its units into one displayed value
- * (e.g. "20 MW").
+ * (e.g. "20 MW") and must only be set when the backend actually defines that
+ * `<key>_units` field, otherwise the value renders as "(No unit specified)".
+ *
+ * Each group carries a `description` used as the section tooltip; keep it in
+ * sync with `getDataCenterFieldGroups`, which forwards it to the details page.
  */
 export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
     Object.freeze({
         label: 'Named Entities',
+        description:
+            'Covers the organizations connected to this location: who operates it, who owns it, who manages the property, and who holds the permits.',
         fields: Object.freeze([
             {
                 key: 'name_operator',
@@ -191,6 +197,8 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
     }),
     Object.freeze({
         label: 'Utility Usage',
+        description:
+            'Covers power and water: how much capacity this location draws, where the power comes from, and how efficiently it is used.',
         fields: Object.freeze([
             {
                 key: 'capacity',
@@ -229,7 +237,8 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             },
             {
                 key: 'pue',
-                unitsField: 'pue_units',
+                // PUE is a dimensionless ratio, so there is no `pue_units`
+                // field on the backend and none should be displayed.
                 label: 'Power Usage Effectiveness (PUE)',
                 tooltipText:
                     'A metric indicating the energy efficiency of a data center, calculated as the ratio of total power used by the data center to the power delivered to the IT equipment.',
@@ -283,6 +292,8 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
     }),
     Object.freeze({
         label: 'Operating Information',
+        description:
+            'Covers the current status of this location, when it became operational, the time zones it serves, and the certifications it holds.',
         fields: Object.freeze([
             {
                 key: 'operational_status',
@@ -312,6 +323,8 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
     }),
     Object.freeze({
         label: 'Building Information',
+        description:
+            'Covers the physical footprint of this location: floor and land area, the number of floors and buildings, and the equipment housed inside.',
         fields: Object.freeze([
             {
                 key: 'area',
@@ -402,6 +415,8 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
     }),
     Object.freeze({
         label: 'Grouping',
+        description:
+            'Covers how this location relates to a wider group of data centers, such as a building or a campus.',
         fields: Object.freeze([
             {
                 key: 'is_group',

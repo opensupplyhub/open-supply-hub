@@ -2,7 +2,10 @@ import React from 'react';
 import getVisibleFields, {
     getDataCenterFieldGroups,
 } from '../../components/ProductionLocation/ProductionLocationDetailsGeneralFields/utils';
-import { FIELD_CONFIG } from '../../components/ProductionLocation/constants.jsx';
+import {
+    DATA_CENTER_FIELD_GROUPS,
+    FIELD_CONFIG,
+} from '../../components/ProductionLocation/constants.jsx';
 
 /**
  * Anonymized facility fixture for getVisibleFields tests.
@@ -508,6 +511,47 @@ describe('getDataCenterFieldGroups', () => {
         const groups = getDataCenterFieldGroups(dataCenterFixture);
         const utility = findGroup(groups, 'Utility Usage');
         expect(findField(utility, 'capacity').value).toBe('20 MW');
+    });
+
+    it('forwards a non-empty description for every returned group', () => {
+        // The description feeds the section tooltip on the details page; a
+        // missing one used to render the literal string "undefined".
+        const groups = getDataCenterFieldGroups(dataCenterFixture);
+        expect(groups.length).toBeGreaterThan(0);
+        groups.forEach(group => {
+            expect(typeof group.description).toBe('string');
+            expect(group.description.length).toBeGreaterThan(0);
+        });
+    });
+
+    it('describes every configured group, not just the populated ones', () => {
+        DATA_CENTER_FIELD_GROUPS.forEach(group => {
+            expect(typeof group.description).toBe('string');
+            expect(group.description.length).toBeGreaterThan(0);
+        });
+    });
+
+    it('renders PUE and WUE with the units the backend actually defines', () => {
+        // PUE is a dimensionless ratio, so it must never pick up a units
+        // field and render as "1.2 (No unit specified)". WUE does have
+        // wue_units on the backend, so it keeps its units.
+        const utility = DATA_CENTER_FIELD_GROUPS.find(
+            group => group.label === 'Utility Usage',
+        );
+        const byKey = key => utility.fields.find(field => field.key === key);
+
+        expect(byKey('pue').unitsField).toBeUndefined();
+        expect(byKey('wue').unitsField).toBe('wue_units');
+    });
+
+    it('only points unitsField at a units key', () => {
+        DATA_CENTER_FIELD_GROUPS.forEach(group => {
+            group.fields.forEach(field => {
+                if (field.unitsField) {
+                    expect(field.unitsField).toBe(`${field.key}_units`);
+                }
+            });
+        });
     });
 
     it('renders data_center_group_id as a link to the group profile', () => {

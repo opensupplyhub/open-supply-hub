@@ -6,7 +6,11 @@ single source of truth for the "is this a data center?" question; guards
 (merge / link), downloads, grouping, and any other caller should use
 ``is_data_center`` rather than re-implementing the check inline.
 """
+import logging
+
 from api.facility_type_processing_type import ALL_FACILITY_TYPES, DATA_CENTER
+
+log = logging.getLogger(__name__)
 
 # The human-readable facility_type value stored in matched_values, e.g.
 # "Data Center". Sourced from the taxonomy so there is one definition.
@@ -88,6 +92,59 @@ DATE_OF_SOURCE_FORMAT_MESSAGE = (
     'must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format'
 )
 
+# Mirrors the FacilityListItem column sizes. The remaining provenance fields
+# are TextFields and therefore unbounded.
+PROVENANCE_MAX_LENGTHS = {
+    'source_name': 500,
+    'source_link': 2000,
+    'information_source_type': 200,
+}
+
+
+def _clean_provenance_text(value, max_length=None):
+    """
+    Return a trimmed string when the value is usable, otherwise None.
+
+    Non-string values are rejected rather than coerced, and values longer
+    than the column can hold are rejected so they cannot fail at the database
+    layer.
+    """
+    if not isinstance(value, str):
+        return None
+
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    if max_length is not None and len(cleaned) > max_length:
+        return None
+
+    return cleaned
+
+
+def _clean_provenance_url(value):
+    """
+    Return a valid http(s) URL, or None.
+
+    The link is rendered as a clickable anchor, so schemes are restricted to
+    http and https - a value such as a `javascript:` URI must never be stored
+    and offered as a link.
+    """
+    from django.core.exceptions import ValidationError
+    from django.core.validators import URLValidator
+
+    cleaned = _clean_provenance_text(
+        value, PROVENANCE_MAX_LENGTHS['source_link']
+    )
+    if cleaned is None:
+        return None
+
+    try:
+        URLValidator(schemes=['http', 'https'])(cleaned)
+    except ValidationError:
+        return None
+
+    return cleaned
+
 
 def normalize_date_of_source(value):
     """
@@ -132,26 +189,50 @@ def normalize_date_of_source(value):
 
 def extract_provenance(raw_data):
     """
-    Return a dict of provenance field -> value from a raw contribution row.
+    Return a dict of provenance field -> value from a raw contribution row,
+    validated so the values can always be persisted.
 
-    Only present, non-empty values are included, so absent provenance leaves
-    the FacilityListItem columns as NULL. `date_of_source` is normalized to
-    an ISO reduced-precision date string (YYYY, YYYY-MM, or YYYY-MM-DD) and
-    omitted when invalid. Safe to call on any path; returns an empty dict
-    when the row carries no provenance.
+    Every value is checked centrally here because this is the single entry
+    point used by all FacilityListItem creation paths (list upload, legacy
+    API and SLC approval), and only the v1 API validates provenance up front:
+
+    * values must be strings; other types are rejected rather than coerced;
+    * values are trimmed, and rejected when longer than the column allows, so
+      they cannot fail at the database layer;
+    * `source_link` must be a valid http(s) URL, since it is rendered as a
+      clickable link;
+    * `date_of_source` must be an ISO reduced-precision date (YYYY, YYYY-MM
+      or YYYY-MM-DD).
+
+    Invalid values are logged and omitted rather than failing the row: this
+    is supplementary metadata, and dropping the whole contribution because a
+    source link is malformed would lose the location data too. Absent or
+    rejected values leave the FacilityListItem columns as NULL.
     """
     if not raw_data:
         return {}
 
     provenance = {}
     for field in PROVENANCE_FIELDS:
-        value = raw_data.get(field)
-        if value in (None, ''):
+        raw_value = raw_data.get(field)
+        if raw_value in (None, ''):
             continue
+
         if field == 'date_of_source':
-            value = normalize_date_of_source(value)
-            if value is None:
-                continue
+            value = normalize_date_of_source(raw_value)
+        elif field == 'source_link':
+            value = _clean_provenance_url(raw_value)
+        else:
+            value = _clean_provenance_text(
+                raw_value, PROVENANCE_MAX_LENGTHS.get(field)
+            )
+
+        if value is None:
+            log.warning(
+                'Ignoring invalid provenance value for field "%s".', field
+            )
+            continue
+
         provenance[field] = value
 
     return provenance
