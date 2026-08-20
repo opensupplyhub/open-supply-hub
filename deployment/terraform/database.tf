@@ -64,6 +64,31 @@ resource "aws_db_parameter_group" "default" {
     value = var.rds_work_mem
   }
 
+  # pgaudit must be present in shared_preload_libraries so that the extension is
+  # loaded at server start. This is a static parameter, so the change only takes
+  # effect after the instance is rebooted -- hence apply_method =
+  # "pending-reboot". pg_stat_statements is loaded by default on PostgreSQL 11
+  # and later, and is listed explicitly here so that overriding this parameter
+  # does not silently drop it.
+  parameter {
+    name         = "shared_preload_libraries"
+    value        = var.rds_shared_preload_libraries
+    apply_method = "pending-reboot"
+  }
+
+  # Classes of SQL statements that pgaudit records. Deliberately "none" for now:
+  # CREATE EXTENSION pgaudit installs the event triggers that supply object type
+  # and object name for DDL records, and it can only run once the library above
+  # is loaded at server start. Setting a real class before that would produce
+  # DDL records naming no object. Phase 2 (OSDEV-3236) flips the default to
+  # "ddl,role" once the extension exists in every environment -- see
+  # doc/ops/database-auditing.md.
+  parameter {
+    name         = "pgaudit.log"
+    value        = var.rds_pgaudit_log
+    apply_method = "pending-reboot"
+  }
+
   tags = {
     Name        = "dbpgDatabaseServer"
     Project     = var.project
@@ -117,4 +142,3 @@ module "database_enc" {
   project     = var.project
   environment = var.environment
 }
-
