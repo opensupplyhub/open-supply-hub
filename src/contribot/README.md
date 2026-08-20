@@ -8,17 +8,19 @@ ContriBot polls Open Supply Hub for newly processed facility lists, validates fa
 
 ## Facility List Validation
 
-Facility list validation is implemented in [`lib/contribot.py`](lib/contribot.py). The `ContriBot` class reads a contributor Excel workbook, runs table- and column-level quality checks (missing columns, bad countries, whitespace issues, duplicate rows, and more), applies optional auto-fixes, and writes an annotated output workbook with **Summary**, **Findings**, **Similarities**, and **Fixes** sheets. Findings are driven by error codes in a configuration workbook (`0000.error_codes.xlsx`).
+Facility list validation is implemented in [`lib/contribot.py`](lib/contribot.py). The `ContriBot` class reads a contributor Excel workbook, runs table- and column-level quality checks (missing columns, bad countries, whitespace issues, duplicate rows, and more), applies optional auto-fixes, and writes an annotated output workbook with **Summary**, **Findings**, **Similarities**, and **Fixes** sheets. Findings are driven by error codes in the bundled configuration workbook ([`lib/0000.error_codes.xlsx`](lib/0000.error_codes.xlsx)).
 
 Run the unit tests locally:
 
 ```bash
-cd src/contribot/lib && python -m pytest tests/test_contribot.py
+cd src/contribot/lib && python -m pytest tests/
+cd src/contribot/fetch_lists && python -m pytest tests/test_handler.py
+cd src/contribot/process_list && python -m pytest tests/test_handler.py
 ```
 
 ## Lambda Source Code
 
-Handler code lives under `src/contribot/`. Each Lambda is a single `handler.py` module packaged into a zip for deployment.
+Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), [`google_drive.py`](lib/google_drive.py), and [`contribot_workbook.py`](lib/contribot_workbook.py)).
 
 | Lambda         | Handler source                                       | Deployment package                                                                                                                     |
 | -------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
@@ -34,7 +36,7 @@ Build all deployment zips from this directory:
 make -C src/contribot
 ```
 
-Each package Makefile zips its handler into `deployment/terraform/lambda-functions/<name>/<name>.zip`. Terraform defines the Lambda resources in [`deployment/terraform/contribot_lambda.tf`](../../deployment/terraform/contribot_lambda.tf); the Step Functions workflow is in [`deployment/terraform/step-functions/contribot.json`](../../deployment/terraform/step-functions/contribot.json) and [`deployment/terraform/contribot_sfn.tf`](../../deployment/terraform/contribot_sfn.tf).
+Each package Makefile builds `deployment/terraform/lambda-functions/<name>/<name>.zip`. `fetch_lists` zips `handler.py` plus shared `lib/` modules; `process_list` additionally installs `requirements.txt` into the zip and bundles `lib/contribot.py`, helpers, and `0000.error_codes.xlsx`. Terraform defines the Lambda resources in [`deployment/terraform/contribot_lambda.tf`](../../deployment/terraform/contribot_lambda.tf); the Step Functions workflow is in [`deployment/terraform/step-functions/contribot.json`](../../deployment/terraform/step-functions/contribot.json) and [`deployment/terraform/contribot_sfn.tf`](../../deployment/terraform/contribot_sfn.tf).
 
 ## Architecture
 
@@ -59,38 +61,48 @@ flowchart LR
 
 ### State Management
 
-Each processed facility list is recorded in DynamoDB (keyed by list ID). The `fetch_lists` task reads this table to determine which lists still need processing; `process_list` updates it after a list is handled successfully.
+DynamoDB stores one item per facility list (hash key `list_id`) with `contributor_id`, `list_name`, `file_name`, `status`, `started_at`, and `finished_at`.
+
+On each run, `fetch_lists`:
+
+1. Reads a dedicated `__CURSOR__` DynamoDB item (`last_list_id`) for the resume watermark (`0` when missing).
+2. Queries `GET /api/admin-facility-lists/?id__gt={last_id}&ordering=id&status=PENDING`.
+3. Writes each returned list as a `PENDING` row **before** returning Map items to Step Functions.
+4. Conditionally advances `__CURSOR__.last_list_id` to the highest fetched id.
+
+`process_list` marks the row `PROCESSING`, downloads the upload from S3 using `file_name` as the object key (`.xlsx` or `.csv`), converts CSV to a temporary workbook, and always hands ContriBot a file named `{list_id}.xlsx`. That makes the Drive report `{list_id}.~PROCESSED.xlsx` (moderation tooling reads the facility-list id from the filename stem, not the contributor’s original upload name). CSV inputs must be UTF-8 (optional BOM); delimiter is sniffed (comma, semicolon, tab, pipe). Empty, header-only, or malformed CSVs fail the task so Step Functions can route to `notify`. Native `.xlsx` validation is otherwise unchanged. The handler stores `report_url` / summary stats on the row and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it raises so Step Functions `Catch` can route to `notify` with `$.error`. Final `PROCESSED` / `FAILED` status is recorded by `notify`.
 
 ## Process
 
-| Step | Description                                                                                                          |
-| ---- | -------------------------------------------------------------------------------------------------------------------- |
-| 1    | Fetch newly processed lists and queue them for processing. Lists are retrieved via `GET /api/admin-facility-lists/`. |
-| 2    | For each list, download the file from S3, run facility list validation, and upload the report to Google Drive.       |
-| 3    | Send notifications to Slack and Monday so that data moderators can review the report.                                |
+| Step | Description                                                                                                    |
+| ---- | -------------------------------------------------------------------------------------------------------------- |
+| 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
+| 2    | For each list, download the `.csv` or `.xlsx` from S3, convert CSV if needed, run facility list validation, and upload `{list_id}.~PROCESSED.xlsx` to Google Drive. |
+| 3    | Send notifications to Slack and Monday so that data moderators can review the report.                          |
 
 ## Configuration
 
 ### Secrets Manager
 
-Store sensitive values in AWS Secrets Manager and inject them at runtime.
+Store sensitive values in AWS Secrets Manager. Each Lambda receives only the secret ARNs it needs and loads values at runtime via `GetSecretValue`.
 
-| Variable                   | Description                                                                |
-| -------------------------- | -------------------------------------------------------------------------- |
-| `OS_HUB_API_TOKEN`         | API token used to authenticate requests to Open Supply Hub.                |
-| `MONDAY_API_KEY`           | API token used to post items to the Monday board.                          |
-| `SLACK_API_URL`            | Webhook URL used to send Slack notifications.                              |
-| `GOOGLE_DRIVE_SERVICE_KEY` | Google service account credentials used to upload reports to Google Drive. |
+| Secret (Secrets Manager) | Environment variable                  | Used by         | Description                                                                |
+| ------------------------ | ------------------------------------- | --------------- | -------------------------------------------------------------------------- |
+| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`         | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
+| Monday API key           | `MONDAY_API_KEY_SECRET_ARN`           | `notify`        | API token used to post items to the Monday board.                          |
+| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | `notify`        | Webhook URL used to send Slack notifications.                              |
+| Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | `process_list`  | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables
 
-Nonsensitive configuration can be set as plain Lambda environment variables.
+Nonsensitive configuration is set as plain Lambda environment variables. Each function receives only the variables it uses.
 
-| Variable                           | Description                                                       |
-| ---------------------------------- | ----------------------------------------------------------------- |
-| `OS_HUB_API_URL`                   | Base URL of the Open Supply Hub API.                              |
-| `MONDAY_API_URL`                   | Base URL of the Monday.com API.                                   |
-| `AWS_STORAGE_BUCKET_NAME`          | S3 bucket where uploaded facility list files are stored.          |
-| `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | Google Drive folder ID where validation reports are uploaded.     |
-| `MONDAY_BOARD_ID`                  | ID of the Monday board to post the update.                        |
-| `CONTRIBOT_STATE_TABLE_NAME`       | DynamoDB table that stores the state of processed facility lists. |
+| Variable                           | Used by                        | Description                                                              |
+| ---------------------------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| `CONTRIBOT_STATE_TABLE_NAME`       | all                            | DynamoDB table that stores the state of processed facility lists.        |
+| `LAST_LIST_ID`                     | `fetch_lists`                  | Fallback resume cursor when the DynamoDB `__CURSOR__` item is missing.   |
+| `OS_HUB_API_URL`                   | `fetch_lists`                  | Base URL of the Open Supply Hub API.                                     |
+| `AWS_STORAGE_BUCKET_NAME`          | `process_list`                 | S3 bucket where uploaded facility list files are stored.                 |
+| `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | `process_list`                 | Google Drive folder ID where validation reports are uploaded.            |
+| `MONDAY_API_URL`                   | `notify`                       | Base URL of the Monday.com API.                                          |
+| `MONDAY_BOARD_ID`                  | `notify`                       | ID of the Monday board to post the update.                               |

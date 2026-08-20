@@ -1,0 +1,13 @@
+{
+  "include": [
+    "fetch_lists",
+    "lib",
+    "process_list",
+    "notify"
+  ],
+  "extraPaths": [
+    ".",
+    "lib"
+  ],
+  "pythonVersion": "3.10"
+}

@@ -269,6 +269,10 @@ class APIV1LocationContributionErrorMessages:
     POSSIBLE_DUPLICATE_SUBMISSION = (
         'You recently submitted a very similar production location.'
     )
+    SUBMISSION_QUALITY_WARNING = (
+        'This submission may have one or more data-quality issues. '
+        'Please review the warnings below.'
+    )
 
     @staticmethod
     def invalid_data_type_error(data_type: str) -> str:

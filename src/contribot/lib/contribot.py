@@ -33,8 +33,8 @@ from openpyxl.utils.dataframe import dataframe_to_rows
 from tqdm import tqdm
 from unidecode import unidecode
 
-from known_countries import COUNTRY_CODES, known_countries
-from utils import map_n_dataframe_cols_to_excel_cols
+from .known_countries import COUNTRY_CODES, known_countries
+from .utils import map_n_dataframe_cols_to_excel_cols
 
 
 class ContriBot:
