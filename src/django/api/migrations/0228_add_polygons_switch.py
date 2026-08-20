@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0224_create_polygon'),
+        ('api', '0227_create_polygon'),
     ]
 
     operations = [

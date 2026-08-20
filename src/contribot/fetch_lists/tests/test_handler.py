@@ -16,6 +16,12 @@ for path in (str(CONTRIBOT_DIR), str(FETCH_LISTS_DIR)):
 
 import handler  # noqa: E402
 
+PRESIGNED_FILE_URL = (
+    "https://example-files-bucket.s3.eu-west-1.amazonaws.com/"
+    "Summer_2026_Suppliers_xYz1234.csv?AWSAccessKeyId=TEST&Signature=abc"
+)
+PARSED_FILE_KEY = "Summer_2026_Suppliers_xYz1234.csv"
+
 
 @pytest.fixture
 def env(monkeypatch):
@@ -42,7 +48,7 @@ def test_handler_empty_table_queries_id_gt_zero(mock_repo_cls, mock_api_cls, env
     assert result == {"lists": []}
     mock_api_cls.assert_called_once_with()
     api.fetch_lists.assert_called_once_with(
-        params={"id__gt": 0, "ordering": "id"},
+        params={"id__gt": 0, "ordering": "id", "status": "PENDING"},
     )
     repo.advance_cursor.assert_not_called()
     repo.put_list.assert_not_called()
@@ -63,7 +69,6 @@ def test_handler_uses_cursor_and_enqueues(mock_repo_cls, mock_api_cls, env):
             "contributor_id": 5,
             "contributor_name": "Contributor One",
             "contributor_email": "one@example.com",
-            "file_name": "one.csv",
         },
         {
             "id": 102,
@@ -71,19 +76,21 @@ def test_handler_uses_cursor_and_enqueues(mock_repo_cls, mock_api_cls, env):
             "contributor_id": 6,
             "contributor_name": "Contributor Two",
             "contributor_email": "two@example.com",
-            "file_name": "two.csv",
+            "file": PRESIGNED_FILE_URL,
         },
     ]
 
     result = handler.handler({}, None)
 
     api.fetch_lists.assert_called_once_with(
-        params={"id__gt": 100, "ordering": "id"},
+        params={"id__gt": 100, "ordering": "id", "status": "PENDING"},
     )
     assert result == {
         "lists": [{"list_id": "101"}, {"list_id": "102"}],
     }
     assert repo.put_list.call_count == 2
+    assert repo.put_list.call_args_list[0].kwargs["file_name"] == ""
+    assert repo.put_list.call_args_list[1].kwargs["file_name"] == PARSED_FILE_KEY
     repo.advance_cursor.assert_called_once_with(102)
 
 
@@ -101,7 +108,7 @@ def test_handler_enqueues_before_advancing_cursor(mock_repo_cls, mock_api_cls, e
         "contributor_id": 1,
         "contributor_name": "Acme Corp",
         "contributor_email": "admin@acme.com",
-        "file_name": "facilities.csv",
+        "file": PRESIGNED_FILE_URL,
     }
     api.fetch_lists.return_value = [facility_list]
     order = []
@@ -126,7 +133,7 @@ def test_handler_enqueues_before_advancing_cursor(mock_repo_cls, mock_api_cls, e
         contributor_id=1,
         contributor_name="Acme Corp",
         contributor_email="admin@acme.com",
-        file_name="facilities.csv",
+        file_name=PARSED_FILE_KEY,
     )
     repo.advance_cursor.assert_called_once_with(6)
     assert result == {"lists": [{"list_id": "6"}]}
@@ -150,4 +157,6 @@ def test_handler_skips_duplicate_list_in_response(mock_repo_cls, mock_api_cls, e
 
     assert result == {"lists": [{"list_id": "6"}]}
     assert repo.put_list.call_count == 2
+    assert repo.put_list.call_args_list[0].kwargs["file_name"] == ""
+    assert repo.put_list.call_args_list[1].kwargs["file_name"] == ""
     repo.advance_cursor.assert_called_once_with(7)

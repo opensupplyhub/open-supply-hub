@@ -25,9 +25,10 @@ compute, disk, and Docker.
 
 Bastion reachability was verified at migration time: the SSH ingress
 allowlist of each environment's bastion (`bastion_ssh_ingress` in
-`deployment/terraform/firewall.tf`, with per-environment values coming from
-the private tfvars) admits the runner's AWS egress IPs, so no security group
-changes were needed. If those allowlists are ever tightened, attach this
+`deployment/terraform/firewall.tf`, fed by `local.external_access_cidr_blocks`
+from the per-env SM secret `oshub/<env>/external-access-cidr-blocks`) admits
+the runner's AWS egress IPs, so no security group changes were needed. If those
+allowlists are ever tightened, attach this
 CodeBuild project to the Test VPC (private subnets) so its egress goes
 through the NAT gateway's stable Elastic IP, and allowlist that single
 address on the bastions.
@@ -54,9 +55,11 @@ connection must be created manually **in the Test AWS account**:
    installation can be scoped to the `open-supply-hub` repository).
 4. The connection status becomes **Available**. Copy its ARN
    (`arn:aws:codeconnections:eu-west-1:<account-id>:connection/<uuid>`).
-5. Set `codebuild_github_runner_connection_arn = "<the ARN>"` in the Test
-   tfvars of the private `ci-deployment` repository (the deploy workflow
-   concatenates it with `deployment/environments/terraform-test.tfvars`).
+5. Store the ARN in SM as `oshub/test/codebuild-github-runner-connection`
+   (via the `sm-secrets-cli` repo or any other method). Public
+   `deployment/environments/terraform-test.tfvars` already references it with
+   `codebuild_github_runner_connection_secret_name`; Terraform reads the value
+   at apply time.
 
 Also verify on GitHub that runner registration is allowed for the public
 repository: the org-level runner group setting **Allow public repositories**

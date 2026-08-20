@@ -343,6 +343,7 @@ def format_sectors(items,
             return user_can_see_detail
         return (user_can_see_detail and entity['source']['is_active']
                 and entity['source']['is_public']
+                and not entity['source'].get('is_anonymized', False)
                 and entity['has_active_complete_match'])
 
     def format_sector_data(entity, is_claim):

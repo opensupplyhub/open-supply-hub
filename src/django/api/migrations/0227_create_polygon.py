@@ -9,7 +9,7 @@ import api.models.polygon
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0223_fix_sector_search_index'),
+        ('api', '0226_add_slc_submission_quality_check_switch'),
     ]
 
     operations = [
