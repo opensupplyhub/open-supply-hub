@@ -27,17 +27,10 @@ data "aws_iam_policy_document" "this" {
 
   statement {
     actions = [
-      "ssm:DescribeParameters"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "ssm:GetParameters"
+      "secretsmanager:GetSecretValue",
     ]
     resources = [
-      aws_ssm_parameter.database_password.arn
+      var.anonymized_database_password_secret_arn,
     ]
   }
 }
@@ -45,13 +38,6 @@ data "aws_iam_policy_document" "this" {
 module "anonymized_database_dump_cluster" {
   source = "github.com/cn-terraform/terraform-aws-ecs-cluster?ref=1.0.11"
   name   = join("-", [local.short, "AnonymizedDatabaseDump"])
-}
-
-resource "aws_ssm_parameter" "database_password" {
-  name        = "/database/${var.anonymized_database_identifier}/password"
-  description = "The database ${var.anonymized_database_identifier} password"
-  type        = "String"
-  value       = var.anonymized_database_password
 }
 
 module "anonymized_database_dump_task_definition" {
@@ -93,8 +79,8 @@ module "anonymized_database_dump_task_definition" {
 
   secrets = [
     {
-       valueFrom: aws_ssm_parameter.database_password.arn
-       name: "DATABASE_PASSWORD"
+      valueFrom : var.anonymized_database_password_secret_arn
+      name : "DATABASE_PASSWORD"
     },
   ]
 
