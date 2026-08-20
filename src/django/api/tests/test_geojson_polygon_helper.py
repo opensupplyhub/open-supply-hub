@@ -99,3 +99,69 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         )
         with self.assertRaises(InvalidPolygonGeoJSON):
             parse_polygon_geojson(geojson)
+
+    def _square_with_crs(self, crs):
+        return json.dumps({
+            'type': 'Polygon',
+            'coordinates': SQUARE,
+            'crs': crs,
+        })
+
+    def test_wgs84_crs_declarations_are_accepted(self):
+        for name in (
+            'urn:ogc:def:crs:OGC:1.3:CRS84',
+            'EPSG:4326',
+            'urn:ogc:def:crs:EPSG::4326',
+        ):
+            geojson = self._square_with_crs(
+                {'type': 'name', 'properties': {'name': name}}
+            )
+            result = parse_polygon_geojson(geojson)
+            self.assertEqual(result.geom_type, 'MultiPolygon')
+
+    def test_non_wgs84_crs_declaration_raises(self):
+        geojson = self._square_with_crs(
+            {'type': 'name', 'properties': {'name': 'EPSG:32644'}}
+        )
+        with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
+            parse_polygon_geojson(geojson)
+        message = str(ctx.exception)
+        self.assertIn('EPSG:32644', message)
+        self.assertIn('WGS 84', message)
+
+    def test_malformed_crs_declaration_raises(self):
+        for crs in ('EPSG:4326', {}, {'properties': {}}, 42):
+            geojson = self._square_with_crs(crs)
+            with self.assertRaises(InvalidPolygonGeoJSON):
+                parse_polygon_geojson(geojson)
+
+    def test_projected_coordinates_raise(self):
+        # Values like these are meters in a projected coordinate
+        # system, not degrees; they must be rejected, not stored.
+        geojson = json.dumps({
+            'type': 'Polygon',
+            'coordinates': [[
+                [233000, 4210000],
+                [233000, 4220000],
+                [243000, 4220000],
+                [243000, 4210000],
+                [233000, 4210000],
+            ]],
+        })
+        with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
+            parse_polygon_geojson(geojson)
+        self.assertIn('projected', str(ctx.exception))
+
+    def test_full_world_extent_is_accepted(self):
+        geojson = json.dumps({
+            'type': 'Polygon',
+            'coordinates': [[
+                [-180, -90],
+                [-180, 90],
+                [180, 90],
+                [180, -90],
+                [-180, -90],
+            ]],
+        })
+        result = parse_polygon_geojson(geojson)
+        self.assertEqual(result.geom_type, 'MultiPolygon')

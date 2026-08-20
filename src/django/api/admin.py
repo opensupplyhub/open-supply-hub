@@ -17,7 +17,7 @@ from api.helpers.geojson_polygon import (
     InvalidPolygonGeoJSON,
     parse_polygon_geojson,
 )
-from api.models.named_polygon import NamedPolygon
+from api.models.polygon import Polygon
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
@@ -32,6 +32,7 @@ from api.partner_data_file_upload.batch import (
 from api.partner_data_file_upload.errors import format_upload_processing_error
 from allauth.account.models import EmailAddress
 from simple_history.admin import SimpleHistoryAdmin
+from waffle import switch_is_active
 from waffle.models import Flag, Sample, Switch
 from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
 
@@ -315,7 +316,7 @@ class USCountyTigerlineAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
-class NamedPolygonForm(forms.ModelForm):
+class PolygonForm(forms.ModelForm):
     geojson_file = forms.FileField(
         required=False,
         help_text=(
@@ -328,13 +329,32 @@ class NamedPolygonForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'rows': 10}),
         help_text=(
             'Or paste GeoJSON directly. Ignored if a file is uploaded. '
-            'Leave both blank when editing to keep the current boundary.'
+            'When editing, this shows the currently saved boundary; '
+            'edit or replace it to change the boundary, or leave it '
+            'unchanged (or blank) to keep it.'
         ),
     )
 
+    # Boundaries larger than this are not echoed back into the text
+    # box when editing, to keep the page loadable.
+    GEOJSON_PREFILL_MAX_CHARS = 1_000_000
+
     class Meta:
-        model = NamedPolygon
-        fields = ('name', 'description')
+        model = Polygon
+        fields = ('name', 'display_name', 'description')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and self.instance.geom:
+            geojson = self.instance.geom.geojson
+            if len(geojson) <= self.GEOJSON_PREFILL_MAX_CHARS:
+                self.fields['geojson_text'].initial = geojson
+            else:
+                self.fields['geojson_text'].help_text = (
+                    'The current boundary is too large to display here. '
+                    'Paste or upload GeoJSON to replace it, or leave '
+                    'blank to keep it.'
+                )
 
     def clean(self):
         cleaned_data = super().clean()
@@ -365,11 +385,57 @@ class NamedPolygonForm(forms.ModelForm):
         return cleaned_data
 
 
-class NamedPolygonAdmin(admin.ModelAdmin):
-    form = NamedPolygonForm
-    list_display = ('name', 'created_at', 'updated_at')
-    search_fields = ('name', 'description')
-    readonly_fields = ('created_at', 'updated_at')
+POLYGONS_SWITCH = 'polygons'
+
+
+class PolygonAdmin(admin.ModelAdmin):
+    form = PolygonForm
+    list_display = (
+        'name', 'display_name', 'boundary_summary', 'created_at',
+        'updated_at',
+    )
+    search_fields = ('name', 'display_name', 'description')
+    readonly_fields = ('boundary_summary', 'created_at', 'updated_at')
+
+    @admin.display(description='Boundary')
+    def boundary_summary(self, obj):
+        if not obj or not obj.pk or not obj.geom:
+            return '(no boundary saved yet)'
+        extent = ', '.join(f'{value:.3f}' for value in obj.geom.extent)
+        return (
+            f'{len(obj.geom)} part(s), {obj.geom.num_coords} vertices, '
+            f'extent (lon/lat): {extent}'
+        )
+
+    def has_module_permission(self, request):
+        return (
+            switch_is_active(POLYGONS_SWITCH)
+            and super().has_module_permission(request)
+        )
+
+    def has_view_permission(self, request, obj=None):
+        return (
+            switch_is_active(POLYGONS_SWITCH)
+            and super().has_view_permission(request, obj)
+        )
+
+    def has_add_permission(self, request):
+        return (
+            switch_is_active(POLYGONS_SWITCH)
+            and super().has_add_permission(request)
+        )
+
+    def has_change_permission(self, request, obj=None):
+        return (
+            switch_is_active(POLYGONS_SWITCH)
+            and super().has_change_permission(request, obj)
+        )
+
+    def has_delete_permission(self, request, obj=None):
+        return (
+            switch_is_active(POLYGONS_SWITCH)
+            and super().has_delete_permission(request, obj)
+        )
 
 
 class PartnerDataFileUploadAdmin(admin.ModelAdmin):
@@ -480,5 +546,5 @@ admin_site.register(
     WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
 )
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
-admin_site.register(NamedPolygon, NamedPolygonAdmin)
+admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)
