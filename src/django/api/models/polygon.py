@@ -1,8 +1,14 @@
+import uuid
+
 from django.contrib.gis.db import models as gis_models
 from django.core.validators import RegexValidator
 from django.db import models
 
 
+# Polygon names are machine-friendly identifiers (other code looks
+# polygons up by name), so they follow identifier rules: letters,
+# digits, and underscores only, and the first character can't be a
+# digit. The admin form shows this message when a name breaks the rule.
 variable_style_name_validator = RegexValidator(
     regex=r'^[a-zA-Z_][a-zA-Z0-9_]*$',
     message=(
@@ -25,6 +31,13 @@ class Polygon(models.Model):
     tooling needs to do with those locations.
     """
 
+    uuid = models.UUIDField(
+        null=False,
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+        help_text='Unique identifier for the polygon.',
+    )
     name = models.CharField(
         max_length=200,
         unique=True,
@@ -64,10 +77,19 @@ class Polygon(models.Model):
     def __str__(self):
         return self.name
 
-    # Fields callers may filter get_production_locations() by, mapped
-    # to the FacilityIndex lookup that implements each. `__in` fields
-    # hold one value per location; `__overlap` fields are arrays, so a
-    # location matches if any of its values is in the requested list.
+    # The fields callers may pass as keys in the `filters` argument of
+    # get_production_locations(), mapped to the FacilityIndex lookup
+    # that implements each one. Two kinds of lookup appear here because
+    # the underlying columns differ:
+    #   - `__in` fields hold ONE value per location (a location has
+    #     exactly one country), so the check is "is that value in the
+    #     requested list".
+    #   - `__overlap` fields are ARRAYS (a location can have several
+    #     sectors), so the check is "does the location's list share at
+    #     least one value with the requested list".
+    # To make a new field filterable, add an entry here — anything not
+    # in this whitelist is rejected with an error rather than silently
+    # ignored.
     FILTERABLE_FIELDS = {
         'country': 'country_code__in',
         'sector': 'sector__overlap',
@@ -79,13 +101,29 @@ class Polygon(models.Model):
 
     def get_production_locations(self, filters=None):
         """
-        Return the FacilityIndex queryset of OS Hub production locations
-        within this boundary.
+        Return the OS Hub production locations inside this boundary.
 
-        `filters` optionally narrows the result by core location
-        fields, e.g. {'country': ['IN'], 'sector': ['Apparel']}. Keys
-        must be in FILTERABLE_FIELDS; values within a key are OR'd,
-        separate keys are AND'd. Everything runs as a single query.
+        Containment is evaluated by PostGIS (the same `location__within`
+        lookup used by the existing `boundary` facility-search query
+        param). Any optional filters are combined into the same single
+        database query, and PostgreSQL applies the cheap column checks
+        before the more expensive point-in-polygon test on its own, so
+        there is no separate pre-filtering step to manage.
+
+        Args:
+            filters: Optional dict narrowing the results by core
+                location fields, e.g.
+                `{'country': ['IN'], 'sector': ['Apparel']}`.
+                Keys must appear in `FILTERABLE_FIELDS` (an unknown key
+                raises `ValueError`, so typos can't silently return
+                unfiltered results). Values may be a list or a single
+                string. Within one key, values are OR'd ("US or IN");
+                across keys, conditions are AND'd ("that country AND
+                that sector"). Country codes are upper-cased before
+                matching so `'in'` behaves the same as `'IN'`.
+
+        Returns:
+            A `FacilityIndex` queryset of the matching locations.
         """
         from .facility.facility_index import FacilityIndex
         queryset = FacilityIndex.objects.filter(location__within=self.geom)

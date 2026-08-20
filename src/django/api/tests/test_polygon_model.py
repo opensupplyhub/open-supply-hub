@@ -13,6 +13,7 @@ OTHER_SQUARE_WKT = 'POLYGON((20 20, 20 30, 30 30, 30 20, 20 20))'
 
 
 class PolygonModelTest(TestCase):
+    """Tests for the Polygon model and its production-location query."""
     def setUp(self):
         self.user = User.objects.create(email='test@example.com')
         self.contributor = Contributor.objects.create(
@@ -24,6 +25,7 @@ class PolygonModelTest(TestCase):
     def _make_facility(
         self, facility_id, lon, lat, country_code='US', sector=None
     ):
+        """Create a minimal FacilityIndex row at the given lon/lat."""
         return FacilityIndex.objects.create(
             id=facility_id,
             name='Test Facility',
@@ -43,6 +45,7 @@ class PolygonModelTest(TestCase):
         )
 
     def test_facilities_respects_holes(self):
+        """Locations inside a hole in the boundary are excluded."""
         polygon = Polygon.objects.create(
             name='square_with_hole',
             description='A square boundary with a hole cut out.',
@@ -62,6 +65,7 @@ class PolygonModelTest(TestCase):
         self.assertNotIn(outside.id, result_ids)
 
     def test_facilities_matches_any_part_of_a_multipolygon(self):
+        """A location inside any disjoint part of the boundary matches."""
         polygon = Polygon.objects.create(
             name='two_disjoint_squares',
             description='A multipolygon made of two separate squares.',
@@ -83,6 +87,7 @@ class PolygonModelTest(TestCase):
         self.assertNotIn(outside.id, result_ids)
 
     def _make_square_polygon(self):
+        """Create a simple square Polygon to query against."""
         return Polygon.objects.create(
             name='square',
             description='A simple square boundary.',
@@ -90,6 +95,7 @@ class PolygonModelTest(TestCase):
         )
 
     def test_country_filter_narrows_results(self):
+        """The country filter keeps only matching countries, any case."""
         polygon = self._make_square_polygon()
         in_us = self._make_facility('US1000000USIN', 1, 1, country_code='US')
         in_india = self._make_facility(
@@ -107,6 +113,7 @@ class PolygonModelTest(TestCase):
         self.assertNotIn(in_us.id, result_ids)
 
     def test_sector_filter_matches_overlapping_values(self):
+        """The sector filter matches on any of a location's sectors."""
         polygon = self._make_square_polygon()
         apparel = self._make_facility(
             'US1000000APPL', 1, 1, sector=['Apparel', 'Textiles']
@@ -125,6 +132,7 @@ class PolygonModelTest(TestCase):
         self.assertNotIn(food.id, result_ids)
 
     def test_filters_combine_with_and_semantics(self):
+        """Separate filter keys must all hold at once (AND semantics)."""
         polygon = self._make_square_polygon()
         match = self._make_facility(
             'IN1000000BOTH', 1, 1, country_code='IN', sector=['Apparel']
@@ -143,6 +151,7 @@ class PolygonModelTest(TestCase):
         self.assertNotIn(wrong_sector.id, result_ids)
 
     def test_unknown_filter_field_raises(self):
+        """A typo in a filter key raises instead of silently unfiltering."""
         polygon = self._make_square_polygon()
 
         with self.assertRaises(ValueError) as ctx:
@@ -151,8 +160,24 @@ class PolygonModelTest(TestCase):
         self.assertIn('contry', str(ctx.exception))
 
     def test_polygon_names_must_be_unique(self):
+        """The database refuses a second polygon with the same name."""
+        # (kept as a database-level backstop; the admin form catches
+        # duplicates earlier with a friendly message)
         self._make_square_polygon()
 
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
                 self._make_square_polygon()
+
+    def test_polygons_get_a_unique_uuid_on_creation(self):
+        """Every polygon is assigned a UUID automatically, for joins."""
+        first = self._make_square_polygon()
+        second = Polygon.objects.create(
+            name='other_square',
+            description='A second boundary.',
+            geom=first.geom,
+        )
+
+        self.assertIsNotNone(first.uuid)
+        self.assertIsNotNone(second.uuid)
+        self.assertNotEqual(first.uuid, second.uuid)

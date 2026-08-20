@@ -317,6 +317,16 @@ class USCountyTigerlineAdmin(admin.ModelAdmin):
 
 
 class PolygonForm(forms.ModelForm):
+    """
+    Admin form for creating and editing Polygon boundaries.
+
+    The geometry itself is not edited as a raw model field: staff
+    provide it as GeoJSON, either by uploading a file or pasting text,
+    and the form parses and validates it (via
+    `api.helpers.geojson_polygon`) before anything is saved. Parsing
+    problems come back as ordinary red form errors rather than 500s.
+    """
+
     geojson_file = forms.FileField(
         required=False,
         help_text=(
@@ -345,6 +355,11 @@ class PolygonForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # When editing an existing polygon, show its saved boundary in
+        # the paste box so staff can see and tweak what is stored
+        # (without this, the stored geometry would be invisible in the
+        # admin). Very large boundaries are summarized instead so the
+        # page stays loadable.
         if self.instance.pk and self.instance.geom:
             geojson = self.instance.geom.geojson
             if len(geojson) <= self.GEOJSON_PREFILL_MAX_CHARS:
@@ -357,6 +372,14 @@ class PolygonForm(forms.ModelForm):
                 )
 
     def clean(self):
+        """
+        Resolve which GeoJSON input to use and parse it into geometry.
+
+        Precedence: an uploaded file wins over pasted text; if neither
+        is provided while editing an existing polygon, the saved
+        boundary is kept; if neither is provided on a brand-new
+        polygon, that is an error (a polygon must have a boundary).
+        """
         cleaned_data = super().clean()
         geojson_file = cleaned_data.get('geojson_file')
         geojson_text = cleaned_data.get('geojson_text')
@@ -385,20 +408,41 @@ class PolygonForm(forms.ModelForm):
         return cleaned_data
 
 
+# Name of the waffle switch gating the polygon admin. Flipping it in
+# the admin (Waffle > Switches) shows or hides the whole Polygons
+# section immediately — no deploy or restart needed.
 POLYGONS_SWITCH = 'polygons'
 
 
 class PolygonAdmin(admin.ModelAdmin):
+    """
+    Admin for Polygon boundaries, gated behind the `polygons` waffle
+    switch: every permission method below requires the switch to be
+    active, so when it is off the section is hidden from the admin
+    index and direct URLs are refused.
+    """
+
     form = PolygonForm
     list_display = (
         'name', 'display_name', 'boundary_summary', 'created_at',
         'updated_at',
     )
     search_fields = ('name', 'display_name', 'description')
-    readonly_fields = ('boundary_summary', 'created_at', 'updated_at')
+    readonly_fields = (
+        'uuid', 'boundary_summary', 'created_at', 'updated_at',
+    )
 
     @admin.display(description='Boundary')
     def boundary_summary(self, obj):
+        """
+        One-line description of the saved geometry (part count, vertex
+        count, and lon/lat extent), shown on the change page and as a
+        list column so staff can sanity-check a boundary at a glance.
+
+        Args:
+            obj: The Polygon being displayed, or an unsaved instance
+                on the add page (which has no boundary yet).
+        """
         if not obj or not obj.pk or not obj.geom:
             return '(no boundary saved yet)'
         extent = ', '.join(f'{value:.3f}' for value in obj.geom.extent)

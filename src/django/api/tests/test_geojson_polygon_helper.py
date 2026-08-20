@@ -19,13 +19,16 @@ SELF_INTERSECTING = [
 
 
 class ParsePolygonGeoJSONTest(unittest.TestCase):
+    """Tests for the GeoJSON-to-MultiPolygon parsing helper."""
     def test_bare_polygon(self):
+        """A bare Polygon geometry parses into a one-part MultiPolygon."""
         geojson = json.dumps({'type': 'Polygon', 'coordinates': SQUARE})
         result = parse_polygon_geojson(geojson)
         self.assertEqual(result.geom_type, 'MultiPolygon')
         self.assertEqual(len(result), 1)
 
     def test_polygon_with_hole_is_preserved(self):
+        """Interior rings (holes) survive parsing intact."""
         geojson = json.dumps(
             {'type': 'Polygon', 'coordinates': SQUARE_WITH_HOLE}
         )
@@ -33,6 +36,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         self.assertEqual(len(result[0]), 2)
 
     def test_bare_multipolygon(self):
+        """A bare MultiPolygon keeps all of its parts."""
         geojson = json.dumps({
             'type': 'MultiPolygon',
             'coordinates': [SQUARE, OTHER_SQUARE],
@@ -41,6 +45,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         self.assertEqual(len(result), 2)
 
     def test_feature_is_unwrapped(self):
+        """A Feature wrapper is unwrapped to its inner geometry."""
         geojson = json.dumps({
             'type': 'Feature',
             'properties': {},
@@ -51,6 +56,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         self.assertEqual(len(result), 1)
 
     def test_feature_collection_is_merged(self):
+        """A FeatureCollection's geometries merge into one MultiPolygon."""
         geojson = json.dumps({
             'type': 'FeatureCollection',
             'features': [
@@ -72,20 +78,24 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         self.assertEqual(len(result), 2)
 
     def test_invalid_json_raises(self):
+        """Non-JSON input is rejected with a friendly error."""
         with self.assertRaises(InvalidPolygonGeoJSON):
             parse_polygon_geojson('not json')
 
     def test_non_polygon_geometry_raises(self):
+        """Non-polygon geometry (e.g. a Point) is rejected."""
         geojson = json.dumps({'type': 'Point', 'coordinates': [0, 0]})
         with self.assertRaises(InvalidPolygonGeoJSON):
             parse_polygon_geojson(geojson)
 
     def test_feature_collection_with_no_geometries_raises(self):
+        """A FeatureCollection with no usable geometry is rejected."""
         geojson = json.dumps({'type': 'FeatureCollection', 'features': []})
         with self.assertRaises(InvalidPolygonGeoJSON):
             parse_polygon_geojson(geojson)
 
     def test_feature_collection_with_non_dict_feature_raises(self):
+        """Malformed feature entries are rejected, not crashed on."""
         geojson = json.dumps({
             'type': 'FeatureCollection',
             'features': [None, 'not a feature'],
@@ -94,6 +104,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
             parse_polygon_geojson(geojson)
 
     def test_self_intersecting_polygon_raises(self):
+        """Self-intersecting (invalid) shapes are rejected."""
         geojson = json.dumps(
             {'type': 'Polygon', 'coordinates': SELF_INTERSECTING}
         )
@@ -101,6 +112,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
             parse_polygon_geojson(geojson)
 
     def _square_with_crs(self, crs):
+        """Build square-polygon GeoJSON carrying the given crs member."""
         return json.dumps({
             'type': 'Polygon',
             'coordinates': SQUARE,
@@ -108,6 +120,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         })
 
     def test_wgs84_crs_declarations_are_accepted(self):
+        """Common WGS 84 spellings in a crs member are all accepted."""
         for name in (
             'urn:ogc:def:crs:OGC:1.3:CRS84',
             'EPSG:4326',
@@ -120,6 +133,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
             self.assertEqual(result.geom_type, 'MultiPolygon')
 
     def test_non_wgs84_crs_declaration_raises(self):
+        """A declared non-WGS-84 coordinate system is rejected, naming it."""
         geojson = self._square_with_crs(
             {'type': 'name', 'properties': {'name': 'EPSG:32644'}}
         )
@@ -130,12 +144,14 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         self.assertIn('WGS 84', message)
 
     def test_malformed_crs_declaration_raises(self):
+        """A crs member we cannot interpret is rejected, not ignored."""
         for crs in ('EPSG:4326', {}, {'properties': {}}, 42):
             geojson = self._square_with_crs(crs)
             with self.assertRaises(InvalidPolygonGeoJSON):
                 parse_polygon_geojson(geojson)
 
     def test_projected_coordinates_raise(self):
+        """Meter-scale coordinates (undeclared projection) are rejected."""
         # Values like these are meters in a projected coordinate
         # system, not degrees; they must be rejected, not stored.
         geojson = json.dumps({
@@ -153,6 +169,7 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         self.assertIn('projected', str(ctx.exception))
 
     def test_full_world_extent_is_accepted(self):
+        """Coordinates exactly at the lon/lat limits are still valid."""
         geojson = json.dumps({
             'type': 'Polygon',
             'coordinates': [[
