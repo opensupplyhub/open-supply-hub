@@ -667,10 +667,12 @@ SELECT
     LIMIT
       1
   ) AS claimed_at_value,
-  -- Contributor data (OSDEV-1148). Visibility filters mirror the legacy
-  -- FacilityIndex contributor queries (src/django/sqls/0130_index_contributors_id.sql,
-  -- 0130_index_contributors_count.sql, 0130_index_lists.sql): only active,
-  -- public sources with active matches are publicly exposable.
+  -- Contributor data (OSDEV-1148). Visibility filter mirrors the legacy
+  -- FacilityIndex contributor queries — since OSDEV-3142/0225, that is
+  -- `should_display_associations` in src/django/sqls/0225_index_contributors.sql:
+  -- only ACTIVE, PUBLIC, NON-ANONYMIZED sources with active matches are
+  -- publicly exposable. `NOT is_anonymized` keeps anonymized SLC sources
+  -- (public, but identity-masked) out of the contributor data.
   (
     SELECT
       json_agg(DISTINCT jsonb_build_object('id', ac.id, 'type', ac.contrib_type))::TEXT
@@ -685,6 +687,7 @@ SELECT
       AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
       AND as1.is_active
       AND as1.is_public
+      AND NOT as1.is_anonymized
   ) AS contributors_value,
   (
     SELECT
@@ -699,6 +702,7 @@ SELECT
       AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
       AND as1.is_active
       AND as1.is_public
+      AND NOT as1.is_anonymized
   ) AS number_of_contributors,
   (
     SELECT
@@ -718,6 +722,7 @@ SELECT
       AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
       AND as1.is_active
       AND as1.is_public
+      AND NOT as1.is_anonymized
   ) AS lists_value
 FROM
   api_facility af
