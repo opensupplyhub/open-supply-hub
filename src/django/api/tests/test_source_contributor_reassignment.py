@@ -1,4 +1,5 @@
 from io import StringIO
+from unittest.mock import patch
 
 from api.models import (
     Contributor,
@@ -34,6 +35,16 @@ class SourceReassignmentTestBase(FacilityAPITestCaseBase):
             list_item=self.list_item,
             contributor=self.contributor,
         )
+
+    def save_source(self, source, **kwargs):
+        """
+        Save a source and run the transaction.on_commit callbacks it
+        registers. TestCase wraps each test in a transaction that never
+        commits, so without this the deferred reassignment would never
+        execute.
+        """
+        with self.captureOnCommitCallbacks(execute=True):
+            source.save(**kwargs)
 
     def create_extended_field(
         self,
@@ -86,13 +97,53 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
 
     def test_reassignment_updates_extended_field_contributor(self):
         self.source.contributor = self.new_contributor
-        self.source.save()
+        self.save_source(self.source)
 
         self.extended_field.refresh_from_db()
         self.assertEqual(
             self.new_contributor.id,
             self.extended_field.contributor_id,
         )
+
+    def test_reassignment_waits_for_the_enclosing_transaction(self):
+        # The chunked update is registered with transaction.on_commit, so
+        # nothing is re-attributed until the transaction that changed the
+        # source commits (TestCase's never does).
+        self.source.contributor = self.new_contributor
+        self.source.save()
+
+        self.extended_field.refresh_from_db()
+        self.assertEqual(
+            self.contributor.id,
+            self.extended_field.contributor_id,
+        )
+
+    def test_reassignment_is_chunked(self):
+        extra = [
+            self.create_extended_field(
+                list_item=self.list_item,
+                contributor=self.contributor,
+                field_name=field_name,
+                value={"raw_value": field_name},
+            )
+            for field_name in (
+                ExtendedField.NATIVE_LANGUAGE_NAME,
+                ExtendedField.PARENT_COMPANY,
+            )
+        ]
+
+        self.source.contributor = self.new_contributor
+        with patch(
+            'api.services.source_service.REASSIGNMENT_CHUNK_SIZE', 1
+        ):
+            self.save_source(self.source)
+
+        for extended_field in [self.extended_field, *extra]:
+            extended_field.refresh_from_db()
+            self.assertEqual(
+                self.new_contributor.id,
+                extended_field.contributor_id,
+            )
 
     def test_reassignment_updates_facility_index_attribution(self):
         # Facility detail pages and search responses read attribution
@@ -102,7 +153,7 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
         self.assertEqual(self.contributor.id, indexed["contributor"]["id"])
 
         self.source.contributor = self.new_contributor
-        self.source.save()
+        self.save_source(self.source)
 
         indexed = self.indexed_extended_field(self.extended_field)
         self.assertIsNotNone(indexed)
@@ -117,7 +168,7 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
 
     def test_reassignment_updates_serialized_attribution(self):
         self.source.contributor = self.new_contributor
-        self.source.save()
+        self.save_source(self.source)
 
         indexed = self.indexed_extended_field(self.extended_field)
         serialized = FacilityIndexExtendedFieldListSerializer(
@@ -145,7 +196,7 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
         original_updated_at = self.extended_field.updated_at
 
         self.source.contributor = self.new_contributor
-        self.source.save()
+        self.save_source(self.source)
 
         self.extended_field.refresh_from_db()
         self.assertEqual(original_updated_at, self.extended_field.updated_at)
@@ -160,7 +211,7 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
         )
 
         source.contributor = self.new_contributor
-        source.save()
+        self.save_source(source)
 
         extended_field.refresh_from_db()
         self.assertEqual(
@@ -176,7 +227,7 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
         )
 
         self.source.contributor = self.new_contributor
-        self.source.save()
+        self.save_source(self.source)
 
         other_field.refresh_from_db()
         self.assertEqual(self.contributor.id, other_field.contributor_id)
@@ -190,14 +241,14 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
         )
 
         self.source.contributor = self.new_contributor
-        self.source.save()
+        self.save_source(self.source)
 
         claim_field.refresh_from_db()
         self.assertEqual(self.contributor.id, claim_field.contributor_id)
 
     def test_saving_without_contributor_change_is_a_no_op(self):
         self.source.is_public = False
-        self.source.save()
+        self.save_source(self.source)
 
         self.extended_field.refresh_from_db()
         self.assertEqual(
@@ -207,7 +258,7 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
 
     def test_update_fields_without_contributor_skips_reassignment(self):
         self.source.contributor = self.new_contributor
-        self.source.save(update_fields=["is_active"])
+        self.save_source(self.source, update_fields=["is_active"])
 
         self.extended_field.refresh_from_db()
         self.assertEqual(
@@ -219,7 +270,7 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
         # ExtendedField.contributor is NOT NULL, so a cleared source
         # contributor must be skipped rather than propagated.
         self.source.contributor = None
-        self.source.save()
+        self.save_source(self.source)
 
         self.extended_field.refresh_from_db()
         self.assertEqual(
@@ -228,7 +279,8 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
         )
 
     def test_creating_a_source_does_not_reassign(self):
-        source, _ = self.create_single_source(self.new_contributor)
+        with self.captureOnCommitCallbacks(execute=True):
+            source, _ = self.create_single_source(self.new_contributor)
 
         self.extended_field.refresh_from_db()
         self.assertEqual(

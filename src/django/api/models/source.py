@@ -92,6 +92,19 @@ class Source(models.Model):
         re-attribute the extended fields contributed through this source,
         otherwise they keep pointing at the original uploader on facility
         detail pages, search responses and downloads. See OSDEV-2159.
+
+        The re-attribution runs in separately committed chunks, so it is
+        registered with transaction.on_commit rather than performed here:
+        Django admin wraps the whole change view in one transaction, and
+        inside it the per-chunk commits would degrade to savepoints of a
+        single large transaction, holding locks on api_extendedfield and
+        the affected FacilityIndex rows for the entire run. Deferring to
+        on_commit means the source row commits first (with the enclosing
+        transaction, or immediately in autocommit contexts such as the
+        shell) and the chunks then commit one by one — deliberately not
+        atomic with the source row. If the enclosing transaction rolls
+        back, the callback is discarded along with the contributor
+        change, so the two cannot diverge in that direction.
         """
         # Imported lazily to avoid a circular import: the service imports
         # ExtendedField, which is loaded through api.models.
@@ -114,8 +127,9 @@ class Source(models.Model):
             .first()
         )
 
-        with transaction.atomic():
-            result = super().save(*args, **kwargs)
-            if previous_contributor_id != self.contributor_id:
-                SourceService.reassign_extended_fields(self)
-            return result
+        result = super().save(*args, **kwargs)
+        if previous_contributor_id != self.contributor_id:
+            transaction.on_commit(
+                lambda: SourceService.reassign_extended_fields(self)
+            )
+        return result
