@@ -298,6 +298,44 @@ variable "rds_log_autovacuum_min_duration" {
   default = "250"
 }
 
+variable "rds_shared_preload_libraries" {
+  description = "Comma-separated libraries loaded at PostgreSQL server start. Must include pgaudit so that database activity auditing is available (SOC 2). Static parameter: an instance reboot is required for changes to take effect."
+  type        = string
+  default     = "pg_stat_statements,pgaudit"
+
+  validation {
+    condition     = contains([for library in split(",", lower(replace(var.rds_shared_preload_libraries, " ", ""))) : library], "pgaudit")
+    error_message = "rds_shared_preload_libraries must include pgaudit. Database activity auditing is a SOC 2 requirement (OSDEV-2997) and pgaudit only loads at server start."
+  }
+
+  validation {
+    condition     = contains([for library in split(",", lower(replace(var.rds_shared_preload_libraries, " ", ""))) : library], "pg_stat_statements")
+    error_message = "rds_shared_preload_libraries must include pg_stat_statements. Setting this parameter in a custom parameter group replaces the postgres16 family default outright, so dropping it from the list disables query statistics silently rather than raising an error."
+  }
+}
+
+variable "rds_pgaudit_log" {
+  description = "Comma-separated classes of SQL statements recorded by pgaudit. Classes: none, all, ddl, function, misc, misc_set, read, role, write; a class can be subtracted by prefixing it with '-' (e.g. \"all,-misc\"). Deliberately \"none\" for phase 1 of the staged rollout: CREATE EXTENSION pgaudit has to land before this is set, or DDL records are written without object type or object name. OSDEV-3236 flips it to \"ddl,role\". See doc/ops/database-auditing.md."
+  type        = string
+  default     = "none"
+
+  validation {
+    condition = alltrue([
+      for class in split(",", lower(replace(var.rds_pgaudit_log, " ", ""))) :
+      contains([
+        "none", "all", "ddl", "function", "misc", "misc_set", "read", "role", "write",
+        "-all", "-ddl", "-function", "-misc", "-misc_set", "-read", "-role", "-write"
+      ], class)
+    ])
+    error_message = "rds_pgaudit_log accepts only the pgaudit classes none, all, ddl, function, misc, misc_set, read, role and write, optionally prefixed with '-' to subtract. An unsupported class makes pgaudit raise an error at session start."
+  }
+
+  validation {
+    condition     = !contains([for class in split(",", lower(replace(var.rds_pgaudit_log, " ", ""))) : class], "none") || lower(replace(var.rds_pgaudit_log, " ", "")) == "none"
+    error_message = "rds_pgaudit_log cannot combine \"none\" with other classes. Use \"none\" on its own to disable session auditing during the first phase of the staged rollout."
+  }
+}
+
 variable "rds_cpu_threshold_percent" {
   default = "75"
 }
@@ -1216,6 +1254,42 @@ variable "contribot_last_list_id" {
   type        = string
   description = "Initial fetch_lists resume watermark when the DynamoDB cursor item is missing or invalid."
   default     = "NaN"
+}
+
+variable "bedrock_submission_quality_region" {
+  type        = string
+  description = "Region of the Bedrock inference profiles the SLC submission quality check may invoke. Must match the app's BEDROCK_AWS_REGION."
+  default     = "eu-west-1"
+}
+
+variable "bedrock_submission_quality_inference_profiles" {
+  type        = list(string)
+  description = "Bedrock inference profile IDs the SLC submission quality check may invoke. The active one is selected by the app's BEDROCK_SUBMISSION_QUALITY_MODEL_ID env var; keep the two in sync."
+  default     = ["eu.anthropic.claude-haiku-4-5-20251001-v1:0"]
+}
+
+variable "bedrock_submission_quality_foundation_models" {
+  type        = list(string)
+  description = "Foundation model IDs underlying the inference profiles above. Granted region-wildcarded because cross-region profiles route across regions."
+  default     = ["anthropic.claude-haiku-4-5-20251001-v1:0"]
+}
+
+variable "bedrock_invocations_alarm_hourly_threshold" {
+  type        = number
+  description = "Hourly sum of Bedrock Invocations above which the runaway alarm fires. Organic SLC submission-quality volume is a handful of calls per day, so keep this orders of magnitude above real traffic; it exists to catch retry loops and scripted abuse within the hour."
+  default     = 100
+}
+
+variable "manage_bedrock_cost_budget" {
+  type        = bool
+  description = "Whether this environment creates the account-level AWS Budget for Bedrock spend. Budgets are account-wide: set true in exactly one environment per AWS account, like aws_chatbot_manage_channel_configuration."
+  default     = false
+}
+
+variable "bedrock_cost_budget_monthly_limit_usd" {
+  type        = string
+  description = "Monthly USD limit for the Bedrock cost budget. Alerts at 80% actual and 100% forecasted spend via the global SNS topic (Slack)."
+  default     = "25"
 }
 
 # ---------------------------------------------------------------------------

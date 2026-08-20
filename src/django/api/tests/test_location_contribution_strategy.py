@@ -38,6 +38,19 @@ from api.serializers.v1.production_location_post_schema_serializer \
 
 class TestLocationContributionStrategy(APITestCase):
     def setUp(self):
+        # This chain also runs SubmissionQualityProcessor for CREATE/SLC
+        # submissions, which would otherwise make a real Bedrock call for
+        # every such test in this file. These tests aren't exercising that
+        # processor, so it's neutralized here (fail-open "no verdict").
+        quality_check_patcher = patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=None,
+        )
+        quality_check_patcher.start()
+        self.addCleanup(quality_check_patcher.stop)
+
         self.common_valid_input_data = {
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',

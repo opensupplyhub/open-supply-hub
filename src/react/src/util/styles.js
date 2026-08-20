@@ -1271,6 +1271,17 @@ export const makeContributionWarningDialogStyles = theme =>
                 backgroundColor: theme.palette.action.dark,
             },
         }),
+        warningItemStyles: Object.freeze({
+            '&:not(:first-child)': {
+                marginTop: '24px',
+                paddingTop: '24px',
+                borderTop: '1px solid #e0e0e0',
+            },
+        }),
+        warningItemTitleStyles: Object.freeze({
+            textAlign: 'center',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
+        }),
     });
 
 export const makeProductionLocationDetailsStyles = theme => ({
