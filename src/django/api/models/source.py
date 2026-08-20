@@ -105,9 +105,17 @@ class Source(models.Model):
         atomic with the source row. If the enclosing transaction rolls
         back, the callback is discarded along with the contributor
         change, so the two cannot diverge in that direction.
+
+        The callback captures only the primary key, never this instance
+        or its contributor: callbacks from concurrent reassignments of
+        the same source can execute out of order, and a stale captured
+        contributor would overwrite rows a newer callback had already
+        re-attributed. The service instead locks the source row and
+        re-reads its current contributor in every chunk, so late
+        callbacks converge on the latest committed value.
         """
         # Imported lazily to avoid a circular import: the service imports
-        # ExtendedField, which is loaded through api.models.
+        # this module for the per-chunk source row lock.
         from api.services.source_service import SourceService
 
         # `update_fields` is read defensively; when it is passed
@@ -129,7 +137,8 @@ class Source(models.Model):
 
         result = super().save(*args, **kwargs)
         if previous_contributor_id != self.contributor_id:
+            source_pk = self.pk
             transaction.on_commit(
-                lambda: SourceService.reassign_extended_fields(self)
+                lambda: SourceService.reassign_extended_fields(source_pk)
             )
         return result

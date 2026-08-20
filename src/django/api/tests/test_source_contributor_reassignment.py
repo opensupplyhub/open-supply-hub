@@ -145,6 +145,38 @@ class SourceContributorReassignmentTest(SourceReassignmentTestBase):
                 extended_field.contributor_id,
             )
 
+    def test_out_of_order_callbacks_converge_on_current_contributor(self):
+        # Concurrent reassignments queue one callback each, and nothing
+        # guarantees execution order across workers. The callback only
+        # captures the source pk and every chunk re-reads the current
+        # contributor under a row lock, so a stale callback (C2) running
+        # after a newer one (C3) must not overwrite the newer value.
+        third_user = User.objects.create(email="third@example.com")
+        third_contributor = Contributor.objects.create(
+            admin=third_user,
+            name="test contributor 3",
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+
+        with self.captureOnCommitCallbacks() as stale_callbacks:
+            self.source.contributor = self.new_contributor
+            self.source.save()
+        with self.captureOnCommitCallbacks() as newer_callbacks:
+            self.source.contributor = third_contributor
+            self.source.save()
+
+        # Execute the newer reassignment first, then the stale one.
+        for callback in newer_callbacks:
+            callback()
+        for callback in stale_callbacks:
+            callback()
+
+        self.extended_field.refresh_from_db()
+        self.assertEqual(
+            third_contributor.id,
+            self.extended_field.contributor_id,
+        )
+
     def test_reassignment_updates_facility_index_attribution(self):
         # Facility detail pages and search responses read attribution
         # from the denormalized FacilityIndex, not from the model.
