@@ -356,6 +356,25 @@ jobs:
           show-annotations: "warning"
           app-name: Dedupe Hub App | Unittest test suite
 
+  # code quality for ContriBot
+  run-contribot-tests:
+    environment: Quality Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - name: Install ContriBot test dependencies
+        run: pip install -r src/contribot/requirements-dev.txt
+      - name: Run ContriBot unit tests
+        run: |
+          for testdir in src/contribot/*/tests; do
+            (cd "$(dirname "$testdir")" && python -m pytest tests/)
+          done
+
   # code quality integration test
   run-integration-test-code-quality:
     environment: Quality Environment

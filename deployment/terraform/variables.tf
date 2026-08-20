@@ -1256,6 +1256,12 @@ variable "contribot_last_list_id" {
   default     = "NaN"
 }
 
+variable "contribot_max_attempts" {
+  type        = number
+  description = "Maximum process_list attempts before a FAILED facility list is left for ops follow-up."
+  default     = 3
+}
+
 variable "bedrock_submission_quality_region" {
   type        = string
   description = "Region of the Bedrock inference profiles the SLC submission quality check may invoke. Must match the app's BEDROCK_AWS_REGION."
