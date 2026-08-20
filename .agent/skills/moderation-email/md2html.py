@@ -12,16 +12,36 @@ import re
 import sys
 
 
+def _link(m: re.Match) -> str:
+    # Only http/https targets become anchors; anything else (javascript:,
+    # data:, etc.) stays as visible, already-escaped text.
+    text, target = m.group(1), m.group(2)
+    if re.match(r'(?i)https?://', target):
+        return f'<a href="{target}">{text}</a>'
+    return m.group(0)
+
+
 def inline(t: str) -> str:
     t = html.escape(t)
     t = re.sub(r'`([^`]+)`', r'<code>\1</code>', t)
     t = re.sub(r'==([^=]+)==', r'<span style="background-color:#ffeb3b; font-weight:bold">\1</span>', t)
-    t = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'<a href="\2">\1</a>', t)
+    t = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', _link, t)
     # autolink bare URLs not already inside an anchor
     t = re.sub(r'(?<![">=])(https?://[^\s<)]+)', r'<a href="\1">\1</a>', t)
     t = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', t)
     t = re.sub(r'(?<![\w*])\*([^*\n]+)\*(?![\w*])', r'<i>\1</i>', t)
     return t
+
+
+def split_row(s: str) -> list:
+    # Split a markdown table row on unescaped pipes only, then unescape
+    # the escaped ones, so cell values containing \| stay in one cell.
+    parts = re.split(r'(?<!\\)\|', s)
+    if parts and not parts[0].strip():
+        parts = parts[1:]
+    if parts and not parts[-1].strip():
+        parts = parts[:-1]
+    return [p.strip().replace('\\|', '|') for p in parts]
 
 
 
@@ -65,7 +85,7 @@ def render(src: str) -> str:
     if lines and lines[0].startswith(':::'):
         mode = lines[0][3:].strip()
         end = next(
-            (i for i, l in enumerate(lines[1:], 1) if l.strip() == ':::'),
+            (i for i, line in enumerate(lines[1:], 1) if line.strip() == ':::'),
             None,
         )
         if end is not None:  # unclosed banner: render the file as-is
@@ -84,7 +104,7 @@ def render(src: str) -> str:
             in_list = False
 
         if is_table:
-            cells = [c.strip() for c in stripped.strip('|').split('|')]
+            cells = split_row(stripped)
             if all(re.fullmatch(r':?-{3,}:?', c) for c in cells if c):
                 continue  # separator row
             if not in_table:

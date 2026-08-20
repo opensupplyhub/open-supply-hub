@@ -61,6 +61,7 @@ Config keys used below: `docs.templates_doc_id`, `docs.taxonomy_sheet_id`
   skill's parser in ONE call:**
 
   ```bash
+  mkdir -p <output_dir>/<id>
   python3 <skill-dir>/parse_processed.py <dump-file> --csv <output_dir>/<id>/tagged.csv
   ```
 
@@ -108,7 +109,7 @@ block the renderer turns into a loud color-coded box ABOVE the email
 (red for reject, green for remove-and-approve) with a
 copy-below-this-line divider:
 
-```
+```text
 :::reject
 - **[Open list <id> on OS Hub](<base_url>/lists/<id>)** → set it to **REJECT** — do NOT remove rows or Approve
 - <N>/<total> rows tagged (<pct>%)
@@ -128,11 +129,11 @@ Approved; work the post-approval Confirm/Reject queue.)
 - Duplicate pairs use the uploaded-facility / removed-facility format
   from the templates doc's duplicates section.
 - Order sections by count/severity (dupes and address issues first).
-- Write `email.md`, render with the skill's script so one browser copy
-  pastes into Gmail with formatting intact:
+- Write `<output_dir>/<id>/email.md`, render with the skill's script so
+  one browser copy pastes into Gmail with formatting intact:
 
   ```bash
-  python3 <skill-dir>/md2html.py email.md email.html
+  python3 <skill-dir>/md2html.py <output_dir>/<id>/email.md <output_dir>/<id>/email.html
   ```
 
 ## 5. Report

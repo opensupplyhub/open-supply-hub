@@ -29,7 +29,16 @@ def load(path: str) -> str:
 
 
 def cells(row: str) -> list:
-    return [c.strip().replace("\\", "") for c in row.strip().strip("|").split("|")]
+    # Split on unescaped pipes only, so values containing \| stay in one
+    # cell. Then invert the dump's markdown escaping (\X -> X), which
+    # also turns an escaped backslash (\\) back into a literal one —
+    # unlike the previous blanket backslash strip.
+    parts = re.split(r"(?<!\\)\|", row.strip())
+    if parts and not parts[0].strip():
+        parts = parts[1:]
+    if parts and not parts[-1].strip():
+        parts = parts[:-1]
+    return [re.sub(r"\\(.)", r"\1", c.strip()) for c in parts]
 
 
 def is_separator(cs: list) -> bool:
@@ -87,27 +96,16 @@ def main():
     dup_i = hdr.index("duplicate_pair_id") if "duplicate_pair_id" in hdr else None
     data = tagged_table[1:]
 
-    def field(r, name, default=""):
-        return r[hdr.index(name)] if name in hdr and len(r) > hdr.index(name) else default
-
     tagged = []
     for i, r in enumerate(data, start=2):
         err = r[err_i] if len(r) > err_i else ""
         dup = r[dup_i] if dup_i is not None and len(r) > dup_i else ""
         if err or dup:
-            tagged.append({
-                "rn": i,
-                "os_hub_row": i - 1,  # list page currently displays row_index+1 (OSDEV-2724 regression; PR #1167 restores +2 → page will equal rn after deploy)
-                "country": field(r, "country"),
-                "name": field(r, "name"),
-                "address": field(r, "address"),
-                "sector_product_type": field(r, "sector_product_type"),
-                "facility_type_processing_type": field(r, "facility_type_processing_type"),
-                "number_of_workers": field(r, "number_of_workers"),
-                "parent_company": field(r, "parent_company"),
-                "error": err,
-                "duplicate_pair_id": dup,
-            })
+            # Preserve every source column (a canonical template may need
+            # any of them), then overlay the derived/normalized fields.
+            rec = {hdr[k]: (r[k] if len(r) > k else "") for k in range(len(hdr))}
+            rec.update({"rn": i, "error": err, "duplicate_pair_id": dup})
+            tagged.append(rec)
 
     # Duplicate pair resolution
     pairs, notes = {}, []
@@ -133,35 +131,50 @@ def main():
             continue
         seen.add(fs)
         entry = {"pair": key, "rows": members}
-        # find partners not in the tagged data (pruned) via the original table
-        missing = [m for m in members if m - 2 >= len(data) or m < 2]
-        for m in members:
+        # Any pair member absent from `tagged` needs its facility details
+        # resolved — whether it is beyond the tagged tab (pruned) or within
+        # range but carrying no error/duplicate_pair_id of its own.
+        tagged_rns = {t["rn"] for t in tagged}
+        missing = [m for m in members if m not in tagged_rns]
+
+        orig_hdr = [h.lower() for h in original_table[0]] if original_table else []
+
+        def ofield(orow, name):
+            # Header-name lookup: immune to source-column reordering.
+            if name in orig_hdr and len(orow) > orig_hdr.index(name):
+                return orow[orig_hdr.index(name)]
+            return ""
+
+        def record_for(m):
+            if original_table and 2 <= m < len(original_table) + 1:
+                orow = original_table[1:][m - 2]
+                return {"rn": m, "name": ofield(orow, "name"),
+                        "address": ofield(orow, "address"),
+                        "number_of_workers": ofield(orow, "number_of_workers")}
             if 2 <= m < len(data) + 2:
-                row_tags = next((t["error"] for t in tagged if t["rn"] == m), "")
-                if m in [t["rn"] for t in tagged] and not row_tags:
-                    pass
+                r = data[m - 2]
+                def tfield(name):
+                    return r[hdr.index(name)] if name in hdr and len(r) > hdr.index(name) else ""
+                return {"rn": m, "name": tfield("name"),
+                        "address": tfield("address"),
+                        "number_of_workers": tfield("number_of_workers")}
+            return {"rn": m, "name": "", "address": "",
+                    "number_of_workers": "", "unresolved": True}
+
         if len(members) == 1 and original_table:
             # unpaired dupe tag: search original table for same normalized name
             me = next(t for t in tagged if t["rn"] == members[0])
             target = norm(me["name"])
             for j, orow in enumerate(original_table[1:], start=2):
-                if j != members[0] and norm(orow[1] if len(orow) > 1 else "") == target:
+                if j != members[0] and norm(ofield(orow, "name")) == target:
                     entry["partner_in_original"] = {
-                        "rn": j, "name": orow[1],
-                        "address": orow[2] if len(orow) > 2 else "",
-                        "number_of_workers": orow[5] if len(orow) > 5 else "",
+                        "rn": j, "name": ofield(orow, "name"),
+                        "address": ofield(orow, "address"),
+                        "number_of_workers": ofield(orow, "number_of_workers"),
                     }
                     break
-        if missing and original_table:
-            entry["partners_from_original"] = []
-            for m in missing:
-                if m - 2 < len(original_table) - 1:
-                    orow = original_table[1:][m - 2]
-                    entry["partners_from_original"].append({
-                        "rn": m, "name": orow[1] if len(orow) > 1 else "",
-                        "address": orow[2] if len(orow) > 2 else "",
-                        "number_of_workers": orow[5] if len(orow) > 5 else "",
-                    })
+        if missing:
+            entry["partners_from_original"] = [record_for(m) for m in missing]
         resolved.append(entry)
 
     # Merge entries whose row-sets overlap (a dupe_remove row shows up both
@@ -197,8 +210,9 @@ def main():
             w = csv.writer(f)
             w.writerow(["rn", "country", "name", "address", "error", "duplicate_pair_id"])
             for t in tagged:
-                w.writerow([t["rn"], t["country"], t["name"], t["address"],
-                            t["error"], t["duplicate_pair_id"]])
+                w.writerow([t["rn"], t.get("country", ""), t.get("name", ""),
+                            t.get("address", ""), t["error"],
+                            t["duplicate_pair_id"]])
 
 
 if __name__ == "__main__":
