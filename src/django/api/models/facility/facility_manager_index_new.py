@@ -118,6 +118,46 @@ def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
     return parts, params
 
 
+def _append_fp_param_clause(
+    param_clauses,
+    all_params,
+    values,
+    overlap_field,
+    taxonomy_slot,
+):
+    if not values:
+        return
+
+    parts, params = _build_fp_param_sql_parts(
+        values,
+        overlap_field,
+        taxonomy_slot,
+    )
+    # A supplied parameter whose values are all invalid must not silently
+    # broaden the request to an unfiltered facility search.
+    param_clauses.append(
+        '(' + ' OR '.join(parts) + ')' if parts else '(FALSE)'
+    )
+    all_params.extend(params)
+
+
+def _append_exact_processing_clause(
+    param_clauses,
+    all_params,
+    exact_processing_types,
+    legacy_processing_types,
+):
+    if not exact_processing_types:
+        return
+
+    exact_clause = 'processing_type && %s::varchar[]'
+    if param_clauses and legacy_processing_types:
+        param_clauses[-1] = f'({param_clauses[-1]} OR {exact_clause})'
+    else:
+        param_clauses.append(f'({exact_clause})')
+    all_params.append(exact_processing_types)
+
+
 def build_fp_match_sql(
     facility_types,
     processing_types,
@@ -147,32 +187,20 @@ def build_fp_match_sql(
         (facility_types, 'facility_type', 2),
         (legacy_processing_types, 'processing_type', 3),
     ):
-        if not values:
-            continue
-
-        parts, params = _build_fp_param_sql_parts(
+        _append_fp_param_clause(
+            param_clauses,
+            all_params,
             values,
             overlap_field,
             taxonomy_slot,
         )
-        if parts:
-            param_clauses.append('(' + ' OR '.join(parts) + ')')
-            all_params.extend(params)
-        else:
-            # A supplied parameter whose values are all invalid must not
-            # silently broaden the request to an unfiltered facility search.
-            param_clauses.append('(FALSE)')
 
-    if exact_processing_types:
-        exact_clause = 'processing_type && %s::varchar[]'
-        if processing_types:
-            if param_clauses and legacy_processing_types:
-                param_clauses[-1] = (
-                    f'({param_clauses[-1]} OR {exact_clause})'
-                )
-            else:
-                param_clauses.append(f'({exact_clause})')
-            all_params.append(exact_processing_types)
+    _append_exact_processing_clause(
+        param_clauses,
+        all_params,
+        exact_processing_types,
+        legacy_processing_types,
+    )
 
     if not param_clauses:
         return None, []

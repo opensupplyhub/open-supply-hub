@@ -990,12 +990,12 @@ export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
 
 const normalizeFacilityProcessingLabel = value =>
     unidecode(value)
-        .replace(/\n/g, ' ')
-        .replace(/-/g, '')
-        .replace(/\//g, ' ')
-        .replace(/'/g, '')
-        .replace(/,/g, '')
-        .replace(/:/g, ' ')
+        .replaceAll('\n', ' ')
+        .replaceAll('-', '')
+        .replaceAll('/', ' ')
+        .replaceAll("'", '')
+        .replaceAll(',', '')
+        .replaceAll(':', ' ')
         .replace(/ +/g, ' ')
         .trim()
         .replace(/^["']|["']$/g, '')
