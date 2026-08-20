@@ -19,8 +19,8 @@ def update_indexing_functions(apps, schema_editor):
     index_extended_fields(). See OSDEV-3189.
     """
     helper.run_sql_files([
-        '0226_index_facility_type.sql',
-        '0226_index_processing_type.sql',
+        '0229_index_facility_type.sql',
+        '0229_index_processing_type.sql',
     ])
 
 
@@ -34,7 +34,7 @@ def revert_indexing_functions(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0227_create_isic_taxonomy_config'),
+        ('api', '0228_create_isic_taxonomy_config'),
     ]
 
     operations = [

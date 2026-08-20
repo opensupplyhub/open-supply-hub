@@ -20,20 +20,20 @@ def create_facility_processing_value_index(apps, schema_editor):
     filtered out during indexing. See OSDEV-3189.
     """
     helper.run_sql_files([
-        '0229_facility_processing_value_index.sql',
+        '0230_facility_processing_value_index.sql',
     ])
 
 
 def drop_facility_processing_value_index(apps, schema_editor):
     helper.run_sql_files([
-        '0229_revert_facility_processing_value_index.sql',
+        '0230_revert_facility_processing_value_index.sql',
     ])
 
 
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0228_index_facility_processing_raw_values'),
+        ('api', '0229_index_facility_processing_raw_values'),
     ]
 
     operations = [

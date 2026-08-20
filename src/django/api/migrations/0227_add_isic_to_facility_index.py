@@ -9,21 +9,21 @@ helper = MigrationHelper(connection)
 
 def add_isic_indexing_functions(apps, schema_editor):
     helper.run_sql_files([
-        '0224_extract_isic_code.sql',
-        '0224_index_isic_4.sql',
+        '0227_extract_isic_code.sql',
+        '0227_index_isic_4.sql',
     ])
 
 
 def revert_isic_indexing_functions(apps, schema_editor):
     helper.run_sql_files([
-        '0224_revert_index_isic_4.sql',
+        '0227_revert_index_isic_4.sql',
     ])
 
 
 def update_indexing_procedures(apps, schema_editor):
     helper.run_sql_files([
-        '0224_index_facilities.sql',
-        '0224_index_facilities_by.sql',
+        '0227_index_facilities.sql',
+        '0227_index_facilities_by.sql',
     ])
 
 
@@ -37,7 +37,7 @@ def revert_indexing_procedures(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0225_add_is_anonymized_to_source'),
+        ('api', '0226_add_slc_submission_quality_check_switch'),
     ]
 
     operations = [

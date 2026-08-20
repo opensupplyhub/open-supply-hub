@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('api', '0226_add_isic_to_facility_index'),
+        ('api', '0227_add_isic_to_facility_index'),
     ]
 
     operations = [
