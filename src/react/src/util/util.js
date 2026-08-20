@@ -461,6 +461,9 @@ export const createQueryStringFromSearchFilters = (
         processing_type: createCompactSortedQuerystringInputObject(
             processingType,
         ),
+        processing_type_exact: createCompactSortedQuerystringInputObject(
+            processingType.filter(option => option.isExact),
+        ),
         isic_4: createCompactSortedQuerystringInputObject(isic4),
         product_type: createCompactSortedQuerystringInputObject(productType),
         number_of_workers: createCompactSortedQuerystringInputObject(
@@ -534,6 +537,7 @@ export const createFiltersFromQueryString = qs => {
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
+        processing_type_exact: exactProcessingTypes = [],
         isic_4: isic4 = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
@@ -560,7 +564,16 @@ export const createFiltersFromQueryString = qs => {
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
-        processingType: createSelectOptionsFromParams(processingType),
+        processingType: createSelectOptionsFromParams(processingType).map(
+            option => ({
+                ...option,
+                ...(normaliseStringArray(exactProcessingTypes).includes(
+                    option.value,
+                )
+                    ? { isExact: true }
+                    : {}),
+            }),
+        ),
         isic4: createSelectOptionsFromParams(isic4),
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
@@ -973,6 +986,55 @@ export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
         });
     }
     return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
+};
+
+const normalizeFacilityProcessingLabel = value =>
+    unidecode(value)
+        .replace(/\n/g, ' ')
+        .replace(/-/g, '')
+        .replace(/\//g, ' ')
+        .replace(/'/g, '')
+        .replace(/,/g, '')
+        .replace(/:/g, ' ')
+        .replace(/ +/g, ' ')
+        .trim()
+        .replace(/^["']|["']$/g, '')
+        .toLowerCase()
+        .trim();
+
+export const restoreExactProcessingTypeLabels = (
+    processingTypes,
+    facilityProcessingTypes,
+) => {
+    if (!processingTypes?.length || !facilityProcessingTypes?.length) {
+        return processingTypes;
+    }
+
+    const taxonomyLabels = new Map();
+    facilityProcessingTypes.forEach(({ processingTypes: labels = [] }) => {
+        labels.forEach(label => {
+            taxonomyLabels.set(normalizeFacilityProcessingLabel(label), label);
+        });
+    });
+
+    let changed = false;
+    const restored = processingTypes.map(option => {
+        if (!option.isExact) {
+            return option;
+        }
+
+        const canonicalLabel = taxonomyLabels.get(
+            normalizeFacilityProcessingLabel(option.value),
+        );
+        if (!canonicalLabel || canonicalLabel === option.label) {
+            return option;
+        }
+
+        changed = true;
+        return { ...option, label: canonicalLabel };
+    });
+
+    return changed ? restored : processingTypes;
 };
 
 export const mapFacilityTypeOptions = (fPTypes, pTypes) => {

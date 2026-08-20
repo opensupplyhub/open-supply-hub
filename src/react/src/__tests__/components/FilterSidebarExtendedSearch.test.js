@@ -212,6 +212,46 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
         expect(options).toHaveTextContent('Textile or Material Production');
     });
 
+    test('restores canonical labels for exact hydrated processing types', async () => {
+        const { reduxStore } = renderComponent(
+            createPreloadedState({
+                facilityProcessingTypeOptions: [
+                    {
+                        facilityType: 'Printing',
+                        processingTypes: ['Dyeing'],
+                    },
+                ],
+                processingType: [
+                    {
+                        value: 'DYEING',
+                        label: 'DYEING',
+                        isExact: true,
+                    },
+                    {
+                        value: 'Custom CAPS',
+                        label: 'Custom CAPS',
+                        isExact: true,
+                    },
+                ],
+            }),
+        );
+
+        await waitFor(() => {
+            expect(reduxStore.getState().filters.processingType).toEqual([
+                {
+                    value: 'DYEING',
+                    label: 'Dyeing',
+                    isExact: true,
+                },
+                {
+                    value: 'Custom CAPS',
+                    label: 'Custom CAPS',
+                    isExact: true,
+                },
+            ]);
+        });
+    });
+
     test('shows the combine checkbox when enabled and all selections exist', () => {
         const { getByLabelText } = renderComponent(
             createPreloadedState({

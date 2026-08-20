@@ -75,7 +75,8 @@ class ProcessingTypeSuggestionsView(APIView):
 
             [
                 {
-                    "value": "Dyeing",
+                    "value": "DYEING",
+                    "label": "DYEING",
                     "count": 1204,
                     "in_taxonomy": true,
                     "facility_types": [
@@ -85,6 +86,7 @@ class ProcessingTypeSuggestionsView(APIView):
                 },
                 {
                     "value": "yarn dyeing",
+                    "label": "yarn dyeing",
                     "count": 37,
                     "in_taxonomy": false,
                     "facility_types": [],

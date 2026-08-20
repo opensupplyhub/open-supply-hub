@@ -26,10 +26,12 @@ const GROUP_TITLES = Object.freeze({
 const reactSelectOptionPropType = shape({
     value: string.isRequired,
     label: string.isRequired,
+    isExact: bool,
 });
 
 const suggestionPropType = shape({
     value: string.isRequired,
+    label: string,
     count: number,
     in_taxonomy: bool,
     facility_types: arrayOf(string),
@@ -152,7 +154,8 @@ function ProcessingTypeSearch({
         setActiveRowIndex(-1);
     };
 
-    const handleToggleValue = value => {
+    const handleToggleSuggestion = suggestion => {
+        const { value } = suggestion;
         if (selectedValues.has(value)) {
             onProcessingTypeChange(
                 processingType.filter(option => option.value !== value),
@@ -160,7 +163,11 @@ function ProcessingTypeSearch({
         } else {
             onProcessingTypeChange([
                 ...processingType,
-                makeSelectOption(value),
+                {
+                    ...makeSelectOption(value),
+                    label: suggestion.label ?? value,
+                    isExact: true,
+                },
             ]);
         }
 
@@ -206,7 +213,7 @@ function ProcessingTypeSearch({
                 rows[activeRowIndex]
             ) {
                 event.preventDefault();
-                handleToggleValue(rows[activeRowIndex].suggestion.value);
+                handleToggleSuggestion(rows[activeRowIndex].suggestion);
                 return;
             }
 
@@ -340,6 +347,10 @@ function ProcessingTypeSearch({
                                           key={suggestion.value}
                                           id={`${LISTBOX_ID}-option-${index}`}
                                           value={suggestion.value}
+                                          label={
+                                              suggestion.label ??
+                                              suggestion.value
+                                          }
                                           count={suggestion.count}
                                           facilityTypes={
                                               suggestion.facility_types ?? []
@@ -352,9 +363,7 @@ function ProcessingTypeSearch({
                                           )}
                                           active={index === activeRowIndex}
                                           onSelect={() =>
-                                              handleToggleValue(
-                                                  suggestion.value,
-                                              )
+                                              handleToggleSuggestion(suggestion)
                                           }
                                           onMouseEnter={() =>
                                               setActiveRowIndex(index)

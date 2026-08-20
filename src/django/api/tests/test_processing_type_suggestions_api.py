@@ -151,17 +151,67 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self._values(response), ['Sérigraphie'])
 
-    def test_casing_variants_collapse_into_one_suggestion(self):
-        self._index_processing_types(['sonic welding'], locations=2)
-        self._index_processing_types(['Sonic Welding'])
+    def test_caps_casing_variants_keep_individual_values_and_counts(self):
+        self._index_processing_types(['CAPS'], locations=2)
+        self._index_processing_types(['Caps'])
 
-        response = self.client.get(self.url, {'q': 'sonic'})
+        response = self.client.get(self.url, {'q': 'caps'})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [(row['value'], row['count']) for row in response.data],
-            [('sonic welding', 2)],
+            [('CAPS', 2), ('Caps', 1)],
         )
+
+    def test_punctuation_variants_remain_independently_selectable(self):
+        self._index_processing_types(
+            ['Warehousing Distribution'],
+            locations=2,
+        )
+        self._index_processing_types(['Warehousing / Distribution'])
+
+        response = self.client.get(self.url, {'q': 'warehousing'})
+
+        self.assertEqual(
+            [(row['value'], row['count']) for row in response.data],
+            [
+                ('Warehousing Distribution', 2),
+                ('Warehousing / Distribution', 1),
+            ],
+        )
+        self.assertTrue(all(row['in_taxonomy'] for row in response.data))
+
+    def test_synthetic_taxonomy_duplicate_does_not_double_count(self):
+        self._index_processing_types(['Yarn Dyeing'], locations=2)
+
+        response = self.client.get(self.url, {'q': 'yarn dyeing'})
+
+        yarn_dyeing = next(
+            row for row in response.data
+            if row['value'] == 'Yarn Dyeing'
+        )
+        self.assertEqual(yarn_dyeing['count'], 2)
+        self.assertEqual(
+            sum(
+                row['value'] == 'Yarn Dyeing'
+                for row in response.data
+            ),
+            1,
+        )
+
+    def test_taxonomy_suggestion_displays_concrete_stored_value(self):
+        self._index_processing_types(['DYEING'], locations=2)
+
+        response = self.client.get(self.url, {'q': 'dyeing'})
+
+        dyeing = next(
+            row for row in response.data
+            if row['value'] == 'DYEING'
+        )
+        self.assertEqual(dyeing['value'], 'DYEING')
+        self.assertEqual(dyeing['label'], 'DYEING')
+        self.assertEqual(dyeing['count'], 2)
+        self.assertTrue(dyeing['in_taxonomy'])
 
     def test_facility_type_promotes_its_children_without_dropping_others(self):
         # Prefix matches outrank matches on a later word, so without a
@@ -304,6 +354,7 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
     def test_identical_requests_are_served_from_the_cache(self, mock_search):
         mock_search.return_value = [{
             'value': 'Dyeing',
+            'label': 'Dyeing',
             'count': 1,
             'in_taxonomy': True,
             'facility_types': ['Printing, Product Dyeing and Laundering'],

@@ -175,7 +175,7 @@ describe('ProcessingTypeSearch component', () => {
         fireEvent.click(dyeingRow);
 
         expect(onProcessingTypeChange).toHaveBeenCalledWith([
-            { value: 'Dyeing', label: 'Dyeing' },
+            { value: 'Dyeing', label: 'Dyeing', isExact: true },
         ]);
     });
 
@@ -291,7 +291,56 @@ describe('ProcessingTypeSearch component', () => {
         fireEvent.keyDown(input, { key: 'Enter' });
 
         expect(onProcessingTypeChange).toHaveBeenCalledWith([
-            { value: 'yarn dyeing services', label: 'yarn dyeing services' },
+            {
+                value: 'yarn dyeing services',
+                label: 'yarn dyeing services',
+                isExact: true,
+            },
+        ]);
+    });
+
+    test('displays and selects the concrete taxonomy value', () => {
+        const concreteDyeing = {
+            ...DYEING,
+            value: 'DYEING',
+            label: 'DYEING',
+        };
+        const { container, getByText, onProcessingTypeChange } =
+            renderComponent({
+                suggestions: makeSuggestions([concreteDyeing]),
+            });
+
+        expect(getByText('DYEING')).toBeInTheDocument();
+        fireEvent.click(getRowButtons(container)[0]);
+
+        expect(onProcessingTypeChange).toHaveBeenCalledWith([
+            { value: 'DYEING', label: 'DYEING', isExact: true },
+        ]);
+    });
+
+    test('distinguishes and selects concrete taxonomy variants', () => {
+        const selected = {
+            value: 'DYEING',
+            label: 'DYEING',
+            isExact: true,
+        };
+        const suggestions = [
+            { ...DYEING, value: 'DYEING', label: 'DYEING' },
+            { ...DYEING, value: 'Dyeing', label: 'Dyeing' },
+        ];
+        const { container, getAllByText, getByText, onProcessingTypeChange } =
+            renderComponent({
+                processingType: [selected],
+                suggestions: makeSuggestions(suggestions),
+            });
+
+        expect(getAllByText('DYEING')).toHaveLength(2);
+        expect(getByText('Dyeing')).toBeInTheDocument();
+        fireEvent.click(getRowButtons(container)[1]);
+
+        expect(onProcessingTypeChange).toHaveBeenCalledWith([
+            selected,
+            { value: 'Dyeing', label: 'Dyeing', isExact: true },
         ]);
     });
 

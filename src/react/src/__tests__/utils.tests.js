@@ -96,6 +96,7 @@ const {
     getFilteredSearchForEmbed,
     makeFacilityDetailLinkOnRedirect,
     splitContributorsIntoPublicAndNonPublic,
+    restoreExactProcessingTypeLabels,
 } = require('../util/util');
 
 const {
@@ -748,6 +749,51 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(freeTextProcessingTypeString),
     ).toMatchObject(expectedFreeTextProcessingTypeMatch);
+
+    const exactProcessingTypeString =
+        '?processing_type=CAPS&processing_type=cement%20mixing' +
+        '&processing_type_exact=CAPS&processing_type_exact=orphan';
+    expect(
+        createFiltersFromQueryString(exactProcessingTypeString),
+    ).toMatchObject({
+        processingType: [
+            { value: 'CAPS', label: 'CAPS', isExact: true },
+            { value: 'cement mixing', label: 'cement mixing' },
+        ],
+    });
+
+    expect(
+        createQueryStringFromSearchFilters({
+            processingType: [
+                { value: 'CAPS', label: 'Caps', isExact: true },
+                { value: 'cement mixing', label: 'cement mixing' },
+            ],
+        }),
+    ).toBe(
+        'processing_type=CAPS&processing_type=cement+mixing' +
+            '&processing_type_exact=CAPS',
+    );
+
+    const hydratedExactProcessingTypes = createFiltersFromQueryString(
+        '?processing_type=DYEING&processing_type=Custom%20CAPS' +
+            '&processing_type_exact=DYEING' +
+            '&processing_type_exact=Custom%20CAPS',
+    ).processingType;
+    expect(
+        restoreExactProcessingTypeLabels(hydratedExactProcessingTypes, [
+            {
+                facilityType: 'Printing',
+                processingTypes: ['Dyeing'],
+            },
+        ]),
+    ).toEqual([
+        { value: 'DYEING', label: 'Dyeing', isExact: true },
+        {
+            value: 'Custom CAPS',
+            label: 'Custom CAPS',
+            isExact: true,
+        },
+    ]);
 
     const isic4String =
         '?isic_4=section%3AC&isic_4=class%3A0111&isic_4=division%3A01';

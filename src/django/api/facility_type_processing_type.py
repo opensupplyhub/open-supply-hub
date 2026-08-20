@@ -469,7 +469,11 @@ def clean_raw_data(raw_data):
     return data
 
 
-def get_facility_and_processing_type(facility_or_processing_type, sector=None):
+def get_facility_and_processing_type(
+    facility_or_processing_type,
+    sector=None,
+    allow_fuzzy=True,
+):
     """Attempts to match the input value to a facility or processing
     type via various methods.
     """
@@ -492,12 +496,12 @@ def get_facility_and_processing_type(facility_or_processing_type, sector=None):
     match_type = EXACT_MATCH
 
     # Try for alias match
-    if not processing_type:
+    if not processing_type and not facility_type:
         matched_value = ALL_PROCESSING_TYPES_ALIAS.get(cleaned_input)
         match_type = ALIAS_MATCH
 
         # Try for fuzzy match
-        if not matched_value or matched_value is None:
+        if (not matched_value or matched_value is None) and allow_fuzzy:
             matched_value = process.extractOne(
                 cleaned_input,
                 ALL_PROCESSING_TYPES.keys()
@@ -509,6 +513,9 @@ def get_facility_and_processing_type(facility_or_processing_type, sector=None):
                 return (None, None, None, None)
 
             matched_value = matched_value[0]
+
+        if not matched_value:
+            return (None, None, None, None)
 
         # Using the alias or fuzzy matched value, find a
         # processing and facility type

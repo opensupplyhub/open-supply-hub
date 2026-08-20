@@ -45,6 +45,33 @@ class TilePermissionsTest(APITestCase):
 
         self.assertEqual(200, response.status_code)
 
+    @override_settings(ALLOWED_HOSTS=["testserver", ".allowed.org"])
+    @override_switch("vector_tile", active=True)
+    def test_both_tile_layers_support_exact_processing_type_filter(self):
+        for layer in ("facilities", "facilitygrid"):
+            with self.subTest(layer=layer):
+                tile_path = reverse(
+                    "tile",
+                    kwargs={
+                        "layer": layer,
+                        "cachekey": "1567700347-1-95f951f7",
+                        "z": 6,
+                        "x": 15,
+                        "y": 29,
+                        "ext": "pbf",
+                    },
+                )
+                response = self.client.get(
+                    tile_path,
+                    {
+                        "processing_type": "CAPS",
+                        "processing_type_exact": "CAPS",
+                    },
+                    HTTP_REFERER="http://allowed.org/",
+                )
+
+                self.assertEqual(200, response.status_code)
+
     def test_disallowed_hosts_cannot_fetch_tiles(self):
         response = self.client.get(self.tile_path)
         self.assertEqual(401, response.status_code)

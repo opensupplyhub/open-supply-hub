@@ -32,7 +32,7 @@ function HighlightedTerm({ value, highlightQuery, classes }) {
 
 function ProcessingTypeResultRow({
     id,
-    value,
+    label,
     count,
     facilityTypes,
     inTaxonomy,
@@ -67,7 +67,7 @@ function ProcessingTypeResultRow({
             >
                 <span className={classes.resultRowBody}>
                     <HighlightedTerm
-                        value={value}
+                        value={label}
                         highlightQuery={highlightQuery}
                         classes={classes}
                     />
@@ -112,7 +112,7 @@ ProcessingTypeResultRow.defaultProps = {
 
 ProcessingTypeResultRow.propTypes = {
     id: string,
-    value: string.isRequired,
+    label: string.isRequired,
     count: number,
     facilityTypes: arrayOf(string),
     inTaxonomy: bool,

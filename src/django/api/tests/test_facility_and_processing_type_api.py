@@ -12,6 +12,7 @@ from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 
 from django.contrib.gis.geos import Point
+from django.http import QueryDict
 from django.urls import reverse
 
 
@@ -295,6 +296,358 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             [feature["id"] for feature in data["features"]],
             [self.facility.id, prefix_facility.id],
         )
+
+    def test_selected_processing_type_matches_exact_case_in_both_managers(
+        self,
+    ):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+        )
+        self._create_indexed_facility(
+            "Lowercase Caps",
+            2,
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "processing_type": "CAPS",
+                "processing_type_exact": "CAPS",
+            },
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+        params = QueryDict(
+            "processing_type=CAPS&processing_type_exact=CAPS"
+        )
+        self.assertEqual(
+            list(
+                FacilityIndex.objects.filter_by_query_params(
+                    params
+                ).values_list("id", flat=True)
+            ),
+            [self.facility.id],
+        )
+        self.assertEqual(
+            list(
+                Facility.objects.filter_by_query_params(params).values_list(
+                    "id", flat=True
+                )
+            ),
+            [self.facility.id],
+        )
+
+    def test_unselected_processing_type_keeps_legacy_case_insensitive_match(
+        self,
+    ):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+        )
+        lowercase = self._create_indexed_facility(
+            "Lowercase Caps",
+            2,
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "CAPS"},
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            {self.facility.id, lowercase.id},
+        )
+
+    def test_exact_value_without_processing_type_companion_is_ignored(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cement mixing"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "processing_type": "cement",
+                "processing_type_exact": "CAPS",
+            },
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_exact_and_free_processing_types_are_ored(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+        )
+        cement = self._create_indexed_facility(
+            "Cement",
+            2,
+            processing_type=["cement mixing"],
+        )
+        self._create_indexed_facility(
+            "Lowercase Caps",
+            3,
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=CAPS"
+            + "&processing_type=cement"
+            + "&processing_type_exact=CAPS"
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            {self.facility.id, cement.id},
+        )
+
+    def test_exact_processing_type_is_anded_with_facility_type(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            facility_type=["Office / HQ"],
+            processing_type=["CAPS"],
+        )
+        self._create_indexed_facility(
+            "Processing Only",
+            2,
+            facility_type=["Final Product Assembly"],
+            processing_type=["CAPS"],
+        )
+        self._create_indexed_facility(
+            "Facility Only",
+            3,
+            facility_type=["Office / HQ"],
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "facility_type": "Office / HQ",
+                "processing_type": "CAPS",
+                "processing_type_exact": "CAPS",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_exact_processing_type_and_isic_default_to_or(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+            isic_section=["A"],
+        )
+        isic_only = self._create_indexed_facility(
+            "ISIC Only",
+            2,
+            processing_type=["caps"],
+        )
+        both = self._create_indexed_facility(
+            "Both",
+            3,
+            processing_type=["CAPS"],
+        )
+        FacilityIndex.objects.filter(id__in=[isic_only.id, both.id]).update(
+            isic_section=["C"],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=CAPS"
+            + "&processing_type_exact=CAPS"
+            + "&isic_4=section%3AC"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            {self.facility.id, isic_only.id, both.id},
+        )
+
+    def test_exact_processing_type_and_isic_support_and_mode(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+            isic_section=["A"],
+        )
+        isic_only = self._create_indexed_facility(
+            "ISIC Only",
+            2,
+            processing_type=["caps"],
+        )
+        both = self._create_indexed_facility(
+            "Both",
+            3,
+            processing_type=["CAPS"],
+        )
+        FacilityIndex.objects.filter(id__in=[isic_only.id, both.id]).update(
+            isic_section=["C"],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=CAPS"
+            + "&processing_type_exact=CAPS"
+            + "&isic_4=section%3AC"
+            + "&combine_facility_processing_isic=AND"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], both.id)
+
+    def test_exact_processing_type_is_excluded_from_free_text_relevance(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            name="Alpha Exact",
+            processing_type=["CAPS"],
+        )
+        cement = self._create_indexed_facility(
+            "Zebra Cement",
+            2,
+            processing_type=["cement mixing"],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=CAPS"
+            + "&processing_type=cement"
+            + "&processing_type_exact=CAPS"
+            + "&sort_by=name_asc"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            [feature["id"] for feature in data["features"]],
+            [cement.id, self.facility.id],
+        )
+
+    def test_empty_type_values_are_omitted_in_list_and_both_managers(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cement mixing"],
+        )
+        cement = self._create_indexed_facility(
+            "Second Cement",
+            2,
+            processing_type=["cement finishing"],
+        )
+        params = QueryDict(
+            "facility_type=&facility_type=%20%20"
+            "&processing_type=&processing_type=%20"
+        )
+
+        unfiltered_ids = set(
+            FacilityIndex.objects.all().values_list("id", flat=True)
+        )
+        response = self.client.get(self.url, params)
+        data = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            unfiltered_ids,
+        )
+        self.assertEqual(
+            set(
+                FacilityIndex.objects.filter_by_query_params(
+                    params
+                ).values_list("id", flat=True)
+            ),
+            unfiltered_ids,
+        )
+        self.assertEqual(
+            set(
+                Facility.objects.filter_by_query_params(params).values_list(
+                    "id", flat=True
+                )
+            ),
+            unfiltered_ids,
+        )
+
+        mixed_response = self.client.get(
+            self.url
+            + "?processing_type=&processing_type=cement"
+            + "&facility_type=%20",
+        )
+        mixed_data = json.loads(mixed_response.content)
+        self.assertEqual(
+            {feature["id"] for feature in mixed_data["features"]},
+            {self.facility.id, cement.id},
+        )
+
+    def test_short_unmatched_processing_type_is_explicit_no_match(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["Dyeing"],
+        )
+
+        response = self.client.get(self.url, {"processing_type": "dy"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)["count"], 0)
+
+    def test_short_unmatched_value_can_be_ored_with_valid_processing_type(
+        self,
+    ):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cement mixing"],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=dy&processing_type=cement"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_short_declared_alias_retains_taxonomy_behavior(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["Office / HQ"],
+        )
+
+        response = self.client.get(self.url, {"processing_type": "hq"})
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_short_processing_type_remains_usable_when_exact(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["X"],
+        )
+        self._create_indexed_facility(
+            "Lowercase X",
+            2,
+            processing_type=["x"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "processing_type": "X",
+                "processing_type_exact": "X",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
 
     def test_free_text_treats_regex_metacharacters_literally(self):
         FacilityIndex.objects.filter(id=self.facility.id).update(

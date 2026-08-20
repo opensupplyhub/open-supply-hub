@@ -40,7 +40,11 @@ import {
     numberOfWorkerOptionsPropType,
 } from '../util/propTypes';
 
-import { getValueFromEvent, mapFacilityTypeOptions } from '../util/util';
+import {
+    getValueFromEvent,
+    mapFacilityTypeOptions,
+    restoreExactProcessingTypeLabels,
+} from '../util/util';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
 const PARENT_COMPANY = 'PARENT_COMPANY';
@@ -134,6 +138,16 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
             fetchFacilityProcessingType();
         }
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
+
+    useEffect(() => {
+        const restoredProcessingTypes = restoreExactProcessingTypeLabels(
+            processingType,
+            facilityProcessingTypeOptions,
+        );
+        if (restoredProcessingTypes !== processingType) {
+            updateProcessingType(restoredProcessingTypes);
+        }
+    }, [facilityProcessingTypeOptions, processingType, updateProcessingType]);
 
     useEffect(() => {
         if (!numberOfWorkersOptions) {

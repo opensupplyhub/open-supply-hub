@@ -7,6 +7,7 @@ from django.db.models.expressions import RawSQL
 
 from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
+from api.facility_processing_query import parse_facility_processing_query
 from api.isic import parse_isic4_filter_values
 from api.helpers.helpers import (
     clean,
@@ -44,20 +45,39 @@ FREE_TEXT_FP_TERM_SCORE = """
 
 
 def _classify_fp_filter_value(value):
-    standard_type = get_facility_and_processing_type(value, ['Apparel'])
+    trimmed = value.strip()
+    if not trimmed:
+        return (None, None)
+
+    standard_type = get_facility_and_processing_type(
+        value,
+        ['Apparel'],
+        allow_fuzzy=len(trimmed) >= MIN_FREE_TEXT_FP_LENGTH,
+    )
     if standard_type[0] is not None:
         return ('taxonomy', standard_type)
 
-    trimmed = value.strip()
     if len(trimmed) >= MIN_FREE_TEXT_FP_LENGTH:
         return ('free_text', trimmed)
 
     return (None, None)
 
 
-def _free_text_fp_terms(facility_types, processing_types):
+def _free_text_fp_terms(
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+):
     terms = []
-    for value in [*(facility_types or []), *(processing_types or [])]:
+    exact_processing_types = set(exact_processing_types or [])
+    values = [
+        *(facility_types or []),
+        *(
+            value for value in (processing_types or [])
+            if value not in exact_processing_types
+        ),
+    ]
+    for value in values:
         classification, data = _classify_fp_filter_value(value)
         if classification == 'free_text':
             terms.append(data)
@@ -98,7 +118,11 @@ def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
     return parts, params
 
 
-def build_fp_match_sql(facility_types, processing_types):
+def build_fp_match_sql(
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+):
     """
     Build a boolean SQL expression for facility/processing type filters.
 
@@ -110,9 +134,18 @@ def build_fp_match_sql(facility_types, processing_types):
     param_clauses = []
     all_params = []
 
+    exact_processing_types = [
+        value for value in (exact_processing_types or [])
+        if value in (processing_types or [])
+    ]
+    legacy_processing_types = [
+        value for value in (processing_types or [])
+        if value not in exact_processing_types
+    ]
+
     for values, overlap_field, taxonomy_slot in (
         (facility_types, 'facility_type', 2),
-        (processing_types, 'processing_type', 3),
+        (legacy_processing_types, 'processing_type', 3),
     ):
         if not values:
             continue
@@ -130,13 +163,28 @@ def build_fp_match_sql(facility_types, processing_types):
             # silently broaden the request to an unfiltered facility search.
             param_clauses.append('(FALSE)')
 
+    if exact_processing_types:
+        exact_clause = 'processing_type && %s::varchar[]'
+        if processing_types:
+            if param_clauses and legacy_processing_types:
+                param_clauses[-1] = (
+                    f'({param_clauses[-1]} OR {exact_clause})'
+                )
+            else:
+                param_clauses.append(f'({exact_clause})')
+            all_params.append(exact_processing_types)
+
     if not param_clauses:
         return None, []
 
     return ' AND '.join(param_clauses), all_params
 
 
-def build_fp_relevance_sql(facility_types, processing_types):
+def build_fp_relevance_sql(
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+):
     """
     Score free-text facility/processing filters across both indexed arrays.
 
@@ -146,7 +194,11 @@ def build_fp_relevance_sql(facility_types, processing_types):
     score_parts = []
     params = []
 
-    for term in _free_text_fp_terms(facility_types, processing_types):
+    for term in _free_text_fp_terms(
+        facility_types,
+        processing_types,
+        exact_processing_types,
+    ):
         score_parts.append(
             FREE_TEXT_FP_TERM_SCORE.format(
                 array_match=FREE_TEXT_FP_ARRAY_MATCH
@@ -176,9 +228,14 @@ def annotate_facility_processing_match(
     queryset,
     facility_types,
     processing_types,
+    exact_processing_types=None,
     annotation_name='_fp_match',
 ):
-    sql, params = build_fp_match_sql(facility_types, processing_types)
+    sql, params = build_fp_match_sql(
+        facility_types,
+        processing_types,
+        exact_processing_types,
+    )
     if not sql:
         return queryset, False
 
@@ -197,9 +254,14 @@ def annotate_facility_processing_relevance(
     queryset,
     facility_types,
     processing_types,
+    exact_processing_types=None,
     annotation_name='_fp_relevance',
 ):
-    sql, params = build_fp_relevance_sql(facility_types, processing_types)
+    sql, params = build_fp_relevance_sql(
+        facility_types,
+        processing_types,
+        exact_processing_types,
+    )
     if not sql:
         return queryset, False
 
@@ -269,10 +331,12 @@ class FacilityIndexNewManager(models.Manager):
 
         parent_companies = params.getlist(FacilitiesQueryParams.PARENT_COMPANY)
 
-        facility_types = params.getlist(FacilitiesQueryParams.FACILITY_TYPE)
-
-        processing_types = params.getlist(
-            FacilitiesQueryParams.PROCESSING_TYPE
+        (
+            facility_types,
+            processing_types,
+            exact_processing_types,
+        ) = parse_facility_processing_query(
+            params
         )
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
@@ -377,6 +441,7 @@ class FacilityIndexNewManager(models.Manager):
             facilities_qs,
             facility_types,
             processing_types,
+            exact_processing_types,
         )
         parsed_isic_filters = parse_isic4_filter_values(isic_4_filters)
         isic_filter = build_isic_filter(parsed_isic_filters)

@@ -125,7 +125,9 @@ facilities_list_parameters = [
             'word or word-prefix matching across both facility type and '
             'processing type. On the facilities list endpoint, whole-word '
             'matches rank before word-prefix matches, followed by the '
-            'requested sort order.'
+            'requested sort order. Empty values are ignored. Unrecognized '
+            'free text shorter than three trimmed characters matches '
+            'nothing; declared taxonomy aliases remain supported.'
         ),
     ),
     Parameter(
@@ -139,7 +141,24 @@ facilities_list_parameters = [
             'word or word-prefix matching across both facility type and '
             'processing type. On the facilities list endpoint, whole-word '
             'matches rank before word-prefix matches, followed by the '
-            'requested sort order.'
+            'requested sort order. Empty values are ignored. Unrecognized '
+            'free text shorter than three trimmed characters matches '
+            'nothing; declared taxonomy aliases remain supported.'
+        ),
+    ),
+    Parameter(
+        'processing_type_exact',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'Repeat a case-sensitive processing_type value here to require '
+            'exact overlap with the indexed processing type array. Values '
+            'not also supplied as processing_type are ignored. Exact and '
+            'legacy processing terms are combined with OR semantics. Empty '
+            'values are ignored; non-empty values preserve their submitted '
+            'case and punctuation, including values shorter than three '
+            'characters.'
         ),
     ),
     Parameter(

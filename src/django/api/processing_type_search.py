@@ -243,18 +243,17 @@ def _taxonomy_candidates():
 
 def _group_candidates(candidates, normalized_query):
     """
-    Collapse variants of the same value into one row.
+    Dedupe only identical stored values.
 
-    The materialized view groups by exact value, so "Dyeing" contributed by
-    one organization and "dyeing" by another arrive as separate rows. The
-    count is the largest of the variants rather than their sum, because a
-    location can carry several of them.
+    Taxonomy labels are appended as synthetic zero-count candidates. When a
+    stored value is identical to one of those labels, retain the stored count
+    rather than adding it twice. Casing and punctuation variants remain
+    independently selectable rows with their own counts.
     """
     grouped = {}
 
     for value, count in candidates:
-        key = _grouping_key(value)
-        if not key:
+        if not value or not _grouping_key(value):
             continue
 
         score = (
@@ -264,20 +263,15 @@ def _group_candidates(candidates, normalized_query):
         if score is None:
             continue
 
-        group = grouped.get(key)
+        group = grouped.get(value)
         if group is None:
-            grouped[key] = {
+            grouped[value] = {
                 'value': value,
                 'count': count,
                 'score': score,
             }
             continue
 
-        is_more_common = count > group['count'] or (
-            count == group['count'] and value < group['value']
-        )
-        if is_more_common:
-            group['value'] = value
         group['count'] = max(group['count'], count)
         group['score'] = max(group['score'], score)
 
@@ -285,10 +279,8 @@ def _group_candidates(candidates, normalized_query):
 
 
 def _build_row(key, group, selected_facility_types):
-    canonical = _TAXONOMY_BY_KEY.get(key)
-    value, facility_types = (
-        canonical if canonical else (group['value'], ())
-    )
+    canonical = _TAXONOMY_BY_KEY.get(_grouping_key(key))
+    facility_types = canonical[1] if canonical else ()
 
     matches_selection = any(
         facility_type in selected_facility_types
@@ -299,7 +291,11 @@ def _build_row(key, group, selected_facility_types):
         score += FACILITY_TYPE_MATCH_BOOST
 
     return {
-        'value': value,
+        'value': group['value'],
+        # Concrete variants remain independently selectable, so display the
+        # stored value rather than giving every variant the same taxonomy
+        # label and making distinct counts look like duplicate rows.
+        'label': group['value'],
         'count': group['count'],
         'in_taxonomy': canonical is not None,
         'facility_types': list(facility_types),
@@ -320,8 +316,9 @@ def search_processing_types(
     first. Selected facility types boost the values they are parents of and
     dim the rest; nothing is filtered out.
 
-    Returns a list of dicts with the keys `value`, `count`, `in_taxonomy`,
-    `facility_types` and `dim`.
+    `value` is a concrete, case-sensitive indexed value suitable for exact
+    filtering. `label` displays that same concrete value so independently
+    selectable casing and punctuation variants remain distinguishable.
     """
     limit = min(max(int(limit), 0), MAX_SUGGESTION_LIMIT)
     if limit == 0:
