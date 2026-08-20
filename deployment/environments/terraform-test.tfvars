@@ -102,6 +102,11 @@ craft_cms_origin_domain = "open-supply.staging.servd.dev"
 # Dev/Preprod set aws_chatbot_manage_channel_configuration = false.
 aws_chatbot_manage_channel_configuration = true
 
+# Owns the account-level AWS Budget for Bedrock spend (account shared
+# with Dev/Preprod, which leave manage_bedrock_cost_budget at its
+# default of false).
+manage_bedrock_cost_budget = true
+
 waf_enabled = true
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvmXPN2tV5nf0j18Vaed5v"

@@ -1,7 +1,10 @@
 aiokafka==0.8.0
 kafka-python==2.0.2
 base32-crockford==0.3.0
-boto3==1.35.37
+# pydantic-ai's bedrock extra requires boto3>=1.42.63; boto3 1.x point
+# releases are backward compatible per AWS's versioning policy.
+boto3==1.42.63
+pydantic-ai-slim[bedrock]==2.29.0
 coreapi==2.3.3
 coverage==7.6.1
 debugpy==1.8.5
