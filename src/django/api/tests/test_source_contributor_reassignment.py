@@ -14,6 +14,7 @@ from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 from django.contrib.gis.geos import Point
 from django.core.management import call_command
+from django.db.models import F
 
 
 class SourceReassignmentTestBase(FacilityAPITestCaseBase):
@@ -261,7 +262,8 @@ class BackfillExtendedFieldContributorsTest(SourceReassignmentTestBase):
             self.contributor.id,
             self.extended_field.contributor_id,
         )
-        self.assertIn('would_update=1', out.getvalue())
+        self.assertIn('[DRY-RUN]', out.getvalue())
+        self.assertIn('processed=1', out.getvalue())
 
     def test_backfill_repairs_drifted_rows(self):
         self.drift_source_contributor(self.source, self.new_contributor)
@@ -274,7 +276,7 @@ class BackfillExtendedFieldContributorsTest(SourceReassignmentTestBase):
             self.new_contributor.id,
             self.extended_field.contributor_id,
         )
-        self.assertIn('updated=1', out.getvalue())
+        self.assertIn('processed=1', out.getvalue())
 
     def test_backfill_updates_facility_index_attribution(self):
         self.drift_source_contributor(self.source, self.new_contributor)
@@ -306,4 +308,84 @@ class BackfillExtendedFieldContributorsTest(SourceReassignmentTestBase):
         self.assertEqual(
             self.contributor.id,
             self.extended_field.contributor_id,
+        )
+
+    def test_backfill_commits_each_batch_separately(self):
+        extra = [
+            self.create_extended_field(
+                list_item=self.list_item,
+                contributor=self.contributor,
+                field_name=field_name,
+                value={"raw_value": field_name},
+            )
+            for field_name in (
+                ExtendedField.NATIVE_LANGUAGE_NAME,
+                ExtendedField.PARENT_COMPANY,
+                ExtendedField.DUNS_ID,
+            )
+        ]
+        self.drift_source_contributor(self.source, self.new_contributor)
+
+        out = StringIO()
+        call_command(self.COMMAND, '--batch-size', '2', stdout=out)
+
+        for extended_field in [self.extended_field, *extra]:
+            extended_field.refresh_from_db()
+            self.assertEqual(
+                self.new_contributor.id,
+                extended_field.contributor_id,
+            )
+        # 4 rows at 2 per batch.
+        self.assertIn('batches=2', out.getvalue())
+
+    def test_backfill_resumes_from_start_after_id(self):
+        later = self.create_extended_field(
+            list_item=self.list_item,
+            contributor=self.contributor,
+            field_name=ExtendedField.NATIVE_LANGUAGE_NAME,
+            value={"raw_value": "name"},
+        )
+        self.drift_source_contributor(self.source, self.new_contributor)
+
+        call_command(
+            self.COMMAND,
+            '--start-after-id',
+            str(self.extended_field.id),
+            stdout=StringIO(),
+        )
+
+        self.extended_field.refresh_from_db()
+        later.refresh_from_db()
+        self.assertEqual(
+            self.contributor.id,
+            self.extended_field.contributor_id,
+        )
+        self.assertEqual(self.new_contributor.id, later.contributor_id)
+
+    def test_backfill_limit_stops_early_and_reports_resume_point(self):
+        self.create_extended_field(
+            list_item=self.list_item,
+            contributor=self.contributor,
+            field_name=ExtendedField.NATIVE_LANGUAGE_NAME,
+            value={"raw_value": "name"},
+        )
+        self.drift_source_contributor(self.source, self.new_contributor)
+
+        out = StringIO()
+        call_command(self.COMMAND, '--limit', '1', stdout=out)
+
+        self.assertIn('processed=1', out.getvalue())
+        self.assertIn(
+            f'--start-after-id {self.extended_field.id}',
+            out.getvalue(),
+        )
+        # The remaining row is picked up by a plain re-run.
+        call_command(self.COMMAND, stdout=StringIO())
+        self.assertFalse(
+            ExtendedField.objects
+            .exclude(
+                contributor=F('facility_list_item__source__contributor')
+            )
+            .filter(facility_list_item__isnull=False)
+            .exists()
         )
