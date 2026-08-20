@@ -5,7 +5,13 @@ from api.models.extended_field import ExtendedField
 from api.constants import MIT_LIVING_WAGE_COUNTRY_CODES
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 
-SYSTEM_PARTNER_FIELD_NAMES = frozenset({"wage_indicator", "mit_living_wage"})
+INDIA_LABOUR_LINE_FIELD = "india_labour_line_helpline"
+
+SYSTEM_PARTNER_FIELD_NAMES = frozenset({
+    "wage_indicator",
+    "mit_living_wage",
+    INDIA_LABOUR_LINE_FIELD,
+})
 
 
 def apply_partner_fields_or_filter(
@@ -64,6 +70,9 @@ def apply_partner_fields_or_filter(
         )
     elif has_mit_living_wage:
         filters.append(Q(country_code__in=MIT_LIVING_WAGE_COUNTRY_CODES))
+
+    if INDIA_LABOUR_LINE_FIELD in field_names:
+        filters.append(build_india_labour_line_filter())
 
     if not filters:
         return facilities_queryset
@@ -126,3 +135,34 @@ def apply_partner_contributors_filter(
     )
 
     return facilities_queryset
+
+
+def build_india_labour_line_filter():
+    """
+    Return a Q matching locations inside the India Labour Line
+    boundary polygons.
+
+    Imports are deferred to avoid a circular import at model-loading
+    time (the provider module imports models from this package).
+    When the feature's waffle switch is off, or the configured polygons
+    are missing, this returns a match-nothing Q — never an unfiltered
+    "everything matches" — so a misconfiguration cannot quietly widen
+    search results.
+    """
+    from waffle import switch_is_active
+    from api.partner_fields.india_labour_line_provider import (
+        INDIA_LABOUR_LINE_SWITCH,
+        get_india_labour_line_polygons,
+    )
+
+    if not switch_is_active(INDIA_LABOUR_LINE_SWITCH):
+        return Q(id__in=[])
+
+    polygons = get_india_labour_line_polygons()
+    if not polygons:
+        return Q(id__in=[])
+
+    boundary_filter = Q(location__within=polygons[0].geom)
+    for polygon in polygons[1:]:
+        boundary_filter |= Q(location__within=polygon.geom)
+    return boundary_filter

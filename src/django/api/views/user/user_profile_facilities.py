@@ -1,6 +1,7 @@
 from django.conf import settings
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from django.utils.decorators import method_decorator
+from waffle import switch_is_active
 from django.views.decorators.cache import cache_page
 
 from rest_framework.exceptions import NotFound, ValidationError
@@ -12,6 +13,11 @@ from ...models.extended_field import ExtendedField
 from ...models.facility.facility_index import FacilityIndex
 from ...models.partner_field import PartnerField
 from ...models.wage_indicator_country_data import WageIndicatorCountryData
+from ...partner_fields.india_labour_line_provider import (
+    INDIA_LABOUR_LINE_SWITCH,
+    IndiaLabourLineProvider,
+    get_india_labour_line_polygons,
+)
 from ...serializers.facility.facility_index_summary_serializer import (
     FacilityIndexSummarySerializer,
 )
@@ -104,6 +110,26 @@ class UserProfileFacilities(ListAPIView):
             return self.__base_queryset().filter(
                 country_code__in=["US"],
             )
+
+        # The India Labour Line spotlight is polygon-driven: show the
+        # locations inside the helpline's boundary polygons. Gated by
+        # the feature's waffle switch; if the switch is off, fall
+        # through to the generic branch below (which matches nothing
+        # for a system field, since system fields have no ExtendedField
+        # rows).
+        if (
+            IndiaLabourLineProvider.FIELD_NAME in partner_fields
+            and switch_is_active(INDIA_LABOUR_LINE_SWITCH)
+        ):
+            polygons = get_india_labour_line_polygons()
+            if not polygons:
+                # Misconfigured (polygons missing): show nothing rather
+                # than something wrong. The helper already logged it.
+                return self.__base_queryset().none()
+            boundary_filter = Q(location__within=polygons[0].geom)
+            for polygon in polygons[1:]:
+                boundary_filter |= Q(location__within=polygon.geom)
+            return self.__base_queryset().filter(boundary_filter)
 
         return queryset.filter(
             Exists(
