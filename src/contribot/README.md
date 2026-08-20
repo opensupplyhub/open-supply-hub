@@ -29,7 +29,7 @@ Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module 
 | `notify`              | [`notify/handler.py`](notify/handler.py)                             | [`deployment/terraform/lambda-functions/contribot_notify/`](../../deployment/terraform/lambda-functions/contribot_notify/)                                         |
 | `retry_failed_lists`  | [`retry_failed_lists/handler.py`](retry_failed_lists/handler.py)     | [`deployment/terraform/lambda-functions/contribot_retry_failed_lists/`](../../deployment/terraform/lambda-functions/contribot_retry_failed_lists/)                 |
 
-Shared Python dependencies are listed in [`requirements.txt`](requirements.txt) (runtime) and [`requirements-dev.txt`](requirements-dev.txt) (local development).
+Shared Python dependencies are listed in [`requirements.txt`](requirements.txt) (runtime ranges) and [`requirements-dev.txt`](requirements-dev.txt) (frozen pins for local pytest and CI). Refresh the freeze with `pip install -r requirements.txt pytest && pip freeze > requirements-dev.txt`.
 
 Build all deployment zips from this directory:
 

@@ -203,11 +203,8 @@ data "aws_iam_policy_document" "contribot_retry_failed_lists" {
     effect = "Allow"
 
     actions = [
-      "dynamodb:GetItem",
-      "dynamodb:PutItem",
-      "dynamodb:UpdateItem",
-      "dynamodb:Query",
       "dynamodb:Scan",
+      "dynamodb:UpdateItem",
     ]
 
     resources = [aws_dynamodb_table.contribot_state.arn]

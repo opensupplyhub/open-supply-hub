@@ -1260,6 +1260,11 @@ variable "contribot_max_attempts" {
   type        = number
   description = "Maximum process_list attempts before a FAILED facility list is left for ops follow-up."
   default     = 3
+
+  validation {
+    condition     = var.contribot_max_attempts >= 1 && floor(var.contribot_max_attempts) == var.contribot_max_attempts
+    error_message = "contribot_max_attempts must be a positive integer."
+  }
 }
 
 variable "bedrock_submission_quality_region" {
