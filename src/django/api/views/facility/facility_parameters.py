@@ -152,13 +152,13 @@ facilities_list_parameters = [
         type=TYPE_STRING,
         required=False,
         description=(
-            'Repeat a case-sensitive processing_type value here to require '
-            'exact overlap with the indexed processing type array. Values '
-            'not also supplied as processing_type are ignored. Exact and '
-            'legacy processing terms are combined with OR semantics. Empty '
-            'values are ignored; non-empty values preserve their submitted '
-            'case and punctuation, including values shorter than three '
-            'characters.'
+            'Repeat a processing_type value here to require a whole array '
+            'element match, ignoring case only. Values not also supplied as '
+            'processing_type (using the same case-insensitive identity) are '
+            'ignored. Exact and legacy processing terms are combined with OR '
+            'semantics. Empty values are ignored; punctuation, accents, and '
+            'whitespace remain significant, including for values shorter '
+            'than three characters.'
         ),
     ),
     Parameter(

@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.core.cache import caches
+from django.db import connection
 from django.test import override_settings
 from django.urls import reverse
 
@@ -35,6 +36,7 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
         going through ExtendedField would exercise the matching code, which
         the typeahead reads the results of rather than depends on.
         """
+        facilities = []
         for _ in range(locations):
             row_index = next(self.row_indexes)
             list_item = FacilityListItem.objects.create(
@@ -66,8 +68,10 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
             FacilityIndex.objects.filter(id=facility.id).update(
                 processing_type=processing_types,
             )
+            facilities.append(facility)
 
         caches['view_cache'].clear()
+        return facilities
 
     @staticmethod
     def _values(response):
@@ -151,16 +155,157 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self._values(response), ['Sérigraphie'])
 
-    def test_caps_casing_variants_keep_individual_values_and_counts(self):
+    def test_casing_variants_share_one_distinct_facility_count(self):
         self._index_processing_types(['CAPS'], locations=2)
         self._index_processing_types(['Caps'])
+        self._index_processing_types(['CAPS', 'caps'])
 
         response = self.client.get(self.url, {'q': 'caps'})
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [(row['value'], row['count']) for row in response.data],
-            [('CAPS', 2), ('Caps', 1)],
+            [('CAPS', 4)],
+        )
+
+    def test_canonical_variant_uses_c_collation_to_break_count_ties(self):
+        self._index_processing_types(['Zebra'])
+        self._index_processing_types(['ZEBRA'])
+
+        response = self.client.get(self.url, {'q': 'zebra'})
+
+        self.assertEqual(
+            [(row['value'], row['count']) for row in response.data],
+            [('ZEBRA', 2)],
+        )
+
+    def test_case_only_update_preserves_logical_count_and_moves_variant(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=['CAPS'],
+        )
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=['caps'],
+        )
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT value, facility_count
+                FROM api_facility_processing_value
+                WHERE kind = 'processing_type' AND identity = 'caps'
+                """
+            )
+            logical_row = cursor.fetchone()
+            cursor.execute(
+                """
+                SELECT value, facility_count
+                FROM api_facility_processing_value_variant
+                WHERE kind = 'processing_type' AND identity = 'caps'
+                ORDER BY value COLLATE "C"
+                """
+            )
+            variant_rows = cursor.fetchall()
+
+        self.assertEqual(logical_row, ('caps', 1))
+        self.assertEqual(variant_rows, [('caps', 1)])
+
+    def test_removing_dominant_variant_switches_canonical_value(self):
+        dominant_facilities = self._index_processing_types(
+            ['CAPS'],
+            locations=2,
+        )
+        self._index_processing_types(['Caps'])
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT value, facility_count
+                FROM api_facility_processing_value
+                WHERE kind = 'processing_type' AND identity = 'caps'
+                """
+            )
+            self.assertEqual(cursor.fetchone(), ('CAPS', 3))
+
+        FacilityIndex.objects.filter(
+            id__in=[facility.id for facility in dominant_facilities]
+        ).update(processing_type=[])
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT value, facility_count
+                FROM api_facility_processing_value
+                WHERE kind = 'processing_type' AND identity = 'caps'
+                """
+            )
+            logical_row = cursor.fetchone()
+            cursor.execute(
+                """
+                SELECT value, facility_count
+                FROM api_facility_processing_value_variant
+                WHERE kind = 'processing_type' AND identity = 'caps'
+                """
+            )
+            variant_rows = cursor.fetchall()
+
+        self.assertEqual(logical_row, ('Caps', 1))
+        self.assertEqual(variant_rows, [('Caps', 1)])
+
+    def test_recompute_matches_triggered_logical_and_variant_aggregates(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=['CAPS', 'caps', 'Accent'],
+        )
+        self._index_processing_types(['Caps', 'accent'])
+
+        def aggregate_rows(cursor, table):
+            cursor.execute(
+                f"""
+                SELECT kind, identity, value, facility_count
+                FROM {table}
+                ORDER BY kind, identity, value COLLATE "C"
+                """
+            )
+            return cursor.fetchall()
+
+        with connection.cursor() as cursor:
+            logical_before = aggregate_rows(
+                cursor,
+                'api_facility_processing_value',
+            )
+            variants_before = aggregate_rows(
+                cursor,
+                'api_facility_processing_value_variant',
+            )
+            cursor.execute('CALL recompute_facility_processing_values();')
+            logical_after = aggregate_rows(
+                cursor,
+                'api_facility_processing_value',
+            )
+            variants_after = aggregate_rows(
+                cursor,
+                'api_facility_processing_value_variant',
+            )
+
+        self.assertEqual(logical_after, logical_before)
+        self.assertEqual(variants_after, variants_before)
+        self.assertIn(
+            ('processing_type', 'caps', 'CAPS', 2),
+            logical_after,
+        )
+        self.assertIn(
+            ('processing_type', 'accent', 'Accent', 2),
+            logical_after,
+        )
+        self.assertCountEqual(
+            [
+                row for row in variants_after
+                if row[:2] == ('processing_type', 'caps')
+            ],
+            [
+                ('processing_type', 'caps', 'CAPS', 1),
+                ('processing_type', 'caps', 'Caps', 1),
+                ('processing_type', 'caps', 'caps', 1),
+            ],
         )
 
     def test_punctuation_variants_remain_independently_selectable(self):
@@ -179,7 +324,31 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
                 ('Warehousing / Distribution', 1),
             ],
         )
-        self.assertTrue(all(row['in_taxonomy'] for row in response.data))
+        taxonomy_by_value = {
+            row['value']: row['in_taxonomy'] for row in response.data
+        }
+        self.assertFalse(taxonomy_by_value['Warehousing Distribution'])
+        self.assertTrue(taxonomy_by_value['Warehousing / Distribution'])
+
+    def test_accents_and_whitespace_remain_separate_identities(self):
+        self._index_processing_types([
+            'Serigraphie',
+            'Sérigraphie',
+            'Dyeing',
+            ' Dyeing',
+        ])
+
+        serigraphie = self.client.get(self.url, {'q': 'serigraphie'})
+        dyeing = self.client.get(self.url, {'q': 'dyeing'})
+
+        self.assertCountEqual(
+            [(row['value'], row['count']) for row in serigraphie.data],
+            [('Serigraphie', 1), ('Sérigraphie', 1)],
+        )
+        self.assertIn(
+            (' Dyeing', 1),
+            [(row['value'], row['count']) for row in dyeing.data],
+        )
 
     def test_synthetic_taxonomy_duplicate_does_not_double_count(self):
         self._index_processing_types(['Yarn Dyeing'], locations=2)
@@ -199,19 +368,23 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
             1,
         )
 
-    def test_taxonomy_suggestion_displays_concrete_stored_value(self):
+    def test_taxonomy_suggestion_uses_official_casing_and_combined_count(self):
         self._index_processing_types(['DYEING'], locations=2)
 
         response = self.client.get(self.url, {'q': 'dyeing'})
 
         dyeing = next(
             row for row in response.data
-            if row['value'] == 'DYEING'
+            if row['value'] == 'Dyeing'
         )
-        self.assertEqual(dyeing['value'], 'DYEING')
-        self.assertEqual(dyeing['label'], 'DYEING')
-        self.assertEqual(dyeing['count'], 2)
+        self.assertEqual(dyeing['value'], 'Dyeing')
+        self.assertEqual(dyeing['label'], 'Dyeing')
+        self.assertEqual(dyeing['count'], 3)
         self.assertTrue(dyeing['in_taxonomy'])
+        self.assertEqual(
+            sum(row['value'].lower() == 'dyeing' for row in response.data),
+            1,
+        )
 
     def test_facility_type_promotes_its_children_without_dropping_others(self):
         # Prefix matches outrank matches on a later word, so without a

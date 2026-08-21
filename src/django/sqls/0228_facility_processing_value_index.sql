@@ -22,20 +22,32 @@ DROP MATERIALIZED VIEW IF EXISTS api_facility_processing_value;
 
 CREATE TABLE api_facility_processing_value (
 	kind TEXT NOT NULL,
+	identity TEXT NOT NULL,
+	value TEXT NOT NULL,
+	facility_count INTEGER NOT NULL,
+	PRIMARY KEY (kind, identity)
+);
+
+CREATE TABLE api_facility_processing_value_variant (
+	kind TEXT NOT NULL,
+	identity TEXT NOT NULL,
 	value TEXT NOT NULL,
 	facility_count INTEGER NOT NULL,
 	PRIMARY KEY (kind, value)
 );
 
 COMMENT ON TABLE api_facility_processing_value IS
-	'Distinct facility_type and processing_type values indexed on '
-	'api_facilityindex with the number of locations carrying each one. '
+	'Case-normalized facility_type and processing_type values indexed on '
+	'api_facilityindex with the number of locations carrying any casing. '
 	'Maintained by the facility_index_processing_value_* triggers and '
 	'rebuilt by the recompute_facility_processing_value_index management '
 	'command.';
 
 CREATE INDEX api_facility_processing_value_value_trgm_idx
 	ON api_facility_processing_value USING gin (value gin_trgm_ops);
+
+CREATE INDEX api_facility_processing_value_variant_identity_idx
+	ON api_facility_processing_value_variant (kind, identity);
 
 /*Placeholders contributors upload instead of leaving the field empty. Kept
 in sync with the exclusions of index_processing_type() and
@@ -59,10 +71,9 @@ SELECT
 	]);
 $body$;
 
-/*Apply the difference between the values a location carried and the values
-it carries now. Both arrays are aggregated with DISTINCT upstream, so a value
-appears at most once per location and each side of the difference moves the
-count by exactly one.*/
+/*Apply both exact-variant and lower-case identity deltas. A facility carrying
+multiple casing variants increments each variant once but increments their
+shared identity only once.*/
 CREATE OR REPLACE
 PROCEDURE apply_facility_processing_value_delta(
 	value_kind TEXT,
@@ -74,6 +85,9 @@ AS $body$
 DECLARE
 	removed_values VARCHAR[];
 	added_values VARCHAR[];
+	removed_identities TEXT[];
+	added_identities TEXT[];
+	affected_identities TEXT[];
 
 BEGIN
 IF old_values IS NOT DISTINCT FROM new_values THEN
@@ -102,9 +116,39 @@ FROM
 	SELECT unnest(COALESCE(old_values, '{}'::VARCHAR[]))
 ) AS additions(added);
 
+SELECT
+	array_agg(removed_identity)
+INTO
+	removed_identities
+FROM
+	(
+	SELECT DISTINCT lower(old_value) AS removed_identity
+	FROM unnest(COALESCE(old_values, '{}'::VARCHAR[])) AS old_values(old_value)
+	WHERE is_indexable_facility_processing_value(old_value)
+	EXCEPT
+	SELECT DISTINCT lower(new_value)
+	FROM unnest(COALESCE(new_values, '{}'::VARCHAR[])) AS new_values(new_value)
+	WHERE is_indexable_facility_processing_value(new_value)
+) AS removals;
+
+SELECT
+	array_agg(added_identity)
+INTO
+	added_identities
+FROM
+	(
+	SELECT DISTINCT lower(new_value) AS added_identity
+	FROM unnest(COALESCE(new_values, '{}'::VARCHAR[])) AS new_values(new_value)
+	WHERE is_indexable_facility_processing_value(new_value)
+	EXCEPT
+	SELECT DISTINCT lower(old_value)
+	FROM unnest(COALESCE(old_values, '{}'::VARCHAR[])) AS old_values(old_value)
+	WHERE is_indexable_facility_processing_value(old_value)
+) AS additions;
+
 IF removed_values IS NOT NULL THEN
 UPDATE
-	api_facility_processing_value
+	api_facility_processing_value_variant
 SET
 	facility_count = facility_count - 1
 WHERE
@@ -113,7 +157,7 @@ WHERE
 
 DELETE
 FROM
-	api_facility_processing_value
+	api_facility_processing_value_variant
 WHERE
 	kind = value_kind
 	AND value = ANY(removed_values)
@@ -123,9 +167,12 @@ END IF;
 IF added_values IS NOT NULL THEN
 INSERT
 	INTO
-	api_facility_processing_value (kind, value, facility_count)
+	api_facility_processing_value_variant (
+		kind, identity, value, facility_count
+	)
 SELECT
 	value_kind,
+	lower(added),
 	added,
 	1
 FROM
@@ -137,8 +184,79 @@ ON
 DO
 UPDATE
 SET
+	facility_count =
+		api_facility_processing_value_variant.facility_count + 1;
+END IF;
+
+IF removed_identities IS NOT NULL THEN
+UPDATE
+	api_facility_processing_value
+SET
+	facility_count = facility_count - 1
+WHERE
+	kind = value_kind
+	AND identity = ANY(removed_identities);
+
+DELETE
+FROM
+	api_facility_processing_value
+WHERE
+	kind = value_kind
+	AND identity = ANY(removed_identities)
+	AND facility_count <= 0;
+END IF;
+
+IF added_identities IS NOT NULL THEN
+INSERT
+	INTO
+	api_facility_processing_value (kind, identity, value, facility_count)
+SELECT
+	value_kind,
+	added_identity,
+	added_identity,
+	1
+FROM
+	unnest(added_identities) AS additions(added_identity)
+ON
+	CONFLICT (kind, identity)
+DO
+UPDATE
+SET
 	facility_count = api_facility_processing_value.facility_count + 1;
 END IF;
+
+SELECT array_agg(DISTINCT identity)
+INTO affected_identities
+FROM unnest(
+	COALESCE(removed_values, '{}'::VARCHAR[])
+	|| COALESCE(added_values, '{}'::VARCHAR[])
+) AS affected(value)
+CROSS JOIN LATERAL (SELECT lower(value) AS identity) normalized;
+
+UPDATE api_facility_processing_value logical_value
+SET value = (
+	SELECT variant.value
+	FROM api_facility_processing_value_variant variant
+	WHERE
+		variant.kind = logical_value.kind
+		AND variant.identity = logical_value.identity
+	ORDER BY
+		variant.facility_count DESC,
+		variant.value COLLATE "C" ASC
+	LIMIT 1
+)
+WHERE
+	logical_value.kind = value_kind
+	AND logical_value.identity = ANY(
+		COALESCE(affected_identities, '{}'::TEXT[])
+	)
+	AND EXISTS (
+		SELECT 1
+		FROM api_facility_processing_value_variant variant
+		WHERE
+			variant.kind = logical_value.kind
+			AND variant.identity = logical_value.identity
+	);
 END;
 
 $body$;
@@ -156,18 +274,23 @@ DECLARE
 	processing_type_kind CONSTANT TEXT := 'processing_type';
 
 BEGIN
+TRUNCATE api_facility_processing_value_variant;
 TRUNCATE api_facility_processing_value;
 
 INSERT
 	INTO
-	api_facility_processing_value (kind, value, facility_count)
+	api_facility_processing_value_variant (
+		kind, identity, value, facility_count
+	)
 SELECT
 	kind,
+	lower(value),
 	value,
-	count(*)::INTEGER
+	count(DISTINCT facility_id)::INTEGER
 FROM
 	(
 	SELECT
+		fi.id AS facility_id,
 		facility_type_kind AS kind,
 		raw_value AS value
 	FROM
@@ -179,6 +302,7 @@ FROM
 	UNION ALL
 
 	SELECT
+		fi.id AS facility_id,
 		processing_type_kind AS kind,
 		raw_value AS value
 	FROM
@@ -192,6 +316,52 @@ WHERE
 GROUP BY
 	kind,
 	value;
+
+INSERT
+	INTO
+	api_facility_processing_value (kind, identity, value, facility_count)
+SELECT DISTINCT ON (logical_counts.kind, logical_counts.identity)
+	logical_counts.kind,
+	logical_counts.identity,
+	variant.value,
+	logical_counts.facility_count
+FROM (
+	SELECT
+		kind,
+		lower(value) AS identity,
+		count(DISTINCT facility_id)::INTEGER AS facility_count
+	FROM (
+		SELECT
+			fi.id AS facility_id,
+			facility_type_kind AS kind,
+			raw_value AS value
+		FROM api_facilityindex fi
+		CROSS JOIN LATERAL
+			unnest(fi.facility_type) AS ft(raw_value)
+		WHERE fi.facility_type <> '{}'
+
+		UNION ALL
+
+		SELECT
+			fi.id AS facility_id,
+			processing_type_kind AS kind,
+			raw_value AS value
+		FROM api_facilityindex fi
+		CROSS JOIN LATERAL
+			unnest(fi.processing_type) AS pt(raw_value)
+		WHERE fi.processing_type <> '{}'
+	) unnested_values
+	WHERE is_indexable_facility_processing_value(value)
+	GROUP BY kind, lower(value)
+) logical_counts
+JOIN api_facility_processing_value_variant variant
+	ON variant.kind = logical_counts.kind
+	AND variant.identity = logical_counts.identity
+ORDER BY
+	logical_counts.kind,
+	logical_counts.identity,
+	variant.facility_count DESC,
+	variant.value COLLATE "C" ASC;
 END;
 
 $body$;

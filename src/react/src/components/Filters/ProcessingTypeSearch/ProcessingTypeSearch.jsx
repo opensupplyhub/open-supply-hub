@@ -17,6 +17,7 @@ import styles from './styles';
 const MIN_QUERY_LENGTH = 3;
 const SUGGESTION_DEBOUNCE_MS = 250;
 const LISTBOX_ID = 'processing-type-suggestions';
+const caseIdentity = value => value.toLowerCase();
 
 const GROUP_TITLES = Object.freeze({
     standard: 'Standard types',
@@ -135,8 +136,8 @@ function ProcessingTypeSearch({
         setActiveRowIndex(-1);
     }, [suggestionData]);
 
-    const selectedValues = useMemo(
-        () => new Set(processingType.map(option => option.value)),
+    const selectedIdentities = useMemo(
+        () => new Set(processingType.map(option => caseIdentity(option.value))),
         [processingType],
     );
 
@@ -156,9 +157,12 @@ function ProcessingTypeSearch({
 
     const handleToggleSuggestion = suggestion => {
         const { value } = suggestion;
-        if (selectedValues.has(value)) {
+        const identity = caseIdentity(value);
+        if (selectedIdentities.has(identity)) {
             onProcessingTypeChange(
-                processingType.filter(option => option.value !== value),
+                processingType.filter(
+                    option => caseIdentity(option.value) !== identity,
+                ),
             );
         } else {
             onProcessingTypeChange([
@@ -175,8 +179,11 @@ function ProcessingTypeSearch({
     };
 
     const handleRemoveChip = chipId => {
+        const identity = caseIdentity(chipId);
         onProcessingTypeChange(
-            processingType.filter(option => option.value !== chipId),
+            processingType.filter(
+                option => caseIdentity(option.value) !== identity,
+            ),
         );
     };
 
@@ -190,7 +197,7 @@ function ProcessingTypeSearch({
             return false;
         }
 
-        if (!selectedValues.has(trimmedQuery)) {
+        if (!selectedIdentities.has(caseIdentity(trimmedQuery))) {
             onProcessingTypeChange([
                 ...processingType,
                 makeSelectOption(trimmedQuery),
@@ -358,8 +365,8 @@ function ProcessingTypeSearch({
                                           inTaxonomy={!!suggestion.in_taxonomy}
                                           dim={!!suggestion.dim}
                                           highlightQuery={highlightQuery}
-                                          selected={selectedValues.has(
-                                              suggestion.value,
+                                          selected={selectedIdentities.has(
+                                              caseIdentity(suggestion.value),
                                           )}
                                           active={index === activeRowIndex}
                                           onSelect={() =>

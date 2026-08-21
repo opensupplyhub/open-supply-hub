@@ -297,13 +297,13 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             [self.facility.id, prefix_facility.id],
         )
 
-    def test_selected_processing_type_matches_exact_case_in_both_managers(
+    def test_selected_processing_type_matches_whole_element_ignoring_case(
         self,
     ):
         FacilityIndex.objects.filter(id=self.facility.id).update(
             processing_type=["CAPS"],
         )
-        self._create_indexed_facility(
+        lowercase = self._create_indexed_facility(
             "Lowercase Caps",
             2,
             processing_type=["caps"],
@@ -313,32 +313,36 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             self.url,
             {
                 "processing_type": "CAPS",
-                "processing_type_exact": "CAPS",
+                "processing_type_exact": "cApS",
             },
         )
 
         data = json.loads(response.content)
-        self.assertEqual(data["count"], 1)
-        self.assertEqual(data["features"][0]["id"], self.facility.id)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            {self.facility.id, lowercase.id},
+        )
 
         params = QueryDict(
-            "processing_type=CAPS&processing_type_exact=CAPS"
+            "processing_type=CAPS&processing_type_exact=caps"
         )
+        expected_ids = {self.facility.id, lowercase.id}
         self.assertEqual(
-            list(
+            set(
                 FacilityIndex.objects.filter_by_query_params(
                     params
                 ).values_list("id", flat=True)
             ),
-            [self.facility.id],
+            expected_ids,
         )
         self.assertEqual(
-            list(
+            set(
                 Facility.objects.filter_by_query_params(params).values_list(
                     "id", flat=True
                 )
             ),
-            [self.facility.id],
+            expected_ids,
         )
 
     def test_unselected_processing_type_keeps_legacy_case_insensitive_match(
@@ -391,7 +395,7 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             2,
             processing_type=["cement mixing"],
         )
-        self._create_indexed_facility(
+        lowercase = self._create_indexed_facility(
             "Lowercase Caps",
             3,
             processing_type=["caps"],
@@ -405,10 +409,14 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
         )
 
         data = json.loads(response.content)
-        self.assertEqual(data["count"], 2)
+        self.assertEqual(data["count"], 3)
         self.assertEqual(
             {feature["id"] for feature in data["features"]},
-            {self.facility.id, cement.id},
+            {
+                self.facility.id,
+                cement.id,
+                lowercase.id,
+            },
         )
 
     def test_exact_processing_type_is_anded_with_facility_type(self):
@@ -440,8 +448,7 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertEqual(data["count"], 1)
-        self.assertEqual(data["features"][0]["id"], self.facility.id)
+        self.assertEqual(data["count"], 2)
 
     def test_exact_processing_type_is_excluded_from_free_text_relevance(self):
         FacilityIndex.objects.filter(id=self.facility.id).update(
@@ -575,11 +582,37 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
             self.url,
             {
                 "processing_type": "X",
-                "processing_type_exact": "X",
+                "processing_type_exact": "x",
             },
         )
 
         self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+
+    def test_exact_processing_preserves_punctuation_and_accents(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAFÉ / DYEING"],
+        )
+        self._create_indexed_facility(
+            "Different Accent",
+            2,
+            processing_type=["Cafe / Dyeing"],
+        )
+        self._create_indexed_facility(
+            "Different Punctuation",
+            3,
+            processing_type=["Café Dyeing"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "processing_type": "Café / Dyeing",
+                "processing_type_exact": "café / dyeing",
+            },
+        )
+
         data = json.loads(response.content)
         self.assertEqual(data["count"], 1)
         self.assertEqual(data["features"][0]["id"], self.facility.id)

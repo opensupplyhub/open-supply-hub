@@ -318,29 +318,64 @@ describe('ProcessingTypeSearch component', () => {
         ]);
     });
 
-    test('distinguishes and selects concrete taxonomy variants', () => {
+    test('toggles a selected value using case-only identity', () => {
         const selected = {
             value: 'DYEING',
             label: 'DYEING',
             isExact: true,
         };
-        const suggestions = [
-            { ...DYEING, value: 'DYEING', label: 'DYEING' },
-            { ...DYEING, value: 'Dyeing', label: 'Dyeing' },
-        ];
-        const { container, getAllByText, getByText, onProcessingTypeChange } =
-            renderComponent({
-                processingType: [selected],
-                suggestions: makeSuggestions(suggestions),
-            });
+        const { container, onProcessingTypeChange } = renderComponent({
+            processingType: [selected],
+            suggestions: makeSuggestions([DYEING]),
+        });
 
-        expect(getAllByText('DYEING')).toHaveLength(2);
-        expect(getByText('Dyeing')).toBeInTheDocument();
-        fireEvent.click(getRowButtons(container)[1]);
+        fireEvent.click(getRowButtons(container)[0]);
+
+        expect(onProcessingTypeChange).toHaveBeenCalledWith([]);
+    });
+
+    test('pending text does not duplicate a case-only identity', () => {
+        const ref = createRef();
+        const { input, onProcessingTypeChange } = renderComponent({
+            processingType: [
+                { value: 'Dyeing', label: 'Dyeing', isExact: true },
+            ],
+            processingTypeSearchRef: ref,
+        });
+
+        fireEvent.change(input, { target: { value: 'DYEING' } });
+        act(() => {
+            ref.current.commitPendingQuery();
+        });
+
+        expect(onProcessingTypeChange).not.toHaveBeenCalled();
+    });
+
+    test('punctuation variants remain separately selectable', () => {
+        const suggestion = {
+            ...YARN_DYEING,
+            value: 'Warehousing / Distribution',
+            label: 'Warehousing / Distribution',
+        };
+        const selected = {
+            value: 'Warehousing Distribution',
+            label: 'Warehousing Distribution',
+            isExact: true,
+        };
+        const { container, onProcessingTypeChange } = renderComponent({
+            processingType: [selected],
+            suggestions: makeSuggestions([suggestion]),
+        });
+
+        fireEvent.click(getRowButtons(container)[0]);
 
         expect(onProcessingTypeChange).toHaveBeenCalledWith([
             selected,
-            { value: 'Dyeing', label: 'Dyeing', isExact: true },
+            {
+                value: 'Warehousing / Distribution',
+                label: 'Warehousing / Distribution',
+                isExact: true,
+            },
         ]);
     });
 

@@ -11,12 +11,12 @@ TABLE = 'api_facility_processing_value'
 
 class Command(BaseCommand):
     help = (
-        'Rebuild the {} table, which holds the distinct facility type and '
-        'processing type values of the facility index behind the processing '
-        'type typeahead. The counts are maintained by triggers, so this is '
-        'only needed after a bulk rewrite of api_facilityindex such as '
-        'index_facilities_new or backfill_facility_index, or to correct '
-        'drift.'.format(TABLE)
+        'Rebuild the {} table and its exact-variant counts, which hold the '
+        'case-normalized facility type and processing type values behind the '
+        'processing type typeahead. The counts are maintained by triggers, '
+        'so this is only needed after a bulk rewrite of api_facilityindex '
+        'such as index_facilities_new or backfill_facility_index, or to '
+        'correct drift.'.format(TABLE)
     )
 
     def handle(self, *args, **options):

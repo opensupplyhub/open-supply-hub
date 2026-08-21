@@ -68,12 +68,14 @@ def _free_text_fp_terms(
     exact_processing_types=None,
 ):
     terms = []
-    exact_processing_types = set(exact_processing_types or [])
+    exact_processing_type_identities = {
+        value.lower() for value in (exact_processing_types or [])
+    }
     values = [
         *(facility_types or []),
         *(
             value for value in (processing_types or [])
-            if value not in exact_processing_types
+            if value.lower() not in exact_processing_type_identities
         ),
     ]
     for value in values:
@@ -149,7 +151,15 @@ def _append_exact_processing_clause(
     if not exact_processing_types:
         return
 
-    exact_clause = 'processing_type && %s::varchar[]'
+    exact_clause = """
+    EXISTS (
+        SELECT 1 FROM unnest(processing_type) AS elem
+        WHERE lower(elem) IN (
+            SELECT lower(requested_value)
+            FROM unnest(%s::text[]) AS requested(requested_value)
+        )
+    )
+    """
     if param_clauses and legacy_processing_types:
         param_clauses[-1] = f'({param_clauses[-1]} OR {exact_clause})'
     else:
@@ -173,13 +183,19 @@ def build_fp_match_sql(
     param_clauses = []
     all_params = []
 
+    processing_type_identities = {
+        value.lower() for value in (processing_types or [])
+    }
     exact_processing_types = [
         value for value in (exact_processing_types or [])
-        if value in (processing_types or [])
+        if value.lower() in processing_type_identities
     ]
+    exact_processing_type_identities = {
+        value.lower() for value in exact_processing_types
+    }
     legacy_processing_types = [
         value for value in (processing_types or [])
-        if value not in exact_processing_types
+        if value.lower() not in exact_processing_type_identities
     ]
 
     for values, overlap_field, taxonomy_slot in (

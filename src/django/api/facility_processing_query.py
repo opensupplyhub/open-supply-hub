@@ -26,14 +26,16 @@ def parse_facility_processing_query(params):
         params,
         FacilitiesQueryParams.PROCESSING_TYPE,
     )
-    processing_type_values = set(processing_types)
+    processing_type_identities = {
+        value.lower() for value in processing_types
+    }
     exact_processing_types = [
         value
         for value in _nonblank_values(
             params,
             FacilitiesQueryParams.PROCESSING_TYPE_EXACT,
         )
-        if value in processing_type_values
+        if value.lower() in processing_type_identities
     ]
 
     return FacilityProcessingQuery(

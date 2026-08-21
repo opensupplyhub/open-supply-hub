@@ -545,6 +545,29 @@ export const createFiltersFromQueryString = qs => {
         return isArray(val) ? compact(val) : compact([val]);
     };
 
+    const exactProcessingTypeIdentities = new Set(
+        normaliseStringArray(exactProcessingTypes).map(value =>
+            value.toLowerCase(),
+        ),
+    );
+    const seenProcessingTypeIdentities = new Set();
+    const hydratedProcessingTypes = createSelectOptionsFromParams(
+        processingType,
+    ).reduce((options, option) => {
+        const processingTypeIdentity = option.value.toLowerCase();
+        if (seenProcessingTypeIdentities.has(processingTypeIdentity)) {
+            return options;
+        }
+        seenProcessingTypeIdentities.add(processingTypeIdentity);
+        options.push({
+            ...option,
+            ...(exactProcessingTypeIdentities.has(identity)
+                ? { isExact: true }
+                : {}),
+        });
+        return options;
+    }, []);
+
     return Object.freeze({
         facilityFreeTextQuery,
         contributors: createSelectOptionsFromParams(contributors),
@@ -555,16 +578,7 @@ export const createFiltersFromQueryString = qs => {
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
-        processingType: createSelectOptionsFromParams(processingType).map(
-            option => ({
-                ...option,
-                ...(normaliseStringArray(exactProcessingTypes).includes(
-                    option.value,
-                )
-                    ? { isExact: true }
-                    : {}),
-            }),
-        ),
+        processingType: hydratedProcessingTypes,
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,
@@ -977,19 +991,7 @@ export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
     return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
 };
 
-const normalizeFacilityProcessingLabel = value =>
-    unidecode(value)
-        .replaceAll('\n', ' ')
-        .replaceAll('-', '')
-        .replaceAll('/', ' ')
-        .replaceAll("'", '')
-        .replaceAll(',', '')
-        .replaceAll(':', ' ')
-        .replace(/ +/g, ' ')
-        .trim()
-        .replace(/^["']|["']$/g, '')
-        .toLowerCase()
-        .trim();
+const normalizeFacilityProcessingLabel = value => value.toLowerCase();
 
 export const restoreExactProcessingTypeLabels = (
     processingTypes,

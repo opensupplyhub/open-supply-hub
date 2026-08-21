@@ -18,3 +18,5 @@ DROP PROCEDURE IF EXISTS apply_facility_processing_value_delta(
 DROP FUNCTION IF EXISTS is_indexable_facility_processing_value(TEXT);
 
 DROP TABLE IF EXISTS api_facility_processing_value;
+
+DROP TABLE IF EXISTS api_facility_processing_value_variant;

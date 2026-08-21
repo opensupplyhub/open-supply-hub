@@ -68,7 +68,9 @@ class ProcessingTypeSuggestionsView(APIView):
             'cached per set of query parameters.'
         ),
     )
-    @cache_view_response('processing_type_suggestions')
+    # Version the namespace when suggestion identity semantics change so
+    # responses cached before a deployment cannot preserve obsolete rows.
+    @cache_view_response('processing_type_suggestions_v2')
     def get(self, request):
         """
         ## Sample Response

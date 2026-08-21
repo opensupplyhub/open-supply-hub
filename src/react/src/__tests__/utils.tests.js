@@ -726,8 +726,9 @@ it('creates a set of filters from a querystring', () => {
     ).toMatchObject(expectedFreeTextProcessingTypeMatch);
 
     const exactProcessingTypeString =
-        '?processing_type=CAPS&processing_type=cement%20mixing' +
-        '&processing_type_exact=CAPS&processing_type_exact=orphan';
+        '?processing_type=CAPS&processing_type=Caps' +
+        '&processing_type=cement%20mixing' +
+        '&processing_type_exact=caps&processing_type_exact=orphan';
     expect(
         createFiltersFromQueryString(exactProcessingTypeString),
     ).toMatchObject({
@@ -769,6 +770,30 @@ it('creates a set of filters from a querystring', () => {
             isExact: true,
         },
     ]);
+
+    const punctuationVariant = [
+        {
+            value: 'Warehousing Distribution',
+            label: 'Warehousing Distribution',
+            isExact: true,
+        },
+        {
+            value: 'Serigraphie',
+            label: 'Serigraphie',
+            isExact: true,
+        },
+    ];
+    expect(
+        restoreExactProcessingTypeLabels(punctuationVariant, [
+            {
+                facilityType: 'Warehouse',
+                processingTypes: [
+                    'Warehousing / Distribution',
+                    'Sérigraphie',
+                ],
+            },
+        ]),
+    ).toBe(punctuationVariant);
 
     const productTypeString = '?product_type=Beauty&product_type=Jackets/Blazers'
     const expectedProductTypeMatch = {
