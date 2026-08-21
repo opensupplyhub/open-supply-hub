@@ -49,6 +49,9 @@ def _check_crs(data):
     """
     crs = data.get('crs')
     if crs is None:
+        # No declared coordinate system. This is the normal, spec-
+        # compliant case: current GeoJSON has no `crs` member at all
+        # and is always WGS 84, so there is nothing to check.
         return
 
     # A well-formed legacy declaration looks like:
