@@ -16,7 +16,7 @@ import Grid from '@material-ui/core/Grid';
 import { withStyles } from '@material-ui/core/styles';
 
 import IconComponent from '../../Shared/IconComponent/IconComponent';
-import { getContributionsCount } from '../ContributionsDrawer/utils';
+import { getTotalContributionsCount } from '../ContributionsDrawer/utils';
 import SourcesButton from './SourcesButton/SourcesButton';
 import MetaContributor from './MetaContributor/MetaContributor';
 import MetaDate from './MetaDate/MetaDate';
@@ -38,7 +38,9 @@ const DataPoint = ({
     onOpenDrawer,
     multiline,
 }) => {
-    const sourcesCount = getContributionsCount(drawerData?.contributions);
+    // Counts the promoted contribution as well, so a field with a single
+    // contribution can still open the drawer (OSDEV-3228).
+    const sourcesCount = getTotalContributionsCount(drawerData);
     const showSourcesButton = sourcesCount > 0 && onOpenDrawer;
     const statusChipClass = getStatusChipClass(statusLabel, classes);
 
