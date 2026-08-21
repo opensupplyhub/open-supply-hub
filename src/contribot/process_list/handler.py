@@ -16,7 +16,7 @@ from pathlib import Path
 from lib.contribot import ContriBot
 from lib.contribot_workbook import ContribotWorkbook
 from lib.google_drive import GoogleDrive
-from lib.lists_repository import STATUS_PROCESSING, ListsRepository
+from lib.lists_repository import STATUS_FAILED, STATUS_PROCESSING, ListsRepository
 from lib.s3_storage import S3Storage
 
 logger = logging.getLogger(__name__)
@@ -34,21 +34,21 @@ def handler(event, context):
     if not item:
         raise ValueError(f"No DynamoDB row for list_id={list_id}")
 
-    file_name = (item.get("file_name") or "").strip()
-    if not file_name:
-        raise ValueError(f"list_id={list_id} is missing file_name")
-
     work_dir = Path("/tmp") / "contribot" / list_id
 
     if work_dir.exists():
         shutil.rmtree(work_dir, ignore_errors=True)
 
-    work_dir.mkdir(parents=True, exist_ok=True)
-    source_path = work_dir / Path(file_name).name
-    output_dir = work_dir / "output"
-    output_dir.mkdir(parents=True, exist_ok=True)
-
     try:
+        file_name = (item.get("file_name") or "").strip()
+        if not file_name:
+            raise ValueError(f"list_id={list_id} is missing file_name")
+
+        work_dir.mkdir(parents=True, exist_ok=True)
+        source_path = work_dir / Path(file_name).name
+        output_dir = work_dir / "output"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
         repository.update_list(list_id, status=STATUS_PROCESSING)
         logger.info("Processing list_id=%s file_name=%s", list_id, file_name)
 
@@ -106,5 +106,9 @@ def handler(event, context):
             "num_errors": num_errors,
             "error_ratio": error_ratio,
         }
+    except Exception:
+        logger.exception("Failed processing list_id=%s", list_id)
+        repository.update_list(list_id, status=STATUS_FAILED)
+        raise
     finally:
         shutil.rmtree(work_dir, ignore_errors=True)
