@@ -43,6 +43,36 @@ INDIA_LABOUR_LINE_SECTORS = [
 ]
 
 
+def get_covered_production_locations():
+    """
+    Return the queryset of production locations the helpline covers.
+
+    "Covered" means: inside one of the configured boundary polygons AND
+    working in at least one covered sector. This is the one shared
+    definition of that rule — the contributor-profile spotlight and the
+    search filter both build on this queryset, so the two can never
+    drift apart. It is built on Polygon.get_production_locations(), the
+    polygon model's general-purpose query.
+
+    Returns an empty queryset — never "everything" — when no configured
+    polygon exists (the lookup helper logs a warning in that case).
+    Callers are responsible for checking the feature's waffle switch.
+    """
+    from api.models.facility.facility_index import FacilityIndex
+
+    polygons = get_india_labour_line_polygons()
+    if not polygons:
+        return FacilityIndex.objects.none()
+
+    sector_filter = {'sector': INDIA_LABOUR_LINE_SECTORS}
+    covered = polygons[0].get_production_locations(filters=sector_filter)
+    for polygon in polygons[1:]:
+        covered = covered | polygon.get_production_locations(
+            filters=sector_filter
+        )
+    return covered
+
+
 def get_india_labour_line_polygons() -> List[Polygon]:
     """
     Return the Polygon rows backing the India Labour Line field.
@@ -103,8 +133,12 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
         the formatted field needs.
 
         Cheap checks run first (feature switch, country, has a
-        location) so most locations never reach the PostGIS
-        containment query.
+        location, sector) so most locations never reach the PostGIS
+        containment query. This runs on every page render, so it keeps
+        its own lean one-location query rather than going through
+        get_covered_production_locations() — but it applies the same
+        boundary and sector rules, from the same constants, and the
+        test suite holds the two paths to the same answers.
 
         Args:
             production_location: The Facility being rendered.

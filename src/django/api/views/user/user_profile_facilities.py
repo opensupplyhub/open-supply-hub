@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Exists, OuterRef
 from django.utils.decorators import method_decorator
 from waffle import switch_is_active
 from django.views.decorators.cache import cache_page
@@ -14,10 +14,9 @@ from ...models.facility.facility_index import FacilityIndex
 from ...models.partner_field import PartnerField
 from ...models.wage_indicator_country_data import WageIndicatorCountryData
 from ...partner_fields.india_labour_line_provider import (
-    INDIA_LABOUR_LINE_SECTORS,
     INDIA_LABOUR_LINE_SWITCH,
     IndiaLabourLineProvider,
-    get_india_labour_line_polygons,
+    get_covered_production_locations,
 )
 from ...serializers.facility.facility_index_summary_serializer import (
     FacilityIndexSummarySerializer,
@@ -113,28 +112,20 @@ class UserProfileFacilities(ListAPIView):
                 country_code__in=["US"],
             )
 
-        # The India Labour Line spotlight is polygon-driven: show the
-        # locations inside the helpline's boundary polygons. Gated by
-        # the feature's waffle switch; if the switch is off, fall
-        # through to the generic branch below (which matches nothing
-        # for a system field, since system fields have no ExtendedField
-        # rows).
+        # The India Labour Line spotlight shows the locations the
+        # helpline covers, using the shared covered-locations
+        # definition so this page can never disagree with the search
+        # filter. Gated by the feature's waffle switch; if the switch
+        # is off, fall through to the generic branch below (which
+        # matches nothing for a system field, since system fields have
+        # no ExtendedField rows).
         if (
             IndiaLabourLineProvider.FIELD_NAME in partner_fields
             and switch_is_active(INDIA_LABOUR_LINE_SWITCH)
         ):
-            polygons = get_india_labour_line_polygons()
-            if not polygons:
-                # Misconfigured (polygons missing): show nothing rather
-                # than something wrong. The helper already logged it.
-                return self.__base_queryset().none()
-            boundary_filter = Q(location__within=polygons[0].geom)
-            for polygon in polygons[1:]:
-                boundary_filter |= Q(location__within=polygon.geom)
-            # Inside the boundary AND working in a covered sector.
+            covered = get_covered_production_locations()
             return self.__base_queryset().filter(
-                boundary_filter,
-                sector__overlap=INDIA_LABOUR_LINE_SECTORS,
+                id__in=covered.values('id')
             )
 
         return queryset.filter(

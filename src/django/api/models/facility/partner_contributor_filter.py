@@ -139,32 +139,27 @@ def apply_partner_contributors_filter(
 
 def build_india_labour_line_filter():
     """
-    Return a Q matching locations inside the India Labour Line
-    boundary polygons.
+    Return a Q matching the locations the India Labour Line covers.
 
-    Imports are deferred to avoid a circular import at model-loading
-    time (the provider module imports models from this package).
-    When the feature's waffle switch is off, or the configured polygons
-    are missing, this returns a match-nothing Q — never an unfiltered
+    Delegates to the shared covered-locations definition (see
+    get_covered_production_locations in the provider module), so
+    search results can never disagree with the contributor-profile
+    spotlight. Imports are deferred to avoid a circular import at
+    model-loading time (the provider module imports models from this
+    package).
+
+    When the feature's waffle switch is off, or the boundary polygons
+    are missing, this matches nothing — never an unfiltered
     "everything matches" — so a misconfiguration cannot quietly widen
     search results.
     """
     from waffle import switch_is_active
     from api.partner_fields.india_labour_line_provider import (
-        INDIA_LABOUR_LINE_SECTORS,
         INDIA_LABOUR_LINE_SWITCH,
-        get_india_labour_line_polygons,
+        get_covered_production_locations,
     )
 
     if not switch_is_active(INDIA_LABOUR_LINE_SWITCH):
         return Q(id__in=[])
 
-    polygons = get_india_labour_line_polygons()
-    if not polygons:
-        return Q(id__in=[])
-
-    boundary_filter = Q(location__within=polygons[0].geom)
-    for polygon in polygons[1:]:
-        boundary_filter |= Q(location__within=polygon.geom)
-    # Inside the boundary AND working in a covered sector.
-    return boundary_filter & Q(sector__overlap=INDIA_LABOUR_LINE_SECTORS)
+    return Q(id__in=get_covered_production_locations().values('id'))
