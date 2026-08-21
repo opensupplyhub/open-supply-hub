@@ -11,6 +11,7 @@
   },
   "policy": {
     "reject_heuristic_pct": null,
+    "reject_heuristic_count": null,
     "second_rejection_cc": "<from the Data Team Resources Confluence page>"
   },
   "output_dir": "~/list-reviews"

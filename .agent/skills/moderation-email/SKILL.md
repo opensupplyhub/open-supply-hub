@@ -41,6 +41,7 @@ from the config; none of them are stored in this skill.
 Config keys used below: `docs.templates_doc_id`, `docs.taxonomy_sheet_id`
 (+ `gid`), `docs.contribot_drive_folder_id`, `platform.base_url`,
 `platform.monday_board_url`, `policy.reject_heuristic_pct` (nullable),
+`policy.reject_heuristic_count` (nullable),
 `policy.second_rejection_cc`, `output_dir`.
 
 ## 1. Read the tagged sheet
@@ -95,11 +96,15 @@ text is stored in this skill; the doc is the single source of truth.
 
 - Default scenario: **REMOVE AND APPROVE**.
 - If `policy.reject_heuristic_pct` is set and the tagged-row share meets
-  or exceeds it, raise the possibility of **REJECTED (Feedback Phase)**.
-  The threshold is a **heuristic, not a rule**: it prompts the question,
-  never decides it — severity and kind of errors matter more than the
-  count, and the moderator's call is final in both directions. If the
-  config leaves it null, report the count with no threshold framing.
+  or exceeds it, OR `policy.reject_heuristic_count` is set and the
+  absolute number of tagged rows meets or exceeds it, raise the
+  possibility of **REJECTED (Feedback Phase)**. Either trigger alone is
+  enough — the count floor exists because on a very large list a serious
+  problem can sit well under the percentage bar. The thresholds are
+  **heuristics, not rules**: they prompt the question, never decide it —
+  severity and kind of errors matter more than the count, and the
+  moderator's call is final in both directions. If the config leaves
+  both null, report the count with no threshold framing.
 - The moderator can always state the scenario directly — that wins.
 
 ## 4. Build the email
