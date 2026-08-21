@@ -11,11 +11,11 @@ REEXPORT_ADVICE = (
     'Please re-export the data in WGS 84 (EPSG:4326) and try again.'
 )
 
-# Spellings of WGS 84 accepted in a legacy GeoJSON `crs` member.
-# Current GeoJSON (RFC 7946) removed `crs` entirely — WGS 84 is the
-# only coordinate system the spec allows — but older files and some GIS
-# tools still write the member, so when it is present we check that it
-# names WGS 84 and reject anything else before parsing.
+# The different ways a GeoJSON file might spell out "WGS 84" — the
+# standard latitude/longitude system OS Hub uses. Modern GeoJSON files
+# don't name a coordinate system at all (WGS 84 is simply the rule),
+# but older files and some mapping tools still include a label. When a
+# label is present, we accept only these spellings.
 WGS84_CRS_NAMES = frozenset({
     'urn:ogc:def:crs:ogc:1.3:crs84',
     'urn:ogc:def:crs:ogc:2:84',
@@ -31,11 +31,12 @@ def _check_crs(data):
     """
     Reject GeoJSON that declares a coordinate system other than WGS 84.
 
-    OS Hub stores all coordinates in WGS 84 (EPSG:4326). If a file
-    declares a different coordinate system, its numbers mean something
-    else entirely (often meters in a projected grid), and storing them
-    unconverted would silently place the boundary in the wrong spot on
-    Earth — so we stop it here with instructions instead.
+    OS Hub stores every coordinate as plain latitude/longitude
+    (WGS 84). If a file says its numbers are in some other coordinate
+    system, then those numbers aren't latitudes and longitudes at all —
+    often they're meters on a map grid — and saving them as-is would
+    quietly put the boundary in the wrong place on the map. Better to
+    stop here and tell the person how to fix the file.
 
     Args:
         data: The parsed top-level GeoJSON dict. A missing `crs` member
@@ -54,11 +55,11 @@ def _check_crs(data):
         # and is always WGS 84, so there is nothing to check.
         return
 
-    # A well-formed legacy declaration looks like:
+    # A well-formed label looks like:
     #   {"type": "name", "properties": {"name": "EPSG:4326"}}
-    # Dig the name out defensively — a malformed member is treated as
-    # an error rather than being ignored, since we can't know what
-    # coordinate system the file intended.
+    # If the label doesn't have that shape, we can't tell what
+    # coordinate system the file meant — so that's an error too,
+    # rather than something to quietly ignore.
     name = None
     if isinstance(crs, dict):
         properties = crs.get('properties')
@@ -82,11 +83,11 @@ def _check_bounds(geom):
     """
     Reject geometry whose coordinates cannot be longitude/latitude.
 
-    This catches the sneakier cousin of the `_check_crs` case: a file
-    whose coordinates are in a projected system (meters, so values like
-    233000) but which declares no coordinate system at all. Such values
-    fall far outside the valid longitude (±180) and latitude (±90)
-    ranges, so a simple bounds check exposes them.
+    Some files use map-grid coordinates measured in meters (values
+    like 233000) without labeling the coordinate system, so the label
+    check in `_check_crs` never sees them. Meter values sit far
+    outside the possible range for longitude (-180 to 180) and
+    latitude (-90 to 90), so checking the ranges catches these files.
 
     Args:
         geom: The parsed GEOS geometry to check.
@@ -105,19 +106,97 @@ def _check_bounds(geom):
         )
 
 
+def _extract_geometries(data):
+    """
+    Unwrap the accepted GeoJSON shapes into a list of geometry dicts.
+
+    Handles the three shapes we accept: a FeatureCollection (take each
+    feature's geometry), a Feature (take its geometry), or a bare
+    geometry (use it as-is).
+
+    Args:
+        data: The parsed GeoJSON.
+
+    Raises:
+        InvalidPolygonGeoJSON: If a Feature or FeatureCollection turns
+            out to contain no geometry at all.
+    """
+    geom_type = data.get('type') if isinstance(data, dict) else None
+
+    if geom_type == 'FeatureCollection':
+        geometries = [
+            feature['geometry']
+            for feature in (data.get('features') or [])
+            if isinstance(feature, dict) and feature.get('geometry')
+            is not None
+        ]
+        if not geometries:
+            raise InvalidPolygonGeoJSON(
+                'FeatureCollection has no features with a geometry.'
+            )
+        return geometries
+
+    if geom_type == 'Feature':
+        geometry = data.get('geometry')
+        if geometry is None:
+            raise InvalidPolygonGeoJSON('Feature has no geometry.')
+        return [geometry]
+
+    return [data]
+
+
+def _parse_polygons(geometries):
+    """
+    Parse geometry dicts into a flat list of simple polygons.
+
+    MultiPolygons contribute each of their parts to the list, so the
+    caller can combine everything into one MultiPolygon at the end.
+
+    Args:
+        geometries: A list of GeoJSON geometry dicts.
+
+    Raises:
+        InvalidPolygonGeoJSON: If a geometry cannot be parsed, or is
+            something other than a Polygon or MultiPolygon.
+    """
+    polygons = []
+    for geometry in geometries:
+        try:
+            geom = GEOSGeometry(json.dumps(geometry))
+        except (GEOSException, ValueError, TypeError) as exc:
+            raise InvalidPolygonGeoJSON(
+                f'Could not parse geometry: {exc}'
+            ) from exc
+
+        if geom.geom_type == 'Polygon':
+            polygons.append(geom)
+        elif geom.geom_type == 'MultiPolygon':
+            polygons.extend(geom)
+        else:
+            raise InvalidPolygonGeoJSON(
+                'Expected a Polygon or MultiPolygon geometry, got '
+                f'{geom.geom_type}.'
+            )
+    return polygons
+
+
 def parse_polygon_geojson(raw):
     """
-    Parse a GeoJSON string into a single valid MultiPolygon in EPSG:4326.
+    Turn a GeoJSON string into one valid MultiPolygon in WGS 84.
 
-    Accepts a bare Polygon or MultiPolygon geometry, a Feature wrapping
-    one of those geometries, or a FeatureCollection whose features'
-    geometries are combined into one MultiPolygon. Polygons may have
-    holes; any number of disjoint polygons is supported.
+    Different mapping tools wrap the same shape in different ways — a
+    bare Polygon or MultiPolygon, a Feature around one of those, or a
+    FeatureCollection holding several. All three are accepted so staff
+    can paste or upload whatever their tool produced, without hand-
+    editing files first. Shapes with holes, and boundaries made of
+    several separate pieces, are supported for the same reason: real
+    boundaries look like that.
 
-    Along the way this rejects, with a human-readable message: invalid
-    JSON, non-polygon geometry, self-intersecting or otherwise invalid
-    shapes, declared non-WGS-84 coordinate systems, and coordinates
-    outside valid longitude/latitude ranges.
+    Bad input is rejected with a message written for the person using
+    the admin form. That covers: broken JSON, geometry that isn't a
+    polygon, shapes that cross over themselves, empty shapes, a
+    declared non-WGS-84 coordinate system, and coordinates outside the
+    possible longitude/latitude ranges.
 
     Args:
         raw: The GeoJSON, as a string (e.g. pasted text or the decoded
@@ -140,49 +219,8 @@ def parse_polygon_geojson(raw):
     if isinstance(data, dict):
         _check_crs(data)
 
-    geom_type = data.get('type') if isinstance(data, dict) else None
-
-    # Unwrap down to a list of plain geometry dicts, whichever of the
-    # three accepted GeoJSON shapes we were given.
-    if geom_type == 'FeatureCollection':
-        geometries = [
-            feature['geometry']
-            for feature in (data.get('features') or [])
-            if isinstance(feature, dict) and feature.get('geometry')
-            is not None
-        ]
-        if not geometries:
-            raise InvalidPolygonGeoJSON(
-                'FeatureCollection has no features with a geometry.'
-            )
-    elif geom_type == 'Feature':
-        geometry = data.get('geometry')
-        if geometry is None:
-            raise InvalidPolygonGeoJSON('Feature has no geometry.')
-        geometries = [geometry]
-    else:
-        geometries = [data]
-
-    # Parse each geometry and flatten everything into one list of
-    # simple polygons (MultiPolygons contribute each of their parts).
-    polygons = []
-    for geometry in geometries:
-        try:
-            geom = GEOSGeometry(json.dumps(geometry))
-        except (GEOSException, ValueError, TypeError) as exc:
-            raise InvalidPolygonGeoJSON(
-                f'Could not parse geometry: {exc}'
-            ) from exc
-
-        if geom.geom_type == 'Polygon':
-            polygons.append(geom)
-        elif geom.geom_type == 'MultiPolygon':
-            polygons.extend(geom)
-        else:
-            raise InvalidPolygonGeoJSON(
-                'Expected a Polygon or MultiPolygon geometry, got '
-                f'{geom.geom_type}.'
-            )
+    geometries = _extract_geometries(data)
+    polygons = _parse_polygons(geometries)
 
     result = MultiPolygon(*polygons, srid=4326)
 
