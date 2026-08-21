@@ -42,6 +42,7 @@ src/dedupe-hub/api/coverage
 src/django/*.csv
 src/django/*.xlsx
 src/django/media/
+src/django/taxonomy/
 
 
 # macOS
@@ -110,3 +111,12 @@ dumps
 
 # Mocks
 src/react/src/mocks/
+
+# Taxonomy source (generated JSON/JS are committed; keep ODS + script locally)
+scripts/taxonomy/ISIC_Rev4.ods
+scripts/generate_taxonomy_constants.py
+src/django/api/tests/fixtures/ISIC_Rev4.ods
+src/django/api/tests/fixtures/ISIC_Rev4_corrected.csv
+
+# Local dev sample-data seed commands (not for production)
+src/django/api/management/commands/seed_isic_4_sample_data.py

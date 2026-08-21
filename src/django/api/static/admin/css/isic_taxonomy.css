@@ -1,0 +1,197 @@
+.isic-taxonomy-admin {
+    color: var(--body-fg);
+    font-family: var(--font-family-primary);
+}
+
+.isic-taxonomy-admin h1,
+.isic-taxonomy-admin h2,
+.isic-taxonomy-admin h3 {
+    color: var(--body-loud-color);
+    font-family: var(--font-family-primary);
+}
+
+.isic-taxonomy-admin h1 {
+    margin-bottom: 1rem;
+}
+
+.isic-taxonomy-admin .module {
+    margin-bottom: 1.5rem;
+}
+
+.isic-taxonomy-info-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.isic-taxonomy-info-grid .help,
+.isic-taxonomy-preview-header .help {
+    color: var(--body-quiet-color);
+}
+
+.isic-taxonomy-headers {
+    width: 100%;
+}
+
+.isic-taxonomy-headers code,
+.isic-taxonomy-pattern {
+    color: var(--body-fg);
+    font-family: var(--font-family-monospace);
+    word-break: break-all;
+}
+
+.isic-taxonomy-status-list {
+    display: grid;
+    gap: 0.75rem 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    margin: 0 0 1rem;
+}
+
+.isic-taxonomy-status-list dl {
+    margin: 0;
+}
+
+.isic-taxonomy-status-list dl.isic-taxonomy-status-visibility {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.isic-taxonomy-status-list dl.isic-taxonomy-status-visibility dd {
+    margin: 0;
+}
+
+.isic-taxonomy-status-list dt {
+    color: var(--body-medium-color);
+    font-weight: bold;
+    margin: 0;
+}
+
+.isic-taxonomy-status-list dd {
+    color: var(--body-fg);
+    margin: 0.25rem 0 0;
+}
+
+.isic-taxonomy-badge {
+    display: inline-block;
+    border-radius: 4px;
+    font-weight: bold;
+    padding: 0.15rem 0.5rem;
+}
+
+.isic-taxonomy-badge--active {
+    background: var(--message-success-bg);
+    color: var(--body-fg);
+}
+
+.isic-taxonomy-badge--inactive {
+    background: var(--message-error-bg);
+    color: var(--error-fg);
+}
+
+.isic-taxonomy-last-error pre,
+.isic-taxonomy-errors {
+    background: var(--body-bg);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--error-fg);
+    color: var(--body-fg);
+    font-family: var(--font-family-primary);
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.isic-taxonomy-last-error pre {
+    font-family: var(--font-family-monospace);
+}
+
+.isic-taxonomy-errors ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.isic-taxonomy-toggle-form {
+    margin-top: 1rem;
+}
+
+.isic-taxonomy-toggle-form .button,
+.isic-taxonomy-upload-form .submit-row .button {
+    padding: 10px 15px;
+}
+
+.isic-taxonomy-upload-form .submit-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 0 0;
+}
+
+.isic-taxonomy-preview-header {
+    align-items: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.isic-taxonomy-preview-header h2 {
+    margin: 0;
+}
+
+.isic-taxonomy-preview-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.isic-taxonomy-accordion {
+    max-height: 32rem;
+    overflow: auto;
+}
+
+.isic-accordion {
+    background: var(--body-bg);
+    border: 1px solid var(--border-color);
+    margin: 0.5rem 0;
+}
+
+.isic-accordion--section {
+    margin-left: 0;
+}
+
+.isic-accordion--division {
+    margin-left: 1rem;
+}
+
+.isic-accordion--group {
+    margin-left: 2rem;
+}
+
+.isic-accordion > summary {
+    background: var(--darkened-bg);
+    color: var(--body-medium-color);
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0.5rem 0.75rem;
+}
+
+.isic-accordion > summary:hover {
+    color: var(--body-loud-color);
+}
+
+.isic-accordion__body {
+    padding: 0 0.75rem 0.75rem;
+}
+
+.isic-accordion-classes {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.isic-accordion-classes li {
+    border-top: 1px solid var(--hairline-color);
+    color: var(--body-fg);
+    padding: 0.35rem 0;
+}

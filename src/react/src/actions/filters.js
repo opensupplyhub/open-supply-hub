@@ -4,6 +4,7 @@ import { createAction } from 'redux-act';
 import {
     createFiltersFromQueryString,
     mapPartnerGroupContributorsToSelectOptions,
+    restoreExactProcessingTypeLabels,
     updateListWithLabels,
 } from '../util/util';
 import { optionsForSortingResults } from '../util/constants';
@@ -35,6 +36,7 @@ export const updateFacilityTypeFilter = createAction(
 export const updateProcessingTypeFilter = createAction(
     'UPDATE_PROCESSING_TYPE_FILTER',
 );
+export const updateIsic4Filter = createAction('UPDATE_ISIC4_FILTER');
 export const updateProductTypeFilter = createAction(
     'UPDATE_PRODUCT_TYPE_FILTER',
 );
@@ -46,6 +48,9 @@ export const updateNativeLanguageNameFilter = createAction(
 );
 export const updateCombineContributorsFilterOption = createAction(
     'UPDATE_COMBINE_CONTRIBUTORS_FILTER_OPTION',
+);
+export const updateCombineFacilityProcessingIsicFilterOption = createAction(
+    'UPDATE_COMBINE_FACILITY_PROCESSING_ISIC_FILTER_OPTION',
 );
 export const updateDataSourceFilter = createAction('UPDATE_DATA_SOURCE_FILTER');
 export const updateModerationStatusFilter = createAction(
@@ -79,6 +84,7 @@ export function setFiltersFromQueryString(qs = '') {
                 contributors: { data: contributors },
                 parentCompanies: { data: parentCompanies },
                 lists: { data: lists },
+                facilityProcessingType: { data: facilityProcessingTypes },
             },
             partnerGroupContributors: { data: partnerGroupContributors },
             embeddedMap: { embed },
@@ -110,6 +116,17 @@ export function setFiltersFromQueryString(qs = '') {
             ? update(payload, {
                   lists: {
                       $set: updateListWithLabels(filters.lists, lists),
+                  },
+              })
+            : payload;
+
+        payload = facilityProcessingTypes
+            ? update(payload, {
+                  processingType: {
+                      $set: restoreExactProcessingTypeLabels(
+                          filters.processingType,
+                          facilityProcessingTypes,
+                      ),
                   },
               })
             : payload;

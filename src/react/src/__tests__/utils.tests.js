@@ -20,6 +20,8 @@ const {
     makeMergeTwoFacilitiesAPIURL,
     makeLogDownloadUrl,
     makeGetFacilitiesURLWithQueryString,
+    makeGetTaxonomyCountsURL,
+    makeGetProcessingTypeSuggestionsURL,
     getValueFromObject,
     createQueryStringFromSearchFilters,
     allFiltersAreEmpty,
@@ -94,6 +96,7 @@ const {
     getFilteredSearchForEmbed,
     makeFacilityDetailLinkOnRedirect,
     splitContributorsIntoPublicAndNonPublic,
+    restoreExactProcessingTypeLabels,
     hasEmbeddedSeparator,
 } = require('../util/util');
 
@@ -194,6 +197,31 @@ it('creates an API URL for getting all facilities', () => {
     expect(makeGetFacilitiesURL()).toEqual(expectedMatch);
 });
 
+it('creates an API URL for getting taxonomy counts', () => {
+    expect(makeGetTaxonomyCountsURL('facility_processing')).toEqual(
+        '/api/taxonomy-counts/?kind=facility_processing',
+    );
+    expect(makeGetTaxonomyCountsURL('isic4')).toEqual(
+        '/api/taxonomy-counts/?kind=isic4',
+    );
+});
+
+it('creates an API URL for getting processing type suggestions', () => {
+    expect(makeGetProcessingTypeSuggestionsURL()).toEqual(
+        '/api/processing-type-suggestions/?q=',
+    );
+    expect(
+        makeGetProcessingTypeSuggestionsURL('dyeing', [
+            'Final Product Assembly',
+            'Textile or Material Production',
+        ]),
+    ).toEqual(
+        '/api/processing-type-suggestions/?q=dyeing' +
+            '&facility_type=Final+Product+Assembly' +
+            '&facility_type=Textile+or+Material+Production',
+    );
+});
+
 it('creates an API URL for getting a single facility by OS ID', () => {
     const expectedMatch = '/api/facilities/12345/?created_at_of_data_points=false&pending_claim_info=true';
     expect(makeGetFacilityByOSIdURL(12345)).toEqual(expectedMatch);
@@ -271,6 +299,22 @@ it('creates a querystring from a set of filter selection', () => {
             .concat('&contributor_types=foo&countries=bar&sectors=baz');
     expect(createQueryStringFromSearchFilters(allFilters))
         .toEqual(expectedAllFiltersMatch);
+
+    const isic4FilterSelections = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        isic4: [
+            { value: 'section:C', label: 'C - Manufacturing' },
+            { value: 'class:0111', label: '0111 - Growing of cereals' },
+        ],
+    };
+
+    expect(createQueryStringFromSearchFilters(isic4FilterSelections)).toEqual(
+        'isic_4=class%3A0111&isic_4=section%3AC',
+    );
 
     const partnerSharedFilters = {
         facilityFreeTextQuery: '',
@@ -693,6 +737,138 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(processingTypeString),
     ).toMatchObject(expectedProcessingTypeMatch);
+
+    const freeTextProcessingTypeString =
+        '?processing_type=cement%20mixing';
+    const expectedFreeTextProcessingTypeMatch = {
+        processingType: [{
+            value: 'cement mixing',
+            label: 'cement mixing',
+        }],
+    };
+
+    expect(
+        createFiltersFromQueryString(freeTextProcessingTypeString),
+    ).toMatchObject(expectedFreeTextProcessingTypeMatch);
+
+    const exactProcessingTypeString =
+        '?processing_type=CAPS&processing_type=cement%20mixing' +
+        '&processing_type_exact=CAPS&processing_type_exact=orphan';
+    expect(
+        createFiltersFromQueryString(exactProcessingTypeString),
+    ).toMatchObject({
+        processingType: [
+            { value: 'CAPS', label: 'CAPS', isExact: true },
+            { value: 'cement mixing', label: 'cement mixing' },
+        ],
+    });
+
+    expect(
+        createQueryStringFromSearchFilters({
+            processingType: [
+                { value: 'CAPS', label: 'Caps', isExact: true },
+                { value: 'cement mixing', label: 'cement mixing' },
+            ],
+        }),
+    ).toBe(
+        'processing_type=CAPS&processing_type=cement+mixing' +
+            '&processing_type_exact=CAPS',
+    );
+
+    const hydratedExactProcessingTypes = createFiltersFromQueryString(
+        '?processing_type=DYEING&processing_type=Custom%20CAPS' +
+            '&processing_type_exact=DYEING' +
+            '&processing_type_exact=Custom%20CAPS',
+    ).processingType;
+    expect(
+        restoreExactProcessingTypeLabels(hydratedExactProcessingTypes, [
+            {
+                facilityType: 'Printing',
+                processingTypes: ['Dyeing'],
+            },
+        ]),
+    ).toEqual([
+        { value: 'DYEING', label: 'Dyeing', isExact: true },
+        {
+            value: 'Custom CAPS',
+            label: 'Custom CAPS',
+            isExact: true,
+        },
+    ]);
+
+    const isic4String =
+        '?isic_4=section%3AC&isic_4=class%3A0111&isic_4=division%3A01';
+    const expectedIsic4Match = {
+        facilityFreeTextQuery: '',
+        contributors: [],
+        contributorTypes: [],
+        countries: [],
+        sectors: [],
+        statuses: [],
+        lists: [],
+        parentCompany: [],
+        facilityType: [],
+        processingType: [],
+        isic4: [
+            { value: 'section:C', label: 'section:C' },
+            { value: 'class:0111', label: 'class:0111' },
+            { value: 'division:01', label: 'division:01' },
+        ],
+        productType: [],
+        numberOfWorkers: [],
+        nativeLanguageName: '',
+        combineContributors: '',
+        boundary: null,
+        sortAlgorithm: {
+            value: 'name_asc',
+            label: 'A to Z',
+        },
+    };
+
+    expect(createFiltersFromQueryString(isic4String)).toMatchObject(
+        expectedIsic4Match,
+    );
+
+    const combineFacilityProcessingIsicString =
+        '?facility_type=Final+Product+Assembly&isic_4=section%3AC&combine_facility_processing_isic=AND';
+
+    expect(
+        createFiltersFromQueryString(combineFacilityProcessingIsicString),
+    ).toMatchObject({
+        facilityType: [
+            {
+                value: 'Final Product Assembly',
+                label: 'Final Product Assembly',
+            },
+        ],
+        isic4: [{ value: 'section:C', label: 'section:C' }],
+        combineFacilityProcessingIsic: 'AND',
+    });
+
+    expect(
+        createQueryStringFromSearchFilters({
+            facilityType: [
+                {
+                    value: 'Final Product Assembly',
+                    label: 'Final Product Assembly',
+                },
+            ],
+            isic4: [{ value: 'section:C', label: 'section:C' }],
+            combineFacilityProcessingIsic: 'AND',
+        }),
+    ).toContain('combine_facility_processing_isic=AND');
+    expect(
+        createQueryStringFromSearchFilters({
+            facilityType: [
+                {
+                    value: 'Final Product Assembly',
+                    label: 'Final Product Assembly',
+                },
+            ],
+            isic4: [{ value: 'section:C', label: 'section:C' }],
+            combineFacilityProcessingIsic: 'AND',
+        }),
+    ).toContain('isic_4=section%3AC');
 
     const productTypeString = '?product_type=Beauty&product_type=Jackets/Blazers'
     const expectedProductTypeMatch = {

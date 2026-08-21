@@ -41,6 +41,10 @@ from .facility.facility_parameters import (
     facilities_create_parameters,
 )
 from .facility.facility_processing_types import facility_processing_types
+from .facility.processing_type_suggestions import (
+    ProcessingTypeSuggestionsView
+)
+from .facility.taxonomy_counts import TaxonomyCountsView
 from .facility.update_facility_activity_report_status import (
     update_facility_activity_report_status
 )
@@ -73,6 +77,8 @@ from .number_of_workers_ranges import number_of_workers_ranges
 from .parent_companies import ParentCompanies
 from .product_types import ProductTypes
 from .sectors import sectors
+from .taxonomy_config import TaxonomyConfigView
+from .isic_taxonomy import IsicTaxonomyView
 from .claim_statuses import claim_statuses
 from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
 from .partner_field_groups.partner_field_groups_view_set import (

@@ -1,4 +1,5 @@
 from django.contrib.gis.geos import Point
+from django.core.cache import caches
 from django.urls import reverse
 
 from rest_framework import status
@@ -19,6 +20,7 @@ from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 class SectorsViewTest(FacilityAPITestCaseBase):
     def setUp(self):
         super().setUp()
+        caches['view_cache'].clear()
 
         self.user_email_2 = "test2@example.com"
         self.user_password_2 = "example123"
@@ -48,7 +50,16 @@ class SectorsViewTest(FacilityAPITestCaseBase):
             name="Item 2",
             address="Address 2",
             country_code="US",
-            sector=["Health", "Information"],
+            sector=[
+                "Health",
+                "Information",
+                "Unspecified",
+                "Valid Ungrouped",
+                "Unknown",
+                "health",
+                "",
+                "['Apparel']",
+            ],
             row_index=2,
             geocoded_point=Point(0, 0),
             status=FacilityListItem.MATCHED,
@@ -78,6 +89,8 @@ class SectorsViewTest(FacilityAPITestCaseBase):
         self.sector3 = Sector.objects.create(name="Information")
         self.sector4 = Sector.objects.create(name="Health")
         self.sector5 = Sector.objects.create(name="Manufacturing")
+        self.unspecified_sector = Sector.objects.create(name="Unspecified")
+        self.ungrouped_sector = Sector.objects.create(name="Valid Ungrouped")
 
         self.group1 = SectorGroup.objects.create(name="Group 1")
         self.group2 = SectorGroup.objects.create(name="Group 2")
@@ -93,9 +106,20 @@ class SectorsViewTest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
             response.data,
-            sorted(['Agriculture', 'Apparel', 'Health', 'Information']),
+            sorted([
+                'Agriculture',
+                'Apparel',
+                'Health',
+                'Information',
+                'Unspecified',
+                'Valid Ungrouped',
+            ]),
         )
         self.assertNotIn('Manufacturing', response.data)
+        self.assertNotIn('Unknown', response.data)
+        self.assertNotIn('health', response.data)
+        self.assertNotIn('', response.data)
+        self.assertNotIn("['Apparel']", response.data)
 
     def test_get_sectors_with_embed_and_contributor_has_claims(self):
         response = self.client.get(
@@ -104,7 +128,14 @@ class SectorsViewTest(FacilityAPITestCaseBase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            response.data, sorted(['Agriculture', 'Health', 'Information'])
+            response.data,
+            sorted([
+                'Agriculture',
+                'Health',
+                'Information',
+                'Unspecified',
+                'Valid Ungrouped',
+            ]),
         )
 
     def test_get_sectors_with_embed_and_contributor_has_no_claims(self):
@@ -142,3 +173,10 @@ class SectorsViewTest(FacilityAPITestCaseBase):
             'Manufacturing',
             [sector for group in response.data for sector in group['sectors']],
         )
+        grouped_sector_names = {
+            sector
+            for group in response.data
+            for sector in group['sectors']
+        }
+        self.assertNotIn('Unspecified', grouped_sector_names)
+        self.assertNotIn('Valid Ungrouped', grouped_sector_names)

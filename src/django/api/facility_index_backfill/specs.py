@@ -18,11 +18,27 @@ APPROVED_CLAIM_FACILITIES_FILTER = "approved_claim IS NOT NULL"
 # Only facilities that have at least one processing_type ExtendedField can
 # change when index_processing_type() is recomputed; this skips the millions
 # of rows without processing type data.
+FACILITY_TYPE_FILTER = (
+    "EXISTS ("
+    "SELECT 1 FROM api_extendedfield aef "
+    "WHERE aef.facility_id = afi.id "
+    "AND aef.field_name = 'facility_type'"
+    ")"
+)
+
 PROCESSING_TYPE_FILTER = (
     "EXISTS ("
     "SELECT 1 FROM api_extendedfield aef "
     "WHERE aef.facility_id = afi.id "
     "AND aef.field_name = 'processing_type'"
+    ")"
+)
+
+ISIC_4_FILTER = (
+    "EXISTS ("
+    "SELECT 1 FROM api_extendedfield aef "
+    "WHERE aef.facility_id = afi.id "
+    "AND aef.field_name = 'isic_4'"
     ")"
 )
 
@@ -91,6 +107,18 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
         },
         'filter_sql': APPROVED_CLAIM_FACILITIES_FILTER,
     },
+    'facility_type': {
+        'columns': {
+            'facility_type': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT facility_type) "
+                "FROM index_facility_type(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+        },
+        'filter_sql': FACILITY_TYPE_FILTER,
+    },
     'processing_type': {
         'columns': {
             'processing_type': (
@@ -102,6 +130,39 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': PROCESSING_TYPE_FILTER,
+    },
+    'isic_4': {
+        'columns': {
+            'isic_section': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_section) "
+                "FROM index_isic_section(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_division': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_division) "
+                "FROM index_isic_division(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_group': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_group) "
+                "FROM index_isic_group(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_class': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_class) "
+                "FROM index_isic_class(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+        },
+        'filter_sql': ISIC_4_FILTER,
     },
     'sector': {
         'columns': {

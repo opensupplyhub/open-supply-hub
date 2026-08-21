@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from api.constants import FacilityClaimStatuses
 from api.models.facility.facility_index import FacilityIndex
+from api.models.sector import Sector
 from api.models.sector_group import SectorGroup
 from api.views.sectors_swagger_schema import (
     sectors_manual_parameters,
@@ -40,7 +41,7 @@ def sectors(request):
 
         submitted_sectors = get_sectors_for_contributor(contributor)
 
-        return Response(sorted(list(submitted_sectors)))
+        return Response(curated_sector_names(submitted_sectors))
 
     else:
         submitted_sectors = get_all_submitted_sectors()
@@ -51,7 +52,15 @@ def sectors(request):
             return Response(grouped_sectors)
 
         else:
-            return Response(sorted(list(submitted_sectors)))
+            return Response(curated_sector_names(submitted_sectors))
+
+
+def curated_sector_names(submitted_sectors):
+    return sorted(
+        Sector.objects.filter(name__in=submitted_sectors)
+        .values_list('name', flat=True)
+        .distinct()
+    )
 
 
 def get_sectors_for_contributor(contributor):

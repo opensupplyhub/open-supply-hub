@@ -15,6 +15,9 @@ import {
     makeGetGroupedSectorsURL,
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
+    makeGetProcessingTypeSuggestionsURL,
+    makeGetTaxonomyCountsURL,
+    makeGetTaxonomyConfigURL,
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
     mapDjangoChoiceTuplesValueToSelectOptions,
@@ -98,6 +101,26 @@ export const completeFetchFacilityProcessingTypeOptions = createAction(
     'COMPLETE_FETCH_FACILITY_PROCESSING_TYPE_OPTIONS',
 );
 
+export const startFetchProcessingTypeSuggestions = createAction(
+    'START_FETCH_PROCESSING_TYPE_SUGGESTIONS',
+);
+export const failFetchProcessingTypeSuggestions = createAction(
+    'FAIL_FETCH_PROCESSING_TYPE_SUGGESTIONS',
+);
+export const completeFetchProcessingTypeSuggestions = createAction(
+    'COMPLETE_FETCH_PROCESSING_TYPE_SUGGESTIONS',
+);
+
+export const startFetchTaxonomyCounts = createAction(
+    'START_FETCH_TAXONOMY_COUNTS',
+);
+export const failFetchTaxonomyCounts = createAction(
+    'FAIL_FETCH_TAXONOMY_COUNTS',
+);
+export const completeFetchTaxonomyCounts = createAction(
+    'COMPLETE_FETCH_TAXONOMY_COUNTS',
+);
+
 export const startFetchNumberOfWorkersOptions = createAction(
     'START_FETCH_NUMBER_OF_WORKERS_TYPE_OPTIONS',
 );
@@ -115,6 +138,24 @@ export const failFetchClaimStatusOption = createAction(
 );
 export const completeFetchClaimStatusOption = createAction(
     'COMPLETE_FETCH_CLAIM_STATUS_OPTIONS',
+);
+
+export const startFetchIsic4TaxonomyConfig = createAction(
+    'START_FETCH_ISIC4_TAXONOMY_CONFIG',
+);
+export const failFetchIsic4TaxonomyConfig = createAction(
+    'FAIL_FETCH_ISIC4_TAXONOMY_CONFIG',
+);
+export const completeFetchIsic4TaxonomyConfig = createAction(
+    'COMPLETE_FETCH_ISIC4_TAXONOMY_CONFIG',
+);
+
+export const startFetchIsic4Taxonomy = createAction(
+    'START_FETCH_ISIC4_TAXONOMY',
+);
+export const failFetchIsic4Taxonomy = createAction('FAIL_FETCH_ISIC4_TAXONOMY');
+export const completeFetchIsic4Taxonomy = createAction(
+    'COMPLETE_FETCH_ISIC4_TAXONOMY',
 );
 
 export const resetFilterOptions = createAction('RESET_FILTER_OPTIONS');
@@ -302,6 +343,73 @@ export function fetchFacilityProcessingTypeOptions() {
     };
 }
 
+export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
+    return dispatch => {
+        dispatch(startFetchProcessingTypeSuggestions(query));
+
+        return apiRequest
+            .get(makeGetProcessingTypeSuggestionsURL(query, facilityTypes))
+            .then(({ data }) =>
+                dispatch(
+                    completeFetchProcessingTypeSuggestions({ query, data }),
+                ),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching processing type suggestions',
+                        messages =>
+                            failFetchProcessingTypeSuggestions({
+                                query,
+                                error: messages,
+                            }),
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchTaxonomyCounts(kind) {
+    return dispatch => {
+        dispatch(startFetchTaxonomyCounts(kind));
+
+        return apiRequest
+            .get(makeGetTaxonomyCountsURL(kind))
+            .then(({ data }) =>
+                dispatch(completeFetchTaxonomyCounts({ kind, data })),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching taxonomy counts',
+                        messages =>
+                            failFetchTaxonomyCounts({
+                                kind,
+                                error: messages,
+                            }),
+                    ),
+                ),
+            );
+    };
+}
+
+export const fetchTaxonomyCountsIfNeeded = ({
+    kinds = ['facility_processing', 'isic4'],
+} = {}) => (dispatch, getState) => {
+    kinds.forEach(kind => {
+        const { data, fetching } =
+            getState().filterOptions.taxonomyCounts[kind] ?? {};
+
+        if (data !== null || fetching) {
+            return;
+        }
+
+        dispatch(fetchTaxonomyCounts(kind));
+    });
+};
+
 export function fetchNumberOfWorkersOptions() {
     return dispatch => {
         dispatch(startFetchNumberOfWorkersOptions());
@@ -378,3 +486,118 @@ export const fetchAllPrimaryFilterOptionsIfNeeded = () => dispatch => {
     dispatch(fetchCountryOptionsIfNeeded());
     dispatch(fetchListOptionsIfNeeded());
 };
+
+export function fetchIsic4TaxonomyConfig() {
+    return async dispatch => {
+        dispatch(startFetchIsic4TaxonomyConfig());
+
+        try {
+            const response = await fetch(makeGetTaxonomyConfigURL());
+
+            if (!response.ok) {
+                return dispatch(
+                    logErrorAndDispatchFailure(
+                        { response: { status: response.status, data: null } },
+                        'An error prevented fetching ISIC taxonomy config',
+                        failFetchIsic4TaxonomyConfig,
+                    ),
+                );
+            }
+
+            const config = await response.json();
+
+            if (!config?.isic4) {
+                return dispatch(
+                    logErrorAndDispatchFailure(
+                        { response: { status: null, data: null } },
+                        'Taxonomy config response did not include isic4',
+                        failFetchIsic4TaxonomyConfig,
+                    ),
+                );
+            }
+
+            return dispatch(completeFetchIsic4TaxonomyConfig(config.isic4));
+        } catch (err) {
+            return dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented fetching ISIC taxonomy config',
+                    failFetchIsic4TaxonomyConfig,
+                ),
+            );
+        }
+    };
+}
+
+export const fetchIsic4TaxonomyConfigIfNeeded = () => async (
+    dispatch,
+    getState,
+) => {
+    const { config, fetching } = getState().filterOptions.isic4Taxonomy ?? {};
+
+    if (config != null || fetching) {
+        return config;
+    }
+
+    return dispatch(fetchIsic4TaxonomyConfig());
+};
+
+export function fetchIsic4Taxonomy() {
+    return async (dispatch, getState) => {
+        await dispatch(fetchIsic4TaxonomyConfigIfNeeded());
+
+        const isic4Config = getState().filterOptions.isic4Taxonomy?.config;
+        if (!isic4Config?.enabled || !isic4Config.taxonomyUrl) {
+            return null;
+        }
+
+        const { data, fetching } = getState().filterOptions.isic4Taxonomy ?? {};
+
+        if (data != null) {
+            return data;
+        }
+
+        if (fetching) {
+            return null;
+        }
+
+        dispatch(startFetchIsic4Taxonomy());
+
+        try {
+            const response = await fetch(isic4Config.taxonomyUrl);
+
+            if (!response.ok) {
+                return dispatch(
+                    logErrorAndDispatchFailure(
+                        { response: { status: response.status, data: null } },
+                        'An error prevented fetching ISIC taxonomy',
+                        failFetchIsic4Taxonomy,
+                    ),
+                );
+            }
+
+            const taxonomy = await response.json();
+
+            if (!taxonomy?.sections) {
+                return dispatch(
+                    logErrorAndDispatchFailure(
+                        { response: { status: null, data: null } },
+                        'ISIC taxonomy response did not include sections',
+                        failFetchIsic4Taxonomy,
+                    ),
+                );
+            }
+
+            dispatch(completeFetchIsic4Taxonomy(taxonomy));
+            return taxonomy;
+        } catch (err) {
+            return dispatch(
+                logErrorAndDispatchFailure(
+                    err,
+                    'An error prevented fetching ISIC taxonomy',
+                    failFetchIsic4Taxonomy,
+                ),
+            );
+        }
+    };
+}

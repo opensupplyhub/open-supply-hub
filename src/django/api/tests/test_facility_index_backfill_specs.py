@@ -85,6 +85,25 @@ class FacilityIndexBackfillTest(SimpleTestCase):
     def test_list_field_names_includes_processing_type(self):
         self.assertIn('processing_type', list_field_names())
 
+    def test_list_field_names_includes_facility_type(self):
+        self.assertIn('facility_type', list_field_names())
+
+    def test_build_update_sql_includes_facility_type_column(self):
+        spec = get_field_spec('facility_type')
+        sql = build_update_sql(spec)
+
+        self.assertIn('facility_type =', sql)
+        self.assertIn('index_facility_type(afi.id)', sql)
+        self.assertIn('updated_at = now()', sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_build_count_sql_applies_facility_type_filter(self):
+        spec = get_field_spec('facility_type')
+        sql = build_count_sql(spec)
+
+        self.assertIn("field_name = 'facility_type'", sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
     def test_build_update_sql_includes_processing_type_column(self):
         spec = get_field_spec('processing_type')
         sql = build_update_sql(spec)
@@ -99,6 +118,27 @@ class FacilityIndexBackfillTest(SimpleTestCase):
         sql = build_count_sql(spec)
 
         self.assertIn("field_name = 'processing_type'", sql)
+        self.assertIn('hashtext(afi.id::text)::bigint', sql)
+
+    def test_list_field_names_includes_isic_4(self):
+        self.assertIn('isic_4', list_field_names())
+
+    def test_build_update_sql_includes_isic_columns(self):
+        spec = get_field_spec('isic_4')
+        sql = build_update_sql(spec)
+
+        self.assertIn('isic_section =', sql)
+        self.assertIn('isic_division =', sql)
+        self.assertIn('isic_group =', sql)
+        self.assertIn('isic_class =', sql)
+        self.assertIn('index_isic_section(afi.id)', sql)
+        self.assertIn('index_isic_class(afi.id)', sql)
+
+    def test_build_count_sql_applies_isic_filter(self):
+        spec = get_field_spec('isic_4')
+        sql = build_count_sql(spec)
+
+        self.assertIn("field_name = 'isic_4'", sql)
         self.assertIn('hashtext(afi.id::text)::bigint', sql)
 
     def test_list_field_names_includes_sector(self):

@@ -29,7 +29,9 @@ sectors_manual_parameters = [
 ]
 
 sectors_operation_description = """
-Returns a list of sectors or sectors grouped by their sector groups.
+Returns a list of sectors or sectors grouped by their sector groups. Flat
+responses contain only submitted values that exactly match a curated Sector
+name. Valid curated sectors do not need to belong to a sector group.
 
 ## Parameters:
 - `embed` (optional): If present, returns a flat list of sectors submitted

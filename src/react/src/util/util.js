@@ -213,6 +213,17 @@ export const makeGetGroupedSectorsURL = () => '/api/sectors/?grouped=true';
 export const makeGetParentCompaniesURL = () => '/api/parent-companies/';
 export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
+export const makeGetTaxonomyCountsURL = kind =>
+    `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
+export const makeGetProcessingTypeSuggestionsURL = (
+    query = '',
+    facilityTypes = [],
+) =>
+    `/api/processing-type-suggestions/?${querystring.stringify({
+        q: query,
+        facility_type: facilityTypes,
+    })}`;
+export const makeGetTaxonomyConfigURL = () => '/api/taxonomy-config/';
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
@@ -413,11 +424,13 @@ export const createQueryStringFromSearchFilters = (
         parentCompany = [],
         facilityType = [],
         processingType = [],
+        isic4 = [],
         productType = [],
         numberOfWorkers = [],
         nativeLanguageName = '',
         lists = [],
         combineContributors = '',
+        combineFacilityProcessingIsic = '',
         boundary = {},
         sortAlgorithm = {},
         claimStatuses = [],
@@ -448,12 +461,17 @@ export const createQueryStringFromSearchFilters = (
         processing_type: createCompactSortedQuerystringInputObject(
             processingType,
         ),
+        processing_type_exact: createCompactSortedQuerystringInputObject(
+            processingType.filter(option => option.isExact),
+        ),
+        isic_4: createCompactSortedQuerystringInputObject(isic4),
         product_type: createCompactSortedQuerystringInputObject(productType),
         number_of_workers: createCompactSortedQuerystringInputObject(
             numberOfWorkers,
         ),
         native_language_name: nativeLanguageName,
         combine_contributors: combineContributors,
+        combine_facility_processing_isic: combineFacilityProcessingIsic,
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
@@ -519,10 +537,13 @@ export const createFiltersFromQueryString = qs => {
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
+        processing_type_exact: exactProcessingTypes = [],
+        isic_4: isic4 = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
         native_language_name: nativeLanguageName = '',
         combine_contributors: combineContributors = '',
+        combine_facility_processing_isic: combineFacilityProcessingIsic = '',
         boundary = '',
         sort_by: sortBy = '',
         partner_contributor: rawPartnerContributors = [],
@@ -543,11 +564,22 @@ export const createFiltersFromQueryString = qs => {
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
-        processingType: createSelectOptionsFromParams(processingType),
+        processingType: createSelectOptionsFromParams(processingType).map(
+            option => ({
+                ...option,
+                ...(normaliseStringArray(exactProcessingTypes).includes(
+                    option.value,
+                )
+                    ? { isExact: true }
+                    : {}),
+            }),
+        ),
+        isic4: createSelectOptionsFromParams(isic4),
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,
         combineContributors,
+        combineFacilityProcessingIsic,
         boundary: isEmpty(boundary) ? null : JSON.parse(boundary),
         sortAlgorithm: getAlgorithm(sortBy),
         partnerContributors: normaliseStringArray(
@@ -954,6 +986,55 @@ export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
         });
     }
     return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
+};
+
+const normalizeFacilityProcessingLabel = value =>
+    unidecode(value)
+        .replaceAll('\n', ' ')
+        .replaceAll('-', '')
+        .replaceAll('/', ' ')
+        .replaceAll("'", '')
+        .replaceAll(',', '')
+        .replaceAll(':', ' ')
+        .replace(/ +/g, ' ')
+        .trim()
+        .replace(/^["']|["']$/g, '')
+        .toLowerCase()
+        .trim();
+
+export const restoreExactProcessingTypeLabels = (
+    processingTypes,
+    facilityProcessingTypes,
+) => {
+    if (!processingTypes?.length || !facilityProcessingTypes?.length) {
+        return processingTypes;
+    }
+
+    const taxonomyLabels = new Map();
+    facilityProcessingTypes.forEach(({ processingTypes: labels = [] }) => {
+        labels.forEach(label => {
+            taxonomyLabels.set(normalizeFacilityProcessingLabel(label), label);
+        });
+    });
+
+    let changed = false;
+    const restored = processingTypes.map(option => {
+        if (!option.isExact) {
+            return option;
+        }
+
+        const canonicalLabel = taxonomyLabels.get(
+            normalizeFacilityProcessingLabel(option.value),
+        );
+        if (!canonicalLabel || canonicalLabel === option.label) {
+            return option;
+        }
+
+        changed = true;
+        return { ...option, label: canonicalLabel };
+    });
+
+    return changed ? restored : processingTypes;
 };
 
 export const mapFacilityTypeOptions = (fPTypes, pTypes) => {

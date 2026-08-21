@@ -8,7 +8,11 @@ from api.constants import PaginationConfig
 
 def create_query_hash(request, page_size: int) -> str:
     parts = {
-        "qp": sorted(request.query_params.items()),
+        "qp": sorted(
+            (key, sorted(values))
+            for key, values in request.query_params.lists()
+            if key not in ("page", "pageSize")
+        ),
         "uid": getattr(request.user, "id", None),
         "ps": page_size,
     }

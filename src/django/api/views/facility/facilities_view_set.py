@@ -8,6 +8,10 @@ from api.facility_actions.processing_facility_executor import (
 )
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.models.facility.facility_manager_index_new import (
+    annotate_facility_processing_relevance,
+)
+from api.facility_processing_query import parse_facility_processing_query
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
@@ -502,6 +506,17 @@ class FacilitiesViewSet(ListModelMixin,
             order_list = ['-name']
         elif (sort_by == 'contributors_asc'):
             order_list = ['contributors_count', 'name']
+
+        facility_processing_query = parse_facility_processing_query(
+            request.query_params
+        )
+        queryset, has_fp_relevance = annotate_facility_processing_relevance(
+            queryset,
+            *facility_processing_query,
+        )
+        if has_fp_relevance:
+            order_list.insert(0, '-_fp_relevance')
+        order_list.append('id')
 
         queryset = queryset.extra(order_by=order_list)
 

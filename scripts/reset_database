@@ -25,7 +25,6 @@ function setup_minio() {
   echo "Creating MinIO bucket $MINIO_BUCKET..."
   docker compose exec minio bash -c "mc mb --ignore-existing $MINIO_ALIAS/$MINIO_BUCKET"
 
-
   echo "Copying fixtures to MinIO bucket $MINIO_BUCKET..."
   docker compose exec minio bash \
           -c "mkdir -p /fixtures"
