@@ -3,7 +3,8 @@
     "fetch_lists",
     "lib",
     "process_list",
-    "notify"
+    "notify",
+    "retry_failed_lists"
   ],
   "extraPaths": [
     ".",
