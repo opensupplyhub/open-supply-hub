@@ -75,6 +75,7 @@ class Polygon(models.Model):
         verbose_name_plural = 'Polygons'
 
     def __str__(self):
+        """A polygon is identified by its name."""
         return self.name
 
     # The fields callers may pass as keys in the `filters` argument of
