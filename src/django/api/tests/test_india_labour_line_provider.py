@@ -194,3 +194,15 @@ class IndiaLabourLineProviderTest(TestCase):
             result = self.provider._fetch_raw_data(facility)
 
         self.assertIsNone(result)
+
+    def test_provider_declares_its_polygon_names_for_the_admin(self):
+        """The admin's rename/delete warning discovers our polygons."""
+        self.assertEqual(
+            IndiaLabourLineProvider.POLYGON_NAMES,
+            INDIA_LABOUR_LINE_POLYGON_NAMES,
+        )
+        from api.admin import code_referenced_polygon_names
+        self.assertIn(
+            INDIA_LABOUR_LINE_POLYGON_NAMES[0],
+            code_referenced_polygon_names(),
+        )

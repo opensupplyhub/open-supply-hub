@@ -75,6 +75,10 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
 
     FIELD_NAME = 'india_labour_line_helpline'
 
+    # Declares the polygons this provider depends on, so the polygon
+    # admin can warn staff before renaming or deleting one of them.
+    POLYGON_NAMES = INDIA_LABOUR_LINE_POLYGON_NAMES
+
     def _get_field_name(self) -> str:
         """Return the partner field name for this provider."""
         return self.FIELD_NAME
