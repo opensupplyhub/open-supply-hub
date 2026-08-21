@@ -1,6 +1,17 @@
 {
-    "StartAt": "FetchLists",
+    "StartAt": "ChooseSource",
     "States": {
+        "ChooseSource": {
+            "Type": "Choice",
+            "Choices": [
+                {
+                    "Variable": "$.lists",
+                    "IsPresent": true,
+                    "Next": "ProcessLists"
+                }
+            ],
+            "Default": "FetchLists"
+        },
         "FetchLists": {
             "Type": "Task",
             "Resource": "${fetch_lists_lambda_arn}",
