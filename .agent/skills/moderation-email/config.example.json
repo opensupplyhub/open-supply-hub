@@ -1,0 +1,18 @@
+{
+  "docs": {
+    "templates_doc_id": "<from the Data Team Resources Confluence page>",
+    "taxonomy_sheet_id": "<from the Data Team Resources Confluence page>",
+    "taxonomy_sheet_gid": "<from the Data Team Resources Confluence page>",
+    "contribot_drive_folder_id": "<from the Data Team Resources Confluence page>"
+  },
+  "platform": {
+    "base_url": "https://opensupplyhub.org",
+    "monday_board_url": "<from the Data Team Resources Confluence page>"
+  },
+  "policy": {
+    "reject_heuristic_pct": null,
+    "reject_heuristic_count": null,
+    "second_rejection_cc": "<from the Data Team Resources Confluence page>"
+  },
+  "output_dir": "~/list-reviews"
+}

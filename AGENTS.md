@@ -39,6 +39,10 @@ docker compose exec react yarn test --watchAll=false
 docker compose exec django python manage.py test
 ```
 
+## Data moderation
+
+- To generate a contributor feedback email from a moderator's own error tags on a ContriBot ~PROCESSED sheet, use the [moderation-email](.agent/skills/moderation-email/SKILL.md) skill. It requires a per-moderator config file (see the skill's `config.example.json`) and the Google Drive integration; it never adds or changes tags and never sends email.
+
 ## Release notes & PR descriptions
 
 - To write the description for each PR, use the [pr-description](.agent/skills/pr-description/SKILL.md) skill.
