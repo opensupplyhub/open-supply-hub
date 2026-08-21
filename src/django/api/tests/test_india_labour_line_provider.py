@@ -62,7 +62,7 @@ class IndiaLabourLineProviderTest(TestCase):
                 defaults={
                     'type': PartnerField.OBJECT,
                     'label': 'India Labour Line Helpline',
-                    'system_field': True,
+                    'system_field': False,
                     'active': True,
                 },
             )
