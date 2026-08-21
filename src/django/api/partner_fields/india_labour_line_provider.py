@@ -133,9 +133,19 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
 
         if polygon is None:
             # Distinguish "outside the boundaries" (normal, quiet) from
-            # "the configured polygons don't exist" (misconfiguration,
-            # loud) — the helper logs the warning.
-            get_india_labour_line_polygons()
+            # "no configured polygons exist at all" (misconfiguration,
+            # loud). This runs on every near-miss page render, so use a
+            # cheap existence check instead of loading full geometries.
+            if not Polygon.objects.filter(
+                name__in=INDIA_LABOUR_LINE_POLYGON_NAMES
+            ).exists():
+                logger.warning(
+                    'No India Labour Line polygons exist in the '
+                    'database (expected names: '
+                    f'{sorted(INDIA_LABOUR_LINE_POLYGON_NAMES)}). The '
+                    'field will not appear anywhere until they are '
+                    'created.'
+                )
             return None
 
         phone_number = self.__get_phone_number()
