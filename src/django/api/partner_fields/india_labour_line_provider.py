@@ -31,11 +31,18 @@ INDIA_LABOUR_LINE_POLYGON_NAMES = [
 # The sectors the helpline covers (the request behind this feature was
 # a textile facility list). A location must have at least one of these
 # sectors, in addition to being inside the boundary, to get the field.
-# These are exact names from the OS Hub sector taxonomy.
+# Matching is exact-text against the production sector taxonomy, so
+# these must be spelled exactly as they appear in the sector dropdown.
+# 'Textile Mills' is kept alongside 'Textiles' as a safety net (it
+# appears in the repo's sector fixture); a name that doesn't exist in
+# an environment simply never matches anything there.
 INDIA_LABOUR_LINE_SECTORS = [
     'Apparel',
     'Apparel Accessories',
     'Footwear',
+    'Home Textiles',
+    'Leather',
+    'Textiles',
     'Textile Mills',
 ]
 
