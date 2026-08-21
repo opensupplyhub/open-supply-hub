@@ -33,9 +33,6 @@ INDIA_LABOUR_LINE_POLYGON_NAMES = [
 # sectors, in addition to being inside the boundary, to get the field.
 # Matching is exact-text against the production sector taxonomy, so
 # these must be spelled exactly as they appear in the sector dropdown.
-# 'Textile Mills' is kept alongside 'Textiles' as a safety net (it
-# appears in the repo's sector fixture); a name that doesn't exist in
-# an environment simply never matches anything there.
 INDIA_LABOUR_LINE_SECTORS = [
     'Apparel',
     'Apparel Accessories',
@@ -43,7 +40,6 @@ INDIA_LABOUR_LINE_SECTORS = [
     'Home Textiles',
     'Leather',
     'Textiles',
-    'Textile Mills',
 ]
 
 
