@@ -8,6 +8,9 @@ r53_private_hosted_zone = "osh.internal"
 r53_service_discovery_zone = "sd.internal"
 r53_public_hosted_zone = "os-hub.net"
 
+# Owns query logging for os-hub.net, which Test and Preprod also point at.
+route53_query_logging_enabled = true
+
 cloudfront_price_class = "PriceClass_All"
 api_facilities_cache_default_ttl           = 60
 api_facilities_cache_max_ttl               = 60
