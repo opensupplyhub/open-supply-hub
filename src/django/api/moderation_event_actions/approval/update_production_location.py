@@ -3,7 +3,10 @@ import logging
 from api.constants import (
     LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX,
     APIV1MatchTypes,
+    FacilityClaimStatuses,
 )
+from api.models.contributor.contributor import Contributor
+from api.models.facility.facility_claim import FacilityClaim
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
 from api.models.facility.facility import Facility
@@ -44,6 +47,13 @@ class UpdateProductionLocation(EventApprovalTemplate):
 
     def _get_action_type(self):
         return ModerationEvent.ActionType.MATCHED
+
+    def _is_approved_claimant(self, contributor: Contributor) -> bool:
+        return FacilityClaim.objects.filter(
+            facility_id=self.__os_id,
+            contributor=contributor,
+            status=FacilityClaimStatuses.APPROVED,
+        ).exists()
 
     @staticmethod
     def _update_facility_updated_at(facility_id: str) -> None:

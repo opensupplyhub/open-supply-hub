@@ -28,9 +28,27 @@ import {
     BETA_TOOLTIP_TEXT,
     AFFILIATIONS_OPTIONS,
     CERTIFICATIONS_OPTIONS,
+    PROCESSING_TYPES_TOOLTIP,
+    PROCESSING_TYPES_TAXONOMY_TOOLTIP,
+    PRODUCT_TYPES_TOOLTIP,
+    LOCATION_TYPES_TOOLTIP,
+    LOCATION_TYPES_TAXONOMY_TOOLTIP,
+    COMPANY_WEBSITE_TOOLTIP,
+    LOCATION_TYPE_SELECT_PLACEHOLDER,
+    PROCESSING_TYPE_SELECT_PLACEHOLDER,
+    PRODUCT_TYPE_SELECT_PLACEHOLDER,
 } from './constants';
 import { profileStepStyles } from './styles';
 import { selectStyles } from '../../styles';
+import { profileStepSchema } from '../../validationSchemas';
+
+const isValidPersistedBusinessWebsite = website => {
+    if (!website) {
+        return false;
+    }
+
+    return profileStepSchema.fields.businessWebsite.isValidSync(website);
+};
 
 const ProfileStep = ({
     classes,
@@ -50,8 +68,10 @@ const ProfileStep = ({
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
 
-    const [shouldHideBusinessWebsite] = useState(
-        () => !!formData.businessWebsite,
+    // Only hide a prefilled website when it already passes client validation,
+    // so invalid persisted values remain editable.
+    const [shouldHideBusinessWebsite] = useState(() =>
+        isValidPersistedBusinessWebsite(formData.businessWebsite),
     );
 
     useEffect(() => {
@@ -238,7 +258,7 @@ const ProfileStep = ({
                                             Company Website
                                             <IconComponent
                                                 className={classes.helpTooltip}
-                                                title="Official website URL for this specific production location (if available)"
+                                                title={COMPANY_WEBSITE_TOOLTIP}
                                             />
                                         </>
                                     }
@@ -256,7 +276,7 @@ const ProfileStep = ({
                                         )
                                     }
                                     onBlur={handleBlur}
-                                    placeholder="https://company.com"
+                                    placeholder="https://company.com (max 200 characters)"
                                     error={
                                         touched.businessWebsite &&
                                         !!errors.businessWebsite
@@ -618,7 +638,11 @@ const ProfileStep = ({
                                         Location Type(s)
                                         <IconComponent
                                             className={classes.helpTooltip}
-                                            title="Select or enter the location type(s) for this production location. For example: Final Product Assembly, Raw Materials Production or Processing, Office/HQ."
+                                            title={
+                                                enabledTaxonomy
+                                                    ? LOCATION_TYPES_TAXONOMY_TOOLTIP
+                                                    : LOCATION_TYPES_TOOLTIP
+                                            }
                                         />
                                     </>
                                 }
@@ -655,7 +679,9 @@ const ProfileStep = ({
                                     onChange={values =>
                                         handleChange('facilityType', values)
                                     }
-                                    placeholder="Enter location type(s)"
+                                    placeholder={
+                                        LOCATION_TYPE_SELECT_PLACEHOLDER
+                                    }
                                     styles={getSelectStyles(
                                         touched.facilityType &&
                                             !!errors.facilityType,
@@ -667,6 +693,13 @@ const ProfileStep = ({
                                     }}
                                 />
                             )}
+                            {touched.facilityType && errors.facilityType && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.facilityType}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className={classes.doubleFieldContainer}>
@@ -677,7 +710,11 @@ const ProfileStep = ({
                                         Processing Type(s)
                                         <IconComponent
                                             className={classes.helpTooltip}
-                                            title="Select or enter the type of processing activities that take place at this location. For example: Printing, Tooling, Assembly."
+                                            title={
+                                                enabledTaxonomy
+                                                    ? PROCESSING_TYPES_TAXONOMY_TOOLTIP
+                                                    : PROCESSING_TYPES_TOOLTIP
+                                            }
                                         />
                                     </>
                                 }
@@ -724,7 +761,9 @@ const ProfileStep = ({
                                             values,
                                         )
                                     }
-                                    placeholder="Enter processing type(s)"
+                                    placeholder={
+                                        PROCESSING_TYPE_SELECT_PLACEHOLDER
+                                    }
                                     styles={getSelectStyles(
                                         touched.facilityProductionTypes &&
                                             !!errors.facilityProductionTypes,
@@ -736,6 +775,16 @@ const ProfileStep = ({
                                     }}
                                 />
                             )}
+                            {touched.facilityProductionTypes &&
+                                errors.facilityProductionTypes && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={
+                                                errors.facilityProductionTypes
+                                            }
+                                        />
+                                    </div>
+                                )}
                         </div>
                         <div className={classes.fieldContainer}>
                             <FormFieldTitle
@@ -744,7 +793,7 @@ const ProfileStep = ({
                                         Product Types
                                         <IconComponent
                                             className={classes.helpTooltip}
-                                            title="Examples: T-shirts, Jeans, Dresses, Shirts, Jackets, Underwear, Sportswear, Children's clothing"
+                                            title={PRODUCT_TYPES_TOOLTIP}
                                         />
                                     </>
                                 }
@@ -759,7 +808,7 @@ const ProfileStep = ({
                                 onChange={values =>
                                     handleChange('facilityProductTypes', values)
                                 }
-                                placeholder="Enter product types..."
+                                placeholder={PRODUCT_TYPE_SELECT_PLACEHOLDER}
                                 styles={getSelectStyles(
                                     touched.facilityProductTypes &&
                                         !!errors.facilityProductTypes,
@@ -770,6 +819,14 @@ const ProfileStep = ({
                                     IndicatorSeparator: null,
                                 }}
                             />
+                            {touched.facilityProductTypes &&
+                                errors.facilityProductTypes && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors.facilityProductTypes}
+                                        />
+                                    </div>
+                                )}
                         </div>
                     </div>
                     <div className={classes.doubleFieldContainer}>
@@ -825,7 +882,7 @@ const ProfileStep = ({
                                         Percentage of Female Workers
                                         <IconComponent
                                             className={classes.helpTooltip}
-                                            title="Percentage of female employees out of the total workforce at this location"
+                                            title="Percentage of female employees out of the total workforce at this location (0–100). You may include a % sign."
                                         />
                                     </>
                                 }
@@ -845,7 +902,7 @@ const ProfileStep = ({
                                     )
                                 }
                                 onBlur={handleBlur}
-                                placeholder="e.g., 45%"
+                                placeholder="e.g., 45 (or 45%)"
                                 error={
                                     touched.facilityFemaleWorkersPercentage &&
                                     !!errors.facilityFemaleWorkersPercentage

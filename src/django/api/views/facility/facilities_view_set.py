@@ -1552,7 +1552,12 @@ class FacilitiesViewSet(ListModelMixin,
                 raise NotFound() from exc
             os_id = aliases.first().facility.id
 
-            return redirect('/api/facilities/' + os_id)
+            redirect_url = f'/api/facilities/{os_id}/'
+            query_string = request.META.get('QUERY_STRING', '')
+            if query_string:
+                redirect_url = f'{redirect_url}?{query_string}'
+
+            return redirect(redirect_url)
 
     @swagger_auto_schema(request_body=Schema(
         'data',

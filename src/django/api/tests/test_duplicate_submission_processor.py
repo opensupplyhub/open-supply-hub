@@ -26,6 +26,21 @@ from api.moderation_event_actions.creation.location_contribution \
 
 class TestDuplicateSubmissionProcessor(APITestCase):
     def setUp(self):
+        # This chain also runs SubmissionQualityProcessor after the
+        # duplicate check, which would otherwise make a real Bedrock call
+        # for every non-duplicate submission in this file. These tests
+        # only care about duplicate-check behavior, so the quality check
+        # is neutralized here (fail-open "no verdict") rather than in each
+        # individual test.
+        quality_check_patcher = patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=None,
+        )
+        quality_check_patcher.start()
+        self.addCleanup(quality_check_patcher.stop)
+
         user = User.objects.create(email='test@example.com')
         user.set_password('example123')
         user.save()
