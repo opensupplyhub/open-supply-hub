@@ -5,6 +5,7 @@ SWITCH_NAME = 'india_labour_line_helpline'
 
 
 def create_switch(apps, schema_editor):
+    """Create the switch, off by default."""
     Switch = apps.get_model('waffle', 'Switch')
     Switch.objects.get_or_create(
         name=SWITCH_NAME,
@@ -13,6 +14,7 @@ def create_switch(apps, schema_editor):
 
 
 def delete_switch(apps, schema_editor):
+    """Remove the switch when the migration is rolled back."""
     Switch = apps.get_model('waffle', 'Switch')
     Switch.objects.filter(name=SWITCH_NAME).delete()
 

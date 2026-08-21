@@ -49,6 +49,7 @@ class UserProfileFacilities(ListAPIView):
     pagination_class = FacilityIndexCursorPagination
 
     def __base_queryset(self):
+        """The slim facility queryset every branch below filters."""
         return FacilityIndex.objects.only(
             "id",
             "name",
