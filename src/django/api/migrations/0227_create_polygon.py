@@ -7,6 +7,7 @@ import api.models.polygon
 
 
 class Migration(migrations.Migration):
+    """Create the Polygon table for named geographic boundaries."""
 
     dependencies = [
         ('api', '0226_add_slc_submission_quality_check_switch'),

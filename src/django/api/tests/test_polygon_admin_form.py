@@ -217,6 +217,8 @@ class PolygonAdminReferenceWarningTest(TestCase):
         }).save()
 
         class StubProvider:
+            """Pretends to be a provider that depends on our polygon."""
+
             POLYGON_NAMES = ['referenced_boundary']
 
         registry = system_partner_field_registry
@@ -240,9 +242,11 @@ class PolygonAdminReferenceWarningTest(TestCase):
         return request
 
     def _messages(self, request):
+        """Return the admin messages collected on the request."""
         return [str(m) for m in request._messages]
 
     def test_renaming_a_referenced_polygon_warns(self):
+        """Renaming a depended-on polygon warns but still saves."""
         request = self._request_with_messages()
         self.polygon.name = 'renamed_boundary'
         form = PolygonForm(instance=self.polygon)
@@ -257,6 +261,7 @@ class PolygonAdminReferenceWarningTest(TestCase):
         self.assertEqual(self.polygon.name, 'renamed_boundary')
 
     def test_renaming_an_unreferenced_polygon_does_not_warn(self):
+        """Ordinary polygons can be renamed with no warning."""
         request = self._request_with_messages()
         other = PolygonForm(data={
             'name': 'unreferenced_boundary',
@@ -271,6 +276,7 @@ class PolygonAdminReferenceWarningTest(TestCase):
         self.assertEqual(self._messages(request), [])
 
     def test_deleting_a_referenced_polygon_warns(self):
+        """Deleting a depended-on polygon warns but still deletes."""
         request = self._request_with_messages()
 
         self.model_admin.delete_model(request, self.polygon)
@@ -283,6 +289,7 @@ class PolygonAdminReferenceWarningTest(TestCase):
         )
 
     def test_bulk_deleting_referenced_polygons_warns(self):
+        """The bulk-delete action warns about depended-on polygons."""
         request = self._request_with_messages()
 
         self.model_admin.delete_queryset(
