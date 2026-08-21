@@ -182,3 +182,15 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         })
         result = parse_polygon_geojson(geojson)
         self.assertEqual(result.geom_type, 'MultiPolygon')
+
+    def test_empty_geometry_raises(self):
+        """A geometry with no coordinates is rejected, not saved as a
+        match-nothing boundary."""
+        for coordinates in ([], [[]]):
+            geojson = json.dumps({
+                'type': 'MultiPolygon',
+                'coordinates': coordinates,
+            })
+            with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
+                parse_polygon_geojson(geojson)
+            self.assertIn('no polygon coordinates', str(ctx.exception))

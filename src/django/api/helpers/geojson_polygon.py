@@ -186,6 +186,14 @@ def parse_polygon_geojson(raw):
 
     result = MultiPolygon(*polygons, srid=4326)
 
+    # An empty geometry (e.g. a MultiPolygon with no coordinates)
+    # technically counts as "valid", but saving it would create a
+    # boundary that matches nothing — reject it up front.
+    if result.empty or result.num_coords == 0:
+        raise InvalidPolygonGeoJSON(
+            'The GeoJSON contains no polygon coordinates.'
+        )
+
     if not result.valid:
         raise InvalidPolygonGeoJSON(
             f'Geometry is not valid: {result.valid_reason}'
