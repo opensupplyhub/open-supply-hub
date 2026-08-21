@@ -28,6 +28,17 @@ INDIA_LABOUR_LINE_POLYGON_NAMES = [
     'india_labour_line_helpline_areas',
 ]
 
+# The sectors the helpline covers (the request behind this feature was
+# a textile facility list). A location must have at least one of these
+# sectors, in addition to being inside the boundary, to get the field.
+# These are exact names from the OS Hub sector taxonomy.
+INDIA_LABOUR_LINE_SECTORS = [
+    'Apparel',
+    'Apparel Accessories',
+    'Footwear',
+    'Textile Mills',
+]
+
 
 def get_india_labour_line_polygons() -> List[Polygon]:
     """
@@ -109,6 +120,9 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
         if not production_location.location:
             return None
 
+        if not self.__has_covered_sector(production_location):
+            return None
+
         polygon = Polygon.objects.filter(
             name__in=INDIA_LABOUR_LINE_POLYGON_NAMES,
             geom__contains=production_location.location,
@@ -160,6 +174,30 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
             'facility_list_item_id': 1111,
             'should_display_association': True,
         }
+
+    def __has_covered_sector(self, production_location) -> bool:
+        """
+        Check whether the location works in a covered sector.
+
+        The details page passes a FacilityIndex (which carries the
+        location's sectors directly); the v1 endpoint passes a Facility
+        (which doesn't), so in that case the sectors are looked up from
+        the search index by the location's id.
+
+        Args:
+            production_location: The Facility or FacilityIndex being
+                rendered.
+        """
+        sectors = getattr(production_location, 'sector', None)
+        if sectors is None:
+            from api.models.facility.facility_index import FacilityIndex
+            sectors = (
+                FacilityIndex.objects
+                .filter(id=production_location.id)
+                .values_list('sector', flat=True)
+                .first()
+            ) or []
+        return bool(set(sectors) & set(INDIA_LABOUR_LINE_SECTORS))
 
     def __get_phone_number(self) -> Optional[str]:
         """

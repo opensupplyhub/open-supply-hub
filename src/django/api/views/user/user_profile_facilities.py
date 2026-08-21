@@ -14,6 +14,7 @@ from ...models.facility.facility_index import FacilityIndex
 from ...models.partner_field import PartnerField
 from ...models.wage_indicator_country_data import WageIndicatorCountryData
 from ...partner_fields.india_labour_line_provider import (
+    INDIA_LABOUR_LINE_SECTORS,
     INDIA_LABOUR_LINE_SWITCH,
     IndiaLabourLineProvider,
     get_india_labour_line_polygons,
@@ -130,7 +131,11 @@ class UserProfileFacilities(ListAPIView):
             boundary_filter = Q(location__within=polygons[0].geom)
             for polygon in polygons[1:]:
                 boundary_filter |= Q(location__within=polygon.geom)
-            return self.__base_queryset().filter(boundary_filter)
+            # Inside the boundary AND working in a covered sector.
+            return self.__base_queryset().filter(
+                boundary_filter,
+                sector__overlap=INDIA_LABOUR_LINE_SECTORS,
+            )
 
         return queryset.filter(
             Exists(

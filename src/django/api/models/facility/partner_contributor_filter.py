@@ -151,6 +151,7 @@ def build_india_labour_line_filter():
     """
     from waffle import switch_is_active
     from api.partner_fields.india_labour_line_provider import (
+        INDIA_LABOUR_LINE_SECTORS,
         INDIA_LABOUR_LINE_SWITCH,
         get_india_labour_line_polygons,
     )
@@ -165,4 +166,5 @@ def build_india_labour_line_filter():
     boundary_filter = Q(location__within=polygons[0].geom)
     for polygon in polygons[1:]:
         boundary_filter |= Q(location__within=polygon.geom)
-    return boundary_filter
+    # Inside the boundary AND working in a covered sector.
+    return boundary_filter & Q(sector__overlap=INDIA_LABOUR_LINE_SECTORS)

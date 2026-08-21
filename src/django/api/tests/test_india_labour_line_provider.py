@@ -17,6 +17,7 @@ from api.models import (
 from api.models.partner_field import PartnerField
 from api.partner_fields.india_labour_line_provider import (
     INDIA_LABOUR_LINE_POLYGON_NAMES,
+    INDIA_LABOUR_LINE_SECTORS,
     INDIA_LABOUR_LINE_SWITCH,
     IndiaLabourLineProvider,
 )
@@ -83,7 +84,8 @@ class IndiaLabourLineProviderTest(TestCase):
         """Detach the contributor but keep the system partner field."""
         self.partner_field.contributor_set.clear()
 
-    def _make_facility(self, lon, lat, country_code='IN'):
+    def _make_facility(self, lon, lat, country_code='IN',
+                       sector=None):
         """Create a Facility (with its list/source chain) at lon/lat."""
         location = Point(lon, lat, srid=4326)
         facility_list = FacilityList.objects.create(
@@ -100,7 +102,7 @@ class IndiaLabourLineProviderTest(TestCase):
             name='Test Facility',
             address='123 Test St',
             country_code=country_code,
-            sector=['Apparel'],
+            sector=sector or ['Apparel'],
             row_index=0,
             geocoded_point=location,
             status=FacilityListItem.CONFIRMED_MATCH,
@@ -206,3 +208,16 @@ class IndiaLabourLineProviderTest(TestCase):
             INDIA_LABOUR_LINE_POLYGON_NAMES[0],
             code_referenced_polygon_names(),
         )
+
+    def test_uncovered_sector_gets_nothing(self):
+        """An in-boundary location in a non-covered sector is skipped."""
+        facility = self._make_facility(77.2, 28.6, sector=['Electronics'])
+        self.assertIsNone(self.provider._fetch_raw_data(facility))
+
+    def test_every_covered_sector_qualifies(self):
+        """Each covered sector, on its own, is enough to qualify."""
+        for sector in INDIA_LABOUR_LINE_SECTORS:
+            facility = self._make_facility(77.2, 28.6, sector=[sector])
+            self.assertIsNotNone(
+                self.provider._fetch_raw_data(facility), sector
+            )

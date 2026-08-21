@@ -37,13 +37,14 @@ class IndiaLabourLinePartnerFilterTest(TestCase):
         self.inside = self._make_facility('IN2026000INSD', 77.2, 28.6)
         self.outside = self._make_facility('IN2026000OUTS', 75.0, 20.0)
 
-    def _make_facility(self, facility_id, lon, lat):
+    def _make_facility(self, facility_id, lon, lat, sector=None):
         """Create a FacilityIndex row in India at the given lon/lat."""
         return FacilityIndex.objects.create(
             id=facility_id,
             name='Test Facility',
             address='123 Main St',
             country_code='IN',
+            sector=sector or ['Apparel'],
             location=Point(lon, lat),
             contributors_count=1,
             contributors_id=[self.contributor.id],
@@ -71,6 +72,15 @@ class IndiaLabourLinePartnerFilterTest(TestCase):
         ids = self._filtered_ids()
         self.assertIn(self.inside.id, ids)
         self.assertNotIn(self.outside.id, ids)
+
+    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=True)
+    def test_filter_excludes_uncovered_sectors(self):
+        """In-boundary locations outside the covered sectors do not
+        match the search filter."""
+        electronics = self._make_facility(
+            'IN2026000ELEC', 77.1, 28.7, sector=['Electronics']
+        )
+        self.assertNotIn(electronics.id, self._filtered_ids())
 
     @override_switch(INDIA_LABOUR_LINE_SWITCH, active=False)
     def test_filter_matches_nothing_when_switch_is_off(self):
