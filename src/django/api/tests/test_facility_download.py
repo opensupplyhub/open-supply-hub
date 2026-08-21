@@ -16,6 +16,7 @@ from api.models import (
     User,
 )
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
+from api.models.facility.facility_index import FacilityIndex
 from django.core.files.uploadedfile import SimpleUploadedFile
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
@@ -486,6 +487,25 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.data
         self.assertEqual(data["count"], 3)
+
+    def test_download_filters_selected_processing_type_by_exact_value(self):
+        FacilityIndex.objects.filter(id=self.contrib_facility.id).update(
+            processing_type=["CAPS"],
+        )
+        FacilityIndex.objects.filter(id=self.contrib_facility_two.id).update(
+            processing_type=["caps"],
+        )
+
+        response = self.get_facility_download(
+            "processing_type=CAPS&processing_type_exact=CAPS"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(
+            [row[0] for row in self.get_rows(response)],
+            [self.contrib_facility.id],
+        )
 
     def test_default_headers_are_created(self):
         response = self.get_facility_download()

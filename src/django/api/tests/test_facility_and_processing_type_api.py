@@ -1,11 +1,18 @@
 import json
 from unittest.mock import Mock, patch
 
-from api.models import ExtendedField
+from api.models import (
+    ExtendedField,
+    Facility,
+    FacilityListItem,
+    FacilityMatch,
+)
 from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_data import geocoding_data
 
+from django.contrib.gis.geos import Point
+from django.http import QueryDict
 from django.urls import reverse
 
 
@@ -32,6 +39,171 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
                 "matched_values": matched_values,
             },
         )
+
+    def _create_facility_type_extended_field(
+        self, raw_value, matched_values
+    ):
+        return ExtendedField.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            facility_list_item=self.list_item,
+            field_name=ExtendedField.FACILITY_TYPE,
+            value={
+                "raw_values": raw_value,
+                "matched_values": matched_values,
+            },
+        )
+
+    def _create_indexed_facility(
+        self,
+        name,
+        row_index,
+        facility_type=None,
+        processing_type=None,
+    ):
+        list_item = FacilityListItem.objects.create(
+            name=name,
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=row_index,
+            geocoded_point=Point(row_index, row_index),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.source,
+        )
+        facility = Facility.objects.create(
+            name=name,
+            address="Address",
+            country_code="US",
+            location=Point(row_index, row_index),
+            created_from=list_item,
+        )
+        FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=facility,
+            facility_list_item=list_item,
+            confidence=0.85,
+            results="",
+        )
+        list_item.facility = facility
+        list_item.save()
+        FacilityIndex.objects.filter(id=facility.id).update(
+            facility_type=facility_type or [],
+            processing_type=processing_type or [],
+        )
+        return facility
+
+    def test_unmatched_raw_processing_type_indexed(self):
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("cement mixing", facility_index.processing_type)
+
+    def test_unmatched_raw_facility_type_indexed(self):
+        self._create_facility_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("cement mixing", facility_index.facility_type)
+
+    def test_unmatched_raw_processing_type_not_indexed_from_inactive_source(
+        self,
+    ):
+        self.source.is_active = False
+        self.source.save()
+
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("cement mixing", facility_index.processing_type)
+
+    def test_matched_types_not_indexed_from_inactive_source(self):
+        self.source.is_active = False
+        self.source.save()
+
+        self._create_facility_type_extended_field(
+            ["Office / HQ"],
+            [
+                [
+                    "FACILITY_TYPE",
+                    "EXACT",
+                    "Office / HQ",
+                    "Office / HQ",
+                ]
+            ],
+        )
+        self._create_processing_type_extended_field(
+            ["Assembly"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Assembly",
+                ]
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("Office / HQ", facility_index.facility_type)
+        self.assertNotIn("Assembly", facility_index.processing_type)
+
+    def test_skipped_matching_raw_facility_type_indexed(self):
+        # Non-apparel SKIPPED_MATCHING stores the raw value in slot 3 only;
+        # facility_type slot 2 is null, so the raw value must be indexed from
+        # raw_values.
+        self._create_facility_type_extended_field(
+            ["custom facility label"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "SKIPPED_MATCHING",
+                    None,
+                    "custom facility label",
+                ]
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("custom facility label", facility_index.facility_type)
+
+    def test_placeholder_matched_value_not_indexed(self):
+        # Contributors upload the literal string "null" instead of leaving the
+        # field empty; it reaches matched_values and used to be indexed as a
+        # type of its own.
+        self._create_processing_type_extended_field(
+            ["null"],
+            [["PROCESSING_TYPE", "SKIPPED_MATCHING", None, "null"]],
+        )
+        self._create_facility_type_extended_field(
+            ["null"],
+            [["PROCESSING_TYPE", "SKIPPED_MATCHING", None, "null"]],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("null", facility_index.processing_type)
+        self.assertNotIn("null", facility_index.facility_type)
+
+    def test_placeholder_raw_value_not_indexed(self):
+        self._create_processing_type_extended_field(
+            ["N/A", "cement mixing"],
+            [
+                [None, None, None, None],
+                [None, None, None, None],
+            ],
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertNotIn("N/A", facility_index.processing_type)
+        self.assertIn("cement mixing", facility_index.processing_type)
 
     def test_processing_type_indexed_when_tagged_as_facility_type(self):
         # "Final Product Assembly" is both a facility type and a processing
@@ -79,6 +251,509 @@ class FacilityAndProcessingTypeAPITest(FacilityAPITestCaseBase):
 
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
         self.assertIn("Cutting", facility_index.processing_type)
+
+        response = self.client.get(self.url + "?processing_type=Cutting")
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_unmatched_raw_processing_type_by_free_text(self):
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_free_text_matches_word_and_prefix_but_not_middle_substring(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            name="Zebra Whole Word",
+            processing_type=["plastic caps"],
+        )
+        prefix_facility = self._create_indexed_facility(
+            "Alpha Word Prefix",
+            2,
+            processing_type=["capsulas"],
+        )
+        self._create_indexed_facility(
+            "Middle Substring",
+            3,
+            processing_type=["encapsulation"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "caps", "sort_by": "name_asc"},
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            [feature["id"] for feature in data["features"]],
+            [self.facility.id, prefix_facility.id],
+        )
+
+    def test_selected_processing_type_matches_exact_case_in_both_managers(
+        self,
+    ):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+        )
+        self._create_indexed_facility(
+            "Lowercase Caps",
+            2,
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "processing_type": "CAPS",
+                "processing_type_exact": "CAPS",
+            },
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+        params = QueryDict(
+            "processing_type=CAPS&processing_type_exact=CAPS"
+        )
+        self.assertEqual(
+            list(
+                FacilityIndex.objects.filter_by_query_params(
+                    params
+                ).values_list("id", flat=True)
+            ),
+            [self.facility.id],
+        )
+        self.assertEqual(
+            list(
+                Facility.objects.filter_by_query_params(params).values_list(
+                    "id", flat=True
+                )
+            ),
+            [self.facility.id],
+        )
+
+    def test_unselected_processing_type_keeps_legacy_case_insensitive_match(
+        self,
+    ):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+        )
+        lowercase = self._create_indexed_facility(
+            "Lowercase Caps",
+            2,
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "CAPS"},
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            {self.facility.id, lowercase.id},
+        )
+
+    def test_exact_value_without_processing_type_companion_is_ignored(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cement mixing"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "processing_type": "cement",
+                "processing_type_exact": "CAPS",
+            },
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_exact_and_free_processing_types_are_ored(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["CAPS"],
+        )
+        cement = self._create_indexed_facility(
+            "Cement",
+            2,
+            processing_type=["cement mixing"],
+        )
+        self._create_indexed_facility(
+            "Lowercase Caps",
+            3,
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=CAPS"
+            + "&processing_type=cement"
+            + "&processing_type_exact=CAPS"
+        )
+
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            {self.facility.id, cement.id},
+        )
+
+    def test_exact_processing_type_is_anded_with_facility_type(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            facility_type=["Office / HQ"],
+            processing_type=["CAPS"],
+        )
+        self._create_indexed_facility(
+            "Processing Only",
+            2,
+            facility_type=["Final Product Assembly"],
+            processing_type=["CAPS"],
+        )
+        self._create_indexed_facility(
+            "Facility Only",
+            3,
+            facility_type=["Office / HQ"],
+            processing_type=["caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "facility_type": "Office / HQ",
+                "processing_type": "CAPS",
+                "processing_type_exact": "CAPS",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_exact_processing_type_is_excluded_from_free_text_relevance(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            name="Alpha Exact",
+            processing_type=["CAPS"],
+        )
+        cement = self._create_indexed_facility(
+            "Zebra Cement",
+            2,
+            processing_type=["cement mixing"],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=CAPS"
+            + "&processing_type=cement"
+            + "&processing_type_exact=CAPS"
+            + "&sort_by=name_asc"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            [feature["id"] for feature in data["features"]],
+            [cement.id, self.facility.id],
+        )
+
+    def test_empty_type_values_are_omitted_in_list_and_both_managers(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cement mixing"],
+        )
+        cement = self._create_indexed_facility(
+            "Second Cement",
+            2,
+            processing_type=["cement finishing"],
+        )
+        params = QueryDict(
+            "facility_type=&facility_type=%20%20"
+            "&processing_type=&processing_type=%20"
+        )
+
+        unfiltered_ids = set(
+            FacilityIndex.objects.all().values_list("id", flat=True)
+        )
+        response = self.client.get(self.url, params)
+        data = json.loads(response.content)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            {feature["id"] for feature in data["features"]},
+            unfiltered_ids,
+        )
+        self.assertEqual(
+            set(
+                FacilityIndex.objects.filter_by_query_params(
+                    params
+                ).values_list("id", flat=True)
+            ),
+            unfiltered_ids,
+        )
+        self.assertEqual(
+            set(
+                Facility.objects.filter_by_query_params(params).values_list(
+                    "id", flat=True
+                )
+            ),
+            unfiltered_ids,
+        )
+
+        mixed_response = self.client.get(
+            self.url
+            + "?processing_type=&processing_type=cement"
+            + "&facility_type=%20",
+        )
+        mixed_data = json.loads(mixed_response.content)
+        self.assertEqual(
+            {feature["id"] for feature in mixed_data["features"]},
+            {self.facility.id, cement.id},
+        )
+
+    def test_short_unmatched_processing_type_is_explicit_no_match(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["Dyeing"],
+        )
+
+        response = self.client.get(self.url, {"processing_type": "dy"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content)["count"], 0)
+
+    def test_short_unmatched_value_can_be_ored_with_valid_processing_type(
+        self,
+    ):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cement mixing"],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=dy&processing_type=cement"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_short_declared_alias_retains_taxonomy_behavior(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["Office / HQ"],
+        )
+
+        response = self.client.get(self.url, {"processing_type": "hq"})
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_short_processing_type_remains_usable_when_exact(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["X"],
+        )
+        self._create_indexed_facility(
+            "Lowercase X",
+            2,
+            processing_type=["x"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {
+                "processing_type": "X",
+                "processing_type_exact": "X",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_free_text_treats_regex_metacharacters_literally(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["x[yz finishing"],
+        )
+        self._create_indexed_facility(
+            "Regex Lookalike",
+            2,
+            processing_type=["xayz finishing"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "x[yz"},
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_free_text_word_prefix_matching_is_accent_insensitive(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            processing_type=["cafépress"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "cafep"},
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_sort_by_is_secondary_to_equal_free_text_relevance(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            name="Zebra Caps",
+            processing_type=["plastic caps"],
+        )
+        alpha_facility = self._create_indexed_facility(
+            "Alpha Caps",
+            2,
+            processing_type=["metal caps"],
+        )
+
+        response = self.client.get(
+            self.url,
+            {"processing_type": "caps", "sort_by": "name_asc"},
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 2)
+        self.assertEqual(
+            [feature["id"] for feature in data["features"]],
+            [alpha_facility.id, self.facility.id],
+        )
+
+    def test_search_processing_type_fuzzy_typo_still_uses_taxonomy(self):
+        self._create_processing_type_extended_field(
+            ["Assembly"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Assembly",
+                ]
+            ],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=asembley"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_mixed_taxonomy_and_free_text(self):
+        self._create_processing_type_extended_field(
+            ["Cutting"],
+            [
+                [
+                    "PROCESSING_TYPE",
+                    "EXACT",
+                    "Final Product Assembly",
+                    "Cutting",
+                ],
+            ],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?processing_type=Cutting&processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+    def test_search_facility_type_and_processing_type_params_are_anded(self):
+        self._create_facility_type_extended_field(
+            ["Office / HQ"],
+            [
+                [
+                    "FACILITY_TYPE",
+                    "EXACT",
+                    "Office / HQ",
+                    "Office / HQ",
+                ]
+            ],
+        )
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(
+            self.url
+            + "?facility_type=Office%20/%20HQ&processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
+
+        response = self.client.get(
+            self.url
+            + "?facility_type=Final%20Product%20Assembly"
+            + "&processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 0)
+
+    def test_search_free_text_below_min_length_returns_no_results(self):
+        self._create_processing_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(self.url + "?processing_type=ce")
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 0)
+
+    def test_invalid_processing_type_does_not_broaden_facility_type_search(
+        self,
+    ):
+        self._create_facility_type_extended_field(
+            ["Office / HQ"],
+            [
+                [
+                    "FACILITY_TYPE",
+                    "EXACT",
+                    "Office / HQ",
+                    "Office / HQ",
+                ]
+            ],
+        )
+
+        response = self.client.get(
+            self.url + "?facility_type=Office%20/%20HQ&processing_type=ce"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 0)
+
+    def test_search_free_text_finds_value_in_either_column(self):
+        self._create_facility_type_extended_field(
+            ["cement mixing"],
+            [[None, None, None, None]],
+        )
+
+        response = self.client.get(
+            self.url + "?processing_type=cement%20mixing"
+        )
+        data = json.loads(response.content)
+        self.assertEqual(data["count"], 1)
+        self.assertEqual(data["features"][0]["id"], self.facility.id)
 
     # TODO: Replace to Dedupe Hub if possible (issue between test database
     #       & Dedupe Hub live database)

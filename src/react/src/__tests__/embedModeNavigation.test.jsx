@@ -78,6 +78,11 @@ const createTestStore = (overrides = {}) => {
             contributors: { data: null, fetching: false, error: null },
             parentCompanies: { data: null, fetching: false, error: null },
             lists: { data: null, fetching: false, error: null },
+            facilityProcessingType: {
+                data: null,
+                fetching: false,
+                error: null,
+            },
         },
         partnerGroupContributors: { data: null, fetching: false, error: null },
         ...restOverrides,

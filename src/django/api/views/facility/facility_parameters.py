@@ -119,14 +119,47 @@ facilities_list_parameters = [
         IN_QUERY,
         type=TYPE_STRING,
         required=False,
-        description='Facility type',
+        description=(
+            'Facility type taxonomy label or free text. Taxonomy values '
+            'use exact matching; unmatched free text uses accent-insensitive '
+            'word or word-prefix matching across both facility type and '
+            'processing type. On the facilities list endpoint, whole-word '
+            'matches rank before word-prefix matches, followed by the '
+            'requested sort order. Empty values are ignored. Unrecognized '
+            'free text shorter than three trimmed characters matches '
+            'nothing; declared taxonomy aliases remain supported.'
+        ),
     ),
     Parameter(
         'processing_type',
         IN_QUERY,
         type=TYPE_STRING,
         required=False,
-        description='Processing type',
+        description=(
+            'Processing type taxonomy label or free text. Taxonomy values '
+            'use exact matching; unmatched free text uses accent-insensitive '
+            'word or word-prefix matching across both facility type and '
+            'processing type. On the facilities list endpoint, whole-word '
+            'matches rank before word-prefix matches, followed by the '
+            'requested sort order. Empty values are ignored. Unrecognized '
+            'free text shorter than three trimmed characters matches '
+            'nothing; declared taxonomy aliases remain supported.'
+        ),
+    ),
+    Parameter(
+        'processing_type_exact',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'Repeat a case-sensitive processing_type value here to require '
+            'exact overlap with the indexed processing type array. Values '
+            'not also supplied as processing_type are ignored. Exact and '
+            'legacy processing terms are combined with OR semantics. Empty '
+            'values are ignored; non-empty values preserve their submitted '
+            'case and punctuation, including values shorter than three '
+            'characters.'
+        ),
     ),
     Parameter(
         'product_type',

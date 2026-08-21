@@ -4,8 +4,11 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
 from django.db.models import Q
 
-from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
+from api.facility_processing_query import parse_facility_processing_query
+from api.models.facility.facility_manager_index_new import (
+    annotate_facility_processing_match,
+)
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -57,10 +60,12 @@ class FacilityManager(models.Manager):
 
         parent_companies = params.getlist(FacilitiesQueryParams.PARENT_COMPANY)
 
-        facility_types = params.getlist(FacilitiesQueryParams.FACILITY_TYPE)
-
-        processing_types = params.getlist(
-            FacilitiesQueryParams.PROCESSING_TYPE
+        (
+            facility_types,
+            processing_types,
+            exact_processing_types,
+        ) = parse_facility_processing_query(
+            params
         )
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
@@ -157,29 +162,14 @@ class FacilityManager(models.Manager):
                     Q(parent_company_name__overlap=parent_company_name)
                 )
 
-        if len(facility_types):
-            standard_facility_types = []
-            for facility_type in facility_types:
-                standard_type = get_facility_and_processing_type(
-                    facility_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_facility_types.append(standard_type[2])
-            facilities_qs = facilities_qs.filter(
-                facility_type__overlap=standard_facility_types
-            )
-
-        if len(processing_types):
-            standard_processing_types = []
-            for processing_type in processing_types:
-                standard_type = get_facility_and_processing_type(
-                    processing_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_processing_types.append(standard_type[3])
-            facilities_qs = facilities_qs.filter(
-                processing_type__overlap=standard_processing_types
-            )
+        facilities_qs, has_fp_filter = annotate_facility_processing_match(
+            facilities_qs,
+            facility_types,
+            processing_types,
+            exact_processing_types,
+        )
+        if has_fp_filter:
+            facilities_qs = facilities_qs.filter(_fp_match=True)
 
         if len(product_types):
             clean_product_types = []

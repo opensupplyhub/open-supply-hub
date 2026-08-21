@@ -1,9 +1,13 @@
+import re
+
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
-from django.db.models import Q
+from django.db.models import BooleanField, IntegerField, Q
+from django.db.models.expressions import RawSQL
 
 from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
+from api.facility_processing_query import parse_facility_processing_query
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -11,6 +15,292 @@ from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
+
+
+MIN_FREE_TEXT_FP_LENGTH = 3
+
+FREE_TEXT_FP_ARRAY_MATCH = """
+(
+    EXISTS (
+        SELECT 1 FROM unnest(facility_type) AS elem
+        WHERE unaccent(elem) ~* unaccent(%s)
+    )
+    OR EXISTS (
+        SELECT 1 FROM unnest(processing_type) AS elem
+        WHERE unaccent(elem) ~* unaccent(%s)
+    )
+)
+"""
+
+FREE_TEXT_FP_TERM_SCORE = """
+(
+    CASE
+        WHEN {array_match} THEN 2
+        WHEN {array_match} THEN 1
+        ELSE 0
+    END
+)
+"""
+
+
+def _classify_fp_filter_value(value):
+    trimmed = value.strip()
+    if not trimmed:
+        return (None, None)
+
+    standard_type = get_facility_and_processing_type(
+        value,
+        ['Apparel'],
+        allow_fuzzy=len(trimmed) >= MIN_FREE_TEXT_FP_LENGTH,
+    )
+    if standard_type[0] is not None:
+        return ('taxonomy', standard_type)
+
+    if len(trimmed) >= MIN_FREE_TEXT_FP_LENGTH:
+        return ('free_text', trimmed)
+
+    return (None, None)
+
+
+def _free_text_fp_terms(
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+):
+    terms = []
+    exact_processing_types = set(exact_processing_types or [])
+    values = [
+        *(facility_types or []),
+        *(
+            value for value in (processing_types or [])
+            if value not in exact_processing_types
+        ),
+    ]
+    for value in values:
+        classification, data = _classify_fp_filter_value(value)
+        if classification == 'free_text':
+            terms.append(data)
+    return terms
+
+
+def _word_prefix_pattern(term):
+    return rf'\m{re.escape(term)}'
+
+
+def _whole_word_pattern(term):
+    return rf'{_word_prefix_pattern(term)}\M'
+
+
+def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
+    taxonomy_values = []
+    free_text_terms = []
+
+    for value in values:
+        classification, data = _classify_fp_filter_value(value)
+        if classification == 'taxonomy':
+            taxonomy_values.append(data[taxonomy_slot])
+        elif classification == 'free_text':
+            free_text_terms.append(data)
+
+    parts = []
+    params = []
+
+    if taxonomy_values:
+        parts.append(f'{overlap_field} && %s::varchar[]')
+        params.append(taxonomy_values)
+
+    for term in free_text_terms:
+        parts.append(FREE_TEXT_FP_ARRAY_MATCH)
+        pattern = _word_prefix_pattern(term)
+        params.extend([pattern, pattern])
+
+    return parts, params
+
+
+def _append_fp_param_clause(
+    param_clauses,
+    all_params,
+    values,
+    overlap_field,
+    taxonomy_slot,
+):
+    if not values:
+        return
+
+    parts, params = _build_fp_param_sql_parts(
+        values,
+        overlap_field,
+        taxonomy_slot,
+    )
+    # A supplied parameter whose values are all invalid must not silently
+    # broaden the request to an unfiltered facility search.
+    param_clauses.append(
+        '(' + ' OR '.join(parts) + ')' if parts else '(FALSE)'
+    )
+    all_params.extend(params)
+
+
+def _append_exact_processing_clause(
+    param_clauses,
+    all_params,
+    exact_processing_types,
+    legacy_processing_types,
+):
+    if not exact_processing_types:
+        return
+
+    exact_clause = 'processing_type && %s::varchar[]'
+    if param_clauses and legacy_processing_types:
+        param_clauses[-1] = f'({param_clauses[-1]} OR {exact_clause})'
+    else:
+        param_clauses.append(f'({exact_clause})')
+    all_params.append(exact_processing_types)
+
+
+def build_fp_match_sql(
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+):
+    """
+    Build a boolean SQL expression for facility/processing type filters.
+
+    Taxonomy values use array overlap on the param's primary column.
+    Unmatched values fall back to an accent-insensitive word-prefix search
+    across both columns. Multiple values within one param are OR'd;
+    facility_type and processing_type params are AND'd.
+    """
+    param_clauses = []
+    all_params = []
+
+    exact_processing_types = [
+        value for value in (exact_processing_types or [])
+        if value in (processing_types or [])
+    ]
+    legacy_processing_types = [
+        value for value in (processing_types or [])
+        if value not in exact_processing_types
+    ]
+
+    for values, overlap_field, taxonomy_slot in (
+        (facility_types, 'facility_type', 2),
+        (legacy_processing_types, 'processing_type', 3),
+    ):
+        _append_fp_param_clause(
+            param_clauses,
+            all_params,
+            values,
+            overlap_field,
+            taxonomy_slot,
+        )
+
+    _append_exact_processing_clause(
+        param_clauses,
+        all_params,
+        exact_processing_types,
+        legacy_processing_types,
+    )
+
+    if not param_clauses:
+        return None, []
+
+    return ' AND '.join(param_clauses), all_params
+
+
+def build_fp_relevance_sql(
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+):
+    """
+    Score free-text facility/processing filters across both indexed arrays.
+
+    Whole-word matches score 2 and word-prefix matches score 1. The highest
+    score wins when multiple values or indexed array elements match.
+    """
+    score_parts = []
+    params = []
+
+    for term in _free_text_fp_terms(
+        facility_types,
+        processing_types,
+        exact_processing_types,
+    ):
+        score_parts.append(
+            FREE_TEXT_FP_TERM_SCORE.format(
+                array_match=FREE_TEXT_FP_ARRAY_MATCH
+            )
+        )
+        whole_word_pattern = _whole_word_pattern(term)
+        word_prefix_pattern = _word_prefix_pattern(term)
+        params.extend(
+            [
+                whole_word_pattern,
+                whole_word_pattern,
+                word_prefix_pattern,
+                word_prefix_pattern,
+            ]
+        )
+
+    if not score_parts:
+        return None, []
+
+    if len(score_parts) == 1:
+        return score_parts[0], params
+
+    return f"GREATEST({', '.join(score_parts)})", params
+
+
+def annotate_facility_processing_match(
+    queryset,
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+    annotation_name='_fp_match',
+):
+    sql, params = build_fp_match_sql(
+        facility_types,
+        processing_types,
+        exact_processing_types,
+    )
+    if not sql:
+        return queryset, False
+
+    return queryset.annotate(
+        **{
+            annotation_name: RawSQL(
+                sql,
+                params,
+                output_field=BooleanField(),
+            )
+        }
+    ), True
+
+
+def annotate_facility_processing_relevance(
+    queryset,
+    facility_types,
+    processing_types,
+    exact_processing_types=None,
+    annotation_name='_fp_relevance',
+):
+    sql, params = build_fp_relevance_sql(
+        facility_types,
+        processing_types,
+        exact_processing_types,
+    )
+    if not sql:
+        return queryset, False
+
+    return queryset.annotate(
+        **{
+            annotation_name: RawSQL(
+                sql,
+                params,
+                output_field=IntegerField(),
+            )
+        }
+    ), True
 
 
 class FacilityIndexNewManager(models.Manager):
@@ -55,10 +345,12 @@ class FacilityIndexNewManager(models.Manager):
 
         parent_companies = params.getlist(FacilitiesQueryParams.PARENT_COMPANY)
 
-        facility_types = params.getlist(FacilitiesQueryParams.FACILITY_TYPE)
-
-        processing_types = params.getlist(
-            FacilitiesQueryParams.PROCESSING_TYPE
+        (
+            facility_types,
+            processing_types,
+            exact_processing_types,
+        ) = parse_facility_processing_query(
+            params
         )
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
@@ -157,29 +449,14 @@ class FacilityIndexNewManager(models.Manager):
                     Q(parent_company_name__overlap=parent_company_name)
                 )
 
-        if len(facility_types):
-            standard_facility_types = []
-            for facility_type in facility_types:
-                standard_type = get_facility_and_processing_type(
-                    facility_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_facility_types.append(standard_type[2])
-            facilities_qs = facilities_qs.filter(
-                facility_type__overlap=standard_facility_types
-            )
-
-        if len(processing_types):
-            standard_processing_types = []
-            for processing_type in processing_types:
-                standard_type = get_facility_and_processing_type(
-                    processing_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_processing_types.append(standard_type[3])
-            facilities_qs = facilities_qs.filter(
-                processing_type__overlap=standard_processing_types
-            )
+        facilities_qs, has_fp_filter = annotate_facility_processing_match(
+            facilities_qs,
+            facility_types,
+            processing_types,
+            exact_processing_types,
+        )
+        if has_fp_filter:
+            facilities_qs = facilities_qs.filter(_fp_match=True)
 
         if len(product_types):
             clean_product_types = []
