@@ -25,7 +25,7 @@ INDIA_LABOUR_LINE_SWITCH = 'india_labour_line_helpline'
 # helpline serves; more names can be added here if coverage is ever
 # split across multiple rows.
 INDIA_LABOUR_LINE_POLYGON_NAMES = [
-    'india_labour_line_helpline_ares',
+    'india_labour_line_helpline_areas',
 ]
 
 
