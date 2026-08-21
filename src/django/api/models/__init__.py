@@ -82,6 +82,7 @@ from .user import (
 )
 from .version import Version
 from .moderation_event import ModerationEvent
+from .polygon import Polygon
 from .download_location_payment import DownloadLocationPayment
 from .wage_indicator_country_data import WageIndicatorCountryData
 from .wage_indicator_link_text_config import WageIndicatorLinkTextConfig
