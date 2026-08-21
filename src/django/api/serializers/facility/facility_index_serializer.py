@@ -284,7 +284,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                 and not name_obj.get('is_anonymized', False),
                                 is_from_created_from=name_obj.get(
                                     'is_from_created_from', False),
-                                masked_ids=masked))
+                                masked_ids=masked,
+                                claimant_contributor_id=(
+                                    claimant_contributor_id),
+                                is_anonymized=name_obj.get(
+                                    'is_anonymized', False)))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
@@ -307,7 +311,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                                     'is_anonymized', False),
                                 is_from_created_from=address_obj.get(
                                     'is_from_created_from', False),
-                                masked_ids=masked))
+                                masked_ids=masked,
+                                claimant_contributor_id=(
+                                    claimant_contributor_id),
+                                is_anonymized=address_obj.get(
+                                    'is_anonymized', False)))
                 data = sorted(unsorted_data,
                               key=self._sort_order_excluding_date,
                               reverse=True)
@@ -350,12 +358,17 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 claims
                 ))
 
+        claimant_contributor_id = (
+            (facility.approved_claim or {}).get('contributor_id')
+        )
+
         return format_sectors(items,
                               claims,
                               date_field_to_sort,
                               use_main_created_at,
                               user_can_see_detail,
-                              masked)
+                              masked,
+                              claimant_contributor_id)
 
     def get_has_approved_claim(self, facility):
         return len(facility.approved_claim_ids) > 0
