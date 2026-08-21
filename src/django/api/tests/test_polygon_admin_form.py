@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.admin.sites import AdminSite
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from waffle.testutils import override_switch
@@ -11,6 +12,7 @@ from api.admin import (
     PolygonForm,
 )
 from api.models import Polygon, User
+from api.partner_fields.registry import system_partner_field_registry
 
 SQUARE_GEOJSON = json.dumps({
     'type': 'Polygon',
@@ -199,3 +201,92 @@ class PolygonNameRulesTest(TestCase):
 
         self.assertEqual(unnamed.display_name, '')
         self.assertEqual(named.display_name, 'Delhi NCR')
+
+
+class PolygonAdminReferenceWarningTest(TestCase):
+    """Tests for the warnings shown when staff edit polygons that
+    code references by name."""
+
+    def setUp(self):
+        """Create a polygon and register a stub provider referencing it."""
+        self.model_admin = PolygonAdmin(Polygon, AdminSite())
+        self.polygon = PolygonForm(data={
+            'name': 'referenced_boundary',
+            'description': 'A polygon some feature depends on.',
+            'geojson_text': SQUARE_GEOJSON,
+        }).save()
+
+        class StubProvider:
+            POLYGON_NAMES = ['referenced_boundary']
+
+        registry = system_partner_field_registry
+        self.__original_providers = list(registry.providers)
+        registry.providers.append(StubProvider())
+
+    def tearDown(self):
+        """Restore the real provider registry."""
+        registry = system_partner_field_registry
+        registry.providers.clear()
+        registry.providers.extend(self.__original_providers)
+
+    def _request_with_messages(self):
+        """Build a request that can collect admin messages."""
+        request = RequestFactory().post('/')
+        request.user = User.objects.create_superuser(
+            'warn-admin@example.com', 'example123'
+        )
+        setattr(request, 'session', 'session')
+        request._messages = FallbackStorage(request)
+        return request
+
+    def _messages(self, request):
+        return [str(m) for m in request._messages]
+
+    def test_renaming_a_referenced_polygon_warns(self):
+        request = self._request_with_messages()
+        self.polygon.name = 'renamed_boundary'
+        form = PolygonForm(instance=self.polygon)
+
+        self.model_admin.save_model(request, self.polygon, form, True)
+
+        warnings = self._messages(request)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn('referenced_boundary', warnings[0])
+        # The rename still goes through — this is a warning, not a block.
+        self.polygon.refresh_from_db()
+        self.assertEqual(self.polygon.name, 'renamed_boundary')
+
+    def test_renaming_an_unreferenced_polygon_does_not_warn(self):
+        request = self._request_with_messages()
+        other = PolygonForm(data={
+            'name': 'unreferenced_boundary',
+            'description': 'Nothing depends on this one.',
+            'geojson_text': SQUARE_GEOJSON,
+        }).save()
+        other.name = 'still_unreferenced'
+        form = PolygonForm(instance=other)
+
+        self.model_admin.save_model(request, other, form, True)
+
+        self.assertEqual(self._messages(request), [])
+
+    def test_deleting_a_referenced_polygon_warns(self):
+        request = self._request_with_messages()
+
+        self.model_admin.delete_model(request, self.polygon)
+
+        warnings = self._messages(request)
+        self.assertEqual(len(warnings), 1)
+        self.assertIn('referenced_boundary', warnings[0])
+        self.assertFalse(
+            Polygon.objects.filter(name='referenced_boundary').exists()
+        )
+
+    def test_bulk_deleting_referenced_polygons_warns(self):
+        request = self._request_with_messages()
+
+        self.model_admin.delete_queryset(
+            request, Polygon.objects.filter(name='referenced_boundary')
+        )
+
+        self.assertEqual(len(self._messages(request)), 1)
