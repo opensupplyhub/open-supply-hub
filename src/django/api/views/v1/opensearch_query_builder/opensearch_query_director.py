@@ -24,6 +24,7 @@ class OpenSearchQueryDirector:
             V1_PARAMETERS_LIST.COORDINATES: 'geo_distance',
             V1_PARAMETERS_LIST.GEO_POLYGON: 'geo_polygon',
             V1_PARAMETERS_LIST.CONTRIBUTOR_ID: 'terms',
+            V1_PARAMETERS_LIST.CONTRIBUTOR_TYPE: 'terms',
             V1_PARAMETERS_LIST.REQUEST_TYPE: 'terms',
             V1_PARAMETERS_LIST.SOURCE: 'terms',
             V1_PARAMETERS_LIST.STATUS: 'terms',
