@@ -30,6 +30,10 @@ from api.moderation_event_actions.creation.location_contribution \
     .location_contribution import LocationContribution
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
+from api.serializers.v1.duplicate_override_query_param_serializer \
+    import DuplicateOverrideQueryParamSerializer
+from api.serializers.v1.ignore_warnings_query_param_serializer \
+    import IgnoreWarningsQueryParamSerializer
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
 from api.models.partner_field import PartnerField
@@ -119,6 +123,22 @@ class ProductionLocations(ViewSet):
         # settings.py file.
         return super().get_parsers()
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(
+            request, response, *args, **kwargs
+        )
+        # A rejected submission creates no moderation event, so the entry
+        # DuplicateThrottle recorded for it must not block an identical
+        # retry (e.g. resubmitting unchanged data after dismissing the
+        # duplicate or quality-warning dialog). 429 is excluded: that is
+        # the throttle's own rejection, and clearing on it would let every
+        # second identical request through.
+        if (response.status_code >= status.HTTP_400_BAD_REQUEST
+                and response.status_code
+                != status.HTTP_429_TOO_MANY_REQUESTS):
+            DuplicateThrottle().clear(request, self)
+        return response
+
     @handle_errors_decorator
     def list(self, request):
         _, error_response = serialize_params(
@@ -193,6 +213,42 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        duplicate_override_serializer = DuplicateOverrideQueryParamSerializer(
+            data=request.query_params
+        )
+        if not duplicate_override_serializer.is_valid():
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
+                    'errors': [{
+                        'field': 'duplicate_override',
+                        'detail': str(
+                            duplicate_override_serializer
+                            .errors['duplicate_override'][0]
+                        )
+                    }]
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        ignore_warnings_serializer = IgnoreWarningsQueryParamSerializer(
+            data=request.query_params
+        )
+        if not ignore_warnings_serializer.is_valid():
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
+                    'errors': [{
+                        'field': 'ignore_warnings',
+                        'detail': str(
+                            ignore_warnings_serializer
+                            .errors['ignore_warnings'][0]
+                        )
+                    }]
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
@@ -200,7 +256,15 @@ class ProductionLocations(ViewSet):
         event_dto = CreateModerationEventDTO(
             contributor=request.user.contributor,
             raw_data=request.data,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            duplicate_override=(
+                duplicate_override_serializer
+                .validated_data['duplicate_override']
+            ),
+            ignore_warnings=(
+                ignore_warnings_serializer
+                .validated_data['ignore_warnings']
+            ),
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 

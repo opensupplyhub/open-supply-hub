@@ -56,7 +56,38 @@ Alarms publish to `topic<ShortEnv>GlobalNotifications` (`aws_sns_topic.global` i
 CloudWatch Alarm → SNS (topic…GlobalNotifications) → AWS Chatbot → Slack
 ```
 
-When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (required, non-empty values in private [`ci-deployment`](https://github.com/opensupplyhub/ci-deployment) tfvars), Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes that topic so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`.
+When `aws_chatbot_manage_channel_configuration = true`, Terraform creates an [AWS Chatbot](https://docs.aws.amazon.com/chatbot/latest/adminguide/slack-setup.html) Slack channel configuration that subscribes SNS topics so CloudWatch alarm state changes post to Slack. See `deployment/terraform/chatbot.tf`. Slack workspace and channel IDs are read from the owner env’s SM secret (`oshub/<owner>/aws-chatbot-slack-config`, referenced by `aws_chatbot_slack_config_secret_name` in public tfvars — Test and Production today) as JSON `{"team_id":"…","channel_id":"…"}`.
+
+### Shared AWS account (one channel config)
+
+AWS allows **only one** Chatbot Slack channel configuration per Slack channel **per AWS account**. Two groups share an account + channel:
+
+**Dev / Test / Preprod** (shared AWS account):
+
+| Env | `aws_chatbot_manage_channel_configuration` | Role |
+| --- | --- | --- |
+| Test | `true` (owner) | Creates the channel config; `sns_topic_arns` = Test SNS + optional sibling ARNs |
+| Development / Preprod | `false` | Own SNS topic only; no Chatbot resources |
+
+**Production / Staging / RBA** (shared AWS account):
+
+| Env | `aws_chatbot_manage_channel_configuration` | Role |
+| --- | --- | --- |
+| Production | `true` (owner) | Creates the channel config; `sns_topic_arns` = Prod SNS + optional sibling ARNs |
+| Staging / RBA | `false` | Own SNS topic only; no Chatbot resources |
+
+Owner optional list `aws_chatbot_additional_sns_topic_arns` defaults to `[]` (safe for a new account / first env). After **stable** sibling SNS topics exist, update the owner env’s SM secret (`oshub/<owner>/aws-chatbot-additional-sns-topic-arns`, referenced by `aws_chatbot_additional_sns_topic_arns_secret_name` in public tfvars — Test and Production today) via the `sm-secrets-cli` repo or any other method, then re-apply the owner env.
+
+Do **not** put ephemeral Preprod in that Terraform list. Chatbot accepts an SNS ARN even when the topic does not exist yet and does **not** create a subscription later when the topic appears. Preprod attach/detach is CI-owned:
+
+| When | Workflow | Script |
+| --- | --- | --- |
+| After Preprod terraform apply | `deploy_to_aws.yml` | `./deployment/sync_chatbot_sns_topic attach` → Test Chatbot config `chatbotOpenSupplyHubTestGlobalAlarms` |
+| Before Preprod terraform destroy | `destroy.yml` | `./deployment/sync_chatbot_sns_topic detach` |
+
+`attach` remove-then-re-adds the ARN so a previously listed-but-unsubscribed topic is repaired. After a **Test** apply while Preprod is live, Terraform may drop the CI-attached Preprod ARN (desired state is Test + Dev only); re-run Preprod deploy (or the attach script) to restore Slack paging.
+
+New AWS account, first env: leave manage `true` and additional ARNs empty — only that env’s SNS is attached. If ownership later moves between envs in the same account, apply the previous owner with manage `false` first (destroys its Chatbot resources), then apply the new owner.
 
 ### Slack setup (once per AWS account)
 
@@ -65,18 +96,19 @@ When `aws_chatbot_slack_team_id` and `aws_chatbot_slack_channel_id` are set (req
 3. Copy:
    - **Workspace (team) ID** — Chatbot console → configured clients, or Slack workspace settings (starts with `T`).
    - **Channel ID** — Slack → channel details / copy link (starts with `C`).
-4. Put both values in the private `ci-deployment` tfvars for that environment:
-   - `aws_chatbot_slack_team_id`
-   - `aws_chatbot_slack_channel_id`
+4. Seed the owner env’s SM secret (`aws_chatbot_slack_config_secret_name`, e.g. `oshub/test/aws-chatbot-slack-config` or `oshub/production/aws-chatbot-slack-config`) via the `sm-secrets-cli` repo or any other method with JSON:
+   ```json
+   {"team_id": "T…", "channel_id": "C…"}
+   ```
 
 | Resource | Purpose |
 | --- | --- |
-| `aws_iam_role.chatbot` | Role assumed by Chatbot (`chatbot.amazonaws.com`) |
+| `aws_iam_role.chatbot` | Role assumed by Chatbot (`chatbot.amazonaws.com`) — owner env only |
 | `CloudWatchReadOnlyAccess` on that role | Enrich Slack cards with metric / alarm detail |
-| `aws_chatbot_slack_channel_configuration.global_alarms` | Binds Slack channel to `aws_sns_topic.global` |
+| `aws_chatbot_slack_channel_configuration.global_alarms` | Binds Slack channel to owner + additional SNS topics |
 | Guardrail `ReadOnlyAccess` | Limits what Chatbot can do from the channel |
 
-After deploy with IDs set: SNS → topic `topic…GlobalNotifications` → Subscriptions should list the Chatbot endpoint. Force a test `ALARM` on an alarm wired to that topic, confirm Slack, then restore `OK`.
+After deploy: SNS → topic `topic…GlobalNotifications` → Subscriptions should list the Chatbot endpoint (for every topic attached to the shared config). Force a test `ALARM` on an alarm wired to that topic, confirm Slack, then restore `OK`.
 
 ### RDS (primary Postgres)
 
@@ -126,6 +158,20 @@ Both alarms: `evaluation_periods = 1`; `alarm_actions` / `ok_actions` / `insuffi
 ### ECS CPU (autoscaling)
 
 `aws-ecs-service-autoscaling` raises/lowers desired count on ECS `CPUUtilization` high/low. Those alarms drive scaling policies; they are **not** wired to the global SNS topic unless `sns_topic_arn` is passed (currently omitted). Treat them as capacity signals, not pages.
+
+### Bedrock (SLC submission quality check)
+
+Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check makes one Bedrock (Claude Haiku) call per new SLC submission — organic volume is tens of calls per **week**. There is deliberately no in-app cap on these calls: per-user volume is bounded by the endpoint's `DataUploadThrottle` (30/minute), and runaway volume (a frontend retry loop, scripted submissions across accounts) is caught by monitoring instead, accepting a bounded-spend risk rather than risking the check or submissions being silently degraded by a cap.
+
+| Alarm | Metric | Period | Pages when |
+| --- | --- | ---: | --- |
+| `alarm…BedrockInvocations` | `Invocations` (`AWS/Bedrock`, no `ModelId` dimension — covers all models/callers) | 3600s | Sum > `bedrock_invocations_alarm_hourly_threshold` (default **100/hour**, orders of magnitude above organic volume) |
+
+`treat_missing_data = notBreaching`: zero calls in an hour is the normal state, so no insufficient-data pages. Bedrock metrics land in the calling region, so the alarm only sees traffic where the app's `BEDROCK_AWS_REGION` matches the env's `aws_region`.
+
+A monthly AWS Budget on Bedrock spend (`budget…Bedrock`, limit `bedrock_cost_budget_monthly_limit_usd`, default **$25**) alerts at 80% actual and 100% forecasted through the same SNS → Chatbot → Slack path. Budgets are account-wide, so only the account-owner envs create one (`manage_bedrock_cost_budget = true` — Test and Production today, mirroring the Chatbot ownership pattern).
+
+The Django app also logs per-call token usage (`Submission quality check tokens: input=… output=…`) to CloudWatch Logs for verifying actual consumption against expectations (~640 tokens/call).
 
 ## Suggested triage order
 

@@ -1245,6 +1245,7 @@ export const makeContributionWarningDialogStyles = theme =>
             padding: 0,
         }),
         dialogBodyStyles: Object.freeze({
+            fontSize: '16px',
             textAlign: 'center',
             padding: '16px 0 0',
         }),
@@ -1270,6 +1271,18 @@ export const makeContributionWarningDialogStyles = theme =>
             '&:hover': {
                 backgroundColor: theme.palette.action.dark,
             },
+        }),
+        warningItemStyles: Object.freeze({
+            '&:not(:first-child)': {
+                marginTop: '24px',
+                paddingTop: '24px',
+                borderTop: '1px solid #e0e0e0',
+            },
+        }),
+        warningItemTitleStyles: Object.freeze({
+            fontSize: '16px',
+            textAlign: 'center',
+            fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),
     });
 

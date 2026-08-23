@@ -92,3 +92,37 @@ is_database_private_link_consumer = true
 
 enable_homepage_proxy   = false
 craft_cms_origin_domain = ""
+
+# Shares Chatbot channel config with Production (same Slack channel / shared account).
+aws_chatbot_manage_channel_configuration = false
+
+waf_enabled = true
+memcached_view_cache_timeout_seconds = 360
+stripe_price_id = ""
+dromo_schema_id = ""
+google_drive_shared_directory_id = ""
+aws_key_name = "osh-rba"
+
+rds_master_secret_name = "oshub/rba/rds-master"
+django_secret_key_secret_name = "oshub/rba/django-secret-key"
+cloudfront_auth_token_secret_name = "oshub/rba/cloudfront-auth-token"
+default_from_email_secret_name = "oshub/rba/default-from-email"
+data_from_email_secret_name = "oshub/rba/data-from-email"
+notification_email_to_secret_name = "oshub/rba/notification-email-to"
+claim_from_email_secret_name = "oshub/rba/claim-from-email"
+google_server_side_api_key_secret_name = "oshub/rba/google-server-side-api-key"
+google_client_side_api_key_secret_name = "oshub/rba/google-client-side-api-key"
+google_service_account_creds_base64_secret_name = "oshub/rba/google-service-account-creds-base64"
+oar_client_key_secret_name = "oshub/rba/oar-client-key"
+external_access_cidr_blocks_secret_name = "oshub/rba/external-access-cidr-blocks"
+ip_whitelist_secret_name = "oshub/rba/ip-whitelist"
+source_db_name_secret_name = "oshub/rba/source-db-name"
+source_db_user_secret_name = "oshub/rba/source-db-user"
+source_db_password_secret_name = "oshub/rba/source-db-password"
+source_db_port_secret_name = "oshub/rba/source-db-port"
+database_private_link_vpc_endpoint_service_name_secret_name = "oshub/rba/database-private-link-vpc-endpoint-service-name"
+email_anonymization_secret_secret_name = "oshub/rba/email-anonymization-secret"
+contribot_os_hub_api_token_secret_name = "oshub/rba/contribot-os-hub-api-token"
+contribot_monday_api_key_secret_name = "oshub/rba/contribot-monday-api-key"
+contribot_slack_api_url_secret_name = "oshub/rba/contribot-slack-api-url"
+contribot_google_drive_service_key_secret_name = "oshub/rba/contribot-google-drive-service-key"

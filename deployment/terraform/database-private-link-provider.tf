@@ -8,8 +8,7 @@ module "database_private_link_provider" {
   vpc_id                     = module.vpc.id
   subnet_ids                 = module.vpc.private_subnet_ids
   db_instance_identifier     = var.rds_database_identifier
-  db_username                = var.rds_database_username
-  db_password                = var.rds_database_password
+  rds_master_secret_arn      = local.rds_master_secret_arn
   db_port                    = module.database_enc.port
   database_security_group_id = module.database_enc.database_security_group_id
 }

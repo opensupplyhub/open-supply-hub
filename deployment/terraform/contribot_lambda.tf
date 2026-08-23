@@ -3,18 +3,34 @@
 #
 
 locals {
-  contribot_lambda_environment = {
-    ENVIRONMENT                         = var.environment
+  contribot_os_hub_api_url = var.environment == "Production" ? "https://${var.r53_public_hosted_zone}" : "https://${local.domain_name}"
+
+  contribot_fetch_lists_environment = {
+    CONTRIBOT_STATE_TABLE_NAME  = aws_dynamodb_table.contribot_state.name
+    LAST_LIST_ID                = var.contribot_last_list_id
+    OS_HUB_API_URL              = local.contribot_os_hub_api_url
+    OS_HUB_API_TOKEN_SECRET_ARN = local.contribot_os_hub_api_token_arn
+  }
+
+  contribot_process_list_environment = {
     CONTRIBOT_STATE_TABLE_NAME          = aws_dynamodb_table.contribot_state.name
     AWS_STORAGE_BUCKET_NAME             = local.files_bucket_name
-    OS_HUB_API_URL                      = "https://${var.r53_public_hosted_zone}"
-    MONDAY_API_URL                      = "https://api.monday.com/v2"
-    MONDAY_BOARD_ID                     = var.contribot_monday_board_id
     GOOGLE_DRIVE_SHARED_DIRECTORY_ID    = var.contribot_google_drive_shared_directory_id
-    OS_HUB_API_TOKEN_SECRET_ARN         = aws_secretsmanager_secret.contribot_os_hub_api_token.arn
-    MONDAY_API_KEY_SECRET_ARN           = aws_secretsmanager_secret.contribot_monday_api_key.arn
-    SLACK_API_URL_SECRET_ARN            = aws_secretsmanager_secret.contribot_slack_api_url.arn
-    GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = aws_secretsmanager_secret.contribot_google_drive_service_key.arn
+    GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = local.contribot_google_drive_service_key_arn
+  }
+
+  contribot_notify_environment = {
+    CONTRIBOT_STATE_TABLE_NAME = aws_dynamodb_table.contribot_state.name
+    MONDAY_API_URL             = "https://api.monday.com/v2"
+    MONDAY_BOARD_ID            = var.contribot_monday_board_id
+    MONDAY_API_KEY_SECRET_ARN  = local.contribot_monday_api_key_arn
+    SLACK_API_URL_SECRET_ARN   = local.contribot_slack_api_url_arn
+  }
+
+  contribot_retry_failed_lists_environment = {
+    CONTRIBOT_STATE_TABLE_NAME  = aws_dynamodb_table.contribot_state.name
+    CONTRIBOT_STATE_MACHINE_ARN = aws_sfn_state_machine.contribot.arn
+    CONTRIBOT_MAX_ATTEMPTS      = tostring(var.contribot_max_attempts)
   }
 }
 
@@ -40,12 +56,12 @@ data "aws_iam_policy_document" "contribot_lambda" {
       "secretsmanager:GetSecretValue",
     ]
 
-    resources = [
-      aws_secretsmanager_secret.contribot_os_hub_api_token.arn,
-      aws_secretsmanager_secret.contribot_monday_api_key.arn,
-      aws_secretsmanager_secret.contribot_slack_api_url.arn,
-      aws_secretsmanager_secret.contribot_google_drive_service_key.arn,
-    ]
+    resources = compact([
+      local.contribot_os_hub_api_token_arn,
+      local.contribot_monday_api_key_arn,
+      local.contribot_slack_api_url_arn,
+      local.contribot_google_drive_service_key_arn,
+    ])
   }
 
   statement {
@@ -115,11 +131,11 @@ resource "aws_lambda_function" "contribot_fetch_lists" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 60
+  timeout          = 900
   memory_size      = 256
 
   environment {
-    variables = local.contribot_lambda_environment
+    variables = local.contribot_fetch_lists_environment
   }
 
   depends_on = [
@@ -140,11 +156,11 @@ resource "aws_lambda_function" "contribot_process_list" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 300
-  memory_size      = 512
+  timeout          = 900
+  memory_size      = 1024
 
   environment {
-    variables = local.contribot_lambda_environment
+    variables = local.contribot_process_list_environment
   }
 
   depends_on = [
@@ -165,11 +181,11 @@ resource "aws_lambda_function" "contribot_notify" {
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
   runtime          = "python3.10"
-  timeout          = 60
+  timeout          = 900
   memory_size      = 256
 
   environment {
-    variables = local.contribot_lambda_environment
+    variables = local.contribot_notify_environment
   }
 
   depends_on = [
@@ -179,5 +195,83 @@ resource "aws_lambda_function" "contribot_notify" {
 
   tags = merge(local.default_tags, {
     Name = "funcContribotNotify"
+  })
+}
+
+data "aws_iam_policy_document" "contribot_retry_failed_lists" {
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "dynamodb:Scan",
+      "dynamodb:UpdateItem",
+    ]
+
+    resources = [aws_dynamodb_table.contribot_state.arn]
+  }
+
+  statement {
+    effect = "Allow"
+
+    actions = [
+      "states:StartExecution",
+    ]
+
+    resources = [aws_sfn_state_machine.contribot.arn]
+  }
+}
+
+resource "aws_iam_role" "contribot_retry_failed_lists" {
+  name               = "lambda${local.short}ContribotRetryFailedLists"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
+
+  tags = merge(local.default_tags, {
+    Name = "lambdaContribotRetryFailedLists"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "contribot_retry_failed_lists_basic_execution" {
+  role       = aws_iam_role.contribot_retry_failed_lists.name
+  policy_arn = var.aws_lambda_service_role_policy_arn
+}
+
+resource "aws_iam_role_policy" "contribot_retry_failed_lists" {
+  name = "lambda${local.short}ContribotRetryFailedListsPolicy"
+  role = aws_iam_role.contribot_retry_failed_lists.id
+
+  policy = data.aws_iam_policy_document.contribot_retry_failed_lists.json
+}
+
+resource "aws_cloudwatch_log_group" "contribot_retry_failed_lists" {
+  name              = "/aws/lambda/func${local.short}ContribotRetryFailedLists"
+  retention_in_days = 365
+
+  tags = merge(local.default_tags, {
+    Name = "logContribotRetryFailedLists"
+  })
+}
+
+resource "aws_lambda_function" "contribot_retry_failed_lists" {
+  filename         = "${path.module}/lambda-functions/contribot_retry_failed_lists/contribot_retry_failed_lists.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda-functions/contribot_retry_failed_lists/contribot_retry_failed_lists.zip")
+  function_name    = "func${local.short}ContribotRetryFailedLists"
+  description      = "ContriBot task that re-enqueues FAILED facility lists."
+  role             = aws_iam_role.contribot_retry_failed_lists.arn
+  handler          = "handler.handler"
+  runtime          = "python3.10"
+  timeout          = 900
+  memory_size      = 256
+
+  environment {
+    variables = local.contribot_retry_failed_lists_environment
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.contribot_retry_failed_lists,
+    aws_iam_role_policy_attachment.contribot_retry_failed_lists_basic_execution,
+  ]
+
+  tags = merge(local.default_tags, {
+    Name = "funcContribotRetryFailedLists"
   })
 }

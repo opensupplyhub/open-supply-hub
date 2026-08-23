@@ -266,6 +266,13 @@ class APIV1LocationContributionErrorMessages:
         'address. This may be due to incorrect, incomplete, or ambiguous '
         'information. Please verify and try again.'
     )
+    POSSIBLE_DUPLICATE_SUBMISSION = (
+        'You recently submitted a very similar production location.'
+    )
+    SUBMISSION_QUALITY_WARNING = (
+        'This submission may have one or more data-quality issues. '
+        'Please review the warnings below.'
+    )
 
     @staticmethod
     def invalid_data_type_error(data_type: str) -> str:

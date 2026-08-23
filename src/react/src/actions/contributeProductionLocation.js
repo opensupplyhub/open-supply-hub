@@ -1,4 +1,5 @@
 import { createAction } from 'redux-act';
+import { isEmpty } from 'lodash';
 
 import apiRequest from '../util/apiRequest';
 import {
@@ -62,16 +63,26 @@ export const resetPendingModerationEvent = createAction(
     'RESET_PENDING_MODERATION_EVENT',
 );
 
-export function createProductionLocation(contribData) {
-    const parsedContribData = parseContribData(contribData);
+export function createProductionLocation(
+    contribData,
+    duplicateOverride = false,
+    ignoreWarnings = false,
+) {
+    const requestData = parseContribData(contribData);
 
     return async dispatch => {
-        dispatch(startCreateProductionLocation(parsedContribData));
+        dispatch(startCreateProductionLocation(requestData));
+
+        const params = {
+            ...(duplicateOverride ? { duplicate_override: true } : {}),
+            ...(ignoreWarnings ? { ignore_warnings: true } : {}),
+        };
 
         try {
             const { data } = await apiRequest.post(
                 makeProductionLocationURL(),
-                parsedContribData,
+                requestData,
+                isEmpty(params) ? undefined : { params },
             );
             return dispatch(completeCreateProductionLocation(data));
         } catch (err) {
@@ -87,15 +98,15 @@ export function createProductionLocation(contribData) {
 }
 
 export function updateProductionLocation(contribData, osID) {
-    const parsedContribData = parseContribData(contribData);
+    const requestData = parseContribData(contribData);
 
     return async dispatch => {
-        dispatch(startUpdateProductionLocation(parsedContribData));
+        dispatch(startUpdateProductionLocation(requestData));
 
         try {
             const { data } = await apiRequest.patch(
                 makeProductionLocationURL(osID),
-                parsedContribData,
+                requestData,
             );
             return dispatch(completeUpdateProductionLocation(data));
         } catch (err) {

@@ -20,11 +20,15 @@ on:
         - Production
         - RBA
         default: Development
-      deploy-plan-only:
-        description: 'Plan only'
+      deploy-mode:
+        description: 'How much of the workflow to run. The terraform- modes stop early and never touch the running services: terraform-plan produces a plan and stops (previously "Plan only"); terraform-plan-and-apply also applies it, skipping the image build, service update, migrations and OpenSearch steps, with image_tag pinned to what the ECS service is already running.'
         required: false
-        type: boolean
-        default: false
+        type: choice
+        options:
+        - full
+        - terraform-plan
+        - terraform-plan-and-apply
+        default: full
       restore-db:
         description: 'Restore database to original state (Reset database for Development and restore anon dump for Test and Pre-prod)'
         required: false
@@ -82,17 +86,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Checkout config repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'opensupplyhub/ci-deployment'
-          path: 'terraform-config'
-          token: ${{ secrets.PAT }}
-          persist-credentials: false
-
-      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+      - name: Copy public tfvars for ${{ vars.ENV_NAME }}
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{env.TFVAR_NAME}}"  > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          cp "deployment/environments/${{ env.TFVAR_NAME }}" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           TFVAR_NAME: terraform-${{steps.get_env_name.outputs.lowercase}}.tfvars
@@ -105,12 +101,44 @@ jobs:
 
       - name: Validate whitelist and denylist usage
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}" "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
-          scripts/validate_ip_lists.sh deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars
+          scripts/validate_ip_lists.sh "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
-          TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
 
+      # # A terraform-plan-and-apply run skips the image build jobs, so planning with this
+      # commit's SHA would register task definitions pointing at images that
+      # were never pushed -- and aws_ecs_service.task_definition tracks
+      # aws_ecs_task_definition.arn, so terraform apply itself would move the
+      # live services onto them. Pin image_tag to the tag the service is
+      # already running instead, so the plan contains no task-definition change.
+      - name: Pin image tag to the running service for ${{ vars.ENV_NAME }}
+        if: ${{ inputs.deploy-mode == 'terraform-plan-and-apply' }}
+        run: |
+          set -euo pipefail
+          task_definition="$(aws ecs describe-services \
+            --cluster "${{ vars.CLUSTER }}" \
+            --services "${{ vars.SERVICE_NAME }}" \
+            --query 'services[0].taskDefinition' \
+            --output text)"
+          if [ -z "$task_definition" ] || [ "$task_definition" = "None" ]; then
+            echo "Could not read the running task definition for ${{ vars.SERVICE_NAME }}."
+            exit 1
+          fi
+          image="$(aws ecs describe-task-definition \
+            --task-definition "$task_definition" \
+            --query 'taskDefinition.containerDefinitions[?name==`django`].image' \
+            --output text)"
+          running_tag="${image##*:}"
+          if [ -z "$running_tag" ] || [ "$running_tag" = "$image" ]; then
+            echo "Could not parse an image tag out of '$image'."
+            exit 1
+          fi
+          echo "Pinning image_tag to the running tag: $running_tag"
+          echo "GIT_COMMIT=$running_tag" >> "$GITHUB_ENV"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
       - name: Terraform Plan for ${{ vars.ENV_NAME }}
         run: ./deployment/infra plan
         env:
@@ -142,7 +170,7 @@ jobs:
 
   detach-waf-if-needed:
     needs: init-and-plan
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     steps:
@@ -155,17 +183,9 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Checkout config repository
-        uses: actions/checkout@v4
-        with:
-          repository: 'opensupplyhub/ci-deployment'
-          path: 'terraform-config'
-          token: ${{ secrets.PAT }}
-          persist-credentials: false
-
-      - name: Copy tfvars for ${{ vars.ENV_NAME }}
+      - name: Copy public tfvars for ${{ vars.ENV_NAME }}
         run: |
-          cat "terraform-config/environments/${{ env.TFVAR_NAME }}"  "deployment/environments/${{ env.TFVAR_NAME }}" > "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
+          cp "deployment/environments/${{ env.TFVAR_NAME }}" "deployment/terraform/${{ env.SETTINGS_BUCKET }}.tfvars"
         env:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           TFVAR_NAME: terraform-${{ steps.get_env_name.outputs.lowercase }}.tfvars
@@ -201,7 +221,7 @@ jobs:
     needs: [init-and-plan, detach-waf-if-needed]
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -235,6 +255,19 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
+      # Preprod is ephemeral and shares Test's Chatbot Slack channel config. Attach
+      # after apply so Chatbot creates a real SNS subscription (ARN-only updates
+      # before the topic exists do not backfill). See doc/ops/monitoring.md.
+      - name: Attach Preprod SNS topic to shared Chatbot config
+        if: ${{ vars.ENV_NAME == 'Preprod' }}
+        run: ./deployment/sync_chatbot_sns_topic attach
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+          CHATBOT_CONFIGURATION_NAME: chatbotOpenSupplyHubTestGlobalAlarms
+          SNS_TOPIC_NAME: topicOpenSupplyHubPreprodGlobalNotifications
+
       - name: Delete debug log from S3 bucket for ${{ vars.ENV_NAME }}
         if: always()
         continue-on-error: true
@@ -249,7 +282,7 @@ jobs:
     needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -302,10 +335,10 @@ jobs:
           aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
 
   build_and_push_docker_image:
-    needs: build_and_push_react_app
+    needs: apply
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -325,117 +358,103 @@ jobs:
 
       - name: Get GIT_COMMIT
         run: |
-              export SHORT_SHA="$(git rev-parse --short HEAD)"
-              export GIT_COMMIT_CI="${SHORT_SHA:0:7}"
-              echo "GIT_COMMIT=$GIT_COMMIT_CI" >> $GITHUB_ENV
+          export SHORT_SHA="$(git rev-parse --short HEAD)"
+          export GIT_COMMIT_CI="${SHORT_SHA:0:7}"
+          echo "GIT_COMMIT=$GIT_COMMIT_CI" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Check for existing image tags (ECR repos are IMMUTABLE)
+      - name: Select bake targets (skip immutable tags that already exist)
         # ECR repos enforce IMMUTABLE tags and images are tagged by commit SHA, so
         # re-running this job on an unchanged commit (e.g. "Re-run failed jobs"
         # after a later step like terraform apply fails) would otherwise fail at
-        # `docker push` with ImageTagAlreadyExistsException. Check each repo up
-        # front and skip the corresponding push step below if that SHA tag is
-        # already present.
+        # push with ImageTagAlreadyExistsException. Omit those targets from bake.
+        # Batch FROM the django image at the same GIT_COMMIT, so it bakes in wave 2.
+        id: bake_targets
+        env:
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
         run: |
-          set -e
-          check_tag () {
-            local repo="$1"
-            local env_var="$2"
-            if aws ecr describe-images --repository-name "$repo" --image-ids imageTag="${{ env.GIT_COMMIT }}" >/dev/null 2>&1; then
-              echo "Tag ${{ env.GIT_COMMIT }} already exists in $repo, skipping push."
-              echo "$env_var=true" >> "$GITHUB_ENV"
+          set -euo pipefail
+
+          # target|repo_suffix (suffix appended as ${IMAGE_NAME}${suffix}-${ENV_SLUG})
+          candidates=(
+            "kafka|-kafka"
+            "django|"
+            "batch|-batch"
+            "dedupe|-deduplicate"
+            "logstash|-logstash"
+          )
+          if [ "$ENV_SLUG" = "production" ]; then
+            candidates+=("database-anonymizer|-database-anonymizer")
+          fi
+          if [ "$ENV_SLUG" = "test" ]; then
+            candidates+=("anonymized-database-dump|-anonymized-database-dump")
+          fi
+
+          wave1=()
+          wave2=()
+          for entry in "${candidates[@]}"; do
+            target="${entry%%|*}"
+            suffix="${entry#*|}"
+            repo="${IMAGE_NAME}${suffix}-${ENV_SLUG}"
+            if aws ecr describe-images --repository-name "$repo" --image-ids "imageTag=${GIT_COMMIT}" >/dev/null 2>&1; then
+              echo "Tag ${GIT_COMMIT} already exists in ${repo}, skipping ${target}."
+            elif [ "$target" = "batch" ]; then
+              wave2+=("$target")
             else
-              echo "$env_var=false" >> "$GITHUB_ENV"
+              wave1+=("$target")
             fi
-          }
+          done
 
-          check_tag "${{ vars.IMAGE_NAME }}-kafka-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_KAFKA
-          check_tag "${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DJANGO
-          check_tag "${{ vars.IMAGE_NAME }}-batch-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_BATCH
-          check_tag "${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DEDUPE
-          check_tag "${{ vars.IMAGE_NAME }}-logstash-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_LOGSTASH
-          if [ "${{ steps.get_env_name.outputs.lowercase }}" = "production" ]; then
-            check_tag "${{ vars.IMAGE_NAME }}-database-anonymizer-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_DB_ANONYMIZER
+          if [ "${#wave1[@]}" -eq 0 ] && [ "${#wave2[@]}" -eq 0 ]; then
+            echo "All image tags already exist for ${GIT_COMMIT}; nothing to bake."
+          else
+            echo "Bake wave 1 (parallel): ${wave1[*]:-"(none)"}"
+            echo "Bake wave 2 (after django): ${wave2[*]:-"(none)"}"
           fi
-          if [ "${{ steps.get_env_name.outputs.lowercase }}" = "test" ]; then
-            check_tag "${{ vars.IMAGE_NAME }}-anonymized-database-dump-${{ steps.get_env_name.outputs.lowercase }}" SKIP_PUSH_ANON_DUMP
-          fi
+          {
+            echo "wave1=${wave1[*]-}"
+            echo "wave2=${wave2[*]-}"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Build and push Kafka Tools Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_KAFKA != 'true' }}
-        with:
-          context: src/kafka-tools/
-          file: src/kafka-tools/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-kafka-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
+      - name: Build and push Docker images to ECR for ${{ vars.ENV_NAME }} (wave 1)
+        if: ${{ steps.bake_targets.outputs.wave1 != '' }}
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
+          DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
+          BAKE_TARGETS: ${{ steps.bake_targets.outputs.wave1 }}
+        run: |
+          set -euo pipefail
+          read -r -a targets <<< "$BAKE_TARGETS"
+          docker buildx bake -f docker-bake.hcl --push "${targets[@]}"
 
-      - name: Build and push Django Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_DJANGO != 'true' }}
-        with:
-          context: src/django
-          file: src/django/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_BATCH != 'true' }}
-        with:
-          context: src/batch
-          file: src/batch/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-batch-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-          build-args: |
-            GIT_COMMIT=${{ env.GIT_COMMIT }}
-            DOCKER_IMAGE=${{ vars.DOCKER_IMAGE }}
-            ENVIRONMENT=${{ steps.get_env_name.outputs.lowercase }}
-
-      - name: Build and push Dedupe Hub Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_DEDUPE != 'true' }}
-        with:
-          context: src/dedupe-hub/api
-          file: src/dedupe-hub/api/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-deduplicate-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Logstash Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ env.SKIP_PUSH_LOGSTASH != 'true' }}
-        with:
-          context: src/logstash
-          file: src/logstash/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-logstash-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Database Anonymizer Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ steps.get_env_name.outputs.lowercase == 'production' && env.SKIP_PUSH_DB_ANONYMIZER != 'true' }}
-        with:
-          context: deployment/terraform/database_anonymizer_scheduled_task/docker
-          file: deployment/terraform/database_anonymizer_scheduled_task/docker/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-database-anonymizer-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
-
-      - name: Build and push Anonymize Database Dump Docker image to ECR for ${{ vars.ENV_NAME }}
-        uses: docker/build-push-action@v2
-        if: ${{ steps.get_env_name.outputs.lowercase == 'test' && env.SKIP_PUSH_ANON_DUMP != 'true' }}
-        with:
-          context: deployment/terraform/anonymized_database_dump_scheduled_task/docker
-          file: deployment/terraform/anonymized_database_dump_scheduled_task/docker/Dockerfile
-          push: true
-          tags: ${{ vars.ECR_REGISTRY }}/${{ vars.IMAGE_NAME }}-anonymized-database-dump-${{ steps.get_env_name.outputs.lowercase }}:${{ env.GIT_COMMIT }}
+      - name: Build and push Batch Docker image to ECR for ${{ vars.ENV_NAME }} (wave 2)
+        if: ${{ steps.bake_targets.outputs.wave2 != '' }}
+        env:
+          ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+          IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
+          GIT_COMMIT: ${{ env.GIT_COMMIT }}
+          DOCKER_IMAGE: ${{ vars.DOCKER_IMAGE }}
+          BAKE_TARGETS: ${{ steps.bake_targets.outputs.wave2 }}
+        run: |
+          set -euo pipefail
+          read -r -a targets <<< "$BAKE_TARGETS"
+          docker buildx bake -f docker-bake.hcl --push "${targets[@]}"
 
   create_kafka_topic:
-    needs: build_and_push_docker_image
+    needs: [build_and_push_react_app, build_and_push_docker_image]
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -457,7 +476,7 @@ jobs:
     needs: create_kafka_topic
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -483,7 +502,7 @@ jobs:
     # project is managed by deployment/terraform/codebuild_github_runner.
     runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if:  ${{ inputs.deploy-plan-only == false }}
+    if:  ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -494,19 +513,30 @@ jobs:
         uses: actions/checkout@v4
       - name: Restore database for ${{ vars.ENV_NAME }}
         if: ${{ (vars.ENV_NAME == 'Preprod' || vars.ENV_NAME == 'Test') && inputs.restore-db == true}}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
         run: |
+          SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "oshub/${ENV_SLUG}/rds-master" \
+            --query SecretString --output text)
+          DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
+          DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
+
           cd ./src/anon-tools
           mkdir -p ./keys
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./keys/key
           docker build -t restore -f Dockerfile.restore .
           docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
-              -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-              -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
-              -e AWS_DEFAULT_REGION=eu-west-1 \
+              -e AWS_ACCESS_KEY_ID \
+              -e AWS_SECRET_ACCESS_KEY \
+              -e AWS_DEFAULT_REGION \
               -e ENVIRONMENT=${{ vars.ENV_NAME }} \
               -e DATABASE_NAME=opensupplyhub \
-              -e DATABASE_USERNAME=opensupplyhub \
-              -e DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+              -e DATABASE_USERNAME="$DB_USER" \
+              -e DATABASE_PASSWORD="$DB_PASS" \
               restore
       - name: Reset database for ${{ vars.ENV_NAME }}
         if: ${{ vars.ENV_NAME == 'Development' && inputs.restore-db == true}}
@@ -525,37 +555,11 @@ jobs:
           LIST_S3_BUCKET: opensupplyhub-${{ steps.get_env_name.outputs.lowercase }}-files-eu-west-1
           RESET_LISTS_FOLDER: "api/fixtures/list_files/"
 
-  update_services:
+  post_deploy:
     needs: restore_database
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
-    steps:
-      - name: Get Environment Name for ${{ vars.ENV_NAME }}
-        id: get_env_name
-        uses: Entepotenz/change-string-case-action-min-dependencies@v1
-        with:
-          string: ${{ vars.ENV_NAME }}
-      - name: Update ECS Django Service with new Image for ${{ vars.ENV_NAME }}
-        run: |
-          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }} --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Django service update failed"; exit 1; }
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-      - name: Update ECS Dedupe Hub Service with new Image for ${{ vars.ENV_NAME }}
-        run: |
-          aws ecs update-service --cluster ${{ vars.CLUSTER }} --service ${{ vars.SERVICE_NAME }}DD --force-new-deployment --region ${{env.AWS_DEFAULT_REGION}} > /dev/null 2>&1 || { echo "ECS Dedupe Hub service update failed"; exit 1; }
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: "eu-west-1"
-
-  post_deploy:
-    needs: update_services
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -576,7 +580,7 @@ jobs:
     needs: post_deploy
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name
@@ -643,7 +647,7 @@ jobs:
     needs: clear_opensearch
     runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
-    if: ${{ inputs.deploy-plan-only == false }}
+    if: ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
       - name: Get Environment Name for ${{ vars.ENV_NAME }}
         id: get_env_name

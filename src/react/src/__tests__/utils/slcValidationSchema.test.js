@@ -34,6 +34,12 @@ const makeItems = count =>
         value: `item-${i + 1}`,
     }));
 
+// Helper: build a single { label, value } item whose label is N characters.
+const makeItemOfLength = length => {
+    const label = 'A'.repeat(length);
+    return { label, value: label };
+};
+
 describe('slcValidationSchema', () => {
     describe('name field', () => {
         it('accepts plain ASCII text', async () => {
@@ -221,6 +227,33 @@ describe('slcValidationSchema', () => {
                 }),
             ).rejects.toThrow('must contain only Latin characters');
         });
+
+        it(`accepts an item of exactly ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                isValid({
+                    productType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+                        ),
+                    ],
+                }),
+            ).resolves.toBe(true);
+        });
+
+        it(`rejects when only one item exceeds ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                validate({
+                    productType: [
+                        { label: 'Shirts', value: 'Shirts' },
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH + 1,
+                        ),
+                    ],
+                }),
+            ).rejects.toThrow(
+                `Each value in Product type(s) cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`,
+            );
+        });
     });
 
     describe('locationType field', () => {
@@ -245,6 +278,32 @@ describe('slcValidationSchema', () => {
                 }),
             ).rejects.toThrow('Location type(s) must contain only Latin characters');
         });
+
+        it(`accepts an item of exactly ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                isValid({
+                    locationType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+                        ),
+                    ],
+                }),
+            ).resolves.toBe(true);
+        });
+
+        it(`rejects an item exceeding ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                validate({
+                    locationType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH + 1,
+                        ),
+                    ],
+                }),
+            ).rejects.toThrow(
+                `Each value in Location type(s) cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`,
+            );
+        });
     });
 
     describe('processingType field', () => {
@@ -268,6 +327,32 @@ describe('slcValidationSchema', () => {
                     processingType: [{ label: 'طباعة', value: 'طباعة' }],
                 }),
             ).rejects.toThrow('Processing type(s) must contain only Latin characters');
+        });
+
+        it(`accepts an item of exactly ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                isValid({
+                    processingType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+                        ),
+                    ],
+                }),
+            ).resolves.toBe(true);
+        });
+
+        it(`rejects an item exceeding ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                validate({
+                    processingType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH + 1,
+                        ),
+                    ],
+                }),
+            ).rejects.toThrow(
+                `Each value in Processing type(s) cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`,
+            );
         });
     });
 });
