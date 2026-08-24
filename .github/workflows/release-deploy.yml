@@ -27,6 +27,12 @@ on:
           - both
         default: none
 
+# Tag creation with GITHUB_TOKEN will not fire on.push workflows. Deploy is
+# started via workflow_dispatch, which GitHub does allow with GITHUB_TOKEN.
+permissions:
+  contents: write
+  actions: write
+
 jobs:
   create-release-tag:
     runs-on: ubuntu-latest
@@ -40,7 +46,7 @@ jobs:
         with:
           custom_tag: ${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}
           tag_prefix: ''
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-deploy-to-aws:
     runs-on: ubuntu-latest
@@ -60,7 +66,7 @@ jobs:
           curl -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.PAT }}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/opensupplyhub/open-supply-hub/actions/workflows/deploy_to_aws.yml/dispatches \
             -d '{"ref": "${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}", "inputs": {"deploy-env": "'$ENV'", "clear-opensearch-target": "${{ inputs.clear-opensearch-target }}" }}'
