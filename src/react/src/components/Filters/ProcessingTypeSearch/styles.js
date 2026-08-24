@@ -18,7 +18,7 @@ export default function processingTypeSearchStyles(theme) {
         resultsPanel: Object.freeze({
             ...sharedStyles.resultsPanel,
             maxHeight: '320px',
-            '& > li:first-child > *': Object.freeze({
+            '& > div:first-child > *': Object.freeze({
                 borderTop: 'none',
             }),
         }),

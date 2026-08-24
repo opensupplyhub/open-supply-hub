@@ -261,25 +261,25 @@ function ProcessingTypeSearch({
     const renderStatusRow = () => {
         if (fetching) {
             return (
-                <li className={classes.statusRow} role="presentation">
-                    <span role="status">Loading processing types&hellip;</span>
-                </li>
+                <div className={classes.statusRow}>
+                    <output>Loading processing types&hellip;</output>
+                </div>
             );
         }
 
         if (error) {
             return (
-                <li className={classes.statusRow} role="presentation">
+                <div className={classes.statusRow}>
                     <span role="alert">
                         Unable to load processing type suggestions. Try again in
                         a moment.
                     </span>
-                </li>
+                </div>
             );
         }
 
         return (
-            <li className={classes.statusRow} role="presentation">
+            <div className={classes.statusRow}>
                 No matching processing types
                 {trimmedQuery ? (
                     <>
@@ -288,7 +288,7 @@ function ProcessingTypeSearch({
                         free text
                     </>
                 ) : null}
-            </li>
+            </div>
         );
     };
 
@@ -334,9 +334,9 @@ function ProcessingTypeSearch({
             ) : null}
 
             {showResultsPanel && (
-                <ul
+                <div
                     id={LISTBOX_ID}
-                    role="listbox"
+                    role={'listbox' /* NOSONAR -- custom multi-select popup */}
                     className={classes.resultsPanel}
                     aria-label={label}
                     aria-busy={!!fetching}
@@ -345,16 +345,16 @@ function ProcessingTypeSearch({
                         ? renderStatusRow()
                         : groups.map(group => (
                               <React.Fragment key={group.id}>
-                                  <li
+                                  <div
                                       className={classes.groupHeader}
-                                      role="presentation"
+                                      aria-hidden="true"
                                   >
                                       <span
                                           className={classes.groupHeaderLabel}
                                       >
                                           {group.title}
                                       </span>
-                                  </li>
+                                  </div>
                                   {group.rows.map(({ suggestion, index }) => (
                                       <ProcessingTypeResultRow
                                           key={suggestion.value}
@@ -386,7 +386,7 @@ function ProcessingTypeSearch({
                                   ))}
                               </React.Fragment>
                           ))}
-                </ul>
+                </div>
             )}
 
             <p className={classes.hint}>{hint}</p>

@@ -68,7 +68,9 @@ describe('ProcessingTypeSearch component', () => {
 
     const getRowLabels = container =>
         Array.from(
-            container.querySelectorAll('#processing-type-suggestions > li'),
+            container.querySelectorAll(
+                '#processing-type-suggestions > [class*="groupHeader"], #processing-type-suggestions > [role="option"]',
+            ),
         ).map(element => element.textContent);
 
     const getRowOptions = container =>
@@ -472,6 +474,7 @@ describe('ProcessingTypeSearch component', () => {
             });
 
         expect(getByText(/Loading processing types/)).toBeInTheDocument();
+        expect(getByText(/Loading processing types/).tagName).toBe('OUTPUT');
 
         rerender(
             <ProcessingTypeSearch

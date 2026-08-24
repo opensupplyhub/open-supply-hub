@@ -1,5 +1,6 @@
 from django.db.migrations import Migration, RunPython
 from django.db import connection
+from psycopg2 import sql
 
 from api.migrations._migration_helper import MigrationHelper
 
@@ -80,7 +81,9 @@ def _drop_invalid_indexes(index_names):
 
         for index_name in invalid:
             cursor.execute(
-                f'DROP INDEX CONCURRENTLY IF EXISTS {index_name}'
+                sql.SQL('DROP INDEX CONCURRENTLY IF EXISTS {}').format(
+                    sql.Identifier(index_name)
+                )
             )
 
 
@@ -106,7 +109,11 @@ def index_facility_processing_search(apps, schema_editor):
 
     with connection.cursor() as cursor:
         for index_name in UNUSED_INDEXES:
-            cursor.execute(f'DROP INDEX CONCURRENTLY IF EXISTS {index_name}')
+            cursor.execute(
+                sql.SQL('DROP INDEX CONCURRENTLY IF EXISTS {}').format(
+                    sql.Identifier(index_name)
+                )
+            )
 
         for statement in INDEXES.values():
             cursor.execute(statement)
@@ -116,14 +123,18 @@ def index_facility_processing_search(apps, schema_editor):
         # are. ANALYZE takes only a SHARE UPDATE EXCLUSIVE lock, so ordinary
         # writes are unaffected.
         for table_name in ANALYZED_TABLES:
-            cursor.execute(f'ANALYZE {table_name}')
+            cursor.execute(
+                sql.SQL('ANALYZE {}').format(sql.Identifier(table_name))
+            )
 
 
 def revert_facility_processing_search_index(apps, schema_editor):
     with connection.cursor() as cursor:
         for index_name in INDEXES:
             cursor.execute(
-                f'DROP INDEX CONCURRENTLY IF EXISTS {index_name}'
+                sql.SQL('DROP INDEX CONCURRENTLY IF EXISTS {}').format(
+                    sql.Identifier(index_name)
+                )
             )
 
     helper.run_sql_files([

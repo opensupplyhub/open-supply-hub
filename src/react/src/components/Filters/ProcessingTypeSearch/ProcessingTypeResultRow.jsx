@@ -53,11 +53,12 @@ function ProcessingTypeResultRow({
         .join(' ');
 
     return (
-        // Keyboard selection is handled by the controlling combobox.
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events
-        <li
+        // Keyboard focus and selection are handled by the controlling
+        // combobox through aria-activedescendant.
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
+        <div
             id={id}
-            role="option"
+            role={'option' /* NOSONAR -- rich custom combobox option */}
             aria-selected={selected}
             className={rowClassName}
             onMouseDown={event => event.preventDefault()}
@@ -89,7 +90,7 @@ function ProcessingTypeResultRow({
                     {count.toLocaleString()}
                 </span>
             )}
-        </li>
+        </div>
     );
 }
 
