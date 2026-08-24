@@ -89,7 +89,7 @@ class Polygon(models.Model):
     #     sectors), so the check is "does the location's list share at
     #     least one value with the requested list".
     # To make a new field filterable, add an entry here — anything not
-    # in this whitelist is rejected with an error rather than silently
+    # in this allowlist is rejected with an error rather than silently
     # ignored.
     FILTERABLE_FIELDS = {
         'country': 'country_code__in',
@@ -115,9 +115,9 @@ class Polygon(models.Model):
             filters: Optional dict narrowing the results by core
                 location fields, e.g.
                 `{'country': ['IN'], 'sector': ['Apparel']}`.
-                Keys must appear in `FILTERABLE_FIELDS` (an unknown key
-                raises `ValueError`, so typos can't silently return
-                unfiltered results). Values may be a list or a single
+                Keys must appear in the `FILTERABLE_FIELDS`
+                allowlist (an unknown key raises `ValueError`, so
+                typos can't silently return unfiltered results). Values may be a list or a single
                 string. Within one key, values are OR'd ("US or IN");
                 across keys, conditions are AND'd ("that country AND
                 that sector"). Country codes are upper-cased before

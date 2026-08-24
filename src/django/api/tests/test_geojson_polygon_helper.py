@@ -194,3 +194,23 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
             with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
                 parse_polygon_geojson(geojson)
             self.assertIn('no polygon coordinates', str(ctx.exception))
+
+    def test_touching_features_are_merged_not_rejected(self):
+        """Adjacent features sharing an edge (like neighboring
+        districts) merge into one piece instead of being wrongly
+        rejected as invalid."""
+        left = [[[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]]
+        right = [[[10, 0], [10, 10], [20, 10], [20, 0], [10, 0]]]
+        geojson = json.dumps({
+            'type': 'FeatureCollection',
+            'features': [
+                {'type': 'Feature', 'properties': {},
+                 'geometry': {'type': 'Polygon', 'coordinates': left}},
+                {'type': 'Feature', 'properties': {},
+                 'geometry': {'type': 'Polygon', 'coordinates': right}},
+            ],
+        })
+        result = parse_polygon_geojson(geojson)
+        self.assertEqual(len(result), 1)
+        # The merged piece covers both original squares.
+        self.assertAlmostEqual(result.area, 200.0)
