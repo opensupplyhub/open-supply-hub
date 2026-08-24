@@ -130,9 +130,13 @@ class PolygonAdmin(admin.ModelAdmin):
     @admin.display(description='Boundary')
     def boundary_summary(self, obj):
         """
-        One-line description of the saved geometry (part count, vertex
-        count, and lon/lat extent), shown on the change page and as a
-        list column so staff can sanity-check a boundary at a glance.
+        One-line description of the saved geometry (part count, hole
+        count, vertex count, and lon/lat extent), shown on the change
+        page and as a list column so staff can sanity-check a boundary
+        at a glance. The hole count matters because merging touching
+        pieces preserves enclosed gaps — a handful of holes is usually
+        deliberate (enclaves), while hundreds usually means a
+        misaligned export full of sliver gaps.
 
         Args:
             obj: The Polygon being displayed, or an unsaved instance
@@ -140,8 +144,10 @@ class PolygonAdmin(admin.ModelAdmin):
         """
         if not obj or not obj.pk or not obj.geom:
             return '(no boundary saved yet)'
+        holes = sum(len(poly) - 1 for poly in obj.geom)
         extent = ', '.join(f'{value:.3f}' for value in obj.geom.extent)
         return (
-            f'{len(obj.geom)} part(s), {obj.geom.num_coords} vertices, '
+            f'{len(obj.geom)} part(s), {holes} hole(s), '
+            f'{obj.geom.num_coords} vertices, '
             f'extent (lon/lat): {extent}'
         )

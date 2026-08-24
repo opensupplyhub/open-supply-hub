@@ -108,8 +108,30 @@ class PolygonAdminDisplayTest(TestCase):
         summary = model_admin.boundary_summary(polygon)
 
         self.assertIn('1 part(s)', summary)
+        self.assertIn('0 hole(s)', summary)
         self.assertIn('5 vertices', summary)
         self.assertIn('0.000, 0.000, 10.000, 10.000', summary)
+
+    def test_boundary_summary_counts_holes(self):
+        """Holes are counted so staff can spot both deliberate
+        enclaves and accidental sliver gaps at a glance."""
+        holed = json.dumps({
+            'type': 'Polygon',
+            'coordinates': [
+                [[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]],
+                [[2, 2], [2, 4], [4, 4], [4, 2], [2, 2]],
+            ],
+        })
+        form = PolygonForm(data={
+            'name': 'holed_square',
+            'description': 'A square with a hole.',
+            'geojson_text': holed,
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+        polygon = form.save()
+        model_admin = PolygonAdmin(Polygon, AdminSite())
+
+        self.assertIn('1 hole(s)', model_admin.boundary_summary(polygon))
 
     def test_boundary_summary_handles_unsaved_polygon(self):
         """The summary has a safe fallback before a boundary exists."""
