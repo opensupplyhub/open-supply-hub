@@ -1245,6 +1245,7 @@ export const makeContributionWarningDialogStyles = theme =>
             padding: 0,
         }),
         dialogBodyStyles: Object.freeze({
+            fontSize: '16px',
             textAlign: 'center',
             padding: '16px 0 0',
         }),
@@ -1279,6 +1280,7 @@ export const makeContributionWarningDialogStyles = theme =>
             },
         }),
         warningItemTitleStyles: Object.freeze({
+            fontSize: '16px',
             textAlign: 'center',
             fontWeight: theme.typography.fontWeightSemiBoldPlus,
         }),

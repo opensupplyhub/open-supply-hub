@@ -23,6 +23,7 @@ from api.serializers import FacilityIndexDetailsSerializer
 from api.serializers.facility.facility_activity_report_serializer import (
     FacilityActivityReportSerializer
 )
+from api.serializers.facility.utils import is_contribution_from_claimant
 from api.serializers.utils import get_contributor_name
 
 
@@ -205,6 +206,80 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertIn("contributor_name", data["properties"]["sector"][0])
         self.assertIn("values", data["properties"]["sector"][0])
         self.assertIn("updated_at", data["properties"]["sector"][0])
+
+    def test_extended_field_carries_list_item_provenance(self):
+        # Extended-field entries on the details endpoint carry
+        # the per-row provenance of the FacilityListItem they came from.
+        self.list_item_one.source_name = 'US EPA FRS'
+        self.list_item_one.source_link = 'https://example.com/dc?id=1'
+        self.list_item_one.information_source_type = 'air quality permit'
+        self.list_item_one.date_of_source = '2024-06'
+        self.list_item_one.ai_usage_notes = 'AI-extracted; human reviewed'
+        self.list_item_one.save()
+
+        ExtendedField.objects.create(
+            contributor=self.contrib_one,
+            facility=self.facility,
+            facility_list_item=self.list_item_one,
+            field_name=ExtendedField.NAME_OPERATOR,
+            value={'raw_value': 'Blue Horizon Ops'},
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        entries = data['properties']['extended_fields']['name_operator']
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]['provenance'], {
+            'source_name': 'US EPA FRS',
+            'source_link': 'https://example.com/dc?id=1',
+            'information_source_type': 'air quality permit',
+            'date_of_source': '2024-06',
+            'ai_usage_notes': 'AI-extracted; human reviewed',
+        })
+
+    def test_extended_field_without_provenance_has_none(self):
+        # list_item_two carries no provenance data.
+        ExtendedField.objects.create(
+            contributor=self.contrib_two,
+            facility=self.facility,
+            facility_list_item=self.list_item_two,
+            field_name=ExtendedField.NAME_OPERATOR,
+            value={'raw_value': 'Other Ops'},
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        entries = data['properties']['extended_fields']['name_operator']
+        self.assertEqual(len(entries), 1)
+        self.assertIsNone(entries[0]['provenance'])
+
+    def test_is_data_center_false_by_default(self):
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertIn("is_data_center", data["properties"])
+        self.assertFalse(data["properties"]["is_data_center"])
+
+    def test_is_data_center_true_when_facility_type_is_data_center(self):
+        ExtendedField.objects.create(
+            contributor=self.contrib_one,
+            facility=self.facility,
+            facility_list_item=self.list_item_one,
+            field_name=ExtendedField.FACILITY_TYPE,
+            value={
+                'raw_values': 'Data Center',
+                'matched_values': [
+                    ['FACILITY_TYPE', 'EXACT', 'Data Center', None]
+                ],
+            },
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertTrue(data["properties"]["is_data_center"])
 
     def test_sector_includes_approved_claim(self):
         FacilityClaim.objects.create(
@@ -462,6 +537,77 @@ class FacilityIndexDetailsSerializerTest(TestCase):
         self.assertFalse(workers[1]['is_from_claim'])
         self.assertEqual(
             workers[1]['contributor_name'], self.contrib_three.name
+        )
+
+    def test_claimant_name_and_address_contributions_marked(self):
+        # Names and addresses contributed by the approved claimant through
+        # SLC or list upload are marked is_from_claim, even though they are
+        # served from facility_names/facility_addresses rather than as
+        # extended fields (OSDEV-3170).
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        for field_name in ('name', 'address'):
+            fields = data['properties']['extended_fields'][field_name]
+            claimant_fields = [
+                field for field in fields
+                if field['contributor_name'] == self.contrib_one_name
+            ]
+            other_fields = [
+                field for field in fields
+                if field['contributor_name'] not in (
+                    None, self.contrib_one_name
+                )
+            ]
+
+            self.assertNotEqual([], claimant_fields)
+            for field in claimant_fields:
+                self.assertTrue(field['is_from_claim'], field_name)
+            for field in other_fields:
+                self.assertFalse(field['is_from_claim'], field_name)
+
+    def test_claimant_sector_contribution_marked_without_reordering(self):
+        # The claimant's contributed sector is marked in place. The sector
+        # list order is deliberately NOT changed, so a contributor with a
+        # more recent sector stays first — promotion is out of scope for
+        # OSDEV-3170.
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        before = FacilityIndexDetailsSerializer(facility_index).data
+        before_order = [
+            sector['contributor_name']
+            for sector in before['properties']['sector']
+        ]
+
+        # The fixture's newest sector belongs to contrib_two, the claimant's
+        # to contrib_one; guard the premise so this test cannot silently
+        # stop covering the ordering case.
+        self.assertEqual(
+            [self.contrib_two_name, self.contrib_one_name], before_order
+        )
+
+        sectors = before['properties']['sector']
+        self.assertFalse(sectors[0]['is_from_claim'])
+        self.assertTrue(sectors[1]['is_from_claim'])
+
+    def test_claimant_check_matches_on_contributor_id_only(self):
+        # Masking is deliberately not part of this check: the label states
+        # where a value came from, while the contributor name/id getters hide
+        # who the contributor is (see the OSDEV-3170 review).
+        self.assertTrue(
+            is_contribution_from_claimant(
+                {'id': self.contrib_one.id}, self.contrib_one.id
+            )
+        )
+        self.assertFalse(
+            is_contribution_from_claimant(
+                {'id': self.contrib_two.id}, self.contrib_one.id
+            )
+        )
+        self.assertFalse(
+            is_contribution_from_claimant({'id': self.contrib_one.id}, None)
+        )
+        self.assertFalse(
+            is_contribution_from_claimant(None, self.contrib_one.id)
         )
 
     def test_get_other_names(self):

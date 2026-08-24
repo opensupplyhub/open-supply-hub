@@ -34,6 +34,12 @@ const makeItems = count =>
         value: `item-${i + 1}`,
     }));
 
+// Helper: build a single { label, value } item whose label is N characters.
+const makeItemOfLength = length => {
+    const label = 'A'.repeat(length);
+    return { label, value: label };
+};
+
 describe('slcValidationSchema', () => {
     describe('name field', () => {
         it('accepts plain ASCII text', async () => {
@@ -221,6 +227,33 @@ describe('slcValidationSchema', () => {
                 }),
             ).rejects.toThrow('must contain only Latin characters');
         });
+
+        it(`accepts an item of exactly ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                isValid({
+                    productType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+                        ),
+                    ],
+                }),
+            ).resolves.toBe(true);
+        });
+
+        it(`rejects when only one item exceeds ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                validate({
+                    productType: [
+                        { label: 'Shirts', value: 'Shirts' },
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH + 1,
+                        ),
+                    ],
+                }),
+            ).rejects.toThrow(
+                `Each value in Product type(s) cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`,
+            );
+        });
     });
 
     describe('locationType field', () => {
@@ -245,6 +278,32 @@ describe('slcValidationSchema', () => {
                 }),
             ).rejects.toThrow('Location type(s) must contain only Latin characters');
         });
+
+        it(`accepts an item of exactly ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                isValid({
+                    locationType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+                        ),
+                    ],
+                }),
+            ).resolves.toBe(true);
+        });
+
+        it(`rejects an item exceeding ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                validate({
+                    locationType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH + 1,
+                        ),
+                    ],
+                }),
+            ).rejects.toThrow(
+                `Each value in Location type(s) cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`,
+            );
+        });
     });
 
     describe('processingType field', () => {
@@ -268,6 +327,85 @@ describe('slcValidationSchema', () => {
                     processingType: [{ label: 'طباعة', value: 'طباعة' }],
                 }),
             ).rejects.toThrow('Processing type(s) must contain only Latin characters');
+        });
+
+        it(`accepts an item of exactly ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                isValid({
+                    processingType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+                        ),
+                    ],
+                }),
+            ).resolves.toBe(true);
+        });
+
+        it(`rejects an item exceeding ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`, async () => {
+            await expect(
+                validate({
+                    processingType: [
+                        makeItemOfLength(
+                            SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH + 1,
+                        ),
+                    ],
+                }),
+            ).rejects.toThrow(
+                `Each value in Processing type(s) cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters`,
+            );
+        });
+    });
+
+    describe('isGroup field (data-center grouping)', () => {
+        it('accepts an empty value', async () => {
+            await expect(isValid({ isGroup: '' })).resolves.toBe(true);
+        });
+
+        it("accepts 'true' and 'false'", async () => {
+            await expect(isValid({ isGroup: 'true' })).resolves.toBe(true);
+            await expect(isValid({ isGroup: 'false' })).resolves.toBe(true);
+        });
+
+        it('rejects any other value', async () => {
+            await expect(validate({ isGroup: 'yes' })).rejects.toThrow(
+                'Is a group must be either true or false.',
+            );
+        });
+    });
+
+    describe('dateOfSource field (data-center provenance, OSDEV-3074)', () => {
+        it('accepts an empty value', async () => {
+            await expect(isValid({ dateOfSource: '' })).resolves.toBe(true);
+        });
+
+        it('accepts ISO reduced-precision dates (YYYY, YYYY-MM, YYYY-MM-DD)', async () => {
+            await expect(isValid({ dateOfSource: '2024' })).resolves.toBe(
+                true,
+            );
+            await expect(isValid({ dateOfSource: '2024-06' })).resolves.toBe(
+                true,
+            );
+            await expect(
+                isValid({ dateOfSource: '2024-06-15' }),
+            ).resolves.toBe(true);
+        });
+
+        it('rejects free-text and out-of-range dates', async () => {
+            await expect(
+                validate({ dateOfSource: 'June 2024' }),
+            ).rejects.toThrow(
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            );
+            await expect(
+                validate({ dateOfSource: '2024-13' }),
+            ).rejects.toThrow(
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            );
+            await expect(
+                validate({ dateOfSource: '15/06/2024' }),
+            ).rejects.toThrow(
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            );
         });
     });
 });
