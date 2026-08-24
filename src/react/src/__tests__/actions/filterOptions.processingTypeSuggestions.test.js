@@ -26,6 +26,12 @@ const SUGGESTIONS = Object.freeze([
         dim: false,
     }),
 ]);
+const DYEING_REQUEST_IDENTITY =
+    '/api/processing-type-suggestions/?q=dyeing';
+const FILTERED_DYEING_REQUEST_IDENTITY =
+    '/api/processing-type-suggestions/?q=dyeing' +
+    '&facility_type=Final+Product+Assembly' +
+    '&facility_type=Textile+or+Material+Production';
 
 describe('processing type suggestion filterOptions actions', () => {
     test('fetches suggestions for a query and the selected facility types', async () => {
@@ -40,14 +46,16 @@ describe('processing type suggestion filterOptions actions', () => {
         );
 
         expect(apiRequest.get).toHaveBeenCalledWith(
-            '/api/processing-type-suggestions/?q=dyeing' +
-                '&facility_type=Final+Product+Assembly' +
-                '&facility_type=Textile+or+Material+Production',
+            FILTERED_DYEING_REQUEST_IDENTITY,
         );
         expect(store.getActions()).toEqual([
-            startFetchProcessingTypeSuggestions('dyeing'),
+            startFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: FILTERED_DYEING_REQUEST_IDENTITY,
+            }),
             completeFetchProcessingTypeSuggestions({
                 query: 'dyeing',
+                requestIdentity: FILTERED_DYEING_REQUEST_IDENTITY,
                 data: SUGGESTIONS,
             }),
         ]);
@@ -60,9 +68,13 @@ describe('processing type suggestion filterOptions actions', () => {
         await store.dispatch(fetchProcessingTypeSuggestions('dyeing'));
 
         expect(store.getActions()).toEqual([
-            startFetchProcessingTypeSuggestions('dyeing'),
+            startFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
+            }),
             failFetchProcessingTypeSuggestions({
                 query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
                 error: [
                     'An error prevented fetching processing type suggestions',
                 ],
@@ -75,6 +87,7 @@ describe('processing type suggestion filterOptions actions', () => {
 
         expect(state.processingTypeSuggestions).toEqual({
             query: null,
+            requestIdentity: null,
             data: null,
             fetching: false,
             error: null,
@@ -82,7 +95,10 @@ describe('processing type suggestion filterOptions actions', () => {
 
         state = FilterOptionsReducer(
             state,
-            startFetchProcessingTypeSuggestions('dyeing'),
+            startFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
+            }),
         );
         expect(state.processingTypeSuggestions.fetching).toBe(true);
         expect(state.processingTypeSuggestions.query).toBe('dyeing');
@@ -91,6 +107,7 @@ describe('processing type suggestion filterOptions actions', () => {
             state,
             completeFetchProcessingTypeSuggestions({
                 query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
                 data: SUGGESTIONS,
             }),
         );
@@ -103,16 +120,23 @@ describe('processing type suggestion filterOptions actions', () => {
 
         state = FilterOptionsReducer(
             state,
-            startFetchProcessingTypeSuggestions('dye'),
+            startFetchProcessingTypeSuggestions({
+                query: 'dye',
+                requestIdentity: '/api/processing-type-suggestions/?q=dye',
+            }),
         );
         state = FilterOptionsReducer(
             state,
-            startFetchProcessingTypeSuggestions('dyeing'),
+            startFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
+            }),
         );
         state = FilterOptionsReducer(
             state,
             completeFetchProcessingTypeSuggestions({
                 query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
                 data: SUGGESTIONS,
             }),
         );
@@ -121,6 +145,7 @@ describe('processing type suggestion filterOptions actions', () => {
             state,
             completeFetchProcessingTypeSuggestions({
                 query: 'dye',
+                requestIdentity: '/api/processing-type-suggestions/?q=dye',
                 data: [],
             }),
         );
@@ -136,13 +161,66 @@ describe('processing type suggestion filterOptions actions', () => {
 
         state = FilterOptionsReducer(
             state,
-            startFetchProcessingTypeSuggestions('dyeing'),
+            startFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
+            }),
         );
 
         const stateAfterStaleFailure = FilterOptionsReducer(
             state,
             failFetchProcessingTypeSuggestions({
                 query: 'dye',
+                requestIdentity: '/api/processing-type-suggestions/?q=dye',
+                error: ['Network down'],
+            }),
+        );
+
+        expect(stateAfterStaleFailure).toBe(state);
+        expect(stateAfterStaleFailure.processingTypeSuggestions.error).toBeNull();
+    });
+
+    test('reducer drops stale results for different facility types', () => {
+        let state = FilterOptionsReducer(undefined, { type: '@@INIT' });
+
+        state = FilterOptionsReducer(
+            state,
+            startFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
+            }),
+        );
+        state = FilterOptionsReducer(
+            state,
+            startFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: FILTERED_DYEING_REQUEST_IDENTITY,
+            }),
+        );
+
+        const stateAfterStaleResponse = FilterOptionsReducer(
+            state,
+            completeFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
+                data: SUGGESTIONS,
+            }),
+        );
+
+        expect(stateAfterStaleResponse).toBe(state);
+        expect(stateAfterStaleResponse.processingTypeSuggestions).toEqual(
+            expect.objectContaining({
+                requestIdentity: FILTERED_DYEING_REQUEST_IDENTITY,
+                data: null,
+                fetching: true,
+            }),
+        );
+
+        const stateAfterStaleFailure = FilterOptionsReducer(
+            state,
+            failFetchProcessingTypeSuggestions({
+                query: 'dyeing',
+                requestIdentity: DYEING_REQUEST_IDENTITY,
                 error: ['Network down'],
             }),
         );

@@ -315,13 +315,23 @@ export function fetchFacilityProcessingTypeOptions() {
 
 export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
     return dispatch => {
-        dispatch(startFetchProcessingTypeSuggestions(query));
+        const requestIdentity = makeGetProcessingTypeSuggestionsURL(
+            query,
+            facilityTypes,
+        );
+        dispatch(
+            startFetchProcessingTypeSuggestions({ query, requestIdentity }),
+        );
 
         return apiRequest
-            .get(makeGetProcessingTypeSuggestionsURL(query, facilityTypes))
+            .get(requestIdentity)
             .then(({ data }) =>
                 dispatch(
-                    completeFetchProcessingTypeSuggestions({ query, data }),
+                    completeFetchProcessingTypeSuggestions({
+                        query,
+                        requestIdentity,
+                        data,
+                    }),
                 ),
             )
             .catch(err =>
@@ -332,6 +342,7 @@ export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
                         messages =>
                             failFetchProcessingTypeSuggestions({
                                 query,
+                                requestIdentity,
                                 error: messages,
                             }),
                     ),

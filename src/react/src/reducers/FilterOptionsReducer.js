@@ -81,6 +81,7 @@ const initialState = Object.freeze({
     }),
     processingTypeSuggestions: Object.freeze({
         query: null,
+        requestIdentity: null,
         data: null,
         fetching: false,
         error: null,
@@ -283,21 +284,32 @@ export default createReducer(
                     data: { $set: payload },
                 },
             }),
-        [startFetchProcessingTypeSuggestions]: (state, query) =>
+        [startFetchProcessingTypeSuggestions]: (
+            state,
+            { query, requestIdentity },
+        ) =>
             update(state, {
                 processingTypeSuggestions: {
                     query: { $set: query },
+                    requestIdentity: { $set: requestIdentity },
                     fetching: { $set: true },
                     error: { $set: null },
                 },
             }),
         /*
-        The typeahead fires a request per debounced keystroke, so responses can
-        arrive out of order. Anything that does not answer the query currently
-        in flight is dropped rather than allowed to overwrite fresher results.
+        The typeahead fires requests as its query and facility types change, so
+        responses can arrive out of order. Anything that does not answer the
+        request currently in flight is dropped rather than allowed to overwrite
+        fresher results.
         */
-        [failFetchProcessingTypeSuggestions]: (state, { query, error }) => {
-            if (state.processingTypeSuggestions.query !== query) {
+        [failFetchProcessingTypeSuggestions]: (
+            state,
+            { requestIdentity, error },
+        ) => {
+            if (
+                state.processingTypeSuggestions.requestIdentity !==
+                requestIdentity
+            ) {
                 return state;
             }
 
@@ -308,8 +320,14 @@ export default createReducer(
                 },
             });
         },
-        [completeFetchProcessingTypeSuggestions]: (state, { query, data }) => {
-            if (state.processingTypeSuggestions.query !== query) {
+        [completeFetchProcessingTypeSuggestions]: (
+            state,
+            { requestIdentity, data },
+        ) => {
+            if (
+                state.processingTypeSuggestions.requestIdentity !==
+                requestIdentity
+            ) {
                 return state;
             }
 
