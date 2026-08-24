@@ -243,3 +243,24 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         from django.contrib.gis.geos import Point
         self.assertFalse(result.contains(Point(5, 5)))  # the "Lesotho"
         self.assertTrue(result.contains(Point(1, 1)))   # covered land
+
+    def test_nested_crs_declarations_are_checked(self):
+        """A non-WGS-84 coordinate-system label hidden inside a
+        feature or geometry is rejected just like a top-level one."""
+        bad_crs = {'type': 'name', 'properties': {'name': 'EPSG:32644'}}
+        nested_in_feature = {
+            'type': 'FeatureCollection',
+            'features': [{
+                'type': 'Feature', 'properties': {}, 'crs': bad_crs,
+                'geometry': {'type': 'Polygon', 'coordinates': SQUARE},
+            }],
+        }
+        nested_in_geometry = {
+            'type': 'Feature', 'properties': {},
+            'geometry': {'type': 'Polygon', 'coordinates': SQUARE,
+                         'crs': bad_crs},
+        }
+        for payload in (nested_in_feature, nested_in_geometry):
+            with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
+                parse_polygon_geojson(json.dumps(payload))
+            self.assertIn('EPSG:32644', str(ctx.exception))
