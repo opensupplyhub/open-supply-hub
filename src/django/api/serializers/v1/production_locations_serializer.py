@@ -48,12 +48,21 @@ class ProductionLocationsSerializer(Serializer):
         child=CharField(required=False),
         required=False
     )
+    contributor_id = ListField(
+        child=IntegerField(required=False),
+        required=False
+    )
+    contributor_type = ListField(
+        child=CharField(required=False),
+        required=False
+    )
     sort_by = ChoiceField(
         choices=[
             'name',
             'address',
             'claim_status',
-            'claimed_at'
+            'claimed_at',
+            'number_of_contributors'
         ],
         required=False
     )
