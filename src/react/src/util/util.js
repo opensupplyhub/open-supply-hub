@@ -2001,6 +2001,17 @@ const SLC_ARRAY_FIELD_TESTS = Object.freeze({
             !value ||
             value.every(item => containsOnlyLatinCharacters(item?.label)),
     }),
+    'max-char-count': Object.freeze({
+        message: ({ label }) =>
+            `Each value in ${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
+        test: value =>
+            !value ||
+            value.every(
+                item =>
+                    (item?.label ?? '').length <=
+                    SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+            ),
+    }),
     'max-product-type-count': Object.freeze({
         message: `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
         test: value =>
@@ -2059,16 +2070,25 @@ const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
         tests: [
             'no-embedded-separators',
             'latin-characters-only',
+            'max-char-count',
             'max-product-type-count',
         ],
     }),
     locationType: Object.freeze({
         type: 'array',
-        tests: ['no-embedded-separators', 'latin-characters-only'],
+        tests: [
+            'no-embedded-separators',
+            'latin-characters-only',
+            'max-char-count',
+        ],
     }),
     processingType: Object.freeze({
         type: 'array',
-        tests: ['no-embedded-separators', 'latin-characters-only'],
+        tests: [
+            'no-embedded-separators',
+            'latin-characters-only',
+            'max-char-count',
+        ],
     }),
     numberOfWorkers: Object.freeze({
         type: 'text',
