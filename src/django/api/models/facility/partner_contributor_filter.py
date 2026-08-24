@@ -141,25 +141,21 @@ def build_india_labour_line_filter():
     """
     Return a Q matching the locations the India Labour Line covers.
 
-    Delegates to the shared covered-locations definition (see
-    get_covered_production_locations in the provider module), so
-    search results can never disagree with the contributor-profile
-    spotlight. Imports are deferred to avoid a circular import at
-    model-loading time (the provider module imports models from this
-    package).
+    Delegates to the shared covered-locations rule (see
+    build_covered_locations_q in the provider module), so search
+    results can never disagree with the contributor-profile spotlight.
+    The import is deferred to avoid a circular import at model-loading
+    time (the provider module imports models from this package).
 
-    When the feature's waffle switch is off, or the boundary polygons
-    are missing, this matches nothing — never an unfiltered
-    "everything matches" — so a misconfiguration cannot quietly widen
-    search results.
+    When the boundary polygons are missing, this matches nothing —
+    never an unfiltered "everything matches" — so a misconfiguration
+    cannot quietly widen search results.
     """
-    from waffle import switch_is_active
     from api.partner_fields.india_labour_line_provider import (
-        INDIA_LABOUR_LINE_SWITCH,
-        get_covered_production_locations,
+        build_covered_locations_q,
     )
 
-    if not switch_is_active(INDIA_LABOUR_LINE_SWITCH):
+    covered_q = build_covered_locations_q()
+    if covered_q is None:
         return Q(id__in=[])
-
-    return Q(id__in=get_covered_production_locations().values('id'))
+    return covered_q

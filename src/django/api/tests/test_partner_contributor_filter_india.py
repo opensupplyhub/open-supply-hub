@@ -1,6 +1,5 @@
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
 from django.test import TestCase
-from waffle.testutils import override_switch
 
 from api.models import Contributor, Polygon, User
 from api.models.facility.facility_index import FacilityIndex
@@ -9,7 +8,6 @@ from api.models.facility.partner_contributor_filter import (
 )
 from api.partner_fields.india_labour_line_provider import (
     INDIA_LABOUR_LINE_POLYGON_NAMES,
-    INDIA_LABOUR_LINE_SWITCH,
     IndiaLabourLineProvider,
 )
 
@@ -66,14 +64,12 @@ class IndiaLabourLinePartnerFilterTest(TestCase):
         )
         return set(queryset.values_list('id', flat=True))
 
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=True)
     def test_filter_keeps_only_in_boundary_facilities(self):
         """The search filter matches in-polygon locations only."""
         ids = self._filtered_ids()
         self.assertIn(self.inside.id, ids)
         self.assertNotIn(self.outside.id, ids)
 
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=True)
     def test_filter_excludes_uncovered_sectors(self):
         """In-boundary locations outside the covered sectors do not
         match the search filter."""
@@ -82,13 +78,6 @@ class IndiaLabourLinePartnerFilterTest(TestCase):
         )
         self.assertNotIn(electronics.id, self._filtered_ids())
 
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=False)
-    def test_filter_matches_nothing_when_switch_is_off(self):
-        """With the switch off, the filter matches nothing — it never
-        degrades into an unfiltered everything-matches result."""
-        self.assertEqual(self._filtered_ids(), set())
-
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=True)
     def test_filter_matches_nothing_when_polygons_are_missing(self):
         """Missing boundary polygons also mean zero matches, loudly."""
         self.polygon.delete()

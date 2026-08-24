@@ -2,18 +2,13 @@ import json
 import logging
 from typing import Any, Dict, List, Optional
 
-from waffle import switch_is_active
+from django.db.models import Q
 
 from api.models.partner_field import PartnerField
 from api.models.polygon import Polygon
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
 logger = logging.getLogger(__name__)
-
-# Waffle switch gating every India Labour Line behavior (this provider,
-# the contributor-profile spotlight, and the search filter). Off by
-# default; flip it in the Django admin (Waffle > Switches) to go live.
-INDIA_LABOUR_LINE_SWITCH = 'india_labour_line_helpline'
 
 # The Polygon rows (looked up by name) whose boundaries carry the
 # India Labour Line helpline. This is deliberately a code-level list —
@@ -43,34 +38,56 @@ INDIA_LABOUR_LINE_SECTORS = [
 ]
 
 
-def get_covered_production_locations():
+def build_covered_locations_q():
     """
-    Return the queryset of production locations the helpline covers.
+    Build the query condition for "the helpline covers this location".
 
     "Covered" means: inside one of the configured boundary polygons AND
     working in at least one covered sector. This is the one shared
     definition of that rule — the contributor-profile spotlight and the
-    search filter both build on this queryset, so the two can never
-    drift apart. It is built on Polygon.get_production_locations(), the
-    polygon model's general-purpose query.
+    search filter both use it, so the two can never drift apart.
 
-    Returns an empty queryset — never "everything" — when no configured
-    polygon exists (the lookup helper logs a warning in that case).
-    Callers are responsible for checking the feature's waffle switch.
+    Returns:
+        A Q object expressing the rule, or None when no configured
+        polygon exists (the lookup helper logs a warning in that case).
+        Callers must treat None as "match nothing", never as "match
+        everything".
+    """
+    polygons = get_india_labour_line_polygons()
+    if not polygons:
+        return None
+
+    boundary = Q(location__within=polygons[0].geom)
+    for polygon in polygons[1:]:
+        boundary |= Q(location__within=polygon.geom)
+    return boundary & Q(sector__overlap=INDIA_LABOUR_LINE_SECTORS)
+
+
+def get_covered_production_locations(base_queryset=None):
+    """
+    Return the production locations the helpline covers.
+
+    Applies the shared covered-locations rule (see
+    build_covered_locations_q) directly to the given queryset, so the
+    database runs one flat query with no id sub-lookup.
+
+    Args:
+        base_queryset: Optional FacilityIndex queryset to narrow (for
+            example, a view's own queryset with its ordering and field
+            selection). Defaults to all production locations.
+
+    Returns:
+        The covered locations; an empty queryset — never "everything" —
+        when no configured polygon exists.
     """
     from api.models.facility.facility_index import FacilityIndex
 
-    polygons = get_india_labour_line_polygons()
-    if not polygons:
-        return FacilityIndex.objects.none()
-
-    sector_filter = {'sector': INDIA_LABOUR_LINE_SECTORS}
-    covered = polygons[0].get_production_locations(filters=sector_filter)
-    for polygon in polygons[1:]:
-        covered = covered | polygon.get_production_locations(
-            filters=sector_filter
-        )
-    return covered
+    if base_queryset is None:
+        base_queryset = FacilityIndex.objects.all()
+    covered_q = build_covered_locations_q()
+    if covered_q is None:
+        return base_queryset.none()
+    return base_queryset.filter(covered_q)
 
 
 def get_india_labour_line_polygons() -> List[Polygon]:
@@ -132,9 +149,8 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
         Decide whether this location gets the helpline, and gather what
         the formatted field needs.
 
-        Cheap checks run first (feature switch, country, has a
-        location, sector) so most locations never reach the PostGIS
-        containment query. This runs on every page render, so it keeps
+        Cheap checks run first (country, has a location, sector)
+        so most locations never reach the PostGIS containment query. This runs on every page render, so it keeps
         its own lean one-location query rather than going through
         get_covered_production_locations() — but it applies the same
         boundary and sector rules, from the same constants, and the
@@ -148,9 +164,6 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
             to display, or None when the location is outside every
             configured boundary (or the feature is off/misconfigured).
         """
-        if not switch_is_active(INDIA_LABOUR_LINE_SWITCH):
-            return None
-
         if production_location.country_code != 'IN':
             return None
 

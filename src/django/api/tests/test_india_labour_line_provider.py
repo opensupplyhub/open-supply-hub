@@ -2,7 +2,6 @@ import json
 
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
 from django.test import TestCase
-from waffle.testutils import override_switch
 
 from api.models import (
     Contributor,
@@ -18,7 +17,6 @@ from api.models.partner_field import PartnerField
 from api.partner_fields.india_labour_line_provider import (
     INDIA_LABOUR_LINE_POLYGON_NAMES,
     INDIA_LABOUR_LINE_SECTORS,
-    INDIA_LABOUR_LINE_SWITCH,
     IndiaLabourLineProvider,
 )
 
@@ -43,7 +41,6 @@ HELPLINE_SCHEMA = {
 }
 
 
-@override_switch(INDIA_LABOUR_LINE_SWITCH, active=True)
 class IndiaLabourLineProviderTest(TestCase):
     """Tests for the India Labour Line system partner field provider."""
 
@@ -154,12 +151,6 @@ class IndiaLabourLineProviderTest(TestCase):
         facility = self._make_facility(77.2, 28.6, country_code='US')
         self.assertIsNone(self.provider._fetch_raw_data(facility))
 
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=False)
-    def test_switch_off_disables_the_provider(self):
-        """With the waffle switch off, no location gets the field."""
-        facility = self._make_facility(77.2, 28.6)
-        self.assertIsNone(self.provider._fetch_raw_data(facility))
-
     def test_missing_polygon_warns_and_returns_nothing(self):
         """A missing boundary polygon logs loudly instead of failing."""
         facility = self._make_facility(77.2, 28.6)
@@ -203,7 +194,9 @@ class IndiaLabourLineProviderTest(TestCase):
             IndiaLabourLineProvider.POLYGON_NAMES,
             INDIA_LABOUR_LINE_POLYGON_NAMES,
         )
-        from api.admin import code_referenced_polygon_names
+        from api.models.polygon_admin import (
+            code_referenced_polygon_names,
+        )
         self.assertIn(
             INDIA_LABOUR_LINE_POLYGON_NAMES[0],
             code_referenced_polygon_names(),

@@ -4,14 +4,12 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon
-from waffle.testutils import override_switch
 
 from api.models import Contributor, Polygon, User
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
 from api.partner_fields.india_labour_line_provider import (
     INDIA_LABOUR_LINE_POLYGON_NAMES,
-    INDIA_LABOUR_LINE_SWITCH,
     IndiaLabourLineProvider,
 )
 
@@ -153,14 +151,12 @@ class TestIndiaLabourLineSpotlight(APITestCase):
             for feature in response.data["results"]["features"]
         }
 
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=True)
     def test_spotlight_lists_only_in_boundary_facilities(self):
         """Spotlight shows in-polygon locations and no others."""
         ids = self._spotlight_ids()
         self.assertIn(self.inside.id, ids)
         self.assertNotIn(self.outside.id, ids)
 
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=True)
     def test_spotlight_excludes_uncovered_sectors(self):
         """In-boundary locations outside the covered sectors are
         left out of the spotlight."""
@@ -169,7 +165,8 @@ class TestIndiaLabourLineSpotlight(APITestCase):
         )
         self.assertNotIn(electronics.id, self._spotlight_ids())
 
-    @override_switch(INDIA_LABOUR_LINE_SWITCH, active=False)
-    def test_spotlight_is_empty_when_switch_is_off(self):
-        """With the switch off, the spotlight reveals nothing."""
+    def test_spotlight_is_empty_when_polygons_are_missing(self):
+        """Without a boundary polygon the spotlight shows nothing —
+        never everything."""
+        Polygon.objects.all().delete()
         self.assertEqual(self._spotlight_ids(), set())
