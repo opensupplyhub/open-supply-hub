@@ -6,6 +6,9 @@ aws_availability_zones = ["eu-west-1a", "eu-west-1b"]
 r53_private_hosted_zone = "osh.internal"
 r53_public_hosted_zone = "staging.opensupplyhub.org"
 
+# Owns query logging for staging.opensupplyhub.org.
+route53_query_logging_enabled = true
+
 cloudfront_price_class = "PriceClass_All"
 
 api_facilities_cache_default_ttl           = 120
