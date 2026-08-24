@@ -150,8 +150,9 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
         the formatted field needs.
 
         Cheap checks run first (country, has a location, sector)
-        so most locations never reach the PostGIS containment query. This runs on every page render, so it keeps
-        its own lean one-location query rather than going through
+        so most locations never reach the PostGIS containment
+        query. This runs on every page render, so it keeps its own
+        lean one-location query rather than going through
         get_covered_production_locations() — but it applies the same
         boundary and sector rules, from the same constants, and the
         test suite holds the two paths to the same answers.
