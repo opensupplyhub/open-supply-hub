@@ -493,7 +493,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             processing_type=["CAPS"],
         )
         FacilityIndex.objects.filter(id=self.contrib_facility_two.id).update(
-            processing_type=["caps"],
+            processing_type=["CAPSULE MAKING"],
         )
 
         response = self.get_facility_download(

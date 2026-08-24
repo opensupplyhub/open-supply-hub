@@ -561,7 +561,7 @@ export const createFiltersFromQueryString = qs => {
         seenProcessingTypeIdentities.add(processingTypeIdentity);
         options.push({
             ...option,
-            ...(exactProcessingTypeIdentities.has(identity)
+            ...(exactProcessingTypeIdentities.has(processingTypeIdentity)
                 ? { isExact: true }
                 : {}),
         });
