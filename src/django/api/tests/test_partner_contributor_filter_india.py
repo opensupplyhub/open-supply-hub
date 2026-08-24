@@ -98,3 +98,13 @@ class IndiaLabourLinePartnerFilterTest(TestCase):
             ids = self._filtered_ids()
 
         self.assertEqual(ids, set())
+
+    def test_filter_excludes_non_indian_locations_inside_boundary(self):
+        """A location whose point falls inside the boundary but whose
+        country isn't India (e.g. mislabeled border data) is excluded —
+        keeping the search filter consistent with the location page,
+        which applies the same country check."""
+        foreign = self._make_facility('US2026000MISL', 77.1, 28.7)
+        foreign.country_code = 'US'
+        foreign.save()
+        self.assertNotIn(foreign.id, self._filtered_ids())

@@ -63,10 +63,11 @@ def build_covered_locations_q():
     """
     Build the query condition for "the helpline covers this location".
 
-    "Covered" means: inside the linked boundary polygon AND working in
-    at least one covered sector. This is the one shared definition of
-    that rule — the contributor-profile spotlight and the search
-    filter both use it, so the two can never drift apart.
+    "Covered" means: in India AND inside the linked boundary polygon
+    AND working in at least one covered sector. This is the one shared
+    definition of that rule — the contributor-profile spotlight, the
+    search filter, and the location page all apply the same three
+    conditions, so the surfaces can never drift apart.
 
     Returns:
         A Q object expressing the rule, or None when no coverage
@@ -78,7 +79,8 @@ def build_covered_locations_q():
     if polygon is None:
         return None
     return (
-        Q(location__within=polygon.geom)
+        Q(country_code='IN')
+        & Q(location__within=polygon.geom)
         & Q(sector__overlap=INDIA_LABOUR_LINE_SECTORS)
     )
 
