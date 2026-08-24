@@ -124,12 +124,17 @@ def _extract_geometries(data):
     geom_type = data.get('type') if isinstance(data, dict) else None
 
     if geom_type == 'FeatureCollection':
-        geometries = [
-            feature['geometry']
-            for feature in (data.get('features') or [])
+        features = [
+            feature for feature in (data.get('features') or [])
             if isinstance(feature, dict) and feature.get('geometry')
             is not None
         ]
+        # A coordinate-system label can also appear on an individual
+        # feature, not just at the top level — check those too, so a
+        # non-WGS-84 label can't slip in nested.
+        for feature in features:
+            _check_crs(feature)
+        geometries = [feature['geometry'] for feature in features]
         if not geometries:
             raise InvalidPolygonGeoJSON(
                 'FeatureCollection has no features with a geometry.'
@@ -161,6 +166,10 @@ def _parse_polygons(geometries):
     """
     polygons = []
     for geometry in geometries:
+        # Geometry objects themselves can carry a coordinate-system
+        # label in older files; reject non-WGS-84 ones here too.
+        if isinstance(geometry, dict):
+            _check_crs(geometry)
         try:
             geom = GEOSGeometry(json.dumps(geometry))
         except (GEOSException, ValueError, TypeError) as exc:

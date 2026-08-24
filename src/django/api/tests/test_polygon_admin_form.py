@@ -26,6 +26,17 @@ class PolygonFormTest(TestCase):
         })
         self.assertFalse(form.is_valid())
 
+    def test_description_is_required(self):
+        """A polygon cannot be saved without a description — every
+        boundary must say what it represents and where it came from."""
+        form = PolygonForm(data={
+            'name': 'undescribed_boundary',
+            'description': '',
+            'geojson_text': SQUARE_GEOJSON,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('description', form.errors)
+
     def test_rejects_invalid_geojson(self):
         """Bad GeoJSON becomes a form error, not an exception."""
         form = PolygonForm(data={
