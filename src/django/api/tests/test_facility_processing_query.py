@@ -2,7 +2,10 @@ from django.http import QueryDict
 from django.test import SimpleTestCase
 
 from api.facility_processing_query import parse_facility_processing_query
-from api.models.facility.facility_manager_index_new import build_fp_match_sql
+from api.models.facility.facility_manager_index_new import (
+    build_fp_match_sql,
+    build_fp_relevance_sql,
+)
 
 
 class FacilityProcessingQueryTest(SimpleTestCase):
@@ -33,16 +36,53 @@ class FacilityProcessingQueryTest(SimpleTestCase):
         self.assertEqual(parsed.processing_types, ['CAPS'])
         self.assertEqual(parsed.exact_processing_types, ['Caps'])
 
-    def test_exact_sql_lowers_elements_and_raw_requested_values_in_postgres(
-        self,
-    ):
+    def test_exact_sql_overlaps_the_indexed_lower_cased_array(self):
+        """
+        The predicate has to match the expression index built by migration
+        0229; lower-casing each element inside an unnest instead would read
+        every row of api_facilityindex.
+        """
         sql, sql_params = build_fp_match_sql(
             [],
             ['CAPS'],
             ['cApS'],
         )
 
-        self.assertIn('lower(elem)', sql)
-        self.assertIn('SELECT lower(requested_value)', sql)
-        self.assertIn('unnest(%s::text[])', sql)
-        self.assertEqual(sql_params, [['cApS']])
+        self.assertIn(
+            'lower_varchar_array(processing_type) && %s::text[]',
+            sql,
+        )
+        self.assertNotIn('unnest(processing_type)', sql)
+        self.assertEqual(sql_params, [['caps']])
+
+    def test_free_text_sql_prefilters_on_the_trigram_expression(self):
+        sql, sql_params = build_fp_match_sql([], ['cement mixing'], [])
+
+        self.assertIn(
+            'facility_processing_search_text(facility_type, processing_type)',
+            sql,
+        )
+        self.assertIn('immutable_unaccent(lower(%s))', sql)
+        # The containment pattern comes first, then the word-prefix regex for
+        # each of the two arrays.
+        self.assertEqual(
+            sql_params,
+            ['cement mixing', r'\mcement\ mixing', r'\mcement\ mixing'],
+        )
+
+    def test_free_text_sql_escapes_like_wildcards_in_the_pattern(self):
+        _, sql_params = build_fp_match_sql([], ['100%_cotton'], [])
+
+        self.assertEqual(sql_params[0], r'100\%\_cotton')
+
+    def test_relevance_sql_scores_both_tiers_in_one_pass(self):
+        sql, sql_params = build_fp_relevance_sql([], ['cement mixing'], [])
+
+        # One aggregate over both arrays rather than an EXISTS per tier and
+        # per column, which would run the same regex over the same elements
+        # twice.
+        self.assertEqual(sql.count('unnest('), 1)
+        self.assertEqual(
+            sql_params,
+            [r'\mcement\ mixing\M', r'\mcement\ mixing'],
+        )

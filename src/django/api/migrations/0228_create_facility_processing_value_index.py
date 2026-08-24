@@ -26,13 +26,36 @@ def create_facility_processing_value_index(apps, schema_editor):
     ])
 
 
+def populate_facility_processing_value_index(apps, schema_editor):
+    """
+    Fill the counts once the triggers are in place.
+
+    This is a separate operation on a non-atomic migration so that the SHARE
+    ROW EXCLUSIVE lock CREATE TRIGGER takes on api_facilityindex is released
+    before the rebuild starts. That lock conflicts with the ROW EXCLUSIVE one
+    every insert, update and delete needs, so holding it across the rebuild
+    would block all indexing for the duration; the rebuild itself only reads
+    api_facilityindex.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute('CALL recompute_facility_processing_values();')
+
+
 def drop_facility_processing_value_index(apps, schema_editor):
     helper.run_sql_files([
         '0228_revert_facility_processing_value_index.sql',
     ])
 
 
+def noop(apps, schema_editor):
+    """The counts go away with the tables dropped by the reverse above."""
+
+
 class Migration(Migration):
+
+    # The trigger creation and the initial rebuild have to commit separately,
+    # which a transaction around the whole migration would prevent.
+    atomic = False
 
     dependencies = [
         ('api', '0227_index_facility_processing_raw_values'),
@@ -42,5 +65,9 @@ class Migration(Migration):
         RunPython(
             create_facility_processing_value_index,
             drop_facility_processing_value_index,
-        )
+        ),
+        RunPython(
+            populate_facility_processing_value_index,
+            noop,
+        ),
     ]

@@ -17,6 +17,8 @@ from api.models.facility.partner_contributor_filter import (
 )
 
 
+# Also the shortest term a trigram index can narrow, so no free-text filter
+# falls back to scanning api_facilityindex.
 MIN_FREE_TEXT_FP_LENGTH = 3
 
 FREE_TEXT_FP_ARRAY_MATCH = """
@@ -32,15 +34,40 @@ FREE_TEXT_FP_ARRAY_MATCH = """
 )
 """
 
-FREE_TEXT_FP_TERM_SCORE = """
+# A word-prefix regex over an unnested array cannot use an index, so the
+# trigram index on facility_processing_search_text() gathers the candidate
+# locations and the regex rechecks only those. A substring match returns a
+# superset of a word-prefix match, so the pair selects exactly what the regex
+# alone would. The pattern is normalized by the same functions the indexed
+# expression uses, because normalizing it in Python would risk dropping rows
+# whose accents unidecode and unaccent() disagree about.
+FREE_TEXT_FP_INDEXED_MATCH = """
 (
-    CASE
-        WHEN {array_match} THEN 2
-        WHEN {array_match} THEN 1
-        ELSE 0
-    END
+    facility_processing_search_text(facility_type, processing_type)
+        LIKE '%%' || immutable_unaccent(lower(%s)) || '%%'
+    AND {array_match}
 )
 """
+
+# Both tiers scored in one pass over the two arrays. Testing them as four
+# separate EXISTS would run the same regex over the same elements twice.
+FREE_TEXT_FP_TERM_SCORE = """
+(
+    SELECT COALESCE(MAX(
+        CASE
+            WHEN unaccent(elem) ~* unaccent(%s) THEN 2
+            WHEN unaccent(elem) ~* unaccent(%s) THEN 1
+            ELSE 0
+        END
+    ), 0)
+    FROM unnest(
+        COALESCE(facility_type, '{}'::varchar[])
+        || COALESCE(processing_type, '{}'::varchar[])
+    ) AS elem
+)
+"""
+
+_LIKE_SPECIAL_CHARACTER_PATTERN = re.compile(r'([\\%_])')
 
 
 def _classify_fp_filter_value(value):
@@ -93,6 +120,11 @@ def _whole_word_pattern(term):
     return rf'{_word_prefix_pattern(term)}\M'
 
 
+def _like_term(term):
+    """Escape a term for use inside the trigram containment pattern."""
+    return _LIKE_SPECIAL_CHARACTER_PATTERN.sub(r'\\\1', term)
+
+
 def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
     taxonomy_values = []
     free_text_terms = []
@@ -112,9 +144,13 @@ def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
         params.append(taxonomy_values)
 
     for term in free_text_terms:
-        parts.append(FREE_TEXT_FP_ARRAY_MATCH)
+        parts.append(
+            FREE_TEXT_FP_INDEXED_MATCH.format(
+                array_match=FREE_TEXT_FP_ARRAY_MATCH
+            )
+        )
         pattern = _word_prefix_pattern(term)
-        params.extend([pattern, pattern])
+        params.extend([_like_term(term), pattern, pattern])
 
     return parts, params
 
@@ -151,20 +187,15 @@ def _append_exact_processing_clause(
     if not exact_processing_types:
         return
 
-    exact_clause = """
-    EXISTS (
-        SELECT 1 FROM unnest(processing_type) AS elem
-        WHERE lower(elem) IN (
-            SELECT lower(requested_value)
-            FROM unnest(%s::text[]) AS requested(requested_value)
-        )
-    )
-    """
+    # Overlapping the lower-cased array matches the expression index on it.
+    # Lower-casing each element inside an unnest would read every row of
+    # api_facilityindex instead.
+    exact_clause = 'lower_varchar_array(processing_type) && %s::text[]'
     if param_clauses and legacy_processing_types:
         param_clauses[-1] = f'({param_clauses[-1]} OR {exact_clause})'
     else:
         param_clauses.append(f'({exact_clause})')
-    all_params.append(exact_processing_types)
+    all_params.append([value.lower() for value in exact_processing_types])
 
 
 def build_fp_match_sql(
@@ -242,19 +273,11 @@ def build_fp_relevance_sql(
         processing_types,
         exact_processing_types,
     ):
-        score_parts.append(
-            FREE_TEXT_FP_TERM_SCORE.format(
-                array_match=FREE_TEXT_FP_ARRAY_MATCH
-            )
-        )
-        whole_word_pattern = _whole_word_pattern(term)
-        word_prefix_pattern = _word_prefix_pattern(term)
+        score_parts.append(FREE_TEXT_FP_TERM_SCORE)
         params.extend(
             [
-                whole_word_pattern,
-                whole_word_pattern,
-                word_prefix_pattern,
-                word_prefix_pattern,
+                _whole_word_pattern(term),
+                _word_prefix_pattern(term),
             ]
         )
 

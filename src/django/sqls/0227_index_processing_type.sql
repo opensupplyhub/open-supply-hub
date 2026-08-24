@@ -15,22 +15,33 @@ DECLARE
 	];
 BEGIN
 	RETURN QUERY
-SELECT
+/*One pass over the ExtendedFields of the location. Every matched value
+contributes either the standardized taxonomy value at index 3 or, when that
+slot is null, the raw value the contributor submitted in its place. Reading
+both from the same scan keeps this function on the write path of every
+ExtendedField change: it runs from perform_extended_field_indexing for each
+insert, update and delete.*/
+SELECT DISTINCT
 	raw1
 FROM
 	(
 	SELECT
-		(raw->>3) AS raw1
+		CASE
+			WHEN matched.matched->>3 IS NOT NULL THEN matched.matched->>3
+			ELSE btrim(raw_values.raw_array[matched.idx])
+		END AS raw1
 	FROM
 		(
 		SELECT
-			jsonb_array_elements(aef.value -> matched_values_key) AS raw
+			ae.value
 		FROM
-			api_extendedfield aef
+			api_extendedfield ae
 		WHERE
-			aef.facility_id = af_id
-			AND aef.field_name = 'processing_type'
-			AND aef.value -> matched_values_key IS NOT NULL
+			ae.facility_id = af_id
+			AND ae.field_name = 'processing_type'
+			AND ae.value -> matched_values_key IS NOT NULL
+			-- Only ExtendedFields visible on the location profile, matching
+			-- index_extended_fields().
 			AND (
 				EXISTS (
 					SELECT
@@ -38,10 +49,10 @@ FROM
 					FROM
 						api_facilityclaim af2
 					WHERE
-						af2.id = aef.facility_claim_id
+						af2.id = ae.facility_claim_id
 						AND af2.status = 'APPROVED'
 				)
-				OR aef.facility_list_item_id IN (
+				OR ae.facility_list_item_id IN (
 					SELECT
 						afm.facility_list_item_id
 					FROM
@@ -60,91 +71,33 @@ FROM
 						AND source.is_active = TRUE
 				)
 			)
-	) AS standardized
-	WHERE
-		(raw->>3) IS NOT NULL
-
-	UNION
-
-	SELECT
-		btrim(raw_vals.raw_value) AS raw1
-	FROM
-		(
-		SELECT
-			ae.value
-		FROM
-			api_extendedfield ae
-		WHERE
-			ae.facility_id = af_id
-			AND ae.field_name = 'processing_type'
-			AND ae.value -> matched_values_key IS NOT NULL
-			AND ae.value -> raw_values_key IS NOT NULL
-			AND (
-				EXISTS (
-					SELECT
-						1
-					FROM
-						api_facilityclaim af2
-					WHERE
-						af2.id = ae.facility_claim_id
-						AND af2.status = 'APPROVED'
-				)
-				OR ae.facility_list_item_id IN (
-					SELECT
-						am.facility_list_item_id
-					FROM
-						(
-						SELECT
-							afm.facility_list_item_id
-						FROM
-							api_facilitymatch afm
-						WHERE
-							afm.facility_id = af_id
-							AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
-							AND afm.is_active = TRUE
-					) AS am
-					WHERE
-						am.facility_list_item_id IN (
-						SELECT
-							afli.id
-						FROM
-							api_facilitylistitem afli
-						WHERE
-							afli.facility_id = af_id
-							AND afli.source_id IN (
-							SELECT
-								as2.id
-							FROM
-								api_source as2
-							WHERE
-								as2.is_active = TRUE
-						)
-					)
-				)
-			)
 	) AS visible_fields
+	/*Built once per ExtendedField rather than once per matched value, and
+	subscripted below by ordinality. Expanding it into rows instead would pair
+	the two arrays through a cartesian product filtered down to the positional
+	matches. Mirrors the string vs array handling of process_raw_values(); an
+	absent raw_values yields an empty array, whose every subscript is null.*/
+	CROSS JOIN LATERAL (
+		SELECT
+			CASE
+				WHEN jsonb_typeof(visible_fields.value -> raw_values_key) = 'string' THEN
+					CASE
+						WHEN (visible_fields.value ->> raw_values_key) LIKE '%|%' THEN
+							string_to_array(visible_fields.value ->> raw_values_key, '|')
+						ELSE
+							ARRAY[visible_fields.value ->> raw_values_key]
+					END
+				ELSE
+					ARRAY(
+						SELECT
+							jsonb_array_elements_text(
+								visible_fields.value -> raw_values_key
+							)
+					)
+			END AS raw_array
+	) AS raw_values
 	CROSS JOIN LATERAL jsonb_array_elements(visible_fields.value -> matched_values_key)
 		WITH ORDINALITY AS matched(matched, idx)
-	CROSS JOIN LATERAL unnest(
-		CASE
-			WHEN jsonb_typeof(visible_fields.value -> raw_values_key) = 'string' THEN
-				CASE
-					WHEN (visible_fields.value ->> raw_values_key) LIKE '%|%' THEN
-						string_to_array(visible_fields.value ->> raw_values_key, '|')
-					ELSE
-						ARRAY[visible_fields.value ->> raw_values_key]
-				END
-			ELSE
-				ARRAY(
-					SELECT
-						jsonb_array_elements_text(visible_fields.value -> raw_values_key)
-				)
-		END
-	) WITH ORDINALITY AS raw_vals(raw_value, raw_idx)
-	WHERE
-		matched.idx = raw_vals.raw_idx
-		AND matched.matched->>3 IS NULL
-		AND raw_vals.raw_value IS NOT NULL
 ) AS value1
 WHERE
 	raw1 IS NOT NULL

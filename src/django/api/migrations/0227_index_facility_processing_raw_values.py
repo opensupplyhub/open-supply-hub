@@ -12,11 +12,13 @@ def update_indexing_functions(apps, schema_editor):
     contributor values from profile-visible ExtendedFields are searchable.
 
     Each function keeps the existing standardized extraction from
-    matched_values (indices 2 and 3) and UNIONs raw_values entries whose
-    paired matched_values slot is null, mirroring process_raw_values() string
-    vs array handling. Only ExtendedFields visible on the location profile
-    are included (approved claim or active match with active source), matching
-    index_extended_fields(). See OSDEV-3189.
+    matched_values (indices 2 and 3) and falls back to the raw_values entry at
+    the same position when that slot is null, mirroring process_raw_values()
+    string vs array handling. Only ExtendedFields visible on the location
+    profile are included (approved claim or active match with active source),
+    matching index_extended_fields(). Both values come from one pass over the
+    ExtendedFields of the location, because these functions run on every
+    ExtendedField write. See OSDEV-3189.
     """
     helper.run_sql_files([
         '0227_index_facility_type.sql',

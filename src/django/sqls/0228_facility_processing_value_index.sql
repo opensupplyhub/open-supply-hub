@@ -43,9 +43,10 @@ COMMENT ON TABLE api_facility_processing_value IS
 	'rebuilt by the recompute_facility_processing_value_index management '
 	'command.';
 
-CREATE INDEX api_facility_processing_value_value_trgm_idx
-	ON api_facility_processing_value USING gin (value gin_trgm_ops);
-
+/*The typeahead searches the case- and accent-normalized value, so the index
+that serves it is created in migration 0229 alongside the immutable helper
+function that normalization needs. An index on the raw value would never be
+used.*/
 CREATE INDEX api_facility_processing_value_variant_identity_idx
 	ON api_facility_processing_value_variant (kind, identity);
 
@@ -263,8 +264,10 @@ $body$;
 
 /*Rebuild every count from api_facilityindex. TRUNCATE holds an ACCESS
 EXCLUSIVE lock until this procedure commits, so a location indexed while the
-rebuild runs is either visible to the SELECT below or applies its delta
-afterwards, never both and never neither.*/
+rebuild runs is either visible to the scan below or applies its delta
+afterwards, never both and never neither: the trigger of a concurrent write
+blocks on that lock, which keeps the write invisible to the scan until the
+rebuild has committed.*/
 CREATE OR REPLACE
 PROCEDURE recompute_facility_processing_values()
 LANGUAGE plpgsql
@@ -277,6 +280,42 @@ BEGIN
 TRUNCATE api_facility_processing_value_variant;
 TRUNCATE api_facility_processing_value;
 
+/*One pass over api_facilityindex, which is measured at 12 GB, feeds both the
+exact-variant counts and the lower-case identity counts. The identity counts
+cannot be summed from the variant counts, because a location carrying two
+casings of the same value has to count once, so the unnested rows are kept
+here instead of being scanned a second time.*/
+DROP TABLE IF EXISTS facility_processing_value_scan;
+
+CREATE TEMP TABLE facility_processing_value_scan
+ON COMMIT DROP
+AS
+SELECT
+	fi.id AS facility_id,
+	facility_type_kind AS kind,
+	raw_value AS value
+FROM
+	api_facilityindex fi
+CROSS JOIN LATERAL unnest(fi.facility_type) AS ft(raw_value)
+WHERE
+	fi.facility_type <> '{}'
+	AND is_indexable_facility_processing_value(raw_value)
+
+UNION ALL
+
+SELECT
+	fi.id AS facility_id,
+	processing_type_kind AS kind,
+	raw_value AS value
+FROM
+	api_facilityindex fi
+CROSS JOIN LATERAL unnest(fi.processing_type) AS pt(raw_value)
+WHERE
+	fi.processing_type <> '{}'
+	AND is_indexable_facility_processing_value(raw_value);
+
+ANALYZE facility_processing_value_scan;
+
 INSERT
 	INTO
 	api_facility_processing_value_variant (
@@ -288,31 +327,7 @@ SELECT
 	value,
 	count(DISTINCT facility_id)::INTEGER
 FROM
-	(
-	SELECT
-		fi.id AS facility_id,
-		facility_type_kind AS kind,
-		raw_value AS value
-	FROM
-		api_facilityindex fi
-	CROSS JOIN LATERAL unnest(fi.facility_type) AS ft(raw_value)
-	WHERE
-		fi.facility_type <> '{}'
-
-	UNION ALL
-
-	SELECT
-		fi.id AS facility_id,
-		processing_type_kind AS kind,
-		raw_value AS value
-	FROM
-		api_facilityindex fi
-	CROSS JOIN LATERAL unnest(fi.processing_type) AS pt(raw_value)
-	WHERE
-		fi.processing_type <> '{}'
-) AS unnested_values
-WHERE
-	is_indexable_facility_processing_value(value)
+	facility_processing_value_scan
 GROUP BY
 	kind,
 	value;
@@ -330,28 +345,7 @@ FROM (
 		kind,
 		lower(value) AS identity,
 		count(DISTINCT facility_id)::INTEGER AS facility_count
-	FROM (
-		SELECT
-			fi.id AS facility_id,
-			facility_type_kind AS kind,
-			raw_value AS value
-		FROM api_facilityindex fi
-		CROSS JOIN LATERAL
-			unnest(fi.facility_type) AS ft(raw_value)
-		WHERE fi.facility_type <> '{}'
-
-		UNION ALL
-
-		SELECT
-			fi.id AS facility_id,
-			processing_type_kind AS kind,
-			raw_value AS value
-		FROM api_facilityindex fi
-		CROSS JOIN LATERAL
-			unnest(fi.processing_type) AS pt(raw_value)
-		WHERE fi.processing_type <> '{}'
-	) unnested_values
-	WHERE is_indexable_facility_processing_value(value)
+	FROM facility_processing_value_scan
 	GROUP BY kind, lower(value)
 ) logical_counts
 JOIN api_facility_processing_value_variant variant
@@ -443,5 +437,3 @@ DELETE
 		OR COALESCE(OLD.processing_type, '{}'::VARCHAR[]) <> '{}'::VARCHAR[]
 	)
     EXECUTE FUNCTION handle_facility_index_processing_value_trigger();
-
-CALL recompute_facility_processing_values();

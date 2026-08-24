@@ -41,6 +41,9 @@ SUBSTRING_MATCH_SCORE = 500
 # outside the selection are marked `dim` instead of being dropped.
 FACILITY_TYPE_MATCH_BOOST = 250
 
+# The predicate is written against the same expression the trigram index of
+# migration 0229 is built on. Matching unaccent(value) ILIKE … instead reads
+# every row of the table, because no index can answer it.
 CANDIDATE_VALUES_SQL = """
     SELECT
         identity,
@@ -50,7 +53,8 @@ CANDIDATE_VALUES_SQL = """
         api_facility_processing_value
     WHERE
         kind = %s
-        AND unaccent(value) ILIKE unaccent(%s)
+        AND immutable_unaccent(lower(value))
+            LIKE immutable_unaccent(lower(%s))
 """
 
 TAXONOMY_VALUES_SQL = """
@@ -89,7 +93,7 @@ TOP_CONTRIBUTOR_VALUES_SQL = """
 
 _WHITESPACE_PATTERN = re.compile(r'\s+')
 _WORD_PATTERN = re.compile(r'[a-z0-9]+')
-_ILIKE_SPECIAL_CHARACTER_PATTERN = re.compile(r'([\\%_])')
+_LIKE_SPECIAL_CHARACTER_PATTERN = re.compile(r'([\\%_])')
 
 
 def _normalize(value):
@@ -170,8 +174,8 @@ def resolve_facility_types(facility_types):
     return resolved
 
 
-def _ilike_pattern(query):
-    escaped = _ILIKE_SPECIAL_CHARACTER_PATTERN.sub(r'\\\1', query)
+def _like_pattern(query):
+    escaped = _LIKE_SPECIAL_CHARACTER_PATTERN.sub(r'\\\1', query)
     return '%{}%'.format(escaped)
 
 
@@ -206,7 +210,7 @@ def _fetch_matching_values(normalized_query):
     with connection.cursor() as cursor:
         cursor.execute(
             CANDIDATE_VALUES_SQL,
-            [PROCESSING_TYPE_KIND, _ilike_pattern(normalized_query)],
+            [PROCESSING_TYPE_KIND, _like_pattern(normalized_query)],
         )
         return cursor.fetchall()
 
