@@ -191,3 +191,10 @@ class IndiaLabourLineProviderTest(TestCase):
             self.assertIsNotNone(
                 self.provider._fetch_raw_data(facility), sector
             )
+
+    def test_polygon_link_is_editable_in_the_admin(self):
+        """The polygon link must appear in the partner field admin's
+        page layout (the ModelAdmin fields tuple controls what
+        renders, not just the form's field list)."""
+        from api.models.partner_field_admin import PartnerFieldAdmin
+        self.assertIn('polygon', PartnerFieldAdmin.fields)

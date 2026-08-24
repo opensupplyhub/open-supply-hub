@@ -125,6 +125,7 @@ class PartnerFieldAdmin(admin.ModelAdmin):
         "unit",
         "label",
         "group",
+        "polygon",
         "source_by",
         "base_url",
         "display_text",
