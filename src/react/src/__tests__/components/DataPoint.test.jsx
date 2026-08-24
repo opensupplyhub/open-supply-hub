@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
@@ -89,5 +89,65 @@ describe('DataPoint', () => {
         });
 
         expect(screen.queryByTestId('data-point-sources-button')).not.toBeInTheDocument();
+    });
+
+    test('renders sources button when the field has only a promoted contribution', () => {
+        renderDataPoint({
+            label: 'Name',
+            value: 'Value',
+            drawerData: {
+                promotedContribution: {
+                    value: 'Value',
+                    sourceName: 'Source A',
+                    date: '2022-01-01',
+                },
+                contributions: [],
+            },
+            onOpenDrawer: jest.fn(),
+        });
+
+        const button = screen.getByTestId('data-point-sources-button');
+        expect(button).toBeInTheDocument();
+        expect(button).toHaveTextContent('1 data source');
+    });
+
+    test('sources button counts the promoted contribution in the total', () => {
+        renderDataPoint({
+            label: 'Name',
+            value: 'Value',
+            drawerData: {
+                promotedContribution: {
+                    value: 'Value',
+                    sourceName: 'Source A',
+                    date: '2022-01-01',
+                },
+                contributions: [
+                    { value: 'Other', sourceName: 'Source B' },
+                    { value: 'Another', sourceName: 'Source C' },
+                ],
+            },
+            onOpenDrawer: jest.fn(),
+        });
+
+        expect(
+            screen.getByTestId('data-point-sources-button'),
+        ).toHaveTextContent('3 data sources');
+    });
+
+    test('opens the drawer from a single-contribution field', () => {
+        const onOpenDrawer = jest.fn();
+        renderDataPoint({
+            label: 'Name',
+            value: 'Value',
+            drawerData: {
+                promotedContribution: { value: 'Value', sourceName: 'Source' },
+                contributions: [],
+            },
+            onOpenDrawer,
+        });
+
+        fireEvent.click(screen.getByTestId('data-point-sources-button'));
+
+        expect(onOpenDrawer).toHaveBeenCalledTimes(1);
     });
 });

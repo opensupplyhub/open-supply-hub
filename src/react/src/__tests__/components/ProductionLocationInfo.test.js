@@ -501,6 +501,88 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
     });
 });
 
+describe("ProductionLocationInfo component, data-center prefill for UPDATE (OSDEV-3074)", () => {
+    const osID = 'US2026205NS8T09';
+
+    const makeState = locationType => ({
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        contributeProductionLocation: {
+            singleProductionLocation: {
+                data: {
+                    name: 'Blue Horizon Data Center',
+                    os_id: osID,
+                    location_type: locationType,
+                    country: {
+                        name: 'United States',
+                        numeric: '840',
+                        alpha_3: 'USA',
+                        alpha_2: 'US',
+                    },
+                    address: '990 Spring Garden St., Philadelphia PA 19123',
+                    claim_status: 'unclaimed',
+                },
+                fetching: false,
+                error: null,
+            },
+            productionLocations: {
+                data: [],
+                fetching: false,
+                error: null,
+            },
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: null,
+            },
+        },
+    });
+
+    const renderComponent = preloadedState =>
+        renderWithProviders(
+            <MemoryRouter initialEntries={[`/contribute/single-location/${osID}/info/`]}>
+                <Route
+                    path="/contribute/single-location/:osID/info/"
+                    component={() => (
+                        <ProductionLocationInfo submitMethod="UPDATE" />
+                    )}
+                />
+            </MemoryRouter>,
+            { preloadedState },
+        );
+
+    test("pre-selects Data Center and shows the data-center sections when the record is a data center", async () => {
+        const { getByTestId } = renderComponent(makeState(['Data Center']));
+
+        // The data-center sections only render when the Data Center location
+        // type is pre-selected, so their presence proves the prefill worked.
+        await waitFor(() =>
+            expect(getByTestId('data-center-fields')).toBeInTheDocument(),
+        );
+        // The Additional information section is opened so the pre-selected
+        // location type is visible/editable.
+        expect(
+            getByTestId('switch-additional-info-fields'),
+        ).toBeInTheDocument();
+        expect(
+            getByTestId('data-center-section-Utility Usage'),
+        ).toBeInTheDocument();
+    });
+
+    test("does not show the data-center sections for a production location", async () => {
+        const { queryByTestId, getByRole } = renderComponent(
+            makeState(['Apparel']),
+        );
+
+        await waitFor(() =>
+            expect(getByRole('button', { name: /Update/i })).toBeInTheDocument(),
+        );
+        expect(queryByTestId('data-center-fields')).not.toBeInTheDocument();
+    });
+});
+
 describe("ProductionLocationInfo component, possible duplicate submission dialog", () => {
     const defaultState = {
         filterOptions: {
