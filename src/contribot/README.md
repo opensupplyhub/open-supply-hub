@@ -4,7 +4,7 @@ Lambda functions that validate facility list uploads and notify data moderators 
 
 ## Overview
 
-ContriBot polls Open Supply Hub for newly processed facility lists, validates facility list uploads, uploads the annotated reports to Google Drive, and notifies moderators via Slack and Monday.
+ContriBot polls Open Supply Hub for newly processed facility lists, validates facility list uploads, uploads the annotated reports to Google Drive, and notifies moderators via Slack.
 
 ## Facility List Validation
 
@@ -20,7 +20,7 @@ done
 
 ## Lambda Source Code
 
-Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), [`google_drive.py`](lib/google_drive.py), and [`contribot_workbook.py`](lib/contribot_workbook.py)).
+Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), [`google_drive.py`](lib/google_drive.py), [`monday.py`](lib/monday.py), and [`contribot_workbook.py`](lib/contribot_workbook.py)).
 
 | Lambda                | Handler source                                                       | Deployment package                                                                                                                                                 |
 | --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -65,7 +65,7 @@ flowchart LR
   Process --> S3[(S3)]
   Process --> GDrive[Google Drive]
   Notify --> Slack[Slack]
-  Notify --> Monday[Monday]
+  Notify --> DDB
 ```
 
 ### State Management
@@ -81,7 +81,7 @@ On each fetch run, `fetch_lists`:
 
 `retry_failed_lists` does not touch the cursor or the OS Hub API. It scans for `status=FAILED`, skips rows whose `attempt_count` is already at `CONTRIBOT_MAX_ATTEMPTS`, resets the rest to `PENDING` (increments `attempt_count`, refreshes `started_at`, clears `finished_at`), and starts the state machine with `{"lists": [{"list_id": "..."}]}`.
 
-`process_list` marks the row `PROCESSING`, downloads the upload from S3 using `file_name` as the object key (`.xlsx` or `.csv`), converts CSV to a temporary workbook, and always hands ContriBot a file named `{list_id}.xlsx`. That makes the Drive report `{list_id}.~PROCESSED.xlsx` (moderation tooling reads the facility-list id from the filename stem, not the contributor’s original upload name). CSV inputs must be UTF-8 (optional BOM); delimiter is sniffed (comma, semicolon, tab, pipe). Empty, header-only, or malformed CSVs fail the task so Step Functions can route to `notify`. Native `.xlsx` validation is otherwise unchanged. The handler stores `report_url` / summary stats on the row and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it records `FAILED` (and `finished_at`) then re-raises so Step Functions `Catch` can route to `notify` with `$.error`. `PROCESSED` status is recorded by `notify`.
+`process_list` marks the row `PROCESSING`, downloads the upload from S3 using `file_name` as the object key (`.xlsx` or `.csv`), converts CSV to a temporary workbook, and always hands ContriBot a file named `{list_id}.xlsx`. That makes the Drive report `{list_id}.~PROCESSED.xlsx` (moderation tooling reads the facility-list id from the filename stem, not the contributor’s original upload name). CSV inputs must be UTF-8 (optional BOM); delimiter is sniffed (comma, semicolon, tab, pipe). Empty, header-only, or malformed CSVs fail the task so Step Functions can route to `notify`. Native `.xlsx` validation is otherwise unchanged. The handler stores `report_url` / summary stats on the row and returns `{list_id, report_url, num_lines, num_errors, error_ratio}` for `notify`. On failure it records `FAILED` (and `finished_at`) then re-raises so Step Functions `Catch` can route to `notify` with `$.error`. `notify` posts the Slack notification and records the final `PROCESSED` status.
 
 ## Process
 
@@ -89,7 +89,7 @@ On each fetch run, `fetch_lists`:
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
 | 2    | For each list, download the `.csv` or `.xlsx` from S3, convert CSV if needed, run facility list validation, and upload `{list_id}.~PROCESSED.xlsx` to Google Drive. |
-| 3    | Send notifications to Slack and Monday so that data moderators can review the report.                          |
+| 3    | Send Slack notifications (success and failure use separate webhooks). On success, also create a Monday approval-queue item. |
 | 4    | On a matching schedule, `retry_failed_lists` re-enqueues `FAILED` lists (under the attempt cap) and starts the Map without advancing the cursor. |
 
 ## Configuration
@@ -98,12 +98,13 @@ On each fetch run, `fetch_lists`:
 
 Store sensitive values in AWS Secrets Manager. Each Lambda receives only the secret ARNs it needs and loads values at runtime via `GetSecretValue`.
 
-| Secret (Secrets Manager) | Environment variable                  | Used by         | Description                                                                |
-| ------------------------ | ------------------------------------- | --------------- | -------------------------------------------------------------------------- |
-| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`         | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
-| Monday API key           | `MONDAY_API_KEY_SECRET_ARN`           | `notify`        | API token used to post items to the Monday board.                          |
-| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`            | `notify`        | Webhook URL used to send Slack notifications.                              |
-| Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN` | `process_list`  | Google service account credentials used to upload reports to Google Drive. |
+| Secret (Secrets Manager) | Environment variable                    | Used by         | Description                                                                |
+| ------------------------ | --------------------------------------- | --------------- | -------------------------------------------------------------------------- |
+| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`           | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
+| Monday API key           | `MONDAY_API_KEY_SECRET_ARN`             | `notify`        | API token used to post items to the Monday board.                          |
+| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`              | `notify`        | Webhook URL for successful list notifications.                             |
+| Slack failures webhook URL | `SLACK_FAILURES_API_URL_SECRET_ARN`   | `notify`        | Webhook URL for failed list notifications.                                 |
+| Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN`   | `process_list`  | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables
 
@@ -113,10 +114,10 @@ Nonsensitive configuration is set as plain Lambda environment variables. Each fu
 | ---------------------------------- | ------------------------------ | ------------------------------------------------------------------------ |
 | `CONTRIBOT_STATE_TABLE_NAME`       | all                            | DynamoDB table that stores the state of processed facility lists.        |
 | `LAST_LIST_ID`                     | `fetch_lists`                  | Fallback resume cursor when the DynamoDB `__CURSOR__` item is missing.   |
-| `OS_HUB_API_URL`                   | `fetch_lists`                  | Base URL of the Open Supply Hub API.                                     |
+| `OS_HUB_API_URL`                   | `fetch_lists`, `notify`        | Base URL of the Open Supply Hub API.                                     |
 | `CONTRIBOT_STATE_MACHINE_ARN`      | `retry_failed_lists`           | Step Functions state machine started with re-queued `FAILED` lists.      |
 | `CONTRIBOT_MAX_ATTEMPTS`           | `retry_failed_lists`           | Maximum `process_list` attempts before a `FAILED` list is left for ops.  |
 | `AWS_STORAGE_BUCKET_NAME`          | `process_list`                 | S3 bucket where uploaded facility list files are stored.                 |
 | `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | `process_list`                 | Google Drive folder ID where validation reports are uploaded.            |
 | `MONDAY_API_URL`                   | `notify`                       | Base URL of the Monday.com API.                                          |
-| `MONDAY_BOARD_ID`                  | `notify`                       | ID of the Monday board to post the update.                               |
+| `MONDAY_BOARD_ID`                  | `notify`                       | ID of the Monday approval-queue board. Required; notify raises if unset. |
