@@ -3,7 +3,7 @@
 Receives the ``process_list`` output for a single Map item (or the original
 item plus ``error`` when processing failed), enriches it with the list row
 stored in DynamoDB by ``fetch_lists``, posts a Slack message, and records the
-final list status.
+final list status. On success, also creates a Monday approval-queue item.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from lib.lists_repository import (
     STATUS_PROCESSED,
     ListsRepository,
 )
+from lib.monday import MondayBoard
 from lib.slack_webhook import SlackWebhook
 from message import NotifyMessage
 
@@ -28,18 +29,25 @@ logger.setLevel(logging.INFO)
 
 def handler(event, context):
     """Lambda entry point: post a Slack notification for one processed list."""
+    if not os.environ.get("MONDAY_BOARD_ID", "").strip():
+        raise RuntimeError("MONDAY_BOARD_ID is not configured")
+
     list_id = str(event.get("list_id", "unknown"))
     failed = bool(event.get("error"))
+    base_url = os.environ["OS_HUB_API_URL"].rstrip("/")
 
     repository = ListsRepository()
     item = repository.get_list(list_id) or {}
     if not item:
         logger.warning("No DynamoDB row for list_id=%s", list_id)
 
+    list_name = item.get("list_name") or event.get("list_name") or ""
+    item_list_name = list_name or f"#{list_id}"
+
     notify_message = NotifyMessage(
         list_id=list_id,
-        base_url=os.environ["OS_HUB_API_URL"],
-        list_name=item.get("list_name") or event.get("list_name") or "",
+        base_url=base_url,
+        list_name=list_name,
         contributor_id=item.get("contributor_id"),
         contributor_name=item.get("contributor_name") or "",
         contributor_email=item.get("contributor_email") or "",
@@ -66,6 +74,21 @@ def handler(event, context):
     except (ClientError, RuntimeError):
         logger.exception("Slack notification failed")
         logger.info("Unsent Slack message: %s", json.dumps(message))
+
+    if not failed:
+        try:
+            monday = MondayBoard()
+            monday.create_item(
+                item_name=item_list_name,
+                contributor_name=item.get("contributor_name") or "",
+                contributor_id=item.get("contributor_id"),
+                processed_url=event.get("report_url"),
+                os_hub_url=f"{base_url}/lists/{list_id}",
+                list_size=event.get("num_lines"),
+            )
+        except (ClientError, RuntimeError):
+            logger.exception("Monday notification failed")
+            raise
 
     repository.update_list(
         list_id,

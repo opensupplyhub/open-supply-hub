@@ -20,7 +20,7 @@ done
 
 ## Lambda Source Code
 
-Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), [`google_drive.py`](lib/google_drive.py), and [`contribot_workbook.py`](lib/contribot_workbook.py)).
+Handler code lives under `src/contribot/`. Each Lambda is a `handler.py` module packaged into a zip for deployment. Shared helpers used by Lambdas live under [`lib/`](lib/) (for example [`lists_repository.py`](lib/lists_repository.py), [`os_hub_api.py`](lib/os_hub_api.py), [`s3_storage.py`](lib/s3_storage.py), [`google_drive.py`](lib/google_drive.py), [`monday.py`](lib/monday.py), and [`contribot_workbook.py`](lib/contribot_workbook.py)).
 
 | Lambda                | Handler source                                                       | Deployment package                                                                                                                                                 |
 | --------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -89,7 +89,7 @@ On each fetch run, `fetch_lists`:
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
 | 2    | For each list, download the `.csv` or `.xlsx` from S3, convert CSV if needed, run facility list validation, and upload `{list_id}.~PROCESSED.xlsx` to Google Drive. |
-| 3    | Send notifications to Slack and Monday so that data moderators can review the report. Success and failure go to separate Slack webhooks. |
+| 3    | Send Slack notifications (success and failure use separate webhooks). On success, also create a Monday approval-queue item. |
 | 4    | On a matching schedule, `retry_failed_lists` re-enqueues `FAILED` lists (under the attempt cap) and starts the Map without advancing the cursor. |
 
 ## Configuration
@@ -120,4 +120,4 @@ Nonsensitive configuration is set as plain Lambda environment variables. Each fu
 | `AWS_STORAGE_BUCKET_NAME`          | `process_list`                 | S3 bucket where uploaded facility list files are stored.                 |
 | `GOOGLE_DRIVE_SHARED_DIRECTORY_ID` | `process_list`                 | Google Drive folder ID where validation reports are uploaded.            |
 | `MONDAY_API_URL`                   | `notify`                       | Base URL of the Monday.com API.                                          |
-| `MONDAY_BOARD_ID`                  | `notify`                       | ID of the Monday board to post the update.                               |
+| `MONDAY_BOARD_ID`                  | `notify`                       | ID of the Monday approval-queue board. Required; notify raises if unset. |

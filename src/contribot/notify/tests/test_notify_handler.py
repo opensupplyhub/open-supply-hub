@@ -32,6 +32,7 @@ _SPEC.loader.exec_module(handler)
 def env(monkeypatch):
     monkeypatch.setenv("CONTRIBOT_STATE_TABLE_NAME", "contribot-state")
     monkeypatch.setenv("OS_HUB_API_URL", "https://example.com")
+    monkeypatch.setenv("MONDAY_BOARD_ID", "3514246658")
     monkeypatch.setenv(
         "SLACK_API_URL_SECRET_ARN",
         "arn:aws:secretsmanager:us-east-1:123:secret:slack",
@@ -56,21 +57,25 @@ def _mocks(list_item=LIST_ITEM):
     repo = MagicMock()
     repo.get_list.return_value = dict(list_item) if list_item else None
     slack = MagicMock()
-    return repo, slack
+    monday = MagicMock()
+    return repo, slack, monday
 
 
 @pytest.fixture
-def repo_and_slack(env):
-    repo, slack = _mocks()
+def repo_slack_monday(env):
+    repo, slack, monday = _mocks()
     with patch.object(handler, "ListsRepository", return_value=repo), patch.object(
         handler, "SlackWebhook", return_value=slack
-    ) as slack_cls:
+    ) as slack_cls, patch.object(
+        handler, "MondayBoard", return_value=monday
+    ) as monday_cls:
         slack.cls = slack_cls
-        yield repo, slack
+        monday.cls = monday_cls
+        yield repo, slack, monday
 
 
-def test_handler_posts_success_message(repo_and_slack):
-    repo, slack = repo_and_slack
+def test_handler_posts_success_message(repo_slack_monday):
+    repo, slack, monday = repo_slack_monday
 
     result = handler.handler({"list_id": "101", "status": "processed"}, None)
 
@@ -86,11 +91,19 @@ def test_handler_posts_success_message(repo_and_slack):
     )
     assert "File spring.xlsx" in message
     assert ":rotating_light:" not in message
+    monday.create_item.assert_called_once_with(
+        item_name="Spring Facilities",
+        contributor_name="Example Brand",
+        contributor_id="5",
+        processed_url=None,
+        os_hub_url="https://example.com/lists/101",
+        list_size=None,
+    )
     repo.update_list.assert_called_once_with("101", status=STATUS_PROCESSED)
 
 
-def test_handler_posts_failure_message(repo_and_slack):
-    repo, slack = repo_and_slack
+def test_handler_skips_monday_on_failure(repo_slack_monday):
+    repo, slack, monday = repo_slack_monday
 
     event = {
         "list_id": "101",
@@ -105,11 +118,35 @@ def test_handler_posts_failure_message(repo_and_slack):
     message = slack.post.call_args[0][0]
     assert ":rotating_light: ContriBot failed to process list" in message
     assert "Error: boom" in message
+    monday.create_item.assert_not_called()
+    monday.cls.assert_not_called()
     repo.update_list.assert_called_once_with("101", status=STATUS_FAILED)
 
 
-def test_handler_includes_report_stats_when_present(repo_and_slack):
-    repo, slack = repo_and_slack
+def test_handler_requires_monday_board_id(repo_slack_monday, monkeypatch):
+    repo, slack, monday = repo_slack_monday
+    monkeypatch.delenv("MONDAY_BOARD_ID")
+
+    with pytest.raises(RuntimeError, match="MONDAY_BOARD_ID is not configured"):
+        handler.handler({"list_id": "101"}, None)
+
+    slack.post.assert_not_called()
+    monday.cls.assert_not_called()
+    repo.update_list.assert_not_called()
+
+
+def test_handler_reraises_monday_failure(repo_slack_monday):
+    repo, slack, monday = repo_slack_monday
+    monday.create_item.side_effect = RuntimeError("Monday GraphQL errors")
+
+    with pytest.raises(RuntimeError, match="Monday GraphQL errors"):
+        handler.handler({"list_id": "101"}, None)
+
+    repo.update_list.assert_not_called()
+
+
+def test_handler_includes_report_stats_when_present(repo_slack_monday):
+    repo, slack, monday = repo_slack_monday
 
     event = {
         "list_id": "101",
@@ -123,6 +160,14 @@ def test_handler_includes_report_stats_when_present(repo_and_slack):
     message = slack.post.call_args[0][0]
     assert "<https://docs.google.com/spreadsheets/d/abc|Checked report>" in message
     assert "(200/20) Error ratio: 10.0% :confused:" in message
+    monday.create_item.assert_called_once_with(
+        item_name="Spring Facilities",
+        contributor_name="Example Brand",
+        contributor_id="5",
+        processed_url="https://docs.google.com/spreadsheets/d/abc",
+        os_hub_url="https://example.com/lists/101",
+        list_size=200,
+    )
 
 
 @pytest.mark.parametrize(
@@ -145,20 +190,28 @@ def test_error_ratio_emoji_thresholds(error_ratio, emoji):
 
 
 def test_handler_tolerates_missing_dynamodb_row(env):
-    repo, slack = _mocks(list_item=None)
+    repo, slack, monday = _mocks(list_item=None)
     with patch.object(handler, "ListsRepository", return_value=repo), patch.object(
         handler, "SlackWebhook", return_value=slack
-    ):
+    ), patch.object(handler, "MondayBoard", return_value=monday):
         result = handler.handler({"list_id": "999"}, None)
 
     assert result == {"list_id": "999", "notified": True}
     message = slack.post.call_args[0][0]
     assert "New list <https://example.com/lists/999|#999>" in message
+    monday.create_item.assert_called_once_with(
+        item_name="#999",
+        contributor_name="",
+        contributor_id=None,
+        processed_url=None,
+        os_hub_url="https://example.com/lists/999",
+        list_size=None,
+    )
     repo.update_list.assert_called_once_with("999", status=STATUS_PROCESSED)
 
 
-def test_handler_survives_slack_failure(repo_and_slack):
-    repo, slack = repo_and_slack
+def test_handler_survives_slack_failure(repo_slack_monday):
+    repo, slack, monday = repo_slack_monday
     slack.post.side_effect = RuntimeError("Slack webhook request failed")
 
     result = handler.handler({"list_id": "101"}, None)

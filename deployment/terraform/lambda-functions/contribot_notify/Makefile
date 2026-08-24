@@ -11,6 +11,7 @@ all:
 	cp $(CONTRIBOT_SRC)/lib/__init__.py $(STAGING)/lib/
 	cp $(CONTRIBOT_SRC)/lib/lists_repository.py $(STAGING)/lib/
 	cp $(CONTRIBOT_SRC)/lib/slack_webhook.py $(STAGING)/lib/
+	cp $(CONTRIBOT_SRC)/lib/monday.py $(STAGING)/lib/
 	(cd $(STAGING) && zip -qXr ../$(ZIP) .)
 	rm -rf $(STAGING)
 
