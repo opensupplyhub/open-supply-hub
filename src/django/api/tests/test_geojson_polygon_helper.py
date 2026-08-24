@@ -214,3 +214,32 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         self.assertEqual(len(result), 1)
         # The merged piece covers both original squares.
         self.assertAlmostEqual(result.area, 200.0)
+
+    def test_enclosed_gaps_stay_unmapped(self):
+        """Merging touching pieces never fills space neither piece
+        claimed. Two pieces that wrap around an enclave (think South
+        Africa surrounding Lesotho) merge into one piece with a hole
+        where the enclave is — the enclave stays outside the boundary.
+        """
+        # A donut split into two halves that touch along the split:
+        # together they surround, but do not cover, the 3..7 square.
+        left = [[[0, 0], [5, 0], [5, 3], [3, 3], [3, 7], [5, 7],
+                 [5, 10], [0, 10], [0, 0]]]
+        right = [[[5, 0], [10, 0], [10, 10], [5, 10], [5, 7], [7, 7],
+                  [7, 3], [5, 3], [5, 0]]]
+        geojson = json.dumps({
+            'type': 'FeatureCollection',
+            'features': [
+                {'type': 'Feature', 'properties': {},
+                 'geometry': {'type': 'Polygon', 'coordinates': left}},
+                {'type': 'Feature', 'properties': {},
+                 'geometry': {'type': 'Polygon', 'coordinates': right}},
+            ],
+        })
+        result = parse_polygon_geojson(geojson)
+
+        self.assertEqual(len(result), 1)      # merged into one piece
+        self.assertEqual(len(result[0]), 2)   # outer ring + the hole
+        from django.contrib.gis.geos import Point
+        self.assertFalse(result.contains(Point(5, 5)))  # the "Lesotho"
+        self.assertTrue(result.contains(Point(1, 1)))   # covered land
