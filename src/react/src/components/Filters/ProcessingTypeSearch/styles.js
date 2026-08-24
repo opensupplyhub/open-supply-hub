@@ -15,6 +15,15 @@ export default function processingTypeSearchStyles(theme) {
 
     return Object.freeze({
         ...sharedStyles,
+        searchControl: Object.freeze({
+            ...sharedStyles.searchControl,
+            padding: '2px 36px 2px 8px',
+        }),
+        searchIcon: Object.freeze({
+            ...sharedStyles.searchIcon,
+            left: 'auto',
+            right: '10px',
+        }),
         resultsPanel: Object.freeze({
             ...sharedStyles.resultsPanel,
             maxHeight: '320px',
