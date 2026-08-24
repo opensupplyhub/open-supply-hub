@@ -441,7 +441,7 @@ jobs:
           cache-dependency-path: src/react/yarn.lock
       - name: Install frontend dependencies
         working-directory: src/react
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --ignore-scripts
       - name: Run the ESLint linter check
         working-directory: src/react
         run: ./node_modules/.bin/eslint src/ --ext .js --ext .jsx
