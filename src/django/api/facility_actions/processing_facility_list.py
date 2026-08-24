@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from api.constants import FileHeaderField, ProcessingAction
 from api.extended_fields import create_extendedfields_for_single_item
+from api.helpers.data_center import extract_provenance
 from api.facility_actions.processing_facility import ProcessingFacility
 from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
@@ -95,6 +96,7 @@ class ProcessingFacilityList(ProcessingFacility):
             raw_header=header_str,
             sector=[],
             source=source,
+            **extract_provenance(row.raw_json),
         )
 
     def __handle_cc_internal_errors(self) -> None:

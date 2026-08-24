@@ -16,6 +16,7 @@ from api.extended_fields import (
     create_partner_extendedfields_for_single_item,
     update_extendedfields_for_list_item,
 )
+from api.helpers.data_center import extract_provenance
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
@@ -202,6 +203,7 @@ class EventApprovalTemplate(ABC):
                     'is_geocoded': False,
                 }
             ],
+            **extract_provenance(data["raw_json"]),
         )
 
     def __set_geocoded_location(
