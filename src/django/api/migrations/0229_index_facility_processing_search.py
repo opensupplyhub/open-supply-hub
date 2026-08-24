@@ -1,4 +1,4 @@
-from django.db.migrations import Migration, RunPython
+from django.db.migrations import Migration, RunPython, RunSQL
 from django.db import connection
 from psycopg2 import sql
 
@@ -55,6 +55,10 @@ UNUSED_INDEXES = ('api_facility_processing_value_value_trgm_idx',)
 
 ANALYZED_TABLES = ('api_facilityindex', 'api_facility_processing_value')
 
+DROP_INDEX_CONCURRENTLY_SQL = sql.SQL(
+    'DROP INDEX CONCURRENTLY IF EXISTS {}'
+)
+
 INVALID_INDEXES_SQL = """
     SELECT
         cls.relname
@@ -81,7 +85,7 @@ def _drop_invalid_indexes(index_names):
 
         for index_name in invalid:
             cursor.execute(
-                sql.SQL('DROP INDEX CONCURRENTLY IF EXISTS {}').format(
+                DROP_INDEX_CONCURRENTLY_SQL.format(
                     sql.Identifier(index_name)
                 )
             )
@@ -110,7 +114,7 @@ def index_facility_processing_search(apps, schema_editor):
     with connection.cursor() as cursor:
         for index_name in UNUSED_INDEXES:
             cursor.execute(
-                sql.SQL('DROP INDEX CONCURRENTLY IF EXISTS {}').format(
+                DROP_INDEX_CONCURRENTLY_SQL.format(
                     sql.Identifier(index_name)
                 )
             )
@@ -132,7 +136,7 @@ def revert_facility_processing_search_index(apps, schema_editor):
     with connection.cursor() as cursor:
         for index_name in INDEXES:
             cursor.execute(
-                sql.SQL('DROP INDEX CONCURRENTLY IF EXISTS {}').format(
+                DROP_INDEX_CONCURRENTLY_SQL.format(
                     sql.Identifier(index_name)
                 )
             )
@@ -153,6 +157,10 @@ class Migration(Migration):
     ]
 
     operations = [
+        RunSQL(
+            'CREATE EXTENSION IF NOT EXISTS btree_gin',
+            reverse_sql=RunSQL.noop,
+        ),
         RunPython(
             index_facility_processing_search,
             revert_facility_processing_search_index,

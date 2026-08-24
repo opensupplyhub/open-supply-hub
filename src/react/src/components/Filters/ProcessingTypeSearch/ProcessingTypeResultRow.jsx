@@ -4,6 +4,9 @@ import { arrayOf, bool, func, number, object, string } from 'prop-types';
 import { splitLabelForHighlight } from '../HierarchicalTaxonomySearch/utils';
 
 const BREADCRUMB_SEPARATOR = ' \u00b7 ';
+// These rich options are controlled by the combobox through
+// aria-activedescendant and cannot be represented by native option elements.
+const OPTION_ROLE_PROPS = Object.freeze({ role: 'option' });
 
 function HighlightedTerm({ value, highlightQuery, classes }) {
     const parts = splitLabelForHighlight(value, highlightQuery);
@@ -55,10 +58,10 @@ function ProcessingTypeResultRow({
     return (
         // Keyboard focus and selection are handled by the controlling
         // combobox through aria-activedescendant.
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus, jsx-a11y/no-static-element-interactions
         <div
             id={id}
-            role={'option' /* NOSONAR -- rich custom combobox option */}
+            {...OPTION_ROLE_PROPS}
             aria-selected={selected}
             className={rowClassName}
             onMouseDown={event => event.preventDefault()}

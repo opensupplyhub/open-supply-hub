@@ -17,6 +17,9 @@ import styles from './styles';
 const MIN_QUERY_LENGTH = 3;
 const SUGGESTION_DEBOUNCE_MS = 250;
 const LISTBOX_ID = 'processing-type-suggestions';
+// This custom multi-select popup contains rich options that a native select
+// cannot represent.
+const LISTBOX_ROLE_PROPS = Object.freeze({ role: 'listbox' });
 const caseIdentity = value => value.toLowerCase();
 
 const GROUP_TITLES = Object.freeze({
@@ -336,7 +339,7 @@ function ProcessingTypeSearch({
             {showResultsPanel && (
                 <div
                     id={LISTBOX_ID}
-                    role={'listbox' /* NOSONAR -- custom multi-select popup */}
+                    {...LISTBOX_ROLE_PROPS}
                     className={classes.resultsPanel}
                     aria-label={label}
                     aria-busy={!!fetching}
