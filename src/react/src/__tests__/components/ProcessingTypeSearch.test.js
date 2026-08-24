@@ -93,7 +93,7 @@ describe('ProcessingTypeSearch component', () => {
 
         const rows = getRowLabels(container);
 
-        expect(rows[0]).toBe('Standard types');
+        expect(rows[0]).toBe('OS Hub Taxonomy');
         expect(rows[1]).toContain('Dyeing');
         expect(rows[2]).toContain('Embroidery');
         expect(rows[3]).toBe('Contributor values');
@@ -110,8 +110,8 @@ describe('ProcessingTypeSearch component', () => {
         ).toBeInTheDocument();
     });
 
-    test('shows both parents of a multi-parent value', () => {
-        const { getByText } = renderComponent({
+    test('shows both parent breadcrumbs without a multi-parent label', () => {
+        const { getByText, queryByText } = renderComponent({
             suggestions: makeSuggestions([EMBROIDERY]),
         });
 
@@ -120,7 +120,7 @@ describe('ProcessingTypeSearch component', () => {
                 'Final Product Assembly \u00b7 Textile or Material Production',
             ),
         ).toBeInTheDocument();
-        expect(getByText('2 parents')).toBeInTheDocument();
+        expect(queryByText('2 parents')).not.toBeInTheDocument();
     });
 
     test('badges a contributor value as not in the taxonomy', () => {

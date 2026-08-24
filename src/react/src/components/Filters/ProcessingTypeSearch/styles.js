@@ -92,12 +92,6 @@ export default function processingTypeSearchStyles(theme) {
             background: COLOURS.CROWDSOURCED_CHIP_BG,
             border: `1px solid ${COLOURS.AMBER_300}`,
         }),
-        parentCountBadge: Object.freeze({
-            ...badgeBase,
-            color: COLOURS.DARK_PURPLE,
-            background: COLOURS.LIGHT_LAVENDER,
-            border: `1px solid ${COLOURS.LIGHT_LAVENDER_BORDER}`,
-        }),
         resultRowCount: Object.freeze({
             marginLeft: 'auto',
             alignSelf: 'center',

@@ -83,11 +83,6 @@ function ProcessingTypeResultRow({
                                     : 'Not in taxonomy'}
                             </span>
                         )}
-                        {facilityTypes.length > 1 && (
-                            <span className={classes.parentCountBadge}>
-                                {facilityTypes.length} parents
-                            </span>
-                        )}
                     </span>
                 </span>
                 {count != null && (

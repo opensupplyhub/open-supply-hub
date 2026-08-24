@@ -20,7 +20,7 @@ const LISTBOX_ID = 'processing-type-suggestions';
 const caseIdentity = value => value.toLowerCase();
 
 const GROUP_TITLES = Object.freeze({
-    standard: 'Standard types',
+    standard: 'OS Hub Taxonomy',
     contributor: 'Contributor values',
 });
 
