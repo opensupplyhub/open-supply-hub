@@ -1,5 +1,3 @@
-import json
-
 from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
 from django.test import TestCase
 
@@ -15,7 +13,6 @@ from api.models import (
 )
 from api.models.partner_field import PartnerField
 from api.partner_fields.india_labour_line_provider import (
-    INDIA_LABOUR_LINE_POLYGON_NAMES,
     INDIA_LABOUR_LINE_SECTORS,
     IndiaLabourLineProvider,
 )
@@ -24,21 +21,6 @@ from api.partner_fields.india_labour_line_provider import (
 BOUNDARY_WKT = (
     'POLYGON((76.8 28.4, 76.8 28.9, 77.4 28.9, 77.4 28.4, 76.8 28.4))'
 )
-
-# The production JSON schema shape: the helpline number lives in the
-# `default` of the phone_number property.
-HELPLINE_SCHEMA = {
-    'type': 'object',
-    'title': 'India Labour Line Helpline',
-    '$schema': 'https://json-schema.org/draft/2020-12/schema',
-    'properties': {
-        'phone_number': {
-            'type': 'string',
-            'title': 'Phone Number',
-            'default': '1-800-833-9020',
-        }
-    },
-}
 
 
 class IndiaLabourLineProviderTest(TestCase):
@@ -53,6 +35,12 @@ class IndiaLabourLineProviderTest(TestCase):
             contrib_type=Contributor.CONTRIB_TYPE_CHOICES[0][0],
         )
 
+        self.polygon = Polygon.objects.create(
+            name='helpline_coverage_for_tests',
+            description='Helpline coverage boundary for tests.',
+            geom=MultiPolygon(GEOSGeometry(BOUNDARY_WKT)),
+        )
+
         self.partner_field, _ = PartnerField.objects \
             .get_all_including_inactive() \
             .get_or_create(
@@ -60,20 +48,17 @@ class IndiaLabourLineProviderTest(TestCase):
                 defaults={
                     'type': PartnerField.OBJECT,
                     'label': 'India Labour Line Helpline',
-                    'system_field': False,
+                    'system_field': True,
                     'active': True,
                 },
             )
-        self.partner_field.json_schema = HELPLINE_SCHEMA
+        # The number lives in display_text (admin-editable even on
+        # protected system fields); coverage is a database link.
+        self.partner_field.display_text = '1-800-833-9020'
+        self.partner_field.polygon = self.polygon
         self.partner_field.save()
         self.partner_field.contributor_set.clear()
         self.contributor.partner_fields.add(self.partner_field)
-
-        self.polygon = Polygon.objects.create(
-            name=INDIA_LABOUR_LINE_POLYGON_NAMES[0],
-            description='Helpline coverage boundary for tests.',
-            geom=MultiPolygon(GEOSGeometry(BOUNDARY_WKT)),
-        )
 
         self.provider = IndiaLabourLineProvider()
 
@@ -151,34 +136,40 @@ class IndiaLabourLineProviderTest(TestCase):
         facility = self._make_facility(77.2, 28.6, country_code='US')
         self.assertIsNone(self.provider._fetch_raw_data(facility))
 
-    def test_missing_polygon_warns_and_returns_nothing(self):
-        """A missing boundary polygon logs loudly instead of failing."""
+    def test_unlinked_polygon_warns_and_returns_nothing(self):
+        """With no coverage polygon linked, the field stays dormant
+        and says so loudly in the logs."""
         facility = self._make_facility(77.2, 28.6)
-        self.polygon.delete()
+        self.partner_field.polygon = None
+        self.partner_field.save()
 
         logger_name = 'api.partner_fields.india_labour_line_provider'
         with self.assertLogs(logger_name, level='WARNING') as logs:
             result = self.provider._fetch_raw_data(facility)
 
         self.assertIsNone(result)
-        self.assertIn(
-            INDIA_LABOUR_LINE_POLYGON_NAMES[0], '\n'.join(logs.output)
-        )
+        self.assertIn('no coverage polygon', '\n'.join(logs.output))
 
-    def test_phone_number_read_from_string_schema(self):
-        """A schema stored as a JSON string is parsed the same way."""
-        self.partner_field.json_schema = json.dumps(HELPLINE_SCHEMA)
+    def test_linked_polygon_cannot_be_deleted(self):
+        """The database blocks deleting a polygon a field points at."""
+        from django.db.models import ProtectedError
+        with self.assertRaises(ProtectedError):
+            self.polygon.delete()
+
+    def test_phone_number_read_from_display_text(self):
+        """The number comes from display_text, the admin-editable
+        column, so staff can change it with no deploy."""
+        self.partner_field.display_text = '1-800-000-0000'
         self.partner_field.save()
         facility = self._make_facility(77.2, 28.6)
 
         raw = self.provider._fetch_raw_data(facility)
 
-        self.assertEqual(raw['phone_number'], '1-800-833-9020')
+        self.assertEqual(raw['phone_number'], '1-800-000-0000')
 
-    def test_missing_phone_default_warns_and_returns_nothing(self):
-        """A schema without a phone default disables the field loudly."""
-        schema = {'type': 'object', 'properties': {}}
-        self.partner_field.json_schema = schema
+    def test_blank_display_text_warns_and_returns_nothing(self):
+        """A blank helpline number disables the field loudly."""
+        self.partner_field.display_text = ''
         self.partner_field.save()
         facility = self._make_facility(77.2, 28.6)
 
@@ -187,20 +178,6 @@ class IndiaLabourLineProviderTest(TestCase):
             result = self.provider._fetch_raw_data(facility)
 
         self.assertIsNone(result)
-
-    def test_provider_declares_its_polygon_names_for_the_admin(self):
-        """The admin's rename/delete warning discovers our polygons."""
-        self.assertEqual(
-            IndiaLabourLineProvider.POLYGON_NAMES,
-            INDIA_LABOUR_LINE_POLYGON_NAMES,
-        )
-        from api.models.polygon_admin import (
-            code_referenced_polygon_names,
-        )
-        self.assertIn(
-            INDIA_LABOUR_LINE_POLYGON_NAMES[0],
-            code_referenced_polygon_names(),
-        )
 
     def test_uncovered_sector_gets_nothing(self):
         """An in-boundary location in a non-covered sector is skipped."""

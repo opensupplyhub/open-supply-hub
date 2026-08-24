@@ -1,27 +1,12 @@
-import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from django.db.models import Q
 
 from api.models.partner_field import PartnerField
-from api.models.polygon import Polygon
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
 logger = logging.getLogger(__name__)
-
-# The Polygon rows (looked up by name) whose boundaries carry the
-# India Labour Line helpline. This is deliberately a code-level list —
-# the same pattern as MITLivingWageProvider hard-coding US counties —
-# so changing coverage is a reviewed code change, while the boundary
-# shapes themselves stay editable in the Django admin.
-#
-# The boundary is one (multi-part) Polygon covering every area the
-# helpline serves; more names can be added here if coverage is ever
-# split across multiple rows.
-INDIA_LABOUR_LINE_POLYGON_NAMES = [
-    'india_labour_line_helpline_areas',
-]
 
 # The sectors the helpline covers (the request behind this feature was
 # a textile facility list). A location must have at least one of these
@@ -38,29 +23,64 @@ INDIA_LABOUR_LINE_SECTORS = [
 ]
 
 
+def get_india_labour_line_polygon():
+    """
+    Return the boundary polygon the helpline field points at.
+
+    The partner field row holds a database link (a ForeignKey) to its
+    coverage polygon, set in the Django admin. The link is rename-proof,
+    and the database refuses to delete a polygon a field still points
+    at. A loud warning is logged when the field or its link is missing,
+    since the feature stays dormant until both exist.
+
+    Returns:
+        The linked Polygon, or None when the field doesn't exist or no
+        polygon has been linked yet.
+    """
+    field = (
+        PartnerField.objects.get_all_including_inactive()
+        .filter(name=IndiaLabourLineProvider.FIELD_NAME)
+        .select_related('polygon')
+        .first()
+    )
+    if field is None:
+        logger.warning(
+            f"Partner field '{IndiaLabourLineProvider.FIELD_NAME}' not "
+            'found; the India Labour Line helpline is dormant.'
+        )
+        return None
+    if field.polygon is None:
+        logger.warning(
+            f"Partner field '{IndiaLabourLineProvider.FIELD_NAME}' has "
+            'no coverage polygon linked; the India Labour Line '
+            'helpline is dormant until one is set in the admin.'
+        )
+        return None
+    return field.polygon
+
+
 def build_covered_locations_q():
     """
     Build the query condition for "the helpline covers this location".
 
-    "Covered" means: inside one of the configured boundary polygons AND
-    working in at least one covered sector. This is the one shared
-    definition of that rule — the contributor-profile spotlight and the
-    search filter both use it, so the two can never drift apart.
+    "Covered" means: inside the linked boundary polygon AND working in
+    at least one covered sector. This is the one shared definition of
+    that rule — the contributor-profile spotlight and the search
+    filter both use it, so the two can never drift apart.
 
     Returns:
-        A Q object expressing the rule, or None when no configured
-        polygon exists (the lookup helper logs a warning in that case).
-        Callers must treat None as "match nothing", never as "match
-        everything".
+        A Q object expressing the rule, or None when no coverage
+        polygon is linked (the lookup helper logs a warning in that
+        case). Callers must treat None as "match nothing", never as
+        "match everything".
     """
-    polygons = get_india_labour_line_polygons()
-    if not polygons:
+    polygon = get_india_labour_line_polygon()
+    if polygon is None:
         return None
-
-    boundary = Q(location__within=polygons[0].geom)
-    for polygon in polygons[1:]:
-        boundary |= Q(location__within=polygon.geom)
-    return boundary & Q(sector__overlap=INDIA_LABOUR_LINE_SECTORS)
+    return (
+        Q(location__within=polygon.geom)
+        & Q(sector__overlap=INDIA_LABOUR_LINE_SECTORS)
+    )
 
 
 def get_covered_production_locations(base_queryset=None):
@@ -78,7 +98,7 @@ def get_covered_production_locations(base_queryset=None):
 
     Returns:
         The covered locations; an empty queryset — never "everything" —
-        when no configured polygon exists.
+        when no coverage polygon is linked.
     """
     from api.models.facility.facility_index import FacilityIndex
 
@@ -90,55 +110,20 @@ def get_covered_production_locations(base_queryset=None):
     return base_queryset.filter(covered_q)
 
 
-def get_india_labour_line_polygons() -> List[Polygon]:
-    """
-    Return the Polygon rows backing the India Labour Line field.
-
-    Looks up `INDIA_LABOUR_LINE_POLYGON_NAMES` in the database and logs
-    a loud warning when any configured name is missing (the one
-    fragility of referencing polygons by name: renaming a polygon in
-    the admin would silently break the link, so we make it noisy).
-
-    Returns:
-        The Polygon rows that exist, possibly fewer than configured
-        (or none at all) if names are missing.
-    """
-    polygons = list(
-        Polygon.objects.filter(name__in=INDIA_LABOUR_LINE_POLYGON_NAMES)
-    )
-    missing = (
-        set(INDIA_LABOUR_LINE_POLYGON_NAMES)
-        - {polygon.name for polygon in polygons}
-    )
-    if missing:
-        logger.warning(
-            'India Labour Line polygons missing from the database: '
-            f'{sorted(missing)}. The field will not appear for '
-            'locations in those areas until Polygon rows with these '
-            'exact names exist.'
-        )
-    return polygons
-
-
 class IndiaLabourLineProvider(SystemPartnerFieldProvider):
     """
     Provides the India Labour Line helpline as a system partner field
-    for production locations inside specific Indian state/region
-    boundaries.
+    for production locations inside the linked coverage boundary.
 
-    Mirrors MITLivingWageProvider, with polygons instead of counties:
-    the location's point is tested against the Polygon rows named in
-    `INDIA_LABOUR_LINE_POLYGON_NAMES`, and the helpline phone number is
-    read at request time from the partner field's JSON schema (the
-    `default` of its `phone_number` property), so the number can be
-    changed in the Django admin without a deploy.
+    Mirrors MITLivingWageProvider, with a polygon instead of counties:
+    the location's point is tested against the boundary polygon the
+    partner field links to, and the helpline phone number is read at
+    request time from the partner field's display_text, so the number
+    can be changed in the Django admin without a deploy (display_text
+    stays editable even on protected system fields).
     """
 
     FIELD_NAME = 'india_labour_line_helpline'
-
-    # Declares the polygons this provider depends on, so the polygon
-    # admin can warn staff before renaming or deleting one of them.
-    POLYGON_NAMES = INDIA_LABOUR_LINE_POLYGON_NAMES
 
     def _get_field_name(self) -> str:
         """Return the partner field name for this provider."""
@@ -150,20 +135,20 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
         the formatted field needs.
 
         Cheap checks run first (country, has a location, sector)
-        so most locations never reach the PostGIS containment
-        query. This runs on every page render, so it keeps its own
-        lean one-location query rather than going through
+        so most locations never reach the geometry containment check.
+        This runs on every page render, so it keeps its own lean
+        one-location path rather than going through
         get_covered_production_locations() — but it applies the same
-        boundary and sector rules, from the same constants, and the
-        test suite holds the two paths to the same answers.
+        boundary and sector rules, and the test suite holds the two
+        paths to the same answers.
 
         Args:
             production_location: The Facility being rendered.
 
         Returns:
-            A dict with the matched `polygon` and the `phone_number`
-            to display, or None when the location is outside every
-            configured boundary (or the feature is off/misconfigured).
+            A dict with the coverage `polygon` and the `phone_number`
+            to display, or None when the location is outside the
+            boundary (or the feature is unconfigured).
         """
         if production_location.country_code != 'IN':
             return None
@@ -174,26 +159,10 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
         if not self.__has_covered_sector(production_location):
             return None
 
-        polygon = Polygon.objects.filter(
-            name__in=INDIA_LABOUR_LINE_POLYGON_NAMES,
-            geom__contains=production_location.location,
-        ).first()
-
+        polygon = get_india_labour_line_polygon()
         if polygon is None:
-            # Distinguish "outside the boundaries" (normal, quiet) from
-            # "no configured polygons exist at all" (misconfiguration,
-            # loud). This runs on every near-miss page render, so use a
-            # cheap existence check instead of loading full geometries.
-            if not Polygon.objects.filter(
-                name__in=INDIA_LABOUR_LINE_POLYGON_NAMES
-            ).exists():
-                logger.warning(
-                    'No India Labour Line polygons exist in the '
-                    'database (expected names: '
-                    f'{sorted(INDIA_LABOUR_LINE_POLYGON_NAMES)}). The '
-                    'field will not appear anywhere until they are '
-                    'created.'
-                )
+            return None
+        if not polygon.geom.contains(production_location.location):
             return None
 
         phone_number = self.__get_phone_number()
@@ -210,8 +179,12 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
         """
         Format the helpline into the standard partner field structure.
 
+        The displayed dates come from the coverage polygon's own
+        timestamps — the same rule MIT Living Wage uses (its dates are
+        the county boundary rows' timestamps).
+
         Args:
-            raw_data: The dict returned by `_fetch_raw_data` (matched
+            raw_data: The dict returned by `_fetch_raw_data` (coverage
                 polygon plus phone number).
             contributor_info: The partner organization's details, as
                 resolved by the base class (None on the download-only
@@ -262,13 +235,12 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
 
     def __get_phone_number(self) -> Optional[str]:
         """
-        Read the helpline number from the partner field's JSON schema.
+        Read the helpline number from the partner field's display_text.
 
-        The number lives in the schema as the `default` of the
-        `phone_number` property, so staff can update it in the Django
-        admin with no deploy. Any missing piece (field row, schema,
-        property, default) logs a warning and disables the field
-        rather than crashing a page render.
+        display_text stays editable in the Django admin even on
+        protected system fields, so staff can update the number with
+        no deploy. A missing field or blank number logs a warning and
+        disables the field rather than crashing a page render.
         """
         partner_field = (
             PartnerField.objects.get_all_including_inactive()
@@ -282,28 +254,12 @@ class IndiaLabourLineProvider(SystemPartnerFieldProvider):
             )
             return None
 
-        schema = partner_field.json_schema
-        # The column usually deserializes to a dict, but tolerate a
-        # JSON string too (other code parses it the same way).
-        if isinstance(schema, str):
-            try:
-                schema = json.loads(schema)
-            except ValueError:
-                schema = None
-
-        phone_number = None
-        if isinstance(schema, dict):
-            properties = schema.get('properties')
-            if isinstance(properties, dict):
-                phone_property = properties.get('phone_number')
-                if isinstance(phone_property, dict):
-                    phone_number = phone_property.get('default')
-
-        if not isinstance(phone_number, str) or not phone_number:
+        phone_number = (partner_field.display_text or '').strip()
+        if not phone_number:
             logger.warning(
-                f"Partner field '{self.FIELD_NAME}' has no "
-                "properties.phone_number.default in its JSON schema; "
-                'the India Labour Line helpline cannot be displayed.'
+                f"Partner field '{self.FIELD_NAME}' has no display_text "
+                '(the helpline number); the India Labour Line helpline '
+                'cannot be displayed.'
             )
             return None
 

@@ -9,7 +9,6 @@ from api.models import Contributor, Polygon, User
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
 from api.partner_fields.india_labour_line_provider import (
-    INDIA_LABOUR_LINE_POLYGON_NAMES,
     IndiaLabourLineProvider,
 )
 
@@ -90,6 +89,14 @@ class TestIndiaLabourLineSpotlight(APITestCase):
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
 
+        self.coverage_polygon = Polygon.objects.create(
+            name="helpline_coverage_for_tests",
+            description="Helpline coverage boundary for tests.",
+            geom=MultiPolygon(GEOSGeometry(
+                "POLYGON((76.8 28.4, 76.8 28.9, 77.4 28.9, "
+                "77.4 28.4, 76.8 28.4))"
+            )),
+        )
         self.partner_field, _ = PartnerField.objects \
             .get_all_including_inactive() \
             .get_or_create(
@@ -97,21 +104,15 @@ class TestIndiaLabourLineSpotlight(APITestCase):
                 defaults={
                     "type": PartnerField.OBJECT,
                     "label": "India Labour Line Helpline",
-                    "system_field": False,
+                    "system_field": True,
                     "active": True,
                 },
             )
+        self.partner_field.display_text = "1-800-833-9020"
+        self.partner_field.polygon = self.coverage_polygon
+        self.partner_field.save()
         self.partner_field.contributor_set.clear()
         self.contributor.partner_fields.add(self.partner_field)
-
-        Polygon.objects.create(
-            name=INDIA_LABOUR_LINE_POLYGON_NAMES[0],
-            description="Helpline coverage boundary for tests.",
-            geom=MultiPolygon(GEOSGeometry(
-                "POLYGON((76.8 28.4, 76.8 28.9, 77.4 28.9, "
-                "77.4 28.4, 76.8 28.4))"
-            )),
-        )
 
         self.inside = self._make_facility("IN2026000INSD", 77.2, 28.6)
         self.outside = self._make_facility("IN2026000OUTS", 75.0, 20.0)
@@ -165,8 +166,9 @@ class TestIndiaLabourLineSpotlight(APITestCase):
         )
         self.assertNotIn(electronics.id, self._spotlight_ids())
 
-    def test_spotlight_is_empty_when_polygons_are_missing(self):
-        """Without a boundary polygon the spotlight shows nothing —
-        never everything."""
-        Polygon.objects.all().delete()
+    def test_spotlight_is_empty_when_no_polygon_is_linked(self):
+        """Without a linked coverage polygon the spotlight shows
+        nothing — never everything."""
+        self.partner_field.polygon = None
+        self.partner_field.save()
         self.assertEqual(self._spotlight_ids(), set())

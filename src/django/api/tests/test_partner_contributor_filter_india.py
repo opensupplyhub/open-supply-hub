@@ -2,12 +2,12 @@ from django.contrib.gis.geos import GEOSGeometry, MultiPolygon, Point
 from django.test import TestCase
 
 from api.models import Contributor, Polygon, User
+from api.models.partner_field import PartnerField
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.partner_contributor_filter import (
     apply_partner_fields_or_filter,
 )
 from api.partner_fields.india_labour_line_provider import (
-    INDIA_LABOUR_LINE_POLYGON_NAMES,
     IndiaLabourLineProvider,
 )
 
@@ -28,10 +28,19 @@ class IndiaLabourLinePartnerFilterTest(TestCase):
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
         self.polygon = Polygon.objects.create(
-            name=INDIA_LABOUR_LINE_POLYGON_NAMES[0],
+            name='helpline_coverage_for_tests',
             description='Helpline coverage boundary for tests.',
             geom=MultiPolygon(GEOSGeometry(BOUNDARY_WKT)),
         )
+        self.partner_field, _ = PartnerField.objects \
+            .get_all_including_inactive() \
+            .get_or_create(
+                name=IndiaLabourLineProvider.FIELD_NAME,
+                defaults={'type': PartnerField.OBJECT,
+                          'system_field': True, 'active': True},
+            )
+        self.partner_field.polygon = self.polygon
+        self.partner_field.save()
         self.inside = self._make_facility('IN2026000INSD', 77.2, 28.6)
         self.outside = self._make_facility('IN2026000OUTS', 75.0, 20.0)
 
@@ -78,9 +87,11 @@ class IndiaLabourLinePartnerFilterTest(TestCase):
         )
         self.assertNotIn(electronics.id, self._filtered_ids())
 
-    def test_filter_matches_nothing_when_polygons_are_missing(self):
-        """Missing boundary polygons also mean zero matches, loudly."""
-        self.polygon.delete()
+    def test_filter_matches_nothing_when_no_polygon_is_linked(self):
+        """An unlinked coverage polygon means zero matches, loudly —
+        never an unfiltered everything-matches result."""
+        self.partner_field.polygon = None
+        self.partner_field.save()
 
         logger_name = 'api.partner_fields.india_labour_line_provider'
         with self.assertLogs(logger_name, level='WARNING'):

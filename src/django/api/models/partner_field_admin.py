@@ -43,6 +43,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
             'base_url',
             'display_text',
             'json_schema',
+            'polygon',
             'active',
             'system_field',
             'available_in_api',
