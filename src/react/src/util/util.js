@@ -1929,6 +1929,17 @@ const SLC_ARRAY_FIELD_TESTS = Object.freeze({
             !value ||
             value.every(item => containsOnlyLatinCharacters(item?.label)),
     }),
+    'max-char-count': Object.freeze({
+        message: ({ label }) =>
+            `Each value in ${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
+        test: value =>
+            !value ||
+            value.every(
+                item =>
+                    (item?.label ?? '').length <=
+                    SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+            ),
+    }),
     'max-product-type-count': Object.freeze({
         message: `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
         test: value =>
@@ -1987,16 +1998,25 @@ const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
         tests: [
             'no-embedded-separators',
             'latin-characters-only',
+            'max-char-count',
             'max-product-type-count',
         ],
     }),
     locationType: Object.freeze({
         type: 'array',
-        tests: ['no-embedded-separators', 'latin-characters-only'],
+        tests: [
+            'no-embedded-separators',
+            'latin-characters-only',
+            'max-char-count',
+        ],
     }),
     processingType: Object.freeze({
         type: 'array',
-        tests: ['no-embedded-separators', 'latin-characters-only'],
+        tests: [
+            'no-embedded-separators',
+            'latin-characters-only',
+            'max-char-count',
+        ],
     }),
     numberOfWorkers: Object.freeze({
         type: 'text',
@@ -2041,6 +2061,27 @@ export const slcValidationSchema = objectYup({
     parentCompany: buildFieldValidation(
         SLC_FIELD_VALIDATION_CONFIG.parentCompany,
     ).label('Parent company'),
+    /*
+    Data-center yes/no field. Held as a string so the submit payload builder
+    keeps it (lodash `isEmpty` treats booleans as empty): 'true' when checked
+    and '' when left blank. 'false' is accepted for data submitted through
+    other channels.
+    */
+    isGroup: stringYup()
+        .oneOf(
+            ['', 'true', 'false'],
+            'Is a group must be either true or false.',
+        )
+        .label('Is a group'),
+    // Data-center provenance (OSDEV-3074). Mirrors the server-side rule:
+    // ISO 8601 reduced precision - YYYY, YYYY-MM, or YYYY-MM-DD.
+    dateOfSource: stringYup()
+        .matches(/^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/, {
+            message:
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            excludeEmptyString: true,
+        })
+        .label('Date of source'),
 });
 
 /* eslint-disable camelcase */

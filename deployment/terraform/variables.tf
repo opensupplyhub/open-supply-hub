@@ -37,6 +37,36 @@ variable "r53_private_hosted_zone" {
 variable "r53_public_hosted_zone" {
 }
 
+# Route 53 query logging ownership. A public hosted zone can hold only one query
+# logging configuration, and several environments point at the same zone inside
+# one AWS account, so exactly one environment must opt in per zone. See the
+# ownership table in route53_query_logging.tf.
+variable "route53_query_logging_enabled" {
+  description = "Whether this environment owns, and therefore creates, the Route 53 query logging configuration for the zone named by r53_public_hosted_zone."
+  type        = bool
+  default     = false
+}
+
+variable "route53_query_log_extra_zones" {
+  description = "Additional public hosted zone names whose Route 53 query logging configuration this environment owns. For zones that are not any environment's r53_public_hosted_zone, such as openapparel.org."
+  type        = list(string)
+  default     = []
+}
+
+variable "route53_query_log_retention_days" {
+  description = "Retention, in days, of the CloudWatch Logs log groups that receive Route 53 public hosted zone DNS query logs."
+  type        = number
+  default     = 365
+
+  validation {
+    condition = contains(
+      [0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653],
+      var.route53_query_log_retention_days
+    )
+    error_message = "route53_query_log_retention_days must be a retention period CloudWatch Logs accepts (0 for never expire, or 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653)."
+  }
+}
+
 variable "cloudfront_price_class" {
 }
 
@@ -1516,6 +1546,11 @@ variable "contribot_monday_api_key_secret_name" {
 }
 
 variable "contribot_slack_api_url_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_slack_failures_api_url_secret_name" {
   type    = string
   default = ""
 }

@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     """Create the Polygon table for named geographic boundaries."""
 
     dependencies = [
-        ('api', '0226_add_slc_submission_quality_check_switch'),
+        ('api', '0227_facilitylistitem_ai_usage_notes_and_more'),
     ]
 
     operations = [
