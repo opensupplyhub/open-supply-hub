@@ -16,6 +16,7 @@ import {
 import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
 
 import { slcValidationSchema } from './util';
+import { DATA_CENTER_FORM_INITIAL_VALUES } from '../components/Contribute/DataCenterFields/constants';
 
 export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
@@ -387,6 +388,7 @@ export const useResetScrollPosition = location => {
 export const useSingleLocationContributionForm = onSubmit =>
     useFormik({
         initialValues: {
+            ...DATA_CENTER_FORM_INITIAL_VALUES,
             name: '',
             address: '',
             country: null,
