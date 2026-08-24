@@ -22,7 +22,7 @@ def create_facility_processing_value_index(apps, schema_editor):
     during indexing. See OSDEV-3189.
     """
     helper.run_sql_files([
-        '0228_facility_processing_value_index.sql',
+        '0229_facility_processing_value_index.sql',
     ])
 
 
@@ -43,7 +43,7 @@ def populate_facility_processing_value_index(apps, schema_editor):
 
 def drop_facility_processing_value_index(apps, schema_editor):
     helper.run_sql_files([
-        '0228_revert_facility_processing_value_index.sql',
+        '0229_revert_facility_processing_value_index.sql',
     ])
 
 
@@ -58,7 +58,7 @@ class Migration(Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0227_index_facility_processing_raw_values'),
+        ('api', '0228_index_facility_processing_raw_values'),
     ]
 
     operations = [

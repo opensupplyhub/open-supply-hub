@@ -21,8 +21,8 @@ def update_indexing_functions(apps, schema_editor):
     ExtendedField write. See OSDEV-3189.
     """
     helper.run_sql_files([
-        '0227_index_facility_type.sql',
-        '0227_index_processing_type.sql',
+        '0228_index_facility_type.sql',
+        '0228_index_processing_type.sql',
     ])
 
 
@@ -36,7 +36,7 @@ def revert_indexing_functions(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0226_add_slc_submission_quality_check_switch'),
+        ('api', '0227_facilitylistitem_ai_usage_notes_and_more'),
     ]
 
     operations = [
