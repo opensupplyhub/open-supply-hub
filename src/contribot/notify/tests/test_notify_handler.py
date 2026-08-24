@@ -83,7 +83,7 @@ def test_handler_posts_success_message(repo_and_slack):
     )
     assert "File spring.xlsx" in message
     assert ":rotating_light:" not in message
-    repo.finish_list.assert_called_once_with("101", status=STATUS_PROCESSED)
+    repo.update_list.assert_called_once_with("101", status=STATUS_PROCESSED)
 
 
 def test_handler_posts_failure_message(repo_and_slack):
@@ -104,7 +104,7 @@ def test_handler_posts_failure_message(repo_and_slack):
     message = slack.post.call_args[0][0]
     assert ":rotating_light: ContriBot failed to process list" in message
     assert "Error: boom" in message
-    repo.finish_list.assert_called_once_with("101", status=STATUS_FAILED)
+    repo.update_list.assert_called_once_with("101", status=STATUS_FAILED)
 
 
 def test_failure_skips_failures_channel_when_unconfigured(
@@ -121,7 +121,7 @@ def test_failure_skips_failures_channel_when_unconfigured(
 
     assert result == {"list_id": "101", "notified": True}
     slack.post.assert_called_once()
-    repo.finish_list.assert_called_once_with("101", status=STATUS_FAILED)
+    repo.update_list.assert_called_once_with("101", status=STATUS_FAILED)
 
 
 def test_success_does_not_post_to_failures_channel(repo_and_slack):
@@ -177,7 +177,7 @@ def test_handler_tolerates_missing_dynamodb_row(env):
     assert result == {"list_id": "999", "notified": True}
     message = slack.post.call_args[0][0]
     assert "New list <https://example.com/lists/999|#999>" in message
-    repo.finish_list.assert_called_once_with("999", status=STATUS_PROCESSED)
+    repo.update_list.assert_called_once_with("999", status=STATUS_PROCESSED)
 
 
 def test_handler_survives_slack_failure(repo_and_slack):
@@ -187,4 +187,4 @@ def test_handler_survives_slack_failure(repo_and_slack):
     result = handler.handler({"list_id": "101"}, None)
 
     assert result == {"list_id": "101", "notified": False}
-    repo.finish_list.assert_called_once_with("101", status=STATUS_PROCESSED)
+    repo.update_list.assert_called_once_with("101", status=STATUS_PROCESSED)

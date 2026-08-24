@@ -142,7 +142,7 @@ def handler(event, context):
         # lost in the volume of routine notifications.
         _post_to_slack(message, "SLACK_FAILURES_API_URL_SECRET_ARN")
 
-    repository.finish_list(
+    repository.update_list(
         list_id,
         status=STATUS_FAILED if failed else STATUS_PROCESSED,
     )
