@@ -25,10 +25,14 @@ function TaxonomySearchControl({
     classes,
     listboxId,
     showResultsPanel,
-    resultsCount,
+    activeRowIndex,
     validationMessage,
 }) {
     const showPlaceholder = selectedChips.length === 0 && !query;
+    const activeDescendantId =
+        showResultsPanel && activeRowIndex >= 0
+            ? `${listboxId}-option-${activeRowIndex}`
+            : undefined;
 
     const handleInputKeyDown = event => {
         if (event.key === 'Backspace' && !query && selectedChips.length > 0) {
@@ -69,7 +73,8 @@ function TaxonomySearchControl({
                     disabled={disabled}
                     aria-controls={showResultsPanel ? listboxId : undefined}
                     aria-autocomplete="list"
-                    aria-expanded={showResultsPanel && resultsCount > 0}
+                    aria-expanded={showResultsPanel}
+                    aria-activedescendant={activeDescendantId}
                     aria-invalid={!!validationMessage}
                     role="combobox"
                     onFocus={onFocus}
@@ -98,7 +103,7 @@ TaxonomySearchControl.propTypes = {
     classes: object.isRequired,
     listboxId: string.isRequired,
     showResultsPanel: bool.isRequired,
-    resultsCount: number.isRequired,
+    activeRowIndex: number.isRequired,
     validationMessage: string,
 };
 

@@ -53,44 +53,42 @@ function ProcessingTypeResultRow({
         .join(' ');
 
     return (
+        // Keyboard selection is handled by the controlling combobox.
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events
         <li
             id={id}
-            className={classes.resultRowItem}
+            role="option"
+            aria-selected={selected}
+            className={rowClassName}
+            onMouseDown={event => event.preventDefault()}
+            onClick={onSelect}
             onMouseEnter={onMouseEnter}
         >
-            <button
-                type="button"
-                className={rowClassName}
-                aria-pressed={selected}
-                onMouseDown={event => event.preventDefault()}
-                onClick={onSelect}
-            >
-                <span className={classes.resultRowBody}>
-                    <HighlightedTerm
-                        value={label}
-                        highlightQuery={highlightQuery}
-                        classes={classes}
-                    />
-                    <span className={classes.resultRowMeta}>
-                        {facilityTypes.length > 0 ? (
-                            <span className={classes.resultRowBreadcrumb}>
-                                {facilityTypes.join(BREADCRUMB_SEPARATOR)}
-                            </span>
-                        ) : (
-                            <span className={classes.notInTaxonomyBadge}>
-                                {inTaxonomy
-                                    ? 'No facility type'
-                                    : 'Not in taxonomy'}
-                            </span>
-                        )}
-                    </span>
+            <span className={classes.resultRowBody}>
+                <HighlightedTerm
+                    value={label}
+                    highlightQuery={highlightQuery}
+                    classes={classes}
+                />
+                <span className={classes.resultRowMeta}>
+                    {facilityTypes.length > 0 ? (
+                        <span className={classes.resultRowBreadcrumb}>
+                            {facilityTypes.join(BREADCRUMB_SEPARATOR)}
+                        </span>
+                    ) : (
+                        <span className={classes.notInTaxonomyBadge}>
+                            {inTaxonomy
+                                ? 'No facility type'
+                                : 'Not in taxonomy'}
+                        </span>
+                    )}
                 </span>
-                {count != null && (
-                    <span className={classes.resultRowCount}>
-                        {count.toLocaleString()}
-                    </span>
-                )}
-            </button>
+            </span>
+            {count != null && (
+                <span className={classes.resultRowCount}>
+                    {count.toLocaleString()}
+                </span>
+            )}
         </li>
     );
 }

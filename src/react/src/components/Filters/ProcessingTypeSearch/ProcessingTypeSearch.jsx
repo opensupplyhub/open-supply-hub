@@ -261,23 +261,25 @@ function ProcessingTypeSearch({
     const renderStatusRow = () => {
         if (fetching) {
             return (
-                <li className={classes.statusRow}>
-                    Loading processing types&hellip;
+                <li className={classes.statusRow} role="presentation">
+                    <span role="status">Loading processing types&hellip;</span>
                 </li>
             );
         }
 
         if (error) {
             return (
-                <li className={classes.statusRow} role="alert">
-                    Unable to load processing type suggestions. Try again in a
-                    moment.
+                <li className={classes.statusRow} role="presentation">
+                    <span role="alert">
+                        Unable to load processing type suggestions. Try again in
+                        a moment.
+                    </span>
                 </li>
             );
         }
 
         return (
-            <li className={classes.statusRow}>
+            <li className={classes.statusRow} role="presentation">
                 No matching processing types
                 {trimmedQuery ? (
                     <>
@@ -322,7 +324,7 @@ function ProcessingTypeSearch({
                 classes={classes}
                 listboxId={LISTBOX_ID}
                 showResultsPanel={showResultsPanel}
-                resultsCount={rows.length}
+                activeRowIndex={activeRowIndex}
                 validationMessage={validationMessage}
             />
             {validationMessage ? (
@@ -334,6 +336,7 @@ function ProcessingTypeSearch({
             {showResultsPanel && (
                 <ul
                     id={LISTBOX_ID}
+                    role="listbox"
                     className={classes.resultsPanel}
                     aria-label={label}
                     aria-busy={!!fetching}
@@ -342,7 +345,10 @@ function ProcessingTypeSearch({
                         ? renderStatusRow()
                         : groups.map(group => (
                               <React.Fragment key={group.id}>
-                                  <li className={classes.groupHeader}>
+                                  <li
+                                      className={classes.groupHeader}
+                                      role="presentation"
+                                  >
                                       <span
                                           className={classes.groupHeaderLabel}
                                       >

@@ -71,10 +71,10 @@ describe('ProcessingTypeSearch component', () => {
             container.querySelectorAll('#processing-type-suggestions > li'),
         ).map(element => element.textContent);
 
-    const getRowButtons = container =>
+    const getRowOptions = container =>
         Array.from(
             container.querySelectorAll(
-                '#processing-type-suggestions > li > button',
+                '#processing-type-suggestions > [role="option"]',
             ),
         );
 
@@ -98,6 +98,40 @@ describe('ProcessingTypeSearch component', () => {
         expect(rows[2]).toContain('Embroidery');
         expect(rows[3]).toBe('Contributor values');
         expect(rows[4]).toContain('yarn dyeing services');
+    });
+
+    test('exposes the results using the combobox listbox pattern', () => {
+        const { input, getByRole, getAllByRole } = renderComponent({
+            processingType: [
+                { value: 'Dyeing', label: 'Dyeing', isExact: true },
+            ],
+            suggestions: makeSuggestions([DYEING, YARN_DYEING]),
+        });
+
+        const listbox = getByRole('listbox');
+        const options = getAllByRole('option');
+
+        expect(input).toHaveAttribute('aria-expanded', 'true');
+        expect(input).toHaveAttribute(
+            'aria-controls',
+            'processing-type-suggestions',
+        );
+        expect(listbox).toHaveAttribute('id', 'processing-type-suggestions');
+        expect(options[0]).toHaveAttribute(
+            'id',
+            'processing-type-suggestions-option-0',
+        );
+        expect(options[0]).toHaveAttribute('aria-selected', 'true');
+        expect(options[1]).toHaveAttribute('aria-selected', 'false');
+        expect(options.every(option => option.querySelector('button') == null))
+            .toBe(true);
+
+        fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+        expect(input).toHaveAttribute(
+            'aria-activedescendant',
+            'processing-type-suggestions-option-0',
+        );
     });
 
     test('shows the parent facility types of a taxonomy value', () => {
@@ -167,7 +201,7 @@ describe('ProcessingTypeSearch component', () => {
             ]),
         });
 
-        const [embroideryRow, dyeingRow] = getRowButtons(container);
+        const [embroideryRow, dyeingRow] = getRowOptions(container);
 
         expect(embroideryRow.className).not.toMatch(/resultRowDim/);
         expect(dyeingRow.className).toMatch(/resultRowDim/);
@@ -311,7 +345,7 @@ describe('ProcessingTypeSearch component', () => {
             });
 
         expect(getByText('DYEING')).toBeInTheDocument();
-        fireEvent.click(getRowButtons(container)[0]);
+        fireEvent.click(getRowOptions(container)[0]);
 
         expect(onProcessingTypeChange).toHaveBeenCalledWith([
             { value: 'DYEING', label: 'DYEING', isExact: true },
@@ -329,7 +363,7 @@ describe('ProcessingTypeSearch component', () => {
             suggestions: makeSuggestions([DYEING]),
         });
 
-        fireEvent.click(getRowButtons(container)[0]);
+        fireEvent.click(getRowOptions(container)[0]);
 
         expect(onProcessingTypeChange).toHaveBeenCalledWith([]);
     });
@@ -367,7 +401,7 @@ describe('ProcessingTypeSearch component', () => {
             suggestions: makeSuggestions([suggestion]),
         });
 
-        fireEvent.click(getRowButtons(container)[0]);
+        fireEvent.click(getRowOptions(container)[0]);
 
         expect(onProcessingTypeChange).toHaveBeenCalledWith([
             selected,
@@ -385,7 +419,7 @@ describe('ProcessingTypeSearch component', () => {
         });
 
         fireEvent.change(input, { target: { value: 'dyeing' } });
-        fireEvent.click(getRowButtons(container)[0]);
+        fireEvent.click(getRowOptions(container)[0]);
 
         expect(input).toHaveValue('');
     });
@@ -426,7 +460,7 @@ describe('ProcessingTypeSearch component', () => {
             suggestions: makeSuggestions([DYEING]),
         });
 
-        fireEvent.click(getRowButtons(container)[0]);
+        fireEvent.click(getRowOptions(container)[0]);
 
         expect(onProcessingTypeChange).toHaveBeenCalledWith([]);
     });
