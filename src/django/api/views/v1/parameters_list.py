@@ -25,6 +25,7 @@ class V1_PARAMETERS_LIST:
     ORDER_BY = 'order_by'
     CONTRIBUTOR_ID = 'contributor_id'
     CONTRIBUTOR_NAME = 'contributor_name'
+    CONTRIBUTOR_TYPE = 'contributor_type'
     REQUEST_TYPE = 'request_type'
     SOURCE = 'source'
     STATUS = 'status'
