@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.template.defaultfilters import filesizeformat
 
 from api.helpers.geojson_polygon import (
@@ -7,23 +7,6 @@ from api.helpers.geojson_polygon import (
     parse_polygon_geojson,
 )
 from api.models.polygon import Polygon
-
-
-def code_referenced_polygon_names():
-    """
-    Return the polygon names that code depends on.
-
-    System partner field providers that are driven by polygons declare
-    the names they look up in a `POLYGON_NAMES` class attribute.
-    Renaming or deleting one of those polygons silently severs the
-    code link (the feature goes dormant with a logged warning), so the
-    admin uses this list to warn staff at the moment of the edit.
-    """
-    from api.partner_fields.registry import system_partner_field_registry
-    names = set()
-    for provider in system_partner_field_registry.providers:
-        names.update(getattr(provider, 'POLYGON_NAMES', []))
-    return names
 
 
 class PolygonForm(forms.ModelForm):
@@ -162,46 +145,3 @@ class PolygonAdmin(admin.ModelAdmin):
             f'{len(obj.geom)} part(s), {obj.geom.num_coords} vertices, '
             f'extent (lon/lat): {extent}'
         )
-
-    def save_model(self, request, obj, form, change):
-        """Warn when a rename is about to sever a code reference."""
-        if change:
-            original = Polygon.objects.filter(pk=obj.pk).first()
-            referenced = code_referenced_polygon_names()
-            if (
-                original is not None
-                and original.name != obj.name
-                and original.name in referenced
-            ):
-                messages.warning(
-                    request,
-                    f"Heads up: code references this polygon by its old "
-                    f"name '{original.name}'. The feature using it will "
-                    f"stop finding it until the code is updated or the "
-                    f"name is restored."
-                )
-        super().save_model(request, obj, form, change)
-
-    def delete_model(self, request, obj):
-        """Warn when deleting a polygon that code references."""
-        self.__warn_if_referenced(request, [obj])
-        super().delete_model(request, obj)
-
-    def delete_queryset(self, request, queryset):
-        """Warn on bulk deletes that include code-referenced polygons."""
-        self.__warn_if_referenced(request, queryset)
-        super().delete_queryset(request, queryset)
-
-    def __warn_if_referenced(self, request, polygons):
-        """Post an admin warning for each code-referenced polygon."""
-        referenced = code_referenced_polygon_names()
-        for polygon in polygons:
-            if polygon.name in referenced:
-                messages.warning(
-                    request,
-                    f"Heads up: code references the polygon "
-                    f"'{polygon.name}'. Deleting it will make the "
-                    f"feature using it go dormant (with a logged "
-                    f"warning) until a polygon with this name exists "
-                    f"again."
-                )
