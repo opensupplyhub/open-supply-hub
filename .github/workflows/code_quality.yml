@@ -414,39 +414,40 @@ jobs:
         run: shellcheck scripts/*
 
   run-flake8-linter:
-    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Create required env file
-        run: |
-          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
-      - name: Build Django image
-        run: docker compose build
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Flake8
+        run: pip install $(grep -E '^(flake8|mccabe|pycodestyle|pyflakes)==' src/django/requirements.txt)
       - name: Run the Flake8 linter check
-        run: |
-          docker compose \
-            run --rm --no-deps --entrypoint flake8 django \
-            --exclude settings.py,manage.py,*.pyc,api/migrations/*
+        working-directory: src/django
+        run: flake8 --exclude 'settings.py,manage.py,*.pyc,api/migrations/*'
 
   run-eslint-linter-and-prettier-formatter:
-    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Create required env file
-        run: |
-          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'yarn'
+          cache-dependency-path: src/react/yarn.lock
+      - name: Install frontend dependencies
+        working-directory: src/react
+        run: yarn install --frozen-lockfile --ignore-scripts
       - name: Run the ESLint linter check
-        run: |
-          docker compose \
-            run --rm --entrypoint ./node_modules/.bin/eslint \
-            react src/ --ext .js --ext .jsx
+        working-directory: src/react
+        run: ./node_modules/.bin/eslint src/ --ext .js --ext .jsx
       - name: Run the Prettier formatting check
+        working-directory: src/react
         run: |
-          docker compose \
-            run --rm --no-deps react yarn prettier \
+          yarn prettier \
             --config .prettierrc \
             --check 'src/**/*.js' 'src/**/*.jsx'
