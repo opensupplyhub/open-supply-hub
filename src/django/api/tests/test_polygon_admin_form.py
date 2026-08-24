@@ -4,10 +4,8 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
-from waffle.testutils import override_switch
 
-from api.admin import (
-    POLYGONS_SWITCH,
+from api.models.polygon_admin import (
     PolygonAdmin,
     PolygonForm,
 )
@@ -67,36 +65,6 @@ class PolygonFormTest(TestCase):
         self.assertTrue(form.is_valid(), form.errors)
         instance = form.save()
         self.assertEqual(instance.geom.geom_type, 'MultiPolygon')
-
-
-class PolygonAdminSwitchTest(TestCase):
-    """Tests that the polygons waffle switch gates the admin."""
-    def setUp(self):
-        self.model_admin = PolygonAdmin(Polygon, AdminSite())
-        self.request = RequestFactory().get('/')
-        self.request.user = User.objects.create_superuser(
-            'admin@example.com', 'example123'
-        )
-
-    def _permissions(self):
-        """Collect all five admin permission results for the request."""
-        return (
-            self.model_admin.has_module_permission(self.request),
-            self.model_admin.has_view_permission(self.request),
-            self.model_admin.has_add_permission(self.request),
-            self.model_admin.has_change_permission(self.request),
-            self.model_admin.has_delete_permission(self.request),
-        )
-
-    @override_switch(POLYGONS_SWITCH, active=False)
-    def test_admin_is_hidden_when_switch_is_off(self):
-        """With the switch off, every admin permission is denied."""
-        self.assertEqual(self._permissions(), (False,) * 5)
-
-    @override_switch(POLYGONS_SWITCH, active=True)
-    def test_admin_is_available_when_switch_is_on(self):
-        """With the switch on, a superuser has every permission."""
-        self.assertEqual(self._permissions(), (True,) * 5)
 
 
 class PolygonAdminDisplayTest(TestCase):

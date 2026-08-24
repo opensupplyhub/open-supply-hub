@@ -180,6 +180,62 @@ def _parse_polygons(geometries):
     return polygons
 
 
+def _combine_polygons(polygons):
+    """
+    Merge simple polygons into one MultiPolygon, dissolving shared
+    borders.
+
+    Real regional exports are often several features that touch along
+    their edges (neighboring districts, for example). Simply stapling
+    those together makes a technically-invalid shape even though
+    nothing is wrong with the file — so instead, touching or
+    overlapping pieces are merged into one, and separate pieces are
+    kept separate. Each piece is checked for validity on its own
+    first, so a shape that genuinely crosses over itself is still
+    rejected with a message about that shape.
+
+    Args:
+        polygons: Simple GEOS polygons from `_parse_polygons`.
+
+    Raises:
+        InvalidPolygonGeoJSON: If there are no polygons, a polygon is
+            individually invalid, or the merged result is empty or
+            invalid.
+    """
+    # No coordinates at all (e.g. a MultiPolygon with an empty
+    # coordinates list) would save a boundary that matches nothing.
+    if not polygons:
+        raise InvalidPolygonGeoJSON(
+            'The GeoJSON contains no polygon coordinates.'
+        )
+
+    for polygon in polygons:
+        if not polygon.valid:
+            raise InvalidPolygonGeoJSON(
+                f'Geometry is not valid: {polygon.valid_reason}'
+            )
+
+    combined = polygons[0]
+    for polygon in polygons[1:]:
+        combined = combined.union(polygon)
+
+    if combined.geom_type == 'Polygon':
+        combined = MultiPolygon(combined)
+    combined.srid = 4326
+
+    if combined.empty or combined.num_coords == 0:
+        raise InvalidPolygonGeoJSON(
+            'The GeoJSON contains no polygon coordinates.'
+        )
+
+    if not combined.valid:
+        raise InvalidPolygonGeoJSON(
+            f'Geometry is not valid: {combined.valid_reason}'
+        )
+
+    return combined
+
+
 def parse_polygon_geojson(raw):
     """
     Turn a GeoJSON string into one valid MultiPolygon in WGS 84.
@@ -190,7 +246,8 @@ def parse_polygon_geojson(raw):
     can paste or upload whatever their tool produced, without hand-
     editing files first. Shapes with holes, and boundaries made of
     several separate pieces, are supported for the same reason: real
-    boundaries look like that.
+    boundaries look like that. Pieces that touch or overlap (such as
+    neighboring districts exported together) are merged into one.
 
     Bad input is rejected with a message written for the person using
     the admin form. That covers: broken JSON, geometry that isn't a
@@ -222,20 +279,7 @@ def parse_polygon_geojson(raw):
     geometries = _extract_geometries(data)
     polygons = _parse_polygons(geometries)
 
-    result = MultiPolygon(*polygons, srid=4326)
-
-    # An empty geometry (e.g. a MultiPolygon with no coordinates)
-    # technically counts as "valid", but saving it would create a
-    # boundary that matches nothing — reject it up front.
-    if result.empty or result.num_coords == 0:
-        raise InvalidPolygonGeoJSON(
-            'The GeoJSON contains no polygon coordinates.'
-        )
-
-    if not result.valid:
-        raise InvalidPolygonGeoJSON(
-            f'Geometry is not valid: {result.valid_reason}'
-        )
+    result = _combine_polygons(polygons)
 
     _check_bounds(result)
 
