@@ -117,8 +117,8 @@ class Polygon(models.Model):
                 `{'country': ['IN'], 'sector': ['Apparel']}`.
                 Keys must appear in the `FILTERABLE_FIELDS`
                 allowlist (an unknown key raises `ValueError`, so
-                typos can't silently return unfiltered results). Values may be a list or a single
-                string. Within one key, values are OR'd ("US or IN");
+                typos can't silently return unfiltered results).
+                Values may be a list or a single string. Within one key, values are OR'd ("US or IN");
                 across keys, conditions are AND'd ("that country AND
                 that sector"). Country codes are upper-cased before
                 matching so `'in'` behaves the same as `'IN'`.
