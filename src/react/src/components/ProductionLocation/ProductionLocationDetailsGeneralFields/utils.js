@@ -7,13 +7,19 @@ import {
     ADDITIONAL_IDENTIFIERS,
 } from '../../../util/constants';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
-import { ORDERED_GENERAL_FIELD_KEYS, FIELD_CONFIG } from '../constants.jsx';
+import {
+    ORDERED_GENERAL_FIELD_KEYS,
+    FIELD_CONFIG,
+    DATA_CENTER_FIELD_GROUPS,
+    NO_UNIT_SPECIFIED,
+} from '../constants.jsx';
 
 const toDrawerContribution = (item, value) => ({
     value,
     sourceName: item.contributor_name || null,
     date: item.created_at || null,
     userId: item.contributor_id != null ? item.contributor_id : undefined,
+    provenance: item.provenance || null,
 });
 
 const getStatusLabel = isFromClaim =>
@@ -360,6 +366,95 @@ const getVisibleFields = (data, includeAdditionalIdentifiers) => {
             return { key: config.key, ...props };
         })
         .filter(Boolean);
+};
+
+const rawExtendedValue = item => item?.value?.raw_value || null;
+
+const buildDataCenterDataPoint = (data, field) => {
+    const values = get(data, `properties.extended_fields.${field.key}`, []);
+    if (!values.length || !values[0]) return null;
+
+    const topValue = rawExtendedValue(values[0]);
+    if (topValue == null || topValue === '') return null;
+
+    let unit = null;
+    let isValueWithUnit = false;
+    if (field.unitsField) {
+        isValueWithUnit = true;
+        const unitValues = get(
+            data,
+            `properties.extended_fields.${field.unitsField}`,
+            [],
+        );
+        unit = unitValues.length ? rawExtendedValue(unitValues[0]) : null;
+    }
+
+    const withUnit = value => {
+        if (unit !== null && value != null && value !== '') {
+            return `${value} ${unit}`;
+        }
+        return `${value} ${NO_UNIT_SPECIFIED}`;
+    };
+
+    /*
+    Some fields render their value as a node rather than plain text (e.g.
+    data_center_group_id links to the group's profile). The raw value is kept
+    for the drawer's contribution cards so each contributed value stays
+    readable there.
+    */
+    const displayValue = item => {
+        const value = isValueWithUnit
+            ? withUnit(rawExtendedValue(item))
+            : rawExtendedValue(item);
+        if (field.renderValue && value != null && value !== '') {
+            return field.renderValue(value);
+        }
+        return value;
+    };
+
+    const toContribution = item => ({
+        value: displayValue(item),
+        sourceName: item.contributor_name || null,
+        date: item.created_at || null,
+        userId: item.contributor_id != null ? item.contributor_id : undefined,
+        provenance: item.provenance || null,
+    });
+
+    const promotedContribution = toContribution(values[0]);
+    const contributions = values
+        .slice(1)
+        .filter(item => {
+            const value = rawExtendedValue(item);
+            return value != null && value !== '';
+        })
+        .map(toContribution);
+
+    return {
+        key: field.key,
+        label: field.label,
+        value: promotedContribution.value,
+        tooltipText: field.tooltipText,
+        statusLabel: STATUS_CROWDSOURCED,
+        contributorName: promotedContribution.sourceName,
+        userId: promotedContribution.userId,
+        date: promotedContribution.date,
+        drawerData: { promotedContribution, contributions },
+    };
+};
+
+// Data-center attribute fields. Returns
+// [{ label, description, fields: [...] }] with empty fields/groups dropped.
+// `description` feeds the section tooltip on the details page. Only meaningful
+// for data centers; callers gate on `properties.is_data_center`.
+export const getDataCenterFieldGroups = data => {
+    if (!data) return [];
+    return DATA_CENTER_FIELD_GROUPS.map(group => ({
+        label: group.label,
+        description: group.description,
+        fields: group.fields
+            .map(field => buildDataCenterDataPoint(data, field))
+            .filter(Boolean),
+    })).filter(group => group.fields.length > 0);
 };
 
 export default getVisibleFields;

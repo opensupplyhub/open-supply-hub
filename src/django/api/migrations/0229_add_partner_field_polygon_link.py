@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
     """Add the polygon link column to partner fields."""
 
     dependencies = [
-        ('api', '0227_create_polygon'),
+        ('api', '0228_create_polygon'),
     ]
 
     operations = [

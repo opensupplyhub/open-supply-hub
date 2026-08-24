@@ -217,6 +217,11 @@ data "aws_secretsmanager_secret" "contribot_slack_api_url" {
   name  = var.contribot_slack_api_url_secret_name
 }
 
+data "aws_secretsmanager_secret" "contribot_slack_failures_api_url" {
+  count = var.contribot_slack_failures_api_url_secret_name != "" ? 1 : 0
+  name  = var.contribot_slack_failures_api_url_secret_name
+}
+
 data "aws_secretsmanager_secret" "contribot_google_drive_service_key" {
   count = var.contribot_google_drive_service_key_secret_name != "" ? 1 : 0
   name  = var.contribot_google_drive_service_key_secret_name
@@ -547,6 +552,7 @@ locals {
   contribot_os_hub_api_token_arn         = var.contribot_os_hub_api_token_secret_name != "" ? data.aws_secretsmanager_secret.contribot_os_hub_api_token[0].arn : ""
   contribot_monday_api_key_arn           = var.contribot_monday_api_key_secret_name != "" ? data.aws_secretsmanager_secret.contribot_monday_api_key[0].arn : ""
   contribot_slack_api_url_arn            = var.contribot_slack_api_url_secret_name != "" ? data.aws_secretsmanager_secret.contribot_slack_api_url[0].arn : ""
+  contribot_slack_failures_api_url_arn   = var.contribot_slack_failures_api_url_secret_name != "" ? data.aws_secretsmanager_secret.contribot_slack_failures_api_url[0].arn : ""
   contribot_google_drive_service_key_arn = var.contribot_google_drive_service_key_secret_name != "" ? data.aws_secretsmanager_secret.contribot_google_drive_service_key[0].arn : ""
 
   # ARNs granted to ECS/Batch execution roles for valueFrom injection.

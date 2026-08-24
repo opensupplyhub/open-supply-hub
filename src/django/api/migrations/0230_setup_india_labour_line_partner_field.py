@@ -73,7 +73,7 @@ class Migration(migrations.Migration):
     """Create or adopt the India Labour Line helpline partner field."""
 
     dependencies = [
-        ('api', '0228_add_partner_field_polygon_link'),
+        ('api', '0229_add_partner_field_polygon_link'),
     ]
 
     operations = [

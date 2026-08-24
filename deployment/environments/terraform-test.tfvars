@@ -147,4 +147,5 @@ vanta_assumed_role_principals_secret_name = "oshub/test/vanta-assumed-role-princ
 contribot_os_hub_api_token_secret_name = "oshub/test/contribot-os-hub-api-token"
 contribot_monday_api_key_secret_name = "oshub/test/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/test/contribot-slack-api-url"
+contribot_slack_failures_api_url_secret_name = "oshub/test/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/test/contribot-google-drive-service-key"

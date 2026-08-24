@@ -7,6 +7,11 @@ aws_availability_zones = ["eu-west-1a", "eu-west-1b"]
 r53_private_hosted_zone = "osh.internal"
 r53_public_hosted_zone  = "opensupplyhub.org"
 
+# Owns query logging for opensupplyhub.org, which Rba also points at, and for
+# openapparel.org, which no environment points at.
+route53_query_logging_enabled = true
+route53_query_log_extra_zones = ["openapparel.org"]
+
 cloudfront_price_class = "PriceClass_All"
 
 api_facilities_cache_default_ttl           = 120
@@ -137,6 +142,8 @@ vanta_assumed_role_principals_secret_name = "oshub/production/vanta-assumed-role
 anonymizer_destination_aws_account_secret_name = "oshub/production/anonymizer-destination-aws-account"
 anonymizer_kms_key_admin_users_secret_name = "oshub/production/anonymizer-kms-key-admin-users"
 contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-token"
+contribot_monday_board_id = "3514246658"
 contribot_monday_api_key_secret_name = "oshub/production/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/production/contribot-slack-api-url"
+contribot_slack_failures_api_url_secret_name = "oshub/production/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/production/contribot-google-drive-service-key"
