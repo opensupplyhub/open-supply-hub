@@ -1550,6 +1550,11 @@ variable "contribot_slack_api_url_secret_name" {
   default = ""
 }
 
+variable "contribot_slack_failures_api_url_secret_name" {
+  type    = string
+  default = ""
+}
+
 variable "contribot_google_drive_service_key_secret_name" {
   type    = string
   default = ""
