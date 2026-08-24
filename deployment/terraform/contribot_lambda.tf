@@ -20,11 +20,13 @@ locals {
   }
 
   contribot_notify_environment = {
-    CONTRIBOT_STATE_TABLE_NAME = aws_dynamodb_table.contribot_state.name
-    MONDAY_API_URL             = "https://api.monday.com/v2"
-    MONDAY_BOARD_ID            = var.contribot_monday_board_id
-    MONDAY_API_KEY_SECRET_ARN  = local.contribot_monday_api_key_arn
-    SLACK_API_URL_SECRET_ARN   = local.contribot_slack_api_url_arn
+    CONTRIBOT_STATE_TABLE_NAME          = aws_dynamodb_table.contribot_state.name
+    OS_HUB_API_URL                      = local.contribot_os_hub_api_url
+    MONDAY_API_URL                      = "https://api.monday.com/v2"
+    MONDAY_BOARD_ID                     = var.contribot_monday_board_id
+    MONDAY_API_KEY_SECRET_ARN           = local.contribot_monday_api_key_arn
+    SLACK_API_URL_SECRET_ARN            = local.contribot_slack_api_url_arn
+    SLACK_FAILURES_API_URL_SECRET_ARN   = local.contribot_slack_failures_api_url_arn
   }
 
   contribot_retry_failed_lists_environment = {
@@ -60,6 +62,7 @@ data "aws_iam_policy_document" "contribot_lambda" {
       local.contribot_os_hub_api_token_arn,
       local.contribot_monday_api_key_arn,
       local.contribot_slack_api_url_arn,
+      local.contribot_slack_failures_api_url_arn,
       local.contribot_google_drive_service_key_arn,
     ])
   }
