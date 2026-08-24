@@ -8,12 +8,11 @@ on:
         required: true
         type: string
 
-# GITHUB_TOKEN cannot start other workflows via push/create events (loop
-# prevention). Branch creation therefore does not trigger Deploy to AWS;
-# the second job dispatches it explicitly (workflow_dispatch is allowed).
+# Create the release branch only. Do not start Deploy to AWS: Pre-prod is
+# deployed later by hand (RELEASE-PROTOCOL.md). GITHUB_TOKEN pushes also
+# do not fire on.push, so this job cannot accidentally start that workflow.
 permissions:
   contents: write
-  actions: write
 
 jobs:
   create-release-branch:
@@ -29,17 +28,3 @@ jobs:
         with:
           branch: releases/v.${{ inputs.release-version }}
           sha: ${{ github.sha }}
-
-  trigger-deploy-to-aws:
-    runs-on: ubuntu-latest
-    needs: create-release-branch
-    steps:
-      - name: Trigger Deploy to AWS workflow
-        run: |
-          curl -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/opensupplyhub/open-supply-hub/actions/workflows/deploy_to_aws.yml/dispatches \
-            -d '{"ref": "releases/v.${{ inputs.release-version }}", "inputs": {"deploy-env": "Pre-prod"}}'
