@@ -89,7 +89,7 @@ On each fetch run, `fetch_lists`:
 | ---- | -------------------------------------------------------------------------------------------------------------- |
 | 1    | Fetch new lists after the DynamoDB cursor and enqueue them. Lists come from `GET /api/admin-facility-lists/`.  |
 | 2    | For each list, download the `.csv` or `.xlsx` from S3, convert CSV if needed, run facility list validation, and upload `{list_id}.~PROCESSED.xlsx` to Google Drive. |
-| 3    | Send notifications to Slack and Monday so that data moderators can review the report. Failures also go to a failures-only Slack channel. |
+| 3    | Send notifications to Slack and Monday so that data moderators can review the report. Success and failure go to separate Slack webhooks. |
 | 4    | On a matching schedule, `retry_failed_lists` re-enqueues `FAILED` lists (under the attempt cap) and starts the Map without advancing the cursor. |
 
 ## Configuration
@@ -102,8 +102,8 @@ Store sensitive values in AWS Secrets Manager. Each Lambda receives only the sec
 | ------------------------ | --------------------------------------- | --------------- | -------------------------------------------------------------------------- |
 | OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`           | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
 | Monday API key           | `MONDAY_API_KEY_SECRET_ARN`             | `notify`        | API token used to post items to the Monday board.                          |
-| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`              | `notify`        | Webhook URL for the channel that receives every notification.              |
-| Slack failures webhook URL | `SLACK_FAILURES_API_URL_SECRET_ARN`   | `notify`        | Webhook URL for the failures-only channel. Failure notifications go to both channels; leave unset to disable. |
+| Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`              | `notify`        | Webhook URL for successful list notifications.                             |
+| Slack failures webhook URL | `SLACK_FAILURES_API_URL_SECRET_ARN`   | `notify`        | Webhook URL for failed list notifications.                                 |
 | Google Drive service key | `GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN`   | `process_list`  | Google service account credentials used to upload reports to Google Drive. |
 
 ### Environment Variables
