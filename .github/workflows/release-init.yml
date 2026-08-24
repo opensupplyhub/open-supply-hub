@@ -8,15 +8,11 @@ on:
         required: true
         type: string
 
-# Create the release branch only. Do not start Deploy to AWS: Pre-prod is
-# deployed later by hand (RELEASE-PROTOCOL.md). GITHUB_TOKEN pushes also
-# do not fire on.push, so this job cannot accidentally start that workflow.
-permissions:
-  contents: write
-
 jobs:
   create-release-branch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
