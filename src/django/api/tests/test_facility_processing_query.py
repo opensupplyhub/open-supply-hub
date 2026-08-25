@@ -1,10 +1,9 @@
+from unittest.mock import patch
+
 from django.http import QueryDict
 from django.test import SimpleTestCase
 
-from api.models.facility.facility_manager_index_new import (
-    build_fp_match_sql,
-    build_fp_relevance_sql,
-)
+from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 
 
@@ -42,11 +41,11 @@ class FacilityProcessingQueryTests(SimpleTestCase):
         0233; lower-casing each element inside an unnest instead would read
         every row of api_facilityindex.
         """
-        sql, sql_params = build_fp_match_sql(
+        sql, sql_params = FacilityProcessingFilter(
             [],
             ['CAPS'],
             ['cApS'],
-        )
+        ).match_sql()
 
         self.assertIn(
             'lower_varchar_array(processing_type) && %s::text[]',
@@ -56,7 +55,10 @@ class FacilityProcessingQueryTests(SimpleTestCase):
         self.assertEqual(sql_params, [['caps']])
 
     def test_free_text_sql_prefilters_on_the_trigram_expression(self):
-        sql, sql_params = build_fp_match_sql([], ['cement mixing'], [])
+        sql, sql_params = FacilityProcessingFilter(
+            [],
+            ['cement mixing'],
+        ).match_sql()
 
         self.assertIn(
             'facility_processing_search_text(facility_type, processing_type)',
@@ -71,12 +73,18 @@ class FacilityProcessingQueryTests(SimpleTestCase):
         )
 
     def test_free_text_sql_escapes_like_wildcards_in_the_pattern(self):
-        _, sql_params = build_fp_match_sql([], ['100%_cotton'], [])
+        _, sql_params = FacilityProcessingFilter(
+            [],
+            ['100%_cotton'],
+        ).match_sql()
 
         self.assertEqual(sql_params[0], r'100\%\_cotton')
 
     def test_relevance_sql_scores_both_tiers_in_one_pass(self):
-        sql, sql_params = build_fp_relevance_sql([], ['cement mixing'], [])
+        sql, sql_params = FacilityProcessingFilter(
+            [],
+            ['cement mixing'],
+        ).relevance_sql()
 
         # One aggregate over both arrays rather than an EXISTS per tier and
         # per column, which would run the same regex over the same elements
@@ -86,3 +94,19 @@ class FacilityProcessingQueryTests(SimpleTestCase):
             sql_params,
             [r'\mcement\ mixing\M', r'\mcement\ mixing'],
         )
+
+    @patch(
+        'api.services.facility_processing_filter.'
+        'get_facility_and_processing_type'
+    )
+    def test_classifies_terms_once_for_match_and_relevance(self, get_type):
+        get_type.return_value = (None, None, None, None)
+
+        facility_processing_filter = FacilityProcessingFilter(
+            ['regional office'],
+            ['cement mixing'],
+        )
+        facility_processing_filter.match_sql()
+        facility_processing_filter.relevance_sql()
+
+        self.assertEqual(get_type.call_count, 2)

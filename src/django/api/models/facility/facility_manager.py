@@ -5,9 +5,6 @@ from django.db import models
 from django.db.models import Q
 
 from api.constants import FacilitiesQueryParams
-from api.models.facility.facility_manager_index_new import (
-    annotate_facility_processing_match,
-)
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -15,6 +12,7 @@ from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
+from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 
 
@@ -60,11 +58,9 @@ class FacilityManager(models.Manager):
 
         parent_companies = params.getlist(FacilitiesQueryParams.PARENT_COMPANY)
 
-        (
-            facility_types,
-            processing_types,
-            exact_processing_types,
-        ) = FacilityProcessingQuery(params).parse()
+        facility_processing_filter = FacilityProcessingFilter.from_result(
+            FacilityProcessingQuery(params).parse()
+        )
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
 
@@ -160,11 +156,8 @@ class FacilityManager(models.Manager):
                     Q(parent_company_name__overlap=parent_company_name)
                 )
 
-        facilities_qs, has_fp_filter = annotate_facility_processing_match(
-            facilities_qs,
-            facility_types,
-            processing_types,
-            exact_processing_types,
+        facilities_qs, has_fp_filter = (
+            facility_processing_filter.annotate_match(facilities_qs)
         )
         if has_fp_filter:
             facilities_qs = facilities_qs.filter(_fp_match=True)

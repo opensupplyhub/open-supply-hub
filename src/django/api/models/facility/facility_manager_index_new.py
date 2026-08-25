@@ -1,11 +1,7 @@
-import re
-
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
-from django.db.models import BooleanField, IntegerField, Q
-from django.db.models.expressions import RawSQL
+from django.db.models import Q
 
-from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
 from api.helpers.helpers import (
     clean,
@@ -14,336 +10,16 @@ from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
+from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 
 
-# Also the shortest term a trigram index can narrow, so no free-text filter
-# falls back to scanning api_facilityindex.
-MIN_FREE_TEXT_FP_LENGTH = 3
-
-FREE_TEXT_FP_ARRAY_MATCH = """
-(
-    EXISTS (
-        SELECT 1 FROM unnest(facility_type) AS elem
-        WHERE unaccent(elem) ~* unaccent(%s)
-    )
-    OR EXISTS (
-        SELECT 1 FROM unnest(processing_type) AS elem
-        WHERE unaccent(elem) ~* unaccent(%s)
-    )
-)
-"""
-
-# A word-prefix regex over an unnested array cannot use an index, so the
-# trigram index on facility_processing_search_text() gathers the candidate
-# locations and the regex rechecks only those. A substring match returns a
-# superset of a word-prefix match, so the pair selects exactly what the regex
-# alone would. The pattern is normalized by the same functions the indexed
-# expression uses, because normalizing it in Python would risk dropping rows
-# whose accents unidecode and unaccent() disagree about.
-FREE_TEXT_FP_INDEXED_MATCH = """
-(
-    facility_processing_search_text(facility_type, processing_type)
-        LIKE '%%' || immutable_unaccent(lower(%s)) || '%%'
-    AND {array_match}
-)
-"""
-
-# Both tiers scored in one pass over the two arrays. Testing them as four
-# separate EXISTS would run the same regex over the same elements twice.
-FREE_TEXT_FP_TERM_SCORE = """
-(
-    SELECT COALESCE(MAX(
-        CASE
-            WHEN unaccent(elem) ~* unaccent(%s) THEN 2
-            WHEN unaccent(elem) ~* unaccent(%s) THEN 1
-            ELSE 0
-        END
-    ), 0)
-    FROM unnest(
-        COALESCE(facility_type, '{}'::varchar[])
-        || COALESCE(processing_type, '{}'::varchar[])
-    ) AS elem
-)
-"""
-
-_LIKE_SPECIAL_CHARACTER_PATTERN = re.compile(r'([\\%_])')
-
-
-def _classify_fp_filter_value(value):
-    trimmed = value.strip()
-    if not trimmed:
-        return (None, None)
-
-    standard_type = get_facility_and_processing_type(
-        value,
-        ['Apparel'],
-        allow_fuzzy=len(trimmed) >= MIN_FREE_TEXT_FP_LENGTH,
-    )
-    if standard_type[0] is not None:
-        return ('taxonomy', standard_type)
-
-    if len(trimmed) >= MIN_FREE_TEXT_FP_LENGTH:
-        return ('free_text', trimmed)
-
-    return (None, None)
-
-
-def _free_text_fp_terms(
-    facility_types,
-    processing_types,
-    exact_processing_types=None,
-):
-    terms = []
-    exact_processing_type_identities = {
-        value.lower() for value in (exact_processing_types or [])
-    }
-    values = [
-        *(facility_types or []),
-        *(
-            value for value in (processing_types or [])
-            if value.lower() not in exact_processing_type_identities
-        ),
-    ]
-    for value in values:
-        classification, data = _classify_fp_filter_value(value)
-        if classification == 'free_text':
-            terms.append(data)
-    return terms
-
-
-def _word_prefix_pattern(term):
-    return rf'\m{re.escape(term)}'
-
-
-def _whole_word_pattern(term):
-    return rf'{_word_prefix_pattern(term)}\M'
-
-
-def _like_term(term):
-    """Escape a term for use inside the trigram containment pattern."""
-    return _LIKE_SPECIAL_CHARACTER_PATTERN.sub(r'\\\1', term)
-
-
-def _build_fp_param_sql_parts(values, overlap_field, taxonomy_slot):
-    taxonomy_values = []
-    free_text_terms = []
-
-    for value in values:
-        classification, data = _classify_fp_filter_value(value)
-        if classification == 'taxonomy':
-            taxonomy_values.append(data[taxonomy_slot])
-        elif classification == 'free_text':
-            free_text_terms.append(data)
-
-    parts = []
-    params = []
-
-    if taxonomy_values:
-        parts.append(f'{overlap_field} && %s::varchar[]')
-        params.append(taxonomy_values)
-
-    for term in free_text_terms:
-        parts.append(
-            FREE_TEXT_FP_INDEXED_MATCH.format(
-                array_match=FREE_TEXT_FP_ARRAY_MATCH
-            )
-        )
-        pattern = _word_prefix_pattern(term)
-        params.extend([_like_term(term), pattern, pattern])
-
-    return parts, params
-
-
-def _append_fp_param_clause(
-    param_clauses,
-    all_params,
-    values,
-    overlap_field,
-    taxonomy_slot,
-):
-    if not values:
-        return
-
-    parts, params = _build_fp_param_sql_parts(
-        values,
-        overlap_field,
-        taxonomy_slot,
-    )
-    # A supplied parameter whose values are all invalid must not silently
-    # broaden the request to an unfiltered facility search.
-    param_clauses.append(
-        '(' + ' OR '.join(parts) + ')' if parts else '(FALSE)'
-    )
-    all_params.extend(params)
-
-
-def _append_exact_processing_clause(
-    param_clauses,
-    all_params,
-    exact_processing_types,
-    legacy_processing_types,
-):
-    if not exact_processing_types:
-        return
-
-    # Overlapping the lower-cased array matches the expression index on it.
-    # Lower-casing each element inside an unnest would read every row of
-    # api_facilityindex instead.
-    exact_clause = 'lower_varchar_array(processing_type) && %s::text[]'
-    if param_clauses and legacy_processing_types:
-        param_clauses[-1] = f'({param_clauses[-1]} OR {exact_clause})'
-    else:
-        param_clauses.append(f'({exact_clause})')
-    all_params.append([value.lower() for value in exact_processing_types])
-
-
-def build_fp_match_sql(
-    facility_types,
-    processing_types,
-    exact_processing_types=None,
-):
-    """
-    Build a boolean SQL expression for facility/processing type filters.
-
-    Taxonomy values use array overlap on the param's primary column.
-    Unmatched values fall back to an accent-insensitive word-prefix search
-    across both columns. Multiple values within one param are OR'd;
-    facility_type and processing_type params are AND'd.
-    """
-    param_clauses = []
-    all_params = []
-
-    processing_type_identities = {
-        value.lower() for value in (processing_types or [])
-    }
-    exact_processing_types = [
-        value for value in (exact_processing_types or [])
-        if value.lower() in processing_type_identities
-    ]
-    exact_processing_type_identities = {
-        value.lower() for value in exact_processing_types
-    }
-    legacy_processing_types = [
-        value for value in (processing_types or [])
-        if value.lower() not in exact_processing_type_identities
-    ]
-
-    for values, overlap_field, taxonomy_slot in (
-        (facility_types, 'facility_type', 2),
-        (legacy_processing_types, 'processing_type', 3),
-    ):
-        _append_fp_param_clause(
-            param_clauses,
-            all_params,
-            values,
-            overlap_field,
-            taxonomy_slot,
-        )
-
-    _append_exact_processing_clause(
-        param_clauses,
-        all_params,
-        exact_processing_types,
-        legacy_processing_types,
-    )
-
-    if not param_clauses:
-        return None, []
-
-    return ' AND '.join(param_clauses), all_params
-
-
-def build_fp_relevance_sql(
-    facility_types,
-    processing_types,
-    exact_processing_types=None,
-):
-    """
-    Score free-text facility/processing filters across both indexed arrays.
-
-    Whole-word matches score 2 and word-prefix matches score 1. The highest
-    score wins when multiple values or indexed array elements match.
-    """
-    score_parts = []
-    params = []
-
-    for term in _free_text_fp_terms(
-        facility_types,
-        processing_types,
-        exact_processing_types,
-    ):
-        score_parts.append(FREE_TEXT_FP_TERM_SCORE)
-        params.extend(
-            [
-                _whole_word_pattern(term),
-                _word_prefix_pattern(term),
-            ]
-        )
-
-    if not score_parts:
-        return None, []
-
-    if len(score_parts) == 1:
-        return score_parts[0], params
-
-    return f"GREATEST({', '.join(score_parts)})", params
-
-
-def annotate_facility_processing_match(
-    queryset,
-    facility_types,
-    processing_types,
-    exact_processing_types=None,
-    annotation_name='_fp_match',
-):
-    sql, params = build_fp_match_sql(
-        facility_types,
-        processing_types,
-        exact_processing_types,
-    )
-    if not sql:
-        return queryset, False
-
-    return queryset.annotate(
-        **{
-            annotation_name: RawSQL(
-                sql,
-                params,
-                output_field=BooleanField(),
-            )
-        }
-    ), True
-
-
-def annotate_facility_processing_relevance(
-    queryset,
-    facility_types,
-    processing_types,
-    exact_processing_types=None,
-    annotation_name='_fp_relevance',
-):
-    sql, params = build_fp_relevance_sql(
-        facility_types,
-        processing_types,
-        exact_processing_types,
-    )
-    if not sql:
-        return queryset, False
-
-    return queryset.annotate(
-        **{
-            annotation_name: RawSQL(
-                sql,
-                params,
-                output_field=IntegerField(),
-            )
-        }
-    ), True
-
-
 class FacilityIndexNewManager(models.Manager):
-    def filter_by_query_params(self, params):
+    def filter_by_query_params(
+        self,
+        params,
+        facility_processing_filter=None,
+    ):
         """
         Create a Facility queryset filtered by a list of request query params.
 
@@ -351,6 +27,9 @@ class FacilityIndexNewManager(models.Manager):
         self (queryset) -- A queryset on the Facility model
         params (dict) -- Request query parameters whose potential choices are
                         enumerated in `api.constants.FacilitiesQueryParams`.
+        facility_processing_filter (FacilityProcessingFilter) -- Optional
+                        preclassified filter reused by callers that also
+                        annotate relevance.
 
         Returns:
         A queryset on the Facility model
@@ -384,11 +63,12 @@ class FacilityIndexNewManager(models.Manager):
 
         parent_companies = params.getlist(FacilitiesQueryParams.PARENT_COMPANY)
 
-        (
-            facility_types,
-            processing_types,
-            exact_processing_types,
-        ) = FacilityProcessingQuery(params).parse()
+        if facility_processing_filter is None:
+            facility_processing_filter = (
+                FacilityProcessingFilter.from_result(
+                    FacilityProcessingQuery(params).parse()
+                )
+            )
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
 
@@ -486,11 +166,8 @@ class FacilityIndexNewManager(models.Manager):
                     Q(parent_company_name__overlap=parent_company_name)
                 )
 
-        facilities_qs, has_fp_filter = annotate_facility_processing_match(
-            facilities_qs,
-            facility_types,
-            processing_types,
-            exact_processing_types,
+        facilities_qs, has_fp_filter = (
+            facility_processing_filter.annotate_match(facilities_qs)
         )
         if has_fp_filter:
             facilities_qs = facilities_qs.filter(_fp_match=True)
