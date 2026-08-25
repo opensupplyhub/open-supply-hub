@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from api.models import Facility, FacilityListItem, FacilityMatch
 from api.models.facility.facility_index import FacilityIndex
-from api.processing_type_search import MAX_SUGGESTION_LIMIT
+from api.services.processing_type_search import MAX_SUGGESTION_LIMIT
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
@@ -655,10 +655,10 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
     )
     @patch(
         'api.views.facility.processing_type_suggestions'
-        '.search_processing_types'
+        '.ProcessingTypeSearch.build_suggestions'
     )
-    def test_identical_requests_are_served_from_the_cache(self, mock_search):
-        mock_search.return_value = [{
+    def test_identical_requests_are_served_from_the_cache(self, mock_build):
+        mock_build.return_value = [{
             'value': 'Dyeing',
             'label': 'Dyeing',
             'count': 1,
@@ -673,11 +673,11 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
 
         self.assertEqual(first.status_code, 200)
         self.assertEqual(second.data, first.data)
-        mock_search.assert_called_once()
+        mock_build.assert_called_once()
 
         self.client.get(
             self.url,
             {'q': 'dyeing', 'facility_type': 'Office / HQ'},
         )
 
-        self.assertEqual(mock_search.call_count, 2)
+        self.assertEqual(mock_build.call_count, 2)

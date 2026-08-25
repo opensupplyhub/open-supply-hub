@@ -1,5 +1,10 @@
-from django.db.migrations import Migration, RunPython
-from django.db import connection
+from django.db import connection, models
+from django.db.migrations import (
+    CreateModel,
+    Migration,
+    RunPython,
+    SeparateDatabaseAndState,
+)
 
 from api.migrations._migration_helper import MigrationHelper
 
@@ -62,9 +67,39 @@ class Migration(Migration):
     ]
 
     operations = [
-        RunPython(
-            create_facility_processing_value_index,
-            drop_facility_processing_value_index,
+        SeparateDatabaseAndState(
+            database_operations=[
+                RunPython(
+                    create_facility_processing_value_index,
+                    drop_facility_processing_value_index,
+                ),
+            ],
+            state_operations=[
+                CreateModel(
+                    name='FacilityProcessingValue',
+                    fields=[
+                        (
+                            'pk',
+                            models.CompositePrimaryKey(
+                                'kind',
+                                'identity',
+                                blank=True,
+                                editable=False,
+                                primary_key=True,
+                                serialize=False,
+                            ),
+                        ),
+                        ('kind', models.TextField()),
+                        ('identity', models.TextField()),
+                        ('value', models.TextField()),
+                        ('facility_count', models.IntegerField()),
+                    ],
+                    options={
+                        'db_table': 'api_facility_processing_value',
+                        'managed': False,
+                    },
+                ),
+            ],
         ),
         RunPython(
             populate_facility_processing_value_index,

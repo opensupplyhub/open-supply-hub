@@ -4,10 +4,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.processing_type_search import (
+from api.services.processing_type_search import (
     DEFAULT_SUGGESTION_LIMIT,
     MAX_SUGGESTION_LIMIT,
-    search_processing_types,
+    ProcessingTypeSearch,
 )
 from api.view_response_cache import cache_view_response
 
@@ -98,11 +98,12 @@ class ProcessingTypeSuggestionsView(APIView):
             ]
 
         """
-        return Response(search_processing_types(
+        search = ProcessingTypeSearch(
             query=request.query_params.get(QUERY_PARAM, ''),
             facility_types=request.query_params.getlist(FACILITY_TYPE_PARAM),
             limit=self.__parse_limit(request.query_params.get(LIMIT_PARAM)),
-        ))
+        )
+        return Response(search.build_suggestions())
 
     @staticmethod
     def __parse_limit(raw_limit):
