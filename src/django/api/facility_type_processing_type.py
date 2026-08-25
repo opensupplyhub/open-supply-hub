@@ -384,6 +384,16 @@ PRINTING_PROCESSING = 'printing product dyeing and laundering'
 ASSEMBLY_PROCESSING = 'final product assembly'
 WAREHOUSING_PROCESSING = 'warehousing distribution'
 OFFICE_PROCESSING = 'office hq'
+DATA_CENTER = 'data center'
+
+# Cleaned input variants that should resolve to the Data Center facility type.
+DATA_CENTER_ALIASES = {
+    'data center',
+    'data centre',
+    'datacenter',
+    'datacentre',
+    'dc',
+}
 
 ALL_FACILITY_TYPES = {
     RAW_MATERIAL_PROCESSING: 'Raw Material Processing or Production',
@@ -392,6 +402,7 @@ ALL_FACILITY_TYPES = {
     ASSEMBLY_PROCESSING: 'Final Product Assembly',
     WAREHOUSING_PROCESSING: 'Warehousing / Distribution',
     OFFICE_PROCESSING: 'Office / HQ',
+    DATA_CENTER: 'Data Center'
 }
 
 ALL_FACILITY_TYPE_CHOICES = [(k, v) for k, v in
@@ -404,6 +415,7 @@ FACILITY_PROCESSING_TYPES = {
     ASSEMBLY_PROCESSING: ASSEMBLY_PROCESSING_TYPES,
     WAREHOUSING_PROCESSING: WAREHOUSING_PROCESSING_TYPES,
     OFFICE_PROCESSING: OFFICE_PROCESSING_TYPES,
+    DATA_CENTER: {},
 }
 
 # Create a look-up of processing type -> facility type for
@@ -469,52 +481,64 @@ def clean_raw_data(raw_data):
     return data
 
 
-def get_facility_and_processing_type(facility_or_processing_type, sector=None):
+def _match_taxonomy_value(cleaned_input, allow_fuzzy):
+    processing_type = ALL_PROCESSING_TYPES.get(cleaned_input)
+    facility_type = ALL_FACILITY_TYPES.get(cleaned_input)
+    if processing_type or facility_type:
+        return processing_type, facility_type, EXACT_MATCH
+
+    matched_value = ALL_PROCESSING_TYPES_ALIAS.get(cleaned_input)
+    match_type = ALIAS_MATCH
+    if not matched_value and allow_fuzzy:
+        fuzzy_match = process.extractOne(
+            cleaned_input,
+            ALL_PROCESSING_TYPES.keys(),
+        )
+        if not fuzzy_match or fuzzy_match[1] < 85:
+            return None
+        matched_value = fuzzy_match[0]
+        match_type = FUZZY_MATCH
+
+    if not matched_value:
+        return None
+
+    return (
+        ALL_PROCESSING_TYPES.get(matched_value),
+        ALL_FACILITY_TYPES.get(matched_value),
+        match_type,
+    )
+
+
+def get_facility_and_processing_type(
+    facility_or_processing_type,
+    sector=None,
+    allow_fuzzy=True,
+):
     """Attempts to match the input value to a facility or processing
     type via various methods.
     """
     # Clean up input value
     cleaned_input = clean(facility_or_processing_type)
-    # Assign a default value to field_type
-    field_type = PROCESSING_TYPE
-
     if cleaned_input is None:
         return (None, None, None, None)
+
+    # Data centers are classified regardless of the sector taxonomy below,
+    # which only covers apparel/goods-production sectors.
+    if cleaned_input in DATA_CENTER_ALIASES:
+        return (FACILITY_TYPE, EXACT_MATCH, ALL_FACILITY_TYPES[DATA_CENTER],
+                None)
 
     if sector is None or 'Apparel' not in sector:
         # No taxonomy for non-apparel sectors has been created.
         formatted_raw_data = clean_raw_data(facility_or_processing_type)
         return (PROCESSING_TYPE, SKIPPED_MATCHING, None, formatted_raw_data)
 
-    # Try for exact match
-    processing_type = ALL_PROCESSING_TYPES.get(cleaned_input)
-    facility_type = ALL_FACILITY_TYPES.get(cleaned_input)
-    match_type = EXACT_MATCH
+    match = _match_taxonomy_value(cleaned_input, allow_fuzzy)
+    if match is None:
+        return (None, None, None, None)
 
-    # Try for alias match
-    if not processing_type:
-        matched_value = ALL_PROCESSING_TYPES_ALIAS.get(cleaned_input)
-        match_type = ALIAS_MATCH
-
-        # Try for fuzzy match
-        if not matched_value or matched_value is None:
-            matched_value = process.extractOne(
-                cleaned_input,
-                ALL_PROCESSING_TYPES.keys()
-            )
-            match_type = FUZZY_MATCH
-
-            # Match must score 85 or higher to be considered usable.
-            if not matched_value or matched_value[1] < 85:
-                return (None, None, None, None)
-
-            matched_value = matched_value[0]
-
-        # Using the alias or fuzzy matched value, find a
-        # processing and facility type
-        processing_type = ALL_PROCESSING_TYPES.get(matched_value)
-        facility_type = ALL_FACILITY_TYPES.get(matched_value)
-
+    processing_type, facility_type, match_type = match
+    field_type = PROCESSING_TYPE
     if facility_type:
         field_type = FACILITY_TYPE
     elif processing_type:

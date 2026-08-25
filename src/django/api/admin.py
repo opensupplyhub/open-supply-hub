@@ -12,6 +12,8 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from api.models.polygon import Polygon
+from api.models.polygon_admin import PolygonAdmin
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
@@ -417,4 +419,5 @@ admin_site.register(
     WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
 )
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
+admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)

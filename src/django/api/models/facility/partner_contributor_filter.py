@@ -5,7 +5,13 @@ from api.models.extended_field import ExtendedField
 from api.constants import MIT_LIVING_WAGE_COUNTRY_CODES
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 
-SYSTEM_PARTNER_FIELD_NAMES = frozenset({"wage_indicator", "mit_living_wage"})
+INDIA_LABOUR_LINE_FIELD = "india_labour_line_helpline"
+
+SYSTEM_PARTNER_FIELD_NAMES = frozenset({
+    "wage_indicator",
+    "mit_living_wage",
+    INDIA_LABOUR_LINE_FIELD,
+})
 
 
 def apply_partner_fields_or_filter(
@@ -64,6 +70,9 @@ def apply_partner_fields_or_filter(
         )
     elif has_mit_living_wage:
         filters.append(Q(country_code__in=MIT_LIVING_WAGE_COUNTRY_CODES))
+
+    if INDIA_LABOUR_LINE_FIELD in field_names:
+        filters.append(build_india_labour_line_filter())
 
     if not filters:
         return facilities_queryset
@@ -126,3 +135,27 @@ def apply_partner_contributors_filter(
     )
 
     return facilities_queryset
+
+
+def build_india_labour_line_filter():
+    """
+    Return a Q matching the locations the India Labour Line covers.
+
+    Delegates to the shared covered-locations rule (see
+    build_covered_locations_q in the provider module), so search
+    results can never disagree with the contributor-profile spotlight.
+    The import is deferred to avoid a circular import at model-loading
+    time (the provider module imports models from this package).
+
+    When the boundary polygons are missing, this matches nothing —
+    never an unfiltered "everything matches" — so a misconfiguration
+    cannot quietly widen search results.
+    """
+    from api.partner_fields.india_labour_line_provider import (
+        build_covered_locations_q,
+    )
+
+    covered_q = build_covered_locations_q()
+    if covered_q is None:
+        return Q(id__in=[])
+    return covered_q

@@ -30,9 +30,13 @@ on:
 jobs:
   create-release-tag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Create Release Tag
         id: tag_version
@@ -40,27 +44,37 @@ jobs:
         with:
           custom_tag: ${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}
           tag_prefix: ''
-          github_token: ${{ secrets.PAT }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-deploy-to-aws:
     runs-on: ubuntu-latest
     needs: create-release-tag
+    permissions:
+      actions: write
     steps:
       - name: Trigger Deploy to AWS workflow
+        env:
+          DEPLOY_ENV: ${{ github.event.inputs.deploy-env }}
+          DEPLOY_TAG_VERSION: ${{ github.event.inputs.deploy-tag-version }}
+          CLEAR_OPENSEARCH_TARGET: ${{ inputs.clear-opensearch-target }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [[ ${{ github.event.inputs.deploy-env }} = "production" ]];
-          then
+          if [[ "$DEPLOY_ENV" = "production" ]]; then
             ENV="Production"
-          elif [[ ${{ github.event.inputs.deploy-env }} = "rba" ]];
-          then
+          elif [[ "$DEPLOY_ENV" = "rba" ]]; then
             ENV="RBA"
           else
             ENV="Staging"
           fi
-          curl -L \
+          PAYLOAD=$(jq -n \
+            --arg ref "${DEPLOY_ENV}-${DEPLOY_TAG_VERSION}" \
+            --arg env "$ENV" \
+            --arg clear "$CLEAR_OPENSEARCH_TARGET" \
+            '{ref: $ref, inputs: {"deploy-env": $env, "clear-opensearch-target": $clear}}')
+          curl --proto '=https' --tlsv1.2 -fsS -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.PAT }}" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/opensupplyhub/open-supply-hub/actions/workflows/deploy_to_aws.yml/dispatches \
-            -d '{"ref": "${{ github.event.inputs.deploy-env }}-${{ github.event.inputs.deploy-tag-version }}", "inputs": {"deploy-env": "'$ENV'", "clear-opensearch-target": "${{ inputs.clear-opensearch-target }}" }}'
+            -d "$PAYLOAD"
