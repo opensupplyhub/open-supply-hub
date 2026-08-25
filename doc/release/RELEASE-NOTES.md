@@ -29,11 +29,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-    * `reindex_database`
+    * `backfill_facility_index --fields isic_4`
+* The targeted backfill populates the new ISIC section, division, group, and class columns for existing facilities; `reindex_database` is not required.
 * Upload, validate, publish, and enable the ISIC Rev 4 taxonomy in Django admin after deployment; the search control remains hidden until an active taxonomy is available.
-
----
-
 
 ## Release 2.29.0
 
