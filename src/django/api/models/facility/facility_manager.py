@@ -5,7 +5,6 @@ from django.db import models
 from django.db.models import Q
 
 from api.constants import FacilitiesQueryParams
-from api.facility_processing_query import parse_facility_processing_query
 from api.models.facility.facility_manager_index_new import (
     annotate_facility_processing_match,
 )
@@ -16,6 +15,7 @@ from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
+from api.services.facility_processing_query import FacilityProcessingQuery
 
 
 class FacilityManager(models.Manager):
@@ -64,9 +64,7 @@ class FacilityManager(models.Manager):
             facility_types,
             processing_types,
             exact_processing_types,
-        ) = parse_facility_processing_query(
-            params
-        )
+        ) = FacilityProcessingQuery(params).parse()
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
 

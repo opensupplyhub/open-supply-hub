@@ -1,14 +1,14 @@
 from django.http import QueryDict
 from django.test import SimpleTestCase
 
-from api.facility_processing_query import parse_facility_processing_query
 from api.models.facility.facility_manager_index_new import (
     build_fp_match_sql,
     build_fp_relevance_sql,
 )
+from api.services.facility_processing_query import FacilityProcessingQuery
 
 
-class FacilityProcessingQueryTest(SimpleTestCase):
+class FacilityProcessingQueryTests(SimpleTestCase):
     def test_removes_blank_values_and_preserves_nonempty_exact_values(self):
         params = QueryDict(
             'facility_type=&facility_type=Office%20%2F%20HQ'
@@ -18,7 +18,7 @@ class FacilityProcessingQueryTest(SimpleTestCase):
             '&processing_type_exact=CAPS'
         )
 
-        parsed = parse_facility_processing_query(params)
+        parsed = FacilityProcessingQuery(params).parse()
 
         self.assertEqual(parsed.facility_types, ['Office / HQ'])
         self.assertEqual(parsed.processing_types, ['CAPS'])
@@ -31,7 +31,7 @@ class FacilityProcessingQueryTest(SimpleTestCase):
             '&processing_type_exact=orphan'
         )
 
-        parsed = parse_facility_processing_query(params)
+        parsed = FacilityProcessingQuery(params).parse()
 
         self.assertEqual(parsed.processing_types, ['CAPS'])
         self.assertEqual(parsed.exact_processing_types, ['Caps'])

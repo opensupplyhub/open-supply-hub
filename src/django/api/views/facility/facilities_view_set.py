@@ -11,7 +11,7 @@ from api.models.facility.facility_index import FacilityIndex
 from api.models.facility.facility_manager_index_new import (
     annotate_facility_processing_relevance,
 )
-from api.facility_processing_query import parse_facility_processing_query
+from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
@@ -507,9 +507,9 @@ class FacilitiesViewSet(ListModelMixin,
         elif (sort_by == 'contributors_asc'):
             order_list = ['contributors_count', 'name']
 
-        facility_processing_query = parse_facility_processing_query(
+        facility_processing_query = FacilityProcessingQuery(
             request.query_params
-        )
+        ).parse()
         queryset, has_fp_relevance = annotate_facility_processing_relevance(
             queryset,
             *facility_processing_query,

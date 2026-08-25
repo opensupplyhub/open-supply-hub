@@ -7,7 +7,6 @@ from django.db.models.expressions import RawSQL
 
 from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
-from api.facility_processing_query import parse_facility_processing_query
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -15,6 +14,7 @@ from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
+from api.services.facility_processing_query import FacilityProcessingQuery
 
 
 # Also the shortest term a trigram index can narrow, so no free-text filter
@@ -388,9 +388,7 @@ class FacilityIndexNewManager(models.Manager):
             facility_types,
             processing_types,
             exact_processing_types,
-        ) = parse_facility_processing_query(
-            params
-        )
+        ) = FacilityProcessingQuery(params).parse()
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
 
