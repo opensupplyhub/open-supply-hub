@@ -20,6 +20,7 @@ const {
     makeMergeTwoFacilitiesAPIURL,
     makeLogDownloadUrl,
     makeGetFacilitiesURLWithQueryString,
+    makeGetProcessingTypeSuggestionsURL,
     getValueFromObject,
     createQueryStringFromSearchFilters,
     allFiltersAreEmpty,
@@ -94,6 +95,7 @@ const {
     getFilteredSearchForEmbed,
     makeFacilityDetailLinkOnRedirect,
     splitContributorsIntoPublicAndNonPublic,
+    restoreExactProcessingTypeLabels,
     hasEmbeddedSeparator,
 } = require('../util/util');
 
@@ -192,6 +194,22 @@ it('creates API URLs for getting contributor, contributor type, country, and sec
 it('creates an API URL for getting all facilities', () => {
     const expectedMatch = '/api/facilities/';
     expect(makeGetFacilitiesURL()).toEqual(expectedMatch);
+});
+
+it('creates an API URL for getting processing type suggestions', () => {
+    expect(makeGetProcessingTypeSuggestionsURL()).toEqual(
+        '/api/processing-type-suggestions/?q=',
+    );
+    expect(
+        makeGetProcessingTypeSuggestionsURL('dyeing', [
+            'Final Product Assembly',
+            'Textile or Material Production',
+        ]),
+    ).toEqual(
+        '/api/processing-type-suggestions/?q=dyeing' +
+            '&facility_type=Final+Product+Assembly' +
+            '&facility_type=Textile+or+Material+Production',
+    );
 });
 
 it('creates an API URL for getting a single facility by OS ID', () => {
@@ -693,6 +711,101 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(processingTypeString),
     ).toMatchObject(expectedProcessingTypeMatch);
+
+    const freeTextProcessingTypeString =
+        '?processing_type=cement%20mixing';
+    const expectedFreeTextProcessingTypeMatch = {
+        processingType: [{
+            value: 'cement mixing',
+            label: 'cement mixing',
+        }],
+    };
+
+    expect(
+        createFiltersFromQueryString(freeTextProcessingTypeString),
+    ).toMatchObject(expectedFreeTextProcessingTypeMatch);
+
+    expect(
+        createFiltersFromQueryString(
+            '?processing_type=300&processing_type=00300' +
+                '&processing_type_exact=00300',
+        ),
+    ).toMatchObject({
+        processingType: [
+            { value: '300', label: '300' },
+            { value: '00300', label: '00300', isExact: true },
+        ],
+    });
+
+    const exactProcessingTypeString =
+        '?processing_type=CAPS&processing_type=Caps' +
+        '&processing_type=cement%20mixing' +
+        '&processing_type_exact=caps&processing_type_exact=orphan';
+    expect(
+        createFiltersFromQueryString(exactProcessingTypeString),
+    ).toMatchObject({
+        processingType: [
+            { value: 'CAPS', label: 'CAPS', isExact: true },
+            { value: 'cement mixing', label: 'cement mixing' },
+        ],
+    });
+
+    expect(
+        createQueryStringFromSearchFilters({
+            processingType: [
+                { value: 'CAPS', label: 'Caps', isExact: true },
+                { value: 'cement mixing', label: 'cement mixing' },
+            ],
+        }),
+    ).toBe(
+        'processing_type=CAPS&processing_type=cement+mixing' +
+            '&processing_type_exact=CAPS',
+    );
+
+    const hydratedExactProcessingTypes = createFiltersFromQueryString(
+        '?processing_type=DYEING&processing_type=Custom%20CAPS' +
+            '&processing_type_exact=DYEING' +
+            '&processing_type_exact=Custom%20CAPS',
+    ).processingType;
+    expect(
+        restoreExactProcessingTypeLabels(hydratedExactProcessingTypes, [
+            {
+                facilityType: 'Printing',
+                processingTypes: ['Dyeing'],
+            },
+        ]),
+    ).toEqual([
+        { value: 'DYEING', label: 'Dyeing', isExact: true },
+        {
+            value: 'Custom CAPS',
+            label: 'Custom CAPS',
+            isExact: true,
+        },
+    ]);
+
+    const punctuationVariant = [
+        {
+            value: 'Warehousing Distribution',
+            label: 'Warehousing Distribution',
+            isExact: true,
+        },
+        {
+            value: 'Serigraphie',
+            label: 'Serigraphie',
+            isExact: true,
+        },
+    ];
+    expect(
+        restoreExactProcessingTypeLabels(punctuationVariant, [
+            {
+                facilityType: 'Warehouse',
+                processingTypes: [
+                    'Warehousing / Distribution',
+                    'Sérigraphie',
+                ],
+            },
+        ]),
+    ).toBe(punctuationVariant);
 
     const productTypeString = '?product_type=Beauty&product_type=Jackets/Blazers'
     const expectedProductTypeMatch = {
