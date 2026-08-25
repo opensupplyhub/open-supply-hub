@@ -432,10 +432,9 @@ export function mapDispatchToProps(dispatch, { history: { replace } }) {
                     filters,
                     embed,
                 );
+                const querySuffix = queryString ? `?${queryString}` : '';
 
-                return replace(
-                    `${facilitiesRoute}${queryString ? `?${queryString}` : ''}`,
-                );
+                return replace(`${facilitiesRoute}${querySuffix}`);
             }),
         resetHiddenFilters: () => dispatch(resetDrawerFilters()),
     };
