@@ -1,9 +1,12 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.serializers.facility \
+    .processing_type_suggestions_query_params_serializer import (
+        ProcessingTypeSuggestionsQueryParamsSerializer,
+    )
 from api.services.processing_type_search import (
     DEFAULT_SUGGESTION_LIMIT,
     MAX_SUGGESTION_LIMIT,
@@ -98,31 +101,14 @@ class ProcessingTypeSuggestionsView(APIView):
             ]
 
         """
+        params = ProcessingTypeSuggestionsQueryParamsSerializer(
+            data=request.query_params,
+        )
+        params.is_valid(raise_exception=True)
+
         search = ProcessingTypeSearch(
-            query=request.query_params.get(QUERY_PARAM, ''),
-            facility_types=request.query_params.getlist(FACILITY_TYPE_PARAM),
-            limit=self.__parse_limit(request.query_params.get(LIMIT_PARAM)),
+            query=params.validated_data[QUERY_PARAM],
+            facility_types=params.validated_data[FACILITY_TYPE_PARAM],
+            limit=params.validated_data[LIMIT_PARAM],
         )
         return Response(search.build_suggestions())
-
-    @staticmethod
-    def __parse_limit(raw_limit):
-        if raw_limit is None or raw_limit == '':
-            return DEFAULT_SUGGESTION_LIMIT
-
-        try:
-            limit = int(raw_limit)
-        except ValueError:
-            raise ValidationError({
-                LIMIT_PARAM: (
-                    f'Invalid limit "{raw_limit}". Expected an integer '
-                    f'between 0 and {MAX_SUGGESTION_LIMIT}.'
-                ),
-            })
-
-        if limit < 0:
-            raise ValidationError({
-                LIMIT_PARAM: 'Invalid limit. Expected a positive integer.',
-            })
-
-        return limit

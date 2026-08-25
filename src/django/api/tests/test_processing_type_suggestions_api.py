@@ -627,6 +627,12 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         self.assertLessEqual(len(response.data), MAX_SUGGESTION_LIMIT)
 
+    def test_blank_limit_uses_default(self):
+        response = self.client.get(self.url, {'limit': ''})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(len(response.data), MAX_SUGGESTION_LIMIT)
+
     def test_invalid_limit_returns_400(self):
         response = self.client.get(
             self.url,
