@@ -49,7 +49,7 @@ INDEXES = {
     ),
 }
 
-# Created by migration 0229 before the typeahead searched the normalized
+# Created by migration 0232 before the typeahead searched the normalized
 # value; nothing can use an index on the raw one.
 UNUSED_INDEXES = ('api_facility_processing_value_value_trgm_idx',)
 
@@ -106,7 +106,7 @@ def index_facility_processing_search(apps, schema_editor):
     OSDEV-3189.
     """
     helper.run_sql_files([
-        '0230_facility_processing_search_functions.sql',
+        '0233_facility_processing_search_functions.sql',
     ])
 
     _drop_invalid_indexes(INDEXES)
@@ -142,7 +142,7 @@ def revert_facility_processing_search_index(apps, schema_editor):
             )
 
     helper.run_sql_files([
-        '0230_revert_facility_processing_search_functions.sql',
+        '0233_revert_facility_processing_search_functions.sql',
     ])
 
 
@@ -153,7 +153,7 @@ class Migration(Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0229_create_facility_processing_value_index'),
+        ('api', '0232_create_facility_processing_value_index'),
     ]
 
     operations = [

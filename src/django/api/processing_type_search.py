@@ -42,7 +42,7 @@ SUBSTRING_MATCH_SCORE = 500
 FACILITY_TYPE_MATCH_BOOST = 250
 
 # The predicate is written against the same expression the trigram index of
-# migration 0229 is built on. Matching unaccent(value) ILIKE … instead reads
+# migration 0233 is built on. Matching unaccent(value) ILIKE … instead reads
 # every row of the table, because no index can answer it.
 CANDIDATE_VALUES_SQL = """
     SELECT

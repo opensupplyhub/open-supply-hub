@@ -39,7 +39,7 @@ class FacilityProcessingQueryTest(SimpleTestCase):
     def test_exact_sql_overlaps_the_indexed_lower_cased_array(self):
         """
         The predicate has to match the expression index built by migration
-        0229; lower-casing each element inside an unnest instead would read
+        0233; lower-casing each element inside an unnest instead would read
         every row of api_facilityindex.
         """
         sql, sql_params = build_fp_match_sql(

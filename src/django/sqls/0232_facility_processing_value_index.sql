@@ -44,7 +44,7 @@ COMMENT ON TABLE api_facility_processing_value IS
 	'command.';
 
 /*The typeahead searches the case- and accent-normalized value, so the index
-that serves it is created in migration 0229 alongside the immutable helper
+that serves it is created in migration 0233 alongside the immutable helper
 function that normalization needs. An index on the raw value would never be
 used.*/
 CREATE INDEX api_facility_processing_value_variant_identity_idx
