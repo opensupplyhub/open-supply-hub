@@ -141,20 +141,6 @@ _FACILITY_TYPE_BY_KEY = {
 }
 
 
-def _grouping_key(value):
-    return value.lower()
-
-
-def get_processing_type_parents(value):
-    """Return the facility types a processing type belongs to."""
-    if not value:
-        return ()
-
-    canonical = _TAXONOMY_BY_KEY.get(_grouping_key(value))
-
-    return canonical[1] if canonical else ()
-
-
 def resolve_facility_types(facility_types):
     """
     Map requested facility types to their taxonomy labels.
