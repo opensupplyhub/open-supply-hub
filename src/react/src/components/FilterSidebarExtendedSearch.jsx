@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { bool, func } from 'prop-types';
+import React, { Suspense, useEffect } from 'react';
+import { bool, func, object } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
@@ -11,6 +11,7 @@ import {
     updateParentCompanyFilter,
     updateFacilityTypeFilter,
     updateProcessingTypeFilter,
+    updateIsic4Filter,
     updateProductTypeFilter,
     updateNumberofWorkersFilter,
     updateNativeLanguageNameFilter,
@@ -19,7 +20,9 @@ import {
 import {
     fetchContributorTypeOptions,
     fetchFacilityProcessingTypeOptions,
+    fetchIsic4TaxonomyConfigIfNeeded,
     fetchNumberOfWorkersOptions,
+    fetchTaxonomyCountsIfNeeded,
 } from '../actions/filterOptions';
 
 import {
@@ -48,6 +51,10 @@ const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
 const isExtendedFieldForThisContributor = (field, extendedFields) =>
     extendedFields.includes(field.toLowerCase());
 
+const LazyIsicTaxonomySearch = React.lazy(() =>
+    import('./Filters/HierarchicalTaxonomySearch/IsicTaxonomySearch'),
+);
+
 function FilterSidebarExtendedSearch({
     contributorTypeOptions,
     facilityProcessingTypeOptions,
@@ -60,6 +67,8 @@ function FilterSidebarExtendedSearch({
     updateFacilityType,
     processingType,
     updateProcessingType,
+    isic4,
+    updateIsic4,
     productType,
     updateProductType,
     numberOfWorkers,
@@ -70,9 +79,34 @@ function FilterSidebarExtendedSearch({
     embedExtendedFields,
     fetchContributorTypes,
     fetchFacilityProcessingType,
+    fetchIsic4TaxonomyConfig,
+    fetchIsic4Counts,
     fetchNumberOfWorkers,
     isSideBarSearch,
+    isic4Taxonomy,
+    isic4Counts,
 }) {
+    const {
+        config: isic4TaxonomyConfig,
+        fetching: isic4TaxonomyFetching,
+        error: isic4TaxonomyError,
+    } = isic4Taxonomy ?? {};
+
+    useEffect(() => {
+        if (
+            isic4TaxonomyConfig == null &&
+            !isic4TaxonomyFetching &&
+            !isic4TaxonomyError?.length
+        ) {
+            fetchIsic4TaxonomyConfig();
+        }
+    }, [
+        fetchIsic4TaxonomyConfig,
+        isic4TaxonomyConfig,
+        isic4TaxonomyFetching,
+        isic4TaxonomyError,
+    ]);
+
     useEffect(() => {
         if (!contributorTypeOptions) {
             fetchContributorTypes();
@@ -100,6 +134,12 @@ function FilterSidebarExtendedSearch({
             </div>
         );
     }
+
+    const isic4TaxonomyEnabled = isic4TaxonomyConfig?.enabled ?? false;
+    const isic4TaxonomyConfigFailed =
+        !isic4TaxonomyConfig &&
+        !isic4TaxonomyFetching &&
+        !!isic4TaxonomyError?.length;
 
     return (
         <>
@@ -188,6 +228,27 @@ function FilterSidebarExtendedSearch({
                     />
                 </div>
             </ShowOnly>
+            <ShowOnly when={!embed && isic4TaxonomyConfigFailed}>
+                <div className="form__field">
+                    <p>
+                        Unable to load ISIC taxonomy settings. Try refreshing
+                        the page.
+                    </p>
+                </div>
+            </ShowOnly>
+            <ShowOnly when={!embed && isic4TaxonomyEnabled}>
+                <div className="form__field">
+                    <Suspense fallback={null}>
+                        <LazyIsicTaxonomySearch
+                            counts={isic4Counts}
+                            isic4={isic4}
+                            onIsic4Change={updateIsic4}
+                            onRequestCounts={fetchIsic4Counts}
+                            disabled={fetchingFacilities}
+                        />
+                    </Suspense>
+                </div>
+            </ShowOnly>
             <ShowOnly
                 when={
                     !embed ||
@@ -239,6 +300,8 @@ FilterSidebarExtendedSearch.defaultProps = {
     contributorTypeOptions: null,
     facilityProcessingTypeOptions: null,
     numberOfWorkersOptions: null,
+    isic4: [],
+    isic4Counts: null,
 };
 
 FilterSidebarExtendedSearch.propTypes = {
@@ -250,6 +313,11 @@ FilterSidebarExtendedSearch.propTypes = {
     parentCompany: contributorOptionsPropType.isRequired,
     facilityType: facilityTypeOptionsPropType.isRequired,
     processingType: processingTypeOptionsPropType.isRequired,
+    isic4: facilityTypeOptionsPropType,
+    updateIsic4: func.isRequired,
+    isic4Taxonomy: object.isRequired,
+    isic4Counts: object,
+    fetchIsic4Counts: func.isRequired,
     productType: productTypeOptionsPropType.isRequired,
     numberOfWorkers: numberOfWorkerOptionsPropType.isRequired,
     fetchingFacilities: bool.isRequired,
@@ -270,12 +338,15 @@ function mapStateToProps({
             data: numberOfWorkersOptions,
             fetching: fetchingNumberOfWorkers,
         },
+        taxonomyCounts: { isic4: { data: isic4Counts } = {} } = {},
+        isic4Taxonomy,
     },
     filters: {
         contributorTypes,
         parentCompany,
         facilityType,
         processingType,
+        isic4,
         productType,
         numberOfWorkers,
         nativeLanguageName,
@@ -293,6 +364,9 @@ function mapStateToProps({
         parentCompany,
         facilityType,
         processingType,
+        isic4,
+        isic4Counts,
+        isic4Taxonomy,
         productType,
         numberOfWorkers,
         nativeLanguageName,
@@ -313,6 +387,7 @@ function mapDispatchToProps(dispatch) {
         updateParentCompany: v => dispatch(updateParentCompanyFilter(v)),
         updateFacilityType: v => dispatch(updateFacilityTypeFilter(v)),
         updateProcessingType: v => dispatch(updateProcessingTypeFilter(v)),
+        updateIsic4: v => dispatch(updateIsic4Filter(v)),
         updateProductType: v => dispatch(updateProductTypeFilter(v)),
         updateNumberOfWorkers: v => dispatch(updateNumberofWorkersFilter(v)),
         updateNativeLanguageName: e =>
@@ -320,6 +395,9 @@ function mapDispatchToProps(dispatch) {
         fetchContributorTypes: () => dispatch(fetchContributorTypeOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
+        fetchIsic4TaxonomyConfig: () =>
+            dispatch(fetchIsic4TaxonomyConfigIfNeeded()),
+        fetchIsic4Counts: () => dispatch(fetchTaxonomyCountsIfNeeded()),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
     };
 }

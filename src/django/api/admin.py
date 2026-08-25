@@ -8,7 +8,7 @@ from django.contrib.admin import AdminSite
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -34,6 +34,8 @@ from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
 from api import models
 from api.models.partner_field import PartnerField
 from api.models.partner_field_admin import PartnerFieldAdmin
+from api.models.isic_taxonomy_config import IsicTaxonomyConfig
+from api.isic_taxonomy.admin_views import isic_taxonomy_admin_view
 
 from api.reports import get_report_names, run_report
 
@@ -311,6 +313,26 @@ class USCountyTigerlineAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
+class IsicTaxonomyConfigAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        return isic_taxonomy_admin_view(request, self.admin_site)
+
+    def change_view(
+        self,
+        request,
+        object_id,
+        form_url='',
+        extra_context=None,
+    ):
+        return redirect('admin:api_isictaxonomyconfig_changelist')
+
+
 class PartnerDataFileUploadAdmin(admin.ModelAdmin):
     list_display = (
         "uuid",
@@ -421,3 +443,4 @@ admin_site.register(
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
 admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)
+admin_site.register(IsicTaxonomyConfig, IsicTaxonomyConfigAdmin)
