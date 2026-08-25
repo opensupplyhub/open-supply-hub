@@ -33,6 +33,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * The targeted backfill populates the new ISIC section, division, group, and class columns for existing facilities; `reindex_database` is not required.
 * Upload, validate, publish, and enable the ISIC Rev 4 taxonomy in Django admin after deployment; the search control remains hidden until an active taxonomy is available.
 
+
 ## Release 2.29.0
 
 ## Introduction
