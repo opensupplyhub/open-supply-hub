@@ -35,8 +35,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
-        with:
-          persist-credentials: false
 
       - name: Create Release Tag
         id: tag_version
