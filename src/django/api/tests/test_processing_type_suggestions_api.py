@@ -479,6 +479,137 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(len(response.data) > 0)
 
+    def test_empty_query_splits_slots_between_taxonomy_and_contributors(self):
+        self._index_processing_types([
+            'Cutting',
+            'Sewing',
+            'alpha contributor',
+            'beta contributor',
+        ])
+
+        response = self.client.get(self.url, {'limit': 5})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self._values(response),
+            [
+                'Cutting',
+                'Dyeing',
+                'Sewing',
+                'alpha contributor',
+                'beta contributor',
+            ],
+        )
+        self.assertEqual(
+            sum(row['in_taxonomy'] for row in response.data),
+            3,
+        )
+        self.assertEqual(
+            sum(not row['in_taxonomy'] for row in response.data),
+            2,
+        )
+        self.assertLessEqual(len(response.data), 5)
+
+    def test_empty_query_backfills_when_taxonomy_is_sparse(self):
+        self._index_processing_types([
+            'alpha contributor',
+            'beta contributor',
+            'gamma contributor',
+        ])
+
+        response = self.client.get(self.url, {'limit': 5})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self._values(response),
+            [
+                'Dyeing',
+                'alpha contributor',
+                'beta contributor',
+                'gamma contributor',
+                'yarn dyeing services',
+            ],
+        )
+
+    def test_empty_query_backfills_when_contributors_are_sparse(self):
+        self._index_processing_types([
+            'Cutting',
+            'Packing',
+            'Sewing',
+        ])
+
+        response = self.client.get(self.url, {'limit': 5})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self._values(response),
+            [
+                'Cutting',
+                'Dyeing',
+                'Packing',
+                'Sewing',
+                'yarn dyeing services',
+            ],
+        )
+
+    def test_empty_query_equal_counts_use_deterministic_value_order(self):
+        self._index_processing_types([
+            'Cutting',
+            'alpha contributor',
+        ])
+
+        response = self.client.get(self.url, {'limit': 4})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            self._values(response),
+            [
+                'Cutting',
+                'Dyeing',
+                'alpha contributor',
+                'yarn dyeing services',
+            ],
+        )
+
+    def test_empty_query_limit_one_favors_taxonomy(self):
+        response = self.client.get(self.url, {'limit': 1})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data), 1)
+        self.assertTrue(response.data[0]['in_taxonomy'])
+
+    def test_empty_query_facility_type_boosts_within_taxonomy_quota(self):
+        self._index_processing_types(['Dyeing'], locations=2)
+        self._index_processing_types(['Sewing'])
+
+        response = self.client.get(
+            self.url,
+            {
+                'facility_type': 'Final Product Assembly',
+                'limit': 2,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]['value'], 'Sewing')
+        self.assertEqual(response.data[0]['count'], 1)
+        self.assertFalse(response.data[0]['dim'])
+        self.assertFalse(response.data[1]['in_taxonomy'])
+
+    def test_zero_count_taxonomy_is_hidden_empty_but_suggestible_when_typed(
+        self,
+    ):
+        empty_response = self.client.get(self.url)
+        typed_response = self.client.get(self.url, {'q': 'headquarters'})
+
+        self.assertNotIn('Headquarters', self._values(empty_response))
+        headquarters = next(
+            row for row in typed_response.data
+            if row['value'] == 'Headquarters'
+        )
+        self.assertEqual(headquarters['count'], 0)
+        self.assertTrue(headquarters['in_taxonomy'])
+
     def test_limit_is_applied(self):
         response = self.client.get(
             self.url,
@@ -492,7 +623,7 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
         response = self.client.get(self.url, {'limit': 1000})
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), MAX_SUGGESTION_LIMIT)
+        self.assertLessEqual(len(response.data), MAX_SUGGESTION_LIMIT)
 
     def test_invalid_limit_returns_400(self):
         response = self.client.get(

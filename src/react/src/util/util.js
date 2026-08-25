@@ -493,13 +493,26 @@ export const mapParamToReactSelectOption = param => {
     });
 };
 
-export const createSelectOptionsFromParams = params => {
+export const createSelectOptionsFromParams = (
+    params,
+    preserveStringValues = false,
+) => {
     const paramsInArray = !isArray(params) ? [params] : params;
+    const mapParam = preserveStringValues
+        ? param => {
+              if (isEmpty(param)) {
+                  return null;
+              }
+
+              return Object.freeze({
+                  value: param,
+                  label: param,
+              });
+          }
+        : mapParamToReactSelectOption;
 
     // compact to remove empty values from querystring params like 'countries='
-    return compact(
-        Object.freeze(paramsInArray.map(mapParamToReactSelectOption)),
-    );
+    return compact(Object.freeze(paramsInArray.map(mapParam)));
 };
 
 export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
@@ -553,6 +566,7 @@ export const createFiltersFromQueryString = qs => {
     const seenProcessingTypeIdentities = new Set();
     const hydratedProcessingTypes = createSelectOptionsFromParams(
         processingType,
+        true,
     ).reduce((options, option) => {
         const processingTypeIdentity = option.value.toLowerCase();
         if (seenProcessingTypeIdentities.has(processingTypeIdentity)) {

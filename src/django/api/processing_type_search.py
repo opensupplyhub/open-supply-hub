@@ -240,8 +240,9 @@ def _fetch_top_values_by_count(limit):
 
 def _taxonomy_candidates():
     """
-    Taxonomy labels are always suggestible, even with no locations indexed
-    under them yet, so they are offered alongside the view rows.
+    Supply taxonomy labels for typed queries even when no locations are
+    indexed under them yet. Empty-query ranking removes those zero-count
+    rows before applying its quotas.
     """
     return [
         (processing_type.lower(), processing_type, 0)
@@ -308,6 +309,43 @@ def _build_row(key, group, selected_facility_types):
     }
 
 
+def _select_empty_query_rows(rows, limit):
+    """
+    Apply the empty-query taxonomy/contributor quota.
+
+    Taxonomy receives half the slots rounded up and contributor values
+    receive half rounded down. A limit of one therefore favors taxonomy.
+    When either group cannot fill its quota, the other group backfills the
+    unused slots. Rows retain their deterministic rank within each group.
+    """
+    positive_count_rows = [row for row in rows if row['count'] > 0]
+    taxonomy_rows = [
+        row for row in positive_count_rows if row['in_taxonomy']
+    ]
+    contributor_rows = [
+        row for row in positive_count_rows if not row['in_taxonomy']
+    ]
+
+    taxonomy_quota = (limit + 1) // 2
+    contributor_quota = limit // 2
+    selected = [
+        *taxonomy_rows[:taxonomy_quota],
+        *contributor_rows[:contributor_quota],
+    ]
+
+    if len(selected) < limit:
+        selected.extend([
+            *taxonomy_rows[taxonomy_quota:],
+            *contributor_rows[contributor_quota:],
+        ][:limit - len(selected)])
+
+    selected_row_ids = {id(row) for row in selected}
+    return [
+        row for row in positive_count_rows
+        if id(row) in selected_row_ids
+    ][:limit]
+
+
 def search_processing_types(
     query='',
     facility_types=None,
@@ -316,9 +354,10 @@ def search_processing_types(
     """
     Rank processing type suggestions for a typeahead query.
 
-    An empty query returns the most common values with taxonomy terms
-    first. Selected facility types boost the values they are parents of and
-    dim the rest; nothing is filtered out.
+    An empty query balances positive-count taxonomy and contributor values
+    according to `_select_empty_query_rows`. Selected facility types boost
+    the values they are parents of and dim the rest; nothing is filtered
+    out for a typed query.
 
     `value` is the canonical casing for a case-insensitive exact filter.
     Taxonomy casing wins for an exact case-only identity match; contributor
@@ -355,6 +394,7 @@ def search_processing_types(
             -row['count'],
             row['value'],
         ))
+        rows = _select_empty_query_rows(rows, limit)
     else:
         rows.sort(key=lambda row: (
             -row['score'],

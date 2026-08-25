@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { array, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
@@ -36,6 +36,8 @@ import {
 } from '../util/propTypes';
 
 import { filterSidebarStyles } from '../util/styles';
+
+import { createQueryStringFromSearchFilters } from '../util/util';
 
 import {
     facilitiesRoute,
@@ -105,7 +107,7 @@ const checkIfAnyFieldSelected = fields => fields.some(f => f.length !== 0);
 const countHiddenFields = fields =>
     fields.reduce((count, f) => (f.length !== 0 ? count + 1 : count), 0);
 
-function FilterSidebarSearchTab({
+export function HomepageSidebarSearch({
     resetFilters,
     facilityFreeTextQuery,
     contributors,
@@ -128,6 +130,7 @@ function FilterSidebarSearchTab({
     partnerContributors,
 }) {
     const isSideBarSearch = true;
+    const processingTypeSearchRef = useRef(null);
     const hiddenFields = [
         contributorTypes,
         parentCompany,
@@ -166,6 +169,21 @@ function FilterSidebarSearchTab({
     }
 
     const hiddenFieldsCount = countHiddenFields(hiddenFields);
+    const commitPendingProcessingTypeQuery = action => {
+        const pendingQueryIsValid = processingTypeSearchRef.current?.commitPendingQuery?.();
+        if (pendingQueryIsValid === false) {
+            return;
+        }
+
+        action();
+    };
+    const handleSearchClick = () =>
+        commitPendingProcessingTypeQuery(searchForFacilities);
+    const handleApplyFilters = () =>
+        commitPendingProcessingTypeQuery(() => setExpand(false));
+    const handleDrawerClose = () =>
+        commitPendingProcessingTypeQuery(() => setExpand(false));
+
     const expandButton = (
         <div>
             <Button
@@ -191,7 +209,7 @@ function FilterSidebarSearchTab({
             variant="contained"
             type="submit"
             className={`${classes.font} ${classes.searchButton}`}
-            onClick={searchForFacilities}
+            onClick={handleSearchClick}
             disabled={fetchingOptions}
         >
             Find Facilities
@@ -203,7 +221,7 @@ function FilterSidebarSearchTab({
             variant="contained"
             type="submit"
             className={`${classes.font} ${classes.searchButton}`}
-            onClick={() => setExpand(false)}
+            onClick={handleApplyFilters}
             disabled={fetchingOptions}
         >
             Apply Filters
@@ -300,7 +318,7 @@ function FilterSidebarSearchTab({
             </div>
             <TitledDrawer
                 open={expand}
-                onClose={() => setExpand(false)}
+                onClose={handleDrawerClose}
                 title="Find facilities"
                 subtitle="Browse facilities using the criteria below."
             >
@@ -319,6 +337,7 @@ function FilterSidebarSearchTab({
                 </ShowOnly>
                 <FeatureFlag flag={EXTENDED_PROFILE_FLAG}>
                     <FilterSidebarExtendedSearch
+                        ref={processingTypeSearchRef}
                         isSideBarSearch={isSideBarSearch}
                     />
                 </FeatureFlag>
@@ -328,7 +347,7 @@ function FilterSidebarSearchTab({
     );
 }
 
-FilterSidebarSearchTab.propTypes = {
+HomepageSidebarSearch.propTypes = {
     resetFilters: func.isRequired,
     facilityFreeTextQuery: string.isRequired,
     contributors: contributorOptionsPropType.isRequired,
@@ -397,14 +416,27 @@ function mapStateToProps({
     };
 }
 
-function mapDispatchToProps(dispatch, { history: { replace, location } }) {
+export function mapDispatchToProps(dispatch, { history: { replace } }) {
     return {
         resetFilters: embedded => {
             dispatch(recordSearchTabResetButtonClick());
             return dispatch(resetAllFilters(embedded));
         },
         searchForFacilities: () =>
-            replace(`${facilitiesRoute}${location.search}`),
+            dispatch((_, getState) => {
+                const {
+                    filters,
+                    embeddedMap: { embed },
+                } = getState();
+                const queryString = createQueryStringFromSearchFilters(
+                    filters,
+                    embed,
+                );
+
+                return replace(
+                    `${facilitiesRoute}${queryString ? `?${queryString}` : ''}`,
+                );
+            }),
         resetHiddenFilters: () => dispatch(resetDrawerFilters()),
     };
 }
@@ -412,4 +444,4 @@ function mapDispatchToProps(dispatch, { history: { replace, location } }) {
 export default connect(
     mapStateToProps,
     mapDispatchToProps,
-)(withStyles(filterSidebarSearchTabStyles)(FilterSidebarSearchTab));
+)(withStyles(filterSidebarSearchTabStyles)(HomepageSidebarSearch));

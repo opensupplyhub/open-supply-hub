@@ -2,6 +2,7 @@ import React, { createRef } from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 
 import ProcessingTypeSearch from '../../components/Filters/ProcessingTypeSearch';
+import { createFiltersFromQueryString } from '../../util/util';
 
 jest.mock('../../components/SearchIcon', () => () => (
     <span data-testid="search-icon" />
@@ -315,6 +316,16 @@ describe('ProcessingTypeSearch component', () => {
             { value: 'cement mixing', label: 'cement mixing' },
         ]);
         expect(input).toHaveValue('');
+    });
+
+    test('renders a numeric-looking processing type hydrated from the URL', () => {
+        const { processingType } = createFiltersFromQueryString(
+            '?processing_type=300',
+        );
+        const { getByText } = renderComponent({ processingType });
+
+        expect(getByText('300')).toBeInTheDocument();
+        expect(processingType[0].value).toBe('300');
     });
 
     test('keyboard navigation walks both groups as one list', () => {

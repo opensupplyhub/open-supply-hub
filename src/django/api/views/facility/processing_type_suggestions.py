@@ -31,9 +31,10 @@ class ProcessingTypeSuggestionsView(APIView):
                 required=False,
                 description=(
                     'Text to match against processing type values, '
-                    'case- and accent-insensitively. When omitted, the '
-                    'most common values are returned with taxonomy terms '
-                    'first.'
+                    'case- and accent-insensitively. When omitted, positive-'
+                    'count results split slots evenly between taxonomy and '
+                    'contributor values, with taxonomy receiving the odd '
+                    'slot and either group backfilling unused slots.'
                 ),
             ),
             openapi.Parameter(
@@ -65,12 +66,12 @@ class ProcessingTypeSuggestionsView(APIView):
             'filter typeahead. Suggestions cover both the Apparel taxonomy '
             'and contributor-submitted values that are not part of it yet, '
             'each with the number of locations carrying it. Responses are '
-            'cached per set of query parameters.'
+            'cached per set of query parameters. Zero-count taxonomy values '
+            'remain available to typed queries but are omitted when the '
+            'query is empty.'
         ),
     )
-    # Version the namespace when suggestion identity semantics change so
-    # responses cached before a deployment cannot preserve obsolete rows.
-    @cache_view_response('processing_type_suggestions_v2')
+    @cache_view_response('processing_type_suggestions')
     def get(self, request):
         """
         ## Sample Response

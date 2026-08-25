@@ -725,6 +725,18 @@ it('creates a set of filters from a querystring', () => {
         createFiltersFromQueryString(freeTextProcessingTypeString),
     ).toMatchObject(expectedFreeTextProcessingTypeMatch);
 
+    expect(
+        createFiltersFromQueryString(
+            '?processing_type=300&processing_type=00300' +
+                '&processing_type_exact=00300',
+        ),
+    ).toMatchObject({
+        processingType: [
+            { value: '300', label: '300' },
+            { value: '00300', label: '00300', isExact: true },
+        ],
+    });
+
     const exactProcessingTypeString =
         '?processing_type=CAPS&processing_type=Caps' +
         '&processing_type=cement%20mixing' +
