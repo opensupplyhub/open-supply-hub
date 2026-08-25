@@ -50,13 +50,14 @@ used.*/
 CREATE INDEX api_facility_processing_value_variant_identity_idx
 	ON api_facility_processing_value_variant (kind, identity);
 
-/*Placeholders contributors upload instead of leaving the field empty. Kept
-in sync with the exclusions of index_processing_type() and
-index_facility_type(), which keep them out of api_facilityindex in the first
-place; the check is repeated here so rows indexed before those exclusions
-existed cannot reach the typeahead either. The length cap keeps the primary
-key entry under the 2704 byte limit of a btree index and drops free text too
-long to ever be a useful suggestion.*/
+/*Placeholders contributors upload instead of leaving the field empty, plus
+legacy production types that are not part of the taxonomy. Kept in sync with
+the exclusions of index_processing_type() and index_facility_type(), which
+keep them out of api_facilityindex in the first place; the check is repeated
+here so rows indexed before those exclusions existed cannot reach the
+typeahead either. The length cap keeps the primary key entry under the 2704
+byte limit of a btree index and drops free text too long to ever be a useful
+suggestion.*/
 CREATE OR REPLACE
 FUNCTION is_indexable_facility_processing_value(raw_value TEXT)
 RETURNS BOOLEAN
@@ -68,7 +69,8 @@ SELECT
 	AND btrim(raw_value) <> ''
 	AND length(raw_value) <= 500
 	AND lower(btrim(raw_value)) <> ALL (ARRAY[
-		'null', 'none', 'n/a', 'na', 'unknown', 'other', '-'
+		'null', 'none', 'n/a', 'na', 'unknown', 'other', '-',
+		'denim services', 'boarding'
 	]);
 $body$;
 

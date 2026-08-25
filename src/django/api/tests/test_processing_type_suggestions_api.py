@@ -438,6 +438,8 @@ class ProcessingTypeSuggestionsAPITest(FacilityAPITestCaseBase):
             'other',
             '-',
             '   ',
+            'denim services',
+            'boarding',
         ]
         self._index_processing_types([*placeholders, 'Dyeing'])
 
