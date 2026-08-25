@@ -7,17 +7,22 @@ on:
         description: 'Release version (e.g. 1.8)'
         required: true
         type: string
+
 jobs:
   create-release-branch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Create release branch
-        uses: peterjgrainger/action-create-branch@v3.0.0
+        uses: peterjgrainger/action-create-branch@v4.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           branch: releases/v.${{ inputs.release-version }}
-          sha: '${{ github.event.pull_request.head.sha }}'
+          sha: ${{ github.sha }}
