@@ -255,6 +255,19 @@ jobs:
           SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
           AWS_DEFAULT_REGION: "eu-west-1"
 
+      # Planfiles can contain sensitive values from state. Keep the object if
+      # apply failed so "Re-run failed jobs" can still download it. terraform-plan
+      # mode never reaches this job, so that review copy stays in S3.
+      - name: Delete planfile from S3 bucket for ${{ vars.ENV_NAME }}
+        if: success()
+        continue-on-error: true
+        run: aws s3 rm "s3://${{ env.SETTINGS_BUCKET }}/terraform/${{ env.SETTINGS_BUCKET }}.tfplan"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SETTINGS_BUCKET: oshub-settings-${{ steps.get_env_name.outputs.lowercase }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+
   build_and_push_react_app:
     needs: apply
     runs-on: ubuntu-latest
