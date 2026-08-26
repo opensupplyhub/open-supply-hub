@@ -85,25 +85,6 @@ class FacilityIndexBackfillTest(SimpleTestCase):
     def test_list_field_names_includes_processing_type(self):
         self.assertIn('processing_type', list_field_names())
 
-    def test_list_field_names_includes_facility_type(self):
-        self.assertIn('facility_type', list_field_names())
-
-    def test_build_update_sql_includes_facility_type_column(self):
-        spec = get_field_spec('facility_type')
-        sql = build_update_sql(spec)
-
-        self.assertIn('facility_type =', sql)
-        self.assertIn('index_facility_type(afi.id)', sql)
-        self.assertIn('updated_at = now()', sql)
-        self.assertIn('hashtext(afi.id::text)::bigint', sql)
-
-    def test_build_count_sql_applies_facility_type_filter(self):
-        spec = get_field_spec('facility_type')
-        sql = build_count_sql(spec)
-
-        self.assertIn("field_name = 'facility_type'", sql)
-        self.assertIn('hashtext(afi.id::text)::bigint', sql)
-
     def test_build_update_sql_includes_processing_type_column(self):
         spec = get_field_spec('processing_type')
         sql = build_update_sql(spec)

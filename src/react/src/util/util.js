@@ -213,14 +213,6 @@ export const makeGetGroupedSectorsURL = () => '/api/sectors/?grouped=true';
 export const makeGetParentCompaniesURL = () => '/api/parent-companies/';
 export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
-export const makeGetProcessingTypeSuggestionsURL = (
-    query = '',
-    facilityTypes = [],
-) =>
-    `/api/processing-type-suggestions/?${querystring.stringify({
-        q: query,
-        facility_type: facilityTypes,
-    })}`;
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
@@ -456,9 +448,6 @@ export const createQueryStringFromSearchFilters = (
         processing_type: createCompactSortedQuerystringInputObject(
             processingType,
         ),
-        processing_type_exact: createCompactSortedQuerystringInputObject(
-            processingType.filter(option => option.isExact),
-        ),
         product_type: createCompactSortedQuerystringInputObject(productType),
         number_of_workers: createCompactSortedQuerystringInputObject(
             numberOfWorkers,
@@ -493,26 +482,13 @@ export const mapParamToReactSelectOption = param => {
     });
 };
 
-export const createSelectOptionsFromParams = (
-    params,
-    preserveStringValues = false,
-) => {
+export const createSelectOptionsFromParams = params => {
     const paramsInArray = !isArray(params) ? [params] : params;
-    const mapParam = preserveStringValues
-        ? param => {
-              if (isEmpty(param)) {
-                  return null;
-              }
-
-              return Object.freeze({
-                  value: param,
-                  label: param,
-              });
-          }
-        : mapParamToReactSelectOption;
 
     // compact to remove empty values from querystring params like 'countries='
-    return compact(Object.freeze(paramsInArray.map(mapParam)));
+    return compact(
+        Object.freeze(paramsInArray.map(mapParamToReactSelectOption)),
+    );
 };
 
 export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
@@ -543,7 +519,6 @@ export const createFiltersFromQueryString = qs => {
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
-        processing_type_exact: exactProcessingTypes = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
         native_language_name: nativeLanguageName = '',
@@ -558,30 +533,6 @@ export const createFiltersFromQueryString = qs => {
         return isArray(val) ? compact(val) : compact([val]);
     };
 
-    const exactProcessingTypeIdentities = new Set(
-        normaliseStringArray(exactProcessingTypes).map(value =>
-            value.toLowerCase(),
-        ),
-    );
-    const seenProcessingTypeIdentities = new Set();
-    const hydratedProcessingTypes = createSelectOptionsFromParams(
-        processingType,
-        true,
-    ).reduce((options, option) => {
-        const processingTypeIdentity = option.value.toLowerCase();
-        if (seenProcessingTypeIdentities.has(processingTypeIdentity)) {
-            return options;
-        }
-        seenProcessingTypeIdentities.add(processingTypeIdentity);
-        options.push({
-            ...option,
-            ...(exactProcessingTypeIdentities.has(processingTypeIdentity)
-                ? { isExact: true }
-                : {}),
-        });
-        return options;
-    }, []);
-
     return Object.freeze({
         facilityFreeTextQuery,
         contributors: createSelectOptionsFromParams(contributors),
@@ -592,7 +543,7 @@ export const createFiltersFromQueryString = qs => {
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
-        processingType: hydratedProcessingTypes,
+        processingType: createSelectOptionsFromParams(processingType),
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,
@@ -1003,43 +954,6 @@ export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
         });
     }
     return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
-};
-
-const normalizeFacilityProcessingLabel = value => value.toLowerCase();
-
-export const restoreExactProcessingTypeLabels = (
-    processingTypes,
-    facilityProcessingTypes,
-) => {
-    if (!processingTypes?.length || !facilityProcessingTypes?.length) {
-        return processingTypes;
-    }
-
-    const taxonomyLabels = new Map();
-    facilityProcessingTypes.forEach(({ processingTypes: labels = [] }) => {
-        labels.forEach(label => {
-            taxonomyLabels.set(normalizeFacilityProcessingLabel(label), label);
-        });
-    });
-
-    let changed = false;
-    const restored = processingTypes.map(option => {
-        if (!option.isExact) {
-            return option;
-        }
-
-        const canonicalLabel = taxonomyLabels.get(
-            normalizeFacilityProcessingLabel(option.value),
-        );
-        if (!canonicalLabel || canonicalLabel === option.label) {
-            return option;
-        }
-
-        changed = true;
-        return { ...option, label: canonicalLabel };
-    });
-
-    return changed ? restored : processingTypes;
 };
 
 export const mapFacilityTypeOptions = (fPTypes, pTypes) => {

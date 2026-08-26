@@ -1,11 +1,11 @@
-import React, { forwardRef, useEffect } from 'react';
-import { bool, func, object } from 'prop-types';
+import React, { useEffect } from 'react';
+import { bool, func } from 'prop-types';
 import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import ShowOnly from './ShowOnly';
 import StyledSelect from './Filters/StyledSelect';
-import ProcessingTypeSearch from './Filters/ProcessingTypeSearch';
+
 import {
     updateContributorTypeFilter,
     updateParentCompanyFilter,
@@ -20,23 +20,22 @@ import {
     fetchContributorTypeOptions,
     fetchFacilityProcessingTypeOptions,
     fetchNumberOfWorkersOptions,
-    fetchProcessingTypeSuggestions,
 } from '../actions/filterOptions';
 
 import {
     contributorOptionsPropType,
     contributorTypeOptionsPropType,
-    facilityProcessingTypeOptionsPropType,
     facilityTypeOptionsPropType,
     processingTypeOptionsPropType,
+    facilityProcessingTypeOptionsPropType,
     productTypeOptionsPropType,
     numberOfWorkerOptionsPropType,
 } from '../util/propTypes';
 
 import {
     getValueFromEvent,
+    mapProcessingTypeOptions,
     mapFacilityTypeOptions,
-    restoreExactProcessingTypeLabels,
 } from '../util/util';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
@@ -49,35 +48,31 @@ const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
 const isExtendedFieldForThisContributor = (field, extendedFields) =>
     extendedFields.includes(field.toLowerCase());
 
-const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
-    const {
-        contributorTypeOptions,
-        facilityProcessingTypeOptions,
-        processingTypeSuggestions,
-        numberOfWorkersOptions,
-        contributorTypes,
-        updateContributorType,
-        parentCompany,
-        updateParentCompany,
-        facilityType,
-        updateFacilityType,
-        processingType,
-        updateProcessingType,
-        productType,
-        updateProductType,
-        numberOfWorkers,
-        updateNumberOfWorkers,
-        fetchingFacilities,
-        fetchingExtendedOptions,
-        embed,
-        embedExtendedFields,
-        fetchContributorTypes,
-        fetchFacilityProcessingType,
-        fetchSuggestionsForProcessingType,
-        fetchNumberOfWorkers,
-        isSideBarSearch,
-    } = props;
-
+function FilterSidebarExtendedSearch({
+    contributorTypeOptions,
+    facilityProcessingTypeOptions,
+    numberOfWorkersOptions,
+    contributorTypes,
+    updateContributorType,
+    parentCompany,
+    updateParentCompany,
+    facilityType,
+    updateFacilityType,
+    processingType,
+    updateProcessingType,
+    productType,
+    updateProductType,
+    numberOfWorkers,
+    updateNumberOfWorkers,
+    fetchingFacilities,
+    fetchingExtendedOptions,
+    embed,
+    embedExtendedFields,
+    fetchContributorTypes,
+    fetchFacilityProcessingType,
+    fetchNumberOfWorkers,
+    isSideBarSearch,
+}) {
     useEffect(() => {
         if (!contributorTypeOptions) {
             fetchContributorTypes();
@@ -89,16 +84,6 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
             fetchFacilityProcessingType();
         }
     }, [facilityProcessingTypeOptions, fetchFacilityProcessingType]);
-
-    useEffect(() => {
-        const restoredProcessingTypes = restoreExactProcessingTypeLabels(
-            processingType,
-            facilityProcessingTypeOptions,
-        );
-        if (restoredProcessingTypes !== processingType) {
-            updateProcessingType(restoredProcessingTypes);
-        }
-    }, [facilityProcessingTypeOptions, processingType, updateProcessingType]);
 
     useEffect(() => {
         if (!numberOfWorkersOptions) {
@@ -170,7 +155,7 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
                         name={FACILITY_TYPE}
                         options={mapFacilityTypeOptions(
                             facilityProcessingTypeOptions || [],
-                            [],
+                            processingType,
                         )}
                         value={facilityType}
                         onChange={updateFacilityType}
@@ -189,16 +174,17 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
                 }
             >
                 <div className="form__field">
-                    <ProcessingTypeSearch
-                        processingTypeSearchRef={ref}
+                    <StyledSelect
                         label="Processing Type"
-                        placeholder="Search processing types"
-                        processingType={processingType}
-                        onProcessingTypeChange={updateProcessingType}
-                        facilityType={facilityType}
-                        suggestions={processingTypeSuggestions}
-                        onFetchSuggestions={fetchSuggestionsForProcessingType}
-                        disabled={fetchingFacilities}
+                        name={PROCESSING_TYPE}
+                        options={mapProcessingTypeOptions(
+                            facilityProcessingTypeOptions || [],
+                            facilityType,
+                        )}
+                        value={processingType}
+                        onChange={updateProcessingType}
+                        disabled={fetchingExtendedOptions || fetchingFacilities}
+                        isSideBarSearch={isSideBarSearch}
                     />
                 </div>
             </ShowOnly>
@@ -247,24 +233,17 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
             </ShowOnly>
         </>
     );
-});
+}
 
 FilterSidebarExtendedSearch.defaultProps = {
     contributorTypeOptions: null,
     facilityProcessingTypeOptions: null,
-    processingTypeSuggestions: Object.freeze({
-        query: null,
-        data: null,
-        fetching: false,
-        error: null,
-    }),
     numberOfWorkersOptions: null,
 };
 
 FilterSidebarExtendedSearch.propTypes = {
     contributorTypeOptions: contributorTypeOptionsPropType,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
-    processingTypeSuggestions: object,
     numberOfWorkersOptions: numberOfWorkerOptionsPropType,
     updateContributorType: func.isRequired,
     contributorTypes: contributorTypeOptionsPropType.isRequired,
@@ -286,8 +265,7 @@ function mapStateToProps({
         facilityProcessingType: {
             data: facilityProcessingTypeOptions,
             fetching: fetchingFacilityProcessingType,
-        } = {},
-        processingTypeSuggestions,
+        },
         numberOfWorkers: {
             data: numberOfWorkersOptions,
             fetching: fetchingNumberOfWorkers,
@@ -310,7 +288,6 @@ function mapStateToProps({
     return {
         contributorTypeOptions,
         facilityProcessingTypeOptions,
-        processingTypeSuggestions,
         numberOfWorkersOptions,
         contributorTypes,
         parentCompany,
@@ -343,12 +320,11 @@ function mapDispatchToProps(dispatch) {
         fetchContributorTypes: () => dispatch(fetchContributorTypeOptions()),
         fetchFacilityProcessingType: () =>
             dispatch(fetchFacilityProcessingTypeOptions()),
-        fetchSuggestionsForProcessingType: (query, facilityTypes) =>
-            dispatch(fetchProcessingTypeSuggestions(query, facilityTypes)),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),
     };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps, null, {
-    forwardRef: true,
-})(FilterSidebarExtendedSearch);
+export default connect(
+    mapStateToProps,
+    mapDispatchToProps,
+)(FilterSidebarExtendedSearch);

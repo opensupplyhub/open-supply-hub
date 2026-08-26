@@ -4,7 +4,6 @@ import { createAction } from 'redux-act';
 import {
     createFiltersFromQueryString,
     mapPartnerGroupContributorsToSelectOptions,
-    restoreExactProcessingTypeLabels,
     updateListWithLabels,
 } from '../util/util';
 import { optionsForSortingResults } from '../util/constants';
@@ -80,7 +79,6 @@ export function setFiltersFromQueryString(qs = '') {
                 contributors: { data: contributors },
                 parentCompanies: { data: parentCompanies },
                 lists: { data: lists },
-                facilityProcessingType: { data: facilityProcessingTypes },
             },
             partnerGroupContributors: { data: partnerGroupContributors },
             embeddedMap: { embed },
@@ -112,17 +110,6 @@ export function setFiltersFromQueryString(qs = '') {
             ? update(payload, {
                   lists: {
                       $set: updateListWithLabels(filters.lists, lists),
-                  },
-              })
-            : payload;
-
-        payload = facilityProcessingTypes
-            ? update(payload, {
-                  processingType: {
-                      $set: restoreExactProcessingTypeLabels(
-                          filters.processingType,
-                          facilityProcessingTypes,
-                      ),
                   },
               })
             : payload;

@@ -15,7 +15,6 @@ import {
     makeGetGroupedSectorsURL,
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
-    makeGetProcessingTypeSuggestionsURL,
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
     mapDjangoChoiceTuplesValueToSelectOptions,
@@ -97,16 +96,6 @@ export const failFetchFacilityProcessingTypeOptions = createAction(
 );
 export const completeFetchFacilityProcessingTypeOptions = createAction(
     'COMPLETE_FETCH_FACILITY_PROCESSING_TYPE_OPTIONS',
-);
-
-export const startFetchProcessingTypeSuggestions = createAction(
-    'START_FETCH_PROCESSING_TYPE_SUGGESTIONS',
-);
-export const failFetchProcessingTypeSuggestions = createAction(
-    'FAIL_FETCH_PROCESSING_TYPE_SUGGESTIONS',
-);
-export const completeFetchProcessingTypeSuggestions = createAction(
-    'COMPLETE_FETCH_PROCESSING_TYPE_SUGGESTIONS',
 );
 
 export const startFetchNumberOfWorkersOptions = createAction(
@@ -307,44 +296,6 @@ export function fetchFacilityProcessingTypeOptions() {
                         err,
                         'An error prevented fetching facility processing type options',
                         failFetchFacilityProcessingTypeOptions,
-                    ),
-                ),
-            );
-    };
-}
-
-export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
-    return dispatch => {
-        const requestIdentity = makeGetProcessingTypeSuggestionsURL(
-            query,
-            facilityTypes,
-        );
-        dispatch(
-            startFetchProcessingTypeSuggestions({ query, requestIdentity }),
-        );
-
-        return apiRequest
-            .get(requestIdentity)
-            .then(({ data }) =>
-                dispatch(
-                    completeFetchProcessingTypeSuggestions({
-                        query,
-                        requestIdentity,
-                        data,
-                    }),
-                ),
-            )
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching processing type suggestions',
-                        messages =>
-                            failFetchProcessingTypeSuggestions({
-                                query,
-                                requestIdentity,
-                                error: messages,
-                            }),
                     ),
                 ),
             );
