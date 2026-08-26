@@ -37,10 +37,12 @@ class FacilityClaimReviewNote(models.Model):
         choices=NOTE_TYPE_CHOICES,
         default=FacilityClaimReviewNoteTypes.INTERNAL,
         db_default=FacilityClaimReviewNoteTypes.INTERNAL,
-        help_text=('Whether the note is internal to moderators or was '
-                   'emailed to the claimant. Rows created before this field '
-                   'existed default to INTERNAL regardless of how they were '
-                   'delivered.'))
+        help_text=('How the note was delivered. CLAIMANT_MESSAGE = emailed '
+                   'to the claimant via the message-claimant action. '
+                   'INTERNAL = not sent directly, although the reason text '
+                   'in deny/revoke notes may still reach the claimant '
+                   'inside status emails. Rows created before this field '
+                   'existed default to INTERNAL regardless of delivery.'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
