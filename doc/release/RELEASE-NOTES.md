@@ -9,6 +9,17 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Database changes
+
+#### Migrations
+* `0234_add_note_type_to_facility_claim_review_note.py` - Adds the `note_type` column (`INTERNAL` | `CLAIMANT_MESSAGE`, default `INTERNAL`) to `api_facilityclaimreviewnote` and its `api_historicalfacilityclaimreviewnote` mirror. See OSDEV-3351.
+
+#### Schema changes
+* [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `FacilityClaimReviewNote.note_type` distinguishes internal moderator notes from messages emailed to the claimant. Legacy rows default to `INTERNAL` with no backfill — there is no reliable signal for which old notes were emailed, so delivery labels are only trustworthy for notes created after this deploys (data self-corrects as claims churn).
+
+### Code/API changes
+* [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `POST /api/facility-claims/{id}/message-claimant/` now records its review note as `CLAIMANT_MESSAGE`; `POST /api/facility-claims/{id}/note/` records `INTERNAL`. Claim detail responses include `note_type` on each note, enabling the claims dashboard v2 to label the activity timeline and derive queue stages (new / awaiting claimant / reply overdue).
+
 ### Bugfix
 * [OSDEV-3349](https://opensupplyhub.atlassian.net/browse/OSDEV-3349) - **Deploy to AWS** now deletes the Terraform planfile from `s3://oshub-settings-<env>/terraform/` after a successful apply. The object is the handoff between `init-and-plan` and `apply`, so it cannot be removed after plan; it was previously left in the settings bucket indefinitely and can contain sensitive values from state. A failed apply still keeps the file so **Re-run failed jobs** can download it. `deploy-mode: terraform-plan` is unchanged — apply never runs, so the review copy stays in S3.
 

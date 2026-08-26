@@ -97,6 +97,11 @@ class FacilityClaimStatuses:
     REVOKED = 'REVOKED'
 
 
+class FacilityClaimReviewNoteTypes:
+    INTERNAL = 'INTERNAL'
+    CLAIMANT_MESSAGE = 'CLAIMANT_MESSAGE'
+
+
 class Affiliations:
     BENEFITS_BUSINESS_WORKERS = 'Benefits for Business and Workers (BBW)'
     BETTER_MILLS_PROGRAM = 'Better Mills Program'

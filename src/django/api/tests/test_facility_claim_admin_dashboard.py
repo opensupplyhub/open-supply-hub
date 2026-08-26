@@ -1,5 +1,8 @@
 from django.utils import timezone
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
 from api.models import (
     Contributor,
     Facility,
@@ -494,6 +497,30 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         ).count()
 
         self.assertEqual(notes_count, 1)
+
+        note = FacilityClaimReviewNote.objects.get(
+            claim=self.facility_claim_first
+        )
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.INTERNAL
+        )
+        self.assertEqual(
+            response.data["notes"][0]["note_type"],
+            FacilityClaimReviewNoteTypes.INTERNAL,
+        )
+
+    def test_review_note_type_defaults_to_internal(self):
+        # Rows created without an explicit type (legacy data and the
+        # status-change notes written by approve/deny/revoke) must read
+        # as INTERNAL.
+        note = FacilityClaimReviewNote.objects.create(
+            claim=self.facility_claim_first,
+            author=self.superuser,
+            note="created without an explicit type",
+        )
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.INTERNAL
+        )
 
     @override_switch("claim_a_facility", active=True)
     def test_claims_list_API_accessible_only_to_superusers(self):

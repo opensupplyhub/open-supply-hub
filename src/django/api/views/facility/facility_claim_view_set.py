@@ -17,7 +17,10 @@ from django.db import models, transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
 from ...geocoding import geocode_address
@@ -233,6 +236,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 claim=claim,
                 author=request.user,
                 note=message,
+                note_type=FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
             )
 
             send_message_to_claimant_email(request, claim, message)
@@ -413,7 +417,8 @@ class FacilityClaimViewSet(ModelViewSet):
             FacilityClaimReviewNote.objects.create(
                 claim=claim,
                 author=request.user,
-                note=request.data.get('note')
+                note=request.data.get('note'),
+                note_type=FacilityClaimReviewNoteTypes.INTERNAL,
             )
 
             response_data = FacilityClaimDetailsSerializer(claim).data

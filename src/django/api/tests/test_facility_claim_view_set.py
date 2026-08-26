@@ -1,3 +1,4 @@
+from api.constants import FacilityClaimReviewNoteTypes
 from api.models import (
     Contributor,
     Facility,
@@ -221,6 +222,23 @@ class FacilityClaimViewSetTest(APITestCase):
         self.assertEqual(response.data['status'], 'PENDING')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(notes_count, 1)
+
+    def test_message_claimant_note_is_claimant_message_type(self):
+        response = self._post_message_claimant(
+            self.facility_claim_first.id, "Hello, claimant!"
+        )
+        note = FacilityClaimReviewNote.objects.get(
+            claim=self.facility_claim_first
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE
+        )
+        self.assertEqual(
+            response.data['notes'][0]['note_type'],
+            FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
+        )
 
     def get_facility_claims(self, statuses='', countries=''):
         url = '/api/facility-claims/?' + statuses + countries
