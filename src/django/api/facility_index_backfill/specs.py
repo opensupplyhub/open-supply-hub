@@ -15,9 +15,9 @@ CLAIMED_FACILITIES_FILTER = "claim_info IS NOT NULL"
 
 APPROVED_CLAIM_FACILITIES_FILTER = "approved_claim IS NOT NULL"
 
-# Only facilities that have at least one processing_type ExtendedField can
-# change when index_processing_type() is recomputed; this skips the millions
-# of rows without processing type data.
+# Only facilities that have a matching ExtendedField can change when the
+# corresponding index function is recomputed; these filters skip locations
+# without Facility Type or Processing Type data.
 FACILITY_TYPE_FILTER = (
     "EXISTS ("
     "SELECT 1 FROM api_extendedfield aef "

@@ -3,6 +3,36 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.29.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Database changes
+
+#### Migrations
+* `0234_revert_facility_processing_search.py` - Reverses the database behavior introduced by migrations `0231`–`0233` without deleting their applied migration history: removes the six Facility Type and Processing Type search indexes, aggregate tables and maintenance triggers, drops the search helper functions, and restores the previous `index_facility_type()` and `index_processing_type()` definitions. The migration is reversible and leaves the unrelated `0230_setup_india_labour_line_partner_field` migration applied. See OSDEV-3189.
+
+#### Schema changes
+* [Hotfix][OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) - Removes the derived `api_facility_processing_value` and `api_facility_processing_value_variant` tables and the indexes, triggers, functions and procedures used by Facility Type and Processing Type autocomplete.
+
+### Code/API changes
+* [Hotfix][OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) - Removes `GET /api/processing-type-suggestions/`, restores the previous facility list, download and tile filtering behavior, and restores the previous Facility Type and Processing Type controls in the React application.
+
+### Bugfix
+* [Hotfix][OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) - Rolls back Facility Type and Processing Type taxonomy search after a Production regression.
+
+### Release instructions
+* Ensure that the following commands are included in `post_deployment`, in this order:
+    * `migrate`
+    * `backfill_facility_index --fields facility_type,processing_type`
+* The backfill recomputes `api_facilityindex.facility_type` and `api_facilityindex.processing_type` with the restored pre-2.29 indexing functions. Monitor RDS load and deployment-task runtime; it commits in batches and can be rerun safely after interruption.
+* No OpenSearch reindex is required for this rollback.
+
+---
+
+
 ## Release 2.29.0
 
 ## Introduction

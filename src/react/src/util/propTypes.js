@@ -255,7 +255,6 @@ export const processingTypeOptionsPropType = arrayOf(
     shape({
         value: string.isRequired,
         label: string.isRequired,
-        isExact: bool,
     }),
 );
 

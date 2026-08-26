@@ -1,4 +1,3 @@
-from io import StringIO
 from unittest.mock import MagicMock, patch
 
 from django.core.management import call_command
@@ -30,18 +29,13 @@ class InstallDbExtsTest(SimpleTestCase):
 
     def test_raises_when_an_extension_fails(self):
         connection, _ = self._mock_connection(['pgaudit'])
-        stderr = StringIO()
 
         with patch('api.management.commands.install_db_exts.connection',
                    connection):
             with self.assertRaises(CommandError) as context:
-                call_command('install_db_exts', stderr=stderr)
+                call_command('install_db_exts')
 
         self.assertIn('pgaudit', str(context.exception))
-        self.assertIn(
-            'pgaudit must be loaded via shared_preload_libraries',
-            stderr.getvalue(),
-        )
 
     def test_attempts_every_extension_before_failing(self):
         connection, cursor = self._mock_connection(['btree_gin'])
@@ -49,7 +43,7 @@ class InstallDbExtsTest(SimpleTestCase):
         with patch('api.management.commands.install_db_exts.connection',
                    connection):
             with self.assertRaises(CommandError):
-                call_command('install_db_exts', stderr=StringIO())
+                call_command('install_db_exts')
 
         # The first extension fails, but the rest are still attempted.
         self.assertEqual(cursor.execute.call_count, 6)

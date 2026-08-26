@@ -11,7 +11,7 @@ class ProductTypes(APIView):
     @cache_view_response('product_types')
     def get(self, request):
         """
-        Returns a list of suggested product types by combining OS Hub Taxonomy
+        Returns a list of suggested product types by combining standard types
         with distinct values submitted by contributors.
 
         ## Sample Response
