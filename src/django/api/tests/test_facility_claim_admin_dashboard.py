@@ -496,6 +496,63 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         self.assertEqual(notes_count, 1)
 
     @override_switch("claim_a_facility", active=True)
+    def test_status_change_details_exposed_for_decided_claim(self):
+        self.client.post(
+            "/api/facility-claims/{}/deny/".format(
+                self.facility_claim_first.id
+            ),
+            {"reason": "Insufficient documentation"},
+        )
+
+        response = self.client.get(
+            "/api/facility-claims/{}/".format(self.facility_claim_first.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+        status_change = response.data["status_change"]
+        self.assertEqual(
+            "Insufficient documentation",
+            status_change["status_change_reason"],
+        )
+        self.assertEqual(
+            self.superuser.email, status_change["status_change_by"]
+        )
+        self.assertIsNotNone(status_change["status_change_date"])
+
+    @override_switch("claim_a_facility", active=True)
+    def test_decided_claim_with_null_decider_does_not_crash(self):
+        # Legacy decided claims can have status_change_by = NULL; the
+        # serializer must return nulls, not raise AttributeError.
+        claim = self.facility_claim_first
+        claim.status = FacilityClaimStatuses.DENIED
+        claim.status_change_reason = "decided before deciders were recorded"
+        claim.save()
+
+        response = self.client.get(
+            "/api/facility-claims/{}/".format(claim.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+        status_change = response.data["status_change"]
+        self.assertIsNone(status_change["status_change_by"])
+        self.assertEqual(
+            "decided before deciders were recorded",
+            status_change["status_change_reason"],
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_pending_claim_status_change_stays_suppressed(self):
+        response = self.client.get(
+            "/api/facility-claims/{}/".format(self.facility_claim_first.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+        status_change = response.data["status_change"]
+        self.assertIsNone(status_change["status_change_by"])
+        self.assertIsNone(status_change["status_change_reason"])
+        self.assertIsNone(status_change["status_change_date"])
+
+    @override_switch("claim_a_facility", active=True)
     def test_claims_list_API_accessible_only_to_superusers(self):
         response = self.client.get("/api/facility-claims/")
         self.assertEqual(200, response.status_code)
