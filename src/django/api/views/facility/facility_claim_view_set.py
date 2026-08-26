@@ -232,13 +232,9 @@ class FacilityClaimViewSet(ModelViewSet):
             if not message:
                 raise BadRequestException('Message is required.')
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=message,
-                note_type=FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
-            )
-
+            # Creates the CLAIMANT_MESSAGE review note and sends the
+            # email as one unit (see mail.py) — @transaction.atomic
+            # rolls the note back if the send fails.
             send_message_to_claimant_email(request, claim, message)
 
             response_data = FacilityClaimDetailsSerializer(claim).data

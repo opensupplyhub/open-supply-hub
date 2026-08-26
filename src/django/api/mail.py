@@ -6,11 +6,15 @@ from waffle import switch_is_active
 from api.models import (
     FacilityList,
     FacilityClaim,
+    FacilityClaimReviewNote,
     ModerationEvent,
     Facility
 )
 from countries.lib.countries import COUNTRY_NAMES
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
 
 
 PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
@@ -101,6 +105,25 @@ def send_claim_facility_confirmation_email(request, facility_claim):
 
 
 def send_message_to_claimant_email(request, facility_claim, message):
+    """
+    Email a moderator message to the claimant and record it as a
+    CLAIMANT_MESSAGE review note.
+
+    The note is created here, next to the send, so the record and the
+    delivery can never drift apart (and so future delivery changes —
+    e.g. bounce handling — happen in one place). It is written before
+    the send on purpose: callers run inside @transaction.atomic, so a
+    failed send raises and rolls the note back. Do NOT swallow send
+    errors and return normally — that would commit a CLAIMANT_MESSAGE
+    note for an email that never went out.
+    """
+    FacilityClaimReviewNote.objects.create(
+        claim=facility_claim,
+        author=request.user,
+        note=message,
+        note_type=FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
+    )
+
     subj_template = get_template('mail/message_claimant_subject.txt')
     text_template = get_template('mail/message_claimant_body.txt')
     html_template = get_template('mail/message_claimant_body.html')
