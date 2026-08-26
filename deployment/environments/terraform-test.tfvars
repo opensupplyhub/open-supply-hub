@@ -146,6 +146,7 @@ vanta_assumed_role_external_ids_secret_name = "oshub/test/vanta-assumed-role-ext
 vanta_assumed_role_principals_secret_name = "oshub/test/vanta-assumed-role-principals"
 contribot_os_hub_api_token_secret_name = "oshub/test/contribot-os-hub-api-token"
 contribot_monday_board_id = "18428337529"
+contribot_last_list_id = "9526"
 contribot_monday_api_key_secret_name = "oshub/test/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/test/contribot-slack-api-url"
 contribot_slack_failures_api_url_secret_name = "oshub/test/contribot-slack-failures-api-url"
