@@ -2,8 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import { connect, useDispatch } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import IconButton from '@material-ui/core/IconButton';
 import InputLabel from '@material-ui/core/InputLabel';
+import Popper from '@material-ui/core/Popper';
 import { withStyles } from '@material-ui/core/styles';
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 
 import {
     getIsic4SearchIndex,
@@ -30,7 +33,7 @@ const reactSelectOptionPropType = shape({
     label: string.isRequired,
 });
 
-function IsicTaxonomySearch({
+export function IsicTaxonomySearch({
     counts,
     isic4,
     onIsic4Change,
@@ -43,9 +46,11 @@ function IsicTaxonomySearch({
     const [query, setQuery] = useState('');
     const [activeRowIndex, setActiveRowIndex] = useState(-1);
     const [isFocused, setIsFocused] = useState(false);
+    const [infoAnchorEl, setInfoAnchorEl] = useState(null);
     const [expandedNodeIds, setExpandedNodeIds] = useState(new Set());
     const countsRequestedRef = useRef(false);
     const inputRef = useRef(null);
+    const infoCloseTimerRef = useRef(null);
     const { config: isic4TaxonomyConfig, data: taxonomy, fetching, error } =
         isic4Taxonomy ?? {};
     const taxonomyVersion =
@@ -58,6 +63,15 @@ function IsicTaxonomySearch({
             dispatch(fetchIsic4Taxonomy());
         }
     }, [dispatch, taxonomy, fetching, error]);
+
+    useEffect(
+        () => () => {
+            if (infoCloseTimerRef.current) {
+                clearTimeout(infoCloseTimerRef.current);
+            }
+        },
+        [],
+    );
 
     const searchIndex = useMemo(() => {
         if (!taxonomy) {
@@ -230,7 +244,96 @@ function IsicTaxonomySearch({
     };
 
     const listboxId = 'isic4-taxonomy-results';
+    const infoPopoverId = 'isic4-taxonomy-information';
+    const infoPopoverTitleId = 'isic4-taxonomy-information-title';
     const label = 'International Standard Industrial Classification "ISIC"';
+    const keepInfoOpen = () => {
+        if (infoCloseTimerRef.current) {
+            clearTimeout(infoCloseTimerRef.current);
+            infoCloseTimerRef.current = null;
+        }
+    };
+    const openInfo = event => {
+        keepInfoOpen();
+        setInfoAnchorEl(event.currentTarget);
+    };
+    const closeInfoSoon = () => {
+        keepInfoOpen();
+        infoCloseTimerRef.current = setTimeout(() => {
+            setInfoAnchorEl(null);
+        }, 100);
+    };
+    const renderLabel = () => (
+        <InputLabel
+            shrink={false}
+            component="div"
+            className={classes.inputLabelStyle}
+        >
+            <span className={classes.labelWithInfo}>
+                {label}
+                <IconButton
+                    className={classes.infoButton}
+                    aria-label="What is ISIC?"
+                    aria-haspopup="dialog"
+                    aria-controls={infoAnchorEl ? infoPopoverId : undefined}
+                    aria-expanded={Boolean(infoAnchorEl)}
+                    onMouseEnter={openInfo}
+                    onMouseLeave={closeInfoSoon}
+                    onFocus={openInfo}
+                    onBlur={closeInfoSoon}
+                    onKeyDown={event => {
+                        if (event.key === 'Escape') {
+                            keepInfoOpen();
+                            setInfoAnchorEl(null);
+                        }
+                    }}
+                >
+                    <InfoOutlinedIcon fontSize="small" />
+                </IconButton>
+            </span>
+            <Popper
+                open={Boolean(infoAnchorEl)}
+                anchorEl={infoAnchorEl}
+                placement="bottom-start"
+                className={classes.infoPopper}
+            >
+                <div
+                    id={infoPopoverId}
+                    className={classes.infoPopover}
+                    role="dialog"
+                    aria-labelledby={infoPopoverTitleId}
+                    onMouseEnter={keepInfoOpen}
+                    onMouseLeave={closeInfoSoon}
+                    onFocus={keepInfoOpen}
+                    onBlur={closeInfoSoon}
+                >
+                    <strong id={infoPopoverTitleId}>What is ISIC?</strong>
+                    <p>
+                        The International Standard Industrial Classification
+                        (ISIC) is the United Nations&apos; system for
+                        classifying businesses by the kind of economic activity
+                        they perform. It&apos;s used by governments and
+                        statistical agencies worldwide, and it covers every
+                        industry.
+                    </p>
+                    <p>
+                        Codes run from broad to specific: <strong>C</strong>{' '}
+                        Manufacturing → <strong>14</strong> Manufacture of
+                        wearing apparel → <strong>1410</strong> Manufacture of
+                        wearing apparel, except fur apparel.
+                    </p>
+                    <a
+                        href="https://unstats.un.org/unsd/classifications/Econ/isic"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Learn more
+                    </a>
+                    .
+                </div>
+            </Popper>
+        </InputLabel>
+    );
 
     if (!taxonomy && !fetching && !error) {
         return null;
@@ -239,13 +342,7 @@ function IsicTaxonomySearch({
     if (fetching || !taxonomy) {
         return (
             <div className={classes.root}>
-                <InputLabel
-                    shrink={false}
-                    component="div"
-                    className={classes.inputLabelStyle}
-                >
-                    {label}
-                </InputLabel>
+                {renderLabel()}
                 <CircularProgress size={24} />
             </div>
         );
@@ -254,13 +351,7 @@ function IsicTaxonomySearch({
     if (error) {
         return (
             <div className={classes.root}>
-                <InputLabel
-                    shrink={false}
-                    component="div"
-                    className={classes.inputLabelStyle}
-                >
-                    {label}
-                </InputLabel>
+                {renderLabel()}
                 <p className={classes.hint}>
                     Unable to load ISIC taxonomy. Try refreshing the page.
                 </p>
@@ -274,13 +365,7 @@ function IsicTaxonomySearch({
 
     return (
         <div className={classes.root}>
-            <InputLabel
-                shrink={false}
-                component="div"
-                className={classes.inputLabelStyle}
-            >
-                {label}
-            </InputLabel>
+            {renderLabel()}
             <TaxonomySearchControl
                 inputId="isic4-taxonomy-search"
                 inputRef={inputRef}

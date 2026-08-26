@@ -58,6 +58,8 @@ class FacilitiesIsic4FilterTest(FacilityAPITestCaseBase):
         FacilityIndex.objects.filter(id=self.facility.id).update(
             contributors_count=2,
             isic_section=['C'],
+            isic_division=['14'],
+            isic_group=['141'],
             isic_class=['1410', '1411'],
             facility_type=['Final Product Assembly'],
         )
@@ -99,6 +101,16 @@ class FacilitiesIsic4FilterTest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         ids = {feature['id'] for feature in response.data['features']}
         self.assertEqual(ids, {self.facility_two.id})
+
+    def test_division_filter_returns_descendant_classes(self):
+        response = self.client.get(
+            reverse('facility-list'),
+            {'isic_4': 'division:14'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        ids = {feature['id'] for feature in response.data['features']}
+        self.assertEqual(ids, {self.facility.id})
 
     def test_multiple_class_filters_use_or_semantics(self):
         response = self.client.get(
