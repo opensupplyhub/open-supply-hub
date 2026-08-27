@@ -147,3 +147,4 @@ async def build_gazetteer():
         GazetteerCache.get_latest()
     except Exception as e:
         log.error(f'[Matching] Initial Gazetteer Build Error: {e}')
+        raise

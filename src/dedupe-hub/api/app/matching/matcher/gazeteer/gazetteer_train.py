@@ -41,7 +41,9 @@ def gazetteer_train(
                                      'training.json')
         with open(training_file) as tf:
             gazetteer.readTraining(tf)
-        gazetteer.train()
+        # Avoid TF-IDF/Levenshtein rules during train(); they need an index
+        # that does not exist until gazetteer.index() below.
+        gazetteer.train(index_predicates=False)
         gazetteer.cleanupTraining()
 
     if should_index:
