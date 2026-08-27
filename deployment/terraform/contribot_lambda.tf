@@ -21,6 +21,7 @@ locals {
 
   contribot_notify_environment = {
     CONTRIBOT_STATE_TABLE_NAME          = aws_dynamodb_table.contribot_state.name
+    ENVIRONMENT                         = var.environment
     OS_HUB_API_URL                      = local.contribot_os_hub_api_url
     MONDAY_API_URL                      = "https://api.monday.com/v2"
     MONDAY_BOARD_ID                     = var.contribot_monday_board_id
