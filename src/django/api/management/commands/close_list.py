@@ -4,7 +4,8 @@ from api.close_list import close_list
 
 
 class Command(BaseCommand):
-    help = 'Closes all the facilities in a list.'
+    help = ('Closes facilities in a list — all of them, or only those whose '
+            'uploaded rows carry given values in a raw status column.')
 
     def add_arguments(self, parser):
         # Create a group of arguments explicitly labeled as required,
@@ -17,8 +18,39 @@ class Command(BaseCommand):
                            required=True,
                            help='The id of the user to record as responsible' +
                            ' for the closures.')
+        parser.add_argument('--status-field',
+                            help='Name of the raw uploaded column holding the '
+                            'status (e.g. "status"). When given, only '
+                            'facilities whose rows match --status-values are '
+                            'closed; facilities that any row of this list '
+                            'marks with a different value are left open.')
+        parser.add_argument('--status-values',
+                            nargs='+',
+                            default=['INACTIVE', 'SUSPENDED'],
+                            help='Raw column values (case-insensitive) that '
+                            'mark a row as closed. Default: INACTIVE '
+                            'SUSPENDED. Only used with --status-field.')
+        parser.add_argument('--apply',
+                            action='store_true',
+                            help='Actually close facilities. Without this '
+                            'flag the command is a DRY RUN: it only reports '
+                            'what would be closed.')
 
     def handle(self, *args, **options):
-        list_id = options['list_id']
-        user_id = options['user_id']
-        close_list(list_id, user_id)
+        summary = close_list(
+            options['list_id'],
+            options['user_id'],
+            status_field=options.get('status_field'),
+            status_values=options.get('status_values'),
+            dry_run=not options.get('apply', False),
+        )
+        mode = 'DRY RUN — would close' if summary['dry_run'] else 'Closed'
+        count = (summary['to_close'] if summary['dry_run']
+                 else summary['closed'])
+        self.stdout.write(
+            '{0} {1} facilities in list {2}.'.format(
+                mode, count, summary['list_id']))
+        if summary['dry_run'] and summary['facility_ids']:
+            self.stdout.write(
+                'Facility ids: {0}'.format(', '.join(
+                    str(i) for i in summary['facility_ids'])))

@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Code/API changes
+* The `close_list` management command can now close only the facilities whose uploaded rows carry given values in a raw status column (`--status-field status --status-values INACTIVE SUSPENDED`), instead of the whole list. A facility stays open if any row of the same list marks it with a different status, and already-closed facilities are skipped. The command is now a dry run by default — it reports what would be closed (count + facility ids) and only writes with an explicit `--apply`. Closures still go through confirmed `FacilityActivityReport` records, so each one is audited and reversible. Needed to ingest contributor lists that include closed facilities (e.g. registry exports with INACTIVE rows) and mark them closed after approval.
+
 ### Architecture/Environment changes
 * [OSDEV-3350](https://opensupplyhub.atlassian.net/browse/OSDEV-3350) - ContriBot Slack notifications from non-production environments are now prefixed with the environment name (e.g. `[TEST] New list …`), so test and production runs posting to the same Slack channels are distinguishable at a glance. Production messages are unchanged. The notify Lambda receives the new `ENVIRONMENT` Terraform variable; no tfvars changes are needed (`environment` is already set per env).
 

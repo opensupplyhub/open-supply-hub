@@ -109,3 +109,67 @@ class CloseListTest(TestCase):
 
         activity = FacilityActivityReport.objects.all().count()
         self.assertEqual(2, activity)
+
+    def test_closes_only_rows_matching_status(self):
+        self.list_item_one.raw_json = {'name': 'a', 'Status': 'inactive'}
+        self.list_item_one.save()
+        self.list_item_one_b.raw_json = {'name': 'b', 'Status': 'ACTIVE'}
+        self.list_item_one_b.save()
+
+        summary = close_list(self.list_one.id, self.user.id,
+                             status_field='status',
+                             status_values=['INACTIVE', 'SUSPENDED'])
+
+        self.assertTrue(
+            Facility.objects.get(id=self.facility_one.id).is_closed)
+        self.assertFalse(
+            Facility.objects.get(id=self.facility_one_b.id).is_closed)
+        self.assertFalse(
+            Facility.objects.get(id=self.facility_two.id).is_closed)
+        self.assertEqual(1, summary['closed'])
+        self.assertEqual(1, FacilityActivityReport.objects.count())
+
+    def test_active_row_keeps_shared_facility_open(self):
+        # Two rows point at the same facility; one INACTIVE, one ACTIVE.
+        self.list_item_one.raw_json = {'status': 'INACTIVE'}
+        self.list_item_one.save()
+        self.list_item_one_b.raw_json = {'status': 'ACTIVE'}
+        self.list_item_one_b.facility = self.facility_one
+        self.list_item_one_b.save()
+
+        summary = close_list(self.list_one.id, self.user.id,
+                             status_field='status',
+                             status_values=['INACTIVE'])
+
+        self.assertFalse(
+            Facility.objects.get(id=self.facility_one.id).is_closed)
+        self.assertEqual(0, summary['closed'])
+
+    def test_dry_run_writes_nothing(self):
+        self.list_item_one.raw_json = {'status': 'SUSPENDED'}
+        self.list_item_one.save()
+
+        summary = close_list(self.list_one.id, self.user.id,
+                             status_field='status',
+                             status_values=['INACTIVE', 'SUSPENDED'],
+                             dry_run=True)
+
+        self.assertTrue(summary['dry_run'])
+        self.assertEqual(1, summary['to_close'])
+        self.assertIn(self.facility_one.id, summary['facility_ids'])
+        self.assertFalse(
+            Facility.objects.get(id=self.facility_one.id).is_closed)
+        self.assertEqual(0, FacilityActivityReport.objects.count())
+
+    def test_already_closed_facilities_are_skipped(self):
+        self.list_item_one.raw_json = {'status': 'INACTIVE'}
+        self.list_item_one.save()
+        self.facility_one.is_closed = True
+        self.facility_one.save()
+
+        summary = close_list(self.list_one.id, self.user.id,
+                             status_field='status',
+                             status_values=['INACTIVE'])
+
+        self.assertEqual(0, summary['closed'])
+        self.assertEqual(0, FacilityActivityReport.objects.count())
