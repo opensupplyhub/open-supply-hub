@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Architecture/Environment changes
+* [OSDEV-3350](https://opensupplyhub.atlassian.net/browse/OSDEV-3350) - ContriBot Slack notifications from non-production environments are now prefixed with the environment name (e.g. `[TEST] New list …`), so test and production runs posting to the same Slack channels are distinguishable at a glance. Production messages are unchanged. The notify Lambda receives the new `ENVIRONMENT` Terraform variable; no tfvars changes are needed (`environment` is already set per env).
+
 ### Bugfix
 * [OSDEV-3349](https://opensupplyhub.atlassian.net/browse/OSDEV-3349) - **Deploy to AWS** now deletes the Terraform planfile from `s3://oshub-settings-<env>/terraform/` after a successful apply. The object is the handoff between `init-and-plan` and `apply`, so it cannot be removed after plan; it was previously left in the settings bucket indefinitely and can contain sensitive values from state. A failed apply still keeps the file so **Re-run failed jobs** can download it. `deploy-mode: terraform-plan` is unchanged — apply never runs, so the review copy stays in S3.
 
