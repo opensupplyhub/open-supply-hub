@@ -19,6 +19,7 @@ class NotifyMessage:
         *,
         list_id: str,
         base_url: str,
+        environment: str = "",
         list_name: str = "",
         contributor_id: Optional[str] = None,
         contributor_name: str = "",
@@ -32,6 +33,7 @@ class NotifyMessage:
     ) -> None:
         self._list_id = list_id
         self._base_url = base_url.rstrip("/")
+        self._environment = environment.strip()
         self._list_name = list_name
         self._contributor_id = contributor_id
         self._contributor_name = contributor_name
@@ -55,6 +57,7 @@ class NotifyMessage:
             if self._error
             else f"New list {list_link}"
         )
+        headline = f"{self._environment_prefix()}{headline}"
         lines = [
             headline,
             self._contributor_line(),
@@ -64,6 +67,13 @@ class NotifyMessage:
             self._error_line(),
         ]
         return "\n".join(line for line in lines if line)
+
+    def _environment_prefix(self) -> str:
+        """Tag non-production messages so test and prod runs posting to the
+        same Slack channels are distinguishable at a glance."""
+        if not self._environment or self._environment.lower() == "production":
+            return ""
+        return f"[{self._environment.upper()}] "
 
     def _contributor_line(self) -> str:
         if not (self._contributor_name or self._contributor_email):

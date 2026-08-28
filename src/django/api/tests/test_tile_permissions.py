@@ -27,6 +27,20 @@ class TilePermissionsTest(APITestCase):
         )
         self.assertEqual(200, response.status_code)
 
+    @override_settings(ALLOWED_HOSTS=["testserver", ".allowed.org"])
+    @override_switch("vector_tile", active=True)
+    def test_facility_grid_supports_free_text_processing_filters(self):
+        response = self.client.get(
+            self.tile_path,
+            {
+                "processing_type": "x[yz",
+                "sort_by": "contributors_desc",
+            },
+            HTTP_REFERER="http://allowed.org/",
+        )
+
+        self.assertEqual(200, response.status_code)
+
     def test_disallowed_hosts_cannot_fetch_tiles(self):
         response = self.client.get(self.tile_path)
         self.assertEqual(401, response.status_code)

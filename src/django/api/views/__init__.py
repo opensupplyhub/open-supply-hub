@@ -42,6 +42,7 @@ from .facility.facility_parameters import (
 )
 from .facility.facility_processing_types import facility_processing_types
 from .facility.taxonomy_counts import TaxonomyCountsView
+from .facility.processing_type_suggestions import ProcessingTypeSuggestionsView
 from .facility.update_facility_activity_report_status import (
     update_facility_activity_report_status
 )

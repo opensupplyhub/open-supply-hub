@@ -267,6 +267,14 @@ export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
                 paddingRight: '5px',
             };
         }),
+        multiValueLabel: Object.freeze(provided => ({
+            ...provided,
+            ...filterMultiValueLabelStyle,
+        })),
+        multiValueRemove: Object.freeze(provided => ({
+            ...provided,
+            ...filterMultiValueRemoveStyle,
+        })),
         control: Object.freeze((provided, state) => {
             const isInUse = state.isFocused || state.menuIsOpen;
             return {

@@ -56,6 +56,7 @@ from .facility.facility_match_temp import (
     FacilityMatchTemp,
     HistoricalFacilityMatchTemp,
 )
+from .facility.facility_processing_value import FacilityProcessingValue
 from .download_log import DownloadLog
 from .embed_config import EmbedConfig
 from .embed_field import EmbedField

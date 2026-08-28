@@ -17,6 +17,7 @@ import {
     makeGetFacilitiesTypeProcessingTypeURL,
     makeGetTaxonomyCountsURL,
     makeGetTaxonomyConfigURL,
+    makeGetProcessingTypeSuggestionsURL,
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
     mapDjangoChoiceTuplesValueToSelectOptions,
@@ -108,6 +109,16 @@ export const failFetchTaxonomyCounts = createAction(
 );
 export const completeFetchTaxonomyCounts = createAction(
     'COMPLETE_FETCH_TAXONOMY_COUNTS',
+);
+
+export const startFetchProcessingTypeSuggestions = createAction(
+    'START_FETCH_PROCESSING_TYPE_SUGGESTIONS',
+);
+export const failFetchProcessingTypeSuggestions = createAction(
+    'FAIL_FETCH_PROCESSING_TYPE_SUGGESTIONS',
+);
+export const completeFetchProcessingTypeSuggestions = createAction(
+    'COMPLETE_FETCH_PROCESSING_TYPE_SUGGESTIONS',
 );
 
 export const startFetchNumberOfWorkersOptions = createAction(
@@ -349,6 +360,44 @@ export function fetchTaxonomyCounts(kind) {
                         messages =>
                             failFetchTaxonomyCounts({
                                 kind,
+                                error: messages,
+                            }),
+                    ),
+                ),
+            );
+    };
+}
+
+export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
+    return dispatch => {
+        const requestIdentity = makeGetProcessingTypeSuggestionsURL(
+            query,
+            facilityTypes,
+        );
+        dispatch(
+            startFetchProcessingTypeSuggestions({ query, requestIdentity }),
+        );
+
+        return apiRequest
+            .get(requestIdentity)
+            .then(({ data }) =>
+                dispatch(
+                    completeFetchProcessingTypeSuggestions({
+                        query,
+                        requestIdentity,
+                        data,
+                    }),
+                ),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching processing type suggestions',
+                        messages =>
+                            failFetchProcessingTypeSuggestions({
+                                query,
+                                requestIdentity,
                                 error: messages,
                             }),
                     ),

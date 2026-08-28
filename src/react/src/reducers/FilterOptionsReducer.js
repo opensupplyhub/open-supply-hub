@@ -35,6 +35,9 @@ import {
     startFetchIsic4Taxonomy,
     failFetchIsic4Taxonomy,
     completeFetchIsic4Taxonomy,
+    startFetchProcessingTypeSuggestions,
+    failFetchProcessingTypeSuggestions,
+    completeFetchProcessingTypeSuggestions,
     startFetchNumberOfWorkersOptions,
     failFetchNumberOfWorkersOptions,
     completeFetchNumberOfWorkersTypeOptions,
@@ -94,6 +97,13 @@ const initialState = Object.freeze({
     }),
     isic4Taxonomy: Object.freeze({
         config: null,
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    processingTypeSuggestions: Object.freeze({
+        query: null,
+        requestIdentity: null,
         data: null,
         fetching: false,
         error: null,
@@ -374,6 +384,61 @@ export default createReducer(
                     data: { $set: taxonomy },
                 },
             }),
+        [startFetchProcessingTypeSuggestions]: (
+            state,
+            { query, requestIdentity },
+        ) =>
+            update(state, {
+                processingTypeSuggestions: {
+                    query: { $set: query },
+                    requestIdentity: { $set: requestIdentity },
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        /*
+        The typeahead fires requests as its query and facility types change, so
+        responses can arrive out of order. Anything that does not answer the
+        request currently in flight is dropped rather than allowed to overwrite
+        fresher results.
+        */
+        [failFetchProcessingTypeSuggestions]: (
+            state,
+            { requestIdentity, error },
+        ) => {
+            if (
+                state.processingTypeSuggestions.requestIdentity !==
+                requestIdentity
+            ) {
+                return state;
+            }
+
+            return update(state, {
+                processingTypeSuggestions: {
+                    fetching: { $set: false },
+                    error: { $set: error },
+                },
+            });
+        },
+        [completeFetchProcessingTypeSuggestions]: (
+            state,
+            { requestIdentity, data },
+        ) => {
+            if (
+                state.processingTypeSuggestions.requestIdentity !==
+                requestIdentity
+            ) {
+                return state;
+            }
+
+            return update(state, {
+                processingTypeSuggestions: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: data },
+                },
+            });
+        },
         [startFetchNumberOfWorkersOptions]: state =>
             update(state, {
                 numberOfWorkers: {
