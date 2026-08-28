@@ -76,6 +76,7 @@ const createTestStore = (overrides = {}) => {
     return setupStore({
         filterOptions: {
             contributors: { data: null, fetching: false, error: null },
+            countries: { data: null, fetching: false, error: null },
             parentCompanies: { data: null, fetching: false, error: null },
             lists: { data: null, fetching: false, error: null },
             facilityProcessingType: {
