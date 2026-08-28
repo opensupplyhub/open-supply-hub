@@ -78,6 +78,7 @@ import {
     facilityListSummaryStatusMessages,
     minimum100PercentWidthEmbedHeight,
     matchResponsibilityEnum,
+    DEFAULT_SORT_OPTION_INDEX,
     optionsForSortingResults,
     componentsWithErrorMessage,
     listParsingErrorMappings,
@@ -527,7 +528,7 @@ export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
 
 export const getAlgorithm = sortBy =>
     optionsForSortingResults.filter(el => el.value === sortBy)[0] ??
-    optionsForSortingResults[0];
+    optionsForSortingResults[DEFAULT_SORT_OPTION_INDEX];
 
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
