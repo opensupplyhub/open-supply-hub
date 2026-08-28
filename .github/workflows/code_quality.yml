@@ -5,8 +5,122 @@ on:
     types: [synchronize, opened, reopened]
 
 jobs:
+  # Path filters: skip jobs whose trees did not change. Job-level `if` (not
+  # workflow `paths`) so the workflow always reports and required checks are
+  # not left pending. `critical` is the always-run allowlist.
+  detect-changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend == 'true' || steps.filter.outputs.critical == 'true' }}
+      frontend_lint: ${{ steps.filter.outputs.frontend_lint == 'true' || steps.filter.outputs.critical == 'true' }}
+      django: ${{ steps.filter.outputs.django == 'true' || steps.filter.outputs.critical == 'true' }}
+      django_lint: ${{ steps.filter.outputs.django_lint == 'true' || steps.filter.outputs.critical == 'true' }}
+      countries: ${{ steps.filter.outputs.countries == 'true' || steps.filter.outputs.critical == 'true' }}
+      contricleaner: ${{ steps.filter.outputs.contricleaner == 'true' || steps.filter.outputs.critical == 'true' }}
+      dedupe: ${{ steps.filter.outputs.dedupe == 'true' || steps.filter.outputs.critical == 'true' }}
+      contribot: ${{ steps.filter.outputs.contribot == 'true' || steps.filter.outputs.critical == 'true' }}
+      integration: ${{ steps.filter.outputs.integration == 'true' || steps.filter.outputs.critical == 'true' }}
+      scripts: ${{ steps.filter.outputs.scripts == 'true' || steps.filter.outputs.critical == 'true' }}
+    steps:
+      - name: Filter changed paths
+        uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            critical:
+              - '.github/workflows/code_quality.yml'
+            frontend:
+              - 'src/react/**'
+              - 'docker-compose.yml'
+            frontend_lint:
+              - 'src/react/**'
+            django:
+              - 'src/django/api/**'
+              - 'src/django/oar/**'
+              - 'src/django/ckeditor/**'
+              - 'src/django/web/**'
+              - 'src/django/static/**'
+              - 'src/django/sqls/**'
+              - 'src/django/Dockerfile'
+              - 'src/django/manage.py'
+              - 'src/django/requirements.txt'
+              - 'docker-compose.yml'
+            django_lint:
+              - 'src/django/**'
+            countries:
+              - 'src/django/countries/**'
+              - 'src/django/oar/**'
+              - 'src/django/Dockerfile'
+              - 'src/django/manage.py'
+              - 'src/django/requirements.txt'
+              - 'docker-compose.yml'
+            contricleaner:
+              - 'src/django/contricleaner/**'
+              - 'src/django/oar/**'
+              - 'src/django/Dockerfile'
+              - 'src/django/manage.py'
+              - 'src/django/requirements.txt'
+              - 'docker-compose.yml'
+            dedupe:
+              - 'src/dedupe-hub/**'
+              - 'docker-compose.yml'
+            contribot:
+              - 'src/contribot/**'
+            integration:
+              - 'src/react/**'
+              - 'src/django/**'
+              - 'src/dedupe-hub/**'
+              - 'src/database/**'
+              - 'src/logstash/**'
+              - 'src/tests/**'
+              - 'src/e2e/**'
+              - 'src/batch/**'
+              - 'src/anon-tools/**'
+              - 'src/kafka-tools/**'
+              - 'src/maintenance-page/**'
+              - 'docker-compose.yml'
+              - 'docker-compose.tests.yml'
+              - 'scripts/start_code_quality_dev'
+              - 'scripts/update'
+              - 'scripts/reset_database'
+              - 'scripts/manage'
+            scripts:
+              - 'scripts/**'
+
+      - name: Path filter results
+        env:
+          CRITICAL: ${{ steps.filter.outputs.critical }}
+          FRONTEND: ${{ steps.filter.outputs.frontend }}
+          FRONTEND_LINT: ${{ steps.filter.outputs.frontend_lint }}
+          DJANGO: ${{ steps.filter.outputs.django }}
+          DJANGO_LINT: ${{ steps.filter.outputs.django_lint }}
+          COUNTRIES: ${{ steps.filter.outputs.countries }}
+          CONTRICLEANER: ${{ steps.filter.outputs.contricleaner }}
+          DEDUPE: ${{ steps.filter.outputs.dedupe }}
+          CONTRIBOT: ${{ steps.filter.outputs.contribot }}
+          INTEGRATION: ${{ steps.filter.outputs.integration }}
+          SCRIPTS: ${{ steps.filter.outputs.scripts }}
+        run: |
+          echo "critical=${CRITICAL}"
+          echo "frontend=${FRONTEND}"
+          echo "frontend_lint=${FRONTEND_LINT}"
+          echo "django=${DJANGO}"
+          echo "django_lint=${DJANGO_LINT}"
+          echo "countries=${COUNTRIES}"
+          echo "contricleaner=${CONTRICLEANER}"
+          echo "dedupe=${DEDUPE}"
+          echo "contribot=${CONTRIBOT}"
+          echo "integration=${INTEGRATION}"
+          echo "scripts=${SCRIPTS}"
+
   # code quality for the frontend
   get-base-branch-fe-cov:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     environment: Quality Environment
     steps:
@@ -26,6 +140,8 @@ jobs:
           path: ./src/react/coverage/lcov.info
 
   run-fe-code-quality:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -43,10 +159,12 @@ jobs:
           path: ./src/react/coverage/lcov.info
 
   check-fe-code-cov:
-    environment: Quality Environment
     needs:
+      - detect-changes
       - get-base-branch-fe-cov
       - run-fe-code-quality
+    if: needs.detect-changes.outputs.frontend == 'true'
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Download Jest code cov reports
@@ -66,6 +184,8 @@ jobs:
 
   # code quality for the Django app
   get-base-branch-django-cov:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.django == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -92,6 +212,8 @@ jobs:
           path: ./src/django/coverage/django/coverage.lcov
 
   run-django-code-quality:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.django == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -116,10 +238,12 @@ jobs:
           path: ./src/django/coverage/django/coverage.lcov
 
   check-django-code-cov:
-    environment: Quality Environment
     needs:
+      - detect-changes
       - get-base-branch-django-cov
       - run-django-code-quality
+    if: needs.detect-changes.outputs.django == 'true'
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Download unittest code cov reports
@@ -139,6 +263,8 @@ jobs:
 
   # code quality for the Countries
   get-base-branch-countries-cov:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.countries == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -165,6 +291,8 @@ jobs:
           path: ./src/django/coverage/countries/coverage.lcov
 
   run-countries-code-quality:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.countries == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -189,10 +317,12 @@ jobs:
           path: ./src/django/coverage/countries/coverage.lcov
 
   check-countries-code-cov:
-    environment: Quality Environment
     needs:
+      - detect-changes
       - get-base-branch-countries-cov
       - run-countries-code-quality
+    if: needs.detect-changes.outputs.countries == 'true'
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Download unittest code cov reports
@@ -212,6 +342,8 @@ jobs:
 
   # code quality for the Contricleaner
   get-base-branch-contricleaner-cov:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.contricleaner == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -238,6 +370,8 @@ jobs:
           path: ./src/django/coverage/contricleaner/coverage.lcov
 
   run-contricleaner-code-quality:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.contricleaner == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -262,10 +396,12 @@ jobs:
           path: ./src/django/coverage/contricleaner/coverage.lcov
 
   check-contricleaner-code-cov:
-    environment: Quality Environment
     needs:
+      - detect-changes
       - get-base-branch-contricleaner-cov
       - run-contricleaner-code-quality
+    if: needs.detect-changes.outputs.contricleaner == 'true'
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Download unittest code cov reports
@@ -285,6 +421,8 @@ jobs:
 
   # code quality for the Dedupe Hub
   get-base-branch-dd-cov:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.dedupe == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -311,6 +449,8 @@ jobs:
           path: ./src/dedupe-hub/api/coverage/coverage.lcov
 
   run-dd-code-quality:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.dedupe == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -335,10 +475,12 @@ jobs:
           path: ./src/dedupe-hub/api/coverage/coverage.lcov
 
   check-dd-code-cov:
-    environment: Quality Environment
     needs:
+      - detect-changes
       - get-base-branch-dd-cov
       - run-dd-code-quality
+    if: needs.detect-changes.outputs.dedupe == 'true'
+    environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
       - name: Download unittest code cov reports
@@ -358,6 +500,8 @@ jobs:
 
   # code quality for ContriBot
   run-contribot-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.contribot == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -378,6 +522,8 @@ jobs:
 
   # code quality integration test
   run-integration-test-code-quality:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.integration == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -405,6 +551,8 @@ jobs:
 
   # code quality formatting
   run-bash-script-linter:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.scripts == 'true'
     environment: Quality Environment
     runs-on: ubuntu-latest
     steps:
@@ -414,6 +562,8 @@ jobs:
         run: shellcheck scripts/*
 
   run-flake8-linter:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.django_lint == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -429,6 +579,8 @@ jobs:
         run: flake8 --exclude 'settings.py,manage.py,*.pyc,api/migrations/*'
 
   run-eslint-linter-and-prettier-formatter:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend_lint == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
