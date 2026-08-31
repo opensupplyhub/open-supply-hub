@@ -2489,10 +2489,37 @@ class FacilitiesViewSet(ListModelMixin,
 
         if not switch_is_active('claim_a_facility'):
             raise NotFound()
+
+        # Default stays approved-only so existing consumers are
+        # unaffected; My Facilities passes ?statuses=PENDING,APPROVED to
+        # also show claims awaiting review (OSDEV-3371).
+        valid_statuses = {
+            FacilityClaimStatuses.PENDING,
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.DENIED,
+            FacilityClaimStatuses.REVOKED,
+        }
+        statuses_param = request.query_params.get('statuses')
+        if statuses_param:
+            statuses = [
+                status.strip().upper()
+                for status in statuses_param.split(',')
+                if status.strip()
+            ]
+            invalid = set(statuses) - valid_statuses
+            if invalid:
+                raise BadRequestException(
+                    'Invalid claim statuses: {}.'.format(
+                        ', '.join(sorted(invalid))
+                    )
+                )
+        else:
+            statuses = [FacilityClaimStatuses.APPROVED]
+
         try:
             claims = FacilityClaim.objects.filter(
                 contributor=request.user.contributor,
-                status=FacilityClaimStatuses.APPROVED)
+                status__in=statuses)
         except Contributor.DoesNotExist as exc:
             raise NotFound(
                 'The current User does not have an associated Contributor'

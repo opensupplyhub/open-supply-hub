@@ -330,6 +330,12 @@ export const profileFormFields = Object.freeze([
     accountConfirmNewPasswordField,
 ]);
 
+// OSDEV-2280 PII warning shown above every claim document upload.
+export const CLAIM_PII_WARNING_TEXT =
+    'We do NOT require and you should NOT submit documents containing ' +
+    'sensitive personal information such as salary information, personal ' +
+    'phone numbers, home addresses, or personal ID numbers.';
+
 export const mainRoute = '/';
 export const mapRoute = '/map';
 export const settingsRoute = '/settings';
@@ -372,6 +378,9 @@ export const dashboardActivityReportsRoute = '/dashboard/activityreports';
 export const dashboardLinkOsIdRoute = '/dashboard/linkid';
 export const dashboardGeocoderRoute = '/dashboard/geocoder';
 export const claimedFacilitiesRoute = '/claimed';
+// Registered before claimedFacilitiesDetailRoute so 'pending' is never
+// captured as a :claimID.
+export const pendingClaimEditRoute = '/claimed/pending/:claimID';
 export const claimedFacilitiesDetailRoute = '/claimed/:claimID';
 export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
