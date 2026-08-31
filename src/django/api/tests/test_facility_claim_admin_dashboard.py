@@ -509,6 +509,21 @@ class FacilityClaimAdminDashboardTest(APITestCase):
             FacilityClaimReviewNoteTypes.INTERNAL,
         )
 
+    def test_claimant_update_is_a_valid_note_type(self):
+        # Claimant -> moderator direction, written by the OSDEV-2278
+        # claimant-edit flow when it lands; the schema accepts it now so
+        # that work has a place to record updates.
+        note = FacilityClaimReviewNote.objects.create(
+            claim=self.facility_claim_first,
+            author=self.superuser,
+            note="Claimant uploaded letter-of-authorization.pdf",
+            note_type=FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+        )
+        note.full_clean()
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE
+        )
+
     def test_review_note_type_defaults_to_internal(self):
         # Rows created without an explicit type (legacy data and the
         # status-change notes written by approve/deny/revoke) must read

@@ -14,6 +14,8 @@ class FacilityClaimReviewNote(models.Model):
          FacilityClaimReviewNoteTypes.INTERNAL),
         (FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
          FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE),
+        (FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+         FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE),
     )
 
     claim = models.ForeignKey(
@@ -37,12 +39,15 @@ class FacilityClaimReviewNote(models.Model):
         choices=NOTE_TYPE_CHOICES,
         default=FacilityClaimReviewNoteTypes.INTERNAL,
         db_default=FacilityClaimReviewNoteTypes.INTERNAL,
-        help_text=('How the note was delivered. CLAIMANT_MESSAGE = emailed '
-                   'to the claimant via the message-claimant action. '
-                   'INTERNAL = not sent directly, although the reason text '
-                   'in deny/revoke notes may still reach the claimant '
-                   'inside status emails. Rows created before this field '
-                   'existed default to INTERNAL regardless of delivery.'))
+        help_text=('Direction of the note. INTERNAL = moderator to '
+                   'moderator (though the reason text in deny/revoke notes '
+                   'may still reach the claimant inside status emails). '
+                   'CLAIMANT_MESSAGE = moderator to claimant, emailed via '
+                   'the message-claimant action. CLAIMANT_UPDATE = claimant '
+                   'to moderator, recorded when a claimant edits their '
+                   'pending claim or uploads documents (OSDEV-2278). Rows '
+                   'created before this field existed default to INTERNAL '
+                   'regardless of direction.'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

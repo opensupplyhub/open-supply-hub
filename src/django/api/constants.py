@@ -98,8 +98,14 @@ class FacilityClaimStatuses:
 
 
 class FacilityClaimReviewNoteTypes:
+    # Direction of the note:
+    #   INTERNAL         moderator -> moderator
+    #   CLAIMANT_MESSAGE moderator -> claimant (emailed)
+    #   CLAIMANT_UPDATE  claimant  -> moderator (claim edits/uploads,
+    #                    OSDEV-2278)
     INTERNAL = 'INTERNAL'
     CLAIMANT_MESSAGE = 'CLAIMANT_MESSAGE'
+    CLAIMANT_UPDATE = 'CLAIMANT_UPDATE'
 
 
 class Affiliations:

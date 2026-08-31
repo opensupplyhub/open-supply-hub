@@ -2,16 +2,19 @@ from django.db import migrations, models
 
 
 NOTE_TYPE_HELP_TEXT = (
-    'How the note was delivered. CLAIMANT_MESSAGE = emailed to the '
-    'claimant via the message-claimant action. INTERNAL = not sent '
-    'directly, although the reason text in deny/revoke notes may still '
-    'reach the claimant inside status emails. Rows created before this '
-    'field existed default to INTERNAL regardless of delivery.'
+    'Direction of the note. INTERNAL = moderator to moderator (though '
+    'the reason text in deny/revoke notes may still reach the claimant '
+    'inside status emails). CLAIMANT_MESSAGE = moderator to claimant, '
+    'emailed via the message-claimant action. CLAIMANT_UPDATE = claimant '
+    'to moderator, recorded when a claimant edits their pending claim or '
+    'uploads documents (OSDEV-2278). Rows created before this field '
+    'existed default to INTERNAL regardless of direction.'
 )
 
 NOTE_TYPE_CHOICES = [
     ('INTERNAL', 'INTERNAL'),
     ('CLAIMANT_MESSAGE', 'CLAIMANT_MESSAGE'),
+    ('CLAIMANT_UPDATE', 'CLAIMANT_UPDATE'),
 ]
 
 

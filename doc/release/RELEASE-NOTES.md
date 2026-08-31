@@ -12,10 +12,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* `0234_add_note_type_to_facility_claim_review_note.py` - Adds the `note_type` column (`INTERNAL` | `CLAIMANT_MESSAGE`, default `INTERNAL`) to `api_facilityclaimreviewnote` and its `api_historicalfacilityclaimreviewnote` mirror. See OSDEV-3351.
+* `0234_add_note_type_to_facility_claim_review_note.py` - Adds the `note_type` column (`INTERNAL` | `CLAIMANT_MESSAGE` | `CLAIMANT_UPDATE`, default `INTERNAL`) to `api_facilityclaimreviewnote` and its `api_historicalfacilityclaimreviewnote` mirror. See OSDEV-3351.
 
 #### Schema changes
-* [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `FacilityClaimReviewNote.note_type` distinguishes internal moderator notes from messages emailed to the claimant. Legacy rows default to `INTERNAL` with no backfill — there is no reliable signal for which old notes were emailed, so delivery labels are only trustworthy for notes created after this deploys (data self-corrects as claims churn).
+* [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `FacilityClaimReviewNote.note_type` records the direction of each note: `INTERNAL` (moderator to moderator), `CLAIMANT_MESSAGE` (moderator to claimant, emailed), and `CLAIMANT_UPDATE` (claimant to moderator — reserved for the OSDEV-2278 claimant-edit flow; nothing writes it yet). Legacy rows default to `INTERNAL` with no backfill — there is no reliable signal for which old notes were emailed, so direction labels are only trustworthy for notes created after this deploys (data self-corrects as claims churn).
 
 ### Code/API changes
 * [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `POST /api/facility-claims/{id}/message-claimant/` now records its review note as `CLAIMANT_MESSAGE`; `POST /api/facility-claims/{id}/note/` records `INTERNAL`. Claim detail responses include `note_type` on each note, enabling the claims dashboard v2 to label the activity timeline and derive queue stages (new / awaiting claimant / reply overdue).
