@@ -1,3 +1,4 @@
+# OSDEV-2644 path-filter smoke test. Do not merge.
 from django.db.migrations import Migration, RunPython, RunSQL
 from django.db import connection
 from psycopg2 import sql
