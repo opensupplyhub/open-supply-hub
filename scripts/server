@@ -1,4 +1,5 @@
 #!/bin/bash
+# OSDEV-2644 path-filter smoke test. Do not merge.
 
 set -e
 
