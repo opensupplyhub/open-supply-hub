@@ -637,6 +637,21 @@ if DEBUG and AWS_S3_ENDPOINT_URL:
 
 AWS_S3_FILE_OVERWRITE = False
 
+# Presigned URLs generated through django-storages (e.g. facility list
+# file links in the moderation dashboard) stay valid for 5 minutes
+# instead of the 1-hour default. Claim attachment downloads do not use
+# this path: they go through the download endpoint on
+# FacilityClaimViewSet, which mints 60-second single-object URLs.
+AWS_QUERYSTRING_EXPIRE = int(os.getenv('AWS_QUERYSTRING_EXPIRE', '300'))
+
+# IAM role assumed to sign claim-attachment download URLs (OSDEV-3370).
+# Scoped to s3:GetObject on claim attachments, so a minted URL is never
+# backed by the app task role's broader permissions. Unset locally and
+# in tests, where default storage URL generation is used instead.
+CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN = os.getenv(
+    'CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN'
+)
+
 TESTING = "test" in sys.argv
 
 if TESTING:
