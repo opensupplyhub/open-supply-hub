@@ -1,3 +1,4 @@
+# OSDEV-2644 path-filter smoke test. Do not merge.
 from django.apps import AppConfig
 
 
