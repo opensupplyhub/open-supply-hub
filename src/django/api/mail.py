@@ -119,6 +119,14 @@ def send_message_to_claimant_email(request, facility_claim, message):
     the note back regardless of the calling context. Do NOT swallow send
     errors and return normally — that would commit a CLAIMANT_MESSAGE
     note for an email that never went out.
+
+    Known, accepted trade-off: if the outer transaction fails AFTER a
+    successful send (e.g. response serialization), the email has gone
+    out but the note rolls back — the claimant may get a duplicate on
+    retry. The reverse design (send after commit) would instead commit
+    phantom "emailed" records on send failure, which corrupts queue-
+    stage derivation; a record-less duplicate email is the cheaper
+    failure.
     """
     FacilityClaimReviewNote.objects.create(
         claim=facility_claim,

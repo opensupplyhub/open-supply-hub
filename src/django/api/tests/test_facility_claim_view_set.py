@@ -1,3 +1,6 @@
+from smtplib import SMTPException
+from unittest.mock import patch
+
 from api.constants import FacilityClaimReviewNoteTypes
 from api.models import (
     Contributor,
@@ -222,6 +225,29 @@ class FacilityClaimViewSetTest(APITestCase):
         self.assertEqual(response.data['status'], 'PENDING')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(notes_count, 1)
+
+    def test_failed_email_send_rolls_back_claimant_message_note(self):
+        # Regression (OSDEV-3351 review): the note and the email must
+        # commit or vanish together. A failed send must not leave a
+        # phantom CLAIMANT_MESSAGE record — stage derivation would read
+        # it as "awaiting claimant" for a claimant who got no email.
+        self.client.raise_request_exception = False
+        with patch(
+            "api.mail.send_mail",
+            side_effect=SMTPException("simulated SMTP outage"),
+        ):
+            response = self._post_message_claimant(
+                self.facility_claim_first.id, "Hello, claimant!"
+            )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        notes_count = FacilityClaimReviewNote.objects.filter(
+            claim=self.facility_claim_first
+        ).count()
+        self.assertEqual(notes_count, 0)
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_message_claimant_note_is_claimant_message_type(self):
         response = self._post_message_claimant(
