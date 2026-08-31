@@ -44,7 +44,6 @@ jobs:
               - 'src/django/oar/**'
               - 'src/django/ckeditor/**'
               - 'src/django/web/**'
-              - 'src/django/static/**'
               - 'src/django/sqls/**'
               - 'src/django/Dockerfile'
               - 'src/django/manage.py'
