@@ -30,6 +30,7 @@ jobs:
         uses: dorny/paths-filter@v4
         id: filter
         with:
+          predicate-quantifier: some-with-excludes
           filters: |
             critical:
               - '.github/workflows/code_quality.yml'
@@ -51,18 +52,17 @@ jobs:
               - 'docker-compose.yml'
             django_lint:
               - 'src/django/**'
+              - '!src/django/manage.py'
+              - '!src/django/**/settings.py'
+              - '!src/django/api/migrations/**'
             countries:
               - 'src/django/countries/**'
-              - 'src/django/oar/**'
               - 'src/django/Dockerfile'
-              - 'src/django/manage.py'
               - 'src/django/requirements.txt'
               - 'docker-compose.yml'
             contricleaner:
               - 'src/django/contricleaner/**'
-              - 'src/django/oar/**'
               - 'src/django/Dockerfile'
-              - 'src/django/manage.py'
               - 'src/django/requirements.txt'
               - 'docker-compose.yml'
             dedupe:
@@ -78,10 +78,6 @@ jobs:
               - 'src/logstash/**'
               - 'src/tests/**'
               - 'src/e2e/**'
-              - 'src/batch/**'
-              - 'src/anon-tools/**'
-              - 'src/kafka-tools/**'
-              - 'src/maintenance-page/**'
               - 'docker-compose.yml'
               - 'docker-compose.tests.yml'
               - 'scripts/start_code_quality_dev'
