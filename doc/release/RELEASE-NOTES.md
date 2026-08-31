@@ -10,6 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: *Provide release date*
 
 ### Architecture/Environment changes
+* [OSDEV-2644](https://opensupplyhub.atlassian.net/browse/OSDEV-2644) - **Code Quality** now skips jobs whose trees did not change in the PR, via `dorny/paths-filter` and job-level `if` (not workflow `paths`, so required checks still report). Docs, `deployment/`, `src/batch`, `src/anon-tools`, `src/kafka-tools`, `src/maintenance-page`, and other unmapped paths skip the heavy suites. Matching trees still run React, Django `api`, countries, contricleaner, Dedupe Hub, ContriBot, and integration. Countries and contricleaner run only for their app plus Django image/deps (`Dockerfile`, `requirements.txt`, `docker-compose.yml`), not `oar/**` or `manage.py`. Flake8 skips `manage.py`, `settings.py`, and `api/migrations`. Changing `.github/workflows/code_quality.yml` forces every job.
 * [OSDEV-3350](https://opensupplyhub.atlassian.net/browse/OSDEV-3350) - ContriBot Slack notifications from non-production environments are now prefixed with the environment name (e.g. `[TEST] New list …`), so test and production runs posting to the same Slack channels are distinguishable at a glance. Production messages are unchanged. The notify Lambda receives the new `ENVIRONMENT` Terraform variable; no tfvars changes are needed (`environment` is already set per env).
 
 ### Bugfix
