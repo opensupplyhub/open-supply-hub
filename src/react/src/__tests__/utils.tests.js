@@ -1,5 +1,6 @@
 /* eslint-env jest */
 /* eslint-disable no-useless-escape */
+/* OSDEV-2644 path-filter smoke test: React-only change */
 
 const mapValues = require('lodash/mapValues');
 const isEqual = require('lodash/isEqual');
