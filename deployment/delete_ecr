@@ -1,6 +1,62 @@
 #!/bin/bash
+#
+# Empties an ECR repository so that `terraform destroy` can delete it.
+#
+# Images are pushed with `docker buildx bake`, so each tag is an OCI image index
+# whose child manifests (the image itself plus a provenance attestation) are
+# untagged. ECR refuses to delete a child while its index still references it, so
+# a single batch-delete-image call only strips the indexes and leaves the children
+# behind, and the repository stays non-empty. Delete in passes instead, and fail
+# if the repository is not empty at the end.
 
-aws ecr batch-delete-image \
-    --repository-name $1 \
-    --image-ids "$(aws ecr list-images --repository-name $1 --query 'imageIds[*]' --output json
-)" || true
+set -euo pipefail
+
+repo="${1:?usage: delete_ecr <repository-name>}"
+max_passes=5
+
+# `--output text` returns list elements tab-separated on a single line.
+to_lines() {
+    tr '\t' '\n' | sed '/^$/d'
+}
+
+if ! aws ecr describe-repositories --repository-names "$repo" >/dev/null 2>&1; then
+    echo "Repository ${repo} does not exist; nothing to delete."
+    exit 0
+fi
+
+for pass in $(seq 1 "$max_passes"); do
+    if ! listing="$(aws ecr list-images \
+        --repository-name "$repo" \
+        --query 'imageIds[*].imageDigest' \
+        --output text)"; then
+        exit 1
+    fi
+
+    digests="$(printf '%s' "$listing" | to_lines)"
+
+    if [ -z "$digests" ]; then
+        echo "Repository ${repo} is empty."
+        exit 0
+    fi
+
+    echo "Pass ${pass}: deleting $(printf '%s\n' "$digests" | wc -l | tr -d ' ') image(s) from ${repo}."
+
+    # batch-delete-image accepts at most 100 image IDs per call. Request only the
+    # failure codes: the full response repeats every digest back, which is what
+    # made this step hundreds of log lines long.
+    if ! result="$(printf '%s\n' "$digests" \
+        | sed 's/^/imageDigest=/' \
+        | xargs -n 100 aws ecr batch-delete-image \
+            --repository-name "$repo" \
+            --query 'failures[*].failureCode' \
+            --output text \
+            --image-ids)"; then
+        exit 1
+    fi
+
+    # Collapse to "<count> <code>" so a repository-wide rejection is one line.
+    printf '%s' "$result" | to_lines | sort | uniq -c | sed 's/^ *//'
+done
+
+echo "ERROR: ${repo} still contains images after ${max_passes} passes." >&2
+exit 1
