@@ -1,3 +1,4 @@
+# OSDEV-2644 path-filter smoke test. Do not merge.
 MAX_PRODUCT_TYPE_COUNT = 50
 MAX_PARENT_COMPANY_OS_ID_COUNT = 20
 DEFAULT_SECTOR_NAME = 'Unspecified'
