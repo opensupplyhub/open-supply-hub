@@ -5,6 +5,14 @@ fastapi[all]==0.75.0
 fastapi-utils==0.2.0
 Unidecode==1.3.6
 dedupe==1.9.4
+# Pinned transitive dependency of dedupe: BTrees 6.5 (released 2026-08-20)
+# removed the long-deprecated byValue() method that dedupe 1.9.4's canopy
+# index calls (dedupe/canopy_index.py) during the gazetteer build, so any
+# image built with an unpinned BTrees >= 6.5 fails every gazetteer build at
+# startup ("Attempting to block with an index predicate without indexing
+# records"). See https://github.com/zopefoundation/BTrees/issues/226.
+# Keep < 6.5 for as long as dedupe 1.9.4 is in use.
+BTrees==6.4
 numpy==1.22.4
 rollbar==0.16.3
 SQLAlchemy==1.4.49
