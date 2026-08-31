@@ -1,3 +1,4 @@
+# OSDEV-2644 path-filter smoke test. Do not merge.
 ARG GIT_COMMIT
 ARG DOCKER_IMAGE
 ARG ENVIRONMENT
