@@ -111,9 +111,10 @@ def send_message_to_claimant_email(request, facility_claim, message):
     Email a moderator message to the claimant and record it as a
     CLAIMANT_MESSAGE review note.
 
-    The note is created here, next to the send, so the record and the
-    delivery can never drift apart (and so future delivery changes —
-    e.g. bounce handling — happen in one place). It is written before
+    The note is created here, next to the send, keeping the record and
+    the delivery as coupled as an external, irreversible send allows
+    (and so future delivery changes — e.g. bounce handling — happen in
+    one place). It is written before
     the send on purpose: this function is atomic (nesting as a savepoint
     under an already-atomic caller), so a failed send raises and rolls
     the note back regardless of the calling context. Do NOT swallow send
