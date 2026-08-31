@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.29.2
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 31, 2026
+
+### Architecture/Environment changes
+* [OSDEV-3350](https://opensupplyhub.atlassian.net/browse/OSDEV-3350) - Set the two remaining ContriBot variables for Production, which had been left at their Terraform defaults: `contribot_last_list_id` (default `"NaN"`, which made the fetch Lambda raise `ValueError: Invalid LAST_LIST_ID` on every scheduled run before it reached the API, since a fresh DynamoDB table has no `__CURSOR__` item to fall back from) and `contribot_google_drive_shared_directory_id` (default empty, which would have failed report upload). The watermark is set to the highest list id already processed by the legacy instance, so the AWS instance starts after it rather than reprocessing live lists. Configuration only - no image, service, schema or database parameter change.
+
+### Release instructions
+* Run **Deploy to AWS** with `deploy-mode` set to `terraform-plan-and-apply`. No reboot, migration or reindex is required.
+
 ## Release 2.29.1
 
 ## Introduction
