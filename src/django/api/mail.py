@@ -1,6 +1,7 @@
 from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import transaction
 from django.template.loader import get_template
 from waffle import switch_is_active
 from api.models import (
@@ -104,6 +105,7 @@ def send_claim_facility_confirmation_email(request, facility_claim):
     )
 
 
+@transaction.atomic
 def send_message_to_claimant_email(request, facility_claim, message):
     """
     Email a moderator message to the claimant and record it as a
@@ -112,8 +114,9 @@ def send_message_to_claimant_email(request, facility_claim, message):
     The note is created here, next to the send, so the record and the
     delivery can never drift apart (and so future delivery changes —
     e.g. bounce handling — happen in one place). It is written before
-    the send on purpose: callers run inside @transaction.atomic, so a
-    failed send raises and rolls the note back. Do NOT swallow send
+    the send on purpose: this function is atomic (nesting as a savepoint
+    under an already-atomic caller), so a failed send raises and rolls
+    the note back regardless of the calling context. Do NOT swallow send
     errors and return normally — that would commit a CLAIMANT_MESSAGE
     note for an email that never went out.
     """
