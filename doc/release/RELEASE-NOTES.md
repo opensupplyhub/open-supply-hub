@@ -12,8 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* `0231_add_isic_to_facility_index.py` - Adds normalized ISIC Rev 4 section, division, group, and class arrays to `FacilityIndex`, creates their indexing functions, and updates facility indexing procedures to populate them from `isic_4` extended fields.
-* `0232_create_isic_taxonomy_config.py` - Adds the singleton `IsicTaxonomyConfig` model used to track the active taxonomy version, private-file artifacts, upload metadata, node counts, publication status, and the staff user who published it.
+* `0234_add_isic_taxonomy.py` - Adds normalized ISIC Rev 4 section, division, group, and class arrays to `FacilityIndex`, creates their indexing functions, updates facility indexing procedures to populate them from `isic_4` extended fields, and adds the singleton `IsicTaxonomyConfig` model used to track the active taxonomy version, private-file artifacts, upload metadata, node counts, publication status, and the staff user who published it.
 
 #### Schema changes
 * [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - Added `isic_section`, `isic_division`, `isic_group`, and `isic_class` array columns to `api_facilityindex`, plus the `api_isictaxonomyconfig` table for runtime taxonomy administration.
