@@ -25,6 +25,32 @@ export default function taxonomySearchStyles(theme) {
         root: Object.freeze({
             position: 'relative',
         }),
+        labelWithInfo: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+        }),
+        infoButton: Object.freeze({
+            padding: '2px',
+            marginLeft: '4px',
+            color: COLOURS.MEDIUM_GREY,
+        }),
+        infoPopper: Object.freeze({
+            zIndex: theme.zIndex.tooltip,
+        }),
+        infoPopover: Object.freeze({
+            boxSizing: 'border-box',
+            maxWidth: '360px',
+            padding: '16px',
+            color: COLOURS.BLACK,
+            background: COLOURS.WHITE,
+            border: `1px solid ${COLOURS.GREY}`,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.18)',
+            fontSize: '14px',
+            lineHeight: 1.4,
+            '& p': {
+                margin: '8px 0',
+            },
+        }),
         searchControl: Object.freeze({
             position: 'relative',
             display: 'flex',

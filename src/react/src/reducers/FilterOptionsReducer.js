@@ -26,6 +26,15 @@ import {
     startFetchFacilityProcessingTypeOptions,
     failFetchFacilityProcessingTypeOptions,
     completeFetchFacilityProcessingTypeOptions,
+    startFetchTaxonomyCounts,
+    failFetchTaxonomyCounts,
+    completeFetchTaxonomyCounts,
+    startFetchIsic4TaxonomyConfig,
+    failFetchIsic4TaxonomyConfig,
+    completeFetchIsic4TaxonomyConfig,
+    startFetchIsic4Taxonomy,
+    failFetchIsic4Taxonomy,
+    completeFetchIsic4Taxonomy,
     startFetchProcessingTypeSuggestions,
     failFetchProcessingTypeSuggestions,
     completeFetchProcessingTypeSuggestions,
@@ -75,6 +84,19 @@ const initialState = Object.freeze({
         error: null,
     }),
     facilityProcessingType: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    taxonomyCounts: Object.freeze({
+        isic4: Object.freeze({
+            data: null,
+            fetching: false,
+            error: null,
+        }),
+    }),
+    isic4Taxonomy: Object.freeze({
+        config: null,
         data: null,
         fetching: false,
         error: null,
@@ -282,6 +304,84 @@ export default createReducer(
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },
+                },
+            }),
+        [startFetchTaxonomyCounts]: state =>
+            update(state, {
+                taxonomyCounts: {
+                    isic4: {
+                        fetching: { $set: true },
+                        error: { $set: null },
+                    },
+                },
+            }),
+        [failFetchTaxonomyCounts]: (state, { error }) =>
+            update(state, {
+                taxonomyCounts: {
+                    isic4: {
+                        fetching: { $set: false },
+                        error: { $set: error },
+                    },
+                },
+            }),
+        [completeFetchTaxonomyCounts]: (state, { data }) =>
+            update(state, {
+                taxonomyCounts: {
+                    isic4: {
+                        fetching: { $set: false },
+                        error: { $set: null },
+                        data: { $set: data },
+                    },
+                },
+            }),
+        [startFetchIsic4TaxonomyConfig]: state =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchIsic4TaxonomyConfig]: (state, payload) =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchIsic4TaxonomyConfig]: (state, payload) => {
+            const previousVersion = state.isic4Taxonomy.config?.version;
+            const versionChanged =
+                previousVersion != null && previousVersion !== payload.version;
+
+            return update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    config: { $set: payload },
+                    ...(versionChanged ? { data: { $set: null } } : {}),
+                },
+            });
+        },
+        [startFetchIsic4Taxonomy]: state =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchIsic4Taxonomy]: (state, payload) =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchIsic4Taxonomy]: (state, taxonomy) =>
+            update(state, {
+                isic4Taxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: taxonomy },
                 },
             }),
         [startFetchProcessingTypeSuggestions]: (

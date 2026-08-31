@@ -9,6 +9,22 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Database changes
+
+#### Migrations
+* `0234_add_isic_taxonomy.py` - Adds normalized ISIC Rev 4 section, division, group, and class arrays to `FacilityIndex`, creates their indexing functions, updates facility indexing procedures to populate them from `isic_4` extended fields, and adds the singleton `IsicTaxonomyConfig` model used to track the active taxonomy version, private-file artifacts, upload metadata, node counts, publication status, and the staff user who published it.
+
+#### Schema changes
+* [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - Added `isic_section`, `isic_division`, `isic_group`, and `isic_class` array columns to `api_facilityindex`, plus the `api_isictaxonomyconfig` table for runtime taxonomy administration.
+
+### Code/API changes
+* [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - Added hierarchical ISIC Rev 4 filtering to facility search through the repeatable `isic_4=level:code` query parameter. Multiple ISIC values use OR semantics, while ISIC remains a normal additional filter alongside the existing search criteria.
+* [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - Added public runtime endpoints for taxonomy configuration, the active ISIC hierarchy, and per-node facility counts. Published taxonomy JSON remains in the private files bucket and is served through Django with caching.
+* [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - Added a Django admin workflow for staff to upload, validate, preview, publish, enable, and disable ISIC taxonomies without rebuilding the React application.
+
+### What's new
+* [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - Facility search users can browse or search the ISIC Rev 4 hierarchy by section, division, group, or class, see matching-location counts, select multiple categories, persist selections in the URL, and reset ISIC with the other search filters. The control is shown only when staff enable a published taxonomy and is excluded from embedded maps.
+
 ### Architecture/Environment changes
 * [OSDEV-2644](https://opensupplyhub.atlassian.net/browse/OSDEV-2644) - **Code Quality** now skips jobs whose trees did not change in the PR, via `dorny/paths-filter` and job-level `if` (not workflow `paths`, so required checks still report). Docs, `deployment/`, `src/batch`, `src/anon-tools`, `src/kafka-tools`, `src/maintenance-page`, and other unmapped paths skip the heavy suites. Matching trees still run React, Django `api`, countries, contricleaner, Dedupe Hub, ContriBot, and integration. Countries and contricleaner run only for their app plus Django image/deps (`Dockerfile`, `requirements.txt`, `docker-compose.yml`), not `oar/**` or `manage.py`. Flake8 skips `manage.py`, `settings.py`, and `api/migrations`. Changing `.github/workflows/code_quality.yml` forces every job.
 * [OSDEV-3350](https://opensupplyhub.atlassian.net/browse/OSDEV-3350) - ContriBot Slack notifications from non-production environments are now prefixed with the environment name (e.g. `[TEST] New list …`), so test and production runs posting to the same Slack channels are distinguishable at a glance. Production messages are unchanged. The notify Lambda receives the new `ENVIRONMENT` Terraform variable; no tfvars changes are needed (`environment` is already set per env).
@@ -20,6 +36,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+    * `backfill_facility_index --fields isic_4`
+* The targeted backfill populates the new ISIC section, division, group, and class columns for existing facilities; `reindex_database` is not required.
+* Upload, validate, publish, and enable the ISIC Rev 4 taxonomy in Django admin after deployment; the search control remains hidden until an active taxonomy is available.
 
 
 ## Release 2.29.0

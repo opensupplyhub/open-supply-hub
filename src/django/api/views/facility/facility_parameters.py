@@ -162,6 +162,16 @@ facilities_list_parameters = [
         ),
     ),
     Parameter(
+        'isic_4',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'ISIC Rev 4 filter using level:code values such as '
+            'section:C, division:01, group:011, or class:0111.'
+        ),
+    ),
+    Parameter(
         'product_type',
         IN_QUERY,
         type=TYPE_STRING,

@@ -24,6 +24,16 @@ const customJestEnvironment = async () => {
     global.window = jsdom.window;
     global.document = jsdom.window.document;
     global.navigator = jsdom.window.navigator;
+    global.Node = global.Node || jsdom.window.Node;
+    global.Blob = global.Blob || jsdom.window.Blob;
+    global.URL = global.URL || jsdom.window.URL;
+    global.requestAnimationFrame =
+        global.requestAnimationFrame || (callback => setTimeout(callback, 0));
+    global.cancelAnimationFrame =
+        global.cancelAnimationFrame || (handle => clearTimeout(handle));
+    if (global.fetch === undefined && jsdom.window.fetch) {
+        global.fetch = jsdom.window.fetch.bind(jsdom.window);
+    }
     global.btoa = str => Buffer.from(str, 'binary').toString('base64');
     global.atob = str => Buffer.from(str, 'base64').toString('binary');
 };

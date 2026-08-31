@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Q
 
 from api.constants import FacilitiesQueryParams
+from api.isic import parse_isic4_filter_values
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -12,6 +13,16 @@ from api.models.facility.partner_contributor_filter import (
 )
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
+
+
+def build_isic_filter(parsed_isic_filters):
+    if not parsed_isic_filters:
+        return None
+
+    isic_filter = Q()
+    for field_name, code in parsed_isic_filters:
+        isic_filter |= Q(**{f'{field_name}__overlap': [code]})
+    return isic_filter
 
 
 class FacilityIndexNewManager(models.Manager):
@@ -81,6 +92,8 @@ class FacilityIndexNewManager(models.Manager):
         )
 
         sectors = params.getlist(FacilitiesQueryParams.SECTOR)
+
+        isic_4_filters = params.getlist(FacilitiesQueryParams.ISIC_4)
 
         from .facility_index import FacilityIndex
         facilities_qs = FacilityIndex.objects.all()
@@ -171,6 +184,12 @@ class FacilityIndexNewManager(models.Manager):
         )
         if has_fp_filter:
             facilities_qs = facilities_qs.filter(_fp_match=True)
+
+        isic_filter = build_isic_filter(
+            parse_isic4_filter_values(isic_4_filters)
+        )
+        if isic_filter:
+            facilities_qs = facilities_qs.filter(isic_filter)
 
         if len(product_types):
             clean_product_types = []
