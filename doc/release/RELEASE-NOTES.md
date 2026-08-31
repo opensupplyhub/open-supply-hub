@@ -9,6 +9,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: *Provide release date*
 
+### Database changes
+
+#### Migrations
+* `0234_add_note_type_to_facility_claim_review_note.py` - Adds the `note_type` column (`INTERNAL` | `CLAIMANT_MESSAGE` | `CLAIMANT_UPDATE`, default `INTERNAL`) to `api_facilityclaimreviewnote` and its `api_historicalfacilityclaimreviewnote` mirror. See OSDEV-3351.
+
+#### Schema changes
+* [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `FacilityClaimReviewNote.note_type` records the direction of each note: `INTERNAL` (moderator to moderator), `CLAIMANT_MESSAGE` (moderator to claimant, emailed), and `CLAIMANT_UPDATE` (claimant to moderator — reserved for the OSDEV-2278 claimant-edit flow; nothing writes it yet). Legacy rows default to `INTERNAL` with no backfill — there is no reliable signal for which old notes were emailed, so direction labels are only trustworthy for notes created after this deploys (data self-corrects as claims churn).
+
+### Code/API changes
+* [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `POST /api/facility-claims/{id}/message-claimant/` now records its review note as `CLAIMANT_MESSAGE`; `POST /api/facility-claims/{id}/note/` records `INTERNAL`. Claim detail responses include `note_type` on each note, enabling the claims dashboard v2 to label the activity timeline and derive queue stages (new / awaiting claimant / reply overdue).
 ### Architecture/Environment changes
 * [OSDEV-2644](https://opensupplyhub.atlassian.net/browse/OSDEV-2644) - **Code Quality** now skips jobs whose trees did not change in the PR, via `dorny/paths-filter` and job-level `if` (not workflow `paths`, so required checks still report). Docs, `deployment/`, `src/batch`, `src/anon-tools`, `src/kafka-tools`, `src/maintenance-page`, and other unmapped paths skip the heavy suites. Matching trees still run React, Django `api`, countries, contricleaner, Dedupe Hub, ContriBot, and integration. Countries and contricleaner run only for their app plus Django image/deps (`Dockerfile`, `requirements.txt`, `docker-compose.yml`), not `oar/**` or `manage.py`. Flake8 skips `manage.py`, `settings.py`, and `api/migrations`. Changing `.github/workflows/code_quality.yml` forces every job.
 * [OSDEV-3350](https://opensupplyhub.atlassian.net/browse/OSDEV-3350) - ContriBot Slack notifications from non-production environments are now prefixed with the environment name (e.g. `[TEST] New list …`), so test and production runs posting to the same Slack channels are distinguishable at a glance. Production messages are unchanged. The notify Lambda receives the new `ENVIRONMENT` Terraform variable; no tfvars changes are needed (`environment` is already set per env).
