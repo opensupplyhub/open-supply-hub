@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.29.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 28, 2026
+
+### Architecture/Environment changes
+* [OSDEV-3236](https://opensupplyhub.atlassian.net/browse/OSDEV-3236) - Turned on `pgaudit` session auditing by setting `pgaudit.log` to `ddl,role`, completing the two-phase rollout started by [OSDEV-2997](https://opensupplyhub.atlassian.net/browse/OSDEV-2997) in 2.29.0 and resolving the Vanta SOC 2 test `aws-rds-pgaudit-enabled`. The only code change is the `rds_pgaudit_log` default in `deployment/terraform/variables.tf`, from `none` to `ddl,role`. Auditing now records schema changes (`CREATE`/`ALTER`/`DROP` of tables, indexes, functions) and privilege changes (`GRANT`, `REVOKE`, `CREATE`/`ALTER`/`DROP ROLE`). `read` and `write` stay excluded because logging every SELECT, or every write on the ingestion path, would multiply log volume. The split into its own release is deliberate: `CREATE EXTENSION pgaudit` installs the event triggers that supply object type and object name for DDL records, and it can only run once the library is loaded at server start, so 2.29.0 had to load the library and create the extension first. `pgaudit.log` carries `apply_method = "pending-reboot"`, so each environment needs a Terraform apply plus a reboot.
+
+### Release instructions
+* [OSDEV-3236](https://opensupplyhub.atlassian.net/browse/OSDEV-3236) - Apply the `pgaudit.log` change, per environment. **Prerequisite**: 2.29.0's pgaudit steps must be complete in that environment — `SELECT extname FROM pg_extension WHERE extname = 'pgaudit';` must return a row. Do not proceed otherwise: enabling the `ddl` class without the extension produces DDL records with no object type or object name, which is the exact failure the two-release split exists to prevent.
+    1. Run **Deploy to AWS** with `deploy-mode` set to `terraform-plan-and-apply`. This applies the parameter change without rebuilding images, updating the ECS services, or running migrations. Check the plan in `s3://<settings-bucket>/terraform/` first: it should show `aws_db_parameter_group.default` changing and nothing else — in particular no `aws_ecs_task_definition` or `aws_ecs_service` changes.
+    2. Reboot the instance: `aws rds reboot-db-instance --db-instance-identifier opensupplyhub-enc-<env>`. Every environment runs `rds_multi_az = false`, so this is a hard restart with roughly 30-120 seconds of database downtime rather than a failover. Schedule it for Production.
+    3. Verify: `SHOW pgaudit.log;` (expect `ddl,role`). Then run a harmless DDL statement and confirm its audit record carries a populated object type and object name — that is what proves the extension was created before the class was enabled. Setting `pgaudit.log_client = on` and `pgaudit.log_level = notice` in the session shows the records directly in psql instead of the RDS log files.
+    4. Re-run the Vanta test `aws-rds-pgaudit-enabled` and confirm the environment passes. Check it only at this point — between 2.29.0 and 2.29.1 the test is expected to fail, and that is not a regression.
+* Run the sequence on Development and Staging before Production.
+
+
 ## Release 2.29.0
 
 ## Introduction
