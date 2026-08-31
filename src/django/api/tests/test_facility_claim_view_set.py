@@ -249,6 +249,24 @@ class FacilityClaimViewSetTest(APITestCase):
         self.assertEqual(notes_count, 0)
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_zero_sent_emails_rolls_back_claimant_message_note(self):
+        # send_mail can return 0 without raising (e.g. an effectively
+        # empty recipient); that silent non-delivery must also roll the
+        # note back rather than record an email nobody received.
+        self.client.raise_request_exception = False
+        with patch("api.mail.send_mail", return_value=0):
+            response = self._post_message_claimant(
+                self.facility_claim_first.id, "Hello, claimant!"
+            )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        notes_count = FacilityClaimReviewNote.objects.filter(
+            claim=self.facility_claim_first
+        ).count()
+        self.assertEqual(notes_count, 0)
+
     def test_message_claimant_note_is_claimant_message_type(self):
         response = self._post_message_claimant(
             self.facility_claim_first.id, "Hello, claimant!"

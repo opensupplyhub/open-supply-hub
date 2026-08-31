@@ -149,13 +149,22 @@ def send_message_to_claimant_email(request, facility_claim, message):
         'facility_url': make_facility_url(request, facility_claim.facility),
     }
 
-    send_mail(
+    sent_count = send_mail(
         subj_template.render().rstrip(),
         text_template.render(message_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
         html_message=html_template.render(message_dictionary)
     )
+    if sent_count != 1:
+        # send_mail can report 0 without raising (e.g. an effectively
+        # empty recipient). Treat that as a failed delivery so the
+        # CLAIMANT_MESSAGE note rolls back with it instead of recording
+        # an email nobody received.
+        raise RuntimeError(
+            'Claimant message email was not sent '
+            f'(send_mail returned {sent_count}).'
+        )
 
 
 def send_claim_facility_approval_email(request, facility_claim):
