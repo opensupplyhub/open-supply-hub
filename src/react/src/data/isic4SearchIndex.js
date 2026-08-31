@@ -97,7 +97,54 @@ function addDescendants(nodeId, allNodes, visibleIds) {
     });
 }
 
-export function getIsic4VisibleRows(flatNodes, query = '') {
+const getNodeCount = (node, counts) => {
+    if (!counts || node.countKey == null) {
+        return 0;
+    }
+
+    const count = counts[node.countKey];
+    return count == null ? 0 : count;
+};
+
+function orderVisibleNodesByCount(flatNodes, visibleIds, counts) {
+    const childrenByParent = new Map();
+    const roots = [];
+
+    flatNodes.forEach(node => {
+        if (!visibleIds.has(node.id)) {
+            return;
+        }
+
+        if (!node.parentId) {
+            roots.push(node);
+            return;
+        }
+
+        const siblings = childrenByParent.get(node.parentId) ?? [];
+        siblings.push(node);
+        childrenByParent.set(node.parentId, siblings);
+    });
+
+    const compareByCount = (left, right) =>
+        getNodeCount(right, counts) - getNodeCount(left, counts);
+
+    roots.sort(compareByCount);
+    childrenByParent.forEach(siblings => siblings.sort(compareByCount));
+
+    const ordered = [];
+    const visit = node => {
+        ordered.push(node);
+        const children = childrenByParent.get(node.id);
+        if (children) {
+            children.forEach(visit);
+        }
+    };
+    roots.forEach(visit);
+
+    return ordered;
+}
+
+export function getIsic4VisibleRows(flatNodes, query = '', counts = null) {
     const trimmedQuery = query.trim();
     const lowerQuery = trimmedQuery.toLowerCase();
 
@@ -139,14 +186,14 @@ export function getIsic4VisibleRows(flatNodes, query = '') {
         }
     });
 
-    const rows = flatNodes
-        .filter(node => visibleIds.has(node.id))
-        .map(node => ({
+    const rows = orderVisibleNodesByCount(flatNodes, visibleIds, counts).map(
+        node => ({
             node,
             depth: node.depth,
             isParent: node.kind !== 'class',
             highlightQuery: nodeMatches(node) ? trimmedQuery : '',
-        }));
+        }),
+    );
 
     const matchCount = rows.filter(row => row.highlightQuery).length;
 

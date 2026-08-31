@@ -101,7 +101,7 @@ export function IsicTaxonomySearch({
         }
 
         if (isSearching) {
-            return getIsic4VisibleRows(searchIndex.flatNodes, query);
+            return getIsic4VisibleRows(searchIndex.flatNodes, query, counts);
         }
 
         const browseRows = searchIndex.flatNodes.map(node => ({
@@ -116,7 +116,7 @@ export function IsicTaxonomySearch({
             hint:
                 'Type to search all ISIC levels, or select a section to browse',
         });
-    }, [isSearching, query, searchIndex]);
+    }, [counts, isSearching, query, searchIndex]);
 
     useEffect(() => {
         if (isSearching) {

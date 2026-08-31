@@ -190,6 +190,28 @@ describe('IsicTaxonomySearch', () => {
         });
     });
 
+    test('ranks type-ahead matches by location count', () => {
+        renderControl({
+            counts: {
+                ...COUNTS,
+                'section:A': 1,
+                'section:C': 3,
+            },
+        });
+        const input = screen.getByRole('combobox');
+
+        fireEvent.change(input, { target: { value: 'i' } });
+
+        const resultLabels = screen
+            .getAllByRole('button')
+            .map(button => button.textContent)
+            .filter(label => label.includes(' - '));
+
+        expect(resultLabels.indexOf('C - Manufacturing')).toBeLessThan(
+            resultLabels.indexOf('A - Agriculture, forestry and fishing'),
+        );
+    });
+
     test('finds descendant text and visibly reports no matches', () => {
         renderControl();
         const input = screen.getByRole('combobox');
