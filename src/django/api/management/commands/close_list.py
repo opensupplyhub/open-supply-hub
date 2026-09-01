@@ -50,7 +50,11 @@ class Command(BaseCommand):
         self.stdout.write(
             '{0} {1} facilities in list {2}.'.format(
                 mode, count, summary['list_id']))
-        if summary['dry_run'] and summary['facility_ids']:
+        sample = summary['facility_ids_sample']
+        if summary['dry_run'] and sample:
+            label = 'Facility ids'
+            if len(sample) < summary['to_close']:
+                label = 'Facility ids (first {0} of {1})'.format(
+                    len(sample), summary['to_close'])
             self.stdout.write(
-                'Facility ids: {0}'.format(', '.join(
-                    str(i) for i in summary['facility_ids'])))
+                '{0}: {1}'.format(label, ', '.join(str(i) for i in sample)))

@@ -7,6 +7,11 @@ from api.models import (Facility, FacilityActivityReport, FacilityListItem,
                         Contributor, User)
 
 
+# How many facility ids a dry run reports back. The count in 'to_close' is
+# always complete; this only bounds the ids printed alongside it.
+ID_SAMPLE_LIMIT = 2000
+
+
 def _get_raw_value(list_item, field):
     raw = list_item.raw_json or {}
     for key, value in raw.items():
@@ -74,8 +79,11 @@ def close_list(list_id, user_id, status_field=None, status_values=None,
         'to_close': facilities.count(),
         'closed': 0,
         'dry_run': dry_run,
-        'facility_ids': list(
-            facilities.values_list('id', flat=True)[:2000]),
+        # Capped so a large list does not dump tens of thousands of ids into
+        # the command output. Named a sample so the cap cannot be mistaken
+        # for the full set - 'to_close' above is always the real count.
+        'facility_ids_sample': list(
+            facilities.values_list('id', flat=True)[:ID_SAMPLE_LIMIT]),
     }
     if dry_run:
         return summary

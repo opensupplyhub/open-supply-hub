@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from api.close_list import close_list
 from api.models import (
     Contributor,
@@ -156,10 +158,26 @@ class CloseListTest(TestCase):
 
         self.assertTrue(summary['dry_run'])
         self.assertEqual(1, summary['to_close'])
-        self.assertIn(self.facility_one.id, summary['facility_ids'])
+        self.assertIn(self.facility_one.id, summary['facility_ids_sample'])
         self.assertFalse(
             Facility.objects.get(id=self.facility_one.id).is_closed)
         self.assertEqual(0, FacilityActivityReport.objects.count())
+
+    def test_id_sample_is_capped_without_hiding_the_count(self):
+        """The sample may be short; 'to_close' must still be the real count."""
+        self.list_item_one.raw_json = {'status': 'INACTIVE'}
+        self.list_item_one.save()
+        self.list_item_one_b.raw_json = {'status': 'INACTIVE'}
+        self.list_item_one_b.save()
+
+        with patch('api.close_list.ID_SAMPLE_LIMIT', 1):
+            summary = close_list(self.list_one.id, self.user.id,
+                                 status_field='status',
+                                 status_values=['INACTIVE'],
+                                 dry_run=True)
+
+        self.assertEqual(2, summary['to_close'])
+        self.assertEqual(1, len(summary['facility_ids_sample']))
 
     def test_already_closed_facilities_are_skipped(self):
         self.list_item_one.raw_json = {'status': 'INACTIVE'}
