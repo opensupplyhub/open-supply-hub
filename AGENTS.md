@@ -42,8 +42,12 @@ docker compose exec django python manage.py test
 ## Data moderation
 
 - To get a first pass at tagging a ContriBot ~PROCESSED sheet, use the [list-review](.agent/skills/list-review/SKILL.md) skill. It proposes taxonomy tags against the team's moderation bar and produces the tagged rows, the summary and the draft email in one go. Every tag is a **suggestion the moderator reviews and can overrule**; it never sends email and never changes list state.
+  - **Accepts** a local CSV path, a Google Drive link or file id, or a bare list id.
+  - **Writes** to `<output_dir>/<list id>/`: `tagged.csv` + `tagged.html` (tagged rows only), `summary.md` + `summary.html` (counts, error ratio, scenario recommendation, checklist), `email.md` + `email.html` (draft contributor email).
 - To generate a contributor feedback email from tags a moderator has already applied themselves, use the [moderation-email](.agent/skills/moderation-email/SKILL.md) skill. It never adds or changes tags and never sends email.
-- Both require the Google Drive integration and the same per-moderator config file — see [`.agent/skills/_shared/config.example.json`](.agent/skills/_shared/config.example.json).
+  - **Accepts** a Google Sheets link to the tagged tab of a ~PROCESSED report, or a local CSV export of that tab.
+  - **Writes** to `<output_dir>/<list id>/`: `tagged.csv` (parsed tags), `email.md` + `email.html`.
+- Both require the Google Drive integration and the same per-moderator config file at `~/.config/os-hub/moderation-email.json` — copy [`.agent/skills/_shared/config.example.json`](.agent/skills/_shared/config.example.json) and fill it from the internal Data Team Resources page. Every document id, board URL, policy threshold and `output_dir` comes from that file; neither skill has defaults, and both stop rather than guess if it is missing.
 
 ## Release notes & PR descriptions
 

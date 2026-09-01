@@ -138,8 +138,12 @@ differ enough that guessing produces wrong tags.
   "CITY, STATE" addresses are ACCEPTABLE, because coordinates override
   geocoding and the location is definite. Don't tag `address_too_few` on
   such rows; include a soft "add street addresses where available"
-  enrichment line in the email instead. General rule: if it can be
-  geocoded, or coordinates are supplied, it can be accepted.
+  enrichment line in the email instead. General rule: supplied coordinates,
+  or a geocode that resolves to a definite in-country facility location,
+  make the row acceptable — a geocoder merely returning *something* does
+  not. Without coordinates, a Plus Code or a partial address that resolves
+  no further than a city centroid still fails the acceptance test above:
+  tag `address_too_few` or ask.
 
 **Specific rules:**
 
@@ -246,8 +250,9 @@ open <output_dir>/<id>/summary.html <output_dir>/<id>/email.html
 open <output_dir>/<id>/
 ```
 
-Include the list URL (`<base_url>/lists/<id>`) and the source Drive link
-alongside the file paths.
+Include the list URL (`<base_url>/lists/<id>`) alongside the file paths,
+plus the source Drive link when the input came from Drive — for a local
+CSV, give the absolute source path instead.
 
 ### Canonical sources — two docs, know both
 
