@@ -621,34 +621,35 @@ class TestSummaryAndSave:
 # affected file still fails, so the underlying faults are fixed here.
 # --------------------------------------------------------------------------- #
 class TestOversizedFile:
-    def test_over_row_limit_does_not_crash_constructor(self, make_contribution):
-        """Findings state and config must exist before the row-limit check.
+    """A file above the row limit is rejected, not silently trimmed.
 
-        The check calls _add_diagnosis, which reads self.df_config and appends
-        to self.diagnostics_table. Both were previously initialised after it.
-        """
-        df = pd.DataFrame(
+    Trimming produced a report whose own row count and error ratio described
+    the truncated frame, so it read as a complete review. Approving on that
+    basis ingested rows nothing had looked at.
+    """
+
+    def _frame(self, rows):
+        return pd.DataFrame(
             {
-                "country": ["Bangladesh"] * 10001,
-                "name": ["Acme Textiles Limited"] * 10001,
-                "address": ["123 Industrial Road, Dhaka Division"] * 10001,
-                "sector_product_type": ["Apparel|Textiles"] * 10001,
+                "country": ["Bangladesh"] * rows,
+                "name": ["Acme Textiles Limited"] * rows,
+                "address": ["123 Industrial Road, Dhaka Division"] * rows,
+                "sector_product_type": ["Apparel|Textiles"] * rows,
             }
         )
-        osh = make_contribution(df=df)
-        assert {d["code"] for d in osh.diagnostics_table} >= {"T0016"}
 
-    def test_over_row_limit_truncates(self, make_contribution):
-        df = pd.DataFrame(
-            {
-                "country": ["Bangladesh"] * 10001,
-                "name": ["Acme Textiles Limited"] * 10001,
-                "address": ["123 Industrial Road, Dhaka Division"] * 10001,
-                "sector_product_type": ["Apparel|Textiles"] * 10001,
-            }
-        )
-        osh = make_contribution(df=df)
-        assert len(osh.df) == 10000
+    def test_over_row_limit_is_rejected(self, make_contribution):
+        with pytest.raises(ValueError) as excinfo:
+            make_contribution(df=self._frame(contribot.MAX_ROWS + 1))
+        message = str(excinfo.value)
+        assert str(contribot.MAX_ROWS + 1) in message
+        assert str(contribot.MAX_ROWS) in message
+        assert "split" in message.lower()
+
+    def test_at_row_limit_is_accepted(self, make_contribution):
+        """The limit is inclusive - exactly MAX_ROWS must still process."""
+        osh = make_contribution(df=self._frame(contribot.MAX_ROWS))
+        assert len(osh.df) == contribot.MAX_ROWS
 
 
 class TestMissingAddressColumn:
