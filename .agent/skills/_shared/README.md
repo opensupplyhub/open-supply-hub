@@ -10,7 +10,26 @@ depends on another's directory.
 | `md2html.py` | `moderation-email`, `list-review` |
 | `config.example.json` | `moderation-email`, `list-review` — both read the same per-moderator config at `~/.config/os-hub/moderation-email.json` |
 
-Referenced from a SKILL.md by repository-relative path, for example:
+## Config keys
+
+Copy `config.example.json` to `~/.config/os-hub/moderation-email.json` and
+fill it from the internal Data Team Resources Confluence page. Every value
+is team-specific and deliberately absent from this repository.
+
+| Key | Used by |
+| --- | --- |
+| `docs.templates_doc_id` | both |
+| `docs.rules_doc_id` | both |
+| `docs.taxonomy_sheet_id`, `docs.taxonomy_sheet_gid` | both |
+| `docs.contribot_drive_folder_id` | `moderation-email` |
+| `platform.base_url`, `platform.monday_board_url` | both |
+| `policy.reject_heuristic_pct`, `policy.reject_heuristic_count` | both — nullable; leave `null` to report counts with no threshold framing |
+| `policy.second_rejection_cc` | both |
+| `output_dir` | both |
+
+## Referencing these files
+
+From a SKILL.md, by repository-relative path, for example:
 
 ```bash
 python3 .agent/skills/_shared/md2html.py email.md email.html
