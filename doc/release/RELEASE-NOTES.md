@@ -10,7 +10,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: *Provide release date*
 
 ### Bugfix
-* [OSDEV-3352](https://opensupplyhub.atlassian.net/browse/OSDEV-3352) - `GET /api/facility-claims/{id}/` no longer raises `AttributeError` (HTTP 500) for decided claims whose `status_change_by` is null (legacy rows) — the `status_change` block now returns null for the decider instead. Decision reason, decider email, and date remain exposed for decided claims (verified with new tests); `status_change` values stay suppressed for PENDING claims.
+* [OSDEV-3352](https://opensupplyhub.atlassian.net/browse/OSDEV-3352) - `GET /api/facility-claims/{id}/` no longer raises `AttributeError` (HTTP 500) for decided claims whose `status_change_by` is null (legacy rows); the decider now serializes as null.
 * [OSDEV-3349](https://opensupplyhub.atlassian.net/browse/OSDEV-3349) - **Deploy to AWS** now deletes the Terraform planfile from `s3://oshub-settings-<env>/terraform/` after a successful apply. The object is the handoff between `init-and-plan` and `apply`, so it cannot be removed after plan; it was previously left in the settings bucket indefinitely and can contain sensitive values from state. A failed apply still keeps the file so **Re-run failed jobs** can download it. `deploy-mode: terraform-plan` is unchanged — apply never runs, so the review copy stays in S3.
 
 ### Release instructions

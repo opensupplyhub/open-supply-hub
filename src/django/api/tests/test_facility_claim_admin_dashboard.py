@@ -542,6 +542,15 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
     @override_switch("claim_a_facility", active=True)
     def test_pending_claim_status_change_stays_suppressed(self):
+        # Populate real status-change values on the still-PENDING claim:
+        # a pristine claim's fields are already null, so without this the
+        # test passes even if the suppression guard is deleted.
+        claim = self.facility_claim_first
+        claim.status_change_reason = "should not be exposed while pending"
+        claim.status_change_by = self.superuser
+        claim.status_change_date = timezone.now()
+        claim.save()
+
         response = self.client.get(
             "/api/facility-claims/{}/".format(self.facility_claim_first.id)
         )
