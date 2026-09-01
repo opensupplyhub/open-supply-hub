@@ -41,6 +41,7 @@ from .facility.facility_parameters import (
     facilities_create_parameters,
 )
 from .facility.facility_processing_types import facility_processing_types
+from .facility.processing_type_suggestions import ProcessingTypeSuggestionsView
 from .facility.update_facility_activity_report_status import (
     update_facility_activity_report_status
 )
