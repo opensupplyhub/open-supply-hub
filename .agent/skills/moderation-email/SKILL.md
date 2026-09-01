@@ -38,9 +38,10 @@ it from the internal **Data Team Resources** Confluence page. Do not
 proceed with defaults — every document ID, policy value, and URL comes
 from the config; none of them are stored in this skill.
 
-Config keys used below: `docs.templates_doc_id`, `docs.taxonomy_sheet_id`
-(+ `gid`), `docs.contribot_drive_folder_id`, `platform.base_url`,
-`platform.monday_board_url`, `policy.reject_heuristic_pct` (nullable),
+Config keys used below: `docs.templates_doc_id`, `docs.rules_doc_id`,
+`docs.taxonomy_sheet_id` (+ `gid`), `docs.contribot_drive_folder_id`,
+`platform.base_url`, `platform.monday_board_url`,
+`policy.reject_heuristic_pct` (nullable),
 `policy.reject_heuristic_count` (nullable),
 `policy.second_rejection_cc`, `output_dir`.
 
@@ -94,6 +95,11 @@ Fetch the canonical template + per-error copy live from the Error
 Message Templates doc (`docs.templates_doc_id`) at run time. No template
 text is stored in this skill; the doc is the single source of truth.
 
+There is a **second** doc (`docs.rules_doc_id`) that duplicates the
+templates but carries several things nothing else does — read
+[Canonical sources](#canonical-sources--two-docs-know-both) before
+assuming the templates doc has what you need.
+
 - Default scenario: **REMOVE AND APPROVE**.
 - If `policy.reject_heuristic_pct` is set and the tagged-row share meets
   or exceeds it, OR `policy.reject_heuristic_count` is set and the
@@ -117,6 +123,7 @@ copy-below-this-line divider:
 ```text
 :::reject
 - **[Open list <id> on OS Hub](<base_url>/lists/<id>)** → set it to **REJECT** — do NOT remove rows or Approve
+- Rejection reason to paste: "<short blurb from the rules doc>"
 - <N>/<total> rows tagged (<pct>%)
 - Second rejection for this contributor? cc <policy.second_rejection_cc>
 - Update the Monday entry to Rejected (<platform.monday_board_url>)
@@ -134,6 +141,28 @@ Approved; work the post-approval Confirm/Reject queue.)
 - Duplicate pairs use the uploaded-facility / removed-facility format
   from the templates doc's duplicates section.
 - Order sections by count/severity (dupes and address issues first).
+- **Removed vs kept must be unmistakable.** The template's "Here are the
+  errors we found" preamble makes every section read as an explanation of
+  a removal. When some tagged rows were KEPT, split the body: "Here is
+  the error that led to a removal:" (only rows actually removed, each
+  marked "(removed)"), then "The rest of your list is live as uploaded"
+  introducing keep-tier suggestions with no `Error:` prefix. Never
+  present a kept row under removal framing — the contributor will
+  believe live rows were deleted.
+- **Rejecting on the platform needs a reason string too.** The reject
+  action writes `status_change_reason`, which is separate from this
+  email. The short canonical blurbs are in the rules doc
+  (`docs.rules_doc_id`) under its rejection-message section — put the
+  right one in the `:::reject` banner so the moderator has it at click
+  time rather than hunting for it mid-action.
+- **The second-rejection cc rule is about contributors who are
+  struggling, not a lifetime count.** Check the dates before flagging it:
+  old rejections followed by clean approvals are not a pattern and should
+  not trigger a cc.
+- **Address precision is usually a keep, not an error.** Check whether
+  the address geocodes first (platform history, or the geocoder); one
+  that resolves to ward or district level is a KEEP with optional
+  precision feedback. Only tag it when the moderator did.
 - Write `<output_dir>/<id>/email.md`, render with the skill's script so
   one browser copy pastes into Gmail with formatting intact:
 
@@ -156,3 +185,20 @@ Approved; work the post-approval Confirm/Reject queue.)
 
 Never send the email or change any list state — the moderator reviews,
 pastes, sends, and clicks Approve/Reject on the platform.
+
+## Canonical sources — two docs, know both
+
+Both ids come from the config; neither is stored here.
+
+1. **Error Message Templates** (`docs.templates_doc_id`) — the per-error
+   email copy blocks and the two scenario templates.
+2. **Moderation rules / templates doc** (`docs.rules_doc_id`) —
+   duplicates the templates, and uniquely carries the summary scenario
+   table (numbered error rows, which moderators cite by number), the
+   short platform **rejection-reason blurbs**, and per-country address
+   moderation practice.
+
+**When fetching either doc, ask for an ordered list of headings first,**
+then request the blocks you need. Asking only "does it cover X?" hides
+everything outside your hypothesis — that is how the rejection-reason
+blurbs stayed unnoticed through several list reviews.
