@@ -19,7 +19,7 @@ You produce three artifacts for one uploaded facility list, in
 (the readable view), rendered with the skill's own script:
 
 ```bash
-python3 <skill-dir>/md2html.py <in.md|in.csv> <out.html>
+python3 .agent/skills/_shared/md2html.py <in.md|in.csv> <out.html>
 ```
 
 1. `tagged.csv` + `tagged.html` — **tagged rows only** (rows with a
@@ -39,9 +39,9 @@ and flag anything you were unsure about rather than quietly resolving it.
 
 Read `~/.config/os-hub/moderation-email.json` (shared with the
 `moderation-email` skill). If it is missing or still contains placeholder
-values, STOP and tell the moderator: copy `config.example.json` from that
-skill's directory to that path and fill it from the internal **Data Team
-Resources** Confluence page. Do not proceed with defaults — every document
+values, STOP and tell the moderator: copy
+`.agent/skills/_shared/config.example.json` to that path and fill it from
+the internal **Data Team Resources** Confluence page. Do not proceed with defaults — every document
 ID, policy value and URL comes from the config; none are stored here.
 
 Config keys used below: `docs.templates_doc_id`, `docs.rules_doc_id`,

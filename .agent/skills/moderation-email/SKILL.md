@@ -33,7 +33,7 @@ in `<output_dir>/<list-id>/`.
 
 Read `~/.config/os-hub/moderation-email.json`. If it is missing or
 contains placeholder values, STOP and tell the moderator: copy
-`config.example.json` from this skill's directory to that path and fill
+`.agent/skills/_shared/config.example.json` to that path and fill
 it from the internal **Data Team Resources** Confluence page. Do not
 proceed with defaults — every document ID, policy value, and URL comes
 from the config; none of them are stored in this skill.
@@ -64,7 +64,7 @@ Config keys used below: `docs.templates_doc_id`, `docs.rules_doc_id`,
 
   ```bash
   mkdir -p <output_dir>/<id>
-  python3 <skill-dir>/parse_processed.py <dump-file> --csv <output_dir>/<id>/tagged.csv
+  python3 .agent/skills/_shared/parse_processed.py <dump-file> --csv <output_dir>/<id>/tagged.csv
   ```
 
   It returns JSON: tagged rows with all columns, the tag ratio, duplicate
@@ -167,7 +167,7 @@ Approved; work the post-approval Confirm/Reject queue.)
   one browser copy pastes into Gmail with formatting intact:
 
   ```bash
-  python3 <skill-dir>/md2html.py <output_dir>/<id>/email.md <output_dir>/<id>/email.html
+  python3 .agent/skills/_shared/md2html.py <output_dir>/<id>/email.md <output_dir>/<id>/email.html
   ```
 
 ## 5. Report
