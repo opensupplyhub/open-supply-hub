@@ -639,8 +639,9 @@ class TestOversizedFile:
         )
 
     def test_over_row_limit_is_rejected(self, make_contribution):
+        oversized = self._frame(contribot.MAX_ROWS + 1)
         with pytest.raises(ValueError) as excinfo:
-            make_contribution(df=self._frame(contribot.MAX_ROWS + 1))
+            make_contribution(df=oversized)
         message = str(excinfo.value)
         assert str(contribot.MAX_ROWS + 1) in message
         assert str(contribot.MAX_ROWS) in message
