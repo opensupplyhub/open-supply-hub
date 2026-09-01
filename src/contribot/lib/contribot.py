@@ -94,6 +94,22 @@ class ContriBot:
             self.wb._sheets[fixes_sheet_no],
         ] + [self.wb._sheets[r] for r in residual[1:]]
 
+        # Finding state and the error-code config must exist before the first
+        # _add_diagnosis call below: it reads self.df_config and appends to
+        # self.diagnostics_*. Neither depends on the dataframe, so they are
+        # initialised here rather than after it.
+        self.statistics = []
+        self.metrics = []
+        self.diagnostics_table = []
+        self.diagnostics_column = []
+        self.fixes = []
+        self.comments = {}
+
+        self.known_countries = known_countries
+
+        self.config_file = config_file
+        self._get_config()
+
         self.df = pd.read_excel(filename)
         if len(self.df) > 10000:
             self._add_diagnosis(code="T0016", num_lines=len(self.df))
@@ -112,18 +128,6 @@ class ContriBot:
 
         self.copy_values_and_layout(self.wb, self.df, self.sourcesheet, "Findings")
         self.copy_values_and_layout(self.wb, self.df, self.sourcesheet, self.fixessheet)
-
-        self.statistics = []
-        self.metrics = []
-        self.diagnostics_table = []
-        self.diagnostics_column = []
-        self.fixes = []
-        self.comments = {}
-
-        self.known_countries = known_countries
-
-        self.config_file = config_file
-        self._get_config()
 
         if len(existing_tables) > 1:
             self._add_diagnosis(code="T0015", existing_sheets=",".join(existing_tables))
@@ -886,7 +890,13 @@ class ContriBot:
                 "lat",
                 "lng",
             ]:
-                self._add_diagnosis(code="T0008", column=column)
+                # column_name drives the cell reference; column is also passed
+                # through kwparams because the T0008 message template renders
+                # "{{ column }}". Passing only one of the two either breaks the
+                # cell reference or blanks the message.
+                self._add_diagnosis(
+                    code="T0008", column_name=column, column=column
+                )
 
         if len(self.df) < 1:
             self._add_diagnosis(code="T0009", column_name=self.sourcesheet)
@@ -1134,7 +1144,7 @@ class ContriBot:
             "VA",
         ]
         can_provinces_of_concern = ["PE", "SK", "NL"]
-        if "country" in self.df.columns:
+        if "country" in self.df.columns and "address" in self.df.columns:
             cells_with_warnings = 0
             addresses = [
                 a.lower() if isinstance(a, str) else "" for a in self.df.address
@@ -1762,6 +1772,11 @@ class ContriBot:
         duplicate findings.
         """
         if len(self.df) <= 1:
+            return
+
+        # A file missing either column already raises T0002/T0003; without
+        # this guard the dereferences below turn that finding into a crash.
+        if "address" not in self.df.columns or "name" not in self.df.columns:
             return
 
         addresses = []
