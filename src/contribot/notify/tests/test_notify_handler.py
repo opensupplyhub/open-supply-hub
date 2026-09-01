@@ -31,6 +31,7 @@ _SPEC.loader.exec_module(handler)
 @pytest.fixture
 def env(monkeypatch):
     monkeypatch.setenv("CONTRIBOT_STATE_TABLE_NAME", "contribot-state")
+    monkeypatch.setenv("ENVIRONMENT", "Test")
     monkeypatch.setenv("OS_HUB_API_URL", "https://example.com")
     monkeypatch.setenv("MONDAY_BOARD_ID", "3514246658")
     monkeypatch.setenv(
@@ -84,7 +85,9 @@ def test_handler_posts_success_message(repo_slack_monday):
         secret_arn="arn:aws:secretsmanager:us-east-1:123:secret:slack"
     )
     message = slack.post.call_args[0][0]
-    assert "New list <https://example.com/lists/101|#101 Spring Facilities>" in message
+    assert message.startswith(
+        "[TEST] New list <https://example.com/lists/101|#101 Spring Facilities>"
+    )
     assert (
         "<https://example.com/admin/api/contributor/5/change/"
         "|Contributor Example Brand> email brand@example.com" in message
@@ -116,7 +119,9 @@ def test_handler_skips_monday_on_failure(repo_slack_monday):
         secret_arn="arn:aws:secretsmanager:us-east-1:123:secret:slack-failures"
     )
     message = slack.post.call_args[0][0]
-    assert ":rotating_light: ContriBot failed to process list" in message
+    assert message.startswith(
+        "[TEST] :rotating_light: ContriBot failed to process list"
+    )
     assert "Error: boom" in message
     monday.create_item.assert_not_called()
     monday.cls.assert_not_called()
@@ -187,6 +192,36 @@ def test_error_ratio_emoji_thresholds(error_ratio, emoji):
         error_ratio=error_ratio,
     ).generate()
     assert emoji in message
+
+
+@pytest.mark.parametrize(
+    "environment,expected_prefix",
+    [
+        ("Test", "[TEST] "),
+        ("Staging", "[STAGING] "),
+        ("Production", ""),
+        ("", ""),
+    ],
+)
+def test_environment_prefix(environment, expected_prefix):
+    message = NotifyMessage(
+        list_id="101",
+        base_url="https://example.com",
+        environment=environment,
+    ).generate()
+    assert message.startswith(f"{expected_prefix}New list ")
+
+
+def test_handler_production_message_has_no_prefix(env, monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "Production")
+    repo, slack, monday = _mocks()
+    with patch.object(handler, "ListsRepository", return_value=repo), patch.object(
+        handler, "SlackWebhook", return_value=slack
+    ), patch.object(handler, "MondayBoard", return_value=monday):
+        handler.handler({"list_id": "101"}, None)
+
+    message = slack.post.call_args[0][0]
+    assert message.startswith("New list ")
 
 
 def test_handler_tolerates_missing_dynamodb_row(env):

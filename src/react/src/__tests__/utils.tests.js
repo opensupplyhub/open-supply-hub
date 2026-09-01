@@ -26,6 +26,7 @@ const {
     allFiltersAreEmpty,
     hasAppliedSearchFilters,
     createFiltersFromQueryString,
+    getAlgorithm,
     getValueFromEvent,
     getCheckedFromEvent,
     getFileFromInputRef,
@@ -407,7 +408,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
         }
     };
 
@@ -442,7 +443,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: 'AND',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -468,7 +469,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'name_asc',
           }
     };
 
@@ -504,7 +505,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -539,7 +540,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -574,7 +575,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -605,7 +606,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -638,7 +639,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -671,7 +672,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -704,7 +705,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -832,7 +833,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -865,7 +866,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -891,7 +892,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -934,7 +935,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -954,6 +955,15 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(combinedPartnersString),
     ).toMatchObject(expectedCombinedPartnersMatch);
+});
+
+it('defaults a missing or unknown sort_by to contributors_desc', () => {
+    expect(getAlgorithm('').value).toBe('contributors_desc');
+    expect(getAlgorithm('not-a-real-sort').value).toBe('contributors_desc');
+    expect(getAlgorithm('name_asc').value).toBe('name_asc');
+    expect(
+        createFiltersFromQueryString('?contributors=1632').sortAlgorithm.value,
+    ).toBe('contributors_desc');
 });
 
 it('creates a facility detail link', () => {

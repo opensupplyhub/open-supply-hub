@@ -17,7 +17,10 @@ from django.db import models, transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
 from ...geocoding import geocode_address
@@ -229,12 +232,9 @@ class FacilityClaimViewSet(ModelViewSet):
             if not message:
                 raise BadRequestException('Message is required.')
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=message,
-            )
-
+            # Creates the CLAIMANT_MESSAGE review note and sends the
+            # email as one unit (see mail.py) — @transaction.atomic
+            # rolls the note back if the send fails.
             send_message_to_claimant_email(request, claim, message)
 
             response_data = FacilityClaimDetailsSerializer(claim).data
@@ -413,7 +413,8 @@ class FacilityClaimViewSet(ModelViewSet):
             FacilityClaimReviewNote.objects.create(
                 claim=claim,
                 author=request.user,
-                note=request.data.get('note')
+                note=request.data.get('note'),
+                note_type=FacilityClaimReviewNoteTypes.INTERNAL,
             )
 
             response_data = FacilityClaimDetailsSerializer(claim).data

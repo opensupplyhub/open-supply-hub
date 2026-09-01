@@ -78,6 +78,7 @@ export function setFiltersFromQueryString(qs = '') {
         const {
             filterOptions: {
                 contributors: { data: contributors },
+                countries: { data: countries },
                 parentCompanies: { data: parentCompanies },
                 lists: { data: lists },
                 facilityProcessingType: { data: facilityProcessingTypes },
@@ -96,6 +97,14 @@ export function setFiltersFromQueryString(qs = '') {
                   },
               })
             : filters;
+
+        payload = countries
+            ? update(payload, {
+                  countries: {
+                      $set: updateListWithLabels(filters.countries, countries),
+                  },
+              })
+            : payload;
 
         payload = parentCompanies
             ? update(payload, {

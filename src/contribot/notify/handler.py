@@ -47,6 +47,7 @@ def handler(event, context):
     notify_message = NotifyMessage(
         list_id=list_id,
         base_url=base_url,
+        environment=os.environ.get("ENVIRONMENT", ""),
         list_name=list_name,
         contributor_id=item.get("contributor_id"),
         contributor_name=item.get("contributor_name") or "",

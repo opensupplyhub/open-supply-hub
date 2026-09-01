@@ -1,3 +1,7 @@
+from smtplib import SMTPException
+from unittest.mock import patch
+
+from api.constants import FacilityClaimReviewNoteTypes
 from api.models import (
     Contributor,
     Facility,
@@ -221,6 +225,94 @@ class FacilityClaimViewSetTest(APITestCase):
         self.assertEqual(response.data['status'], 'PENDING')
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(notes_count, 1)
+
+    def test_failed_email_send_rolls_back_claimant_message_note(self):
+        # Regression (OSDEV-3351 review): the note and the email must
+        # commit or vanish together. A failed send must not leave a
+        # phantom CLAIMANT_MESSAGE record — stage derivation would read
+        # it as "awaiting claimant" for a claimant who got no email.
+        self.client.raise_request_exception = False
+        with patch(
+            "api.mail.send_mail",
+            side_effect=SMTPException("simulated SMTP outage"),
+        ):
+            response = self._post_message_claimant(
+                self.facility_claim_first.id, "Hello, claimant!"
+            )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        notes_count = FacilityClaimReviewNote.objects.filter(
+            claim=self.facility_claim_first
+        ).count()
+        self.assertEqual(notes_count, 0)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_post_send_failure_rolls_back_note_but_not_the_email(self):
+        # Characterizes the documented trade-off (see mail.py): when the
+        # request fails AFTER a successful send, the note rolls back but
+        # the delivered email cannot be retracted. The moderator sees an
+        # error and may retry, so the claimant can receive a duplicate —
+        # accepted in preference to the reverse design, whose phantom
+        # "emailed" records would corrupt queue-stage derivation.
+        self.client.raise_request_exception = False
+        with patch(
+            "api.views.facility.facility_claim_view_set."
+            "FacilityClaimDetailsSerializer",
+            side_effect=RuntimeError("simulated post-send failure"),
+        ):
+            response = self._post_message_claimant(
+                self.facility_claim_first.id, "Hello, claimant!"
+            )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        self.assertEqual(
+            FacilityClaimReviewNote.objects.filter(
+                claim=self.facility_claim_first
+            ).count(),
+            0,
+        )
+        # The email escaped the rolled-back transaction: this is the
+        # known drift window, asserted here so it stays visible.
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_zero_sent_emails_rolls_back_claimant_message_note(self):
+        # send_mail can return 0 without raising (e.g. an effectively
+        # empty recipient); that silent non-delivery must also roll the
+        # note back rather than record an email nobody received.
+        self.client.raise_request_exception = False
+        with patch("api.mail.send_mail", return_value=0):
+            response = self._post_message_claimant(
+                self.facility_claim_first.id, "Hello, claimant!"
+            )
+
+        self.assertEqual(
+            response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        notes_count = FacilityClaimReviewNote.objects.filter(
+            claim=self.facility_claim_first
+        ).count()
+        self.assertEqual(notes_count, 0)
+
+    def test_message_claimant_note_is_claimant_message_type(self):
+        response = self._post_message_claimant(
+            self.facility_claim_first.id, "Hello, claimant!"
+        )
+        note = FacilityClaimReviewNote.objects.get(
+            claim=self.facility_claim_first
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE
+        )
+        self.assertEqual(
+            response.data['notes'][0]['note_type'],
+            FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
+        )
 
     def get_facility_claims(self, statuses='', countries=''):
         url = '/api/facility-claims/?' + statuses + countries
