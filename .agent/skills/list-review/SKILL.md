@@ -46,7 +46,7 @@ ID, policy value and URL comes from the config; none are stored here.
 
 Config keys used below: `docs.templates_doc_id`, `docs.rules_doc_id`,
 `docs.taxonomy_sheet_id` (+ `gid`), `platform.base_url`,
-`platform.monday_board_url`, `policy.reject_heuristic_pct` (nullable),
+`platform.monday_board_url`, `platform.monday_confirm_reject_board_url`, `policy.reject_heuristic_pct` (nullable),
 `policy.reject_heuristic_count` (nullable), `policy.second_rejection_cc`,
 `output_dir`.
 
@@ -197,9 +197,11 @@ duplicate pairs table, and this checklist:
 - [ ] Update the Monday board entry (`<platform.monday_board_url>`) — the
       queue of record.
 - [ ] Remove tagged rows on the list page before clicking Approve.
-- [ ] After approval: work the Confirm/Reject queue for potential matches
+- [ ] After approval: work the Confirm/Reject queue
+      (`<platform.monday_confirm_reject_board_url>`) for potential matches
       that could not be resolved automatically — move PENDING entries to
-      their final state.
+      their final state. This is a **different board** from the approval
+      queue above.
 
 ## 5. Generate the email
 

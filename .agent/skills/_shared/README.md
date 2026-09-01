@@ -27,7 +27,9 @@ key is for.
 | `docs.rules_doc_id` | both |
 | `docs.taxonomy_sheet_id`, `docs.taxonomy_sheet_gid` | both |
 | `docs.contribot_drive_folder_id` | `moderation-email` |
-| `platform.base_url`, `platform.monday_board_url` | both |
+| `platform.base_url` | both |
+| `platform.monday_board_url` | both — the **approval** queue, where a processed list waits for a moderator |
+| `platform.monday_confirm_reject_board_url` | both — the **Confirm/Reject** queue worked *after* approval, for potential matches the deduplication step could not resolve. A different board; do not reuse the value above |
 | `policy.reject_heuristic_pct`, `policy.reject_heuristic_count` | both — nullable; leave `null` to report counts with no threshold framing |
 | `policy.second_rejection_cc` | both |
 | `output_dir` | both |

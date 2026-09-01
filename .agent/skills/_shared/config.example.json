@@ -8,7 +8,8 @@
   },
   "platform": {
     "base_url": "https://opensupplyhub.org",
-    "monday_board_url": "<from the Data Team Resources Confluence page>"
+    "monday_board_url": "<approval queue — from the Data Team Resources Confluence page>",
+    "monday_confirm_reject_board_url": "<Confirm/Reject queue — from the Data Team Resources Confluence page>"
   },
   "policy": {
     "reject_heuristic_pct": null,

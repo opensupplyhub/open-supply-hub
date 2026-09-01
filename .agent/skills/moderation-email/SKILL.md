@@ -132,7 +132,9 @@ copy-below-this-line divider:
 
 (`:::approve` variant: remove the tagged rows — listed as
 `number (facility name)` pairs — then click Approve; update Monday to
-Approved; work the post-approval Confirm/Reject queue.)
+Approved; work the post-approval Confirm/Reject queue
+(`<platform.monday_confirm_reject_board_url>` — a different board from the
+approval queue).)
 
 - `{List Name}` filled; `{error details}` = one section per tag present,
   using the templates doc's copy with real examples substituted
