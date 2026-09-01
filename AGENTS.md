@@ -41,8 +41,9 @@ docker compose exec django python manage.py test
 
 ## Data moderation
 
-- To generate a contributor feedback email from a moderator's own error tags on a ContriBot ~PROCESSED sheet, use the [moderation-email](.agent/skills/moderation-email/SKILL.md) skill. It requires a per-moderator config file (see the skill's `config.example.json`) and the Google Drive integration; it never adds or changes tags and never sends email.
-- To get a first pass at the tagging itself, use the [list-review](.agent/skills/list-review/SKILL.md) skill. It proposes taxonomy tags against the team's moderation bar and produces the summary and draft email in one go. Every tag is a **suggestion the moderator reviews and can overrule**; like `moderation-email` it never sends email and never changes list state. It shares the same config file.
+- To get a first pass at tagging a ContriBot ~PROCESSED sheet, use the [list-review](.agent/skills/list-review/SKILL.md) skill. It proposes taxonomy tags against the team's moderation bar and produces the tagged rows, the summary and the draft email in one go. Every tag is a **suggestion the moderator reviews and can overrule**; it never sends email and never changes list state.
+- To generate a contributor feedback email from tags a moderator has already applied themselves, use the [moderation-email](.agent/skills/moderation-email/SKILL.md) skill. It never adds or changes tags and never sends email.
+- Both require the Google Drive integration and the same per-moderator config file — see [`.agent/skills/_shared/config.example.json`](.agent/skills/_shared/config.example.json).
 
 ## Release notes & PR descriptions
 
