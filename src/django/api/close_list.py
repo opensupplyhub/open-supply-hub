@@ -64,8 +64,11 @@ def close_list(list_id, user_id, status_field=None, status_values=None,
     if status_field:
         target_ids, _ = _facility_ids_by_status(
             list_id, status_field, status_values or [])
+        # An open facility is is_closed NULL in practice (False barely
+        # occurs), so exclude closed rather than filter on False - the
+        # latter silently matches nothing.
         facilities = Facility.objects.filter(
-            id__in=target_ids, is_closed=False)
+            id__in=target_ids).exclude(is_closed=True)
         reason = ('Closed via bulk list closure ({0} in {1})'.format(
             status_field, ', '.join(sorted(
                 v.strip().upper() for v in status_values or []))))

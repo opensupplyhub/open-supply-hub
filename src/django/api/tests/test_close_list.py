@@ -179,6 +179,26 @@ class CloseListTest(TestCase):
         self.assertEqual(2, summary['to_close'])
         self.assertEqual(1, len(summary['facility_ids_sample']))
 
+    def test_closes_facility_with_null_is_closed(self):
+        """In production an open facility has is_closed NULL, not False.
+
+        Caught by the first production dry run: filtering is_closed=False
+        matched 3 rows out of 2.5 million, so the command would have
+        reported and closed nothing.
+        """
+        self.list_item_one.raw_json = {'status': 'INACTIVE'}
+        self.list_item_one.save()
+        self.facility_one.is_closed = None
+        self.facility_one.save()
+
+        summary = close_list(self.list_one.id, self.user.id,
+                             status_field='status',
+                             status_values=['INACTIVE'])
+
+        self.assertEqual(1, summary['closed'])
+        self.assertTrue(
+            Facility.objects.get(id=self.facility_one.id).is_closed)
+
     def test_already_closed_facilities_are_skipped(self):
         self.list_item_one.raw_json = {'status': 'INACTIVE'}
         self.list_item_one.save()
