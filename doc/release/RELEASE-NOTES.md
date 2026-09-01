@@ -13,8 +13,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Migrations
 * `0234_add_note_type_to_facility_claim_review_note.py` - Adds the `note_type` column (`INTERNAL` | `CLAIMANT_MESSAGE` | `CLAIMANT_UPDATE`, default `INTERNAL`) to `api_facilityclaimreviewnote` and its `api_historicalfacilityclaimreviewnote` mirror. See OSDEV-3351.
+* `0235_add_facility_candidate_fields.py` - Adds five candidate columns (`is_candidate`, `polygon`, `confidence`, `external_id`, `source`) to `api_facility` and `api_historicalfacility`, builds their indexes `CONCURRENTLY` (non-atomic migration — writes are never blocked, but the index builds scan both large tables and take a while), and attaches the `api_facility_source_external_id_uniq` unique constraint on `(source, external_id)`. See OSDEV-3242.
 
 #### Schema changes
+* [OSDEV-3242](https://opensupplyhub.atlassian.net/browse/OSDEV-3242) - `Facility` gains candidate-distinguishing columns for the Earth Genome satellite-detection integration: `is_candidate` (default `false`, indexed), `polygon` (nullable `geometry(Polygon,4326)` detection footprint, GiST-indexed), `confidence` (nullable float), and `external_id` + `source` (NULL/empty for normal facilities; unique together for ingest idempotency). Purely additive — nothing reads the fields yet. The default-manager exclusion that hides candidates from existing surfaces ships separately in [OSDEV-3380](https://opensupplyhub.atlassian.net/browse/OSDEV-3380).
 * [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `FacilityClaimReviewNote.note_type` records the direction of each note: `INTERNAL` (moderator to moderator), `CLAIMANT_MESSAGE` (moderator to claimant, emailed), and `CLAIMANT_UPDATE` (claimant to moderator — reserved for the OSDEV-2278 claimant-edit flow; nothing writes it yet). Legacy rows default to `INTERNAL` with no backfill — there is no reliable signal for which old notes were emailed, so direction labels are only trustworthy for notes created after this deploys (data self-corrects as claims churn).
 
 ### Code/API changes

@@ -22,6 +22,12 @@ class Facility(models.Model):
     """
     class Meta:
         verbose_name_plural = "facilities"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['source', 'external_id'],
+                name='api_facility_source_external_id_uniq',
+            ),
+        ]
 
     id = models.CharField(
         max_length=32,
@@ -85,6 +91,40 @@ class Facility(models.Model):
         max_length=200,
         help_text="The environment value where instance running"
     )
+    is_candidate = models.BooleanField(
+        null=False,
+        default=False,
+        db_index=True,
+        help_text=('Whether this facility is an unconfirmed candidate '
+                   'created by an automated detection source (e.g. '
+                   'satellite imagery) rather than a confirmed, named '
+                   'facility.'))
+    polygon = gis_models.PolygonField(
+        null=True,
+        blank=True,
+        help_text=('The detected footprint of a candidate facility in '
+                   'WGS 84 (EPSG:4326).'))
+    confidence = models.FloatField(
+        null=True,
+        blank=True,
+        help_text=('The detection confidence score reported by the '
+                   'automated source for a candidate facility.'))
+    external_id = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=('The identifier of this facility in the external '
+                   'source system, used together with source for '
+                   'ingest idempotency.'))
+    source = models.CharField(
+        max_length=200,
+        null=False,
+        blank=True,
+        default='',
+        help_text=('The external detection source that created this '
+                   'facility as a candidate (e.g. earth_genome). Empty '
+                   'for facilities created through the normal '
+                   'contribution flow.'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
