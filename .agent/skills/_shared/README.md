@@ -8,13 +8,18 @@ depends on another's directory.
 | --- | --- |
 | `parse_processed.py` | `moderation-email` |
 | `md2html.py` | `moderation-email`, `list-review` |
-| `config.example.json` | `moderation-email`, `list-review` — both read the same per-moderator config at `~/.config/os-hub/moderation-email.json` |
+| [`config.example.json`](config.example.json) | `moderation-email`, `list-review` — both read the same per-moderator config at `~/.config/os-hub/moderation-email.json` |
 
 ## Config keys
 
-Copy `config.example.json` to `~/.config/os-hub/moderation-email.json` and
-fill it from the internal Data Team Resources Confluence page. Every value
-is team-specific and deliberately absent from this repository.
+Copy [`config.example.json`](config.example.json) to
+`~/.config/os-hub/moderation-email.json` and fill it from the internal Data
+Team Resources Confluence page. Every value is team-specific and
+deliberately absent from this repository.
+
+The example file is the authoritative shape — it is not reproduced here,
+so there is only one copy to keep current. The table below says what each
+key is for.
 
 | Key | Used by |
 | --- | --- |
