@@ -10,7 +10,9 @@ class FacilityClaimReviewNoteSerializer(ModelSerializer):
 
     class Meta:
         model = FacilityClaimReviewNote
-        fields = ('id', 'created_at', 'updated_at', 'note', 'author')
+        fields = (
+            'id', 'created_at', 'updated_at', 'note', 'note_type', 'author'
+        )
 
     def get_author(self, note):
         return note.author.email
