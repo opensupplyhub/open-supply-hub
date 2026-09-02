@@ -118,6 +118,10 @@ class Facility(models.Model):
         blank=True,
         help_text=('The detection confidence score reported by the '
                    'automated source for a candidate facility.'))
+    # null=True (not the usual '' convention) is required: the
+    # (source, external_id) unique constraint relies on NULLs being
+    # distinct so unsourced facilities can coexist — with '' the pair
+    # ('', '') would permit exactly one facility in the whole table.
     external_id = models.CharField(
         max_length=200,
         null=True,
