@@ -150,8 +150,16 @@ class Migration(migrations.Migration):
             # unique constraint must be built CONCURRENTLY so writes are
             # never blocked.
             database_operations=[
+                # Every ALTER TABLE here takes an ACCESS EXCLUSIVE lock.
+                # Each is metadata-only and instant once acquired, but a
+                # long transaction touching the table would make the ALTER
+                # queue — and all later reads/writes queue behind it. The
+                # lock_timeout makes the ALTER fail fast instead; every
+                # statement is idempotent (IF NOT EXISTS / DO-block
+                # guards), so the recovery is simply rerunning migrate.
                 migrations.RunSQL(
                     sql=[
+                        "SET lock_timeout = '5s';",
                         '''
                         ALTER TABLE api_facility
                         ADD COLUMN IF NOT EXISTS
@@ -185,8 +193,10 @@ class Migration(migrations.Migration):
                         # keep succeeding (as non-candidates) until
                         # OSDEV-3243 teaches it the new schema. Same
                         # pattern as 0234's NOT NULL DEFAULT.
+                        'RESET lock_timeout;',
                     ],
                     reverse_sql=[
+                        "SET lock_timeout = '5s';",
                         '''
                         ALTER TABLE api_historicalfacility
                         DROP COLUMN IF EXISTS is_candidate,
@@ -203,6 +213,7 @@ class Migration(migrations.Migration):
                         DROP COLUMN IF EXISTS external_id,
                         DROP COLUMN IF EXISTS source;
                         ''',
+                        'RESET lock_timeout;',
                     ],
                 ),
                 migrations.RunPython(
@@ -215,29 +226,37 @@ class Migration(migrations.Migration):
                 # CONSTRAINT IF NOT EXISTS, hence the DO-block guard, which
                 # keeps a retry of this non-atomic migration idempotent.
                 migrations.RunSQL(
-                    sql='''
-                    DO $$
-                    BEGIN
-                        IF NOT EXISTS (
-                            SELECT 1
-                            FROM pg_constraint
-                            WHERE conname =
-                                'api_facility_source_external_id_uniq'
-                            AND conrelid = 'api_facility'::regclass
-                        ) THEN
-                            ALTER TABLE api_facility
-                            ADD CONSTRAINT
-                                api_facility_source_external_id_uniq
-                            UNIQUE USING INDEX
-                                api_facility_source_external_id_uniq;
-                        END IF;
-                    END $$;
-                    ''',
-                    reverse_sql='''
-                    ALTER TABLE api_facility
-                    DROP CONSTRAINT IF EXISTS
-                        api_facility_source_external_id_uniq;
-                    ''',
+                    sql=[
+                        "SET lock_timeout = '5s';",
+                        '''
+                        DO $$
+                        BEGIN
+                            IF NOT EXISTS (
+                                SELECT 1
+                                FROM pg_constraint
+                                WHERE conname =
+                                    'api_facility_source_external_id_uniq'
+                                AND conrelid = 'api_facility'::regclass
+                            ) THEN
+                                ALTER TABLE api_facility
+                                ADD CONSTRAINT
+                                    api_facility_source_external_id_uniq
+                                UNIQUE USING INDEX
+                                    api_facility_source_external_id_uniq;
+                            END IF;
+                        END $$;
+                        ''',
+                        'RESET lock_timeout;',
+                    ],
+                    reverse_sql=[
+                        "SET lock_timeout = '5s';",
+                        '''
+                        ALTER TABLE api_facility
+                        DROP CONSTRAINT IF EXISTS
+                            api_facility_source_external_id_uniq;
+                        ''',
+                        'RESET lock_timeout;',
+                    ],
                 ),
             ],
             state_operations=[
