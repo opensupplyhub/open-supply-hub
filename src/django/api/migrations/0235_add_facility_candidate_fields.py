@@ -178,19 +178,13 @@ class Migration(migrations.Migration):
                         ADD COLUMN IF NOT EXISTS
                             source varchar(200) NOT NULL DEFAULT '';
                         ''',
-                        # Django keeps defaults in the model, not the
-                        # database, so drop them once existing rows have
-                        # their values — exactly what AddField would do.
-                        '''
-                        ALTER TABLE api_facility
-                        ALTER COLUMN is_candidate DROP DEFAULT,
-                        ALTER COLUMN source DROP DEFAULT;
-                        ''',
-                        '''
-                        ALTER TABLE api_historicalfacility
-                        ALTER COLUMN is_candidate DROP DEFAULT,
-                        ALTER COLUMN source DROP DEFAULT;
-                        ''',
+                        # The DB defaults are kept on purpose — Django's
+                        # AddField would drop them, but dedupe-hub writes
+                        # api_facility through its own SQLAlchemy model
+                        # that predates these columns, so its INSERTs must
+                        # keep succeeding (as non-candidates) until
+                        # OSDEV-3243 teaches it the new schema. Same
+                        # pattern as 0234's NOT NULL DEFAULT.
                     ],
                     reverse_sql=[
                         '''
