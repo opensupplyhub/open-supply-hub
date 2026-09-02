@@ -1,5 +1,6 @@
 import django.contrib.gis.db.models.fields
-from django.db import connection, migrations, models
+from django.db import migrations, models
+from django.db.models import Q
 from psycopg2 import sql
 
 IS_CANDIDATE_HELP_TEXT = (
@@ -75,7 +76,7 @@ INVALID_INDEXES_SQL = """
 """
 
 
-def _drop_invalid_indexes(index_names):
+def _drop_invalid_indexes(connection, index_names):
     """
     Drop leftovers of an interrupted concurrent build.
 
@@ -101,8 +102,12 @@ def create_candidate_indexes(apps, schema_editor):
     writes: the filter index on is_candidate, the spatial indexes Django
     would have created for the PolygonField on both tables, and the unique
     index that backs the (source, external_id) constraint.
+
+    Uses schema_editor.connection (not django.db.connection) so the work
+    lands on whichever database alias the migration is running against.
     """
-    _drop_invalid_indexes(INDEXES)
+    connection = schema_editor.connection
+    _drop_invalid_indexes(connection, INDEXES)
 
     with connection.cursor() as cursor:
         for statement in INDEXES.values():
@@ -122,7 +127,7 @@ def drop_candidate_indexes(apps, schema_editor):
     # The unique index is normally gone by now: reversing the constraint
     # RunSQL below drops it together with the constraint. IF EXISTS covers
     # the case where the constraint was never attached.
-    with connection.cursor() as cursor:
+    with schema_editor.connection.cursor() as cursor:
         for index_name in INDEXES:
             cursor.execute(
                 DROP_INDEX_CONCURRENTLY_SQL.format(
@@ -246,10 +251,48 @@ class Migration(migrations.Migration):
                             END IF;
                         END $$;
                         ''',
+                        # NULLs are distinct in the unique index (normal
+                        # facilities depend on that), so it cannot stop a
+                        # sourced row from re-ingesting with no id: any row
+                        # claiming an external source must carry that
+                        # source's id. NOT VALID keeps the ACCESS EXCLUSIVE
+                        # lock instant; VALIDATE scans with only a SHARE
+                        # UPDATE EXCLUSIVE lock (writes unaffected) and is
+                        # a no-op on retry.
+                        '''
+                        DO $$
+                        BEGIN
+                            IF NOT EXISTS (
+                                SELECT 1
+                                FROM pg_constraint
+                                WHERE conname =
+                                    'api_facility_source_requires_external_id'
+                                AND conrelid = 'api_facility'::regclass
+                            ) THEN
+                                ALTER TABLE api_facility
+                                ADD CONSTRAINT
+                                    api_facility_source_requires_external_id
+                                CHECK (
+                                    source = ''
+                                    OR external_id IS NOT NULL
+                                ) NOT VALID;
+                            END IF;
+                        END $$;
+                        ''',
+                        '''
+                        ALTER TABLE api_facility
+                        VALIDATE CONSTRAINT
+                            api_facility_source_requires_external_id;
+                        ''',
                         'RESET lock_timeout;',
                     ],
                     reverse_sql=[
                         "SET lock_timeout = '5s';",
+                        '''
+                        ALTER TABLE api_facility
+                        DROP CONSTRAINT IF EXISTS
+                            api_facility_source_requires_external_id;
+                        ''',
                         '''
                         ALTER TABLE api_facility
                         DROP CONSTRAINT IF EXISTS
@@ -361,6 +404,13 @@ class Migration(migrations.Migration):
                     constraint=models.UniqueConstraint(
                         fields=('source', 'external_id'),
                         name='api_facility_source_external_id_uniq',
+                    ),
+                ),
+                migrations.AddConstraint(
+                    model_name='facility',
+                    constraint=models.CheckConstraint(
+                        check=Q(source='') | Q(external_id__isnull=False),
+                        name='api_facility_source_requires_external_id',
                     ),
                 ),
             ],

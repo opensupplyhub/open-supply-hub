@@ -27,6 +27,15 @@ class Facility(models.Model):
                 fields=['source', 'external_id'],
                 name='api_facility_source_external_id_uniq',
             ),
+            # The unique constraint treats NULL external_id values as
+            # distinct (which normal facilities rely on), so it cannot by
+            # itself stop a sourced row from being re-ingested without an
+            # id. Any row claiming an external source must carry that
+            # source's id.
+            models.CheckConstraint(
+                check=Q(source='') | Q(external_id__isnull=False),
+                name='api_facility_source_requires_external_id',
+            ),
         ]
 
     id = models.CharField(
