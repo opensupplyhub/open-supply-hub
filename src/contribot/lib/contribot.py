@@ -37,6 +37,13 @@ from .known_countries import COUNTRY_CODES, known_countries
 from .utils import map_n_dataframe_cols_to_excel_cols
 
 
+# Upper bound on rows in a single contributor file. The duplicate scan in
+# check_name_address_duplicates compares every row pair, so cost grows with the
+# square of the row count; 10,000 rows is already ~50M comparisons. Files above
+# this are rejected rather than trimmed - see the check in __init__.
+MAX_ROWS = 10000
+
+
 class ContriBot:
     """Validate a facility list workbook and build an annotated output workbook.
 
@@ -95,9 +102,19 @@ class ContriBot:
         ] + [self.wb._sheets[r] for r in residual[1:]]
 
         self.df = pd.read_excel(filename)
-        if len(self.df) > 10000:
-            self._add_diagnosis(code="T0016", num_lines=len(self.df))
-            self.df = self.df[:10000]
+        if len(self.df) > MAX_ROWS:
+            # Truncating here produced a report for the first MAX_ROWS rows
+            # whose own row count and error ratio described the truncated
+            # frame, so it read as a complete review of the file. Approving on
+            # that basis ingests every row, including the ones nothing looked
+            # at. Fail instead: process_list marks the list FAILED and Step
+            # Functions routes to notify, so the file is visibly rejected and
+            # the contributor can be asked to split it.
+            raise ValueError(
+                f"List has {len(self.df)} rows, above the {MAX_ROWS}-row "
+                f"limit. It must be split into files of {MAX_ROWS} rows or "
+                f"fewer before it can be processed."
+            )
 
         self.df.index = self.df.index + 2
         self.df = self.normalise_column_names(self.df)
@@ -886,7 +903,13 @@ class ContriBot:
                 "lat",
                 "lng",
             ]:
-                self._add_diagnosis(code="T0008", column=column)
+                # column_name drives the cell reference; column is also passed
+                # through kwparams because the T0008 message template renders
+                # "{{ column }}". Passing only one of the two either breaks the
+                # cell reference or blanks the message.
+                self._add_diagnosis(
+                    code="T0008", column_name=column, column=column
+                )
 
         if len(self.df) < 1:
             self._add_diagnosis(code="T0009", column_name=self.sourcesheet)
@@ -1134,7 +1157,7 @@ class ContriBot:
             "VA",
         ]
         can_provinces_of_concern = ["PE", "SK", "NL"]
-        if "country" in self.df.columns:
+        if "country" in self.df.columns and "address" in self.df.columns:
             cells_with_warnings = 0
             addresses = [
                 a.lower() if isinstance(a, str) else "" for a in self.df.address
@@ -1762,6 +1785,11 @@ class ContriBot:
         duplicate findings.
         """
         if len(self.df) <= 1:
+            return
+
+        # A file missing either column already raises T0002/T0003; without
+        # this guard the dereferences below turn that finding into a crash.
+        if "address" not in self.df.columns or "name" not in self.df.columns:
             return
 
         addresses = []
