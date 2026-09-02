@@ -178,19 +178,35 @@ def main():
         resolved.append(entry)
 
     # Merge entries whose row-sets overlap (a dupe_remove row shows up both
-    # in its letter/row-ref pair and as an unpaired entry).
+    # in its letter/row-ref pair and as an unpaired entry). Overlap is
+    # transitive: given (2,5), (3,8) and a later entry linking 5 and 8, all
+    # four rows are one duplicate cluster. Absorb EVERY overlapping entry,
+    # not just the first, or a row ends up assigned to two duplicate pairs.
+    def rowset(entry):
+        rows = set(entry["rows"])
+        partner = entry.get("partner_in_original")
+        if partner:
+            rows.add(partner["rn"])
+        return rows
+
+    def absorb(home, other):
+        home["rows"] = sorted(set(home["rows"]) | set(other["rows"]))
+        for k in ("partner_in_original", "partners_from_original"):
+            if other.get(k) and not home.get(k):
+                home[k] = other[k]
+
     merged = []
     for e in resolved:
-        home = next((m for m in merged if set(m["rows"]) & set(e["rows"])
-                     or set(m["rows"]) & {p_["rn"] for p_ in
-                     ([e.get("partner_in_original")] if e.get("partner_in_original") else [])}), None)
-        if home:
-            home["rows"] = sorted(set(home["rows"]) | set(e["rows"]))
-            for k in ("partner_in_original", "partners_from_original"):
-                if e.get(k) and not home.get(k):
-                    home[k] = e[k]
-        else:
+        overlapping = [m for m in merged if rowset(m) & rowset(e)]
+        if not overlapping:
             merged.append(e)
+            continue
+        home = overlapping[0]
+        for other in overlapping[1:] + [e]:
+            absorb(home, other)
+        # Identity, not equality: two entries could compare equal by value.
+        absorbed = {id(m) for m in overlapping[1:]}
+        merged = [m for m in merged if id(m) not in absorbed]
     resolved = merged
 
     result.update({
