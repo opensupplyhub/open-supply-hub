@@ -91,6 +91,49 @@ resource "aws_cloudwatch_metric_alarm" "bedrock_invocations" {
   ok_actions    = [aws_sns_topic.global.arn]
 }
 
+# The SLC submission quality check fails open by design: any Bedrock
+# error is logged and the submission proceeds with no warning shown, so
+# an outage is invisible to contributors and moderators alike (this
+# happened Aug 28-31 2026, when the production account lacked the AWS
+# Marketplace subscription for the model - OSDEV-3369). The filter
+# pattern must match the message logged by evaluate() in
+# src/django/api/services/submission_quality_service.py; update both
+# together. Namespaced by environment because Production, Staging, and
+# RBA share an AWS account.
+resource "aws_cloudwatch_log_metric_filter" "submission_quality_check_failures" {
+  name           = "filter${local.short}SubmissionQualityCheckFailures"
+  log_group_name = aws_cloudwatch_log_group.app.name
+  pattern        = "\"Submission quality check failed\""
+
+  metric_transformation {
+    name          = "SubmissionQualityCheckFailures"
+    namespace     = local.short
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+# Any single fail-open occurrence alarms: organic SLC volume is low
+# enough that even one silent failure is worth a look, and a systemic
+# cause (revoked model access, IAM drift, a deprecated model ID) fails
+# every call, so the first failure is usually the start of an outage.
+# Zero failures is the normal state, hence notBreaching on missing data.
+resource "aws_cloudwatch_metric_alarm" "submission_quality_check_failures" {
+  alarm_name          = "alarm${local.short}SubmissionQualityCheckFailures"
+  alarm_description   = "SLC submission quality check is failing open (submissions skip the LLM data-quality warnings)"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = aws_cloudwatch_log_metric_filter.submission_quality_check_failures.metric_transformation[0].name
+  namespace           = aws_cloudwatch_log_metric_filter.submission_quality_check_failures.metric_transformation[0].namespace
+  period              = "3600"
+  statistic           = "Sum"
+  threshold           = "0"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.global.arn]
+  ok_actions    = [aws_sns_topic.global.arn]
+}
+
 # Account-level backstop on Bedrock spend, alerting through the same
 # SNS topic -> Chatbot -> Slack path as the CloudWatch alarms. Budgets
 # are account-wide, so exactly one environment per AWS account creates
