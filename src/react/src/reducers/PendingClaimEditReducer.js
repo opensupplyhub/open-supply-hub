@@ -25,6 +25,8 @@ const initialState = Object.freeze({
     formData: null,
     saving: false,
     savingError: null,
+    // True right after a successful save; drives the outcome dialog.
+    saved: false,
     deletingAttachment: false,
 });
 
@@ -47,6 +49,11 @@ export default createReducer(
                 data: { $set: data },
                 formData: { $set: formData },
             }),
+        // Deliberately does NOT clear `saved`: the reused claim-form
+        // steps dispatch programmatic field updates from effects (e.g.
+        // right after the post-save formik reinitialization), which
+        // would close the outcome dialog in the same frame it opened.
+        // `saved` is cleared when the next save starts, and on reset.
         [updatePendingClaimFormField]: (state, { field, value }) =>
             update(state, {
                 formData: { [field]: { $set: value } },
@@ -56,6 +63,7 @@ export default createReducer(
             update(state, {
                 saving: { $set: true },
                 savingError: { $set: null },
+                saved: { $set: false },
             }),
         [failSavePendingClaim]: (state, error) =>
             update(state, {
@@ -66,6 +74,7 @@ export default createReducer(
             update(state, {
                 saving: { $set: false },
                 savingError: { $set: null },
+                saved: { $set: true },
                 data: { $set: data },
                 formData: { $set: formData },
             }),

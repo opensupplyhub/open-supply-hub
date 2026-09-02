@@ -7,10 +7,6 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
@@ -22,6 +18,7 @@ import BusinessStep from './Steps/BusinessStep/BusinessStep';
 import ProfileStep from './Steps/ProfileStep/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
 import SubmissionErrorsBanner from './SubmissionErrorsBanner/SubmissionErrorsBanner';
+import ClaimOutcomeDialog from '../../ClaimOutcomeDialog';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
 import {
@@ -357,40 +354,22 @@ const ClaimForm = ({
                     </Paper>
                 </form>
             </div>
-            <Dialog open={dialogIsOpen}>
-                <DialogTitle className={classes.dialogTitle}>
-                    <Typography className={classes.dialogTitle}>
-                        Thank you for submitting your claim request!
-                    </Typography>
-                </DialogTitle>
-                <DialogContent>
-                    <Typography
-                        variant="body1"
-                        className={classes.dialogBodyText}
-                    >
-                        You will receive a notification once it has been
-                        reviewed.
-                    </Typography>
-                </DialogContent>
-                <DialogActions className={classes.dialogActions}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => history.push('/claimed')}
-                        className={classes.backButton}
-                    >
-                        To My Claims
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => history.push(mapRoute)}
-                        className={classes.continueButton}
-                    >
-                        Search OS Hub
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <ClaimOutcomeDialog
+                open={dialogIsOpen}
+                title="Thank you for submitting your claim request!"
+                body="You will receive a notification once it has been reviewed."
+                actions={[
+                    {
+                        label: 'To My Claims',
+                        onClick: () => history.push('/claimed'),
+                        secondary: true,
+                    },
+                    {
+                        label: 'Search OS Hub',
+                        onClick: () => history.push(mapRoute),
+                    },
+                ]}
+            />
         </div>
     );
 };

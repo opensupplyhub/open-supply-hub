@@ -1,7 +1,10 @@
 import camelCase from 'lodash/camelCase';
 import snakeCase from 'lodash/snakeCase';
 
-import { filterFreeEmissionsEstimateFields } from '../../util/util';
+import {
+    extractSelectValue,
+    filterFreeEmissionsEstimateFields,
+} from '../../util/util';
 
 /*
  * The single place the API <-> form field mapping lives for the
@@ -52,6 +55,19 @@ const OMIT_WHEN_EMPTY_FIELDS = new Set([
     'energyOther',
 ]);
 
+// Multi-select fields: the API stores/accepts plain string arrays, but
+// the form's StyledSelect components work with {value, label} option
+// objects — the same shape the create flow keeps in Redux and unwraps
+// via extractSelectValue at submit time (appendArrayField).
+const SELECT_OPTION_ARRAY_FIELDS = [
+    'sectors',
+    'facilityType',
+    'facilityProductTypes',
+    'facilityProductionTypes',
+    'facilityAffiliations',
+    'facilityCertifications',
+];
+
 const ENERGY_VALUE_TO_ENABLED = Object.freeze({
     energyCoal: 'energyCoalEnabled',
     energyNaturalGas: 'energyNaturalGasEnabled',
@@ -63,6 +79,20 @@ const ENERGY_VALUE_TO_ENABLED = Object.freeze({
     energyElectricity: 'energyElectricityEnabled',
     energyOther: 'energyOtherEnabled',
 });
+
+// The claim form keeps numeric inputs as strings ('' when blank); the
+// API returns numbers. Coerce for display so controlled inputs behave.
+const NUMERIC_STRING_FIELDS = new Set([
+    'estimatedAnnualThroughput',
+    'facilityFemaleWorkersPercentage',
+    ...Object.keys(ENERGY_VALUE_TO_ENABLED),
+]);
+
+const toSelectOptions = values =>
+    (Array.isArray(values) ? values : []).map(value => ({
+        value,
+        label: value,
+    }));
 
 /*
  * Map a GET /pending/ payload onto the claim form's camelCase formData
@@ -86,16 +116,17 @@ export const pendingClaimApiToFormData = apiData => {
             : [];
     }
 
-    // List fields arrive as null when unset.
-    [
-        'sectors',
-        'facilityProductionTypes',
-        'facilityProductTypes',
-        'facilityAffiliations',
-        'facilityCertifications',
-    ].forEach(field => {
-        if (!Array.isArray(formData[field])) {
-            formData[field] = [];
+    // Wrap multi-select values as {value, label} options — the shape
+    // the form's select components render. Plain strings display as
+    // empty chips.
+    SELECT_OPTION_ARRAY_FIELDS.forEach(field => {
+        formData[field] = toSelectOptions(formData[field]);
+    });
+
+    // Numeric inputs are controlled text fields holding strings.
+    NUMERIC_STRING_FIELDS.forEach(field => {
+        if (formData[field] !== '' && formData[field] !== undefined) {
+            formData[field] = String(formData[field]);
         }
     });
 
@@ -121,7 +152,9 @@ export const pendingClaimApiToFormData = apiData => {
  * Build the JSON PATCH payload from formData: strip client-only fields,
  * drop disabled emissions fields (same behavior as the create flow's
  * filterFreeEmissionsEstimateFields), omit empty numeric/date fields,
- * pipe-join facilityType, and snake_case every key.
+ * unwrap select option objects to plain strings (extractSelectValue,
+ * exactly like the create flow's appendArrayField), pipe-join
+ * facilityType, and snake_case every key.
  */
 export const buildPendingClaimPatchPayload = formData => {
     const filtered = filterFreeEmissionsEstimateFields(formData);
@@ -146,11 +179,11 @@ export const buildPendingClaimPatchPayload = formData => {
             if (!Array.isArray(value) || value.length === 0) {
                 return;
             }
-            outValue = value
-                .map(item =>
-                    typeof item === 'object' ? item.label || item.value : item,
-                )
-                .join('|');
+            outValue = value.map(extractSelectValue).join('|');
+        } else if (SELECT_OPTION_ARRAY_FIELDS.includes(key)) {
+            outValue = (Array.isArray(value) ? value : []).map(
+                extractSelectValue,
+            );
         }
 
         payload[snakeCase(key)] = outValue;

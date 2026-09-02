@@ -14,6 +14,7 @@ import ContactInfoStep from '../InitialClaimFlow/ClaimForm/Steps/ContactInfoStep
 import BusinessStep from '../InitialClaimFlow/ClaimForm/Steps/BusinessStep/BusinessStep';
 import ProfileStep from '../InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep';
 import PendingClaimAttachments from './PendingClaimAttachments';
+import ClaimOutcomeDialog from '../ClaimOutcomeDialog';
 import SubmissionErrorsBanner from '../InitialClaimFlow/ClaimForm/SubmissionErrorsBanner/SubmissionErrorsBanner';
 
 import {
@@ -39,7 +40,7 @@ import {
     resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 
-import { claimedFacilitiesRoute } from '../../util/constants';
+import { claimedFacilitiesRoute, mapRoute } from '../../util/constants';
 
 const pendingClaimEditStyles = Object.freeze({
     container: Object.freeze({
@@ -91,6 +92,7 @@ function PendingClaimEdit({
     error,
     formData,
     saving,
+    saved,
     savingError,
     deletingAttachment,
     getPendingClaim,
@@ -106,6 +108,16 @@ function PendingClaimEdit({
     facilityProcessingTypeOptions,
 }) {
     const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
+    // Latched locally so a stray Redux state change can never close the
+    // dialog once a save has succeeded; it closes only by navigating
+    // away (both dialog actions navigate, and unmount resets the slice).
+    const [outcomeDialogOpen, setOutcomeDialogOpen] = useState(false);
+
+    useEffect(() => {
+        if (saved) {
+            setOutcomeDialogOpen(true);
+        }
+    }, [saved]);
 
     useEffect(() => {
         getPendingClaim(claimID);
@@ -166,7 +178,18 @@ function PendingClaimEdit({
         formik.handleSubmit();
     };
 
-    if (fetching) {
+    // The steps must not mount until the outer formik has actually
+    // hydrated: enableReinitialize applies one render after formData
+    // arrives, and EmissionsEstimateForm seeds its own internal Formik
+    // from whatever it receives at mount (no reinitialize) — mounting
+    // it against the pre-hydration empty values leaves the emissions
+    // section blank and syncs '' back over the fetched data.
+    const formHydrated = Object.keys(formik.values).length > 0;
+
+    // On the very first render data is null and fetching has not been
+    // set yet (the fetch dispatch runs in an effect), so treat that as
+    // loading too rather than flashing the not-available message.
+    if (fetching || (!data && !error) || (data && !formHydrated)) {
         return <CircularProgress className={classes.loader} />;
     }
 
@@ -197,74 +220,99 @@ function PendingClaimEdit({
     };
 
     return (
-        <div className={`${classes.container} notranslate`} translate="no">
-            <Typography variant="title" className={classes.header}>
-                Edit your pending claim
-            </Typography>
-            <Typography variant="body1" className={classes.subtitle}>
-                {data.facility_name} ({data.os_id}) — submitted{' '}
-                {new Date(data.created_at).toLocaleDateString()}. Your claim is
-                awaiting review; any updates you save here are visible to the
-                Open Supply Hub Claims Team.
-            </Typography>
+        <>
+            <div className={`${classes.container} notranslate`} translate="no">
+                <Typography variant="title" className={classes.header}>
+                    Edit your pending claim
+                </Typography>
+                <Typography variant="body1" className={classes.subtitle}>
+                    {data.facility_name} ({data.os_id}) — submitted{' '}
+                    {new Date(data.created_at).toLocaleDateString()}. Your claim
+                    is awaiting review; any updates you save here are visible to
+                    the Open Supply Hub Claims Team.
+                </Typography>
 
-            <PendingClaimAttachments
-                claimId={data.id}
-                attachments={data.attachments}
-                deleting={deletingAttachment}
-                onDelete={attachmentID =>
-                    deleteAttachment(claimID, attachmentID)
-                }
+                <PendingClaimAttachments
+                    claimId={data.id}
+                    attachments={data.attachments}
+                    deleting={deletingAttachment}
+                    onDelete={attachmentID =>
+                        deleteAttachment(claimID, attachmentID)
+                    }
+                />
+
+                <form>
+                    <Paper className={classes.section}>
+                        <Typography variant="title">
+                            Contact information
+                        </Typography>
+                        <ContactInfoStep {...stepProps} />
+                    </Paper>
+                    <Paper className={classes.section}>
+                        <Typography variant="title">
+                            Business information
+                        </Typography>
+                        <BusinessStep {...stepProps} />
+                    </Paper>
+                    <Paper className={classes.section}>
+                        <Typography variant="title">
+                            Production location profile
+                        </Typography>
+                        <ProfileStep
+                            {...stepProps}
+                            countryOptions={countriesOptions}
+                            processingTypeOptions={
+                                facilityProcessingTypeOptions
+                            }
+                            onEmissionsValidationChange={setEmissionsHasErrors}
+                            emissionsFormData={formik.values}
+                            onEmissionsValueChange={handleFieldChange}
+                            onEmissionsEnabledChange={updateFieldWithoutTouch}
+                        />
+                    </Paper>
+
+                    <SubmissionErrorsBanner errors={savingError} />
+
+                    <div className={classes.buttons}>
+                        <Button
+                            variant="outlined"
+                            onClick={() => push(claimedFacilitiesRoute)}
+                            disabled={saving}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleSave}
+                            disabled={saving || emissionsHasErrors}
+                        >
+                            {saving ? (
+                                <CircularProgress size={20} />
+                            ) : (
+                                'Save changes'
+                            )}
+                        </Button>
+                    </div>
+                </form>
+            </div>
+            <ClaimOutcomeDialog
+                open={outcomeDialogOpen}
+                title="Thank you for editing your claim request!"
+                body="We have received your edited claim request, we will review it shortly."
+                actions={[
+                    {
+                        label: 'To My Claims',
+                        onClick: () => push(claimedFacilitiesRoute),
+                        secondary: true,
+                    },
+                    {
+                        label: 'Search OS Hub',
+                        onClick: () => push(mapRoute),
+                    },
+                ]}
             />
-
-            <form>
-                <Paper className={classes.section}>
-                    <Typography variant="title">Contact information</Typography>
-                    <ContactInfoStep {...stepProps} />
-                </Paper>
-                <Paper className={classes.section}>
-                    <Typography variant="title">
-                        Business information
-                    </Typography>
-                    <BusinessStep {...stepProps} />
-                </Paper>
-                <Paper className={classes.section}>
-                    <Typography variant="title">
-                        Production location profile
-                    </Typography>
-                    <ProfileStep
-                        {...stepProps}
-                        countryOptions={countriesOptions}
-                        processingTypeOptions={facilityProcessingTypeOptions}
-                        onEmissionsValidationChange={setEmissionsHasErrors}
-                    />
-                </Paper>
-
-                <SubmissionErrorsBanner errors={savingError} />
-
-                <div className={classes.buttons}>
-                    <Button
-                        variant="outlined"
-                        onClick={() => push(claimedFacilitiesRoute)}
-                        disabled={saving}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleSave}
-                        disabled={saving || emissionsHasErrors}
-                    >
-                        {saving ? (
-                            <CircularProgress size={20} />
-                        ) : (
-                            'Save changes'
-                        )}
-                    </Button>
-                </div>
-            </form>
-        </div>
+        </>
     );
 }
 
@@ -288,6 +336,7 @@ PendingClaimEdit.propTypes = {
     error: arrayOf(string),
     formData: object,
     saving: bool.isRequired,
+    saved: bool.isRequired,
     savingError: arrayOf(string),
     deletingAttachment: bool.isRequired,
     getPendingClaim: func.isRequired,
@@ -310,6 +359,7 @@ const mapStateToProps = ({
         error,
         formData,
         saving,
+        saved,
         savingError,
         deletingAttachment,
     },
@@ -323,6 +373,7 @@ const mapStateToProps = ({
     error,
     formData,
     saving,
+    saved,
     savingError,
     deletingAttachment,
     countriesOptions,
