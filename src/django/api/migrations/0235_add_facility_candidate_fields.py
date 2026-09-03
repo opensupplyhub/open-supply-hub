@@ -1,4 +1,5 @@
 import django.contrib.gis.db.models.fields
+from django.contrib.postgres.indexes import GistIndex
 from django.db import migrations, models
 from django.db.models import Q
 from psycopg2 import sql
@@ -25,40 +26,39 @@ SOURCE_HELP_TEXT = (
     'the normal contribution flow.'
 )
 
-# api_facility and api_historicalfacility hold millions of rows and take
-# writes continuously (every facility save appends a history row), so every
-# index is built CONCURRENTLY: a regular CREATE INDEX would block those
-# writes for the whole build. The unique index backs the
-# api_facility_source_external_id_uniq constraint attached below.
+# api_facility holds millions of rows and takes writes continuously, so
+# every index is built CONCURRENTLY: a regular CREATE INDEX would block
+# writes for the whole build. All three indexes are PARTIAL — they store
+# only candidate/sourced rows (zero today, then proportional to candidate
+# count) instead of the whole table: the majority-side filters
+# (is_candidate=False, external_id NULL) are answered by seq scans and
+# NULL-distinctness regardless, so full indexes would only cost disk.
+# api_historicalfacility gets no indexes at all: nothing queries history
+# by candidacy or geometry. The partial unique index IS the enforcement
+# of the conditional UniqueConstraint (a partial index cannot back an
+# ALTER TABLE constraint, and does not need to).
 INDEXES = {
     'api_facility_is_candidate_idx': (
         'CREATE INDEX CONCURRENTLY IF NOT EXISTS '
         'api_facility_is_candidate_idx '
-        'ON api_facility (is_candidate)'
+        'ON api_facility (is_candidate) '
+        'WHERE is_candidate'
     ),
     'api_facility_polygon_gist': (
         'CREATE INDEX CONCURRENTLY IF NOT EXISTS '
         'api_facility_polygon_gist '
-        'ON api_facility USING gist (polygon)'
+        'ON api_facility USING gist (polygon) '
+        'WHERE polygon IS NOT NULL'
     ),
     'api_facility_source_external_id_uniq': (
         'CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS '
         'api_facility_source_external_id_uniq '
-        'ON api_facility (source, external_id)'
-    ),
-    'api_historicalfacility_is_candidate_idx': (
-        'CREATE INDEX CONCURRENTLY IF NOT EXISTS '
-        'api_historicalfacility_is_candidate_idx '
-        'ON api_historicalfacility (is_candidate)'
-    ),
-    'api_historicalfacility_polygon_gist': (
-        'CREATE INDEX CONCURRENTLY IF NOT EXISTS '
-        'api_historicalfacility_polygon_gist '
-        'ON api_historicalfacility USING gist (polygon)'
+        'ON api_facility (source, external_id) '
+        'WHERE external_id IS NOT NULL'
     ),
 }
 
-ANALYZED_TABLES = ('api_facility', 'api_historicalfacility')
+ANALYZED_TABLES = ('api_facility',)
 
 DROP_INDEX_CONCURRENTLY_SQL = sql.SQL(
     'DROP INDEX CONCURRENTLY IF EXISTS {}'
@@ -98,10 +98,10 @@ def _drop_invalid_indexes(connection, index_names):
 
 def create_candidate_indexes(apps, schema_editor):
     """
-    Build the indexes the new candidate columns need, without blocking
-    writes: the filter index on is_candidate, the spatial indexes Django
-    would have created for the PolygonField on both tables, and the unique
-    index that backs the (source, external_id) constraint.
+    Build the three partial indexes the candidate columns need, without
+    blocking writes: the candidate filter index, the footprint GiST
+    index, and the partial unique index that enforces the conditional
+    (source, external_id) constraint.
 
     Uses schema_editor.connection (not django.db.connection) so the work
     lands on whichever database alias the migration is running against.
@@ -124,9 +124,6 @@ def create_candidate_indexes(apps, schema_editor):
 
 
 def drop_candidate_indexes(apps, schema_editor):
-    # The unique index is normally gone by now: reversing the constraint
-    # RunSQL below drops it together with the constraint. IF EXISTS covers
-    # the case where the constraint was never attached.
     with schema_editor.connection.cursor() as cursor:
         for index_name in INDEXES:
             cursor.execute(
@@ -225,32 +222,18 @@ class Migration(migrations.Migration):
                     create_candidate_indexes,
                     drop_candidate_indexes,
                 ),
-                # Attaching a constraint to an already-built unique index is
-                # a metadata-only ALTER TABLE, so the ACCESS EXCLUSIVE lock
-                # it takes is held only for an instant. Postgres has no ADD
-                # CONSTRAINT IF NOT EXISTS, hence the DO-block guard, which
-                # keeps a retry of this non-atomic migration idempotent.
+                # The conditional UniqueConstraint needs no ALTER TABLE:
+                # its enforcement is the partial unique index built above
+                # (Postgres cannot attach a table constraint to a partial
+                # index, and Django implements conditional constraints as
+                # partial unique indexes for the same reason). Only the
+                # CHECK constraint is attached here. Postgres has no ADD
+                # CONSTRAINT IF NOT EXISTS, hence the DO-block guard,
+                # which keeps a retry of this non-atomic migration
+                # idempotent.
                 migrations.RunSQL(
                     sql=[
                         "SET lock_timeout = '5s';",
-                        '''
-                        DO $$
-                        BEGIN
-                            IF NOT EXISTS (
-                                SELECT 1
-                                FROM pg_constraint
-                                WHERE conname =
-                                    'api_facility_source_external_id_uniq'
-                                AND conrelid = 'api_facility'::regclass
-                            ) THEN
-                                ALTER TABLE api_facility
-                                ADD CONSTRAINT
-                                    api_facility_source_external_id_uniq
-                                UNIQUE USING INDEX
-                                    api_facility_source_external_id_uniq;
-                            END IF;
-                        END $$;
-                        ''',
                         # NULLs are distinct in the unique index (normal
                         # facilities depend on that), so it cannot stop a
                         # sourced row from re-ingesting with no id: any row
@@ -293,11 +276,6 @@ class Migration(migrations.Migration):
                         DROP CONSTRAINT IF EXISTS
                             api_facility_source_requires_external_id;
                         ''',
-                        '''
-                        ALTER TABLE api_facility
-                        DROP CONSTRAINT IF EXISTS
-                            api_facility_source_external_id_uniq;
-                        ''',
                         'RESET lock_timeout;',
                     ],
                 ),
@@ -307,7 +285,6 @@ class Migration(migrations.Migration):
                     model_name='facility',
                     name='is_candidate',
                     field=models.BooleanField(
-                        db_index=True,
                         default=False,
                         help_text=IS_CANDIDATE_HELP_TEXT,
                     ),
@@ -319,6 +296,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text=POLYGON_HELP_TEXT,
                         null=True,
+                        spatial_index=False,
                         srid=4326,
                     ),
                 ),
@@ -355,7 +333,6 @@ class Migration(migrations.Migration):
                     model_name='historicalfacility',
                     name='is_candidate',
                     field=models.BooleanField(
-                        db_index=True,
                         default=False,
                         help_text=IS_CANDIDATE_HELP_TEXT,
                     ),
@@ -367,6 +344,7 @@ class Migration(migrations.Migration):
                         blank=True,
                         help_text=POLYGON_HELP_TEXT,
                         null=True,
+                        spatial_index=False,
                         srid=4326,
                     ),
                 ),
@@ -402,6 +380,7 @@ class Migration(migrations.Migration):
                 migrations.AddConstraint(
                     model_name='facility',
                     constraint=models.UniqueConstraint(
+                        condition=Q(external_id__isnull=False),
                         fields=('source', 'external_id'),
                         name='api_facility_source_external_id_uniq',
                     ),
@@ -411,6 +390,22 @@ class Migration(migrations.Migration):
                     constraint=models.CheckConstraint(
                         check=Q(source='') | Q(external_id__isnull=False),
                         name='api_facility_source_requires_external_id',
+                    ),
+                ),
+                migrations.AddIndex(
+                    model_name='facility',
+                    index=models.Index(
+                        condition=Q(is_candidate=True),
+                        fields=['is_candidate'],
+                        name='api_facility_is_candidate_idx',
+                    ),
+                ),
+                migrations.AddIndex(
+                    model_name='facility',
+                    index=GistIndex(
+                        condition=Q(polygon__isnull=False),
+                        fields=['polygon'],
+                        name='api_facility_polygon_gist',
                     ),
                 ),
             ],

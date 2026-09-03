@@ -9,6 +9,7 @@ from api.models.facility.facility_manager import FacilityManager
 from simple_history.models import HistoricalRecords
 
 from django.contrib.gis.db import models as gis_models
+from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.db.models import ExpressionWrapper, Q
 
@@ -23,18 +24,36 @@ class Facility(models.Model):
     class Meta:
         verbose_name_plural = "facilities"
         constraints = [
+            # Conditional so the backing unique index stores only sourced
+            # rows: unsourced facilities all carry external_id NULL and
+            # can never conflict, so indexing them would only cost disk.
             models.UniqueConstraint(
                 fields=['source', 'external_id'],
+                condition=Q(external_id__isnull=False),
                 name='api_facility_source_external_id_uniq',
             ),
-            # The unique constraint treats NULL external_id values as
-            # distinct (which normal facilities rely on), so it cannot by
-            # itself stop a sourced row from being re-ingested without an
-            # id. Any row claiming an external source must carry that
-            # source's id.
+            # NULL external_id rows never hit the unique constraint, so it
+            # cannot by itself stop a sourced row from being re-ingested
+            # without an id. Any row claiming an external source must
+            # carry that source's id.
             models.CheckConstraint(
                 check=Q(source='') | Q(external_id__isnull=False),
                 name='api_facility_source_requires_external_id',
+            ),
+        ]
+        indexes = [
+            # Partial: candidates are a tiny fraction of the table, and
+            # the majority-side filter (is_candidate=False) is a seq scan
+            # regardless, so indexing non-candidate rows buys nothing.
+            models.Index(
+                fields=['is_candidate'],
+                condition=Q(is_candidate=True),
+                name='api_facility_is_candidate_idx',
+            ),
+            GistIndex(
+                fields=['polygon'],
+                condition=Q(polygon__isnull=False),
+                name='api_facility_polygon_gist',
             ),
         ]
 
@@ -103,14 +122,18 @@ class Facility(models.Model):
     is_candidate = models.BooleanField(
         null=False,
         default=False,
-        db_index=True,
         help_text=('Whether this facility is an unconfirmed candidate '
                    'created by an automated detection source (e.g. '
                    'satellite imagery) rather than a confirmed, named '
                    'facility.'))
+    # spatial_index=False: the partial GiST index in Meta.indexes replaces
+    # the automatic full-table one, and keeping the flag off also stops
+    # simple_history from copying an unused index onto the (even larger)
+    # historical table.
     polygon = gis_models.PolygonField(
         null=True,
         blank=True,
+        spatial_index=False,
         help_text=('The detected footprint of a candidate facility in '
                    'WGS 84 (EPSG:4326).'))
     confidence = models.FloatField(
