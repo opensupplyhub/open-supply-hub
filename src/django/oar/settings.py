@@ -637,12 +637,15 @@ if DEBUG and AWS_S3_ENDPOINT_URL:
 
 AWS_S3_FILE_OVERWRITE = False
 
-# Presigned URLs generated through django-storages (e.g. facility list
-# file links in the moderation dashboard) stay valid for 5 minutes
-# instead of the 1-hour default. Claim attachment downloads do not use
-# this path: they go through the download endpoint on
-# FacilityClaimViewSet, which mints 60-second single-object URLs.
-AWS_QUERYSTRING_EXPIRE = int(os.getenv('AWS_QUERYSTRING_EXPIRE', '300'))
+# Deliberately NOT overriding AWS_QUERYSTRING_EXPIRE (default 1 hour):
+# django-storages presigned URLs are consumed by the facility-list file
+# download in the dashboard and by PartnerFieldGroup.icon_file, which is
+# rendered as an image from an API response that CloudFront caches — a
+# shorter expiry breaks those. Claim attachments do not rely on this
+# default: they are excluded from serializers entirely and downloads go
+# through FacilityClaimViewSet's endpoint, which mints 60-second
+# single-object URLs, with a 15-minute s3:signatureAge cap enforced at
+# the bucket policy for the claim_attachments/ prefix.
 
 # IAM role assumed to sign claim-attachment download URLs (OSDEV-3370).
 # Scoped to s3:GetObject on claim attachments, so a minted URL is never

@@ -654,16 +654,28 @@ class FacilityClaimViewSet(ModelViewSet):
         geocode_result = geocode_address(address, country_code)
         return Response(geocode_result)
 
-    def __get_owned_pending_claim(self, request, pk):
+    def __get_owned_pending_claim(self, request, pk, for_update=False):
         """
         Fetch a claim the requesting user may edit: they are its
         contributor and it is still PENDING. Anything else — including
         a claim that exists but belongs to someone else or has been
         decided — is a 404, so the endpoint does not leak which claim
         ids exist.
+
+        for_update=True takes a row lock on the claim (requires the
+        caller to be inside a transaction): the mutating endpoints
+        count-then-insert attachments and read-modify-write claim
+        fields, and atomic alone does not serialize those against a
+        concurrent request — two simultaneous uploads could both read
+        the same attachment count and land over the cap. Contention is
+        only ever the owning claimant racing themselves, so the lock is
+        cheap; it is skipped for plain reads.
         """
         try:
-            return FacilityClaim.objects.get(
+            queryset = FacilityClaim.objects.all()
+            if for_update:
+                queryset = queryset.select_for_update()
+            return queryset.get(
                 pk=pk,
                 contributor=request.user.contributor,
                 status=FacilityClaimStatuses.PENDING,
@@ -687,7 +699,9 @@ class FacilityClaimViewSet(ModelViewSet):
         if not switch_is_active('claim_a_facility'):
             raise NotFound()
 
-        claim = self.__get_owned_pending_claim(request, pk)
+        claim = self.__get_owned_pending_claim(
+            request, pk, for_update=request.method == 'PATCH'
+        )
 
         if request.method == 'GET':
             return Response(PendingClaimSerializer(claim).data)
@@ -725,8 +739,8 @@ class FacilityClaimViewSet(ModelViewSet):
         if not files:
             raise BadRequestException('No files submitted.')
 
-        claim = self.__get_owned_pending_claim(request, pk)
-        
+        claim = self.__get_owned_pending_claim(request, pk, for_update=True)
+
         existing_count = FacilityClaimAttachments.objects.filter(
             claim=claim
         ).count()
@@ -751,7 +765,7 @@ class FacilityClaimViewSet(ModelViewSet):
         if not switch_is_active('claim_a_facility'):
             raise NotFound()
 
-        claim = self.__get_owned_pending_claim(request, pk)
+        claim = self.__get_owned_pending_claim(request, pk, for_update=True)
 
         try:
             attachment = FacilityClaimAttachments.objects.get(
