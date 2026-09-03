@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 from botocore.exceptions import ProfileNotFound
@@ -22,6 +23,11 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
 from api.services.submission_quality_service import (
     QualityVerdict,
     SubmissionQualityVerdicts,
+)
+
+_PROCESSOR_LOGGER = (
+    'api.moderation_event_actions.creation.location_contribution'
+    '.processors.submission_quality_processor'
 )
 
 CLEAN_VERDICTS = SubmissionQualityVerdicts(
@@ -113,6 +119,11 @@ class TestSubmissionQualityProcessor(APITestCase):
             created_from=list_item
         )
 
+    def _single_log_line(self, logs, prefix):
+        matching = [line for line in logs.output if prefix in line]
+        self.assertEqual(len(matching), 1, logs.output)
+        return matching[0]
+
     def _patch_evaluate(self, return_value):
         return patch(
             'api.moderation_event_actions.creation.location_contribution'
@@ -176,6 +187,57 @@ class TestSubmissionQualityProcessor(APITestCase):
 
         self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
         self.assertIsNotNone(result.moderation_event)
+
+    def test_evaluated_submission_body_is_logged(self):
+        # Every evaluated submission logs the body as received, even
+        # when nothing is flagged, so that it can be compared against
+        # the body of any later ignore_warnings resubmission.
+        with self._patch_evaluate(CLEAN_VERDICTS), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(self.contributor, self.base_input_data)
+
+        line = self._single_log_line(
+            logs, 'Submission quality check evaluated'
+        )
+        self.assertIn(f'contributor={self.contributor.id}', line)
+        self.assertIn('warnings=[]', line)
+        self.assertIn(json.dumps(self.base_input_data), line)
+
+    def test_flagged_submission_body_is_logged_with_warning_types(self):
+        verdicts = _flagged_verdicts(
+            name_quality='Looks like test data.',
+            address_country_mismatch='Address does not look like US.',
+        )
+        with self._patch_evaluate(verdicts), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(self.contributor, self.base_input_data)
+
+        line = self._single_log_line(
+            logs, 'Submission quality check evaluated'
+        )
+        self.assertIn("'name_quality'", line)
+        self.assertIn("'address_country_mismatch'", line)
+        self.assertIn(json.dumps(self.base_input_data), line)
+
+    def test_bypassed_submission_body_is_logged(self):
+        resubmitted_data = {
+            **self.base_input_data,
+            'name': 'Blue Horizon Garment Factory',
+        }
+        with self._patch_evaluate(None), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(
+                self.contributor, resubmitted_data, ignore_warnings=True,
+            )
+
+        line = self._single_log_line(
+            logs, 'Submission quality check bypassed via ignore_warnings'
+        )
+        self.assertIn(f'contributor={self.contributor.id}', line)
+        self.assertIn(json.dumps(resubmitted_data), line)
 
     def test_service_construction_failure_fails_open(self):
         # SubmissionQualityService builds its bedrock client lazily

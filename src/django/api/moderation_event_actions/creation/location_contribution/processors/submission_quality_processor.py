@@ -1,3 +1,4 @@
+import json
 import logging
 
 from rest_framework import status
@@ -70,19 +71,24 @@ class SubmissionQualityProcessor(ContributionProcessor):
         if event_dto.ignore_warnings:
             logger.info(
                 'Submission quality check bypassed via ignore_warnings: '
-                'contributor=%s',
+                'contributor=%s body=%s',
                 event_dto.contributor.id,
+                self.__serialize_body(event_dto),
             )
             return super().process(event_dto)
 
         warnings = self.__collect_warnings(event_dto)
+        # Logged whether or not anything was flagged, so that every
+        # evaluated submission has a body line that can be compared
+        # against the bypassed line of its resubmission (if any).
+        logger.info(
+            'Submission quality check evaluated: contributor=%s '
+            'warnings=%s body=%s',
+            event_dto.contributor.id,
+            [warning['type'] for warning in warnings],
+            self.__serialize_body(event_dto),
+        )
         if warnings:
-            logger.info(
-                'Submission quality warnings raised: contributor=%s '
-                'types=%s',
-                event_dto.contributor.id,
-                [warning['type'] for warning in warnings],
-            )
             event_dto.warnings = warnings
             event_dto.errors = {
                 'detail': (
@@ -96,6 +102,18 @@ class SubmissionQualityProcessor(ContributionProcessor):
             return event_dto
 
         return super().process(event_dto)
+
+    @staticmethod
+    def __serialize_body(event_dto: CreateModerationEventDTO) -> str:
+        # The submitted body as received, before cleaning, so the log
+        # shows exactly what the contributor entered each time. The
+        # first submission is logged when it is evaluated and the
+        # resubmission when it bypasses the check via ignore_warnings;
+        # comparing the two shows whether the warnings led the
+        # contributor to change anything. default=str so an unexpected
+        # value type degrades the log line rather than aborting the
+        # submission.
+        return json.dumps(event_dto.raw_data, default=str)
 
     def __collect_warnings(
             self, event_dto: CreateModerationEventDTO) -> list:
