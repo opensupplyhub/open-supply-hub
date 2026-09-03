@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0234_claim_attachment_cascade_and_upload_prefix'),
+        ('api', '0234_add_note_type_to_facility_claim_review_note'),
     ]
 
     operations = [
