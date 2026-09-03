@@ -359,6 +359,7 @@ export const dashboardListsRoute = '/dashboard/lists';
 export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
+export const dashboardClaimsV2Route = '/dashboard/claims-v2';
 export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
 export const dashboardContributionRecordRoute =
     '/dashboard/moderation-queue/:moderationID';
@@ -592,6 +593,7 @@ export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
 export const ENABLE_PRODUCTION_LOCATION_PAGE =
     'enable_production_location_page';
 export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
+export const ENABLE_CLAIMS_V2_DASHBOARD = 'enable_claims_v2_dashboard';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
