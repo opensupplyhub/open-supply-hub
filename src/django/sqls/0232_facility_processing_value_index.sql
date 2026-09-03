@@ -18,8 +18,7 @@ the recompute_facility_processing_value_index management command after them
 instead, and disable the triggers below for the duration if the run is large
 enough for the counter updates to matter.
 */
-DROP TABLE IF EXISTS api_facility_processing_value;
-DROP TABLE IF EXISTS api_facility_processing_value_variant;
+DROP MATERIALIZED VIEW IF EXISTS api_facility_processing_value;
 
 CREATE TABLE api_facility_processing_value (
 	kind TEXT NOT NULL,

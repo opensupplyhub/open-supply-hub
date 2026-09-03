@@ -670,12 +670,20 @@ class FacilityClaimViewSet(ModelViewSet):
     def __notify_claims_team_of_update(request, claim, changes):
         """
         AC #5: the Claims team is notified on every claimant save. Sent
-        best-effort — a mail failure must not roll back the edit.
+        best-effort — a mail failure must not roll back the edit — and
+        deferred with transaction.on_commit, so a save that ends up
+        rolled back sends nothing, and the claim row lock is not held
+        open across the SMTP round-trip.
         """
-        try:
-            send_claim_updated_by_claimant_notice(request, claim, changes)
-        except Exception:
-            _report_facility_claim_email_error_to_rollbar(claim)
+        def send():
+            try:
+                send_claim_updated_by_claimant_notice(
+                    request, claim, changes
+                )
+            except Exception:
+                _report_facility_claim_email_error_to_rollbar(claim)
+
+        transaction.on_commit(send)
 
     def __get_owned_pending_claim(self, request, pk, for_update=False):
         """

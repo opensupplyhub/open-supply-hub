@@ -69,11 +69,20 @@ export function fetchPendingClaim(claimID) {
 }
 
 /*
- * Saving a pending claim edit is up to two requests: newly picked
- * document files are uploaded first (multipart POST to the attachments
- * sub-resource), then the field edits go out as a JSON PATCH. The PATCH
+ * Saving a pending claim edit is up to two requests: the field edits go
+ * out as a JSON PATCH first, then newly picked document files are
+ * uploaded (multipart POST to the attachments sub-resource). The last
  * response is the fresh pending-claim payload, which becomes the new
  * source of truth for the form.
+ *
+ * The PATCH deliberately runs FIRST: if it fails validation, nothing
+ * has been uploaded yet, so the still-populated pickers can safely
+ * retry without duplicating attachments. On the reverse ordering a
+ * failed PATCH left the files already stored while the pickers kept
+ * them, and the retry uploaded them a second time. If the upload step
+ * fails instead, the retried PATCH is a no-op server-side (no changes,
+ * no email, no claimant_updated_at stamp), so retrying is safe there
+ * too.
  */
 export function savePendingClaim(claimID) {
     return (dispatch, getState) => {
@@ -88,9 +97,9 @@ export function savePendingClaim(claimID) {
             ...(formData.companyAddressVerificationDocuments || []),
         ];
 
-        const uploadNewFiles = () => {
+        const uploadNewFiles = patchResponseData => {
             if (newFiles.length === 0) {
-                return Promise.resolve();
+                return Promise.resolve({ data: patchResponseData });
             }
 
             const postData = new FormData();
@@ -102,13 +111,12 @@ export function savePendingClaim(claimID) {
             );
         };
 
-        return uploadNewFiles()
-            .then(() =>
-                apiRequest.patch(
-                    makePendingClaimURL(claimID),
-                    buildPendingClaimPatchPayload(formData),
-                ),
+        return apiRequest
+            .patch(
+                makePendingClaimURL(claimID),
+                buildPendingClaimPatchPayload(formData),
             )
+            .then(({ data }) => uploadNewFiles(data))
             .then(({ data }) =>
                 dispatch(
                     completeSavePendingClaim({

@@ -1,10 +1,7 @@
 import camelCase from 'lodash/camelCase';
 import snakeCase from 'lodash/snakeCase';
 
-import {
-    extractSelectValue,
-    filterFreeEmissionsEstimateFields,
-} from '../../util/util';
+import { extractSelectValue } from '../../util/util';
 
 /*
  * The single place the API <-> form field mapping lives for the
@@ -37,9 +34,11 @@ const CLIENT_ONLY_FIELDS = new Set([
     'facilityName',
 ]);
 
-// Numeric/date fields where an empty string means "not provided" and
-// must be omitted rather than sent (the API rejects '' for them).
-const OMIT_WHEN_EMPTY_FIELDS = new Set([
+// Numeric/date fields where an empty string means "cleared". In a
+// partial PATCH an omitted field means "unchanged", so these are sent
+// as null (the edit serializer allows null for exactly this set) —
+// otherwise clearing a value in the UI would silently keep the old one.
+const NULL_WHEN_EMPTY_FIELDS = new Set([
     'openingDate',
     'estimatedAnnualThroughput',
     'facilityFemaleWorkersPercentage',
@@ -150,38 +149,48 @@ export const pendingClaimApiToFormData = apiData => {
 
 /*
  * Build the JSON PATCH payload from formData: strip client-only fields,
- * drop disabled emissions fields (same behavior as the create flow's
- * filterFreeEmissionsEstimateFields), omit empty numeric/date fields,
+ * send null for cleared numeric/date fields and for the value fields of
+ * unchecked emissions sections (in a partial PATCH, omitted means
+ * "unchanged" — null is how a claimant actually clears a stored value),
  * unwrap select option objects to plain strings (extractSelectValue,
  * exactly like the create flow's appendArrayField), pipe-join
  * facilityType, and snake_case every key.
  */
 export const buildPendingClaimPatchPayload = formData => {
-    const filtered = filterFreeEmissionsEstimateFields(formData);
     const payload = {};
 
-    Object.entries(filtered).forEach(([key, value]) => {
+    Object.entries(formData).forEach(([key, value]) => {
         if (CLIENT_ONLY_FIELDS.has(key) || key.endsWith('Enabled')) {
-            return;
-        }
-        if (
-            OMIT_WHEN_EMPTY_FIELDS.has(key) &&
-            (value === '' || value === null || value === undefined)
-        ) {
-            return;
-        }
-        if (value === undefined) {
             return;
         }
 
         let outValue = value;
+
+        // Unchecking an emissions section clears its stored value; the
+        // create flow just omits these, but on edit that would leave
+        // the old value in place (and the checkbox would re-derive as
+        // checked on the next load).
+        const enabledField = ENERGY_VALUE_TO_ENABLED[key];
+        if (enabledField && !formData[enabledField]) {
+            outValue = null;
+        }
+
+        if (
+            NULL_WHEN_EMPTY_FIELDS.has(key) &&
+            (outValue === '' || outValue === undefined)
+        ) {
+            outValue = null;
+        }
+        if (outValue === undefined) {
+            return;
+        }
+
         if (key === 'facilityType') {
-            if (!Array.isArray(value) || value.length === 0) {
-                return;
-            }
-            outValue = value.map(extractSelectValue).join('|');
+            outValue = Array.isArray(outValue)
+                ? outValue.map(extractSelectValue).join('|')
+                : '';
         } else if (SELECT_OPTION_ARRAY_FIELDS.includes(key)) {
-            outValue = (Array.isArray(value) ? value : []).map(
+            outValue = (Array.isArray(outValue) ? outValue : []).map(
                 extractSelectValue,
             );
         }

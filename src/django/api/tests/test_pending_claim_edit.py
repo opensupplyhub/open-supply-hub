@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 from api.constants import FacilityClaimStatuses
 from api.models import (
@@ -157,6 +158,52 @@ class PendingClaimEditTest(APITestCase):
         self.claim.refresh_from_db()
         self.assertEqual('Only Name', self.claim.contact_person)
         self.assertEqual('Original Title', self.claim.job_title)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_null_clears_optional_numeric_and_date_fields(self):
+        # In a partial PATCH omitted means "unchanged", so null is the
+        # only way a claimant can clear these values (e.g. unchecking
+        # an emissions section in the edit UI).
+        self.claim.energy_coal = 1000
+        self.claim.opening_date = date(2020, 1, 1)
+        self.claim.estimated_annual_throughput = 5000
+        self.claim.facility_workers_count = '50'
+        self.claim.save()
+
+        self.login()
+        response = self.client.patch(
+            self.pending_url,
+            {
+                'energy_coal': None,
+                'opening_date': None,
+                'estimated_annual_throughput': None,
+                'number_of_workers': None,
+            },
+            format='json',
+        )
+        self.assertEqual(200, response.status_code)
+
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.energy_coal)
+        self.assertIsNone(self.claim.opening_date)
+        self.assertIsNone(self.claim.estimated_annual_throughput)
+        self.assertIsNone(self.claim.facility_workers_count)
+
+        self.assertIsNone(response.data['energy_coal'])
+        self.assertIsNone(response.data['opening_date'])
+        self.assertIsNone(response.data['estimated_annual_throughput'])
+        self.assertIsNone(response.data['number_of_workers'])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_null_is_rejected_for_non_clearable_fields(self):
+        self.login()
+        response = self.client.patch(
+            self.pending_url, {'your_name': None}, format='json'
+        )
+        self.assertEqual(400, response.status_code)
+
+        self.claim.refresh_from_db()
+        self.assertEqual('Original Name', self.claim.contact_person)
 
     @override_switch('claim_a_facility', active=True)
     def test_stranger_gets_404_not_403(self):
@@ -507,9 +554,12 @@ class PendingClaimNotificationAndListTest(APITestCase):
         self.login()
         self.assertIsNone(self.claim.claimant_updated_at)
 
-        response = self.client.patch(
-            self.pending_url, {'your_name': 'Someone Else'}, format='json'
-        )
+        # The notification is deferred with transaction.on_commit;
+        # TestCase never commits, so capture and execute the callbacks.
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                self.pending_url, {'your_name': 'Someone Else'}, format='json'
+            )
         self.assertEqual(200, response.status_code)
 
         self.claim.refresh_from_db()
@@ -530,9 +580,10 @@ class PendingClaimNotificationAndListTest(APITestCase):
         from django.core import mail as django_mail
 
         self.login()
-        response = self.client.patch(
-            self.pending_url, {'your_name': 'Someone'}, format='json'
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                self.pending_url, {'your_name': 'Someone'}, format='json'
+            )
         self.assertEqual(200, response.status_code)
         self.claim.refresh_from_db()
         self.assertIsNone(self.claim.claimant_updated_at)
@@ -543,11 +594,12 @@ class PendingClaimNotificationAndListTest(APITestCase):
         from django.core import mail as django_mail
 
         self.login()
-        response = self.client.post(
-            self.attachments_url,
-            {'files': [make_png('proof.png')]},
-            format='multipart',
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                self.attachments_url,
+                {'files': [make_png('proof.png')]},
+                format='multipart',
+            )
         self.assertEqual(200, response.status_code)
         self.claim.refresh_from_db()
         self.assertIsNotNone(self.claim.claimant_updated_at)
