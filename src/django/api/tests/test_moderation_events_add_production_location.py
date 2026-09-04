@@ -479,3 +479,34 @@ class ModerationEventsAddProductionLocationTest(
             energy_field.value,
             {"raw_value": 1000}
         )
+
+    def test_taxonomy_index_columns_populated_after_approval(self):
+        """
+        OSDEV-3428: facility_type / processing_type on api_facilityindex
+        only count extended fields backed by an active FacilityMatch
+        (since OSDEV-3189). The approval path used to compute them before
+        the match existed and never recomputed, leaving locations
+        approved via moderation events invisible to the Facility Type
+        and Processing Type search filters.
+        """
+        from api.models.facility.facility_index import FacilityIndex
+
+        self.add_extended_fields_data()
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        # The index functions map extended-field values through the
+        # facility type / processing type taxonomy, so assert the arrays
+        # are populated rather than matching the raw fixture strings.
+        # Before the fix both arrays were computed while no FacilityMatch
+        # existed and stayed empty.
+        index_row = FacilityIndex.objects.get(id=response.data["os_id"])
+        self.assertNotEqual([], index_row.facility_type)
+        self.assertNotEqual([], index_row.processing_type)
