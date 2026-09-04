@@ -136,6 +136,77 @@ class ReassertRbaPromotionsTest(TestCase):
         self.assertIn('Promoted', reason)
         self.assertIn('re-asserted after sync', reason)
 
+    def simulate_sync_overwrite(self):
+        '''
+        Apply the mutation the daily sync applies to a shared facility.
+
+        sync_databases copies every synced field from the public row onto
+        the RBA row and re-points created_from at the public list item.
+        This reproduces that write rather than running the sync itself,
+        which needs a second database to read from.
+        '''
+        self.facility.name = self.public_item.name
+        self.facility.address = self.public_item.address
+        self.facility.country_code = self.public_item.country_code
+        self.facility.created_from = self.public_item
+        self.facility.save()
+
+    def test_contribution_survives_a_sync_overwrite(self):
+        # The whole design rests on the contribution outliving the
+        # overwrite: the sync only upserts rows that also exist publicly,
+        # and an RBA list item and match do not.
+        item, match = self.create_rba_contribution()
+        reassert_rba_promotions()
+
+        self.simulate_sync_overwrite()
+
+        item.refresh_from_db()
+        match.refresh_from_db()
+        self.assertEqual('RBA Name', item.name)
+        self.assertEqual('RBA Address', item.address)
+        self.assertEqual(FacilityListItem.CONFIRMED_MATCH, item.status)
+        self.assertEqual(OriginSource.RBA, item.origin_source)
+        self.assertEqual(FacilityMatch.CONFIRMED, match.status)
+        self.assertTrue(match.is_active)
+        self.assertEqual(OriginSource.RBA, match.origin_source)
+
+    def test_restores_the_promotion_after_a_sync_overwrite(self):
+        item, _ = self.create_rba_contribution()
+        reassert_rba_promotions()
+
+        self.simulate_sync_overwrite()
+
+        # The facility now shows the public values again.
+        self.facility.refresh_from_db()
+        self.assertEqual('Public Name', self.facility.name)
+        self.assertEqual(self.public_item.id, self.facility.created_from_id)
+
+        # The reverted promotion is detected and restored, and the values
+        # come from the surviving list item.
+        self.assertEqual(1, find_reverted_promotions().count())
+        summary = reassert_rba_promotions()
+
+        self.assertEqual(1, summary['reasserted'])
+        self.facility.refresh_from_db()
+        self.assertEqual('RBA Name', self.facility.name)
+        self.assertEqual('RBA Address', self.facility.address)
+        self.assertEqual(item.id, self.facility.created_from_id)
+
+    def test_survives_repeated_sync_overwrites(self):
+        item, _ = self.create_rba_contribution()
+
+        for _ in range(3):
+            self.simulate_sync_overwrite()
+            reassert_rba_promotions()
+
+        self.facility.refresh_from_db()
+        self.assertEqual('RBA Name', self.facility.name)
+        self.assertEqual(item.id, self.facility.created_from_id)
+
+        # Each cycle records one promotion; nothing is duplicated or lost.
+        item.refresh_from_db()
+        self.assertEqual(3, len(item.processing_results))
+
     def test_is_a_no_op_once_the_promotion_is_in_place(self):
         self.create_rba_contribution()
 
