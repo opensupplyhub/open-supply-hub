@@ -31,6 +31,7 @@ from ...mail import (
     send_claim_facility_denial_email,
     send_claim_facility_revocation_email,
     send_claim_update_notice_to_list_contributors,
+    send_claim_updated_by_claimant_notice,
     send_message_to_claimant_email,
 )
 from ...helpers.attachment_download import generate_attachment_download_url
@@ -654,6 +655,36 @@ class FacilityClaimViewSet(ModelViewSet):
         geocode_result = geocode_address(address, country_code)
         return Response(geocode_result)
 
+    @staticmethod
+    def __stamp_claimant_update(claim):
+        """
+        Record that the claimant changed something on this claim.
+        claimant_updated_at is deliberately separate from updated_at,
+        which moderator actions also bump — the claims queue sorts on
+        this field to surface claims edited since review started.
+        """
+        claim.claimant_updated_at = timezone.now()
+        claim.save(update_fields=['claimant_updated_at', 'updated_at'])
+
+    @staticmethod
+    def __notify_claims_team_of_update(request, claim, changes):
+        """
+        AC #5: the Claims team is notified on every claimant save. Sent
+        best-effort — a mail failure must not roll back the edit — and
+        deferred with transaction.on_commit, so a save that ends up
+        rolled back sends nothing, and the claim row lock is not held
+        open across the SMTP round-trip.
+        """
+        def send():
+            try:
+                send_claim_updated_by_claimant_notice(
+                    request, claim, changes
+                )
+            except Exception:
+                _report_facility_claim_email_error_to_rollbar(claim)
+
+        transaction.on_commit(send)
+
     def __get_owned_pending_claim(self, request, pk, for_update=False):
         """
         Fetch a claim the requesting user may edit: they are its
@@ -714,10 +745,17 @@ class FacilityClaimViewSet(ModelViewSet):
 
         changed_fields = serializer.apply_to_claim(claim)
         if changed_fields:
+            claim.claimant_updated_at = timezone.now()
             # simple-history records this save with history_user set to
             # the claimant via HistoryRequestMiddleware, which is what
             # lets moderators see exactly what the claimant changed.
             claim.save()
+            self.__notify_claims_team_of_update(
+                request,
+                claim,
+                ['Updated {}'.format(field)
+                 for field in sorted(changed_fields)],
+            )
 
         return Response(PendingClaimSerializer(claim).data)
 
@@ -746,8 +784,15 @@ class FacilityClaimViewSet(ModelViewSet):
         ).count()
         validate_attachment_files(files, existing_count=existing_count)
 
-        for file in files:
-            create_claim_attachment(file, claim)
+        created = [create_claim_attachment(file, claim) for file in files]
+
+        self.__stamp_claimant_update(claim)
+        self.__notify_claims_team_of_update(
+            request,
+            claim,
+            ['Added document: {}'.format(attachment.file_name)
+             for attachment in created],
+        )
 
         return Response(PendingClaimSerializer(claim).data)
 
@@ -775,7 +820,15 @@ class FacilityClaimViewSet(ModelViewSet):
         except FacilityClaimAttachments.DoesNotExist as exc:
             raise NotFound() from exc
 
+        deleted_file_name = attachment.file_name
         delete_claim_attachment(attachment)
+
+        self.__stamp_claimant_update(claim)
+        self.__notify_claims_team_of_update(
+            request,
+            claim,
+            ['Removed document: {}'.format(deleted_file_name)],
+        )
 
         return Response(PendingClaimSerializer(claim).data)
 

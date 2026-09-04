@@ -7,15 +7,11 @@ import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import clamp from 'lodash/clamp';
-import constant from 'lodash/constant';
-
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogActions from '@material-ui/core/DialogActions';
 
 import ClaimFacilityIntroStep from './ClaimFacilityIntroStep';
 import ClaimFacilitySupportDocs from './ClaimFacilitySupportDocs';
 import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
+import ClaimOutcomeDialog from './ClaimOutcomeDialog';
 
 import { submitClaimAFacilityData } from '../actions/claimFacility';
 
@@ -51,30 +47,6 @@ const stepperStyles = theme =>
             },
         }),
     });
-
-const popupDialogStyles = Object.freeze({
-    containerStyles: Object.freeze({
-        padding: '35px',
-    }),
-    titleStyles: Object.freeze({
-        margin: 'auto',
-        textAlign: 'center',
-        color: COLOURS.NEAR_BLACK,
-        paddingBottom: '10px',
-        fontSize: '2.125rem',
-        fontWeight: '400',
-        lineHeight: '1.20588em',
-    }),
-    contentStyles: Object.freeze({
-        fontSize: '20px',
-        margin: 'auto',
-        textAlign: 'center',
-        paddingTop: '10px',
-    }),
-    actionStyles: Object.freeze({
-        justifyContent: 'center',
-    }),
-});
 
 const claimFacilityStepperStyles = Object.freeze({
     containerStyles: Object.freeze({
@@ -147,8 +119,6 @@ const steps = Object.freeze([
         stepInputIsValid: claimAFacilityFormIsValid,
     }),
 ]);
-
-const InvisibleDiv = constant(<div style={{ display: 'none ' }} />);
 
 const ClaimFacilityStepper = ({
     fetching,
@@ -298,51 +268,22 @@ const ClaimFacilityStepper = ({
 
     return (
         <div style={claimFacilityStepperStyles.containerStyles}>
-            <Dialog open={dialogIsOpen}>
-                {dialogIsOpen ? (
-                    <div style={popupDialogStyles.containerStyles}>
-                        <DialogContent>
-                            <Typography
-                                variant="title"
-                                style={popupDialogStyles.titleStyles}
-                            >
-                                Thank you for submitting your claim request!
-                            </Typography>
-                            <Typography style={popupDialogStyles.contentStyles}>
-                                You will receive a notification once it has been
-                                reviewed.
-                            </Typography>
-                            <hr
-                                style={{
-                                    color: COLOURS.GREY,
-                                    backgroundColor: COLOURS.GREY,
-                                    height: 1,
-                                }}
-                            />
-                        </DialogContent>
-                        <DialogActions style={popupDialogStyles.actionStyles}>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                href="/claimed"
-                                className={classes.popupButtonStyles}
-                            >
-                                View My Approved Claims
-                            </Button>
-                            <Button
-                                variant="contained"
-                                color="primary"
-                                href={mapRoute}
-                                className={classes.popupButtonStyles}
-                            >
-                                Search OS Hub
-                            </Button>
-                        </DialogActions>
-                    </div>
-                ) : (
-                    <InvisibleDiv />
-                )}
-            </Dialog>
+            <ClaimOutcomeDialog
+                open={dialogIsOpen}
+                title="Thank you for submitting your claim request!"
+                body="You will receive a notification once it has been reviewed."
+                actions={[
+                    {
+                        label: 'View My Approved Claims',
+                        href: '/claimed',
+                        secondary: true,
+                    },
+                    {
+                        label: 'Search OS Hub',
+                        href: mapRoute,
+                    },
+                ]}
+            />
             <div style={claimFacilityStepperStyles.formContainerStyles}>
                 {activeStepName ===
                 facilityClaimStepsNames.CLAIM_PROD_LOCATION ? (

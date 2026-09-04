@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 from api.constants import FacilityClaimStatuses
 from api.models import (
@@ -157,6 +158,52 @@ class PendingClaimEditTest(APITestCase):
         self.claim.refresh_from_db()
         self.assertEqual('Only Name', self.claim.contact_person)
         self.assertEqual('Original Title', self.claim.job_title)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_null_clears_optional_numeric_and_date_fields(self):
+        # In a partial PATCH omitted means "unchanged", so null is the
+        # only way a claimant can clear these values (e.g. unchecking
+        # an emissions section in the edit UI).
+        self.claim.energy_coal = 1000
+        self.claim.opening_date = date(2020, 1, 1)
+        self.claim.estimated_annual_throughput = 5000
+        self.claim.facility_workers_count = '50'
+        self.claim.save()
+
+        self.login()
+        response = self.client.patch(
+            self.pending_url,
+            {
+                'energy_coal': None,
+                'opening_date': None,
+                'estimated_annual_throughput': None,
+                'number_of_workers': None,
+            },
+            format='json',
+        )
+        self.assertEqual(200, response.status_code)
+
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.energy_coal)
+        self.assertIsNone(self.claim.opening_date)
+        self.assertIsNone(self.claim.estimated_annual_throughput)
+        self.assertIsNone(self.claim.facility_workers_count)
+
+        self.assertIsNone(response.data['energy_coal'])
+        self.assertIsNone(response.data['opening_date'])
+        self.assertIsNone(response.data['estimated_annual_throughput'])
+        self.assertIsNone(response.data['number_of_workers'])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_null_is_rejected_for_non_clearable_fields(self):
+        self.login()
+        response = self.client.patch(
+            self.pending_url, {'your_name': None}, format='json'
+        )
+        self.assertEqual(400, response.status_code)
+
+        self.claim.refresh_from_db()
+        self.assertEqual('Original Name', self.claim.contact_person)
 
     @override_switch('claim_a_facility', active=True)
     def test_stranger_gets_404_not_403(self):
@@ -435,3 +482,151 @@ class PendingClaimEditTest(APITestCase):
                 pk=attachment.id
             ).exists()
         )
+
+
+class PendingClaimNotificationAndListTest(APITestCase):
+    def setUp(self):
+        self.email = 'claimant2@example.com'
+        self.password = 'example123'
+        self.user = User.objects.create(email=self.email)
+        self.user.set_password(self.password)
+        self.user.save()
+        self.contributor = Contributor.objects.create(
+            name='Claimant Two', admin=self.user
+        )
+
+        self.facility_list = FacilityList.objects.create(
+            header='header', file_name='two', name='list-two'
+        )
+        self.source = Source.objects.create(
+            facility_list=self.facility_list,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+        self.list_item = FacilityListItem.objects.create(
+            name='name two',
+            address='address two',
+            country_code='US',
+            sector=['Apparel'],
+            source=self.source,
+            row_index=1,
+            status=FacilityListItem.CONFIRMED_MATCH,
+        )
+        self.facility = Facility.objects.create(
+            name='name two',
+            address='address two',
+            country_code='US',
+            location=Point(0, 0),
+            created_from=self.list_item,
+        )
+        FacilityMatch.objects.create(
+            status=FacilityMatch.CONFIRMED,
+            facility=self.facility,
+            results='',
+            facility_list_item=self.list_item,
+        )
+        self.claim = FacilityClaim.objects.create(
+            facility=self.facility,
+            contributor=self.contributor,
+            contact_person='Someone',
+            job_title='Something',
+            status=FacilityClaimStatuses.PENDING,
+        )
+        self.pending_url = f'/api/facility-claims/{self.claim.id}/pending/'
+        self.attachments_url = (
+            f'/api/facility-claims/{self.claim.id}/attachments/'
+        )
+        self.claimed_url = '/api/facilities/claimed/'
+
+    def login(self):
+        self.client.post(
+            '/user-login/',
+            {'email': self.email, 'password': self.password},
+            format='json',
+        )
+
+    @override_switch('claim_a_facility', active=True)
+    def test_patch_stamps_claimant_updated_at_and_sends_email(self):
+        from django.core import mail as django_mail
+
+        self.login()
+        self.assertIsNone(self.claim.claimant_updated_at)
+
+        # The notification is deferred with transaction.on_commit;
+        # TestCase never commits, so capture and execute the callbacks.
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                self.pending_url, {'your_name': 'Someone Else'}, format='json'
+            )
+        self.assertEqual(200, response.status_code)
+
+        self.claim.refresh_from_db()
+        self.assertIsNotNone(self.claim.claimant_updated_at)
+
+        self.assertEqual(1, len(django_mail.outbox))
+        message = django_mail.outbox[0]
+        self.assertIn(str(self.claim.id), message.subject)
+        self.assertIn('contact_person', message.body)
+        self.assertIn(
+            f'/dashboard/claims/{self.claim.id}', message.body
+        )
+        # The notification carries names and a link, never documents.
+        self.assertEqual([], message.attachments)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_noop_patch_sends_no_email_and_no_stamp(self):
+        from django.core import mail as django_mail
+
+        self.login()
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                self.pending_url, {'your_name': 'Someone'}, format='json'
+            )
+        self.assertEqual(200, response.status_code)
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.claimant_updated_at)
+        self.assertEqual(0, len(django_mail.outbox))
+
+    @override_switch('claim_a_facility', active=True)
+    def test_attachment_add_stamps_and_notifies(self):
+        from django.core import mail as django_mail
+
+        self.login()
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                self.attachments_url,
+                {'files': [make_png('proof.png')]},
+                format='multipart',
+            )
+        self.assertEqual(200, response.status_code)
+        self.claim.refresh_from_db()
+        self.assertIsNotNone(self.claim.claimant_updated_at)
+        self.assertEqual(1, len(django_mail.outbox))
+        self.assertIn('proof.png', django_mail.outbox[0].body)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_claimed_list_defaults_to_approved_only(self):
+        self.login()
+        response = self.client.get(self.claimed_url)
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(0, len(json.loads(response.content)))
+
+    @override_switch('claim_a_facility', active=True)
+    def test_claimed_list_statuses_param_includes_pending(self):
+        self.login()
+        response = self.client.get(
+            f'{self.claimed_url}?statuses=PENDING,APPROVED'
+        )
+        self.assertEqual(200, response.status_code)
+        data = json.loads(response.content)
+        self.assertEqual(1, len(data))
+        self.assertEqual(FacilityClaimStatuses.PENDING, data[0]['status'])
+        self.assertIn('claimant_updated_at', data[0])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_claimed_list_rejects_invalid_status(self):
+        self.login()
+        response = self.client.get(f'{self.claimed_url}?statuses=BOGUS')
+        self.assertEqual(400, response.status_code)
