@@ -118,6 +118,46 @@ data "aws_iam_policy_document" "files" {
       ]
     }
   }
+
+  # OSDEV-3370: reject any presigned request for a claim attachment
+  # whose signature is older than 15 minutes, regardless of the expiry
+  # the signer asked for. A presigned URL is a bearer token; this caps
+  # the damage of a leaked or over-long URL at the policy layer, so no
+  # application bug can mint a long-lived one. Direct SDK requests sign
+  # per request (signature age ~0s) and are unaffected; claim-attachment
+  # downloads use 60-second URLs, well inside this ceiling.
+  #
+  # Deliberately scoped to the claim_attachments/ prefix, not the whole
+  # bucket: facility-list file downloads and PartnerFieldGroup icons
+  # (embedded in CloudFront-cached API responses) legitimately rely on
+  # longer-lived presigned URLs. Legacy claim attachments at the bucket
+  # root are protected by the 60-second URL expiry alone until they are
+  # migrated under the prefix (tracked in OSDEV-2278).
+  statement {
+    sid    = "denyStalePresignedRequests"
+    effect = "Deny"
+
+    actions = [
+      "s3:*",
+    ]
+
+    resources = [
+      "${aws_s3_bucket.files.arn}/claim_attachments/*",
+    ]
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    condition {
+      test     = "NumericGreaterThan"
+      variable = "s3:signatureAge"
+      values = [
+        "900000"
+      ]
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "files" {

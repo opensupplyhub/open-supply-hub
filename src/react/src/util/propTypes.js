@@ -401,8 +401,8 @@ export const facilityClaimNotePropType = shape({
 });
 
 const attachmentPropTypes = shape({
+    id: number.isRequired,
     file_name: string.isRequired,
-    claim_attachment: string.isRequired,
 });
 
 export const facilityClaimAttachmentsPropType = oneOfType([

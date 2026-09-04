@@ -180,6 +180,7 @@ data "template_file" "app" {
     cache_host                                    = aws_route53_record.cache.name
     cache_port                                    = var.ec_memcached_port
     aws_storage_bucket_name                       = local.files_bucket_name
+    claim_attachments_signing_role_arn            = aws_iam_role.claim_attachments_signer.arn
     kafka_bootstrap_servers                       = join(",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name                        = var.topic_dedup_basic_name
     opensearch_host                               = aws_opensearch_domain.opensearch.endpoint
