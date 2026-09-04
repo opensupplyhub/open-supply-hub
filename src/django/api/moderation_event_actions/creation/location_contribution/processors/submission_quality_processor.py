@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 
@@ -27,6 +28,16 @@ SLC_SUBMISSION_QUALITY_CHECK_SWITCH = 'slc_submission_quality_check'
 # SubmissionQualityService, add the corresponding entry here, and read the
 # field off the verdicts object below - no other part of this processor
 # changes.
+# The only submitted fields logged in the clear when the check runs.
+# These are exactly the fields the model evaluates and that a warning
+# asks the contributor to change, and they are the published record of a
+# location anyway. Everything else in the body (notes, source details,
+# etc.) is unbounded free text that can carry third-party personal data
+# and must not land in CloudWatch, where retention is long, access is
+# broader than the database, and there is no per-contributor deletion
+# path. See _describe_body.
+_LOGGED_BODY_FIELDS = ('name', 'address', 'country')
+
 _WARNING_TITLES = {
     'name_quality': 'Name May Not Look Like a Facility Name',
     'address_quality': 'Address May Not Look Like a Facility Address',
@@ -71,22 +82,22 @@ class SubmissionQualityProcessor(ContributionProcessor):
         if event_dto.ignore_warnings:
             logger.info(
                 'Submission quality check bypassed via ignore_warnings: '
-                'contributor=%s body=%s',
+                'contributor=%s fields=%s body_digest=%s',
                 event_dto.contributor.id,
-                self.__serialize_body(event_dto),
+                *self.__describe_body(event_dto),
             )
             return super().process(event_dto)
 
         warnings = self.__collect_warnings(event_dto)
         # Logged whether or not anything was flagged, so that every
-        # evaluated submission has a body line that can be compared
-        # against the bypassed line of its resubmission (if any).
+        # evaluated submission has a line that can be compared against
+        # the bypassed line of its resubmission (if any).
         logger.info(
             'Submission quality check evaluated: contributor=%s '
-            'warnings=%s body=%s',
+            'warnings=%s fields=%s body_digest=%s',
             event_dto.contributor.id,
             [warning['type'] for warning in warnings],
-            self.__serialize_body(event_dto),
+            *self.__describe_body(event_dto),
         )
         if warnings:
             event_dto.warnings = warnings
@@ -104,16 +115,32 @@ class SubmissionQualityProcessor(ContributionProcessor):
         return super().process(event_dto)
 
     @staticmethod
-    def __serialize_body(event_dto: CreateModerationEventDTO) -> str:
-        # The submitted body as received, before cleaning, so the log
-        # shows exactly what the contributor entered each time. The
-        # first submission is logged when it is evaluated and the
-        # resubmission when it bypasses the check via ignore_warnings;
-        # comparing the two shows whether the warnings led the
-        # contributor to change anything. default=str so an unexpected
-        # value type degrades the log line rather than aborting the
-        # submission.
-        return json.dumps(event_dto.raw_data, default=str)
+    def __describe_body(event_dto: CreateModerationEventDTO) -> tuple:
+        '''
+        Returns (fields, digest) for logging: the allowlisted fields of
+        the body as received (before cleaning), serialized to JSON, and
+        a short SHA-256 digest of the whole body. The first submission
+        is logged when it is evaluated and the resubmission when it
+        bypasses the check via ignore_warnings; comparing the fields
+        shows whether the warnings led the contributor to change what
+        was judged, and comparing the digests shows whether anything
+        else in the body changed, without recording what. default=str
+        so an unexpected value type degrades the log line rather than
+        aborting the submission.
+        '''
+        raw_data = event_dto.raw_data
+        fields = json.dumps(
+            {
+                field: raw_data.get(field)
+                for field in _LOGGED_BODY_FIELDS
+                if field in raw_data
+            },
+            default=str,
+        )
+        digest = hashlib.sha256(
+            json.dumps(raw_data, default=str, sort_keys=True).encode()
+        ).hexdigest()[:16]
+        return fields, digest
 
     def __collect_warnings(
             self, event_dto: CreateModerationEventDTO) -> list:
