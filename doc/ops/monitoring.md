@@ -16,7 +16,7 @@ BetterStack ──► GET /health-check/ ──► HTTP 200 "ok"   (app process 
 
 ALB / ECS   ──► GET /health-check/ ──► same liveness probe
 
-CloudWatch  ──► RDS + Memcached metrics
+CloudWatch  ──► RDS + Memcached + Lambda metrics
             ──► SNS topic…GlobalNotifications
             ──► AWS Chatbot
             ──► Slack
@@ -154,6 +154,41 @@ All envs use `cache.t3.medium` (~3.09 GiB). CPU stays at the shared default:
 | `alarm…MemcachedCacheClusterFreeableMemory` | `FreeableMemory` (`AWS/ElastiCache`) | 60s | Average < `ec_memcached_alarm_memory_threshold_bytes` (default **500 MB** / `500000000`, ~16% of node RAM) |
 
 Both alarms: `evaluation_periods = 1`; `alarm_actions` / `ok_actions` / `insufficient_data_actions` → `aws_sns_topic.global`.
+
+### Lambda (all functions)
+
+Defined in `deployment/terraform/alarms.tf`. One **un-dimensioned** alarm on the `AWS/Lambda` `Errors` metric covers every Lambda function in the environment's region at once — there is no `FunctionName` dimension, so functions added later are covered the moment they are created.
+
+| Alarm | Metric | Period | Pages when |
+| --- | --- | ---: | --- |
+| `alarm…LambdaErrors` | `Errors` (`AWS/Lambda`, no `FunctionName` dimension — covers all functions) | 300s | Sum > `lambda_errors_alarm_threshold` (default **0**, i.e. any error) |
+
+`evaluation_periods = 1`; `alarm_actions` / `ok_actions` → `aws_sns_topic.global`. `treat_missing_data = notBreaching`: an idle environment publishes no datapoints, which is normal, so there are no insufficient-data pages.
+
+Functions in scope (`local.short` = e.g. `OpenSupplyHubProduction`):
+
+| Function | Defined in | Covered |
+| --- | --- | --- |
+| `func…AlertBatchFailures` | `lambda.tf` | Yes |
+| `func…AlertStepFunctionsFailures` | `lambda.tf` | Yes |
+| `func…ContribotFetchLists` | `contribot_lambda.tf` | Yes |
+| `func…ContribotProcessList` | `contribot_lambda.tf` | Yes |
+| `func…ContribotNotify` | `contribot_lambda.tf` | Yes |
+| `func…ContribotRetryFailedLists` | `contribot_lambda.tf` | Yes |
+| `func…NlbTargetsRegistrar` | `database-private-link-provider/lambda-nlb-registrar.tf` | Yes, where that module is applied |
+| `func…RedirectToS3origin` | `lambda.tf` (Lambda@Edge) | Partial — see below |
+| `func…AddSecurityHeaders` | `lambda.tf` (Lambda@Edge) | Partial — see below |
+
+The trade-off of a single un-dimensioned alarm: Slack reports that *a* Lambda errored, not which one. To identify it, open the `AWS/Lambda` `Errors` metric broken down by `FunctionName` for the alarm window, or the relevant `/aws/lambda/func…` log group.
+
+**Lambda@Edge caveat.** `RedirectToS3origin` and `AddSecurityHeaders` are created in `us-east-1` (the `aws.certificates` provider), but CloudFront executes them at edge locations worldwide and [their CloudWatch metrics and logs are published in the AWS Region closest to where the function executed](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-edge-testing-debugging.html), not centrally. This alarm therefore only sees edge errors for executions that land in `var.aws_region`.
+
+Closing that gap is not a matter of adding a dimension, because **a CloudWatch alarm can only publish to an SNS topic in its own region** — an alarm in `us-east-1` (or any other edge region) cannot use `aws_sns_topic.global`. The options, if edge coverage becomes a requirement:
+
+1. Create a second SNS topic in `us-east-1` and add its ARN to the Chatbot channel configuration (Chatbot accepts topics from multiple regions), then add a matching un-dimensioned alarm there. Covers `us-east-1` edge executions and anything else in that region.
+2. Use CloudFront's own `LambdaExecutionError` / `LambdaValidationError` metrics, which are global and reported in `us-east-1`. These are CloudFront **additional metrics** and must be enabled per distribution at extra cost.
+
+Neither is in place today; both edge functions are thin (a redirect and a response-header rewrite) and their failures surface as CloudFront 5xx.
 
 ### ECS CPU (autoscaling)
 
