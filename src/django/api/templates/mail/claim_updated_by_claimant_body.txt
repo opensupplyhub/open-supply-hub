@@ -1,0 +1,21 @@
+{% block content %}
+Hello,
+
+The claimant has updated their pending facility claim on Open Supply Hub.
+
+Claim Details:
+
+- Claim ID: {{ claim_id }}
+- Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
+- Contributor: {{ contributor_name }}
+- Updated: {{ updated_at }}
+
+Changes made by the claimant:
+{% for change in changes %}
+- {{ change }}{% endfor %}
+
+Review the claim in the dashboard: {{ claim_dashboard_url }}
+
+This is an automated notification. Documents are never attached to this
+email; view them through the claim's page in the dashboard.
+{% endblock content %}

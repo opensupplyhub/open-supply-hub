@@ -55,6 +55,12 @@ const claimsListHeadCells = [
         disablePadding: true,
         label: 'Last Updated',
     },
+    {
+        id: 'claimant_updated_at',
+        numeric: false,
+        disablePadding: true,
+        label: 'Updated by Claimant',
+    },
 ];
 
 function DashboardClaimsListTableHeader({

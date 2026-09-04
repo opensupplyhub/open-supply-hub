@@ -1,8 +1,7 @@
 import logging
-import os
-from datetime import datetime
 from functools import wraps
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
+from api.helpers.claim_attachments import create_claim_attachment
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
 )
@@ -40,7 +39,6 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
-from django.utils.text import slugify
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 from django.conf import settings
@@ -56,7 +54,6 @@ from api.models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
-    FacilityClaimAttachments,
     FacilityClaimReviewNote,
     FacilityListItem,
     FacilityLocation,
@@ -2434,11 +2431,7 @@ class FacilitiesViewSet(ListModelMixin,
             facility_claim.save()
 
             for file in files:
-                self.__handle_file_upload(
-                    file,
-                    contributor.name,
-                    facility_claim
-                )
+                self.__handle_file_upload(file, facility_claim)
 
             send_claim_facility_confirmation_email(request, facility_claim)
             Facility.update_facility_updated_at_field(facility.id)
@@ -2463,20 +2456,11 @@ class FacilitiesViewSet(ListModelMixin,
         except Contributor.DoesNotExist as exc:
             raise NotFound(detail='Contributor not found.') from exc
 
-    def __handle_file_upload(self, file, contributor_name, facility_claim):
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')[:-3]
-        file_name, file_extension = os.path.splitext(file.name)
-
-        file.name = (
-            f'{slugify(file_name, allow_unicode=True)}-'
-            f'{contributor_name}-{timestamp}{file_extension}'
-        )
-
-        FacilityClaimAttachments.objects.create(
-            claim=facility_claim,
-            file_name=f'{slugify(file_name)}{file_extension}',
-            claim_attachment=file
-        )
+    def __handle_file_upload(self, file, facility_claim):
+        # Storage and naming are shared with the pending-claim edit
+        # endpoints (OSDEV-3370): opaque UUID object keys, display name
+        # kept in the database.
+        create_claim_attachment(file, facility_claim)
 
     @swagger_auto_schema(auto_schema=None, methods=['GET'])
     @action(detail=False, methods=['GET'],
@@ -2505,10 +2489,37 @@ class FacilitiesViewSet(ListModelMixin,
 
         if not switch_is_active('claim_a_facility'):
             raise NotFound()
+
+        # Default stays approved-only so existing consumers are
+        # unaffected; My Facilities passes ?statuses=PENDING,APPROVED to
+        # also show claims awaiting review (OSDEV-3371).
+        valid_statuses = {
+            FacilityClaimStatuses.PENDING,
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.DENIED,
+            FacilityClaimStatuses.REVOKED,
+        }
+        statuses_param = request.query_params.get('statuses')
+        if statuses_param:
+            statuses = [
+                status.strip().upper()
+                for status in statuses_param.split(',')
+                if status.strip()
+            ]
+            invalid = set(statuses) - valid_statuses
+            if invalid:
+                raise BadRequestException(
+                    'Invalid claim statuses: {}.'.format(
+                        ', '.join(sorted(invalid))
+                    )
+                )
+        else:
+            statuses = [FacilityClaimStatuses.APPROVED]
+
         try:
             claims = FacilityClaim.objects.filter(
                 contributor=request.user.contributor,
-                status=FacilityClaimStatuses.APPROVED)
+                status__in=statuses)
         except Contributor.DoesNotExist as exc:
             raise NotFound(
                 'The current User does not have an associated Contributor'

@@ -6,7 +6,7 @@ export const selectStyles = Object.freeze({
     fontWeight: '600',
 });
 
-const primaryButtonStyles = theme =>
+export const primaryButtonStyles = theme =>
     Object.freeze({
         height: '49px',
         borderRadius: 0,

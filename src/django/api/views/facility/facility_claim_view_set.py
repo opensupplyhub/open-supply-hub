@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from waffle import switch_is_active
 
@@ -30,11 +31,21 @@ from ...mail import (
     send_claim_facility_denial_email,
     send_claim_facility_revocation_email,
     send_claim_update_notice_to_list_contributors,
+    send_claim_updated_by_claimant_notice,
     send_message_to_claimant_email,
+)
+from ...helpers.attachment_download import generate_attachment_download_url
+from ...helpers.claim_attachments import (
+    create_claim_attachment,
+    delete_claim_attachment,
+    validate_attachment_files,
 )
 from ...models.contributor.contributor import Contributor
 from ...models.extended_field import ExtendedField
 from ...models.facility.facility_claim import FacilityClaim
+from ...models.facility.facility_claim_attachments import (
+    FacilityClaimAttachments
+)
 from ...models.facility.facility_claim_review_note import (
     FacilityClaimReviewNote
 )
@@ -48,6 +59,10 @@ from ...serializers import (
     FacilityClaimSerializer,
     FacilityClaimDetailsSerializer,
     FacilityClaimListQueryParamsSerializer
+)
+from ...serializers.facility.edit_pending_claim_serializer import (
+    EditPendingClaimSerializer,
+    PendingClaimSerializer,
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
@@ -639,3 +654,222 @@ class FacilityClaimViewSet(ModelViewSet):
 
         geocode_result = geocode_address(address, country_code)
         return Response(geocode_result)
+
+    @staticmethod
+    def __stamp_claimant_update(claim):
+        """
+        Record that the claimant changed something on this claim.
+        claimant_updated_at is deliberately separate from updated_at,
+        which moderator actions also bump — the claims queue sorts on
+        this field to surface claims edited since review started.
+        """
+        claim.claimant_updated_at = timezone.now()
+        claim.save(update_fields=['claimant_updated_at', 'updated_at'])
+
+    @staticmethod
+    def __notify_claims_team_of_update(request, claim, changes):
+        """
+        AC #5: the Claims team is notified on every claimant save. Sent
+        best-effort — a mail failure must not roll back the edit — and
+        deferred with transaction.on_commit, so a save that ends up
+        rolled back sends nothing, and the claim row lock is not held
+        open across the SMTP round-trip.
+        """
+        def send():
+            try:
+                send_claim_updated_by_claimant_notice(
+                    request, claim, changes
+                )
+            except Exception:
+                _report_facility_claim_email_error_to_rollbar(claim)
+
+        transaction.on_commit(send)
+
+    def __get_owned_pending_claim(self, request, pk, for_update=False):
+        """
+        Fetch a claim the requesting user may edit: they are its
+        contributor and it is still PENDING. Anything else — including
+        a claim that exists but belongs to someone else or has been
+        decided — is a 404, so the endpoint does not leak which claim
+        ids exist.
+
+        for_update=True takes a row lock on the claim (requires the
+        caller to be inside a transaction): the mutating endpoints
+        count-then-insert attachments and read-modify-write claim
+        fields, and atomic alone does not serialize those against a
+        concurrent request — two simultaneous uploads could both read
+        the same attachment count and land over the cap. Contention is
+        only ever the owning claimant racing themselves, so the lock is
+        cheap; it is skipped for plain reads.
+        """
+        try:
+            queryset = FacilityClaim.objects.all()
+            if for_update:
+                queryset = queryset.select_for_update()
+            return queryset.get(
+                pk=pk,
+                contributor=request.user.contributor,
+                status=FacilityClaimStatuses.PENDING,
+            )
+        except (FacilityClaim.DoesNotExist, Contributor.DoesNotExist) as exc:
+            raise NotFound() from exc
+
+    @transaction.atomic
+    @action(detail=True,
+            methods=['GET', 'PATCH'],
+            url_path='pending',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def pending(self, request, pk=None):
+        """
+        Claimant-facing view (GET) and edit (PATCH) of their own
+        PENDING claim. OSDEV-3370. PATCH accepts any subset of the
+        claim form's fields; validation is shared with claim creation
+        via EditPendingClaimSerializer. Attachments are managed through
+        the attachments sub-resource, not here.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+
+        claim = self.__get_owned_pending_claim(
+            request, pk, for_update=request.method == 'PATCH'
+        )
+
+        if request.method == 'GET':
+            return Response(PendingClaimSerializer(claim).data)
+
+        serializer = EditPendingClaimSerializer(
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        changed_fields = serializer.apply_to_claim(claim)
+        if changed_fields:
+            claim.claimant_updated_at = timezone.now()
+            # simple-history records this save with history_user set to
+            # the claimant via HistoryRequestMiddleware, which is what
+            # lets moderators see exactly what the claimant changed.
+            claim.save()
+            self.__notify_claims_team_of_update(
+                request,
+                claim,
+                ['Updated {}'.format(field)
+                 for field in sorted(changed_fields)],
+            )
+
+        return Response(PendingClaimSerializer(claim).data)
+
+    @transaction.atomic
+    @action(detail=True,
+            methods=['POST'],
+            url_path='attachments',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def add_attachments(self, request, pk=None):
+        """
+        Add attachment files to the requesting claimant's own PENDING
+        claim. The MAX_ATTACHMENT_AMOUNT cap applies to the claim's
+        lifetime total (submission plus edits), not per request.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+
+        files = request.FILES.getlist('files')
+        if not files:
+            raise BadRequestException('No files submitted.')
+
+        claim = self.__get_owned_pending_claim(request, pk, for_update=True)
+
+        existing_count = FacilityClaimAttachments.objects.filter(
+            claim=claim
+        ).count()
+        validate_attachment_files(files, existing_count=existing_count)
+
+        created = [create_claim_attachment(file, claim) for file in files]
+
+        self.__stamp_claimant_update(claim)
+        self.__notify_claims_team_of_update(
+            request,
+            claim,
+            ['Added document: {}'.format(attachment.file_name)
+             for attachment in created],
+        )
+
+        return Response(PendingClaimSerializer(claim).data)
+
+    @transaction.atomic
+    @action(detail=True,
+            methods=['DELETE'],
+            url_path=r'attachments/(?P<attachment_pk>[0-9]+)',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def delete_attachment(self, request, pk=None, attachment_pk=None):
+        """
+        Remove one attachment from the requesting claimant's own
+        PENDING claim. Deletes the database row and the stored file
+        together (file cleanup runs in the post_delete signal).
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+
+        claim = self.__get_owned_pending_claim(request, pk, for_update=True)
+
+        try:
+            attachment = FacilityClaimAttachments.objects.get(
+                pk=attachment_pk,
+                claim=claim,
+            )
+        except FacilityClaimAttachments.DoesNotExist as exc:
+            raise NotFound() from exc
+
+        deleted_file_name = attachment.file_name
+        delete_claim_attachment(attachment)
+
+        self.__stamp_claimant_update(claim)
+        self.__notify_claims_team_of_update(
+            request,
+            claim,
+            ['Removed document: {}'.format(deleted_file_name)],
+        )
+
+        return Response(PendingClaimSerializer(claim).data)
+
+    @action(detail=True,
+            methods=['GET'],
+            url_path=r'attachments/(?P<attachment_pk>[0-9]+)/download',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def download_attachment(self, request, pk=None, attachment_pk=None):
+        """
+        Authorization-checked attachment download: the claim's own
+        contributor or a superuser (moderator), nobody else. Responds
+        with a 302 redirect to a presigned URL that is valid for 60
+        seconds and scoped to this single object, minted by the
+        dedicated signing role. Raw storage URLs are not exposed
+        anywhere else in the API.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+
+        try:
+            attachment = FacilityClaimAttachments.objects.select_related(
+                'claim'
+            ).get(pk=attachment_pk, claim_id=pk)
+        except FacilityClaimAttachments.DoesNotExist as exc:
+            raise NotFound() from exc
+
+        is_moderator = request.user.is_superuser
+        if not is_moderator:
+            try:
+                is_owner = (
+                    attachment.claim.contributor
+                    == request.user.contributor
+                )
+            except Contributor.DoesNotExist as exc:
+                raise NotFound() from exc
+            if not is_owner:
+                # 404, not 403: no existence leak.
+                raise NotFound()
+
+        if not attachment.claim_attachment:
+            raise NotFound()
+
+        url = generate_attachment_download_url(attachment)
+        return HttpResponseRedirect(url)

@@ -116,6 +116,69 @@ resource "aws_iam_role_policy" "s3_read_write_files_bucket" {
   policy = data.aws_iam_policy_document.s3_read_write_files_bucket.json
 }
 
+# OSDEV-3370: dedicated role for signing claim-attachment download URLs.
+# A presigned URL inherits the permissions of the principal that signed
+# it, so URLs handed to claimants must not be backed by the app task
+# role (which can also write and delete). The Django app assumes this
+# role (CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN) only to mint 60-second GET
+# URLs from the download endpoint.
+#
+# GetObject is granted on the whole files bucket rather than only the
+# claim_attachments/ prefix because attachments uploaded before
+# OSDEV-3370 live at the bucket root. Tighten this to
+# "${aws_s3_bucket.files.arn}/claim_attachments/*" once the legacy
+# objects are migrated under the prefix (tracked in OSDEV-2278).
+data "aws_iam_policy_document" "claim_attachments_signer_assume" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.app_task_role.arn]
+    }
+  }
+}
+
+resource "aws_iam_role" "claim_attachments_signer" {
+  name               = "ecs${local.short}ClaimAttachmentsSigner"
+  assume_role_policy = data.aws_iam_policy_document.claim_attachments_signer_assume.json
+}
+
+data "aws_iam_policy_document" "claim_attachments_signer_s3" {
+  statement {
+    effect = "Allow"
+
+    resources = [
+      "${aws_s3_bucket.files.arn}/*",
+    ]
+
+    actions = [
+      "s3:GetObject",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "claim_attachments_signer_s3" {
+  name   = "S3GetClaimAttachments"
+  role   = aws_iam_role.claim_attachments_signer.name
+  policy = data.aws_iam_policy_document.claim_attachments_signer_s3.json
+}
+
+data "aws_iam_policy_document" "assume_claim_attachments_signer" {
+  statement {
+    effect    = "Allow"
+    actions   = ["sts:AssumeRole"]
+    resources = [aws_iam_role.claim_attachments_signer.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "assume_claim_attachments_signer" {
+  name   = "AssumeClaimAttachmentsSigner"
+  role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.assume_claim_attachments_signer.json
+}
+
 # Lets the Django app task invoke models via Bedrock for the SLC
 # submission quality check (SubmissionQualityProcessor), using the task's
 # IAM role rather than a long-lived API key. The set of invocable models

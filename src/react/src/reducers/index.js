@@ -21,6 +21,7 @@ import ClaimFacilityReducer from './ClaimFacilityReducer';
 import ClaimFacilityDashboardReducer from './ClaimFacilityDashboardReducer';
 import ClaimedFacilityDetailsReducer from './ClaimedFacilityDetailsReducer';
 import ClaimedFacilitesReducer from './ClaimedFacilitesReducer';
+import PendingClaimEditReducer from './PendingClaimEditReducer';
 import DashboardListsReducer from './DashboardListsReducer';
 import DashboardApiBlocksReducer from './DashboardApiBlocksReducer';
 import DashboardActivityReportsReducer from './DashboardActivityReportsReducer';
@@ -58,6 +59,7 @@ export default combineReducers({
     claimFacilityDashboard: ClaimFacilityDashboardReducer,
     claimedFacilityDetails: ClaimedFacilityDetailsReducer,
     claimedFacilities: ClaimedFacilitesReducer,
+    pendingClaimEdit: PendingClaimEditReducer,
     dashboardLists: DashboardListsReducer,
     dashboardApiBlocks: DashboardApiBlocksReducer,
     dashboardActivityReports: DashboardActivityReportsReducer,

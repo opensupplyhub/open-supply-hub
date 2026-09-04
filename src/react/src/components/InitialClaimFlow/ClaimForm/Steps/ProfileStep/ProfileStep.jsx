@@ -60,6 +60,11 @@ const ProfileStep = ({
     countryOptions,
     processingTypeOptions,
     onEmissionsValidationChange,
+    // Optional overrides for the emissions section, used when the form
+    // state lives outside the claimForm slice (pending claim edit view).
+    emissionsFormData,
+    onEmissionsValueChange,
+    onEmissionsEnabledChange,
 }) => {
     const [
         claimEmissionsEstimateHasErrors,
@@ -411,6 +416,7 @@ const ProfileStep = ({
                         <TextField
                             fullWidth
                             variant="outlined"
+                            value={formData.parentCompanyName || ''}
                             onChange={e =>
                                 handleChange(
                                     'parentCompanyName',
@@ -543,6 +549,13 @@ const ProfileStep = ({
                             aria-label="Office country"
                             isMulti={false}
                             options={countryOptions || []}
+                            value={
+                                (countryOptions || []).find(
+                                    option =>
+                                        option.value ===
+                                        formData.officeCountryCode,
+                                ) || null
+                            }
                             onChange={option =>
                                 handleChange(
                                     'officeCountryCode',
@@ -1203,6 +1216,9 @@ const ProfileStep = ({
                 <div className={classes.emissionsEstimateContainer}>
                     <ClaimEmissionsEstimate
                         onValidationChange={setClaimEmissionsEstimateHasErrors}
+                        formData={emissionsFormData}
+                        onEmissionsValueChange={onEmissionsValueChange}
+                        onEmissionsEnabledChange={onEmissionsEnabledChange}
                     />
                 </div>
             )}
@@ -1220,6 +1236,9 @@ ProfileStep.propTypes = {
     countryOptions: array,
     processingTypeOptions: array,
     onEmissionsValidationChange: func,
+    emissionsFormData: object,
+    onEmissionsValueChange: func,
+    onEmissionsEnabledChange: func,
 };
 
 ProfileStep.defaultProps = {
@@ -1228,6 +1247,9 @@ ProfileStep.defaultProps = {
     countryOptions: null,
     processingTypeOptions: null,
     onEmissionsValidationChange: null,
+    emissionsFormData: null,
+    onEmissionsValueChange: null,
+    onEmissionsEnabledChange: null,
 };
 
 export default withStyles(profileStepStyles)(withScrollReset(ProfileStep));
