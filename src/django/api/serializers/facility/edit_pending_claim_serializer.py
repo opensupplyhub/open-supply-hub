@@ -43,6 +43,32 @@ class EditPendingClaimSerializer(FacilityCreateClaimSerializer):
     # Attachment files are sub-resource operations on pending claims.
     files = None
 
+    # In a partial PATCH an omitted field means "unchanged", so the
+    # only way a claimant can clear one of these optional values is to
+    # send null. The create serializer's definitions stay strict (the
+    # create flow simply omits them); the corresponding model fields
+    # are all null=True.
+    NULLABLE_ON_EDIT = (
+        'opening_date',
+        'estimated_annual_throughput',
+        'energy_coal',
+        'energy_natural_gas',
+        'energy_diesel',
+        'energy_kerosene',
+        'energy_biomass',
+        'energy_charcoal',
+        'energy_animal_waste',
+        'energy_electricity',
+        'energy_other',
+        'number_of_workers',
+        'facility_female_workers_percentage',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name in self.NULLABLE_ON_EDIT:
+            self.fields[field_name].allow_null = True
+
     def validate(self, data):
         # The parent validate() rejects facilities that already have a
         # PENDING or APPROVED claim — that is create-time protection

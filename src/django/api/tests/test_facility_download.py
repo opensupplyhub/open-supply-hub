@@ -296,18 +296,25 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "business_linkedin_profile": "https://example.com",
         }
 
+        # File contents must start with the real magic bytes for their
+        # extension — attachment uploads validate content, not just the
+        # file name (OSDEV-3370).
         file_data = {
             'test_attachment_1.jpg': (
-                b'claimant_attachment_content_jpg', 'image/jpg'
+                b'\xff\xd8\xff\xe0claimant_attachment_content_jpg',
+                'image/jpg'
             ),
             'test_attachment_2.jpeg': (
-                b'claimant_attachment_content_jpeg', 'image/jpeg'
+                b'\xff\xd8\xff\xe0claimant_attachment_content_jpeg',
+                'image/jpeg'
             ),
             'test_attachment_3.png': (
-                b'claimant_attachment_content_png', 'image/png'
+                b'\x89PNG\r\n\x1a\nclaimant_attachment_content_png',
+                'image/png'
             ),
             'test_attachment_4.pdf': (
-                b'claimant_attachment_content_pdf', 'application/pdf'
+                b'%PDF-1.4 claimant_attachment_content_pdf',
+                'application/pdf'
             )
         }
 

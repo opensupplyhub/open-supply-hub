@@ -242,6 +242,41 @@ def send_claim_facility_revocation_email(request, facility_claim):
     )
 
 
+def send_claim_updated_by_claimant_notice(request, facility_claim, changes):
+    """
+    Internal notice to the Claims team when a claimant edits their own
+    pending claim (OSDEV-3371). `changes` is a list of human-readable
+    change descriptions (changed field names, attachment add/remove
+    events). The email deliberately carries only names and a dashboard
+    link — never document contents or download URLs.
+    """
+    subj_template = get_template('mail/claim_updated_by_claimant_subject.txt')
+    text_template = get_template('mail/claim_updated_by_claimant_body.txt')
+    html_template = get_template('mail/claim_updated_by_claimant_body.html')
+
+    facility = facility_claim.facility
+    notice_dictionary = {
+        'claim_id': facility_claim.id,
+        'facility_name': facility.name,
+        'facility_address': facility.address,
+        'facility_country': COUNTRY_NAMES.get(facility.country_code, ''),
+        'contributor_name': facility_claim.contributor.name,
+        'updated_at': facility_claim.claimant_updated_at,
+        'changes': changes,
+        'claim_dashboard_url': '{}/dashboard/claims/{}'.format(
+            make_oshub_url(request), facility_claim.id
+        ),
+    }
+
+    send_mail(
+        subj_template.render(notice_dictionary).rstrip(),
+        text_template.render(notice_dictionary),
+        settings.DEFAULT_FROM_EMAIL,
+        [settings.NOTIFICATION_EMAIL_TO],
+        html_message=html_template.render(notice_dictionary)
+    )
+
+
 def send_approved_claim_notice_to_one_contributor(request, claim, contributor):
     subj_template = get_template(
         'mail/approved_facility_claim_contributor_notice_subject.txt')
