@@ -296,6 +296,11 @@ export const makeGetFacilityClaimsURLWithQueryString = qs =>
     `/api/facility-claims/?${qs}`;
 export const makeGetFacilityClaimByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/`;
+// Authorization-checked download: the API answers with a short-lived
+// redirect to the file. Attachment payloads carry no direct storage
+// URLs (OSDEV-3370).
+export const makeFacilityClaimAttachmentDownloadURL = (claimID, attachmentID) =>
+    `/api/facility-claims/${claimID}/attachments/${attachmentID}/download/`;
 export const makeMessageFacilityClaimantByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/message-claimant/`;
 export const makeApproveFacilityClaimByClaimIDURL = claimID =>
