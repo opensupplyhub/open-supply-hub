@@ -1559,3 +1559,18 @@ variable "contribot_google_drive_service_key_secret_name" {
   type    = string
   default = ""
 }
+
+# IAM role ARNs (typically in another AWS account, e.g. the
+# automated-claims pipeline's Lambda execution role) that may read claim
+# attachment objects directly from the files bucket. Granted s3:GetObject
+# on the claim_attachments/ prefix only, via the bucket policy
+# (storage.tf). Set per environment in uncommitted tfvars; empty by
+# default so no cross-account access exists unless explicitly configured.
+# To get this value from the AWS console:
+# Lambda → auto-claims-moderate-claim → Configuration → Permissions → Execution role.
+variable "claim_attachments_reader_role_arns" {
+  type    = list(string)
+  default = [
+    "arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"
+  ]
+}
