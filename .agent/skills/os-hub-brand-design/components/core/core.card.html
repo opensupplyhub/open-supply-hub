@@ -1,0 +1,73 @@
+<!-- @dsCard group="Components" viewport="700x560" name="Core Components" subtitle="Button, Eyebrow, Tag, Stat, Card, SpeechBubble" -->
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+a{color:var(--link-color)}a:hover{color:var(--link-hover-color)}
+section{padding:16px 22px;border-bottom:1px solid rgba(13,17,40,.08);}
+.lbl{font:700 10px 'DM Sans';text-transform:uppercase;letter-spacing:.1em;color:rgba(13,17,40,.45);margin-bottom:10px;}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+</head>
+<body style="margin:0;background:#fff;">
+<div id="root"></div>
+<script type="text/babel">
+const { Button, Eyebrow, Tag, Stat, Card, SpeechBubble } = window.OpenSupplyHubDesignSystem_69f06a;
+
+function Demo() {
+  return (
+    <div>
+      <section>
+        <div className="lbl">Button</div>
+        <div className="row">
+          <Button variant="primary">Get Pricing</Button>
+          <Button variant="accent">Dive In</Button>
+          <Button variant="outline">Find Out More</Button>
+          <span style={{background:'var(--osh-off-black)',borderRadius:12,padding:10}}><Button variant="inverse" size="sm">Share Data</Button></span>
+          <Button variant="primary" size="sm">Small</Button>
+        </div>
+      </section>
+      <section>
+        <div className="lbl">Eyebrow + Tag</div>
+        <div className="row" style={{gap:20}}>
+          <Eyebrow>Case Study</Eyebrow>
+          <Eyebrow color="var(--osh-purple)">Features</Eyebrow>
+          <Tag color="yellow">Brands & Retailers</Tag>
+          <Tag color="purple">Civil Society</Tag>
+          <Tag color="green">Industry Orgs</Tag>
+          <Tag color="outline">Manufacturing</Tag>
+        </div>
+      </section>
+      <section>
+        <div className="lbl">Stat</div>
+        <div className="row" style={{gap:48}}>
+          <Stat value="2,500,000+" label="OS IDs" sublabel="Production locations listed" />
+          <Stat value="4,500+" label="Data contributors" color="var(--osh-green)" />
+        </div>
+      </section>
+      <section style={{borderBottom:'none'}}>
+        <div className="lbl">Card + SpeechBubble</div>
+        <div className="row" style={{alignItems:'flex-start'}}>
+          <Card tone="yellow" padding={18} style={{width:180}}>
+            <h3 style={{fontSize:22}}>Share</h3>
+            <p style={{margin:'4px 0 0',fontSize:13}}>Build the world's most open map.</p>
+          </Card>
+          <Card tone="dark" padding={18} style={{width:180}}>
+            <h3 style={{fontSize:22,color:'var(--osh-off-white)'}}>Discover</h3>
+            <p style={{margin:'4px 0 0',fontSize:13}}>Find overlapping datasets.</p>
+          </Card>
+          <SpeechBubble color="pink">Where was this made?</SpeechBubble>
+        </div>
+      </section>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Demo />);
+</script>
+</body>
+</html>
