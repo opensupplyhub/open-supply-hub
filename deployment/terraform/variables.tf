@@ -1566,7 +1566,11 @@ variable "contribot_google_drive_service_key_secret_name" {
 # on the claim_attachments/ prefix only, via the bucket policy
 # (storage.tf). Set per environment in uncommitted tfvars; empty by
 # default so no cross-account access exists unless explicitly configured.
+# To get this value from the AWS console:
+# Lambda → auto-claims-moderate-claim → Configuration → Permissions → Execution role.
 variable "claim_attachments_reader_role_arns" {
   type    = list(string)
-  default = []
+  default = [
+    "arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"
+  ]
 }
