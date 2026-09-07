@@ -148,6 +148,10 @@ def send_message_to_claimant_email(request, facility_claim, message):
         'facility_address': facility_claim.facility.address,
         'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
+        # OSDEV-2278: claimants update pending claims (fields and
+        # documents) on the platform instead of replying with
+        # attachments by email.
+        'claimed_url': '{}/claimed'.format(make_oshub_url(request)),
     }
 
     sent_count = send_mail(
