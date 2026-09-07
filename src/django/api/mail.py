@@ -270,7 +270,7 @@ def send_claim_updated_by_claimant_notice(request, facility_claim, changes):
         ),
     }
 
-    message = html_template.render(notice_dictionary)
+    message = text_template.render(notice_dictionary)
 
     FacilityClaimReviewNote.objects.create(
         claim=facility_claim,
@@ -281,10 +281,10 @@ def send_claim_updated_by_claimant_notice(request, facility_claim, changes):
 
     sent_count = send_mail(
         subj_template.render(notice_dictionary).rstrip(),
-        text_template.render(notice_dictionary),
+        message,
         settings.DEFAULT_FROM_EMAIL,
         [settings.NOTIFICATION_EMAIL_TO],
-        html_message=message
+        html_message=html_template.render(notice_dictionary)
     )
 
     if sent_count != 1:
