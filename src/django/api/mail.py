@@ -1,5 +1,3 @@
-from itertools import count
-
 from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
