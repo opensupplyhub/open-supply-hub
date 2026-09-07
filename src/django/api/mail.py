@@ -1,3 +1,5 @@
+from itertools import count
+
 from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
@@ -268,13 +270,28 @@ def send_claim_updated_by_claimant_notice(request, facility_claim, changes):
         ),
     }
 
-    send_mail(
+    message = html_template.render(notice_dictionary)
+
+    FacilityClaimReviewNote.objects.create(
+        claim=facility_claim,
+        author=request.user,
+        note=message,
+        note_type=FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+    )
+
+    sent_count = send_mail(
         subj_template.render(notice_dictionary).rstrip(),
         text_template.render(notice_dictionary),
         settings.DEFAULT_FROM_EMAIL,
         [settings.NOTIFICATION_EMAIL_TO],
-        html_message=html_template.render(notice_dictionary)
+        html_message=message
     )
+
+    if sent_count != 1:
+        raise RuntimeError(
+            'Claim update notice email was not sent '
+            f'(send_mail returned {sent_count}).'
+        )
 
 
 def send_approved_claim_notice_to_one_contributor(request, claim, contributor):
