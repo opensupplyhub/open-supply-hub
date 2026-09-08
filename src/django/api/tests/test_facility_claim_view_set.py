@@ -314,6 +314,26 @@ class FacilityClaimViewSetTest(APITestCase):
             FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
         )
 
+    def test_message_claimant_email_points_to_pending_claim_edit(self):
+        # OSDEV-2278: the email directs claimants to update their
+        # pending claim (fields + documents) on the platform instead of
+        # replying with attachments; replying stays as a fallback only.
+        response = self._post_message_claimant(
+            self.facility_claim_first.id, "Please add your documents."
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        message = mail.outbox[0]
+        html_body = message.alternatives[0][0]
+
+        for body in (message.body, html_body):
+            self.assertIn('How to update your claim', body)
+            self.assertIn('/claimed', body)
+            self.assertIn('you can reply to this message instead', body)
+        # The platform path is a real link in the HTML version.
+        self.assertIn('<a href="http', html_body)
+
     def get_facility_claims(self, statuses='', countries=''):
         url = '/api/facility-claims/?' + statuses + countries
         return self.client.get(url)
