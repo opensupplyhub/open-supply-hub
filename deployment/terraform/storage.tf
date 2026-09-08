@@ -158,6 +158,34 @@ data "aws_iam_policy_document" "files" {
       ]
     }
   }
+
+  # OSDEV-3374: let the automated-claims pipeline (a Lambda in another
+  # AWS account) read claim attachments directly via IAM instead of
+  # receiving presigned URLs from the API. Read-only, and scoped to the
+  # claim_attachments/ prefix — nothing else in the bucket is shared.
+  # The role ARNs are provided per environment in uncommitted tfvars;
+  # with the default empty list this statement is not emitted at all.
+  dynamic "statement" {
+    for_each = length(var.claim_attachments_reader_role_arns) > 0 ? [1] : []
+
+    content {
+      sid    = "allowClaimAttachmentPipelineRead"
+      effect = "Allow"
+
+      actions = [
+        "s3:GetObject",
+      ]
+
+      resources = [
+        "${aws_s3_bucket.files.arn}/claim_attachments/*",
+      ]
+
+      principals {
+        type        = "AWS"
+        identifiers = var.claim_attachments_reader_role_arns
+      }
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "files" {

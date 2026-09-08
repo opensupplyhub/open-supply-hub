@@ -467,6 +467,36 @@ class PendingClaimEditTest(APITestCase):
         self.assertNotIn('claim_attachment', data['attachments'][0])
         self.assertIn('id', data['attachments'][0])
 
+    @override_switch('claim_a_facility', active=True)
+    def test_claim_details_payload_has_storage_key_for_pipeline(self):
+        # OSDEV-3374: the automated-claims pipeline reads attachments
+        # directly from S3 via IAM, so the staff-facing details payload
+        # carries the opaque object key (never a URL, never the
+        # uploader's filename) plus claimant_updated_at for the
+        # edited-since-processed check.
+        attachment = self.add_attachment()
+        self.login(self.superuser_email)
+        response = self.client.get(
+            f'/api/facility-claims/{self.claim.id}/'
+        )
+        self.assertEqual(200, response.status_code)
+        data = json.loads(response.content)
+
+        self.assertIn('claimant_updated_at', data)
+
+        payload_attachment = data['attachments'][0]
+        self.assertEqual(
+            attachment.claim_attachment.name,
+            payload_attachment['storage_key'],
+        )
+        self.assertNotIn('http', payload_attachment['storage_key'])
+        # The claimant-facing payload must NOT expose the key.
+        self.login()
+        response = self.client.get(self.pending_url)
+        self.assertNotIn(
+            'storage_key', json.loads(response.content)['attachments'][0]
+        )
+
     # ------------------------------------------------------------------
     # Cascade fix (previously on_delete=PROTECT)
     # ------------------------------------------------------------------
