@@ -7,13 +7,17 @@ has to be *promoted* before its name and address become the location's
 primary values. Doing that by hand is four dashboard operations per record.
 This tool does it for a CSV of records.
 
-Per record it makes four API calls:
+Per record it makes these API calls:
 
-  1. PATCH /api/v1/production-locations/{os_id}/                    submit
-  2. PATCH /api/v1/moderation-events/{id}/production-locations/{os_id}/
+  1. GET   /api/facilities/{os_id}/                     read current primary
+  2. PATCH /api/v1/production-locations/{os_id}/                    submit
+  3. PATCH /api/v1/moderation-events/{id}/production-locations/{os_id}/
                                                     approve (superuser)
-  3. GET   /api/facilities/{os_id}/split/               find the new match
-  4. POST  /api/facilities/{os_id}/promote/            make it primary
+  4. GET   /api/facilities/{os_id}/split/     find the new match, if needed
+  5. POST  /api/facilities/{os_id}/promote/            make it primary
+  6. GET   /api/facilities/{os_id}/                     read it back
+
+Step 4 is skipped when the approval response reports the match it created.
 
 Run --dry-run first, then --execute, then read the verification report
 before treating the batch as done. See README.md in this directory for
@@ -26,6 +30,7 @@ documented.
 """
 import argparse
 import csv
+import hashlib
 import json
 import os
 import sys
@@ -33,15 +38,35 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import requests
 
-# A private instance, or local development. Anything else is refused.
-ALLOWED_HOST_MARKERS = ('localhost', '127.0.0.1', 'rba')
-FORBIDDEN_HOST_MARKERS = ('opensupplyhub.org',)
+# The shared public instance. Never a valid target: bulk-promoting one
+# contributor's submissions there would override other contributors' data.
+PUBLIC_HOSTNAMES = frozenset({
+    'opensupplyhub.org',
+    'www.opensupplyhub.org',
+})
+
+LOCAL_HOSTNAMES = frozenset({'localhost', '127.0.0.1', '::1'})
+
+# A private instance is identified by its first host label, so
+# rba.opensupplyhub.org is allowed while opensupplyhub.org is not. Matching
+# on labels rather than substrings is the point: 'opensupplyhub.org' as a
+# substring test also matches every private instance hosted under it.
+PRIVATE_INSTANCE_LABELS = frozenset({'rba'})
 
 BASE_URL_PLACEHOLDER = '<private-instance-host>'
 REQUIRED_COLUMNS = ('os_id', 'name', 'address', 'country')
+
+# The duplicate-submission guard is a throttle, so it answers 429 like any
+# other rate limit. This text is what distinguishes it from a real one.
+DUPLICATE_DETAIL_MARKER = 'Duplicate request'
+
+RATE_LIMIT_STATUS = 429
+MAX_RATE_LIMIT_RETRIES = 5
+DEFAULT_RETRY_AFTER_SECONDS = 30
 
 
 @dataclass
@@ -55,8 +80,10 @@ class Config:
     report: Path = field(
         default_factory=lambda: Path('verification_report.csv')
     )
-    # Gentle pacing. A thousand records is four thousand calls; there is no
-    # deadline on a cleanup batch and the instance is shared with its users.
+    # Gentle pacing. A thousand records is several thousand calls; there is
+    # no deadline on a cleanup batch and the instance is shared with its
+    # users. The submit endpoint is throttled per contributor, so this also
+    # keeps the run under that ceiling.
     pause_seconds: float = 0.25
 
 
@@ -95,27 +122,83 @@ def host_rejection_reason(base_url):
     """
     Return why this host may not be used, or None when it is allowed.
 
-    Separated from the exit so it can be tested directly.
+    Compares host labels rather than searching for substrings, so a private
+    instance hosted under the public domain is allowed while the public
+    instance itself is not.
     """
-    host = base_url.split('//', 1)[-1].lower()
-    if any(marker in host for marker in FORBIDDEN_HOST_MARKERS):
+    hostname = (urlsplit(base_url).hostname or '').lower()
+    if not hostname:
+        return 'could not read a hostname from {!r}'.format(base_url)
+
+    if hostname in PUBLIC_HOSTNAMES:
         return (
             'refusing to run against {}: promoting one contributor\'s '
             'submissions in bulk on the public instance would override '
-            'other contributors\' data'.format(host)
+            'other contributors\' data'.format(hostname)
         )
-    if not any(marker in host for marker in ALLOWED_HOST_MARKERS):
-        return (
-            'refusing to run against {}: this tool is for a single-tenant '
-            'private instance, or local development'.format(host)
+
+    if hostname in LOCAL_HOSTNAMES:
+        return None
+
+    first_label = hostname.split('.')[0]
+    if first_label in PRIVATE_INSTANCE_LABELS:
+        return None
+
+    return (
+        'refusing to run against {}: this tool is for a single-tenant '
+        'private instance ({}), or local development'.format(
+            hostname, ', '.join(sorted(PRIVATE_INSTANCE_LABELS))
         )
-    return None
+    )
 
 
 def build_session(config):
     session = requests.Session()
     session.headers.update({'Authorization': 'Token {}'.format(config.token)})
     return session
+
+
+def is_duplicate_submission(response):
+    return (
+        response.status_code == RATE_LIMIT_STATUS
+        and DUPLICATE_DETAIL_MARKER in response.text
+    )
+
+
+def request_with_backoff(session, method, url, **kwargs):
+    """
+    Make a request, waiting out rate limits rather than failing the record.
+
+    The submit endpoint is throttled per contributor, so a long batch will
+    meet the ceiling. Without this, every remaining record in the window
+    fails and is reported as if the data were at fault.
+
+    A duplicate-submission response also arrives as 429 but is not a rate
+    limit, so it is returned to the caller rather than retried - retrying
+    would just wait out the whole duplicate window.
+    """
+    for attempt in range(MAX_RATE_LIMIT_RETRIES):
+        response = session.request(method, url, **kwargs)
+
+        if response.status_code != RATE_LIMIT_STATUS:
+            return response
+        if is_duplicate_submission(response):
+            return response
+
+        try:
+            wait = int(response.headers.get('Retry-After', ''))
+        except ValueError:
+            wait = DEFAULT_RETRY_AFTER_SECONDS
+
+        wait = max(wait, 1)
+        print(
+            '  rate limited, waiting {}s (attempt {} of {})'.format(
+                wait, attempt + 1, MAX_RATE_LIMIT_RETRIES
+            )
+        )
+        time.sleep(wait)
+
+    return response
 
 
 def load_rows(path):
@@ -133,9 +216,57 @@ def load_rows(path):
     return rows
 
 
+def row_key(row):
+    """
+    A resume key derived from the row's content, not its position.
+
+    Keying on the row's offset in the file would mean an operator who
+    edits the CSV between runs - deleting rows that already applied, or
+    correcting one that failed - shifts every later key and re-applies
+    records that were already correct.
+    """
+    canonical = '|'.join(
+        str(row.get(column, '')).strip()
+        for column in ('os_id', 'name', 'address', 'country', 'lat', 'lng')
+    )
+    digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()[:12]
+    return '{}#{}'.format(row['os_id'], digest)
+
+
 def journal_write(config, record):
     with config.journal.open('a') as handle:
         handle.write(json.dumps(record) + '\n')
+
+
+def read_journal(config):
+    """
+    Every readable entry in the journal.
+
+    Tolerates a malformed final line: a run killed mid-write, or a full
+    disk, leaves partial JSON, and refusing to parse it would break the
+    resume path this journal exists to provide.
+    """
+    entries = []
+    if not config.journal.exists():
+        return entries
+
+    for number, line in enumerate(
+        config.journal.read_text().splitlines(), start=1
+    ):
+        if not line.strip():
+            continue
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            print(
+                '  ignoring unreadable journal line {} (probably a run that '
+                'was killed mid-write)'.format(number)
+            )
+            continue
+        if isinstance(entry, dict) and 'row_key' in entry:
+            entries.append(entry)
+
+    return entries
 
 
 def completed_row_keys(config):
@@ -145,17 +276,10 @@ def completed_row_keys(config):
     Only a 'verified' entry counts as done, so a run interrupted between
     approve and promote is retried rather than silently skipped.
     """
-    done = set()
-    if not config.journal.exists():
-        return done
-
-    for line in config.journal.read_text().splitlines():
-        if not line.strip():
-            continue
-        entry = json.loads(line)
-        if entry.get('step') == 'verified':
-            done.add(entry['row_key'])
-    return done
+    return {
+        entry['row_key'] for entry in read_journal(config)
+        if entry.get('step') == 'verified'
+    }
 
 
 def build_submission(row):
@@ -176,21 +300,23 @@ def build_submission(row):
 
 
 class DuplicateSubmission(RuntimeError):
-    """Raised when the 15-minute duplicate-request window is hit."""
+    """Raised when the duplicate-submission window is hit."""
 
 
 def submit_address(session, config, os_id, row):
-    response = session.patch(
+    response = request_with_backoff(
+        session,
+        'PATCH',
         '{}/api/v1/production-locations/{}/'.format(config.base_url, os_id),
         json=build_submission(row),
         timeout=30,
     )
-    if response.status_code == 422 and 'Duplicate request' in response.text:
+    if is_duplicate_submission(response):
         raise DuplicateSubmission(
-            'identical payload resubmitted inside the 15-minute '
-            'duplicate-request window - usually a resume after a crash. '
-            'Wait for the window to pass and re-run; the journal will skip '
-            'the records that already finished.'
+            'identical payload resubmitted inside the duplicate-request '
+            'window - usually a resume shortly after a crash. Wait for the '
+            'window to pass and re-run; the journal will skip the records '
+            'that already finished.'
         )
     response.raise_for_status()
     return response.json()['moderation_id']
@@ -207,7 +333,9 @@ def approve_event(session, config, moderation_id, os_id):
     correct whichever order the two changes ship in, and gets safer the
     moment 3424 deploys without needing a change here.
     """
-    response = session.patch(
+    response = request_with_backoff(
+        session,
+        'PATCH',
         '{}/api/v1/moderation-events/{}/production-locations/{}/'.format(
             config.base_url, moderation_id, os_id
         ),
@@ -220,14 +348,6 @@ def approve_event(session, config, moderation_id, os_id):
         return {}
 
 
-def resolve_match_id(session, config, os_id, approval):
-    """Prefer the id the server reported; fall back to discovering it."""
-    match_id = approval.get('match_id')
-    if match_id is not None:
-        return match_id
-    return discover_match_id(session, config, os_id)
-
-
 def discover_match_id(session, config, os_id):
     """
     Find the match the approval just created.
@@ -238,7 +358,9 @@ def discover_match_id(session, config, os_id):
     unreliable. This is only correct while nothing else is writing to the
     same location; see the concurrency note in README.md.
     """
-    response = session.get(
+    response = request_with_backoff(
+        session,
+        'GET',
         '{}/api/facilities/{}/split/'.format(config.base_url, os_id),
         timeout=30,
     )
@@ -259,8 +381,18 @@ def discover_match_id(session, config, os_id):
     return max(match['match_id'] for match in ours)
 
 
+def resolve_match_id(session, config, os_id, approval):
+    """Prefer the id the server reported; fall back to discovering it."""
+    match_id = approval.get('match_id')
+    if match_id is not None:
+        return match_id
+    return discover_match_id(session, config, os_id)
+
+
 def promote_match(session, config, os_id, match_id):
-    response = session.post(
+    response = request_with_backoff(
+        session,
+        'POST',
         '{}/api/facilities/{}/promote/'.format(config.base_url, os_id),
         json={'match_id': match_id},
         timeout=30,
@@ -268,17 +400,30 @@ def promote_match(session, config, os_id, match_id):
     response.raise_for_status()
 
 
-def fetch_primary(session, config, os_id):
+def fetch_primary(session, config, os_id, cache_buster=None):
     """
-    Read the resulting primary values.
+    Read the location's current primary name and address.
 
     Uses the legacy facility endpoint, which is Postgres-backed and
-    reflects the promote immediately. Do not verify through /api/v1/ - that
-    reads OpenSearch and lags by the indexing cycle, so a correct promote
-    looks like a failure for several minutes.
+    reflects a promote immediately. Do not verify through /api/v1/ - that
+    reads a search index and lags by the indexing cycle, so a correct
+    promote looks like a failure for several minutes.
+
+    That endpoint sits behind two response caches which are pure TTL and
+    are not invalidated on write, so a cache-busting parameter is required.
+    Without it the dry run primes the cache and every read during the
+    execute run can return the values from before the change - which would
+    make a batch that did nothing look like a batch that worked.
     """
-    response = session.get(
+    params = {}
+    if cache_buster is not None:
+        params['_'] = cache_buster
+
+    response = request_with_backoff(
+        session,
+        'GET',
         '{}/api/facilities/{}/'.format(config.base_url, os_id),
+        params=params,
         timeout=30,
     )
     response.raise_for_status()
@@ -299,25 +444,66 @@ def group_by_facility(rows):
     return grouped
 
 
+def check_superuser_access(session, config):
+    """
+    Confirm the token can do what the batch needs, not merely read.
+
+    Reading a location needs only an authenticated user, while approve and
+    promote are superuser-only. Without this check a valid non-superuser
+    token passes the dry run, and the execute run then creates a real
+    pending contribution for every record before failing at approve -
+    leaving the instance's moderation queue full of unapproved events.
+    """
+    response = session.get(
+        '{}/api/v1/moderation-events/'.format(config.base_url),
+        params={'size': 1},
+        timeout=30,
+    )
+    if response.status_code in (401, 403):
+        return (
+            'the token is valid but not a superuser: {} returned HTTP {}. '
+            'Approving and promoting both require a superuser account, so '
+            '--execute would submit every record and then fail.'.format(
+                '/api/v1/moderation-events/', response.status_code
+            )
+        )
+    if response.status_code != 200:
+        return (
+            'could not confirm superuser access: '
+            '/api/v1/moderation-events/ returned HTTP {}'.format(
+                response.status_code
+            )
+        )
+    return None
+
+
 def dry_run(session, config, rows):
-    """Read-only: confirm the token works and every location exists."""
+    """Read-only: confirm the token can do the job and locations exist."""
     grouped = group_by_facility(rows)
     print('dry run: {} rows across {} locations'.format(
         len(rows), len(grouped)
     ))
 
-    repeated = {
-        os_id: indexes for os_id, indexes in grouped.items()
-        if len(indexes) > 1
-    }
+    problems = 0
+
+    access_problem = check_superuser_access(session, config)
+    if access_problem:
+        print('  PROBLEM {}'.format(access_problem))
+        problems += 1
+
+    repeated = sorted(
+        os_id for os_id, indexes in grouped.items() if len(indexes) > 1
+    )
     if repeated:
+        shown = repeated[:5]
         print(
             '  NOTE {} locations appear more than once. They are processed '
             'in file order, so the last row for a location wins its primary '
-            'address: {}'.format(len(repeated), sorted(repeated)[:5])
+            'address. Showing {} of {}: {}'.format(
+                len(repeated), len(shown), len(repeated), shown
+            )
         )
 
-    problems = 0
     for os_id in grouped:
         response = session.get(
             '{}/api/facilities/{}/'.format(config.base_url, os_id),
@@ -333,69 +519,132 @@ def dry_run(session, config, rows):
     return problems
 
 
-def process_row(session, config, os_id, row, row_key):
+def process_row(session, config, os_id, row, key):
     """Run one record all the way through, journaling each step."""
+    # Read before and after so the report can say whether anything
+    # actually changed. Both reads bypass the response cache.
+    _, before = fetch_primary(session, config, os_id, cache_buster=key)
+
     moderation_id = submit_address(session, config, os_id, row)
-    journal_write(config, {'row_key': row_key, 'step': 'submitted',
+    journal_write(config, {'row_key': key, 'step': 'submitted',
                            'moderation_id': moderation_id})
 
     approval = approve_event(session, config, moderation_id, os_id)
-    journal_write(config, {'row_key': row_key, 'step': 'approved'})
+    journal_write(config, {'row_key': key, 'step': 'approved'})
 
     match_id = resolve_match_id(session, config, os_id, approval)
     promote_match(session, config, os_id, match_id)
-    journal_write(config, {'row_key': row_key, 'step': 'promoted',
+    journal_write(config, {'row_key': key, 'step': 'promoted',
                            'match_id': match_id})
 
-    name, address = fetch_primary(session, config, os_id)
-    journal_write(config, {'row_key': row_key, 'step': 'verified'})
-    return address
+    _, after = fetch_primary(
+        session, config, os_id, cache_buster='{}-after'.format(key)
+    )
+    return before, after
+
+
+def status_for(before, after):
+    """
+    Whether the promote visibly changed the location's primary address.
+
+    Comparing the submitted string to the result would be wrong - ingest
+    cleaning legitimately rewrites it - but "the primary address is exactly
+    what it was before the run" is a real signal that the promote did not
+    take, and it used to be thrown away.
+    """
+    if after != before:
+        return 'OK'
+    return 'CHECK unchanged'
 
 
 def execute(session, config, rows):
     done = completed_row_keys(config)
-    report_rows = []
+    processed = 0
 
     for os_id, facility_rows in group_by_facility(rows).items():
-        for index, row in facility_rows:
-            row_key = '{}#{}'.format(os_id, index)
-            if row_key in done:
+        for _, row in facility_rows:
+            key = row_key(row)
+            if key in done:
                 continue
+            processed += 1
             try:
-                address = process_row(session, config, os_id, row, row_key)
-                report_rows.append([
-                    os_id, row['address'], address,
-                    'OK' if address else 'CHECK',
-                ])
+                before, after = process_row(
+                    session, config, os_id, row, key
+                )
+                journal_write(config, {
+                    'row_key': key,
+                    'step': 'verified',
+                    'os_id': os_id,
+                    'submitted_address': row['address'],
+                    'previous_primary_address': before,
+                    'resulting_primary_address': after,
+                    'status': status_for(before, after),
+                })
             except Exception as err:
                 # One bad record must not end the batch. It is journaled as
                 # FAILED, reported, and picked up by the next run.
-                journal_write(config, {'row_key': row_key, 'step': 'FAILED',
-                                       'error': str(err)})
-                report_rows.append([
-                    os_id, row['address'], '', 'FAILED {}'.format(err),
-                ])
+                journal_write(config, {
+                    'row_key': key,
+                    'step': 'FAILED',
+                    'os_id': os_id,
+                    'submitted_address': row['address'],
+                    'previous_primary_address': '',
+                    'resulting_primary_address': '',
+                    'status': 'FAILED {}'.format(err),
+                })
             time.sleep(config.pause_seconds)
 
-    write_report(config, report_rows)
-    failures = sum(1 for row in report_rows if row[3].startswith('FAILED'))
+    report_rows = write_report(config)
+    failures = sum(
+        1 for row in report_rows if row[-1].startswith('FAILED')
+    )
+    unchanged = sum(1 for row in report_rows if row[-1].startswith('CHECK'))
     print(
-        'executed {} rows, {} failures. Review {} before treating the batch '
-        'as done - addresses are cleaned on ingest, so a submitted string '
-        'and the resulting primary string differ legitimately and need a '
-        'human eye.'.format(len(report_rows), failures, config.report)
+        'processed {} rows this run; {} in the report, {} failures, {} '
+        'unchanged. Review {} before treating the batch as done - '
+        'addresses are cleaned on ingest, so a submitted string and the '
+        'resulting primary string differ legitimately and need a human '
+        'eye.'.format(
+            processed, len(report_rows), failures, unchanged, config.report
+        )
     )
     return failures
 
 
-def write_report(config, report_rows):
+def write_report(config):
+    """
+    Rebuild the report from the journal.
+
+    Built from the journal rather than from this run's results so that
+    resuming an interrupted batch produces a report covering every record,
+    not only the ones the final run happened to process.
+    """
+    latest = {}
+    for entry in read_journal(config):
+        if entry.get('step') in ('verified', 'FAILED'):
+            # A later attempt supersedes an earlier one for the same row.
+            latest[entry['row_key']] = entry
+
+    report_rows = [
+        [
+            entry.get('os_id', ''),
+            entry.get('submitted_address', ''),
+            entry.get('previous_primary_address', ''),
+            entry.get('resulting_primary_address', ''),
+            entry.get('status', ''),
+        ]
+        for entry in latest.values()
+    ]
+
     with config.report.open('w', newline='') as handle:
         writer = csv.writer(handle)
         writer.writerow([
-            'os_id', 'submitted_address', 'resulting_primary_address',
-            'status',
+            'os_id', 'submitted_address', 'previous_primary_address',
+            'resulting_primary_address', 'status',
         ])
         writer.writerows(report_rows)
+
+    return report_rows
 
 
 def main(argv=None):

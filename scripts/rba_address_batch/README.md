@@ -84,7 +84,9 @@ address. The dry run tells you when this happens.
 ## Running it
 
 **Always dry run first.** It is read-only — it creates and changes
-nothing. It confirms your token works and that every location in the file
+nothing. It confirms your token is a superuser (approving and promoting
+both require one, and a plain authenticated token would get all the way
+to the approve step before failing), and that every location in the file
 exists.
 
 ```bash
@@ -103,20 +105,29 @@ instance for its other users.
 
 ## Afterwards: read the report
 
-`verification_report.csv` has one row per record:
+`verification_report.csv` has one row per record, across **all** runs —
+it is rebuilt from the journal each time, so resuming an interrupted
+batch still gives you a report covering everything.
 
 | Column | Meaning |
 | --- | --- |
 | `os_id` | the location |
 | `submitted_address` | what the file asked for |
-| `resulting_primary_address` | what the location now shows |
-| `status` | `OK`, `CHECK`, or `FAILED …` |
+| `previous_primary_address` | what the location showed before the run |
+| `resulting_primary_address` | what it shows now |
+| `status` | `OK`, `CHECK unchanged`, or `FAILED …` |
+
+`CHECK unchanged` means the primary address is byte-identical to what it
+was before the run, which usually means the promotion did not take.
+`FAILED` rows are safe to re-run.
 
 **The submitted and resulting addresses will not match character for
 character, and that is normal.** Addresses are cleaned and standardised
-when they are ingested. The report exists so a person can confirm the
-results are *right*, which is a judgement a script cannot make. Do not
-treat the batch as complete until someone has read it.
+when they are ingested — which is why the report compares against the
+*previous* value rather than against what you submitted. The report
+exists so a person can confirm the results are *right*, which is a
+judgement a script cannot make. Do not treat the batch as complete until
+someone has read it.
 
 ## If a run is interrupted
 
@@ -125,10 +136,19 @@ Just run the same command again. Every completed record is recorded in
 of the way through is retried from the beginning rather than skipped, so
 nothing is left half-applied.
 
+**You can safely edit the CSV between runs** — delete rows that already
+applied, or correct one that failed. Records are tracked by their content,
+not their position in the file, so shifting the rows around does not
+cause anything to be re-applied.
+
 One caveat: resubmitting an **identical** address for the same location
 within 15 minutes is rejected as a duplicate request. If you re-run
 immediately after a crash you may see those, reported distinctly from real
 failures. Wait for the window to pass and run again.
+
+If the instance rate-limits the run, the tool waits and retries rather
+than failing those records — you will see `rate limited, waiting Ns`
+messages. That is normal on a long batch and needs no action.
 
 ## While the batch runs
 
