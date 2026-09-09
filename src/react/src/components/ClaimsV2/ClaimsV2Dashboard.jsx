@@ -58,10 +58,7 @@ function ClaimWorkspace({ claimID }) {
 
     const stage = deriveClaimStage(detail.notes);
     const facilityName =
-        (detail.facility &&
-            detail.facility.properties &&
-            detail.facility.properties.name) ||
-        `Claim #${detail.id}`;
+        detail.facility?.properties?.name || `Claim #${detail.id}`;
     const statusChange = detail.status_change || {};
 
     return (
@@ -109,8 +106,7 @@ function ClaimWorkspace({ claimID }) {
                         <div style={styles.noteMeta}>
                             {note.author} · {note.created_at}
                             <span style={styles.noteTag}>
-                                {NOTE_TAG_LABELS[note.note_type] ||
-                                    'Internal'}
+                                {NOTE_TAG_LABELS[note.note_type] || 'Internal'}
                             </span>
                         </div>
                         <div>{note.note}</div>

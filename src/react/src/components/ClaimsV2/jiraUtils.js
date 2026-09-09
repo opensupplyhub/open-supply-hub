@@ -16,12 +16,10 @@ export const makeClaimTrackerBoardURL = () =>
     `${CLAIMS_TRACKER_PROJECT_KEY}/board`;
 
 export const makeClaimTrackerTicketSearchURL = claimID => {
-    const id = parseInt(claimID, 10);
+    const id = Number.parseInt(claimID, 10);
     if (!Number.isFinite(id)) {
         return makeClaimTrackerBoardURL();
     }
     const jql = `project = ${CLAIMS_TRACKER_PROJECT_KEY} AND "Claim ID[Short text]" ~ "${id}"`;
-    return `${CLAIMS_TRACKER_JIRA_BASE}/issues/?jql=${encodeURIComponent(
-        jql,
-    )}`;
+    return `${CLAIMS_TRACKER_JIRA_BASE}/issues/?jql=${encodeURIComponent(jql)}`;
 };

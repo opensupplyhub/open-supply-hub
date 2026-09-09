@@ -28,9 +28,7 @@ export const useClaimsList = (statuses = 'PENDING') => {
         setError(null);
         apiRequest
             .get(
-                makeGetFacilityClaimsURLWithQueryString(
-                    `statuses=${statuses}`,
-                ),
+                makeGetFacilityClaimsURLWithQueryString(`statuses=${statuses}`),
             )
             .then(({ data }) => setClaims(data))
             .catch(() =>
@@ -78,23 +76,20 @@ export const useClaimActions = claimID => {
     const [acting, setActing] = useState(false);
     const [actionError, setActionError] = useState(null);
 
-    const runAction = useCallback(
-        (url, payload) => {
-            setActing(true);
-            setActionError(null);
-            return apiRequest
-                .post(url, payload)
-                .then(({ data }) => data)
-                .catch(err => {
-                    setActionError(
-                        'The action could not be completed. Please retry.',
-                    );
-                    throw err;
-                })
-                .finally(() => setActing(false));
-        },
-        [],
-    );
+    const runAction = useCallback((url, payload) => {
+        setActing(true);
+        setActionError(null);
+        return apiRequest
+            .post(url, payload)
+            .then(({ data }) => data)
+            .catch(err => {
+                setActionError(
+                    'The action could not be completed. Please retry.',
+                );
+                throw err;
+            })
+            .finally(() => setActing(false));
+    }, []);
 
     return {
         acting,

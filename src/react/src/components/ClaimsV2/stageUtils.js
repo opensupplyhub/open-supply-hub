@@ -48,12 +48,16 @@ export const businessDaysBetween = (start, end) => {
         return 0;
     }
     let count = 0;
-    const cursor = new Date(startDate);
+    let cursor = new Date(startDate);
     cursor.setHours(0, 0, 0, 0);
     const endDay = new Date(endDate);
     endDay.setHours(0, 0, 0, 0);
     while (cursor < endDay) {
-        cursor.setDate(cursor.getDate() + 1);
+        cursor = new Date(
+            cursor.getFullYear(),
+            cursor.getMonth(),
+            cursor.getDate() + 1,
+        );
         const weekday = cursor.getDay();
         if (weekday !== 0 && weekday !== 6) {
             count += 1;
@@ -82,7 +86,7 @@ const latestOf = notes =>
 export const deriveClaimStage = (notes, { now = new Date() } = {}) => {
     const safeNotes = Array.isArray(notes) ? notes : [];
     const messages = safeNotes.filter(
-        n => n && n.note_type === NOTE_TYPES.CLAIMANT_MESSAGE,
+        n => n?.note_type === NOTE_TYPES.CLAIMANT_MESSAGE,
     );
 
     if (messages.length === 0) {
@@ -106,8 +110,7 @@ export const deriveClaimStage = (notes, { now = new Date() } = {}) => {
     // claims surface at the top of "new".)
     const updatesSinceMessage = safeNotes.filter(
         n =>
-            n &&
-            n.note_type === NOTE_TYPES.CLAIMANT_UPDATE &&
+            n?.note_type === NOTE_TYPES.CLAIMANT_UPDATE &&
             new Date(n.created_at) > new Date(lastMessagedAt),
     );
     if (updatesSinceMessage.length > 0) {
