@@ -71,6 +71,28 @@ class ModerationEventsService:
             )
 
     @staticmethod
+    def build_approval_response(item, facility_match=None):
+        """
+        Body for a successful approval.
+
+        `os_id` is unchanged, so existing consumers are unaffected. The ids
+        of the records the approval just created are added so a client can
+        act on the new match directly - promoting it, for example - rather
+        than re-discovering it from GET /api/facilities/{os_id}/split/ and
+        inferring which match was the new one.
+
+        `match_id` is null only if no match was created, which should not
+        happen on a successful approval; it is tolerated rather than
+        raising, so a response shape change can never turn a completed
+        approval into an error.
+        """
+        return {
+            'os_id': item.facility_id,
+            'item_id': item.id,
+            'match_id': facility_match.id if facility_match else None,
+        }
+
+    @staticmethod
     def handle_processing_error(error_message):
         log.error(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} '
