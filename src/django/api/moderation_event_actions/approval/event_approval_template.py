@@ -130,12 +130,6 @@ class EventApprovalTemplate(ABC):
             'FacilityListItemTemp created.'
         )
 
-        update_extendedfields_for_list_item(item)
-        log.info(
-            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
-            'updated with facility ID.'
-        )
-
         self.__create_facility_match_temp(item)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatchTemp '
@@ -146,6 +140,17 @@ class EventApprovalTemplate(ABC):
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatch '
             'created.'
+        )
+
+        # Stamping the facility id onto the extended fields fires the
+        # extended-field indexing trigger, and since OSDEV-3189 the
+        # facility_type / processing_type index columns only count fields
+        # backed by an active FacilityMatch — so this must run after the
+        # match is created, or the columns are computed empty (OSDEV-3428).
+        update_extendedfields_for_list_item(item)
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
+            'updated with facility ID.'
         )
 
         self.__update_event(item)
