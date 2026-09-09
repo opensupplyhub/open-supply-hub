@@ -36,6 +36,15 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        limit = options['limit']
+        if limit is not None and limit < 1:
+            # Slicing a queryset with a negative index raises a bare
+            # ValueError, and 0 would report success having restored
+            # nothing. Reject both with something readable.
+            raise CommandError(
+                f'--limit must be 1 or greater, got {limit}.'
+            )
+
         if not is_rba_instance() and not options['allow_non_rba_instance']:
             raise CommandError(
                 'This command only applies to the RBA instance, where the '
@@ -45,7 +54,7 @@ class Command(BaseCommand):
 
         summary = reassert_rba_promotions(
             dry_run=options['dry_run'],
-            limit=options['limit'],
+            limit=limit,
         )
 
         if summary['dry_run']:
