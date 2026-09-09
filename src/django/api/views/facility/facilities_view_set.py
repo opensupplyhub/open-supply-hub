@@ -6,6 +6,10 @@ from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
 )
+from api.helpers.rba_instance import (
+    get_unmergeable_os_ids,
+    is_rba_instance
+)
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from api.services.facility_processing_filter import FacilityProcessingFilter
@@ -2540,6 +2544,22 @@ class FacilitiesViewSet(ListModelMixin,
 
         target = Facility.objects.get(id=target_id)
         merge = Facility.objects.get(id=merge_id)
+
+        # On the RBA private instance, merging a publicly-synced record
+        # produces state the one-way sync cannot repair: it recreates the
+        # merged-away facility on the next run because it still exists
+        # publicly. Refuse before any writes. See api/helpers/rba_instance.
+        if is_rba_instance():
+            unmergeable = get_unmergeable_os_ids(target, merge)
+            if unmergeable:
+                raise ValidationError({
+                    'detail': [
+                        'Only production locations created on this instance '
+                        'can be merged here. These were synced from Open '
+                        'Supply Hub and must be merged there instead: '
+                        '{}.'.format(', '.join(unmergeable))
+                    ]
+                })
 
         inactive_match_statuses = (FacilityMatch.PENDING,
                                    FacilityMatch.REJECTED)
