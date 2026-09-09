@@ -12,10 +12,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* `0235_add_claims_v2_dashboard_switch.py` - Adds the `enable_claims_v2_dashboard` waffle switch, created inactive, gating the new `/dashboard/claims-v2` route. See OSDEV-3355.
 * `0234_add_note_type_to_facility_claim_review_note.py` - Adds the `note_type` column (`INTERNAL` | `CLAIMANT_MESSAGE` | `CLAIMANT_UPDATE`, default `INTERNAL`) to `api_facilityclaimreviewnote` and its `api_historicalfacilityclaimreviewnote` mirror. See OSDEV-3351.
 * `0235_fix_taxonomy_index_triggers.py` - Re-creates the `perform_facility_list_item_indexing`, `perform_facility_match_indexing`, and `perform_source_indexing` procedures with the `facility_type` and `processing_type` columns added to the set they recompute, since [OSDEV-3189](https://opensupplyhub.atlassian.net/browse/OSDEV-3189) made those columns depend on matches and sources. See OSDEV-3428.
 * `0236_fix_claim_trigger_taxonomy_columns.py` - Re-creates `perform_facility_claim_indexing` with the `facility_type` and `processing_type` columns added, since approved-claim extended fields count toward both (claim approval/revocation otherwise left them stale). See OSDEV-3430.
+* `0237_add_claims_v2_dashboard_switch.py` - Adds the `enable_claims_v2_dashboard` waffle switch, created inactive, gating the new `/dashboard/claims-v2` route. See OSDEV-3355.
 
 #### Schema changes
 * [OSDEV-3351](https://opensupplyhub.atlassian.net/browse/OSDEV-3351) - `FacilityClaimReviewNote.note_type` records the direction of each note: `INTERNAL` (moderator to moderator), `CLAIMANT_MESSAGE` (moderator to claimant, emailed), and `CLAIMANT_UPDATE` (claimant to moderator — reserved for the OSDEV-2278 claimant-edit flow; nothing writes it yet). Legacy rows default to `INTERNAL` with no backfill — there is no reliable signal for which old notes were emailed, so direction labels are only trustworthy for notes created after this deploys (data self-corrects as claims churn).
