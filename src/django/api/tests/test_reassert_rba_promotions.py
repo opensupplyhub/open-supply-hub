@@ -59,7 +59,8 @@ class ReassertRbaPromotionsTest(TestCase):
         self.public_item.save()
 
     def create_item(self, name, address, origin_source,
-                    status=FacilityListItem.CONFIRMED_MATCH):
+                    status=FacilityListItem.CONFIRMED_MATCH,
+                    geocoded_point=Point(1, 1)):
         return FacilityListItem.objects.create(
             row_index=FacilityListItem.objects.count(),
             source=self.source,
@@ -68,7 +69,7 @@ class ReassertRbaPromotionsTest(TestCase):
             name=name,
             address=address,
             country_code='US',
-            geocoded_point=Point(1, 1),
+            geocoded_point=geocoded_point,
             processing_results=[],
             origin_source=origin_source,
         )
@@ -85,15 +86,38 @@ class ReassertRbaPromotionsTest(TestCase):
             origin_source=origin_source,
         )
 
+    def mark_promoted(self, item, previous_created_from_id=None):
+        '''
+        Record that this item was promoted at some point.
+
+        This is what the promote endpoint leaves behind, and it is the
+        evidence the query uses to tell a reverted promotion from a
+        contribution that was never promoted. The item is an
+        instance-local row, so the marker outlives a sync overwrite.
+        '''
+        item.processing_results.append({
+            'action': ProcessingAction.PROMOTE_MATCH,
+            'started_at': '2026-01-01 00:00:00+00:00',
+            'error': False,
+            'finished_at': '2026-01-01 00:00:00+00:00',
+            'previous_created_from_id': previous_created_from_id,
+        })
+        item.save()
+        return item
+
     def create_rba_contribution(self, name='RBA Name',
-                                address='RBA Address', **kwargs):
+                                address='RBA Address', promoted=True,
+                                geocoded_point=Point(1, 1), **kwargs):
         item = self.create_item(
             name=name,
             address=address,
             origin_source=OriginSource.RBA,
             status=kwargs.pop('item_status',
                               FacilityListItem.CONFIRMED_MATCH),
+            geocoded_point=geocoded_point,
         )
+        if promoted:
+            self.mark_promoted(item)
         return item, self.create_match(item, **kwargs)
 
     def test_restores_a_reverted_promotion(self):
@@ -116,8 +140,9 @@ class ReassertRbaPromotionsTest(TestCase):
         reassert_rba_promotions()
 
         item.refresh_from_db()
-        self.assertEqual(1, len(item.processing_results))
-        result = item.processing_results[0]
+        # One entry for the original promotion, one for the re-assertion.
+        self.assertEqual(2, len(item.processing_results))
+        result = item.processing_results[-1]
         self.assertEqual(ProcessingAction.PROMOTE_MATCH, result['action'])
         self.assertFalse(result['error'])
         self.assertEqual(
@@ -203,9 +228,10 @@ class ReassertRbaPromotionsTest(TestCase):
         self.assertEqual('RBA Name', self.facility.name)
         self.assertEqual(item.id, self.facility.created_from_id)
 
-        # Each cycle records one promotion; nothing is duplicated or lost.
+        # The original promotion plus one entry per cycle; nothing is
+        # duplicated or lost.
         item.refresh_from_db()
-        self.assertEqual(3, len(item.processing_results))
+        self.assertEqual(4, len(item.processing_results))
 
     def test_is_a_no_op_once_the_promotion_is_in_place(self):
         self.create_rba_contribution()
@@ -252,6 +278,8 @@ class ReassertRbaPromotionsTest(TestCase):
             address='Other Address',
             origin_source=OriginSource.OSHUB,
         )
+        # Promoted, so origin is the only reason it is not selected.
+        self.mark_promoted(item)
         self.create_match(item, origin_source=OriginSource.OSHUB)
 
         summary = reassert_rba_promotions()
@@ -276,6 +304,60 @@ class ReassertRbaPromotionsTest(TestCase):
         )
 
         self.assertEqual(0, find_reverted_promotions().count())
+
+    def test_ignores_a_contribution_that_was_never_promoted(self):
+        # The ordinary outcome of an RBA contribution: dedupe-hub matched
+        # it to an existing facility and nobody promoted it, so
+        # created_from is correctly still the original contribution. This
+        # is indistinguishable from a reverted promotion unless the query
+        # requires evidence that a promotion happened - and it is the
+        # common case, so selecting these would rewrite the canonical
+        # fields of facilities nobody ever promoted.
+        self.create_rba_contribution(promoted=False)
+
+        summary = reassert_rba_promotions()
+
+        self.assertEqual(0, summary['found'])
+        self.assertEqual(0, summary['reasserted'])
+        self.facility.refresh_from_db()
+        self.assertEqual(self.public_item.id, self.facility.created_from_id)
+        self.assertEqual('Public Name', self.facility.name)
+
+    def test_ignores_a_promoted_item_with_no_geocoded_point(self):
+        # geocoded_point is nullable on the item but Facility.location is
+        # not, so selecting such a row would raise IntegrityError on save,
+        # be swallowed as an error, and fail identically on every
+        # subsequent run.
+        self.create_rba_contribution(geocoded_point=None)
+
+        summary = reassert_rba_promotions()
+
+        self.assertEqual(0, summary['found'])
+        self.assertEqual(0, summary['errors'])
+        self.facility.refresh_from_db()
+        self.assertEqual(self.public_item.id, self.facility.created_from_id)
+
+    def test_does_not_override_a_deliberately_promoted_older_item(self):
+        # A moderator promoted the older contribution and left the newer
+        # one unpromoted. The newer one must not be selected, or the
+        # command would silently overrule that decision.
+        older_item, _ = self.create_rba_contribution(
+            name='Older', address='Older Address'
+        )
+        self.facility.created_from = older_item
+        self.facility.name = older_item.name
+        self.facility.save()
+
+        self.create_rba_contribution(
+            name='Newer', address='Newer Address', promoted=False
+        )
+
+        summary = reassert_rba_promotions()
+
+        self.assertEqual(0, summary['found'])
+        self.facility.refresh_from_db()
+        self.assertEqual(older_item.id, self.facility.created_from_id)
+        self.assertEqual('Older', self.facility.name)
 
     def test_dry_run_reports_without_changing_anything(self):
         self.create_rba_contribution()
@@ -314,6 +396,7 @@ class ReassertRbaPromotionsTest(TestCase):
             address='Second RBA Address',
             origin_source=OriginSource.RBA,
         )
+        self.mark_promoted(rba_item)
         FacilityMatch.objects.create(
             facility_list_item=rba_item,
             facility=other_facility,

@@ -36,18 +36,31 @@ def find_reverted_promotions():
     is reverted whenever the public row changes. The contribution itself
     survives: its source, list item and match are rows created here, which
     the sync never touches. That makes the reverted set derivable rather
-    than something we have to journal - a facility is out of date when its
-    newest promotable RBA match is not the one it is created from.
+    than something we have to journal.
 
-    Only the newest match per facility is considered, so re-asserting can
-    never demote a facility to an older contribution.
+    A promotion having happened at all is what makes a facility a
+    candidate, and that is recorded durably on the list item: the promote
+    endpoint appends a PROMOTE_MATCH processing result, and the item is an
+    instance-local row the sync leaves alone. Without that condition the
+    query cannot tell a reverted promotion from the ordinary case of an
+    RBA contribution that was matched to a facility and never promoted -
+    the common case, so the bare newest-match-is-not-created_from test
+    would rewrite the canonical fields of facilities nobody ever
+    promoted, including RBA-minted ones the sync never touches.
+
+    Only the newest *promoted* match per facility is considered, so
+    re-asserting can never demote a facility to an older contribution, nor
+    override a moderator who deliberately promoted an earlier one.
     '''
     promotable = FacilityMatch.objects.filter(
         origin_source=OriginSource.RBA,
         is_active=True,
         status__in=PROMOTABLE_MATCH_STATUSES,
         facility_list_item__status__in=PROMOTABLE_ITEM_STATUSES,
-    )
+        facility_list_item__processing_results__contains=[
+            {'action': ProcessingAction.PROMOTE_MATCH}
+        ],
+    ).exclude(facility_list_item__geocoded_point__isnull=True)
 
     newest_per_facility = (
         promotable
@@ -58,14 +71,16 @@ def find_reverted_promotions():
 
     return (
         FacilityMatch.objects
-        .filter(id__in=list(newest_per_facility))
+        .filter(id__in=newest_per_facility)
         .exclude(facility__created_from_id=F('facility_list_item_id'))
         .select_related(
             'facility',
             'facility__created_from',
             'facility__created_from__source',
+            'facility__created_from__source__facility_list',
             'facility_list_item',
             'facility_list_item__source',
+            'facility_list_item__source__facility_list',
         )
         .order_by('id')
     )
