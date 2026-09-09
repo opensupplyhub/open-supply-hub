@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, KeysView, Optional, Type, Union
+from typing import Dict, KeysView, Optional, Type, Union, cast
 
 from django.contrib.gis.geos import Point
 from django.db import transaction
@@ -301,8 +301,14 @@ class EventApprovalTemplate(ABC):
         )
 
     def __create_facility_match(self, item: FacilityListItem) -> FacilityMatch:
-        return self.__create_facility_match_record(
-            model=FacilityMatch, item=item
+        # The model argument pins the concrete type that the shared creator
+        # declares as a union; make that narrowing explicit rather than
+        # letting this signature quietly contradict it.
+        return cast(
+            FacilityMatch,
+            self.__create_facility_match_record(
+                model=FacilityMatch, item=item
+            ),
         )
 
     def __create_facility_match_record(

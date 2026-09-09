@@ -81,11 +81,26 @@ class ModerationEventsService:
         than re-discovering it from GET /api/facilities/{os_id}/split/ and
         inferring which match was the new one.
 
+        Note that `match_id` is only *promotable* from the update flow. A
+        newly created production location is created FROM its own item, and
+        `promote` rejects that case ("Facility is created from item"), so a
+        client should not promote unconditionally after a create.
+
         `match_id` is null only if no match was created, which should not
-        happen on a successful approval; it is tolerated rather than
-        raising, so a response shape change can never turn a completed
-        approval into an error.
+        happen on a successful approval. It is tolerated rather than
+        raising, so a response-shape problem cannot turn an approval that
+        already wrote its source, item and match into an error - but it is
+        logged, because a consumer reading it opportunistically would
+        silently skip promotion and nothing else would record why.
         """
+        if facility_match is None:
+            log.warning(
+                '%s Approval for %s produced no FacilityMatch; returning a '
+                'null match_id. A client relying on it will skip whatever '
+                'it meant to do with the new match.',
+                LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX, item.facility_id,
+            )
+
         return {
             'os_id': item.facility_id,
             'item_id': item.id,
