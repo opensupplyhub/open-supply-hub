@@ -54,8 +54,13 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                 'status_change_reason': None,
             }
 
+        # status_change_by can be null on legacy decided claims —
+        # guard so those rows serialize instead of raising.
         return {
-            'status_change_by': claim.status_change_by.email,
+            'status_change_by': (
+                claim.status_change_by.email
+                if claim.status_change_by else None
+            ),
             'status_change_date': claim.status_change_date,
             'status_change_reason': claim.status_change_reason,
         }

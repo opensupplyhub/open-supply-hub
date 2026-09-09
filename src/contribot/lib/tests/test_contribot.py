@@ -610,3 +610,84 @@ class TestSummaryAndSave:
         assert summary["runtime_total_seconds"] >= 0
         assert summary["datetime_started"] == contribution.START.isoformat()
         assert "datetime_completed" in summary
+
+
+# --------------------------------------------------------------------------- #
+# Regression tests for OSDEV-3216
+#
+# Three unguarded paths in the Airflow predecessor crashed the whole hourly
+# batch, permanently skipping every list in it. The Step Functions rebuild
+# isolates failures per list, so these no longer strand other uploads — but the
+# affected file still fails, so the underlying faults are fixed here.
+# --------------------------------------------------------------------------- #
+class TestOversizedFile:
+    """A file above the row limit is rejected, not silently trimmed.
+
+    Trimming produced a report whose own row count and error ratio described
+    the truncated frame, so it read as a complete review. Approving on that
+    basis ingested rows nothing had looked at.
+    """
+
+    def _frame(self, rows):
+        return pd.DataFrame(
+            {
+                "country": ["Bangladesh"] * rows,
+                "name": ["Acme Textiles Limited"] * rows,
+                "address": ["123 Industrial Road, Dhaka Division"] * rows,
+                "sector_product_type": ["Apparel|Textiles"] * rows,
+            }
+        )
+
+    def test_over_row_limit_is_rejected(self, make_contribution):
+        oversized = self._frame(contribot.MAX_ROWS + 1)
+        with pytest.raises(ValueError) as excinfo:
+            make_contribution(df=oversized)
+        message = str(excinfo.value)
+        assert str(contribot.MAX_ROWS + 1) in message
+        assert str(contribot.MAX_ROWS) in message
+        assert "split" in message.lower()
+
+    def test_at_row_limit_is_accepted(self, make_contribution):
+        """The limit is inclusive - exactly MAX_ROWS must still process."""
+        osh = make_contribution(df=self._frame(contribot.MAX_ROWS))
+        assert len(osh.df) == contribot.MAX_ROWS
+
+
+class TestMissingAddressColumn:
+    def _frame(self):
+        return pd.DataFrame(
+            {
+                "country": ["Bangladesh", "Germany"],
+                "name": ["Acme Textiles Limited", "Globex Manufacturing GmbH"],
+                "sector_product_type": ["Apparel|Textiles", "Electronics|Components"],
+            }
+        )
+
+    def test_duplicate_check_does_not_crash(self, make_contribution):
+        """A missing address column is a finding (T0003), not a crash."""
+        osh = make_contribution(df=self._frame())
+        osh.check_name_address_duplicates()
+
+    def test_country_in_address_check_does_not_crash(self, make_contribution):
+        osh = make_contribution(df=self._frame())
+        osh.check_for_country_name_in_address()
+
+    def test_full_process_does_not_crash(self, make_contribution):
+        osh = make_contribution(df=self._frame())
+        osh.process()
+        assert "T0003" in {d["code"] for d in osh.diagnostics_table}
+
+
+class TestUnrecognisedColumnFinding:
+    def test_finding_carries_column_name_and_message(self, make_contribution):
+        """T0008 must populate both the record's name and the rendered message.
+
+        column_name drives the record; column feeds the "{{ column }}" template.
+        Passing only one of them leaves the other empty.
+        """
+        df = pd.DataFrame({"country": ["Germany"], "surprise": ["x"]})
+        osh = make_contribution(df=df)
+        osh.check_table()
+        rec = next(d for d in osh.diagnostics_table if d["code"] == "T0008")
+        assert rec["name"] == "surprise"
+        assert "surprise" in rec["error"]
