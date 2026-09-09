@@ -18,10 +18,12 @@ from rest_framework.test import APITestCase
 
 class RbaMergeGuardTest(APITestCase):
     '''
-    On the RBA private instance, merging a record that also exists on public
-    OS Hub produces state the one-way sync cannot repair - it recreates the
-    merged-away facility on the next run. These tests cover the guard that
-    refuses those merges, and confirm public OS Hub is unaffected.
+    On the RBA private instance, merging AWAY a record that also exists on
+    public OS Hub produces state the one-way sync cannot repair - it
+    recreates that record on the next run. These tests cover the guard that
+    refuses those merges, confirm that a publicly-synced *target* is still
+    mergeable into (the ordinary cleanup case), and confirm public OS Hub is
+    unaffected.
     '''
 
     def setUp(self):
@@ -79,11 +81,9 @@ class RbaMergeGuardTest(APITestCase):
             location=Point(0, 0),
             created_from=item,
         )
-        # origin_source is stamped by a trigger/signal from the running
-        # instance's own setting, so set it explicitly to model a record
-        # that arrived from elsewhere.
-        Facility.objects.filter(id=os_id).update(origin_source=origin_source)
-        facility.refresh_from_db()
+        # origin_source is stamped from the running instance's own setting,
+        # so set it explicitly to model a record that arrived from elsewhere.
+        self.set_origin(facility, origin_source)
 
         FacilityMatch.objects.create(
             status=FacilityMatch.AUTOMATIC,
@@ -108,15 +108,27 @@ class RbaMergeGuardTest(APITestCase):
         )
         return self.client.post(self.merge_url)
 
-    @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
-    def test_allows_merging_two_records_created_on_this_instance(self):
-        response = self.post_merge()
-
+    def assert_merge_succeeded(self, response):
         self.assertEqual(200, response.status_code)
         self.assertFalse(Facility.objects.filter(id=self.merge.id).exists())
 
     @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
-    def test_refuses_when_the_merged_record_is_publicly_synced(self):
+    def test_allows_merging_two_records_created_on_this_instance(self):
+        self.assert_merge_succeeded(self.post_merge())
+
+    @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
+    def test_allows_merging_a_local_record_into_a_publicly_synced_one(self):
+        # The ordinary cleanup case: a duplicate created here is absorbed
+        # into the synced record it duplicates. Only the merged-away record
+        # can be recreated by the sync, and that one is local, so the merge
+        # is durable. The merge writes none of the target's synced fields,
+        # so the synced target is untouched by it.
+        self.set_origin(self.target, OriginSource.OSHUB)
+
+        self.assert_merge_succeeded(self.post_merge())
+
+    @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
+    def test_refuses_merging_away_a_publicly_synced_record(self):
         self.set_origin(self.merge, OriginSource.OSHUB)
 
         response = self.post_merge()
@@ -125,29 +137,9 @@ class RbaMergeGuardTest(APITestCase):
         self.assertIn(self.merge.id, str(response.data))
 
     @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
-    def test_refuses_when_the_target_record_is_publicly_synced(self):
-        self.set_origin(self.target, OriginSource.OSHUB)
-
-        response = self.post_merge()
-
-        self.assertEqual(400, response.status_code)
-        self.assertIn(self.target.id, str(response.data))
-
-    @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
-    def test_names_both_records_when_neither_is_mergeable(self):
-        self.set_origin(self.target, OriginSource.OSHUB)
-        self.set_origin(self.merge, OriginSource.OSHUB)
-
-        response = self.post_merge()
-
-        self.assertEqual(400, response.status_code)
-        self.assertIn(self.target.id, str(response.data))
-        self.assertIn(self.merge.id, str(response.data))
-
-    @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
-    def test_refuses_an_unstamped_record(self):
-        # origin_source is nullable and the trigger's fallback is os_hub, so
-        # an unstamped record must not be assumed local. Fail closed.
+    def test_refuses_merging_away_an_unstamped_record(self):
+        # origin_source is nullable and an unstamped row stays NULL, so a
+        # record we cannot prove is local must not be assumed local.
         self.set_origin(self.merge, None)
 
         response = self.post_merge()
@@ -169,6 +161,19 @@ class RbaMergeGuardTest(APITestCase):
         self.assertEqual(self.merge.id, match.facility_id)
         self.assertEqual(FacilityMatch.AUTOMATIC, match.status)
 
+    @override_settings(INSTANCE_SOURCE=OriginSource.RBA)
+    def test_the_error_explains_the_alternative(self):
+        # The admin cannot always act on "merge it on OS Hub instead" - the
+        # local duplicate does not exist there - so the message has to point
+        # at merging the other direction.
+        self.set_origin(self.merge, OriginSource.OSHUB)
+
+        response = self.post_merge()
+
+        detail = str(response.data)
+        self.assertIn('created here', detail)
+        self.assertIn('instead', detail)
+
     @override_settings(INSTANCE_SOURCE=OriginSource.OSHUB)
     def test_public_os_hub_is_unaffected(self):
         # The guard is instance-scoped: on public OS Hub a moderator merges
@@ -176,7 +181,24 @@ class RbaMergeGuardTest(APITestCase):
         self.set_origin(self.target, OriginSource.OSHUB)
         self.set_origin(self.merge, OriginSource.OSHUB)
 
+        self.assert_merge_succeeded(self.post_merge())
+
+    @override_settings(INSTANCE_SOURCE='  RBA  ')
+    def test_the_instance_value_is_normalized(self):
+        # The value comes from an environment variable in a task
+        # definition. Stray casing or whitespace must not silently disable
+        # the guard, which would be invisible until unrepairable state
+        # appeared.
+        self.set_origin(self.merge, OriginSource.OSHUB)
+
         response = self.post_merge()
 
-        self.assertEqual(200, response.status_code)
-        self.assertFalse(Facility.objects.filter(id=self.merge.id).exists())
+        self.assertEqual(400, response.status_code)
+
+    @override_settings(INSTANCE_SOURCE='not-a-real-source')
+    def test_an_unrecognized_instance_value_does_not_guard(self):
+        # An unknown value is treated as public OS Hub and warned about,
+        # rather than guessing that it might be a private instance.
+        self.set_origin(self.merge, OriginSource.OSHUB)
+
+        self.assert_merge_succeeded(self.post_merge())
