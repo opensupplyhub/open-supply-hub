@@ -60,6 +60,11 @@ function ClaimWorkspace({ claimID }) {
     const facilityName =
         detail.facility?.properties?.name || `Claim #${detail.id}`;
     const statusChange = detail.status_change || {};
+    // The API orders notes by insertion id; sort by created_at so
+    // backdated or imported notes still read chronologically.
+    const timelineNotes = [...(detail.notes || [])].sort(
+        (a, b) => new Date(a.created_at) - new Date(b.created_at),
+    );
 
     return (
         <div>
@@ -101,12 +106,17 @@ function ClaimWorkspace({ claimID }) {
                 </a>
             </Typography>
             <div>
-                {(detail.notes || []).map(note => (
+                {timelineNotes.map(note => (
                     <div key={note.id} style={styles.noteItem}>
                         <div style={styles.noteMeta}>
                             {note.author} · {note.created_at}
                             <span style={styles.noteTag}>
-                                {NOTE_TAG_LABELS[note.note_type] || 'Internal'}
+                                {NOTE_TAG_LABELS[note.note_type] ||
+                                    // Show an unknown type raw rather than
+                                    // mislabeling its direction; only a
+                                    // missing type means legacy-internal.
+                                    note.note_type ||
+                                    NOTE_TAG_LABELS[NOTE_TYPES.INTERNAL]}
                             </span>
                         </div>
                         <div>{note.note}</div>

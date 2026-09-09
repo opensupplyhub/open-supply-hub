@@ -88,6 +88,16 @@ describe('deriveClaimStage', () => {
         expect(result.stage).toBe(CLAIM_STAGES.AWAITING);
     });
 
+    it('escalates to "new" when the message timestamp is unreadable', () => {
+        // A broken clock must not leave the claim in "awaiting" forever.
+        const result = deriveClaimStage(
+            [note('CLAIMANT_MESSAGE', 'not-a-timestamp')],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.NEW);
+        expect(result.reason).toContain('unreadable timestamp');
+    });
+
     it('returns "new" when the claimant updated after the last message', () => {
         const result = deriveClaimStage(
             [
@@ -152,6 +162,10 @@ describe('claim tracker Jira links', () => {
 
     it('falls back to the board URL for a non-numeric id', () => {
         expect(makeClaimTrackerTicketSearchURL('nope')).toBe(
+            makeClaimTrackerBoardURL(),
+        );
+        // parseInt would truncate this to 12 and search the wrong ticket.
+        expect(makeClaimTrackerTicketSearchURL('12abc')).toBe(
             makeClaimTrackerBoardURL(),
         );
     });

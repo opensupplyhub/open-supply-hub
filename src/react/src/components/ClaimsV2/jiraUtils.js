@@ -16,8 +16,10 @@ export const makeClaimTrackerBoardURL = () =>
     `${CLAIMS_TRACKER_PROJECT_KEY}/board`;
 
 export const makeClaimTrackerTicketSearchURL = claimID => {
-    const id = Number.parseInt(claimID, 10);
-    if (!Number.isFinite(id)) {
+    const id = String(claimID).trim();
+    // Strictly numeric only — parseInt('12abc') would quietly search
+    // for the wrong ticket instead of falling back to the board.
+    if (!/^\d+$/.test(id)) {
         return makeClaimTrackerBoardURL();
     }
     const jql = `project = ${CLAIMS_TRACKER_PROJECT_KEY} AND "Claim ID[Short text]" ~ "${id}"`;

@@ -22,50 +22,83 @@ export const useClaimsList = (statuses = 'PENDING') => {
     const [claims, setClaims] = useState([]);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState(null);
+    const [fetchCount, setFetchCount] = useState(0);
 
-    const fetchClaims = useCallback(() => {
+    /*
+     * The fetch lives in the effect so it can be cancelled: without
+     * the `cancelled` guard, a slow response for a previous statuses
+     * value (or an unmounted component) would overwrite newer state.
+     */
+    useEffect(() => {
+        let cancelled = false;
         setFetching(true);
         setError(null);
         apiRequest
             .get(
                 makeGetFacilityClaimsURLWithQueryString(`statuses=${statuses}`),
             )
-            .then(({ data }) => setClaims(data))
-            .catch(() =>
-                setError('An error prevented fetching the claims list.'),
-            )
-            .finally(() => setFetching(false));
-    }, [statuses]);
+            .then(({ data }) => {
+                if (!cancelled) setClaims(data);
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setError('An error prevented fetching the claims list.');
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setFetching(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [statuses, fetchCount]);
 
-    useEffect(fetchClaims, [fetchClaims]);
+    const refetchClaims = useCallback(() => setFetchCount(n => n + 1), []);
 
-    return { claims, fetching, error, refetchClaims: fetchClaims };
+    return { claims, fetching, error, refetchClaims };
 };
 
 export const useClaimDetail = claimID => {
     const [detail, setDetail] = useState(null);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState(null);
+    const [fetchCount, setFetchCount] = useState(0);
 
-    const fetchDetail = useCallback(() => {
+    /*
+     * Cancellation matters most here: rapid queue navigation means a
+     * slow response for the previously selected claim can arrive after
+     * the current claim rendered — without the guard it would replace
+     * the workspace with the wrong claim's data.
+     */
+    useEffect(() => {
         if (!claimID) {
             setDetail(null);
-            return;
+            return undefined;
         }
+        let cancelled = false;
         setFetching(true);
         setError(null);
         apiRequest
             .get(makeGetFacilityClaimByClaimIDURL(claimID))
-            .then(({ data }) => setDetail(data))
-            .catch(() =>
-                setError('An error prevented fetching the claim details.'),
-            )
-            .finally(() => setFetching(false));
-    }, [claimID]);
+            .then(({ data }) => {
+                if (!cancelled) setDetail(data);
+            })
+            .catch(() => {
+                if (!cancelled) {
+                    setError('An error prevented fetching the claim details.');
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setFetching(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [claimID, fetchCount]);
 
-    useEffect(fetchDetail, [fetchDetail]);
+    const refetchDetail = useCallback(() => setFetchCount(n => n + 1), []);
 
-    return { detail, fetching, error, refetchDetail: fetchDetail };
+    return { detail, fetching, error, refetchDetail };
 };
 
 /*

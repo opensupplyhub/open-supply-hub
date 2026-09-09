@@ -32,11 +32,14 @@ export const NOTE_TYPES = Object.freeze({
 export const REPLY_OVERDUE_BUSINESS_DAYS = 15;
 
 /*
- * Count Mon-Fri days strictly after `start` up to and including `end`.
- * Same naive walk (no holiday calendar) as the pipeline's
- * add_business_days, so the dashboard and the reminder/denial queues
- * agree on what "15 business days" means.
+ * Count Mon-Fri days strictly after `start` up to and including `end`,
+ * on UTC calendar dates. UTC (not the viewer's local timezone) so
+ * every moderator sees the same stage and the count matches the
+ * pipeline's add_business_days, which walks UTC dates — the same
+ * naive walk, no holiday calendar.
  */
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export const businessDaysBetween = (start, end) => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -48,17 +51,19 @@ export const businessDaysBetween = (start, end) => {
         return 0;
     }
     let count = 0;
-    let cursor = new Date(startDate);
-    cursor.setHours(0, 0, 0, 0);
-    const endDay = new Date(endDate);
-    endDay.setHours(0, 0, 0, 0);
+    let cursor = Date.UTC(
+        startDate.getUTCFullYear(),
+        startDate.getUTCMonth(),
+        startDate.getUTCDate(),
+    );
+    const endDay = Date.UTC(
+        endDate.getUTCFullYear(),
+        endDate.getUTCMonth(),
+        endDate.getUTCDate(),
+    );
     while (cursor < endDay) {
-        cursor = new Date(
-            cursor.getFullYear(),
-            cursor.getMonth(),
-            cursor.getDate() + 1,
-        );
-        const weekday = cursor.getDay();
+        cursor += DAY_MS;
+        const weekday = new Date(cursor).getUTCDay();
         if (weekday !== 0 && weekday !== 6) {
             count += 1;
         }
@@ -102,6 +107,19 @@ export const deriveClaimStage = (notes, { now = new Date() } = {}) => {
 
     const lastMessage = latestOf(messages);
     const lastMessagedAt = lastMessage.created_at;
+
+    // A message whose timestamp cannot be read must escalate, not sit
+    // in "awaiting" forever with a clock that never advances.
+    if (Number.isNaN(new Date(lastMessagedAt).getTime())) {
+        return {
+            stage: CLAIM_STAGES.NEW,
+            reason:
+                'The last message has an unreadable timestamp — the ' +
+                'reply window cannot be tracked, review manually.',
+            lastMessagedAt,
+            waitingBusinessDays: 0,
+        };
+    }
 
     // A claimant update after the last outbound message means there is
     // new information to review — the claim is no longer "awaiting".
