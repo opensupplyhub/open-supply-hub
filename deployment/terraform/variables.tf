@@ -1333,6 +1333,12 @@ variable "bedrock_cost_budget_monthly_limit_usd" {
   default     = "25"
 }
 
+variable "lambda_errors_alarm_threshold" {
+  type        = number
+  description = "Sum of AWS/Lambda Errors over 5 minutes, across all functions in the environment's region, above which the alarm pages Slack. Defaults to 0 so any single Lambda error is surfaced; raise it per environment only if a known-noisy function makes that impractical."
+  default     = 0
+}
+
 # ---------------------------------------------------------------------------
 # AWS Secrets Manager secret names (public tfvars). Values are CLI-owned in SM.
 # When a name is set, Terraform resolves ARN/value via data sources in secrets.tf.

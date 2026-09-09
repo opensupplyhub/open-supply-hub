@@ -1,5 +1,4 @@
-aiokafka==0.8.0
-kafka-python==2.0.2
+aiokafka==0.12.0
 base32-crockford==0.3.0
 # pydantic-ai's bedrock extra requires boto3>=1.42.63; boto3 1.x point
 # releases are backward compatible per AWS's versioning policy.
@@ -21,8 +20,8 @@ django-storages==1.14.4
 django-waffle==4.1.0
 drf-yasg==1.21.14
 django-ckeditor-5==0.2.19
-djangorestframework-gis==1.2.0
-djangorestframework==3.16.1
+djangorestframework-gis==1.2.1
+djangorestframework==3.17.2
 flake8==7.1.0
 mccabe==0.7.0
 mercantile==1.2.1
