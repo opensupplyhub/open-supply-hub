@@ -63,6 +63,16 @@ class RbaMergeGuardTest(APITestCase):
             self.target.id, self.merge.id
         )
 
+    def tearDown(self):
+        # Reconnect the receiver disconnected in setUp. post_delete is
+        # process-global state, so leaving it detached would silently
+        # disable location deletion propagation for every test that runs
+        # after this class in the same process.
+        post_delete.connect(
+            location_post_delete_handler_for_opensearch,
+            Facility
+        )
+
     def create_facility(self, os_id, origin_source=OriginSource.RBA):
         item = FacilityListItem.objects.create(
             name='Name',
