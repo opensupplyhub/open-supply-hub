@@ -201,13 +201,35 @@ def request_with_backoff(session, method, url, **kwargs):
     return response
 
 
+def resolve_input_path(path):
+    """
+    Resolve the operator's input path, or exit explaining what is wrong.
+
+    The path arrives on the command line, so the failures to catch are
+    ordinary operator mistakes - a typo, a directory, a file that is not
+    there - which would otherwise surface as a traceback. Resolving before
+    opening also means every later message names the file actually read
+    rather than whatever relative path was typed.
+    """
+    resolved = Path(path).expanduser().resolve()
+
+    if not resolved.exists():
+        sys.exit('input file does not exist: {}'.format(resolved))
+    if not resolved.is_file():
+        sys.exit('input path is not a file: {}'.format(resolved))
+
+    return resolved
+
+
 def load_rows(path):
     """Read the input CSV, or exit explaining which columns are missing."""
-    with open(path, newline='') as handle:
+    resolved = resolve_input_path(path)
+
+    with resolved.open(newline='') as handle:
         rows = list(csv.DictReader(handle))
 
     if not rows:
-        sys.exit('input file has no rows: {}'.format(path))
+        sys.exit('input file has no rows: {}'.format(resolved))
 
     missing = sorted(set(REQUIRED_COLUMNS) - set(rows[0].keys()))
     if missing:

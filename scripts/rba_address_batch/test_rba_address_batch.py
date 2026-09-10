@@ -389,6 +389,50 @@ class ReportTest(unittest.TestCase):
         self.assertEqual('OK', rows[0][-1])
 
 
+class InputPathTest(unittest.TestCase):
+    """
+    The path arrives on the command line, so ordinary operator mistakes
+    have to produce a usable message rather than a traceback.
+    """
+
+    def test_a_missing_file_exits_naming_it(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            missing = Path(tmpdir) / 'not-there.csv'
+
+            with self.assertRaises(SystemExit) as caught:
+                batch.load_rows(str(missing))
+
+            self.assertIn('does not exist', str(caught.exception))
+            self.assertIn('not-there.csv', str(caught.exception))
+
+    def test_a_directory_exits_rather_than_raising(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.assertRaises(SystemExit) as caught:
+                batch.load_rows(tmpdir)
+
+            self.assertIn('not a file', str(caught.exception))
+
+    def test_a_readable_file_resolves_to_an_absolute_path(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / 'input.csv'
+            path.write_text('os_id,name\n')
+
+            resolved = batch.resolve_input_path(str(path))
+
+            self.assertTrue(resolved.is_absolute())
+            self.assertTrue(resolved.is_file())
+
+    def test_missing_columns_are_reported_for_a_real_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = Path(tmpdir) / 'input.csv'
+            path.write_text('os_id\nUS2021250D1DTNT\n')
+
+            with self.assertRaises(SystemExit) as caught:
+                batch.load_rows(str(path))
+
+            self.assertIn('missing columns', str(caught.exception))
+
+
 class GroupingTest(unittest.TestCase):
     def test_groups_by_location_preserving_file_order(self):
         rows = [
