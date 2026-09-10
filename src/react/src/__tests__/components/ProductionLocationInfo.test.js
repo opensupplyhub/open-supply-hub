@@ -1063,8 +1063,8 @@ describe("ProductionLocationInfo component, duplicate and quality warning dialog
             { preloadedState },
         );
 
-    test("shows the update-specific duplicate submission dialog", async () => {
-        const { findByText, getByText, queryByText } = renderComponent(
+    test("shows the duplicate submission dialog instead of the generic error notification", async () => {
+        const { findByText, getByText } = renderComponent(
             stateWithError(duplicateRawData),
         );
 
@@ -1072,11 +1072,8 @@ describe("ProductionLocationInfo component, duplicate and quality warning dialog
             await findByText("Possible Duplicate Submission"),
         ).toBeInTheDocument();
         expect(
-            getByText(/You recently submitted information for a very similar production location/),
+            getByText(/You recently submitted a very similar production location/),
         ).toBeInTheDocument();
-        expect(
-            queryByText(/If this is a different, new location/),
-        ).not.toBeInTheDocument();
         expect(apiRequest.patch).not.toHaveBeenCalled();
     });
 

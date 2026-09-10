@@ -201,24 +201,6 @@ const ProductionLocationInfo = ({
     );
     const serverWarnings = pendingModerationEventError?.rawData?.warnings ?? [];
 
-    // The backend runs the same fuzzy name/address/country match for both
-    // flows, but the advice differs: on POST a match usually means the
-    // contributor is about to create a second copy of a location; on PATCH
-    // it usually means they already sent this information (possibly
-    // against a different search result) a few minutes ago.
-    const getDuplicateSubmissionMessage = () => {
-        const windowMinutes =
-            pendingModerationEventError?.rawData?.duplicate_of
-                ?.duplicate_check_window_minutes ??
-            DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES;
-
-        if (submitMethod === 'PATCH') {
-            return `You recently submitted information for a very similar production location. Please wait at least ${windowMinutes} minutes before re-submitting information for the same production location, as doing so could create duplicate contributions. If this is a different location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`;
-        }
-
-        return `You recently submitted a very similar production location. Please wait at least ${windowMinutes} minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`;
-    };
-
     // The duplicate check and the quality check run sequentially on the
     // backend, so a single submission can trip them one after the other.
     // Overrides granted via the dialogs must accumulate across
@@ -1369,7 +1351,11 @@ const ProductionLocationInfo = ({
                 warnings={[
                     {
                         title: 'Possible Duplicate Submission',
-                        message: getDuplicateSubmissionMessage(),
+                        message: `You recently submitted a very similar production location. Please wait at least ${
+                            pendingModerationEventError?.rawData?.duplicate_of
+                                ?.duplicate_check_window_minutes ??
+                            DEFAULT_DUPLICATE_CHECK_WINDOW_MINUTES
+                        } minutes before re-submitting information for the same production location, as doing so could create unwanted duplicates. If this is a different, new location, go back and double-check the name, address, and country. Otherwise, click 'Submit anyway' to confirm this submission.`,
                     },
                 ]}
             />
