@@ -505,7 +505,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.13"
       - name: Install ContriBot test dependencies
         run: |
           pip install --require-hashes --only-binary=:all: -r src/contribot/requirements-dev.txt
