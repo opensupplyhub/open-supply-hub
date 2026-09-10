@@ -17,6 +17,17 @@ check before the batch is treated as done.
 
 ## Before you start
 
+> **Do not run this against an instance that receives the one-way sync
+> from Open Supply Hub until promotion re-assertion is deployed there.**
+> On such an instance the sync overwrites every synced field of a shared
+> location, including the record of which contribution is primary. A
+> promotion this tool applies is therefore silently undone the next time
+> the public record changes — there is no schedule to it, so a batch can
+> look entirely correct for days and then decay. The `reassert_rba_promotions`
+> management command restores promotions after each sync and must be in
+> place first. If you are not certain it is deployed, ask the Open Supply
+> Hub team before running a batch rather than after.
+
 You need four things. The first three are one-time setup.
 
 1. **A superuser account on the instance.** Both the approval and the
