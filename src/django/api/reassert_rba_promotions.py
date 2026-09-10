@@ -169,7 +169,7 @@ def _describe(item):
 
 
 class PromotionConflict(RuntimeError):
-    """Raised when the item is already another facility's created_from."""
+    """Raised when the item cannot be promoted onto the facility."""
 
 
 @transaction.atomic
@@ -183,12 +183,37 @@ def reassert_promotion(match):
     also means the re-assertion is itself the facility's most recent
     promotion, so a later run reads it and does nothing.
     '''
-    item = match.facility_list_item
-
-    # Lock the row and re-read it, so the values written are based on the
-    # facility as it is now rather than as it was when the set was built.
+    # Lock both rows and re-read them, so the values written are based on
+    # the facility and item as they are now rather than as they were when
+    # the set was built. Always the facility first and the item second, so
+    # two concurrent runs cannot take them in opposite orders and deadlock.
     facility = Facility.objects.select_for_update().get(id=match.facility_id)
+
+    # The item lock is what makes appending to processing_results safe.
+    # That append is a read-modify-write here, while aws_batch appends with
+    # raw SQL - processing_results = processing_results || '<json>' - across
+    # every item of a source. Holding the row lock makes such an append wait
+    # for this transaction and apply on top of the value written here,
+    # instead of this save overwriting it from a stale in-memory list.
+    # No select_related here: facility_list is nullable, so joining it
+    # makes Postgres refuse the lock ("FOR UPDATE cannot be applied to the
+    # nullable side of an outer join"). _describe loads it lazily instead.
+    item = (
+        FacilityListItem.objects
+        .select_for_update()
+        .get(id=match.facility_list_item_id)
+    )
     previous_created_from_id = facility.created_from_id
+
+    if item.geocoded_point is None:
+        # The selection query excludes ungeocoded items, so this means the
+        # point was cleared between then and now. Facility.location is not
+        # nullable, so saving would raise IntegrityError and be swallowed
+        # as a generic error - name the real problem instead.
+        raise PromotionConflict(
+            f'{item.id} no longer has a geocoded point, so it cannot be '
+            f'promoted on {facility.id}.'
+        )
 
     if previous_created_from_id == item.id:
         # Restored by an earlier iteration or a concurrent write.

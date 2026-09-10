@@ -11,6 +11,7 @@ from api.models import (
 from api.reassert_rba_promotions import (
     PromotionConflict,
     find_reverted_promotions,
+    reassert_promotion,
     reassert_rba_promotions,
 )
 
@@ -321,6 +322,53 @@ class ReassertRbaPromotionsTest(TestCase):
         self.assertTrue(self.facility.is_closed)
         self.assertEqual('RBA Name', self.facility.name)
         self.assertEqual(1, len(matches))
+
+    def test_does_not_clobber_a_concurrent_processing_result(self):
+        # Appending to processing_results is a read-modify-write, while
+        # aws_batch appends with raw SQL across every item of a source. The
+        # item is therefore locked and re-read inside the transaction: a
+        # result written after the set was built must survive, rather than
+        # being overwritten from the stale in-memory list the match carries.
+        item, _ = self.create_rba_contribution()
+        self.simulate_sync_overwrite()
+        matches = find_reverted_promotions()
+
+        concurrent = list(
+            FacilityListItem.objects.get(id=item.id).processing_results
+        )
+        concurrent.append({'action': ProcessingAction.PARSE, 'error': False})
+        FacilityListItem.objects.filter(id=item.id).update(
+            processing_results=concurrent
+        )
+
+        reassert_promotion(matches[0])
+
+        item.refresh_from_db()
+        actions = [
+            result['action'] for result in item.processing_results
+        ]
+        self.assertIn(ProcessingAction.PARSE, actions)
+        self.assertEqual(ProcessingAction.PROMOTE_MATCH, actions[-1])
+
+    def test_reports_an_item_that_lost_its_geocode_before_the_write(self):
+        # The selection query excludes ungeocoded items, so this can only
+        # happen between selection and the write. Facility.location is not
+        # nullable, so the save would raise IntegrityError and be swallowed
+        # as a generic error.
+        item, _ = self.create_rba_contribution()
+        self.simulate_sync_overwrite()
+        matches = find_reverted_promotions()
+
+        FacilityListItem.objects.filter(id=item.id).update(
+            geocoded_point=None
+        )
+
+        with self.assertRaises(PromotionConflict) as caught:
+            reassert_promotion(matches[0])
+
+        self.assertIn('geocoded point', str(caught.exception))
+        self.facility.refresh_from_db()
+        self.assertEqual(self.public_item.id, self.facility.created_from_id)
 
     def test_reports_a_created_from_conflict_distinctly(self):
         # created_from is a OneToOneField. If the item became another
