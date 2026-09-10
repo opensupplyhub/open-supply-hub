@@ -196,9 +196,38 @@ class RbaMergeGuardTest(APITestCase):
         self.assertEqual(400, response.status_code)
 
     @override_settings(INSTANCE_SOURCE='not-a-real-source')
-    def test_an_unrecognized_instance_value_does_not_guard(self):
-        # An unknown value is treated as public OS Hub and warned about,
-        # rather than guessing that it might be a private instance.
+    def test_an_unrecognized_instance_value_refuses_the_merge(self):
+        # An unrecognized value must not resolve to os_hub. That is the
+        # value that makes is_rba_instance() false, so a task-definition
+        # typo on this instance would silently disarm the guard - the one
+        # failure mode with no trace and unrepairable consequences.
+        self.set_origin(self.merge, OriginSource.OSHUB)
+
+        response = self.post_merge()
+
+        self.assertEqual(400, response.status_code)
+        self.assertIn('misconfigured', str(response.data))
+
+    @override_settings(INSTANCE_SOURCE='not-a-real-source')
+    def test_an_unrecognized_instance_value_fails_closed_for_any_record(
+        self
+    ):
+        # Fails closed on the origin check too: when we cannot identify the
+        # deployment we cannot evaluate whether the merge is safe, so being
+        # locally stamped does not earn an exemption. A refused merge is
+        # loud and immediately recoverable; a half-applied one is not.
+        self.set_origin(self.merge, OriginSource.RBA)
+
+        response = self.post_merge()
+
+        self.assertEqual(400, response.status_code)
+        self.assertTrue(Facility.objects.filter(id=self.merge.id).exists())
+
+    @override_settings(INSTANCE_SOURCE='')
+    def test_an_unset_instance_value_is_public_os_hub(self):
+        # Unset is not a misconfiguration - it is what every environment
+        # other than a private instance looks like, so it must keep
+        # behaving as public OS Hub rather than refusing merges.
         self.set_origin(self.merge, OriginSource.OSHUB)
 
         self.assert_merge_succeeded(self.post_merge())

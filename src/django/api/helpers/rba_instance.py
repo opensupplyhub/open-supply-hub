@@ -43,20 +43,35 @@ def instance_source():
 
     Read defensively: the value arrives from an environment variable set in
     a task definition, so stray whitespace or casing must not silently
-    change behaviour. An unrecognized value is logged rather than passed
-    through, because a typo here would disable the merge guard with no
-    other trace.
+    change behaviour.
+
+    Three cases, deliberately distinguished:
+
+    - unset or empty - the ordinary public deployment, which is what every
+      environment other than a private instance looks like;
+    - a recognized value - returned normalized;
+    - set to something unrecognized - a misconfiguration, returned as
+      ``None``. It must not resolve to ``os_hub``: that is the value that
+      makes ``is_rba_instance()`` false, so a task-definition typo on the
+      RBA instance would silently disarm the merge guard and permit exactly
+      the unrepairable merge it exists to refuse. Callers that gate a
+      guard on this must treat ``None`` as unsafe rather than as public.
     """
-    raw = getattr(settings, 'INSTANCE_SOURCE', OriginSource.OSHUB) or ''
-    value = raw.strip().lower()
+    raw = getattr(settings, 'INSTANCE_SOURCE', None)
+
+    if raw is None or not str(raw).strip():
+        return OriginSource.OSHUB
+
+    value = str(raw).strip().lower()
 
     if value not in KNOWN_INSTANCE_SOURCES:
-        log.warning(
+        log.error(
             'INSTANCE_SOURCE is %r, which is not a known origin_source '
-            'value. Treating this deployment as %s.',
-            raw, OriginSource.OSHUB,
+            'value. This deployment cannot be identified, so instance '
+            'guards fail closed until it is corrected.',
+            raw,
         )
-        return OriginSource.OSHUB
+        return None
 
     return value
 
@@ -84,9 +99,25 @@ def merge_rejection_reason(merged_facility):
 
     Self-gating: returns None outside the RBA instance, so a caller that
     forgets to check the environment cannot accidentally block merges on
-    public OS Hub.
+    public OS Hub. The one exception is a deployment whose INSTANCE_SOURCE
+    is unrecognized, which is refused everywhere by design - see
+    ``instance_source``.
     """
-    if not is_rba_instance():
+    source = instance_source()
+
+    if source is None:
+        # Misconfigured INSTANCE_SOURCE: we cannot tell whether this is the
+        # RBA instance, so refuse. A refused merge on public OS Hub is a
+        # loud, immediately recoverable error; a merge the RBA sync then
+        # half-undoes is data damage the sync cannot repair.
+        return (
+            'This deployment is misconfigured: INSTANCE_SOURCE is not a '
+            'recognized production location origin. Merging is refused '
+            'until it is corrected, because the check that decides whether '
+            'a merge is safe here cannot be evaluated.'
+        )
+
+    if source != OriginSource.RBA:
         return None
 
     if is_rba_origin(merged_facility):
