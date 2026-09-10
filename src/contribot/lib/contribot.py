@@ -1195,7 +1195,7 @@ class ContriBot:
                         else:
                             possible_problem = True
                     if (
-                        len(re.findall("(?i).*(hong\s*kong)\s*$", addresses[row])) > 0
+                        len(re.findall(r"(?i).*(hong\s*kong)\s*$", addresses[row])) > 0
                         and COUNTRY_CODES[countries[row]] == "CN"
                     ):
                         self._add_diagnosis(
@@ -1203,7 +1203,7 @@ class ContriBot:
                         )
 
                     elif (
-                        len(re.findall("(?i).*(macao)\s*$", addresses[row])) > 0
+                        len(re.findall(r"(?i).*(macao)\s*$", addresses[row])) > 0
                         and COUNTRY_CODES[countries[row]] == "MO"
                     ):
                         self._add_diagnosis(
@@ -1211,7 +1211,7 @@ class ContriBot:
                         )
 
                     elif (
-                        len(re.findall("(?i).*taiwan\s*$", addresses[row])) > 0
+                        len(re.findall(r"(?i).*taiwan\s*$", addresses[row])) > 0
                         and COUNTRY_CODES[countries[row]] == "MO"
                     ):
                         self._add_diagnosis(
@@ -1349,7 +1349,7 @@ class ContriBot:
             if not isinstance(values[row], str):
                 continue
             if re.match("(?i).*Post[ ]+Office.*", values[row]) or re.match(
-                "(?i).*P\.*O\.*[\s]+Box.*", values[row]
+                r"(?i).*P\.*O\.*[\s]+Box.*", values[row]
             ):
                 self._add_diagnosis(code="C0009", column_name=column, row=row + 2)
                 cells_with_errors += 1
