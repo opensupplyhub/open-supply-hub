@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
 import { useClaimsList, useClaimDetail } from './hooks';
 import { deriveClaimStage, CLAIM_STAGES, NOTE_TYPES } from './stageUtils';
+import {
+    buildQueueGroups,
+    nextVisibleClaimID,
+    regionOptions,
+    ALL_REGIONS,
+    SORT_ORDERS,
+} from './railUtils';
+import QueueRail from './QueueRail';
 import { makeClaimTrackerTicketSearchURL } from './jiraUtils';
 import styles from './styles';
 
@@ -29,12 +37,6 @@ const STAGE_LABELS = Object.freeze({
     [CLAIM_STAGES.AWAITING]: 'Awaiting claimant',
     [CLAIM_STAGES.OVERDUE]: 'Reply overdue — decide',
 });
-
-const ageInDays = createdAt =>
-    Math.max(
-        0,
-        Math.floor((Date.now() - new Date(createdAt)) / (24 * 60 * 60 * 1000)),
-    );
 
 function ClaimWorkspace({ claimID }) {
     const { detail, fetching, error } = useClaimDetail(claimID);
@@ -127,9 +129,77 @@ function ClaimWorkspace({ claimID }) {
     );
 }
 
+const isTypingTarget = target =>
+    target &&
+    (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable);
+
 export default function ClaimsV2Dashboard() {
     const { claims, fetching, error, refetchClaims } = useClaimsList();
     const [selectedClaimID, setSelectedClaimID] = useState(null);
+    const [query, setQuery] = useState('');
+    const [region, setRegion] = useState(ALL_REGIONS);
+    const [sort, setSort] = useState(SORT_ORDERS.OLDEST);
+    const searchInputRef = useRef(null);
+
+    const { groups, visibleIds } = useMemo(
+        () => buildQueueGroups(claims, { query, region, sort }),
+        [claims, query, region, sort],
+    );
+    const regions = useMemo(() => regionOptions(claims), [claims]);
+
+    /*
+     * Auto-select the first visible claim on load, and move the
+     * selection back into view when a filter change hides it —
+     * the workspace should never show a claim absent from the rail.
+     */
+    useEffect(() => {
+        if (visibleIds.length === 0) {
+            setSelectedClaimID(null);
+        } else if (!visibleIds.includes(selectedClaimID)) {
+            setSelectedClaimID(visibleIds[0]);
+        }
+    }, [visibleIds, selectedClaimID]);
+
+    /*
+     * Global keys (spec §4): J/K and ↓/↑ walk the rail in on-screen
+     * order; `/` focuses search. All are inert while typing in a
+     * field, so the composer and search box keep their letters.
+     */
+    useEffect(() => {
+        const onKeyDown = event => {
+            if (
+                event.metaKey ||
+                event.ctrlKey ||
+                event.altKey ||
+                isTypingTarget(event.target)
+            ) {
+                return;
+            }
+            const key = event.key.toLowerCase();
+            if (key === '/') {
+                event.preventDefault();
+                if (searchInputRef.current) searchInputRef.current.focus();
+                return;
+            }
+            let delta = 0;
+            if (key === 'j' || event.key === 'ArrowDown') {
+                delta = 1;
+            } else if (key === 'k' || event.key === 'ArrowUp') {
+                delta = -1;
+            }
+            if (delta !== 0) {
+                event.preventDefault();
+                setSelectedClaimID(current =>
+                    nextVisibleClaimID(visibleIds, current, delta),
+                );
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [visibleIds]);
 
     if (fetching) {
         return <CircularProgress size={50} />;
@@ -147,30 +217,26 @@ export default function ClaimsV2Dashboard() {
 
     return (
         <div style={styles.shell}>
-            <nav style={styles.rail} aria-label="Pending claims queue">
-                <Typography variant="body1" gutterBottom>
-                    {claims.length} pending claim(s)
-                </Typography>
-                {claims.map(claim => (
-                    <button
-                        type="button"
-                        key={claim.id}
-                        style={{
-                            ...styles.railCard,
-                            ...(claim.id === selectedClaimID
-                                ? styles.railCardSelected
-                                : {}),
-                        }}
-                        onClick={() => setSelectedClaimID(claim.id)}
-                    >
-                        <div>{claim.facility_name}</div>
-                        <div style={styles.railCardMeta}>
-                            #{claim.id} · {claim.facility_country_name} ·{' '}
-                            {ageInDays(claim.created_at)}d old
-                        </div>
-                    </button>
-                ))}
-            </nav>
+            <QueueRail
+                groups={groups}
+                visibleCount={visibleIds.length}
+                selectedClaimID={selectedClaimID}
+                onSelect={setSelectedClaimID}
+                query={query}
+                onQueryChange={setQuery}
+                region={region}
+                onRegionChange={setRegion}
+                regions={regions}
+                sort={sort}
+                onToggleSort={() =>
+                    setSort(current =>
+                        current === SORT_ORDERS.OLDEST
+                            ? SORT_ORDERS.NEWEST
+                            : SORT_ORDERS.OLDEST,
+                    )
+                }
+                searchInputRef={searchInputRef}
+            />
             <main style={styles.workspace}>
                 <ClaimWorkspace claimID={selectedClaimID} />
             </main>

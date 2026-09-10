@@ -195,6 +195,8 @@ class FacilityClaimViewSet(ModelViewSet):
             'contributor',
             'contributor__admin',
             'status_change_by'
+        ).prefetch_related(
+            'facilityclaimreviewnote_set'
         ).all().order_by('-id')
         if statuses:
             queryset = queryset.filter(status__in=statuses)
