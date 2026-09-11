@@ -126,11 +126,21 @@ batch still gives you a report covering everything.
 | `submitted_address` | what the file asked for |
 | `previous_primary_address` | what the location showed before the run |
 | `resulting_primary_address` | what it shows now |
-| `status` | `OK`, `CHECK unchanged`, or `FAILED …` |
+| `status` | `OK`, `CHECK …`, `FAILED …`, or `INCOMPLETE …` |
 
 `CHECK unchanged` means the primary address is byte-identical to what it
 was before the run, which usually means the promotion did not take.
-`FAILED` rows are safe to re-run.
+
+`CHECK applied but not read back` means the opposite of a failure: the
+changes went through, and only the confirming read afterwards failed.
+The record is finished and will **not** be repeated on a later run —
+repeating it would submit the address a second time for a location that
+is already correct. Look at these in the dashboard to confirm them.
+
+`FAILED` rows are safe to re-run. `INCOMPLETE` rows are records a run
+was in the middle of when it was killed outright, so it never got to
+write down how they ended; the status says which step they reached.
+Re-running the same input file picks both up where they stopped.
 
 **The submitted and resulting addresses will not match character for
 character, and that is normal.** Addresses are cleaned and standardised
@@ -142,20 +152,37 @@ someone has read it.
 
 ## If a run is interrupted
 
-Just run the same command again. Every completed record is recorded in
-`batch_journal.jsonl` and skipped on the next run. A record that got part
-of the way through is retried from the beginning rather than skipped, so
-nothing is left half-applied.
+Just run the same command again. Every step of every record is recorded
+in `batch_journal.jsonl`. Completed records are skipped, and a record
+that got part of the way through **continues from where it stopped**
+rather than starting over — if its address was already submitted, the
+re-run approves that submission instead of making a second one.
+
+That matters because the steps are not undoable. Starting a half-done
+record again would leave its first submission sitting in the moderation
+queue unapproved forever, and would promote the address twice.
 
 **You can safely edit the CSV between runs** — delete rows that already
 applied, or correct one that failed. Records are tracked by their content,
 not their position in the file, so shifting the rows around does not
-cause anything to be re-applied.
+cause anything to be re-applied. Correcting a row's address makes it a
+new record, which is what correcting it means.
 
-One caveat: resubmitting an **identical** address for the same location
-within 15 minutes is rejected as a duplicate request. If you re-run
-immediately after a crash you may see those, reported distinctly from real
-failures. Wait for the window to pass and run again.
+Two things the tool will not decide for you:
+
+- Resubmitting an **identical** address for the same location within 15
+  minutes is rejected as a duplicate request, reported distinctly from a
+  real failure. It means the earlier submission exists on the instance.
+  If the run died before it could write down that submission's id, the
+  tool cannot reach it: approve and promote it from the moderation queue
+  by hand, or wait out the window and re-run to submit it afresh.
+- If a record's moderation event is **no longer pending**, the run stops
+  that record and says so. An interrupted run may already have approved
+  it — leaving only the promotion outstanding — or a moderator may have
+  rejected it. Those look the same from here, and the tool does not
+  guess, because guessing wrong promotes an unrelated contribution over
+  the location. Open the event in the moderation queue and finish or
+  drop that record by hand.
 
 If the instance rate-limits the run, the tool waits and retries rather
 than failing those records — you will see `rate limited, waiting Ns`
@@ -189,6 +216,9 @@ python -m unittest test_rba_address_batch -v
 ```
 
 Covers the host guard, submission payload construction, the duplicate
-window, match resolution, journal resume semantics, and row grouping. The
-network calls themselves are mocked; there is no test that talks to a real
-instance.
+window, match resolution, rate-limit backoff, row grouping, and the resume
+path in detail: that a record already promoted repeats none of its writes,
+that one already submitted is approved rather than submitted again, and
+that a record whose changes landed but could not be read back is finished
+rather than retried. The network calls themselves are mocked; there is no
+test that talks to a real instance.

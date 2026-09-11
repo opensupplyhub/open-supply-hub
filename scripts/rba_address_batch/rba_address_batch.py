@@ -68,6 +68,23 @@ RATE_LIMIT_STATUS = 429
 MAX_RATE_LIMIT_RETRIES = 5
 DEFAULT_RETRY_AFTER_SECONDS = 30
 
+# Approving an event that is no longer PENDING answers 410 with this text.
+# Re-promoting a match that is already the location's primary answers 400
+# with the other. Both are seen only when an earlier attempt got further
+# than its journal records - it sent a request and died before reading the
+# reply - so both are about resuming, not about bad input.
+EVENT_NOT_PENDING_STATUS = 410
+EVENT_NOT_PENDING_MARKER = 'should be in PENDING status'
+ALREADY_PRIMARY_STATUS = 400
+ALREADY_PRIMARY_MARKER = 'Facility is created from item'
+
+# The steps one record passes through, in order. A record is resumed from
+# the furthest step its journal proves it reached, so every entry here is
+# written only once its request has come back.
+RECORD_STEPS = (
+    'started', 'submitted', 'approved', 'resolved', 'promoted', 'verified',
+)
+
 
 @dataclass
 class Config:
@@ -304,6 +321,69 @@ def completed_row_keys(config):
     }
 
 
+def row_progress(config):
+    """
+    What the journal proves about each record, so it can resume mid-record.
+
+    Facts accumulate across attempts. A 'promoted' entry from an attempt
+    that later failed still means the promote happened, so the retry must
+    not do it again; restarting the record from the submit instead would
+    create a second contribution and leave the first one pending and
+    unapproved with nothing pointing at it.
+
+    FAILED entries contribute nothing. They record the outcome of an
+    attempt, not a step the record reached.
+
+    Keyed by row key, which is derived from the row's content - so an
+    operator who corrects a row gets a new key and a clean start, which is
+    what correcting it means.
+    """
+    progress = defaultdict(dict)
+
+    for entry in read_journal(config):
+        step = entry.get('step')
+        if step not in RECORD_STEPS:
+            continue
+
+        facts = progress[entry['row_key']]
+        facts.setdefault('reached', set()).add(step)
+        for name in (
+            'os_id', 'submitted_address', 'previous_primary_address',
+            'moderation_id', 'match_id',
+        ):
+            if entry.get(name) is not None:
+                facts[name] = entry[name]
+
+    return progress
+
+
+def furthest_step(facts):
+    """The last step in RECORD_STEPS this record is known to have reached."""
+    reached = facts.get('reached', set())
+    for step in reversed(RECORD_STEPS):
+        if step in reached:
+            return step
+    return None
+
+
+def required_fact(facts, name, key, step):
+    """
+    Read a value an earlier attempt should have journaled, or stop.
+
+    A step and the id it produced are written in the same journal line, so
+    one without the other means the file was edited or corrupted. Carrying
+    on would send a request built around a missing id.
+    """
+    value = facts.get(name)
+    if value is None:
+        raise ResumeAmbiguity(
+            'the journal says row {} reached {} but records no {}, so it '
+            'cannot be resumed. Delete that row\'s journal lines to run it '
+            'again from the start.'.format(key, step, name)
+        )
+    return value
+
+
 def build_submission(row):
     payload = {
         'name': row['name'],
@@ -325,6 +405,15 @@ class DuplicateSubmission(RuntimeError):
     """Raised when the duplicate-submission window is hit."""
 
 
+class ResumeAmbiguity(RuntimeError):
+    """
+    Raised when a resume cannot prove what an earlier attempt did.
+
+    The tool stops the record rather than guessing, because the wrong
+    guess promotes an unrelated contribution over a real location.
+    """
+
+
 def submit_address(session, config, os_id, row):
     response = request_with_backoff(
         session,
@@ -335,10 +424,12 @@ def submit_address(session, config, os_id, row):
     )
     if is_duplicate_submission(response):
         raise DuplicateSubmission(
-            'identical payload resubmitted inside the duplicate-request '
-            'window - usually a resume shortly after a crash. Wait for the '
-            'window to pass and re-run; the journal will skip the records '
-            'that already finished.'
+            'an identical payload is already inside the duplicate-request '
+            'window, so nothing was submitted again. If that earlier '
+            'submission was this tool\'s and it died before recording the '
+            'id, the event is on the instance but unreachable from here: '
+            'approve and promote it from the moderation queue by hand, or '
+            'wait out the window and re-run to submit it afresh.'
         )
     response.raise_for_status()
     return response.json()['moderation_id']
@@ -363,6 +454,28 @@ def approve_event(session, config, moderation_id, os_id):
         ),
         timeout=60,
     )
+
+    if (response.status_code == EVENT_NOT_PENDING_STATUS
+            and EVENT_NOT_PENDING_MARKER in response.text):
+        # Either an interrupted attempt already approved this event - in
+        # which case the match exists and only the promote is outstanding -
+        # or a moderator rejected it, in which case there is nothing to
+        # promote. The two are indistinguishable from here: the event list
+        # is served from the search index and lags, so reading the status
+        # back can report the state before the approval. Guessing
+        # 'approved' and carrying on would run discovery, find our newest
+        # earlier match, and promote an unrelated contribution over this
+        # location. So the record stops and names itself.
+        raise ResumeAmbiguity(
+            '{}: moderation event {} is no longer pending, so it cannot be '
+            'approved here. An interrupted run may already have approved '
+            'it, leaving only the promote outstanding, or it may have been '
+            'rejected. Open the event in the moderation queue and finish '
+            'or drop this record by hand - the tool will not guess, '
+            'because guessing wrong promotes an unrelated contribution '
+            'over this location.'.format(os_id, moderation_id)
+        )
+
     response.raise_for_status()
     try:
         return response.json() or {}
@@ -412,6 +525,16 @@ def resolve_match_id(session, config, os_id, approval):
 
 
 def promote_match(session, config, os_id, match_id):
+    """
+    Make this match the location's primary name and address.
+
+    Promoting a match that is already primary is refused rather than
+    accepted quietly, so the one response that means 'this is already
+    done' arrives as an error. It is treated as success: an attempt whose
+    promote landed but whose reply never arrived resumes here, and failing
+    the record instead would send the whole sequence round again and
+    create a second contribution for a location that is already correct.
+    """
     response = request_with_backoff(
         session,
         'POST',
@@ -419,6 +542,11 @@ def promote_match(session, config, os_id, match_id):
         json={'match_id': match_id},
         timeout=30,
     )
+
+    if (response.status_code == ALREADY_PRIMARY_STATUS
+            and ALREADY_PRIMARY_MARKER in response.text):
+        return
+
     response.raise_for_status()
 
 
@@ -476,7 +604,9 @@ def check_superuser_access(session, config):
     pending contribution for every record before failing at approve -
     leaving the instance's moderation queue full of unapproved events.
     """
-    response = session.get(
+    response = request_with_backoff(
+        session,
+        'GET',
         '{}/api/v1/moderation-events/'.format(config.base_url),
         params={'size': 1},
         timeout=30,
@@ -500,7 +630,16 @@ def check_superuser_access(session, config):
 
 
 def dry_run(session, config, rows):
-    """Read-only: confirm the token can do the job and locations exist."""
+    """
+    Read-only: confirm the token can do the job and locations exist.
+
+    Its reads go through request_with_backoff for the same reason the
+    execute run's do. A dry run over a large file is one GET per location
+    and can meet the rate limit on its own; a 429 taken straight off the
+    response would be printed as 'PROBLEM {os_id}: HTTP 429' and read as a
+    location that is not there - the exact misreading this check exists to
+    prevent.
+    """
     grouped = group_by_facility(rows)
     print('dry run: {} rows across {} locations'.format(
         len(rows), len(grouped)
@@ -527,7 +666,9 @@ def dry_run(session, config, rows):
         )
 
     for os_id in grouped:
-        response = session.get(
+        response = request_with_backoff(
+            session,
+            'GET',
             '{}/api/facilities/{}/'.format(config.base_url, os_id),
             timeout=30,
         )
@@ -541,28 +682,111 @@ def dry_run(session, config, rows):
     return problems
 
 
-def process_row(session, config, os_id, row, key):
-    """Run one record all the way through, journaling each step."""
-    # Read before and after so the report can say whether anything
-    # actually changed. Both reads bypass the response cache.
-    _, before = fetch_primary(session, config, os_id, cache_buster=key)
+def apply_row(session, config, os_id, row, key, facts=None):
+    """
+    Bring one record to its promoted state, resuming from the journal.
 
-    moderation_id = submit_address(session, config, os_id, row)
-    journal_write(config, {'row_key': key, 'step': 'submitted',
-                           'moderation_id': moderation_id})
+    Each step is skipped when the journal already proves it happened, so an
+    interrupted run continues the record it was in the middle of instead of
+    starting that record again. Starting again was the costly mistake: it
+    submits a second contribution, and the first one stays pending and
+    unapproved on the instance with nothing pointing at it.
 
-    approval = approve_event(session, config, moderation_id, os_id)
-    journal_write(config, {'row_key': key, 'step': 'approved'})
+    Verifying is deliberately not done here. It is a pure read, and a read
+    that fails must not make a record whose writes all landed look like a
+    record to write again. See verification_entry.
 
-    match_id = resolve_match_id(session, config, os_id, approval)
-    promote_match(session, config, os_id, match_id)
-    journal_write(config, {'row_key': key, 'step': 'promoted',
-                           'match_id': match_id})
+    Returns the primary address from before the batch touched this
+    location - on a resume, the value the first attempt recorded, not a
+    re-read of a value this tool has since changed.
+    """
+    facts = facts or {}
+    reached = facts.get('reached', set())
 
-    _, after = fetch_primary(
-        session, config, os_id, cache_buster='{}-after'.format(key)
-    )
-    return before, after
+    before = facts.get('previous_primary_address')
+    if 'started' not in reached:
+        # Cache-busted, so this is the value as it stands rather than the
+        # one the dry run left in the response cache.
+        _, before = fetch_primary(session, config, os_id, cache_buster=key)
+        # Journaled before anything is written, so a record that dies
+        # part-way can still be named in the report and resumed with the
+        # address it started from.
+        journal_write(config, {
+            'row_key': key,
+            'step': 'started',
+            'os_id': os_id,
+            'submitted_address': row['address'],
+            'previous_primary_address': before,
+        })
+
+    if 'submitted' in reached:
+        moderation_id = required_fact(
+            facts, 'moderation_id', key, 'submitted'
+        )
+    else:
+        moderation_id = submit_address(session, config, os_id, row)
+        journal_write(config, {'row_key': key, 'step': 'submitted',
+                               'moderation_id': moderation_id})
+
+    approval = {}
+    if 'approved' not in reached:
+        approval = approve_event(session, config, moderation_id, os_id)
+        journal_write(config, {'row_key': key, 'step': 'approved'})
+
+    if 'resolved' in reached:
+        match_id = required_fact(facts, 'match_id', key, 'resolved')
+    else:
+        match_id = resolve_match_id(session, config, os_id, approval)
+        # Journaled before the promote rather than after it, so an attempt
+        # that dies waiting for the promote response knows which match to
+        # re-promote. Discovering one again would mean running discovery
+        # against a location this tool has already changed.
+        journal_write(config, {'row_key': key, 'step': 'resolved',
+                               'match_id': match_id})
+
+    if 'promoted' not in reached:
+        promote_match(session, config, os_id, match_id)
+        journal_write(config, {'row_key': key, 'step': 'promoted',
+                               'match_id': match_id})
+
+    return before
+
+
+def verification_entry(session, config, os_id, row, key, before):
+    """
+    Read the record back, and journal it as done either way.
+
+    Every write for this record has landed by the time this runs, so the
+    record is finished whatever this read does. Journaling it FAILED
+    because a read failed would hand the next run a record to redo, and
+    redoing it means a second contribution and a second promote against a
+    location that is already correct. A read that fails is a record for a
+    human to look at, not a record to write again.
+    """
+    entry = {
+        'row_key': key,
+        'step': 'verified',
+        'os_id': os_id,
+        'submitted_address': row['address'],
+        'previous_primary_address': before,
+        'resulting_primary_address': '',
+    }
+
+    try:
+        _, after = fetch_primary(
+            session, config, os_id, cache_buster='{}-after'.format(key)
+        )
+    except Exception as err:
+        entry['status'] = (
+            'CHECK applied but not read back ({}). The changes went '
+            'through; only the confirming read failed, so this one needs '
+            'an eye on it in the dashboard.'.format(err)
+        )
+        return entry
+
+    entry['resulting_primary_address'] = after
+    entry['status'] = status_for(before, after)
+    return entry
 
 
 def status_for(before, after):
@@ -581,6 +805,7 @@ def status_for(before, after):
 
 def execute(session, config, rows):
     done = completed_row_keys(config)
+    progress = row_progress(config)
     processed = 0
 
     for os_id, facility_rows in group_by_facility(rows).items():
@@ -588,23 +813,22 @@ def execute(session, config, rows):
             key = row_key(row)
             if key in done:
                 continue
+            # Claimed before the work starts, so a file carrying the same
+            # row twice does not run it twice: the second copy is the same
+            # content for the same location, and re-running it would only
+            # meet the duplicate-submission window and record a failure
+            # against a record that had already succeeded.
+            done.add(key)
             processed += 1
             try:
-                before, after = process_row(
-                    session, config, os_id, row, key
+                before = apply_row(
+                    session, config, os_id, row, key, progress.get(key)
                 )
-                journal_write(config, {
-                    'row_key': key,
-                    'step': 'verified',
-                    'os_id': os_id,
-                    'submitted_address': row['address'],
-                    'previous_primary_address': before,
-                    'resulting_primary_address': after,
-                    'status': status_for(before, after),
-                })
             except Exception as err:
-                # One bad record must not end the batch. It is journaled as
-                # FAILED, reported, and picked up by the next run.
+                # One bad record must not end the batch. It is journaled
+                # as FAILED, reported, and picked up by the next run -
+                # which resumes it from whatever the journal proves,
+                # rather than repeating writes that already landed.
                 journal_write(config, {
                     'row_key': key,
                     'step': 'FAILED',
@@ -614,20 +838,29 @@ def execute(session, config, rows):
                     'resulting_primary_address': '',
                     'status': 'FAILED {}'.format(err),
                 })
+            else:
+                journal_write(config, verification_entry(
+                    session, config, os_id, row, key, before
+                ))
             time.sleep(config.pause_seconds)
 
     report_rows = write_report(config)
     failures = sum(
         1 for row in report_rows if row[-1].startswith('FAILED')
     )
-    unchanged = sum(1 for row in report_rows if row[-1].startswith('CHECK'))
+    to_check = sum(1 for row in report_rows if row[-1].startswith('CHECK'))
+    incomplete = sum(
+        1 for row in report_rows if row[-1].startswith('INCOMPLETE')
+    )
     print(
-        'processed {} rows this run; {} in the report, {} failures, {} '
-        'unchanged. Review {} before treating the batch as done - '
-        'addresses are cleaned on ingest, so a submitted string and the '
-        'resulting primary string differ legitimately and need a human '
-        'eye.'.format(
-            processed, len(report_rows), failures, unchanged, config.report
+        'processed {} rows this run; {} in the report, {} failures, {} to '
+        'check by hand, {} left incomplete. Review {} before treating the '
+        'batch as done - addresses are cleaned on ingest, so a submitted '
+        'string and the resulting primary string differ legitimately and '
+        'need a human eye. Re-running the same input file picks up the '
+        'failed and incomplete rows where they stopped.'.format(
+            processed, len(report_rows), failures, to_check, incomplete,
+            config.report
         )
     )
     return failures
@@ -640,12 +873,33 @@ def write_report(config):
     Built from the journal rather than from this run's results so that
     resuming an interrupted batch produces a report covering every record,
     not only the ones the final run happened to process.
+
+    Records that never reached a terminal step are listed too. A run killed
+    outright - a closed laptop, a lost connection - writes no FAILED entry
+    for the record it was in the middle of, so without this that record's
+    half-applied state would appear nowhere at all. Re-running the same
+    input file finishes them; the line is here so an operator who does not
+    re-run still knows they are there.
     """
     latest = {}
     for entry in read_journal(config):
         if entry.get('step') in ('verified', 'FAILED'):
             # A later attempt supersedes an earlier one for the same row.
             latest[entry['row_key']] = entry
+
+    for key, facts in row_progress(config).items():
+        if key in latest:
+            continue
+        latest[key] = {
+            'os_id': facts.get('os_id', ''),
+            'submitted_address': facts.get('submitted_address', ''),
+            'previous_primary_address': facts.get(
+                'previous_primary_address', ''
+            ),
+            'resulting_primary_address': '',
+            'status': 'INCOMPLETE stopped after {}; re-run the same input '
+                      'file to finish it'.format(furthest_step(facts)),
+        }
 
     report_rows = [
         [

@@ -256,18 +256,63 @@ class SuperuserCheckTest(unittest.TestCase):
         # Reading a location needs only an authenticated user, so without
         # this check the dry run passes and --execute creates a pending
         # contribution per record before failing at approve.
-        session = MagicMock()
-        session.get.return_value = make_response(status_code=403)
+        session = session_returning(make_response(status_code=403))
         problem = batch.check_superuser_access(session, self.config)
         self.assertIsNotNone(problem)
-        self.assertIn('superuser', problem)
+        self.assertIn('not a superuser', problem)
 
     def test_a_superuser_token_passes(self):
-        session = MagicMock()
-        session.get.return_value = make_response(payload={'data': []})
+        session = session_returning(make_response(payload={'data': []}))
         self.assertIsNone(
             batch.check_superuser_access(session, self.config)
         )
+
+    def test_a_rate_limited_check_is_waited_out_not_reported(self):
+        # The check used to read the response directly. A large dry run can
+        # meet the rate limit on its own, and a 429 read straight off would
+        # be reported as 'could not confirm superuser access' - sending the
+        # operator to fix a token that is perfectly fine.
+        session = session_returning(
+            make_response(status_code=429, headers={'Retry-After': '1'}),
+            make_response(payload={'data': []}),
+        )
+        self.assertIsNone(
+            batch.check_superuser_access(session, self.config)
+        )
+        self.assertEqual(2, session.request.call_count)
+
+
+class DryRunTest(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.config = make_config(self.tmpdir.name)
+        self.rows = [
+            {'os_id': 'OSID1', 'name': 'n', 'address': 'a', 'country': 'US'},
+        ]
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def test_a_rate_limited_location_read_is_waited_out(self):
+        # One GET per location over a large file is exactly where the rate
+        # limit is met. Reported as a problem, a 429 reads as 'this location
+        # does not exist', which is the misreading the dry run exists to
+        # prevent.
+        session = session_returning(
+            # superuser check
+            make_response(payload={'data': []}),
+            # the location read, rate limited then served
+            make_response(status_code=429, headers={'Retry-After': '1'}),
+            make_response(payload={'properties': {}}),
+        )
+        self.assertEqual(0, batch.dry_run(session, self.config, self.rows))
+
+    def test_a_genuinely_missing_location_is_still_reported(self):
+        session = session_returning(
+            make_response(payload={'data': []}),
+            make_response(status_code=404),
+        )
+        self.assertEqual(1, batch.dry_run(session, self.config, self.rows))
 
 
 class ResumeKeyTest(unittest.TestCase):
@@ -443,15 +488,22 @@ class GroupingTest(unittest.TestCase):
         self.assertEqual([1], [index for index, _ in grouped['B']])
 
 
-class ProcessRowTest(unittest.TestCase):
+class ApplyRowTest(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.config = make_config(self.tmpdir.name, contributor_id=42)
+        self.row = {'name': 'n', 'address': 'a', 'country': 'US'}
 
     def tearDown(self):
         self.tmpdir.cleanup()
 
-    def test_a_full_record_journals_every_step_and_reports_the_change(self):
+    def steps(self):
+        return [
+            json.loads(line)['step']
+            for line in self.config.journal.read_text().splitlines()
+        ]
+
+    def test_a_fresh_record_runs_and_journals_every_step(self):
         session = session_returning(
             # read before
             make_response(payload={'properties': {
@@ -462,28 +514,266 @@ class ProcessRowTest(unittest.TestCase):
             make_response(payload={'match_id': 55}),
             # promote
             make_response(payload={}),
-            # read after
-            make_response(payload={'properties': {
-                'name': 'New', 'address': 'New Address'}}),
         )
 
-        before, after = batch.process_row(
-            session, self.config, 'OSID',
-            {'name': 'n', 'address': 'a', 'country': 'US'}, 'OSID#abc',
+        before = batch.apply_row(
+            session, self.config, 'OSID', self.row, 'OSID#abc'
         )
 
         self.assertEqual('Old Address', before)
-        self.assertEqual('New Address', after)
-        self.assertEqual('OK', batch.status_for(before, after))
-
-        steps = [
-            json.loads(line)['step']
-            for line in self.config.journal.read_text().splitlines()
-        ]
-        self.assertEqual(['submitted', 'approved', 'promoted'], steps)
-        # Five calls, not six: the approval reported the match, so no
+        self.assertEqual(
+            ['started', 'submitted', 'approved', 'resolved', 'promoted'],
+            self.steps(),
+        )
+        # Four calls, not five: the approval reported the match, so no
         # discovery call was needed.
-        self.assertEqual(5, session.request.call_count)
+        self.assertEqual(4, session.request.call_count)
+
+    def test_the_match_is_journaled_before_the_promote_is_attempted(self):
+        # So an attempt that dies waiting for the promote response knows
+        # which match to re-promote, instead of running discovery again
+        # against a location it has already changed.
+        session = session_returning(
+            make_response(payload={'properties': {
+                'name': 'Old', 'address': 'Old Address'}}),
+            make_response(payload={'moderation_id': 'MOD1'}),
+            make_response(payload={'match_id': 55}),
+            ConnectionError('promote never answered'),
+        )
+
+        with self.assertRaises(ConnectionError):
+            batch.apply_row(
+                session, self.config, 'OSID', self.row, 'OSID#abc'
+            )
+
+        self.assertIn('resolved', self.steps())
+        facts = batch.row_progress(self.config)['OSID#abc']
+        self.assertEqual(55, facts['match_id'])
+
+    def test_a_record_already_promoted_repeats_no_writes(self):
+        # The case that used to submit a second contribution for a location
+        # that was already correct: everything landed, and only the
+        # confirming read failed.
+        facts = {
+            'reached': {'started', 'submitted', 'approved', 'resolved',
+                        'promoted'},
+            'previous_primary_address': 'Old Address',
+            'moderation_id': 'MOD1',
+            'match_id': 55,
+        }
+        session = session_returning()
+
+        before = batch.apply_row(
+            session, self.config, 'OSID', self.row, 'OSID#abc', facts
+        )
+
+        self.assertEqual('Old Address', before)
+        self.assertEqual(0, session.request.call_count)
+        self.assertFalse(self.config.journal.exists())
+
+    def test_a_record_resumes_from_its_journaled_submission(self):
+        # A run that died between submit and promote used to leave its
+        # submission pending forever and start a brand new one. The
+        # moderation id is on record, so it is approved instead.
+        facts = {
+            'reached': {'started', 'submitted'},
+            'previous_primary_address': 'Old Address',
+            'moderation_id': 'MOD1',
+        }
+        session = session_returning(
+            make_response(payload={'match_id': 55}),
+            make_response(payload={}),
+        )
+
+        before = batch.apply_row(
+            session, self.config, 'OSID', self.row, 'OSID#abc', facts
+        )
+
+        self.assertEqual('Old Address', before)
+        self.assertEqual(['approved', 'resolved', 'promoted'], self.steps())
+        self.assertEqual(2, session.request.call_count)
+        approve_url = session.request.call_args_list[0][0][1]
+        self.assertIn('MOD1', approve_url)
+
+    def test_a_resume_re_promotes_the_match_it_recorded(self):
+        facts = {
+            'reached': {'started', 'submitted', 'approved', 'resolved'},
+            'previous_primary_address': 'Old Address',
+            'moderation_id': 'MOD1',
+            'match_id': 55,
+        }
+        session = session_returning(make_response(payload={}))
+
+        batch.apply_row(
+            session, self.config, 'OSID', self.row, 'OSID#abc', facts
+        )
+
+        # No discovery call - the match was already known.
+        self.assertEqual(1, session.request.call_count)
+        self.assertEqual({'match_id': 55},
+                         session.request.call_args_list[0][1]['json'])
+
+    def test_a_step_without_the_id_it_produced_stops_the_record(self):
+        facts = {'reached': {'started', 'submitted'},
+                 'previous_primary_address': 'Old Address'}
+        with self.assertRaises(batch.ResumeAmbiguity):
+            batch.apply_row(
+                session_returning(), self.config, 'OSID', self.row,
+                'OSID#abc', facts,
+            )
+
+
+class AlreadyAppliedTest(unittest.TestCase):
+    """The two responses that mean 'an earlier attempt already did this'."""
+
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.config = make_config(self.tmpdir.name)
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def test_promoting_an_already_primary_match_is_success(self):
+        # The state this call is trying to reach. Failing the record here
+        # would send the whole sequence round again.
+        session = session_returning(make_response(
+            status_code=400,
+            text='{"detail":"Facility is created from item."}',
+        ))
+        batch.promote_match(session, self.config, 'OSID', 55)
+
+    def test_a_different_bad_request_still_fails(self):
+        response = make_response(
+            status_code=400, text='{"detail":"Match is not to facility"}'
+        )
+        response.raise_for_status.side_effect = RuntimeError('400')
+        with self.assertRaises(RuntimeError):
+            batch.promote_match(
+                session_returning(response), self.config, 'OSID', 55
+            )
+
+    def test_approving_a_non_pending_event_stops_the_record_loudly(self):
+        # Approved-then-interrupted and rejected look the same from here,
+        # and the event list lags because it is served from the search
+        # index. Guessing 'approved' would promote whatever our newest
+        # earlier match happens to be over this location.
+        session = session_returning(make_response(
+            status_code=410,
+            text='{"detail":"The moderation event should be in PENDING '
+                 'status."}',
+        ))
+        with self.assertRaises(batch.ResumeAmbiguity) as caught:
+            batch.approve_event(session, self.config, 'MOD1', 'OSID')
+        self.assertIn('MOD1', str(caught.exception))
+        self.assertIn('moderation queue', str(caught.exception))
+
+
+class VerificationTest(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.config = make_config(self.tmpdir.name)
+        self.row = {'os_id': 'OSID', 'name': 'n', 'address': 'a',
+                    'country': 'US'}
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def test_a_failed_read_back_still_counts_the_record_as_done(self):
+        # The writes have all landed by this point. Marking the record
+        # FAILED because a pure read failed hands the next run a record to
+        # redo, and redoing it means a second contribution and a second
+        # promote against a location that is already correct.
+        session = session_returning(ConnectionError('read timed out'))
+
+        entry = batch.verification_entry(
+            session, self.config, 'OSID', self.row, 'OSID#abc', 'Old Address'
+        )
+
+        self.assertEqual('verified', entry['step'])
+        self.assertTrue(entry['status'].startswith('CHECK'))
+        self.assertIn('only the confirming read failed', entry['status'])
+
+        batch.journal_write(self.config, entry)
+        self.assertIn('OSID#abc', batch.completed_row_keys(self.config))
+
+    def test_a_successful_read_back_reports_the_change(self):
+        session = session_returning(make_response(payload={'properties': {
+            'name': 'New', 'address': 'New Address'}}))
+
+        entry = batch.verification_entry(
+            session, self.config, 'OSID', self.row, 'OSID#abc', 'Old Address'
+        )
+
+        self.assertEqual('New Address', entry['resulting_primary_address'])
+        self.assertEqual('OK', entry['status'])
+
+
+class RowProgressTest(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.config = make_config(self.tmpdir.name)
+
+    def tearDown(self):
+        self.tmpdir.cleanup()
+
+    def write(self, *entries):
+        for entry in entries:
+            batch.journal_write(self.config, entry)
+
+    def test_facts_survive_an_attempt_that_later_failed(self):
+        # A promote that happened stays happened even though the attempt
+        # carrying it ended in failure.
+        self.write(
+            {'row_key': 'K', 'step': 'started', 'os_id': 'OSID',
+             'submitted_address': 'a', 'previous_primary_address': 'Old'},
+            {'row_key': 'K', 'step': 'submitted', 'moderation_id': 'MOD1'},
+            {'row_key': 'K', 'step': 'approved'},
+            {'row_key': 'K', 'step': 'resolved', 'match_id': 55},
+            {'row_key': 'K', 'step': 'promoted', 'match_id': 55},
+            {'row_key': 'K', 'step': 'FAILED', 'os_id': 'OSID',
+             'previous_primary_address': '', 'status': 'FAILED read'},
+        )
+
+        facts = batch.row_progress(self.config)['K']
+        self.assertEqual('promoted', batch.furthest_step(facts))
+        self.assertEqual('MOD1', facts['moderation_id'])
+        self.assertEqual(55, facts['match_id'])
+        # Not blanked by the FAILED entry, which records an outcome rather
+        # than a step the record reached.
+        self.assertEqual('Old', facts['previous_primary_address'])
+
+    def test_an_untouched_record_has_no_progress(self):
+        self.assertEqual({}, dict(batch.row_progress(self.config)))
+
+    def test_the_report_surfaces_a_record_that_never_terminated(self):
+        # A run killed outright writes no FAILED entry for the record it
+        # was in the middle of, so without this its half-applied state
+        # appears nowhere at all.
+        self.write(
+            {'row_key': 'K', 'step': 'started', 'os_id': 'OSID',
+             'submitted_address': 'a', 'previous_primary_address': 'Old'},
+            {'row_key': 'K', 'step': 'submitted', 'moderation_id': 'MOD1'},
+        )
+
+        rows = batch.write_report(self.config)
+
+        self.assertEqual(1, len(rows))
+        self.assertEqual('OSID', rows[0][0])
+        self.assertTrue(rows[0][-1].startswith('INCOMPLETE'))
+        self.assertIn('submitted', rows[0][-1])
+
+    def test_a_finished_record_is_not_also_reported_incomplete(self):
+        self.write(
+            {'row_key': 'K', 'step': 'started', 'os_id': 'OSID',
+             'submitted_address': 'a', 'previous_primary_address': 'Old'},
+            {'row_key': 'K', 'step': 'verified', 'os_id': 'OSID',
+             'submitted_address': 'a', 'previous_primary_address': 'Old',
+             'resulting_primary_address': 'New', 'status': 'OK'},
+        )
+
+        rows = batch.write_report(self.config)
+        self.assertEqual(1, len(rows))
+        self.assertEqual('OK', rows[0][-1])
 
 
 if __name__ == '__main__':
