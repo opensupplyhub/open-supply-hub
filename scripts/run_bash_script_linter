@@ -13,8 +13,10 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     if [ "${1:-}" = "--help" ]; then
         usage
     else
-        # Lint Bash scripts.
-        echo "Run shellcheck scripts/*"
-        shellcheck scripts/*
+        # Lint Bash scripts. Files only, and not recursively: passing a
+        # directory to shellcheck fails the whole run. Keep this in sync
+        # with the run-bash-script-linter job in code_quality.yml.
+        echo "Run shellcheck on the files in scripts/"
+        find scripts -maxdepth 1 -type f -exec shellcheck {} +
     fi
 fi
