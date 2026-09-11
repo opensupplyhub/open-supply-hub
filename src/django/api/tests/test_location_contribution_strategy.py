@@ -1855,7 +1855,11 @@ class TestLocationContributionStrategy(APITestCase):
             contributor=existing_location_contributor,
             raw_data=input_data_dict,
             request_type=ModerationEvent.RequestType.UPDATE.value,
-            os=production_location
+            os=production_location,
+            # This test sends several SLC updates for the same facility in
+            # a row to exercise partner-field type validation; skip the
+            # duplicate-submission check so the repeats aren't flagged.
+            duplicate_override=True,
         )
 
         result = self.moderation_event_creator.perform_event_creation(
@@ -1879,7 +1883,11 @@ class TestLocationContributionStrategy(APITestCase):
             contributor=existing_location_contributor,
             raw_data=input_data_list,
             request_type=ModerationEvent.RequestType.UPDATE.value,
-            os=production_location
+            os=production_location,
+            # This test sends several SLC updates for the same facility in
+            # a row to exercise partner-field type validation; skip the
+            # duplicate-submission check so the repeats aren't flagged.
+            duplicate_override=True,
         )
 
         result = self.moderation_event_creator.perform_event_creation(
@@ -1903,7 +1911,11 @@ class TestLocationContributionStrategy(APITestCase):
             contributor=existing_location_contributor,
             raw_data=input_data_invalid,
             request_type=ModerationEvent.RequestType.UPDATE.value,
-            os=production_location
+            os=production_location,
+            # This test sends several SLC updates for the same facility in
+            # a row to exercise partner-field type validation; skip the
+            # duplicate-submission check so the repeats aren't flagged.
+            duplicate_override=True,
         )
 
         result = self.moderation_event_creator.perform_event_creation(
