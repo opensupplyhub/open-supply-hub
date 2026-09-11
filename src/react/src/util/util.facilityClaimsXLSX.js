@@ -10,6 +10,7 @@ const xlsxHeaders = Object.freeze([
     'Claim Decision',
     'Status',
     'Last Updated',
+    'Updated by Claimant',
 ]);
 
 const formatFacilityClaimsDataForXLSX = facilityClaims =>
@@ -25,6 +26,12 @@ const formatFacilityClaimsDataForXLSX = facilityClaims =>
                 : EMPTY_PLACEHOLDER,
             facilityClaim.status,
             formatDate(facilityClaim.updated_at, DATE_FORMATS.LONG),
+            facilityClaim.claimant_updated_at !== null
+                ? formatDate(
+                      facilityClaim.claimant_updated_at,
+                      DATE_FORMATS.LONG,
+                  )
+                : EMPTY_PLACEHOLDER,
         ]),
     );
 

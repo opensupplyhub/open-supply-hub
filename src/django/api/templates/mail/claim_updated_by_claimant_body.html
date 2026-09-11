@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>A claimant updated their pending claim on OS Hub</title>
+    </head>
+    <body>
+        <p>Hello,</p>
+        <p>
+            The claimant has updated their pending facility claim on Open
+            Supply Hub.
+        </p>
+        <p>Claim Details:</p>
+        <ul>
+            <li>Claim ID: {{ claim_id }}</li>
+            <li>
+                Facility: {{ facility_name }}, {{ facility_address }},
+                {{ facility_country }}
+            </li>
+            <li>Contributor: {{ contributor_name }}</li>
+            <li>Updated: {{ updated_at }}</li>
+        </ul>
+        <p>Changes made by the claimant:</p>
+        <ul>
+            {% for change in changes %}
+            <li>{{ change }}</li>
+            {% endfor %}
+        </ul>
+        <p>
+            <a href="{{ claim_dashboard_url }}">Review the claim in the
+            dashboard</a>
+        </p>
+        <p>
+            This is an automated notification. Documents are never attached
+            to this email; view them through the claim&rsquo;s page in the
+            dashboard.
+        </p>
+    </body>
+</html>

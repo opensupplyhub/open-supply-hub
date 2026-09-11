@@ -508,6 +508,15 @@ class FacilityClaim(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # Stamped only by the claimant-facing pending-claim endpoints (field
+    # edits, attachment add/remove) — never by moderator actions, which
+    # also bump updated_at. This is what lets the claims queue show and
+    # sort by "updated by claimant" without conflating moderator edits.
+    claimant_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=('When the claimant last updated this claim or its '
+                   'attachments through the pending-claim edit flow.'))
 
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source']

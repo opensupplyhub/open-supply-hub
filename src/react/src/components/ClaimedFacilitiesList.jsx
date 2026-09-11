@@ -31,9 +31,11 @@ function ClaimedFacilitiesList({
     clearClaimed,
     userHasSignedIn,
 }) {
-    const TITLE = 'My Claimed Facilities';
+    const TITLE = 'My Facility Claims';
     useEffect(() => {
-        getClaimed();
+        // Pending claims are shown alongside approved ones so claimants
+        // can view and edit claims awaiting review (OSDEV-2278).
+        getClaimed(['PENDING', 'APPROVED']);
 
         return () => clearClaimed();
     }, [getClaimed, clearClaimed]);
@@ -63,10 +65,10 @@ function ClaimedFacilitiesList({
                             variant="body1"
                             style={claimFacilitiesListStyle.bodyStyle}
                         >
-                            You do not have any approved facility claims. Search
-                            for your facility and make a request to claim it.
-                            Claiming your facility will enable you to add
-                            business information, including production details,
+                            You do not have any facility claims. Search for your
+                            facility and make a request to claim it. Claiming
+                            your facility will enable you to add business
+                            information, including production details,
                             certifications, minimum order quantities and lead
                             times.
                         </Typography>
@@ -124,7 +126,7 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch) {
     return {
-        getClaimed: () => dispatch(fetchClaimedFacilities()),
+        getClaimed: statuses => dispatch(fetchClaimedFacilities(statuses)),
         clearClaimed: () => dispatch(clearClaimedFacilities()),
     };
 }

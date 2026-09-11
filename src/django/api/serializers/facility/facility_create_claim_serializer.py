@@ -1,4 +1,3 @@
-import os
 from datetime import date
 
 from rest_framework import serializers
@@ -10,13 +9,9 @@ from api.exceptions import BadRequestException
 from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
 from api.constants import JS_MAX_SAFE_INTEGER
+from api.helpers.claim_attachments import validate_attachment_files
 from api.helpers.helpers import validate_workers_count
 from api.serializers.facility.utils import add_http_prefix_to_url
-from oar.settings import (
-    MAX_ATTACHMENT_SIZE_IN_BYTES,
-    MAX_ATTACHMENT_AMOUNT,
-    ALLOWED_ATTACHMENT_EXTENSIONS
-)
 
 
 def validate_workers(value):
@@ -45,24 +40,7 @@ def validate_url_field(field_name, value):
 
 
 def validate_files(files):
-    if len(files) > MAX_ATTACHMENT_AMOUNT:
-        raise DRFValidationError(
-            f"Maximum {MAX_ATTACHMENT_AMOUNT} attachments allowed."
-        )
-
-    for file in files:
-        extension = os.path.splitext(file.name)[-1].lower()
-        if extension not in ALLOWED_ATTACHMENT_EXTENSIONS:
-            raise DRFValidationError(
-                f"{file.name} has an unsupported file type."
-            )
-
-        if file.size > MAX_ATTACHMENT_SIZE_IN_BYTES:
-            raise DRFValidationError(
-                f"{file.name} exceeds the 5MB size limit."
-            )
-
-    return files
+    return validate_attachment_files(files)
 
 
 def validate_non_future_date(value):
