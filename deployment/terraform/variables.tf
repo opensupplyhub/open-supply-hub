@@ -1576,7 +1576,5 @@ variable "contribot_google_drive_service_key_secret_name" {
 # Lambda → auto-claims-moderate-claim → Configuration → Permissions → Execution role.
 variable "claim_attachments_reader_role_arns" {
   type    = list(string)
-  default = [
-    "arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"
-  ]
+  default = []
 }
