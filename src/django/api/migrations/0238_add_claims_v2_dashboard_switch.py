@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0238_add_claimant_updated_at'),
+        ('api', '0237_add_facility_candidate_fields'),
     ]
 
     operations = [
