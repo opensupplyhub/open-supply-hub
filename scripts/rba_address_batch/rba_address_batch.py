@@ -143,7 +143,8 @@ def host_rejection_reason(base_url):
     instance hosted under the public domain is allowed while the public
     instance itself is not.
     """
-    hostname = (urlsplit(base_url).hostname or '').lower()
+    parts = urlsplit(base_url)
+    hostname = (parts.hostname or '').lower()
     if not hostname:
         return 'could not read a hostname from {!r}'.format(base_url)
 
@@ -156,6 +157,19 @@ def host_rejection_reason(base_url):
 
     if hostname in LOCAL_HOSTNAMES:
         return None
+
+    # Checked after the host, so the public-instance refusal stays the
+    # message an operator sees for the most dangerous target. Every request
+    # carries a superuser token in a header, so a remote http:// URL would
+    # put it on the wire in the clear. Local development is exempt because
+    # it has no TLS and nothing to intercept.
+    if parts.scheme != 'https':
+        return (
+            'refusing to send a superuser token to {} over {}: use '
+            'https'.format(
+                hostname, parts.scheme or 'an unrecognised scheme'
+            )
+        )
 
     first_label = hostname.split('.')[0]
     if first_label in PRIVATE_INSTANCE_LABELS:

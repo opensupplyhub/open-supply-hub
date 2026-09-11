@@ -89,6 +89,23 @@ class HostGuardTest(unittest.TestCase):
     def test_a_url_with_no_hostname_is_refused(self):
         self.assertIsNotNone(batch.host_rejection_reason('not-a-url'))
 
+    def test_a_remote_host_over_plain_http_is_refused(self):
+        # Every request carries a superuser token in a header, so this
+        # would put it on the wire in the clear.
+        reason = batch.host_rejection_reason('http://rba.opensupplyhub.org')
+        self.assertIsNotNone(reason)
+        self.assertIn('https', reason)
+
+    def test_the_public_instance_is_refused_as_the_public_instance(self):
+        # Not as a scheme problem: the most dangerous target keeps the
+        # message that says why it is dangerous.
+        reason = batch.host_rejection_reason('http://opensupplyhub.org')
+        self.assertIn('public instance', reason)
+
+    def test_local_development_over_http_is_still_allowed(self):
+        # No TLS locally, and nothing on the wire to intercept.
+        self.assertIsNone(batch.host_rejection_reason('http://127.0.0.1:8000'))
+
 
 class SubmissionPayloadTest(unittest.TestCase):
     def test_sends_the_core_fields(self):
