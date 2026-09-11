@@ -179,7 +179,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 key: 'name_permit_holder',
                 label: 'Permit Holder',
                 tooltipText:
-                    'The entity that holds the permits for operating this production location.',
+                    'An entity that holds the permit(s) to operate at this location.',
             },
             {
                 key: 'name_site_other',
@@ -241,7 +241,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 // field on the backend and none should be displayed.
                 label: 'Power Usage Effectiveness (PUE)',
                 tooltipText:
-                    'Power usage effectiveness (PUE) is the ratio of how much power the data center uses to how much power it uses on computing equipment specifically. For example, a PUE of 1.2 means that for every 1 MW of power the computing equipment uses, an additional 0.2 MW are needed for cooling equipment or other electrical needs. A lower PUE means a more energy-efficient data center.',
+                    'Power usage effectiveness (PUE) is the ratio of how much power the data center uses overall to how much power it uses on computing equipment specifically. For example, a PUE of 1.2 means that for every 1 MW of power the computing equipment uses, an additional 0.2 MW are needed for cooling equipment or other electrical needs. A lower PUE means a more energy-efficient data center.',
             },
             {
                 key: 'power_providers',
@@ -330,7 +330,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 key: 'area',
                 label: 'Area',
                 unitsField: 'area_units',
-                tooltipText: 'The physical area of the data center. There are different ways to measure area, and this general "area" field is only used when the type of capacity is not specified.',
+                tooltipText: 'The physical area of the data center. There are different ways to measure area, and this general "area" field is only used when the type of area is not specified.',
             },
             {
                 key: 'data_area',
@@ -385,7 +385,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 label: 'Other Area',
                 unitsField: 'other_area_units',
                 tooltipText:
-                    'Specific area of this location that does not clearly match any of our standard area categories.',
+                    'Specific type of area of this location that does not clearly match any of our standard area categories.',
             },
             {
                 key: 'other_area_notes',
