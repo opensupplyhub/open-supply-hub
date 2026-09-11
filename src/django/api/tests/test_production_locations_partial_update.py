@@ -18,10 +18,27 @@ from api.models.user import User
 from api.models.facility.facility import Facility
 from api.views.v1.url_names import URLNames
 from api.tests.test_data import geocoding_data
+from api.services.submission_quality_service import (
+    QualityVerdict,
+    SubmissionQualityVerdicts,
+)
 
 
 class TestProductionLocationsPartialUpdate(APITestCase):
     def setUp(self):
+        # This endpoint also runs SubmissionQualityProcessor for SLC
+        # submissions, which would otherwise make a real Bedrock call for
+        # every such test in this file. These tests aren't exercising that
+        # processor, so it's neutralized here (fail-open "no verdict").
+        quality_check_patcher = patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=None,
+        )
+        quality_check_patcher.start()
+        self.addCleanup(quality_check_patcher.stop)
+
         # Create a valid Contributor specifically for this test.
         user_email = 'test@example.com'
         user_password = 'example123'
@@ -540,3 +557,157 @@ class TestProductionLocationsPartialUpdate(APITestCase):
         self.assertEqual(len(response_body_dict), 5)
         self.assertEqual(name, valid_char_field)
         self.assertEqual(parent_company, valid_char_field)
+
+    def test_invalid_duplicate_override_query_param_returns_400(self):
+        response = self.client.patch(
+            f'{self.url}?duplicate_override=1',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        response_body_dict = json.loads(response.content)
+        self.assertEqual(
+            response_body_dict['errors'][0]['field'], 'duplicate_override'
+        )
+
+    def test_invalid_ignore_warnings_query_param_returns_400(self):
+        response = self.client.patch(
+            f'{self.url}?ignore_warnings=yes',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        response_body_dict = json.loads(response.content)
+        self.assertEqual(
+            response_body_dict['errors'][0]['field'], 'ignore_warnings'
+        )
+
+    @patch('api.geocoding.requests.get')
+    def test_repeat_slc_patch_returns_409_with_duplicate_of(
+            self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        slc_req_body = json.dumps({
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'location_type': 'Coating',
+        })
+
+        first_response = self.client.patch(
+            self.url,
+            slc_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(first_response.status_code, 202)
+        first_moderation_id = json.loads(first_response.content)[
+            'moderation_id'
+        ]
+
+        # A different body keeps DuplicateThrottle (keyed on body + query)
+        # out of the way, so the response below comes from
+        # DuplicateSubmissionProcessor rather than the throttle.
+        second_response = self.client.patch(
+            self.url,
+            json.dumps({
+                'source': 'SLC',
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+                'location_type': 'Dyeing',
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(second_response.status_code, 409)
+        response_body_dict = json.loads(second_response.content)
+        self.assertEqual(
+            response_body_dict['duplicate_of']['moderation_id'],
+            first_moderation_id
+        )
+        self.assertEqual(
+            response_body_dict['duplicate_of']['os_id'],
+            self.production_location.id
+        )
+        self.assertEqual(
+            ModerationEvent.objects.filter(
+                request_type=ModerationEvent.RequestType.UPDATE.value
+            ).count(),
+            1
+        )
+
+        # ?duplicate_override=true lets the confirmed resubmission through.
+        override_response = self.client.patch(
+            f'{self.url}?duplicate_override=true',
+            json.dumps({
+                'source': 'SLC',
+                'name': 'Blue Horizon Facility',
+                'address': '990 Spring Garden St., Philadelphia PA 19123',
+                'country': 'US',
+                'location_type': 'Dyeing',
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(override_response.status_code, 202)
+        self.assertEqual(
+            ModerationEvent.objects.filter(
+                request_type=ModerationEvent.RequestType.UPDATE.value
+            ).count(),
+            2
+        )
+
+    @patch('api.geocoding.requests.get')
+    def test_slc_patch_with_quality_warnings_returns_409_until_ignored(
+            self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        slc_req_body = json.dumps({
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+        })
+        flagged_verdicts = SubmissionQualityVerdicts(
+            name_quality=QualityVerdict(
+                flagged=True, reason='The name looks like test data.'
+            ),
+            address_quality=QualityVerdict(flagged=False, reason=''),
+            address_country_mismatch=QualityVerdict(
+                flagged=False, reason=''
+            ),
+            multiple_locations=QualityVerdict(flagged=False, reason=''),
+        )
+        with patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=flagged_verdicts,
+        ) as mock_evaluate:
+            flagged_response = self.client.patch(
+                self.url,
+                slc_req_body,
+                content_type='application/json'
+            )
+            self.assertEqual(flagged_response.status_code, 409)
+            response_body_dict = json.loads(flagged_response.content)
+            self.assertEqual(
+                response_body_dict['warnings'][0]['type'], 'name_quality'
+            )
+            self.assertEqual(ModerationEvent.objects.count(), 0)
+
+            ignored_response = self.client.patch(
+                f'{self.url}?ignore_warnings=true',
+                slc_req_body,
+                content_type='application/json'
+            )
+
+        self.assertEqual(ignored_response.status_code, 202)
+        # The LLM was consulted once, for the flagged attempt only.
+        mock_evaluate.assert_called_once()
+        self.assertEqual(ModerationEvent.objects.count(), 1)
