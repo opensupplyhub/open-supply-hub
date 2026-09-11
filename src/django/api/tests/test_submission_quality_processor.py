@@ -366,7 +366,78 @@ class TestSubmissionQualityProcessor(APITestCase):
         self.assertEqual(result.status_code, status.HTTP_409_CONFLICT)
         self.assertIsNone(result.moderation_event)
 
-    def test_update_request_type_is_never_flagged(self):
+    def test_flagged_update_blocks_creation_with_warning(self):
+        existing_facility = self._create_existing_facility()
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts) as mock_evaluate:
+            result = self._submit(
+                self.contributor,
+                self.base_input_data,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        mock_evaluate.assert_called_once()
+        self.assertEqual(result.status_code, status.HTTP_409_CONFLICT)
+        self.assertIsNone(result.moderation_event)
+        self.assertEqual(
+            [warning['type'] for warning in result.errors['warnings']],
+            ['name_quality']
+        )
+
+    def test_clean_update_is_not_flagged(self):
+        existing_facility = self._create_existing_facility()
+        with self._patch_evaluate(CLEAN_VERDICTS):
+            result = self._submit(
+                self.contributor,
+                self.base_input_data,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+        self.assertEqual(
+            result.moderation_event.request_type,
+            ModerationEvent.RequestType.UPDATE.value
+        )
+
+    def test_ignore_warnings_bypasses_the_check_for_update(self):
+        existing_facility = self._create_existing_facility()
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts) as mock_evaluate:
+            result = self._submit(
+                self.contributor,
+                self.base_input_data,
+                ignore_warnings=True,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        mock_evaluate.assert_not_called()
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+
+    def test_api_update_is_never_flagged(self):
+        existing_facility = self._create_existing_facility()
+        api_input_data = {
+            **self.base_input_data,
+            'source': ModerationEvent.Source.API.value,
+        }
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts) as mock_evaluate:
+            result = self._submit(
+                self.contributor,
+                api_input_data,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        mock_evaluate.assert_not_called()
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+
+    @override_switch('slc_submission_quality_check', active=False)
+    def test_switch_off_skips_check_for_update(self):
         existing_facility = self._create_existing_facility()
         verdicts = _flagged_verdicts(name_quality='Looks like test data.')
         with self._patch_evaluate(verdicts) as mock_evaluate:
@@ -378,4 +449,4 @@ class TestSubmissionQualityProcessor(APITestCase):
             )
 
         mock_evaluate.assert_not_called()
-        self.assertNotEqual(result.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)

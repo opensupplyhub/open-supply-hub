@@ -213,41 +213,11 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        duplicate_override_serializer = DuplicateOverrideQueryParamSerializer(
-            data=request.query_params
+        check_overrides, error_response = self.__parse_check_overrides(
+            request
         )
-        if not duplicate_override_serializer.is_valid():
-            return Response(
-                {
-                    'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
-                    'errors': [{
-                        'field': 'duplicate_override',
-                        'detail': str(
-                            duplicate_override_serializer
-                            .errors['duplicate_override'][0]
-                        )
-                    }]
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        ignore_warnings_serializer = IgnoreWarningsQueryParamSerializer(
-            data=request.query_params
-        )
-        if not ignore_warnings_serializer.is_valid():
-            return Response(
-                {
-                    'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
-                    'errors': [{
-                        'field': 'ignore_warnings',
-                        'detail': str(
-                            ignore_warnings_serializer
-                            .errors['ignore_warnings'][0]
-                        )
-                    }]
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if error_response is not None:
+            return error_response
 
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(
@@ -257,14 +227,7 @@ class ProductionLocations(ViewSet):
             contributor=request.user.contributor,
             raw_data=request.data,
             request_type=ModerationEvent.RequestType.CREATE.value,
-            duplicate_override=(
-                duplicate_override_serializer
-                .validated_data['duplicate_override']
-            ),
-            ignore_warnings=(
-                ignore_warnings_serializer
-                .validated_data['ignore_warnings']
-            ),
+            **check_overrides,
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 
@@ -316,6 +279,12 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        check_overrides, error_response = self.__parse_check_overrides(
+            request
+        )
+        if error_response is not None:
+            return error_response
+
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
@@ -324,7 +293,8 @@ class ProductionLocations(ViewSet):
             contributor=request.user.contributor,
             os=Facility.objects.get(id=pk),
             raw_data=request.data,
-            request_type=ModerationEvent.RequestType.UPDATE.value
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            **check_overrides,
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 
@@ -348,6 +318,42 @@ class ProductionLocations(ViewSet):
             },
             status=result.status_code
         )
+
+    @staticmethod
+    def __parse_check_overrides(request):
+        '''
+        Reads the ?duplicate_override and ?ignore_warnings query params
+        that let the SLC form resubmit past the DuplicateSubmissionProcessor
+        and SubmissionQualityProcessor checks after the contributor has
+        confirmed the warning. Shared by create (POST) and partial_update
+        (PATCH), since both run the same contribution pipeline. Returns
+        (overrides, None) on success, where overrides are keyword args for
+        CreateModerationEventDTO, or (None, Response) with the 400 to
+        return when either param holds something other than true/false.
+        '''
+        param_serializers = (
+            ('duplicate_override', DuplicateOverrideQueryParamSerializer),
+            ('ignore_warnings', IgnoreWarningsQueryParamSerializer),
+        )
+        overrides = {}
+        for field, serializer_class in param_serializers:
+            serializer = serializer_class(data=request.query_params)
+            if not serializer.is_valid():
+                return None, Response(
+                    {
+                        'detail': (
+                            APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR
+                        ),
+                        'errors': [{
+                            'field': field,
+                            'detail': str(serializer.errors[field][0])
+                        }]
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            overrides[field] = serializer.validated_data[field]
+
+        return overrides, None
 
     def __get_partner_fields(self, pk):
         """
