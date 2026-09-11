@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0238_add_claimant_updated_at'),
+        ('api', '0239_add_claims_v2_dashboard_switch'),
     ]
 
     operations = [
