@@ -1,9 +1,7 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from api.reassert_rba_promotions import (
-    is_rba_instance,
-    reassert_rba_promotions,
-)
+from api.helpers.rba_instance import is_rba_instance
+from api.reassert_rba_promotions import reassert_rba_promotions
 
 
 class Command(BaseCommand):
