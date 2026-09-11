@@ -14,6 +14,10 @@ from api.models.facility.facility_manager_index_new import (
     FacilityIndexNewManager,
 )
 from api.models.partner_field import PartnerField
+from api.serializers.facility.data_center_download_helper import (
+    DATA_CENTER_INFORMATION_HEADER,
+    DataCenterDownloadHelper,
+)
 from api.serializers.facility.facility_download_serializer_base import (
     FacilityDownloadSerializerBase,
 )
@@ -61,6 +65,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         super().__init__(*args, **kwargs)
         self.__mit_living_wage_helper = MITLivingWageDownloadHelper()
         self.__wage_indicator_helper = WageIndicatorDownloadHelper()
+        self.__data_center_helper = DataCenterDownloadHelper()
 
         partner_fields_override = partner_fields is not None
         fields = (
@@ -98,6 +103,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.get_partner_fields_headers(),
             *self.get_mit_living_wage_headers(),
             *self.get_wage_indicator_headers(),
+            DATA_CENTER_INFORMATION_HEADER,
         ]
 
     def get_row(self, facility: FacilityIndexNewManager) -> List[str]:
@@ -111,6 +117,7 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
             *self.get_partner_fields_row(facility.extended_fields),
             *self.get_mit_living_wage_row(facility),
             *self.get_wage_indicator_row(facility),
+            self.get_data_center_information(facility),
         ]
 
     def get_contributors(self, facility: FacilityIndexNewManager) -> str:
@@ -252,3 +259,10 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         if field_name not in self.__system_partner_fields:
             return []
         return self.__wage_indicator_helper.get_cells(facility)
+
+    def get_data_center_information(
+        self, facility: FacilityIndexNewManager
+    ) -> str:
+        """Return the JSON-encoded `data_center_information` cell, or an
+        empty string for a facility that is not a data center."""
+        return self.__data_center_helper.get_cell(facility)
