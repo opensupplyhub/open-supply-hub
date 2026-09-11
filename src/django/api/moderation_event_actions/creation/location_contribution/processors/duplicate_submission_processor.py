@@ -45,18 +45,36 @@ NUMBER_TOKEN_PATTERN = re.compile(r'\d+')
 # needs to be unique to this feature; using the Jira ticket number.
 ADVISORY_LOCK_NAMESPACE = 2980
 
+# Request types this check applies to. CLAIM events are created through a
+# different path and never reach this processor.
+CHECKED_REQUEST_TYPES = (
+    ModerationEvent.RequestType.CREATE.value,
+    ModerationEvent.RequestType.UPDATE.value,
+)
+
 logger = logging.getLogger(__name__)
 
 
 class DuplicateSubmissionProcessor(ContributionProcessor):
     '''
-    Flags a new SLC location submission as a possible duplicate when the
-    same contributor submitted a very similar name/address/country within
-    the last few minutes. Queries ModerationEvent directly (not the
-    OpenSearch production-locations index), since the index may not have
-    caught up yet with the contributor's own just-created submission.
-    Rejected submissions are excluded, since a rejected event won't become
-    a real facility and resubmitting after a rejection is legitimate.
+    Flags an SLC submission (a new location, or additional info for an
+    existing one) as a possible duplicate when the same contributor
+    submitted a very similar name/address/country within the last few
+    minutes. Queries ModerationEvent directly (not the OpenSearch
+    production-locations index), since the index may not have caught up
+    yet with the contributor's own just-created submission.
+
+    CREATE and UPDATE submissions are compared against each other with the
+    same fuzzy name/address/country match, rather than an UPDATE being
+    matched on its target os_id: a moderator may attach an UPDATE event to
+    a different production location than the one the contributor picked,
+    so the submitted name/address is the more reliable identity of what
+    the contributor meant. This also means that a contributor who creates
+    a location and then, minutes later, sends an UPDATE for the same
+    name/address is warned (and can confirm via duplicate_override).
+
+    Rejected submissions are excluded, since a rejected event won't take
+    effect and resubmitting after a rejection is legitimate.
     Neither a flagged duplicate nor a duplicate_override bypass leaves a
     ModerationEvent trace, so both are logged to let CloudWatch Logs
     Insights track how often the check fires and how contributors respond.
@@ -65,7 +83,7 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
     def process(
             self,
             event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
-        if event_dto.request_type != ModerationEvent.RequestType.CREATE.value:
+        if event_dto.request_type not in CHECKED_REQUEST_TYPES:
             return super().process(event_dto)
 
         if event_dto.source != ModerationEvent.Source.SLC.value:
@@ -96,6 +114,7 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
                 ),
                 'duplicate_of': {
                     'moderation_id': str(duplicate.uuid),
+                    'os_id': duplicate.os_id,
                     'created_at': duplicate.created_at,
                     'name': duplicate.cleaned_data.get('name'),
                     'address': duplicate.cleaned_data.get('address'),
@@ -113,7 +132,7 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
     @staticmethod
     def __lock_contributor(contributor) -> None:
         '''
-        Closes the race where two near-simultaneous SLC CREATE submissions
+        Closes the race where two near-simultaneous SLC submissions
         from the same contributor both run __find_recent_duplicate before
         either has committed its new ModerationEvent row, so neither sees
         the other and both get created. A Postgres advisory lock is used
@@ -123,8 +142,9 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
         pg_advisory_xact_lock is transaction-scoped: it blocks a second,
         concurrent caller with the same contributor id until this
         transaction commits or rolls back, then releases automatically.
-        This relies on the caller (ProductionLocations.create) already
-        wrapping the whole request in @transaction.atomic - without that,
+        This relies on the caller (ProductionLocations.create or
+        .partial_update) already wrapping the whole request in
+        @transaction.atomic - without that,
         Django's autocommit mode would release the lock immediately after
         this statement instead of holding it for the rest of the request.
         '''
@@ -148,7 +168,7 @@ class DuplicateSubmissionProcessor(ContributionProcessor):
         recent_events = ModerationEvent.objects.filter(
             contributor=event_dto.contributor,
             source=ModerationEvent.Source.SLC.value,
-            request_type=ModerationEvent.RequestType.CREATE.value,
+            request_type__in=CHECKED_REQUEST_TYPES,
             created_at__gte=cutoff,
         ).exclude(status=ModerationEvent.Status.REJECTED.value)
 
