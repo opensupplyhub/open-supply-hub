@@ -1,6 +1,5 @@
 import logging
 
-from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -36,12 +35,6 @@ PROMOTED_FACILITY_FIELDS = (
     'location',
     'created_from',
 )
-
-
-def is_rba_instance():
-    return getattr(
-        settings, 'INSTANCE_SOURCE', OriginSource.OSHUB
-    ) == OriginSource.RBA
 
 
 def _promotable_rba_matches():
