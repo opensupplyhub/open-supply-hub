@@ -16,6 +16,13 @@ from countries.lib.countries import COUNTRY_NAMES
 
 logger = logging.getLogger(__name__)
 
+# Request types this check applies to. CLAIM events are created through a
+# different path and never reach this processor.
+CHECKED_REQUEST_TYPES = (
+    ModerationEvent.RequestType.CREATE.value,
+    ModerationEvent.RequestType.UPDATE.value,
+)
+
 # Kill switch for the whole check, toggleable in the Django admin without
 # a deploy (created active by migration 0226). If the Switch row is ever
 # missing, waffle falls back to WAFFLE_SWITCH_DEFAULT (False), so the
@@ -48,10 +55,11 @@ _WARNING_TITLES = {
 
 class SubmissionQualityProcessor(ContributionProcessor):
     '''
-    Flags a new SLC location submission for optional, overridable
-    data-quality warnings (implausible name, implausible or
-    under-specified address, address/country mismatch, or a submission
-    that appears to bundle more than one location) using a single
+    Flags an SLC submission (a new location, or additional info for an
+    existing one) for optional, overridable data-quality warnings
+    (implausible name, implausible or under-specified address,
+    address/country mismatch, or a submission that appears to bundle more
+    than one location) using a single
     Bedrock-hosted LLM call. Unlike DuplicateSubmissionProcessor this
     check is purely advisory: a flagged submission isn't persisted as a
     ModerationEvent until the contributor resubmits with
@@ -68,13 +76,13 @@ class SubmissionQualityProcessor(ContributionProcessor):
     def process(
             self,
             event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
-        if event_dto.request_type != ModerationEvent.RequestType.CREATE.value:
+        if event_dto.request_type not in CHECKED_REQUEST_TYPES:
             return super().process(event_dto)
 
         if event_dto.source != ModerationEvent.Source.SLC.value:
             return super().process(event_dto)
 
-        # Checked after the request-type/source guards so API and PATCH
+        # Checked after the request-type/source guards so API-sourced
         # requests never query the switch.
         if not switch_is_active(SLC_SUBMISSION_QUALITY_CHECK_SWITCH):
             return super().process(event_dto)
