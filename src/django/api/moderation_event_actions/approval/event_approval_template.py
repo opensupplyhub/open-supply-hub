@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, KeysView, Type, Union
+from typing import Dict, KeysView, Optional, Type, Union, cast
 
 from django.contrib.gis.geos import Point
 from django.db import transaction
@@ -51,6 +51,21 @@ class EventApprovalTemplate(ABC):
     ) -> None:
         self.__event = moderation_event
         self.__moderator = moderator
+        self.__created_facility_match: Optional[FacilityMatch] = None
+
+    @property
+    def created_facility_match(self) -> Optional[FacilityMatch]:
+        """
+        The FacilityMatch this approval created, or None before it runs.
+
+        Exposed so callers can act on the new match directly - promoting it,
+        for example - instead of re-discovering it by inference from
+        GET /api/facilities/{os_id}/split/. The approval already holds the
+        object; making a client reconstruct which match was just created is
+        both extra calls and only correct while nothing else is writing to
+        the same production location.
+        """
+        return self.__created_facility_match
 
     @transaction.atomic
     def process_moderation_event(self) -> FacilityListItem:
@@ -136,7 +151,7 @@ class EventApprovalTemplate(ABC):
             'created.'
         )
 
-        self.__create_facility_match(item)
+        self.__created_facility_match = self.__create_facility_match(item)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatch '
             'created.'
@@ -285,18 +300,26 @@ class EventApprovalTemplate(ABC):
             item=item,
         )
 
-    def __create_facility_match(self, item: FacilityListItem) -> None:
-        self.__create_facility_match_record(model=FacilityMatch, item=item)
+    def __create_facility_match(self, item: FacilityListItem) -> FacilityMatch:
+        # The model argument pins the concrete type that the shared creator
+        # declares as a union; make that narrowing explicit rather than
+        # letting this signature quietly contradict it.
+        return cast(
+            FacilityMatch,
+            self.__create_facility_match_record(
+                model=FacilityMatch, item=item
+            ),
+        )
 
     def __create_facility_match_record(
         self,
         model: Union[Type[FacilityMatchTemp], Type[FacilityMatch]],
         item: FacilityListItem,
-    ) -> None:
+    ) -> Union[FacilityMatchTemp, FacilityMatch]:
         match_type = self._get_match_type()
         status = self._get_match_status()
 
-        model.objects.create(
+        return model.objects.create(
             facility_id=item.facility_id,
             confidence=1.0,
             facility_list_item_id=item.id,
