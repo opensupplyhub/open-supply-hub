@@ -20,12 +20,21 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         self.default_sort_order = 'asc'
         self.build_options = {
             'country': self.__build_country,
-            'number_of_workers': self.__build_number_of_workers
+            'number_of_workers': self.__build_number_of_workers,
+            'contributor_id': self.__build_contributor_id,
+            'contributor_type': self.__build_contributor_type
         }
         self.date_field = 'claimed_at'
 
     def __build_country(self, field):
         return f'{field}.alpha_2'
+
+    def __build_contributor_id(self, field):
+        # Integer sub-field of the contributors object array — no .keyword.
+        return 'contributors.id'
+
+    def __build_contributor_type(self, field):
+        return 'contributors.type.keyword'
 
     def __build_number_of_workers(self, field, range_query):
         self.query_body['query']['bool']['must'].append({
@@ -94,7 +103,9 @@ class ProductionLocationsQueryBuilder(OpenSearchQueryBuilder):
         if order_by is None:
             order_by = self.default_sort_order
 
-        if field == 'claimed_at':
+        # Date and numeric fields sort on the raw field; text fields need
+        # their .keyword sub-field.
+        if field in ('claimed_at', 'number_of_contributors'):
             self.query_body['sort'].append(
                 {f'{field}': {'order': order_by}}
             )

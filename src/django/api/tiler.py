@@ -51,6 +51,7 @@ def get_facility_grid_vector_tile(params, layer, z, x, y):
 
     location_query, location_params = (
         FacilityIndex.objects.filter_by_query_params(params)
+        .values("id")
         .query.sql_with_params()
     )
     where_clause = "TRUE"

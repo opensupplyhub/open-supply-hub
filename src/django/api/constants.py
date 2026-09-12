@@ -36,6 +36,7 @@ class FacilitiesQueryParams:
     PARENT_COMPANY = 'parent_company'
     FACILITY_TYPE = 'facility_type'
     PROCESSING_TYPE = 'processing_type'
+    PROCESSING_TYPE_EXACT = 'processing_type_exact'
     PRODUCT_TYPE = 'product_type'
     NUMBER_OF_WORKERS = 'number_of_workers'
     NATIVE_LANGUAGE_NAME = 'native_language_name'
@@ -94,6 +95,17 @@ class FacilityClaimStatuses:
     APPROVED = 'APPROVED'
     DENIED = 'DENIED'
     REVOKED = 'REVOKED'
+
+
+class FacilityClaimReviewNoteTypes:
+    # Direction of the note:
+    #   INTERNAL         moderator -> moderator
+    #   CLAIMANT_MESSAGE moderator -> claimant (emailed)
+    #   CLAIMANT_UPDATE  claimant  -> moderator (claim edits/uploads,
+    #                    OSDEV-2278)
+    INTERNAL = 'INTERNAL'
+    CLAIMANT_MESSAGE = 'CLAIMANT_MESSAGE'
+    CLAIMANT_UPDATE = 'CLAIMANT_UPDATE'
 
 
 class Affiliations:

@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, KeysView, Type, Union
+from typing import Dict, KeysView, Optional, Type, Union, cast
 
 from django.contrib.gis.geos import Point
 from django.db import transaction
@@ -16,6 +16,7 @@ from api.extended_fields import (
     create_partner_extendedfields_for_single_item,
     update_extendedfields_for_list_item,
 )
+from api.helpers.data_center import extract_provenance
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_list_item_temp import FacilityListItemTemp
@@ -50,6 +51,21 @@ class EventApprovalTemplate(ABC):
     ) -> None:
         self.__event = moderation_event
         self.__moderator = moderator
+        self.__created_facility_match: Optional[FacilityMatch] = None
+
+    @property
+    def created_facility_match(self) -> Optional[FacilityMatch]:
+        """
+        The FacilityMatch this approval created, or None before it runs.
+
+        Exposed so callers can act on the new match directly - promoting it,
+        for example - instead of re-discovering it by inference from
+        GET /api/facilities/{os_id}/split/. The approval already holds the
+        object; making a client reconstruct which match was just created is
+        both extra calls and only correct while nothing else is writing to
+        the same production location.
+        """
+        return self.__created_facility_match
 
     @transaction.atomic
     def process_moderation_event(self) -> FacilityListItem:
@@ -129,22 +145,27 @@ class EventApprovalTemplate(ABC):
             'FacilityListItemTemp created.'
         )
 
-        update_extendedfields_for_list_item(item)
-        log.info(
-            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
-            'updated with facility ID.'
-        )
-
         self.__create_facility_match_temp(item)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatchTemp '
             'created.'
         )
 
-        self.__create_facility_match(item)
+        self.__created_facility_match = self.__create_facility_match(item)
         log.info(
             f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} FacilityMatch '
             'created.'
+        )
+
+        # Stamping the facility id onto the extended fields fires the
+        # extended-field indexing trigger, and since OSDEV-3189 the
+        # facility_type / processing_type index columns only count fields
+        # backed by an active FacilityMatch — so this must run after the
+        # match is created, or the columns are computed empty (OSDEV-3428).
+        update_extendedfields_for_list_item(item)
+        log.info(
+            f'{LOCATION_CONTRIBUTION_APPROVAL_LOG_PREFIX} Extended fields '
+            'updated with facility ID.'
         )
 
         self.__update_event(item)
@@ -202,6 +223,7 @@ class EventApprovalTemplate(ABC):
                     'is_geocoded': False,
                 }
             ],
+            **extract_provenance(data["raw_json"]),
         )
 
     def __set_geocoded_location(
@@ -278,18 +300,26 @@ class EventApprovalTemplate(ABC):
             item=item,
         )
 
-    def __create_facility_match(self, item: FacilityListItem) -> None:
-        self.__create_facility_match_record(model=FacilityMatch, item=item)
+    def __create_facility_match(self, item: FacilityListItem) -> FacilityMatch:
+        # The model argument pins the concrete type that the shared creator
+        # declares as a union; make that narrowing explicit rather than
+        # letting this signature quietly contradict it.
+        return cast(
+            FacilityMatch,
+            self.__create_facility_match_record(
+                model=FacilityMatch, item=item
+            ),
+        )
 
     def __create_facility_match_record(
         self,
         model: Union[Type[FacilityMatchTemp], Type[FacilityMatch]],
         item: FacilityListItem,
-    ) -> None:
+    ) -> Union[FacilityMatchTemp, FacilityMatch]:
         match_type = self._get_match_type()
         status = self._get_match_status()
 
-        model.objects.create(
+        return model.objects.create(
             facility_id=item.facility_id,
             confidence=1.0,
             facility_list_item_id=item.id,

@@ -12,6 +12,10 @@ from ...models.extended_field import ExtendedField
 from ...models.facility.facility_index import FacilityIndex
 from ...models.partner_field import PartnerField
 from ...models.wage_indicator_country_data import WageIndicatorCountryData
+from ...partner_fields.india_labour_line_provider import (
+    IndiaLabourLineProvider,
+    get_covered_production_locations,
+)
 from ...serializers.facility.facility_index_summary_serializer import (
     FacilityIndexSummarySerializer,
 )
@@ -43,6 +47,7 @@ class UserProfileFacilities(ListAPIView):
     pagination_class = FacilityIndexCursorPagination
 
     def __base_queryset(self):
+        """The slim facility queryset every branch below filters."""
         return FacilityIndex.objects.only(
             "id",
             "name",
@@ -103,6 +108,15 @@ class UserProfileFacilities(ListAPIView):
         if "mit_living_wage" in partner_fields:
             return self.__base_queryset().filter(
                 country_code__in=["US"],
+            )
+
+        # The India Labour Line spotlight shows the locations the
+        # helpline covers, applying the shared covered-locations rule
+        # directly to this view's own queryset (one flat query) so
+        # this page can never disagree with the search filter.
+        if IndiaLabourLineProvider.FIELD_NAME in partner_fields:
+            return get_covered_production_locations(
+                self.__base_queryset()
             )
 
         return queryset.filter(

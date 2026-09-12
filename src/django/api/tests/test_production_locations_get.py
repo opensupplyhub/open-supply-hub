@@ -157,6 +157,15 @@ class TestProductionLocationsViewSet(APITestCase):
             ProductionLocationsResponseMapping.PRODUCTION_LOCATION_BY_OS_ID,
         )
 
+    def test_contribution_fields_included_in_response_mappings(self):
+        # Same allowlist trap as is_closed (OSDEV-1149): a field absent
+        # from these lists is silently dropped from the response even if
+        # it is indexed (OSDEV-1148).
+        mapping = ProductionLocationsResponseMapping
+        for field in ("contributors", "number_of_contributors", "lists"):
+            self.assertIn(field, mapping.PRODUCTION_LOCATIONS)
+            self.assertIn(field, mapping.PRODUCTION_LOCATION_BY_OS_ID)
+
     def _create_facility_with_partner_data(self):
         cache.clear()
         user = User.objects.create(email="partner@example.com")

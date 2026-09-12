@@ -12,36 +12,54 @@ Execute Terraform subcommands with remote state management.
 "
 }
 
-CONTRIBOT_LAMBDAS=(
+# Lambda archives built from source by a per-function Makefile. Each one is
+# gitignored: a zip is a build artifact, and committing one is exactly how the
+# alert_* archives came to run 2023 bytes for years. Terraform hashes them via
+# source_code_hash, so the apply job must see the same bytes the plan hashed --
+# hence the S3 handoff below.
+#
+# The Lambda@Edge archives (add_security_headers, redirect_to_s3_origin) are
+# deliberately absent: they have no Makefile and stay committed.
+LAMBDA_ARCHIVES=(
+    alert_batch_failures
+    alert_sfn_failures
     contribot_fetch_lists
     contribot_process_list
     contribot_notify
+    contribot_retry_failed_lists
 )
 
-function upload_contribot_lambda_zips() {
+function build_lambda_zips() {
     local lambda
-    echo "Uploading ContriBot Lambda archives to s3://${SETTINGS_BUCKET}/terraform/lambda/"
-    for lambda in "${CONTRIBOT_LAMBDAS[@]}"; do
+    for lambda in "${LAMBDA_ARCHIVES[@]}"; do
+        make -sC "lambda-functions/${lambda}"
+    done
+}
+
+function upload_lambda_zips() {
+    local lambda
+    echo "Uploading Lambda archives to s3://${SETTINGS_BUCKET}/terraform/lambda/"
+    for lambda in "${LAMBDA_ARCHIVES[@]}"; do
         aws s3 cp \
             "lambda-functions/${lambda}/${lambda}.zip" \
             "s3://${SETTINGS_BUCKET}/terraform/lambda/${lambda}.zip"
     done
 }
 
-function download_contribot_lambda_zips() {
+function download_lambda_zips() {
     local lambda
-    echo "Downloading ContriBot Lambda archives from s3://${SETTINGS_BUCKET}/terraform/lambda/"
-    for lambda in "${CONTRIBOT_LAMBDAS[@]}"; do
+    echo "Downloading Lambda archives from s3://${SETTINGS_BUCKET}/terraform/lambda/"
+    for lambda in "${LAMBDA_ARCHIVES[@]}"; do
         aws s3 cp \
             "s3://${SETTINGS_BUCKET}/terraform/lambda/${lambda}.zip" \
             "lambda-functions/${lambda}/${lambda}.zip"
     done
 }
 
-function delete_contribot_lambda_zips() {
+function delete_lambda_zips() {
     local lambda
-    echo "Deleting ContriBot Lambda archives from s3://${SETTINGS_BUCKET}/terraform/lambda/"
-    for lambda in "${CONTRIBOT_LAMBDAS[@]}"; do
+    echo "Deleting Lambda archives from s3://${SETTINGS_BUCKET}/terraform/lambda/"
+    for lambda in "${LAMBDA_ARCHIVES[@]}"; do
         aws s3 rm "s3://${SETTINGS_BUCKET}/terraform/lambda/${lambda}.zip" || true
     done
 }
@@ -77,11 +95,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 # DEFAULT_BATCH_CE_DESIRED_CPU=$(aws batch describe-compute-environments --output text --compute-environments "batch${OAR_DEPLOYMENT_ENVIRONMENT^}DefaultComputeEnvironment" --query "computeEnvironments[].computeResources.desiredvCpus")
 
                 # Build Lambda function archives
-                make -sC lambda-functions/alert_batch_failures
-                make -sC lambda-functions/alert_sfn_failures
-                make -sC lambda-functions/contribot_fetch_lists
-                make -sC lambda-functions/contribot_process_list
-                make -sC lambda-functions/contribot_notify
+                build_lambda_zips
 
                 # Clear stale modules & remote state, then re-initialize
                 echo "Terraform init"
@@ -98,12 +112,12 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                           -out="${SETTINGS_BUCKET}.tfplan" \
                           > "${SETTINGS_BUCKET}.tfplan.log.txt" 2>&1
 
-                # Pass gitignored ContriBot zips to the apply job (same bytes as plan)
-                upload_contribot_lambda_zips
+                # Pass the gitignored zips to the apply job (same bytes as plan)
+                upload_lambda_zips
                 ;;
             apply)
                 # Use the exact archives hashed during plan
-                download_contribot_lambda_zips
+                download_lambda_zips
 
                 echo "Terraform init"
                 rm -rf .terraform terraform.tfstate*
@@ -113,15 +127,13 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
                 echo "Terraform apply"
                 ls -la
                 terraform apply "${SETTINGS_BUCKET}.tfplan"
-                delete_contribot_lambda_zips
+                delete_lambda_zips
                 ;;
             destroy)
-                 # Build the gitignored ContriBot Lambda archives. Terraform still
+                # Build the gitignored Lambda archives. Terraform still
                 # evaluates the full configuration when planning a destroy, so
                 # filebase64sha256() fails if these zips are missing.
-                make -sC lambda-functions/contribot_fetch_lists
-                make -sC lambda-functions/contribot_process_list
-                make -sC lambda-functions/contribot_notify
+                build_lambda_zips
 
                 echo "Terraform init"
                 terraform init \

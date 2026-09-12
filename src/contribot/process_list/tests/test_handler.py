@@ -196,7 +196,8 @@ def test_handler_raises_when_workbook_transform_fails(
     with pytest.raises(ValueError, match="CSV file is empty"):
         handler.handler({"list_id": "99"}, None)
 
-    repo.update_list.assert_called_once_with("99", status="PROCESSING")
+    assert repo.update_list.call_args_list[0].kwargs == {"status": "PROCESSING"}
+    assert repo.update_list.call_args_list[1].kwargs == {"status": "FAILED"}
 
 
 @patch("handler.ListsRepository")
@@ -208,6 +209,8 @@ def test_handler_raises_for_missing_row(mock_repo_cls, env):
     with pytest.raises(ValueError, match="No DynamoDB row"):
         handler.handler({"list_id": "99"}, None)
 
+    repo.update_list.assert_not_called()
+
 
 @patch("handler.ListsRepository")
 def test_handler_raises_for_missing_file_name(mock_repo_cls, env):
@@ -217,6 +220,8 @@ def test_handler_raises_for_missing_file_name(mock_repo_cls, env):
 
     with pytest.raises(ValueError, match="missing file_name"):
         handler.handler({"list_id": "99"}, None)
+
+    repo.update_list.assert_called_once_with("99", status="FAILED")
 
 
 @patch("handler.S3Storage")
@@ -233,9 +238,13 @@ def test_handler_raises_when_s3_fails(mock_repo_cls, mock_s3_cls, env):
     with pytest.raises(RuntimeError, match="boom"):
         handler.handler({"list_id": "99"}, None)
 
-    repo.update_list.assert_called_once_with("99", status="PROCESSING")
+    assert repo.update_list.call_args_list[0].kwargs == {"status": "PROCESSING"}
+    assert repo.update_list.call_args_list[1].kwargs == {"status": "FAILED"}
 
 
-def test_handler_requires_list_id(env):
+@patch("handler.ListsRepository")
+def test_handler_requires_list_id(mock_repo_cls, env):
     with pytest.raises(ValueError, match="list_id is required"):
         handler.handler({}, None)
+
+    mock_repo_cls.return_value.update_list.assert_not_called()

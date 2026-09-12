@@ -107,7 +107,9 @@ class ListsRepository:
         num_lines: Optional[int] = None,
         num_errors: Optional[int] = None,
         error_ratio: Optional[float] = None,
+        started_at: Optional[str] = None,
         finished_at: Optional[str] = None,
+        attempt_count: Optional[int] = None,
     ) -> None:
         """Update provided fields on a facility-list row.
 
@@ -144,6 +146,14 @@ class ListsRepository:
         if error_ratio is not None:
             values[":error_ratio"] = Decimal(str(error_ratio))
             assignments.append("error_ratio = :error_ratio")
+
+        if started_at is not None:
+            values[":started_at"] = started_at
+            assignments.append("started_at = :started_at")
+
+        if attempt_count is not None:
+            values[":attempt_count"] = attempt_count
+            assignments.append("attempt_count = :attempt_count")
 
         if finished_at is not None:
             values[":finished_at"] = finished_at
@@ -190,6 +200,7 @@ class ListsRepository:
             "status": status,
             "started_at": started_at or datetime.now(timezone.utc).isoformat(),
             "finished_at": finished_at,
+            "attempt_count": 0,
         }
         if contributor_id is not None:
             item["contributor_id"] = str(contributor_id)
@@ -205,3 +216,36 @@ class ListsRepository:
                 logger.info("List %s already enqueued; skipping PutItem", list_id)
                 return False
             raise
+
+    def scan(
+        self,
+        status: str,
+        max_attempts: Optional[int] = None,
+    ) -> list[dict[str, Any]]:
+        """Paginated table scan filtered by ``status``.
+
+        When ``max_attempts`` is set, rows with ``attempt_count`` at or above
+        that value are excluded (missing ``attempt_count`` counts as 0).
+        """
+        scan_args: dict[str, Any] = {
+            "ExpressionAttributeNames": {"#status": "status"},
+            "ExpressionAttributeValues": {":status": status},
+        }
+        conditions = ["#status = :status"]
+        if max_attempts is not None:
+            conditions.append(
+                "(attribute_not_exists(attempt_count) OR attempt_count < :max_attempts)"
+            )
+            scan_args["ExpressionAttributeValues"][":max_attempts"] = max_attempts
+        scan_args["FilterExpression"] = " AND ".join(conditions)
+        items: list[dict[str, Any]] = []
+
+        while True:
+            response = self._table.scan(**scan_args)
+            items.extend(response.get("Items") or [])
+            last_key = response.get("LastEvaluatedKey")
+            if not last_key:
+                break
+            scan_args["ExclusiveStartKey"] = last_key
+
+        return items

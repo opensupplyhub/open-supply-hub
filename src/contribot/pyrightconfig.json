@@ -3,11 +3,12 @@
     "fetch_lists",
     "lib",
     "process_list",
-    "notify"
+    "notify",
+    "retry_failed_lists"
   ],
   "extraPaths": [
     ".",
     "lib"
   ],
-  "pythonVersion": "3.10"
+  "pythonVersion": "3.13"
 }

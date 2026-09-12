@@ -17,7 +17,7 @@ resource "aws_lambda_function" "nlb_targets_registrar" {
   description      = "Lambda function to register the targets for the NLB after resolution of the RDS proxy endpoint"
   role             = aws_iam_role.lambda_nlb_registrar.arn
   handler          = "register_nlb_targets.handler"
-  runtime          = "python3.10"
+  runtime          = "python3.13"
   filename         = "${path.module}/lambda-nlb-registrar/register_nlb_targets.zip"
   publish          = true
   source_code_hash = filebase64sha256("${path.module}/lambda-nlb-registrar/register_nlb_targets.zip")

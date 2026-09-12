@@ -6,8 +6,11 @@ from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
 )
+from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.services.facility_processing_filter import FacilityProcessingFilter
+from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.exceptions.handler_not_set_error \
     import HandlerNotSetError
@@ -486,10 +489,14 @@ class FacilitiesViewSet(ListModelMixin,
         if not params.is_valid():
             raise ValidationError(params.errors)
 
+        facility_processing_filter = FacilityProcessingFilter.from_result(
+            FacilityProcessingQuery(request.query_params).parse()
+        )
         queryset = (
-            FacilityIndex
-            .objects
-            .filter_by_query_params(request.query_params)
+            FacilityIndex.objects.filter_by_query_params(
+                request.query_params,
+                facility_processing_filter=facility_processing_filter,
+            )
         )
         sort_by = params.validated_data['sort_by']
         order_list = []
@@ -502,6 +509,13 @@ class FacilitiesViewSet(ListModelMixin,
             order_list = ['-name']
         elif (sort_by == 'contributors_asc'):
             order_list = ['contributors_count', 'name']
+
+        queryset, has_fp_relevance = (
+            facility_processing_filter.annotate_relevance(queryset)
+        )
+        if has_fp_relevance:
+            order_list.insert(0, '-_fp_relevance')
+        order_list.append('id')
 
         queryset = queryset.extra(order_by=order_list)
 
@@ -2527,6 +2541,15 @@ class FacilitiesViewSet(ListModelMixin,
 
         target = Facility.objects.get(id=target_id)
         merge = Facility.objects.get(id=merge_id)
+
+        # On the RBA private instance, merging away a publicly-synced record
+        # produces state the one-way sync cannot repair: it recreates that
+        # record on the next run because it still exists publicly. Only the
+        # merged-away record is at risk, so a synced target is fine. Refuse
+        # before any writes. See api/helpers/rba_instance.
+        rejection = merge_rejection_reason(merge)
+        if rejection:
+            raise ValidationError({'detail': rejection})
 
         inactive_match_statuses = (FacilityMatch.PENDING,
                                    FacilityMatch.REJECTED)

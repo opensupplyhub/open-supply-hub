@@ -8,6 +8,9 @@ r53_private_hosted_zone = "osh.internal"
 r53_service_discovery_zone = "sd.internal"
 r53_public_hosted_zone = "os-hub.net"
 
+# Owns query logging for os-hub.net, which Test and Preprod also point at.
+route53_query_logging_enabled = true
+
 cloudfront_price_class = "PriceClass_All"
 api_facilities_cache_default_ttl           = 60
 api_facilities_cache_max_ttl               = 60
@@ -119,4 +122,5 @@ ip_denylist_secret_name = "oshub/development/ip-denylist"
 contribot_os_hub_api_token_secret_name = "oshub/development/contribot-os-hub-api-token"
 contribot_monday_api_key_secret_name = "oshub/development/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/development/contribot-slack-api-url"
+contribot_slack_failures_api_url_secret_name = "oshub/development/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/development/contribot-google-drive-service-key"

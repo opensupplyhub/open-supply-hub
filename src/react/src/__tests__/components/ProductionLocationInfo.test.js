@@ -501,6 +501,88 @@ describe("ProductionLocationInfo component, test invalid incoming data for UPDAT
     });
 });
 
+describe("ProductionLocationInfo component, data-center prefill for UPDATE (OSDEV-3074)", () => {
+    const osID = 'US2026205NS8T09';
+
+    const makeState = locationType => ({
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        contributeProductionLocation: {
+            singleProductionLocation: {
+                data: {
+                    name: 'Blue Horizon Data Center',
+                    os_id: osID,
+                    location_type: locationType,
+                    country: {
+                        name: 'United States',
+                        numeric: '840',
+                        alpha_3: 'USA',
+                        alpha_2: 'US',
+                    },
+                    address: '990 Spring Garden St., Philadelphia PA 19123',
+                    claim_status: 'unclaimed',
+                },
+                fetching: false,
+                error: null,
+            },
+            productionLocations: {
+                data: [],
+                fetching: false,
+                error: null,
+            },
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: null,
+            },
+        },
+    });
+
+    const renderComponent = preloadedState =>
+        renderWithProviders(
+            <MemoryRouter initialEntries={[`/contribute/single-location/${osID}/info/`]}>
+                <Route
+                    path="/contribute/single-location/:osID/info/"
+                    component={() => (
+                        <ProductionLocationInfo submitMethod="UPDATE" />
+                    )}
+                />
+            </MemoryRouter>,
+            { preloadedState },
+        );
+
+    test("pre-selects Data Center and shows the data-center sections when the record is a data center", async () => {
+        const { getByTestId } = renderComponent(makeState(['Data Center']));
+
+        // The data-center sections only render when the Data Center location
+        // type is pre-selected, so their presence proves the prefill worked.
+        await waitFor(() =>
+            expect(getByTestId('data-center-fields')).toBeInTheDocument(),
+        );
+        // The Additional information section is opened so the pre-selected
+        // location type is visible/editable.
+        expect(
+            getByTestId('switch-additional-info-fields'),
+        ).toBeInTheDocument();
+        expect(
+            getByTestId('data-center-section-Utility Usage'),
+        ).toBeInTheDocument();
+    });
+
+    test("does not show the data-center sections for a production location", async () => {
+        const { queryByTestId, getByRole } = renderComponent(
+            makeState(['Apparel']),
+        );
+
+        await waitFor(() =>
+            expect(getByRole('button', { name: /Update/i })).toBeInTheDocument(),
+        );
+        expect(queryByTestId('data-center-fields')).not.toBeInTheDocument();
+    });
+});
+
 describe("ProductionLocationInfo component, possible duplicate submission dialog", () => {
     const defaultState = {
         filterOptions: {
@@ -884,6 +966,177 @@ describe("ProductionLocationInfo component, override accumulation across the dup
 
         await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(2));
         expect(apiRequest.post.mock.calls[1][2].params).toEqual({
+            duplicate_override: true,
+            ignore_warnings: true,
+        });
+    });
+});
+
+describe("ProductionLocationInfo component, duplicate and quality warning dialogs on the update (PATCH) flow", () => {
+    const osID = "US2024123AB45CD";
+
+    const duplicateRawData = {
+        detail: "You recently submitted a very similar production location.",
+        duplicate_of: {
+            moderation_id: "abc-123",
+            os_id: osID,
+            created_at: "2026-07-24T12:00:00.000Z",
+            name: "Blue Horizon Facility",
+            address: "990 Spring Garden St., Philadelphia PA 19123",
+            country: "US",
+            duplicate_check_window_minutes: 30,
+        },
+    };
+
+    const warningsRawData = {
+        detail: "This submission may have one or more data-quality issues. Please review the warnings below.",
+        warnings: [
+            {
+                type: "address_quality",
+                title: "Address May Not Look Like a Facility Address",
+                message: "The address is missing a street.",
+            },
+        ],
+    };
+
+    const stateWithError = rawData => ({
+        filterOptions: {
+            countries: {
+                data: [{ value: "US", label: "United States" }],
+                error: null,
+                fetching: false,
+            },
+            facilityProcessingType: {
+                data: [],
+                error: null,
+                fetching: false,
+            },
+        },
+        auth: {
+            user: { user: { isAnon: false } },
+            session: { fetching: false },
+        },
+        featureFlags: {
+            flags: {
+                disable_list_uploading: false,
+            },
+            fetching: false,
+        },
+        contributeProductionLocation: {
+            pendingModerationEvent: {
+                data: {},
+                fetching: false,
+                error: {
+                    errorSource: "CLIENT",
+                    detail: rawData.detail,
+                    errors: null,
+                    rawData,
+                },
+            },
+            singleProductionLocation: {
+                data: {
+                    os_id: osID,
+                    name: "Blue Horizon Facility",
+                    address: "990 Spring Garden St., Philadelphia PA 19123",
+                    country: {
+                        name: "United States",
+                        alpha_2: "US",
+                    },
+                },
+                fetching: false,
+                error: null,
+            },
+        },
+    });
+
+    // The PATCH flow re-fetches the existing location on mount and shows a
+    // spinner while that request is in flight, so the dialogs have to be
+    // awaited rather than read synchronously.
+    const renderComponent = preloadedState =>
+        renderWithProviders(
+            <MemoryRouter initialEntries={[`/contribute/single-location/${osID}/info/`]}>
+                <Route
+                    path="/contribute/single-location/:osID/info/"
+                    component={() => <ProductionLocationInfo submitMethod="PATCH" />}
+                />
+            </MemoryRouter>,
+            { preloadedState },
+        );
+
+    test("shows the duplicate submission dialog instead of the generic error notification", async () => {
+        const { findByText, getByText } = renderComponent(
+            stateWithError(duplicateRawData),
+        );
+
+        expect(
+            await findByText("Possible Duplicate Submission"),
+        ).toBeInTheDocument();
+        expect(
+            getByText(/You recently submitted a very similar production location/),
+        ).toBeInTheDocument();
+        expect(apiRequest.patch).not.toHaveBeenCalled();
+    });
+
+    test("resubmits the PATCH with duplicate_override when 'Submit anyway' is clicked", async () => {
+        const { findByText } = renderComponent(
+            stateWithError(duplicateRawData),
+        );
+
+        fireEvent.click(await findByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.patch).toHaveBeenCalledTimes(1));
+        const [url, body, config] = apiRequest.patch.mock.calls[0];
+        expect(url).toContain(osID);
+        expect(body.duplicate_override).toBeUndefined();
+        expect(config.params).toEqual({ duplicate_override: true });
+        expect(apiRequest.post).not.toHaveBeenCalled();
+    });
+
+    test("shows the server quality warnings dialog and resubmits the PATCH with ignore_warnings", async () => {
+        const { findByText, getByText } = renderComponent(
+            stateWithError(warningsRawData),
+        );
+
+        expect(
+            await findByText("Address May Not Look Like a Facility Address"),
+        ).toBeInTheDocument();
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.patch).toHaveBeenCalledTimes(1));
+        const [, body, config] = apiRequest.patch.mock.calls[0];
+        expect(body.ignore_warnings).toBeUndefined();
+        expect(config.params).toEqual({ ignore_warnings: true });
+        expect(apiRequest.post).not.toHaveBeenCalled();
+    });
+
+    test("carries the granted duplicate override when confirming the quality warnings dialog", async () => {
+        apiRequest.patch.mockRejectedValue({
+            response: { status: 409, data: warningsRawData },
+        });
+
+        const { findByText, getByText, getAllByText } = renderComponent(
+            stateWithError(duplicateRawData),
+        );
+
+        fireEvent.click(await findByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.patch).toHaveBeenCalledTimes(1));
+        expect(apiRequest.patch.mock.calls[0][2].params).toEqual({
+            duplicate_override: true,
+        });
+
+        await waitFor(() => {
+            expect(
+                getByText("Address May Not Look Like a Facility Address"),
+            ).toBeInTheDocument();
+            expect(getAllByText("Submit anyway")).toHaveLength(1);
+        });
+
+        fireEvent.click(getByText("Submit anyway"));
+
+        await waitFor(() => expect(apiRequest.patch).toHaveBeenCalledTimes(2));
+        expect(apiRequest.patch.mock.calls[1][2].params).toEqual({
             duplicate_override: true,
             ignore_warnings: true,
         });

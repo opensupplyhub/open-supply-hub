@@ -1,3 +1,7 @@
+from api.helpers.data_center import (
+    DATE_OF_SOURCE_FORMAT_MESSAGE,
+    normalize_date_of_source,
+)
 from api.serializers.v1.isic4_entry_serializer \
     import ISIC4EntrySerializer
 from api.serializers.v1.coordinates_serializer \
@@ -69,6 +73,76 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
         },
     )
 
+    # Per-row provenance fields (OSDEV-3068). Stored on FacilityListItem
+    # (see OSDEV-3070 / OSDEV-3071). Deliberately lenient free text — values
+    # are recorded as provided, without format validation — except
+    # `date_of_source`, which must be an ISO reduced-precision date (YYYY,
+    # YYYY-MM, or YYYY-MM-DD; see validate_date_of_source). The max_length
+    # limits only mirror the FacilityListItem column sizes so that accepted
+    # values can always be persisted.
+    source_name = serializers.CharField(
+        max_length=500,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'invalid': 'Field source_name must be a valid string.',
+            'max_length': ('Field source_name cannot be longer than 500 '
+                           'characters.'),
+        },
+    )
+    source_link = serializers.CharField(
+        max_length=2000,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'invalid': 'Field source_link must be a valid string.',
+            'max_length': ('Field source_link cannot be longer than 2000 '
+                           'characters.'),
+        },
+    )
+    information_source_type = serializers.CharField(
+        max_length=200,
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'invalid': ('Field information_source_type must be a valid '
+                        'string.'),
+            'max_length': ('Field information_source_type cannot be longer '
+                           'than 200 characters.'),
+        },
+    )
+    date_of_source = serializers.CharField(
+        max_length=10,
+        required=False,
+        error_messages={
+            'invalid': 'Field date_of_source must be a valid string.',
+            'max_length': ('Field date_of_source cannot be longer than 10 '
+                           'characters.'),
+        },
+    )
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'invalid': 'Field notes must be a valid string.',
+        },
+    )
+    data_collection_methodology = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'invalid': ('Field data_collection_methodology must be a valid '
+                        'string.'),
+        },
+    )
+    ai_usage_notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        error_messages={
+            'invalid': 'Field ai_usage_notes must be a valid string.',
+        },
+    )
+
     # Use only subclasses.
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -94,6 +168,17 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
                 "detail": f"Field {field_name} must be a string, not a number."
             }
         return None
+
+    def validate_date_of_source(self, value):
+        """Validate the ISO reduced-precision date format (YYYY, YYYY-MM,
+        or YYYY-MM-DD), so partial dates can be recorded when that is all
+        the external source provides."""
+        normalized = normalize_date_of_source(value)
+        if normalized is None:
+            raise serializers.ValidationError(
+                f'Field date_of_source {DATE_OF_SOURCE_FORMAT_MESSAGE}.'
+            )
+        return normalized
 
     def validate_isic_4(self, value):
         """Validate that there are no duplicate ISIC-4 objects."""

@@ -1,3 +1,4 @@
+import math
 import re
 from api.models import Contributor, ExtendedField, ProductType
 from api.facility_type_processing_type import (
@@ -174,6 +175,12 @@ def create_extendedfield(field, field_value, item, contributor):
             field_value = {
                 'raw_value': field_value,
             }
+        elif field in ExtendedField.DATA_CENTER_FIELDS:
+            if (field in ExtendedField.DATA_CENTER_NUMERICAL_FIELDS):
+                field_value = get_integer_or_double_value(field_value)
+            field_value = {
+                'raw_value': field_value,
+            }
         elif field == ExtendedField.ISIC_4:
             normalized_isic = get_isic_4_extendedfield_value(field_value)
             if not normalized_isic.get('raw_value'):
@@ -229,7 +236,7 @@ RAW_DATA_FIELDS = (
     ExtendedField.LEI_ID,
     ExtendedField.RBA_ID,
     ExtendedField.ISIC_4,
-)
+) + ExtendedField.DATA_CENTER_FIELDS
 
 
 def create_extendedfields_for_single_item(
@@ -371,3 +378,35 @@ def get_product_types():
     product_types = list(set(product_types))
     product_types.sort()
     return product_types
+
+
+def get_integer_or_double_value(value):
+    """
+    Return a numeric value as an int when it represents a whole number, as a
+    float when it has a fractional part, or as a string when it is not
+    numeric.
+
+    Parsing goes through float() first on purpose. int() silently truncates
+    float input - int(1.2) returns 1 without raising - so trying int() first
+    would corrupt fractional values that arrive as native floats (for example
+    a PUE of 1.2 from a JSON API payload) instead of falling through to the
+    float branch.
+    """
+    # Booleans are ints in Python; keep them out of the numeric branches.
+    if isinstance(value, bool):
+        return str(value)
+
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+
+    # NaN and Infinity are not valid JSON and cannot be stored in the value
+    # JSONField, so keep the original representation instead.
+    if not math.isfinite(number):
+        return str(value)
+
+    if number.is_integer():
+        return int(number)
+
+    return number

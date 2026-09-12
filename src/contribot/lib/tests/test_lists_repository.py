@@ -107,6 +107,7 @@ def test_put_list_writes_expected_item():
     assert item["status"] == STATUS_PENDING
     assert item["started_at"]
     assert item["finished_at"] == ""
+    assert item["attempt_count"] == 0
     assert kwargs["ConditionExpression"] == "attribute_not_exists(list_id)"
 
 
@@ -125,6 +126,7 @@ def test_put_list_fills_defaults():
         "status": STATUS_PENDING,
         "started_at": item["started_at"],
         "finished_at": "",
+        "attempt_count": 0,
     }
     assert item["started_at"]
 
@@ -209,6 +211,62 @@ def test_update_list_failed_status_sets_finished_at():
     values = table.update_item.call_args.kwargs["ExpressionAttributeValues"]
     assert values[":status"] == STATUS_FAILED
     assert values[":finished_at"]
+
+
+def test_update_list_sets_started_at_and_attempt_count():
+    table = MagicMock()
+    repo = ListsRepository(table=table)
+    repo.update_list(3, started_at="2026-01-01T00:00:00+00:00", attempt_count=2)
+    values = table.update_item.call_args.kwargs["ExpressionAttributeValues"]
+    assert values[":started_at"] == "2026-01-01T00:00:00+00:00"
+    assert values[":attempt_count"] == 2
+    expression = table.update_item.call_args.kwargs["UpdateExpression"]
+    assert "started_at = :started_at" in expression
+    assert "attempt_count = :attempt_count" in expression
+
+
+def test_scan_filters_by_status():
+    table = MagicMock()
+    table.scan.return_value = {
+        "Items": [{"list_id": "1", "status": STATUS_FAILED}],
+    }
+    repo = ListsRepository(table=table)
+    items = repo.scan(status=STATUS_FAILED)
+    assert items == [{"list_id": "1", "status": STATUS_FAILED}]
+    kwargs = table.scan.call_args.kwargs
+    assert kwargs["FilterExpression"] == "#status = :status"
+    assert kwargs["ExpressionAttributeNames"] == {"#status": "status"}
+    assert kwargs["ExpressionAttributeValues"] == {":status": STATUS_FAILED}
+
+
+def test_scan_paginates_until_complete():
+    table = MagicMock()
+    table.scan.side_effect = [
+        {
+            "Items": [{"list_id": "1"}],
+            "LastEvaluatedKey": {"list_id": "1"},
+        },
+        {"Items": [{"list_id": "2"}]},
+    ]
+    repo = ListsRepository(table=table)
+    items = repo.scan(status=STATUS_FAILED)
+    assert [item["list_id"] for item in items] == ["1", "2"]
+    assert table.scan.call_count == 2
+    assert table.scan.call_args_list[1].kwargs["ExclusiveStartKey"] == {
+        "list_id": "1"
+    }
+
+
+def test_scan_filters_by_max_attempts():
+    table = MagicMock()
+    table.scan.return_value = {"Items": [{"list_id": "1"}]}
+    repo = ListsRepository(table=table)
+    repo.scan(status=STATUS_FAILED, max_attempts=3)
+    kwargs = table.scan.call_args.kwargs
+    assert "attempt_count < :max_attempts" in kwargs["FilterExpression"]
+    assert "attribute_not_exists(attempt_count)" in kwargs["FilterExpression"]
+    assert kwargs["ExpressionAttributeValues"][":status"] == STATUS_FAILED
+    assert kwargs["ExpressionAttributeValues"][":max_attempts"] == 3
 
 
 def test_update_list_requires_at_least_one_field():

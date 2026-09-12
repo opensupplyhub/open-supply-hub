@@ -6,6 +6,9 @@ aws_availability_zones = ["eu-west-1a", "eu-west-1b"]
 r53_private_hosted_zone = "osh.internal"
 r53_public_hosted_zone = "staging.opensupplyhub.org"
 
+# Owns query logging for staging.opensupplyhub.org.
+route53_query_logging_enabled = true
+
 cloudfront_price_class = "PriceClass_All"
 
 api_facilities_cache_default_ttl           = 120
@@ -118,4 +121,5 @@ ip_denylist_secret_name = "oshub/staging/ip-denylist"
 contribot_os_hub_api_token_secret_name = "oshub/staging/contribot-os-hub-api-token"
 contribot_monday_api_key_secret_name = "oshub/staging/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/staging/contribot-slack-api-url"
+contribot_slack_failures_api_url_secret_name = "oshub/staging/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/staging/contribot-google-drive-service-key"

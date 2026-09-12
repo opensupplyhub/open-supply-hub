@@ -12,8 +12,10 @@ from rest_framework.serializers import (
 
 from countries.lib.countries import COUNTRY_NAMES
 from ...constants import MASKED_CONTRIBUTOR_LABEL
+from ...helpers.data_center import PROVENANCE_FIELDS
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
+from ...models.facility.facility_list_item import FacilityListItem
 from ...models.embed_config import EmbedConfig
 from ...models.embed_field import EmbedField
 from ...models.extended_field import ExtendedField
@@ -71,6 +73,11 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     address = SerializerMethodField()
     has_approved_claim = SerializerMethodField()
     sector = SerializerMethodField()
+    # Whether extended-field entries should carry the per-row provenance of
+    # the FacilityListItem they came from. Enabled only on the
+    # single-facility details serializer to avoid extra queries on list
+    # endpoints.
+    include_extended_field_provenance = False
 
     class Meta:
         model = FacilityIndex
@@ -229,6 +236,37 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             except EmbedConfig.DoesNotExist:
                 return fields
 
+    @staticmethod
+    def _build_extended_field_provenance_map(fields):
+        """
+        Bulk-load per-row provenance (see PROVENANCE_FIELDS) for the
+        FacilityListItems referenced by the given extended-field entries.
+        Returns {facility_list_item_id: {field: value}} containing only
+        items that carry at least one non-empty provenance value.
+        """
+        list_item_ids = {
+            field.get('facility_list_item_id')
+            for field in fields
+            if field.get('facility_list_item_id') is not None
+        }
+        if not list_item_ids:
+            return {}
+
+        provenance_map = {}
+        rows = FacilityListItem.objects.filter(
+            id__in=list_item_ids
+        ).values('id', *PROVENANCE_FIELDS)
+        for row in rows:
+            provenance = {
+                field: row[field]
+                for field in PROVENANCE_FIELDS
+                if row[field] not in (None, '')
+            }
+            if provenance:
+                provenance_map[row['id']] = provenance
+
+        return provenance_map
+
     @with_masked_contributors
     def get_extended_fields(self, facility, masked):
         request = self._get_request()
@@ -248,6 +286,10 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
         claimant_contributor_id = (
             (facility.approved_claim or {}).get('contributor_id')
         )
+        provenance_by_list_item_id = (
+            self._build_extended_field_provenance_map(fields)
+            if self.include_extended_field_provenance else {}
+        )
 
         grouped_data = defaultdict(list)
 
@@ -260,7 +302,9 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 context={'user_can_see_detail': user_can_see_detail,
                          'embed_mode_active': embed_mode_active,
                          'claimant_contributor_id': claimant_contributor_id,
-                         'masked_contributor_ids': masked},
+                         'masked_contributor_ids': masked,
+                         'provenance_by_list_item_id':
+                             provenance_by_list_item_id},
                 exclude_fields=(
                     ['created_at'] if not use_main_created_at else []
                 )
