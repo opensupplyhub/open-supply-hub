@@ -149,8 +149,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             {
                 key: 'name_operator',
                 label: 'Operator',
-                tooltipText:
-                    'The entity that operates this location.',
+                tooltipText: 'The entity that operates this location.',
             },
             {
                 key: 'name_owner',
@@ -212,7 +211,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 label: 'IT Capacity',
                 unitsField: 'it_capacity_units',
                 tooltipText:
-                    'How much electrical power the data center\'s computing equipment can use at once.',
+                    "How much electrical power the data center's computing equipment can use at once.",
             },
             {
                 key: 'utility_capacity',
@@ -246,8 +245,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             {
                 key: 'power_providers',
                 label: 'Power Providers',
-                tooltipText:
-                    'Entities that supply power to this location.',
+                tooltipText: 'Entities that supply power to this location.',
             },
             {
                 key: 'power_sources',
@@ -260,14 +258,13 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 label: 'Power Density',
                 unitsField: 'power_density_units',
                 tooltipText:
-                    'How concentrated a data center\'s electrical power use is within a given physical space. Typically measured as power per server rack or power per unit of floor area.',
+                    "How concentrated a data center's electrical power use is within a given physical space. Typically measured as power per server rack or power per unit of floor area.",
             },
             {
                 key: 'water_usage',
                 label: 'Water Usage',
                 unitsField: 'water_usage_units',
-                tooltipText:
-                    'The amount of water used by this location.',
+                tooltipText: 'The amount of water used by this location.',
             },
             {
                 key: 'wue',
@@ -279,8 +276,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             {
                 key: 'onsite_power_generation',
                 label: 'On-site Power Generation',
-                tooltipText:
-                    'Power generated on-site at this location.',
+                tooltipText: 'Power generated on-site at this location.',
             },
             {
                 key: 'cooling_mechanism',
@@ -304,14 +300,12 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             {
                 key: 'date_operational',
                 label: 'Operational Date',
-                tooltipText:
-                    'The date when this location became operational.',
+                tooltipText: 'The date when this location became operational.',
             },
             {
                 key: 'time_zones',
                 label: 'Time Zone(s)',
-                tooltipText:
-                    'The time zone(s) the location operates in.',
+                tooltipText: 'The time zone(s) the location operates in.',
             },
             {
                 key: 'certifications_compliance',
@@ -330,21 +324,20 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 key: 'area',
                 label: 'Area',
                 unitsField: 'area_units',
-                tooltipText: 'The physical area of the data center. There are different ways to measure area, and this general "area" field is only used when the type of area is not specified.',
+                tooltipText:
+                    'The physical area of the data center. There are different ways to measure area, and this general "area" field is only used when the type of area is not specified.',
             },
             {
                 key: 'data_area',
                 label: 'Data Hall Area',
                 unitsField: 'data_area_units',
-                tooltipText:
-                    'Area specific to computing or data processing.',
+                tooltipText: 'Area specific to computing or data processing.',
             },
             {
                 key: 'non_data_area',
                 label: 'Non-Data Area',
                 unitsField: 'non_data_area_units',
-                tooltipText:
-                    'Area not used for computing or data processing.',
+                tooltipText: 'Area not used for computing or data processing.',
             },
             {
                 key: 'floor_space',
@@ -356,8 +349,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             {
                 key: 'number_of_floors',
                 label: 'Number of Floors',
-                tooltipText:
-                    'The total number of floors in this location.',
+                tooltipText: 'The total number of floors in this location.',
             },
             {
                 key: 'footprint',
@@ -370,8 +362,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 key: 'building_area',
                 label: 'Building Area',
                 unitsField: 'building_area_units',
-                tooltipText:
-                    'Area of the entire building.',
+                tooltipText: 'Area of the entire building.',
             },
             {
                 key: 'land_area',
@@ -390,14 +381,12 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             {
                 key: 'other_area_notes',
                 label: 'Other Area Notes',
-                tooltipText:
-                    'How the source describes the other area.',
+                tooltipText: 'How the source describes the other area.',
             },
             {
                 key: 'number_of_servers',
                 label: 'Number of Servers',
-                tooltipText:
-                    'The total number of servers at this location.',
+                tooltipText: 'The total number of servers at this location.',
             },
             {
                 key: 'number_of_racks',
@@ -408,8 +397,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
             {
                 key: 'number_of_buildings',
                 label: 'Number of Buildings',
-                tooltipText:
-                    'Number of buildings stated in the source.',
+                tooltipText: 'Number of buildings stated in the source.',
             },
         ]),
     }),
