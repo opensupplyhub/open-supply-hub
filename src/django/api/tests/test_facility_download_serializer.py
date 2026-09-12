@@ -1,10 +1,12 @@
 import copy
+import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 
+from api.models.extended_field import ExtendedField
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
@@ -106,6 +108,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *CLAIM_HEADERS,
             "is_closed",
             *PARTNER_FIELD_HEADERS,
+            "data_center_information",
         ]
         self.assertEqual(headers, expected_headers)
 
@@ -138,6 +141,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
+            "",
         ]
         self.assertEqual(row, expected_row)
 
@@ -172,6 +176,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
+            "",
         ]
         self.assertEqual(row, expected_row)
 
@@ -567,6 +572,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
+            "",
         ]
         self.assertEqual(row, expected_row)
 
@@ -643,3 +649,102 @@ class FacilityDownloadSerializerTest(TestCase):
         row = serializer.get_row(facility)
         self.assertEqual(row[10], "50-100|500-1000")
         self.assertEqual(row[11], "Other Parent Co")
+
+
+def _facility_type_field(matched_facility_type):
+    """Build a `facility_type` ExtendedField entry resolving to
+    `matched_facility_type`, in the shape stored on FacilityIndex."""
+    return {
+        "field_name": ExtendedField.FACILITY_TYPE,
+        "value": {
+            "raw_values": matched_facility_type,
+            "matched_values": [
+                ["facility_type", "exact", matched_facility_type, None],
+            ],
+        },
+    }
+
+
+def _data_center_field(field_name, raw_value):
+    """Build a data-center ExtendedField entry, in the shape
+    `create_extendedfield` stores for `ExtendedField.DATA_CENTER_FIELDS`."""
+    return {"field_name": field_name, "value": {"raw_value": raw_value}}
+
+
+class DataCenterInformationTest(TestCase):
+    """`data_center_information`: a single JSON column carrying every
+    data-center-specific ExtendedField contributed for a facility
+    (OSDEV-3437)."""
+
+    def test_empty_for_non_data_center_facility(self):
+        """A production facility gets an empty cell, even if a
+        data-center-shaped field happens to be present."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Final Product Assembly"),
+                _data_center_field(ExtendedField.CAPACITY, 500),
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        self.assertEqual(serializer.get_data_center_information(facility), "")
+
+    def test_empty_for_data_center_with_no_data_center_fields(self):
+        """A data center with no data-center ExtendedFields contributed yet
+        gets an empty cell rather than an empty JSON object."""
+        facility = SimpleNamespace(
+            extended_fields=[_facility_type_field("Data Center")],
+        )
+        serializer = FacilityDownloadSerializer()
+        self.assertEqual(serializer.get_data_center_information(facility), "")
+
+    def test_json_object_for_data_center_facility(self):
+        """Every contributed data-center field is projected into the JSON
+        cell, keyed by field name, each as a single-item list."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                _data_center_field(ExtendedField.CAPACITY, 500),
+                _data_center_field(ExtendedField.PUE, 1.2),
+                _data_center_field(ExtendedField.NAME_OPERATOR, "Acme Corp"),
+                # Not a data-center field; must not leak into the column.
+                {
+                    "field_name": ExtendedField.PARENT_COMPANY,
+                    "value": {"name": "Acme Holdings"},
+                },
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {
+                ExtendedField.CAPACITY: [500],
+                ExtendedField.PUE: [1.2],
+                ExtendedField.NAME_OPERATOR: ["Acme Corp"],
+            },
+        )
+
+    def test_multiple_contributions_for_same_field_are_kept_as_a_list(self):
+        """Two contributions for the same data-center field are both kept,
+        instead of the later one silently overwriting the earlier one."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                _data_center_field(ExtendedField.CAPACITY, 500),
+                _data_center_field(ExtendedField.CAPACITY, 750),
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {ExtendedField.CAPACITY: [500, 750]},
+        )
+
+    def test_get_headers_includes_data_center_information_column(self):
+        """The column is always present in the header row, regardless of
+        whether any downloaded facility is a data center."""
+        serializer = FacilityDownloadSerializer()
+        self.assertEqual(
+            serializer.get_headers()[-1], "data_center_information"
+        )
