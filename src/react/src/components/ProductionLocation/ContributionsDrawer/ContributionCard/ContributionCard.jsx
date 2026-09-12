@@ -15,6 +15,7 @@ import ScheduleIcon from '@material-ui/icons/Schedule';
 
 import { makeProfileRouteLink, formatDate } from '../../../../util/util';
 import { DATE_FORMATS } from '../../../../util/constants';
+import ProvenanceAccordion from '../ProvenanceAccordion/ProvenanceAccordion.jsx';
 import {
     GA_LINK_PLACEMENT,
     sendLocationPartnerProfileLinkClick,
@@ -29,6 +30,7 @@ const ContributionCard = ({
     date,
     promoted,
     userId,
+    provenance,
     spotlightGaProfileBase,
     'data-testid': dataTestId,
 }) => {
@@ -125,6 +127,10 @@ const ContributionCard = ({
                     ) : null}
                 </div>
             </div>
+            <ProvenanceAccordion
+                provenance={provenance}
+                data-testid="contribution-card-provenance"
+            />
         </div>
     );
 };
@@ -136,6 +142,7 @@ ContributionCard.propTypes = {
     date: oneOfType([string, instanceOf(Date)]),
     promoted: bool,
     userId: oneOfType([string, number]),
+    provenance: object,
     'data-testid': string,
     spotlightGaProfileBase: object,
 };
@@ -145,6 +152,7 @@ ContributionCard.defaultProps = {
     date: null,
     promoted: false,
     userId: null,
+    provenance: null,
     'data-testid': undefined,
     spotlightGaProfileBase: null,
 };

@@ -3,6 +3,6 @@ module "vanta" {
 
   source = "./vanta-iam-role"
 
-  vanta_assumed_role_principals   = var.vanta_assumed_role_principals
-  vanta_assumed_role_external_ids = var.vanta_assumed_role_external_ids
+  vanta_assumed_role_principals   = local.vanta_assumed_role_principals
+  vanta_assumed_role_external_ids = local.vanta_assumed_role_external_ids
 }

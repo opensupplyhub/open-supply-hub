@@ -1,7 +1,6 @@
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
-import flatten from 'lodash/flatten';
 import identity from 'lodash/identity';
 import split from 'lodash/split';
 import last from 'lodash/last';
@@ -79,6 +78,7 @@ import {
     facilityListSummaryStatusMessages,
     minimum100PercentWidthEmbedHeight,
     matchResponsibilityEnum,
+    DEFAULT_SORT_OPTION_INDEX,
     optionsForSortingResults,
     componentsWithErrorMessage,
     listParsingErrorMappings,
@@ -214,6 +214,14 @@ export const makeGetGroupedSectorsURL = () => '/api/sectors/?grouped=true';
 export const makeGetParentCompaniesURL = () => '/api/parent-companies/';
 export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
+export const makeGetProcessingTypeSuggestionsURL = (
+    query = '',
+    facilityTypes = [],
+) =>
+    `/api/processing-type-suggestions/?${querystring.stringify({
+        q: query,
+        facility_type: facilityTypes,
+    })}`;
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
@@ -449,6 +457,9 @@ export const createQueryStringFromSearchFilters = (
         processing_type: createCompactSortedQuerystringInputObject(
             processingType,
         ),
+        processing_type_exact: createCompactSortedQuerystringInputObject(
+            processingType.filter(option => option.isExact),
+        ),
         product_type: createCompactSortedQuerystringInputObject(productType),
         number_of_workers: createCompactSortedQuerystringInputObject(
             numberOfWorkers,
@@ -483,13 +494,26 @@ export const mapParamToReactSelectOption = param => {
     });
 };
 
-export const createSelectOptionsFromParams = params => {
+export const createSelectOptionsFromParams = (
+    params,
+    preserveStringValues = false,
+) => {
     const paramsInArray = !isArray(params) ? [params] : params;
+    const mapParam = preserveStringValues
+        ? param => {
+              if (isEmpty(param)) {
+                  return null;
+              }
+
+              return Object.freeze({
+                  value: param,
+                  label: param,
+              });
+          }
+        : mapParamToReactSelectOption;
 
     // compact to remove empty values from querystring params like 'countries='
-    return compact(
-        Object.freeze(paramsInArray.map(mapParamToReactSelectOption)),
-    );
+    return compact(Object.freeze(paramsInArray.map(mapParam)));
 };
 
 export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
@@ -504,7 +528,7 @@ export const mapPartnerGroupContributorsToSelectOptions = (groups = []) =>
 
 export const getAlgorithm = sortBy =>
     optionsForSortingResults.filter(el => el.value === sortBy)[0] ??
-    optionsForSortingResults[0];
+    optionsForSortingResults[DEFAULT_SORT_OPTION_INDEX];
 
 export const createFiltersFromQueryString = qs => {
     const qsToParse = startsWith(qs, '?') ? qs.slice(1) : qs;
@@ -520,6 +544,7 @@ export const createFiltersFromQueryString = qs => {
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
+        processing_type_exact: exactProcessingTypes = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
         native_language_name: nativeLanguageName = '',
@@ -534,6 +559,30 @@ export const createFiltersFromQueryString = qs => {
         return isArray(val) ? compact(val) : compact([val]);
     };
 
+    const exactProcessingTypeIdentities = new Set(
+        normaliseStringArray(exactProcessingTypes).map(value =>
+            value.toLowerCase(),
+        ),
+    );
+    const seenProcessingTypeIdentities = new Set();
+    const hydratedProcessingTypes = createSelectOptionsFromParams(
+        processingType,
+        true,
+    ).reduce((options, option) => {
+        const processingTypeIdentity = option.value.toLowerCase();
+        if (seenProcessingTypeIdentities.has(processingTypeIdentity)) {
+            return options;
+        }
+        seenProcessingTypeIdentities.add(processingTypeIdentity);
+        options.push({
+            ...option,
+            ...(exactProcessingTypeIdentities.has(processingTypeIdentity)
+                ? { isExact: true }
+                : {}),
+        });
+        return options;
+    }, []);
+
     return Object.freeze({
         facilityFreeTextQuery,
         contributors: createSelectOptionsFromParams(contributors),
@@ -544,7 +593,7 @@ export const createFiltersFromQueryString = qs => {
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
-        processingType: createSelectOptionsFromParams(processingType),
+        processingType: hydratedProcessingTypes,
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,
@@ -683,16 +732,40 @@ export const hasAppliedSearchFilters = filters =>
 
 export const getFeaturesFromFeatureCollection = ({ features }) => features;
 
-export const createErrorListFromResponseObject = data =>
-    flatten(
-        Object.entries(data).map(([field, errors]) => {
-            if (isArray(errors)) {
-                return errors.map(err => `${field}: ${err}`);
+const formatFieldErrorMessages = (field, errors) => {
+    if (isArray(errors)) {
+        return map(errors, err => {
+            if (isString(err)) {
+                return [`${field}: ${err}`];
+            }
+
+            // Nested serializer / list-child errors may appear inside arrays.
+            if (isObject(err)) {
+                return formatFieldErrorMessages(field, err);
             }
 
             return [];
-        }),
-    );
+        }).flat();
+    }
+
+    // DRF ListField child errors: { "0": ["Ensure this field has no more than 50 characters."] }
+    if (isObject(errors)) {
+        return map(errors, nested =>
+            formatFieldErrorMessages(field, nested),
+        ).flat();
+    }
+
+    if (isString(errors)) {
+        return [`${field}: ${errors}`];
+    }
+
+    return [];
+};
+
+export const createErrorListFromResponseObject = data =>
+    map(data, (errors, field) =>
+        formatFieldErrorMessages(field, errors),
+    ).flat();
 
 export function logErrorAndDispatchFailure(
     error,
@@ -731,13 +804,20 @@ export function logErrorAndDispatchFailure(
             }
 
             if (isObject(response.data)) {
-                return createErrorListFromResponseObject(response.data);
+                const messages = createErrorListFromResponseObject(
+                    response.data,
+                );
+                return messages.length ? messages : [defaultMessage];
             }
 
             return [defaultMessage];
         })();
 
-        return dispatch(failureAction(errorMessages));
+        return dispatch(
+            failureAction(
+                errorMessages.length ? errorMessages : [defaultMessage],
+            ),
+        );
     };
 }
 
@@ -924,6 +1004,43 @@ export const mapProcessingTypeOptions = (fPTypes, fTypes) => {
         });
     }
     return mapDjangoChoiceTuplesValueToSelectOptions(uniq(pTypes.sort()));
+};
+
+const normalizeFacilityProcessingLabel = value => value.toLowerCase();
+
+export const restoreExactProcessingTypeLabels = (
+    processingTypes,
+    facilityProcessingTypes,
+) => {
+    if (!processingTypes?.length || !facilityProcessingTypes?.length) {
+        return processingTypes;
+    }
+
+    const taxonomyLabels = new Map();
+    facilityProcessingTypes.forEach(({ processingTypes: labels = [] }) => {
+        labels.forEach(label => {
+            taxonomyLabels.set(normalizeFacilityProcessingLabel(label), label);
+        });
+    });
+
+    let changed = false;
+    const restored = processingTypes.map(option => {
+        if (!option.isExact) {
+            return option;
+        }
+
+        const canonicalLabel = taxonomyLabels.get(
+            normalizeFacilityProcessingLabel(option.value),
+        );
+        if (!canonicalLabel || canonicalLabel === option.label) {
+            return option;
+        }
+
+        changed = true;
+        return { ...option, label: canonicalLabel };
+    });
+
+    return changed ? restored : processingTypes;
 };
 
 export const mapFacilityTypeOptions = (fPTypes, pTypes) => {
@@ -1831,6 +1948,21 @@ export const isShortAddress = value => {
     return value.trim().length < SLC_FORM_CONSTRAINTS.MIN_ADDRESS_LENGTH;
 };
 
+// Only the vertical bar is blocked: it is the backend's own multi-value
+// join character, so a value containing it would be re-split downstream.
+// Commas, slashes, ampersands, and "and" appear in legitimate single
+// values (e.g. "Cut & Sew") and are allowed.
+const EMBEDDED_SEPARATOR_PATTERN = /\|/;
+
+export const hasEmbeddedSeparator = fieldValue => {
+    if (!Array.isArray(fieldValue)) return false;
+    return fieldValue.some(
+        item =>
+            typeof item?.label === 'string' &&
+            EMBEDDED_SEPARATOR_PATTERN.test(item.label),
+    );
+};
+
 // ─── SLC Validation Test Registry ──────────────────────────────────────────
 //
 // To add a new check: add an entry to SLC_TEXT_FIELD_TESTS or
@@ -1884,11 +2016,27 @@ const SLC_ARRAY_FIELD_TESTS = Object.freeze({
             !value ||
             value.every(item => containsOnlyLatinCharacters(item?.label)),
     }),
+    'max-char-count': Object.freeze({
+        message: ({ label }) =>
+            `Each value in ${label} cannot exceed ${SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH} characters.`,
+        test: value =>
+            !value ||
+            value.every(
+                item =>
+                    (item?.label ?? '').length <=
+                    SLC_FORM_CONSTRAINTS.MAX_STRING_LENGTH,
+            ),
+    }),
     'max-product-type-count': Object.freeze({
         message: `Maximum of ${SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT} product types allowed.`,
         test: value =>
             !value ||
             value.length <= SLC_FORM_CONSTRAINTS.MAX_PRODUCT_TYPE_COUNT,
+    }),
+    'no-embedded-separators': Object.freeze({
+        message: ({ label }) =>
+            `${label} must be entered as separate values. Remove any vertical bar ("|") used to combine multiple values, and add each one separately instead.`,
+        test: value => !hasEmbeddedSeparator(value),
     }),
 });
 
@@ -1929,17 +2077,33 @@ const SLC_FIELD_VALIDATION_CONFIG = Object.freeze({
             'max-char-count',
         ],
     }),
+    // no-embedded-separators runs before latin-characters-only: the
+    // Latin check also rejects '|', and a pipe should get the specific
+    // "enter as separate values" message, not the Latin-characters one.
     productType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only', 'max-product-type-count'],
+        tests: [
+            'no-embedded-separators',
+            'latin-characters-only',
+            'max-char-count',
+            'max-product-type-count',
+        ],
     }),
     locationType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only'],
+        tests: [
+            'no-embedded-separators',
+            'latin-characters-only',
+            'max-char-count',
+        ],
     }),
     processingType: Object.freeze({
         type: 'array',
-        tests: ['latin-characters-only'],
+        tests: [
+            'no-embedded-separators',
+            'latin-characters-only',
+            'max-char-count',
+        ],
     }),
     numberOfWorkers: Object.freeze({
         type: 'text',
@@ -1984,6 +2148,27 @@ export const slcValidationSchema = objectYup({
     parentCompany: buildFieldValidation(
         SLC_FIELD_VALIDATION_CONFIG.parentCompany,
     ).label('Parent company'),
+    /*
+    Data-center yes/no field. Held as a string so the submit payload builder
+    keeps it (lodash `isEmpty` treats booleans as empty): 'true' when checked
+    and '' when left blank. 'false' is accepted for data submitted through
+    other channels.
+    */
+    isGroup: stringYup()
+        .oneOf(
+            ['', 'true', 'false'],
+            'Is a group must be either true or false.',
+        )
+        .label('Is a group'),
+    // Data-center provenance (OSDEV-3074). Mirrors the server-side rule:
+    // ISO 8601 reduced precision - YYYY, YYYY-MM, or YYYY-MM-DD.
+    dateOfSource: stringYup()
+        .matches(/^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/, {
+            message:
+                'Date of source must be a date in YYYY, YYYY-MM, or YYYY-MM-DD format.',
+            excludeEmptyString: true,
+        })
+        .label('Date of source'),
 });
 
 /* eslint-disable camelcase */

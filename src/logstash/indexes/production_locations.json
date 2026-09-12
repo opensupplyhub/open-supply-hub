@@ -239,6 +239,42 @@
               "type": "float"
             }
           }
+        },
+        "contributors": {
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "type": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
+        },
+        "number_of_contributors": {
+          "type": "integer"
+        },
+        "lists": {
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "contributor_id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "text",
+              "fields": {
+                "keyword": {
+                  "type": "keyword"
+                }
+              }
+            }
+          }
         }
       }
     }

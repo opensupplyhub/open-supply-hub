@@ -1,11 +1,10 @@
 """Shared fixtures for the ``contribot`` unit tests.
 
-The tests exercise :class:`contribot.ContriBot` without touching a real
+The tests exercise :class:`lib.contribot.ContriBot` without touching a real
 database or network. To do that we:
 
-* put the ``source`` directory on ``sys.path`` so the flat imports inside
-  ``contribot`` (``from utils import ...`` / ``from known_countries import ...``)
-  resolve;
+* put the ``src/contribot`` directory on ``sys.path`` so ``from lib.contribot``
+  resolves;
 * build a small in-memory error-codes configuration workbook so the diagnosis
   machinery has severities and Jinja templates to render;
 * provide a ``make_contribution`` factory that writes a DataFrame to a temporary
@@ -18,11 +17,11 @@ import sys
 import pandas as pd
 import pytest
 
-SOURCE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if SOURCE_DIR not in sys.path:
-    sys.path.insert(0, SOURCE_DIR)
+CONTRIBOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if CONTRIBOT_DIR not in sys.path:
+    sys.path.insert(0, CONTRIBOT_DIR)
 
-import contribot  # noqa: E402
+from lib import contribot  # noqa: E402
 
 
 ALLOWED_COLUMNS = [

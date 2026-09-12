@@ -125,3 +125,27 @@ resource "aws_cloudwatch_event_target" "contribot" {
   arn       = aws_sfn_state_machine.contribot.arn
   role_arn  = aws_iam_role.contribot_cloudwatch_events.arn
 }
+
+resource "aws_cloudwatch_event_rule" "contribot_retry" {
+  name                = "eventRule${local.short}ContribotRetry"
+  description         = "Run ContriBot FAILED-list retry on schedule (${var.contribot_schedule_expression})"
+  schedule_expression = var.contribot_schedule_expression
+
+  tags = merge(local.default_tags, {
+    Name = "eventRuleContribotRetry"
+  })
+}
+
+resource "aws_cloudwatch_event_target" "contribot_retry" {
+  target_id = "eventTarget${local.short}ContribotRetry"
+  rule      = aws_cloudwatch_event_rule.contribot_retry.name
+  arn       = aws_lambda_function.contribot_retry_failed_lists.arn
+}
+
+resource "aws_lambda_permission" "contribot_retry_failed_lists_events" {
+  statement_id  = "perm${local.short}ContribotRetryFailedListsEvents"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.contribot_retry_failed_lists.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.contribot_retry.arn
+}

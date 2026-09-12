@@ -3,8 +3,12 @@ from unittest.mock import patch
 
 from django.test import override_settings
 from django.core import mail
+from waffle.testutils import override_switch
 
 from api.constants import APIV1MatchTypes
+from api.moderation_event_actions.approval.event_approval_template import (
+    ANONYMIZE_SLC_SOURCES_SWITCH,
+)
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -205,6 +209,39 @@ class ModerationEventsAddProductionLocationTest(
         )
 
     def test_creation_of_source(self):
+        # The anonymize_slc_sources switch is active by default, so a source
+        # created for an approved SLC event is anonymized: its data stays
+        # public and active, but it is not attributed to the contributor.
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        source = Source.objects.get(contributor=self.contributor)
+
+        self.assert_source_creation(source, is_anonymized=True)
+
+    @override_switch(ANONYMIZE_SLC_SOURCES_SWITCH, active=False)
+    def test_creation_of_source_with_anonymization_disabled(self):
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        source = Source.objects.get(contributor=self.contributor)
+
+        self.assert_source_creation(source)
+
+    def test_creation_of_source_for_api_moderation_event(self):
+        self.moderation_event.source = ModerationEvent.Source.API
+        self.moderation_event.save()
+
         self.login_as_superuser()
         response = self.client.post(
             self.get_url(),
@@ -442,3 +479,34 @@ class ModerationEventsAddProductionLocationTest(
             energy_field.value,
             {"raw_value": 1000}
         )
+
+    def test_taxonomy_index_columns_populated_after_approval(self):
+        """
+        OSDEV-3428: facility_type / processing_type on api_facilityindex
+        only count extended fields backed by an active FacilityMatch
+        (since OSDEV-3189). The approval path used to compute them before
+        the match existed and never recomputed, leaving locations
+        approved via moderation events invisible to the Facility Type
+        and Processing Type search filters.
+        """
+        from api.models.facility.facility_index import FacilityIndex
+
+        self.add_extended_fields_data()
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        # The index functions map extended-field values through the
+        # facility type / processing type taxonomy, so assert the arrays
+        # are populated rather than matching the raw fixture strings.
+        # Before the fix both arrays were computed while no FacilityMatch
+        # existed and stayed empty.
+        index_row = FacilityIndex.objects.get(id=response.data["os_id"])
+        self.assertNotEqual([], index_row.facility_type)
+        self.assertNotEqual([], index_row.processing_type)

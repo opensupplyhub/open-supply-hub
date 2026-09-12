@@ -15,14 +15,13 @@ import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
 import Business from '@material-ui/icons/Business';
-import Warning from '@material-ui/icons/Warning';
-
 import ClaimFormStepper from './Stepper/Stepper';
 import EligibilityStep from './Steps/EligibilityStep/EligibilityStep';
 import ContactInfoStep from './Steps/ContactInfoStep/ContactInfoStep';
 import BusinessStep from './Steps/BusinessStep/BusinessStep';
 import ProfileStep from './Steps/ProfileStep/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
+import SubmissionErrorsBanner from './SubmissionErrorsBanner/SubmissionErrorsBanner';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
 import {
@@ -31,6 +30,7 @@ import {
     updateClaimFormField,
     submitClaimFormData,
     resetClaimForm,
+    clearClaimFormSubmissionError,
 } from '../../../actions/claimForm';
 import {
     fetchCountryOptions,
@@ -64,6 +64,7 @@ import {
     useRequireIntroAccess,
     useClaimFormSubmission,
     useClaimFormCleanup,
+    useApplySubmissionErrorsToForm,
 } from './hooks';
 import { claimIntroRoute, mapRoute } from '../../../util/constants';
 
@@ -118,6 +119,7 @@ const ClaimForm = ({
     resetForm,
     resetFilters,
     resetProductionLocation,
+    clearSubmissionError,
 }) => {
     // Track emissions validation errors from ProfileStep.
     const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
@@ -168,7 +170,10 @@ const ClaimForm = ({
         updateField,
         handleSubmit,
         emissionsHasErrors,
+        clearSubmissionError,
     );
+
+    useApplySubmissionErrorsToForm(claimForm, submissionError);
 
     // Check authentication.
     if (!userHasSignedIn) {
@@ -306,24 +311,7 @@ const ClaimForm = ({
                             parentCompanyOptions={parentCompanyOptions}
                             onEmissionsValidationChange={setEmissionsHasErrors}
                         />
-                        {submissionError && (
-                            <div className={`${classes.boxWarningContainer}`}>
-                                <Typography
-                                    variant="body2"
-                                    className={classes.boxWarningText}
-                                >
-                                    <span
-                                        className={classes.boxWarningTextIcon}
-                                    >
-                                        <Warning
-                                            className={classes.warningIcon}
-                                        />
-                                        <strong>ERROR!</strong>
-                                    </span>
-                                    <span>{submissionError}</span>
-                                </Typography>
-                            </div>
-                        )}
+                        <SubmissionErrorsBanner errors={submissionError} />
                         <Grid container className={classes.navigationButtons}>
                             <Grid item>
                                 <Button
@@ -452,6 +440,7 @@ ClaimForm.propTypes = {
     resetForm: func.isRequired,
     resetFilters: func.isRequired,
     resetProductionLocation: func.isRequired,
+    clearSubmissionError: func.isRequired,
 };
 
 const mapStateToProps = ({
@@ -519,6 +508,7 @@ const mapDispatchToProps = dispatch => ({
     resetFilters: () => dispatch(resetFilterOptions()),
     resetProductionLocation: () => dispatch(resetSingleProductionLocation()),
     resetForm: () => dispatch(resetClaimForm()),
+    clearSubmissionError: () => dispatch(clearClaimFormSubmissionError()),
 });
 
 export default connect(

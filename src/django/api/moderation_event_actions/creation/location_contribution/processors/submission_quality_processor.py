@@ -1,0 +1,177 @@
+import hashlib
+import json
+import logging
+
+from rest_framework import status
+from waffle import switch_is_active
+
+from api.moderation_event_actions.creation.location_contribution \
+    .processors.contribution_processor import ContributionProcessor
+from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
+    import CreateModerationEventDTO
+from api.models.moderation_event import ModerationEvent
+from api.constants import APIV1LocationContributionErrorMessages
+from api.services.submission_quality_service import SubmissionQualityService
+from countries.lib.countries import COUNTRY_NAMES
+
+logger = logging.getLogger(__name__)
+
+# Request types this check applies to. CLAIM events are created through a
+# different path and never reach this processor.
+CHECKED_REQUEST_TYPES = (
+    ModerationEvent.RequestType.CREATE.value,
+    ModerationEvent.RequestType.UPDATE.value,
+)
+
+# Kill switch for the whole check, toggleable in the Django admin without
+# a deploy (created active by migration 0226). If the Switch row is ever
+# missing, waffle falls back to WAFFLE_SWITCH_DEFAULT (False), so the
+# check disables rather than blocking submissions.
+SLC_SUBMISSION_QUALITY_CHECK_SWITCH = 'slc_submission_quality_check'
+
+# Maps each verdict returned by SubmissionQualityService to the warning
+# shown to the contributor when it's flagged. To add another AI-judgable
+# check, add a field to SubmissionQualityVerdicts in
+# SubmissionQualityService, add the corresponding entry here, and read the
+# field off the verdicts object below - no other part of this processor
+# changes.
+# The only submitted fields logged in the clear when the check runs.
+# These are exactly the fields the model evaluates and that a warning
+# asks the contributor to change, and they are the published record of a
+# location anyway. Everything else in the body (notes, source details,
+# etc.) is unbounded free text that can carry third-party personal data
+# and must not land in CloudWatch, where retention is long, access is
+# broader than the database, and there is no per-contributor deletion
+# path. See _describe_body.
+_LOGGED_BODY_FIELDS = ('name', 'address', 'country')
+
+_WARNING_TITLES = {
+    'name_quality': 'Name May Not Look Like a Facility Name',
+    'address_quality': 'Address May Not Look Like a Facility Address',
+    'address_country_mismatch': 'Address May Not Match Selected Country',
+    'multiple_locations': 'Submission May Describe Multiple Locations',
+}
+
+
+class SubmissionQualityProcessor(ContributionProcessor):
+    '''
+    Flags an SLC submission (a new location, or additional info for an
+    existing one) for optional, overridable data-quality warnings
+    (implausible name, implausible or under-specified address,
+    address/country mismatch, or a submission that appears to bundle more
+    than one location) using a single
+    Bedrock-hosted LLM call. Unlike DuplicateSubmissionProcessor this
+    check is purely advisory: a flagged submission isn't persisted as a
+    ModerationEvent until the contributor resubmits with
+    ignore_warnings=true, at which point this check is skipped entirely
+    rather than re-run, since the contributor has already seen and
+    dismissed the warnings. The whole check sits behind the
+    slc_submission_quality_check waffle switch (on by default), so it
+    can be turned off in the Django admin without a deploy.
+    '''
+
+    def __init__(self, quality_service: SubmissionQualityService = None):
+        self._quality_service = quality_service or SubmissionQualityService()
+
+    def process(
+            self,
+            event_dto: CreateModerationEventDTO) -> CreateModerationEventDTO:
+        if event_dto.request_type not in CHECKED_REQUEST_TYPES:
+            return super().process(event_dto)
+
+        if event_dto.source != ModerationEvent.Source.SLC.value:
+            return super().process(event_dto)
+
+        # Checked after the request-type/source guards so API-sourced
+        # requests never query the switch.
+        if not switch_is_active(SLC_SUBMISSION_QUALITY_CHECK_SWITCH):
+            return super().process(event_dto)
+
+        if event_dto.ignore_warnings:
+            logger.info(
+                'Submission quality check bypassed via ignore_warnings: '
+                'contributor=%s fields=%s body_digest=%s',
+                event_dto.contributor.id,
+                *self.__describe_body(event_dto),
+            )
+            return super().process(event_dto)
+
+        warnings = self.__collect_warnings(event_dto)
+        # Logged whether or not anything was flagged, so that every
+        # evaluated submission has a line that can be compared against
+        # the bypassed line of its resubmission (if any).
+        logger.info(
+            'Submission quality check evaluated: contributor=%s '
+            'warnings=%s fields=%s body_digest=%s',
+            event_dto.contributor.id,
+            [warning['type'] for warning in warnings],
+            *self.__describe_body(event_dto),
+        )
+        if warnings:
+            event_dto.warnings = warnings
+            event_dto.errors = {
+                'detail': (
+                    APIV1LocationContributionErrorMessages
+                    .SUBMISSION_QUALITY_WARNING
+                ),
+                'warnings': warnings,
+            }
+            event_dto.status_code = status.HTTP_409_CONFLICT
+
+            return event_dto
+
+        return super().process(event_dto)
+
+    @staticmethod
+    def __describe_body(event_dto: CreateModerationEventDTO) -> tuple:
+        '''
+        Returns (fields, digest) for logging: the allowlisted fields of
+        the body as received (before cleaning), serialized to JSON, and
+        a short SHA-256 digest of the whole body. The first submission
+        is logged when it is evaluated and the resubmission when it
+        bypasses the check via ignore_warnings; comparing the fields
+        shows whether the warnings led the contributor to change what
+        was judged, and comparing the digests shows whether anything
+        else in the body changed, without recording what. default=str
+        so an unexpected value type degrades the log line rather than
+        aborting the submission.
+        '''
+        raw_data = event_dto.raw_data
+        fields = json.dumps(
+            {
+                field: raw_data.get(field)
+                for field in _LOGGED_BODY_FIELDS
+                if field in raw_data
+            },
+            default=str,
+        )
+        digest = hashlib.sha256(
+            json.dumps(raw_data, default=str, sort_keys=True).encode()
+        ).hexdigest()[:16]
+        return fields, digest
+
+    def __collect_warnings(
+            self, event_dto: CreateModerationEventDTO) -> list:
+        cleaned_data = event_dto.cleaned_data
+        name = cleaned_data.get('clean_name', '')
+        address = cleaned_data.get('clean_address', '')
+        country_code = cleaned_data.get('country_code')
+        country_name = COUNTRY_NAMES.get(country_code, country_code or '')
+
+        verdicts = self._quality_service.evaluate(
+            name=name, address=address, country_name=country_name
+        )
+        if verdicts is None:
+            return []
+
+        warnings = []
+        for warning_type, title in _WARNING_TITLES.items():
+            verdict = getattr(verdicts, warning_type)
+            if verdict.flagged:
+                warnings.append({
+                    'type': warning_type,
+                    'title': title,
+                    'message': verdict.reason,
+                })
+
+        return warnings

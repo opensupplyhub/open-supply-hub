@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.core import mail
+from django.core.cache import caches
 from allauth.account.models import EmailAddress
 from django.contrib.gis.geos import Point
 from waffle.testutils import override_switch
@@ -17,11 +18,35 @@ from api.models.source import Source
 from api.models.user import User
 from api.models.facility.facility import Facility
 from api.views.v1.url_names import URLNames
+from api.services.submission_quality_service import (
+    QualityVerdict,
+    SubmissionQualityVerdicts,
+)
 from api.tests.test_data import geocoding_data
 
 
 class TestProductionLocationsCreate(APITestCase):
     def setUp(self):
+        # This endpoint also runs SubmissionQualityProcessor for CREATE/SLC
+        # submissions, which would otherwise make a real Bedrock call for
+        # every such test in this file. These tests aren't exercising that
+        # processor, so it's neutralized here (fail-open "no verdict").
+        quality_check_patcher = patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=None,
+        )
+        quality_check_patcher.start()
+        self.addCleanup(quality_check_patcher.stop)
+
+        # DuplicateThrottle uses the shared 'api_throttling' cache (Redis),
+        # which persists across test runs. Because the test DB resets
+        # auto-increment user ids deterministically, a stale entry from an
+        # earlier run can collide with this run's cache key and turn an
+        # expected 202/503 into a spurious 429. Clear it for a hermetic run.
+        caches['api_throttling'].clear()
+
         self.url = reverse(URLNames.PRODUCTION_LOCATIONS + '-list')
         self.common_valid_req_body = json.dumps({
             'name': 'Blue Horizon Facility',
@@ -195,6 +220,122 @@ class TestProductionLocationsCreate(APITestCase):
             throttled_response_body_dict["detail"],
             "Duplicate request submitted, please try again later."
         )
+
+        # The 429 itself must not clear the throttle entry (only
+        # substantive rejections like a 409 do), so a third identical
+        # request is still throttled.
+        third_response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(third_response.status_code, 429)
+
+    @patch('api.geocoding.requests.get')
+    def test_duplicate_throttle_not_bypassed_by_default_query_param(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        # An accepted submission with no query params.
+        first_response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(first_response.status_code, 202)
+
+        # ?ignore_warnings=false is the default and has the same effective
+        # behavior as omitting it, so the identical body must still be
+        # throttled as a duplicate rather than getting a fresh cache key.
+        false_response = self.client.post(
+            f'{self.url}?ignore_warnings=false',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(false_response.status_code, 429)
+
+        # An unrelated query param must not create a fresh cache key either.
+        unrelated_response = self.client.post(
+            f'{self.url}?foo=bar',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(unrelated_response.status_code, 429)
+
+    @patch('api.geocoding.requests.get')
+    def test_duplicate_throttle_allows_true_override_retry(self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        first_response = self.client.post(
+            self.url,
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertEqual(first_response.status_code, 202)
+
+        # A true-valued override flag is a deliberate retry and must remain
+        # a distinct cache key, so it is not blocked by the throttle.
+        override_response = self.client.post(
+            f'{self.url}?ignore_warnings=true',
+            self.common_valid_req_body,
+            content_type='application/json'
+        )
+        self.assertNotEqual(override_response.status_code, 429)
+
+    @patch('api.geocoding.requests.get')
+    def test_rejected_submission_does_not_trigger_duplicate_throttle(
+        self, mock_get
+    ):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        # The quality check only runs for SLC-sourced CREATE submissions.
+        slc_req_body = json.dumps({
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US'
+        })
+        flagged_verdicts = SubmissionQualityVerdicts(
+            name_quality=QualityVerdict(
+                flagged=True, reason='The name looks like test data.'
+            ),
+            address_quality=QualityVerdict(flagged=False, reason=''),
+            address_country_mismatch=QualityVerdict(
+                flagged=False, reason=''
+            ),
+            multiple_locations=QualityVerdict(flagged=False, reason=''),
+        )
+        with patch(
+            'api.moderation_event_actions.creation.location_contribution'
+            '.processors.submission_quality_processor'
+            '.SubmissionQualityService.evaluate',
+            return_value=flagged_verdicts,
+        ):
+            first_response = self.client.post(
+                self.url,
+                slc_req_body,
+                content_type='application/json'
+            )
+            self.assertEqual(first_response.status_code, 409)
+
+            # The rejected attempt created nothing, so an identical retry
+            # (the contributor clicked "Go back and edit" and resubmitted
+            # unchanged data) must reach the quality check again rather
+            # than being blocked by DuplicateThrottle.
+            retry_response = self.client.post(
+                self.url,
+                slc_req_body,
+                content_type='application/json'
+            )
+            self.assertEqual(retry_response.status_code, 409)
+            retry_body_dict = json.loads(retry_response.content)
+            self.assertEqual(
+                retry_body_dict['warnings'][0]['type'], 'name_quality'
+            )
 
     @override_switch('disable_list_uploading', active=True)
     def test_client_cannot_post_when_upload_is_blocked(self):

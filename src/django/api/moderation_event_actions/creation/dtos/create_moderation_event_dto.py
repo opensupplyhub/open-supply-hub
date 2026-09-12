@@ -22,3 +22,5 @@ class CreateModerationEventDTO:
     moderation_event: ModerationEvent = None
     backfilled_fields: List[str] = field(default_factory=list)
     duplicate_override: bool = False
+    ignore_warnings: bool = False
+    warnings: List[Dict] = field(default_factory=list)

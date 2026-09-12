@@ -12,6 +12,9 @@ from api.moderation_event_actions.creation.location_contribution \
 from api.moderation_event_actions.creation.location_contribution \
     .processors.duplicate_submission_processor \
     import DuplicateSubmissionProcessor
+from api.moderation_event_actions.creation.location_contribution \
+    .processors.submission_quality_processor \
+    import SubmissionQualityProcessor
 from api.moderation_event_actions.creation.location_contribution.processors \
     .partner_field_type_processor import PartnerFieldTypeProcessor
 from api.moderation_event_actions.creation.location_contribution \
@@ -46,6 +49,7 @@ class LocationContribution(EventCreationStrategy):
             SourceProcessor(),
             ProductionLocationDataProcessor(),
             DuplicateSubmissionProcessor(),
+            SubmissionQualityProcessor(),
             GeocodingProcessor()
         )
         # Link each processor to the next one.

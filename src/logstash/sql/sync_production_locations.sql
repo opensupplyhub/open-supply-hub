@@ -666,7 +666,64 @@ SELECT
       afc3.updated_at DESC
     LIMIT
       1
-  ) AS claimed_at_value
+  ) AS claimed_at_value,
+  -- Contributor data (OSDEV-1148). Visibility filter mirrors the legacy
+  -- FacilityIndex contributor queries — since OSDEV-3142/0225, that is
+  -- `should_display_associations` in src/django/sqls/0225_index_contributors.sql:
+  -- only ACTIVE, PUBLIC, NON-ANONYMIZED sources with active matches are
+  -- publicly exposable. `NOT is_anonymized` keeps anonymized SLC sources
+  -- (public, but identity-masked) out of the contributor data.
+  (
+    SELECT
+      json_agg(DISTINCT jsonb_build_object('id', ac.id, 'type', ac.contrib_type))::TEXT
+    FROM
+      api_facilitymatch afm
+      JOIN api_facilitylistitem afli2 ON afli2.id = afm.facility_list_item_id
+      JOIN api_source as1 ON as1.id = afli2.source_id
+      JOIN api_contributor ac ON ac.id = as1.contributor_id
+    WHERE
+      afm.facility_id = af.id
+      AND afm.is_active
+      AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
+      AND as1.is_active
+      AND as1.is_public
+      AND NOT as1.is_anonymized
+  ) AS contributors_value,
+  (
+    SELECT
+      COUNT(DISTINCT as1.contributor_id)
+    FROM
+      api_facilitymatch afm
+      JOIN api_facilitylistitem afli2 ON afli2.id = afm.facility_list_item_id
+      JOIN api_source as1 ON as1.id = afli2.source_id
+    WHERE
+      afm.facility_id = af.id
+      AND afm.is_active
+      AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
+      AND as1.is_active
+      AND as1.is_public
+      AND NOT as1.is_anonymized
+  ) AS number_of_contributors,
+  (
+    SELECT
+      json_agg(DISTINCT jsonb_build_object(
+        'id', afl.id,
+        'contributor_id', as1.contributor_id,
+        'name', afl.name
+      ))::TEXT
+    FROM
+      api_facilitymatch afm
+      JOIN api_facilitylistitem afli2 ON afli2.id = afm.facility_list_item_id
+      JOIN api_source as1 ON as1.id = afli2.source_id
+      JOIN api_facilitylist afl ON afl.id = as1.facility_list_id
+    WHERE
+      afm.facility_id = af.id
+      AND afm.is_active
+      AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
+      AND as1.is_active
+      AND as1.is_public
+      AND NOT as1.is_anonymized
+  ) AS lists_value
 FROM
   api_facility af
   LEFT JOIN api_facilityclaim afc ON afc.facility_id = af.id

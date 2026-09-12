@@ -112,6 +112,18 @@ class PartnerField(models.Model):
             "Indicates if this partner field is available in data downloads."
         ),
     )
+    polygon = models.ForeignKey(
+        'Polygon',
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name='partner_fields',
+        help_text=(
+            'For polygon-driven system fields: the boundary whose '
+            'covered locations receive this field. Deleting a polygon '
+            'that a field points at is blocked by the database.'
+        ),
+    )
     group = models.ForeignKey(
         'PartnerFieldGroup',
         on_delete=models.SET_NULL,

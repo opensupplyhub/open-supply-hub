@@ -129,7 +129,7 @@ resource "aws_lb_listener_rule" "cdn_auth" {
   condition {
     http_header {
       http_header_name = "X-CloudFront-Auth"
-      values           = [var.cloudfront_auth_token]
+      values           = [local.cloudfront_auth_token]
     }
   }
 
@@ -153,24 +153,20 @@ data "template_file" "app" {
     image                                         = local.app_image
     postgres_host                                 = aws_route53_record.database.name
     postgres_port                                 = module.database_enc.port
-    postgres_user                                 = var.rds_database_username
-    postgres_password                             = var.rds_database_password
     postgres_db                                   = var.rds_database_name
     gunicorn_workers                              = var.gunicorn_workers
     gunicorn_worker_timeout                       = var.gunicorn_worker_timeout
-    google_server_side_api_key                    = var.google_server_side_api_key
-    google_client_side_api_key                    = var.google_client_side_api_key
-    google_analytics_key                          = var.google_analytics_key
-    rollbar_server_side_access_token              = var.rollbar_server_side_access_token
-    rollbar_client_side_access_token              = var.rollbar_client_side_access_token
-    django_secret_key                             = var.django_secret_key
-    oar_client_key                                = var.oar_client_key
-    external_domain                               = local.domain_name
-    default_from_email                            = var.default_from_email
-    data_from_email                               = var.data_from_email
-    notification_email_to                         = var.notification_email_to
-    hubspot_api_key                               = var.hubspot_api_key
+    google_analytics_key                          = local.google_analytics_key
+    hubspot_api_key                               = local.hubspot_api_key
     hubspot_subscription_id                       = var.hubspot_subscription_id
+    rollbar_server_side_access_token              = local.rollbar_server_side_access_token
+    rollbar_client_side_access_token              = local.rollbar_client_side_access_token
+    stripe_secret_key                             = local.stripe_secret_key
+    stripe_webhook_secret                         = local.stripe_webhook_secret
+    dark_visitors_project_key                     = local.dark_visitors_project_key
+    dark_visitors_token                           = local.dark_visitors_token
+    dromo_license_key                             = local.dromo_license_key
+    external_domain                               = local.domain_name
     app_port                                      = var.app_port
     aws_region                                    = var.aws_region
     project                                       = var.project
@@ -184,7 +180,6 @@ data "template_file" "app" {
     cache_host                                    = aws_route53_record.cache.name
     cache_port                                    = var.ec_memcached_port
     aws_storage_bucket_name                       = local.files_bucket_name
-    claim_from_email                              = var.claim_from_email
     kafka_bootstrap_servers                       = join(",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name                        = var.topic_dedup_basic_name
     opensearch_host                               = aws_opensearch_domain.opensearch.endpoint
@@ -192,14 +187,18 @@ data "template_file" "app" {
     opensearch_ssl                                = var.opensearch_ssl
     opensearch_ssl_cert_verification              = var.opensearch_ssl_cert_verification
     instance_source                               = var.instance_source
-    stripe_secret_key                             = var.stripe_secret_key
     stripe_price_id                               = var.stripe_price_id
-    stripe_webhook_secret                         = var.stripe_webhook_secret
-    dark_visitors_project_key                     = var.dark_visitors_project_key
-    dark_visitors_token                           = var.dark_visitors_token
-    dromo_license_key                             = var.dromo_license_key
     dromo_schema_id                               = var.dromo_schema_id
     memcached_view_cache_timeout_seconds          = var.memcached_view_cache_timeout_seconds
+    rds_master_secret_arn                         = local.rds_master_secret_arn
+    django_secret_key_arn                         = local.django_secret_key_arn
+    default_from_email_arn                        = local.default_from_email_arn
+    data_from_email_arn                           = local.data_from_email_arn
+    notification_email_to_arn                     = local.notification_email_to_arn
+    claim_from_email_arn                          = local.claim_from_email_arn
+    google_server_side_api_key_arn                = local.google_server_side_api_key_arn
+    google_client_side_api_key_arn                = local.google_client_side_api_key_arn
+    oar_client_key_arn                            = local.oar_client_key_arn
   }
 }
 
@@ -223,22 +222,13 @@ data "template_file" "app_cli" {
     image                                         = local.app_image
     postgres_host                                 = aws_route53_record.database.name
     postgres_port                                 = module.database_enc.port
-    postgres_user                                 = var.rds_database_username
-    postgres_password                             = var.rds_database_password
     postgres_db                                   = var.rds_database_name
-    google_server_side_api_key                    = var.google_server_side_api_key
-    google_client_side_api_key                    = var.google_client_side_api_key
-    google_analytics_key                          = var.google_analytics_key
-    rollbar_server_side_access_token              = var.rollbar_server_side_access_token
-    rollbar_client_side_access_token              = var.rollbar_client_side_access_token
-    django_secret_key                             = var.django_secret_key
-    oar_client_key                                = var.oar_client_key
-    external_domain                               = local.domain_name
-    default_from_email                            = var.default_from_email
-    data_from_email                               = var.data_from_email
-    notification_email_to                         = var.notification_email_to
-    hubspot_api_key                               = var.hubspot_api_key
+    google_analytics_key                          = local.google_analytics_key
+    hubspot_api_key                               = local.hubspot_api_key
     hubspot_subscription_id                       = var.hubspot_subscription_id
+    rollbar_server_side_access_token              = local.rollbar_server_side_access_token
+    rollbar_client_side_access_token              = local.rollbar_client_side_access_token
+    external_domain                               = local.domain_name
     app_port                                      = var.app_port
     aws_region                                    = var.aws_region
     project                                       = var.project
@@ -258,6 +248,13 @@ data "template_file" "app_cli" {
     opensearch_ssl                                = var.opensearch_ssl
     opensearch_ssl_cert_verification              = var.opensearch_ssl_cert_verification
     instance_source                               = var.instance_source
+    rds_master_secret_arn                         = local.rds_master_secret_arn
+    django_secret_key_arn                         = local.django_secret_key_arn
+    default_from_email_arn                        = local.default_from_email_arn
+    data_from_email_arn                           = local.data_from_email_arn
+    notification_email_to_arn                     = local.notification_email_to_arn
+    google_server_side_api_key_arn                = local.google_server_side_api_key_arn
+    google_client_side_api_key_arn                = local.google_client_side_api_key_arn
   }
 }
 
@@ -283,8 +280,6 @@ data "template_file" "app_dd" {
     aws_region                       = var.aws_region
     postgres_host                    = aws_route53_record.database.name
     postgres_port                    = module.database_enc.port
-    postgres_user                    = var.rds_database_username
-    postgres_password                = var.rds_database_password
     postgres_db                      = var.rds_database_name
     env                              = "staging"
     git_commit                       = "latest"
@@ -292,12 +287,13 @@ data "template_file" "app_dd" {
     consumer_client_id               = var.consumer_client_id
     bootstrap_servers                = join(",", module.msk_cluster.bootstrap_brokers)
     topic_dedup_basic_name           = var.topic_dedup_basic_name
-    rollbar_server_side_access_token = var.rollbar_server_side_access_token
     security_protocol                = var.security_protocol
     dedupe_hub_live                  = var.dedupe_hub_live
     dedupe_hub_name                  = var.dedupe_hub_name
     dedupe_hub_version               = var.dedupe_hub_version
     instance_source                  = var.instance_source
+    rds_master_secret_arn            = local.rds_master_secret_arn
+    rollbar_server_side_access_token = local.rollbar_server_side_access_token
   }
 }
 
@@ -328,11 +324,10 @@ data "template_file" "app_logstash" {
     opensearch_port                                       = var.opensearch_port
     postgres_host                                         = aws_route53_record.database.name
     postgres_port                                         = module.database_enc.port
-    postgres_user                                         = var.rds_database_username
-    postgres_password                                     = var.rds_database_password
     postgres_db                                           = var.rds_database_name
     production_locations_pipeline_update_interval_minutes = var.production_locations_pipeline_update_interval_minutes
     moderation_events_pipeline_update_interval_minutes    = var.moderation_events_pipeline_update_interval_minutes
+    rds_master_secret_arn                                 = local.rds_master_secret_arn
   }
 }
 

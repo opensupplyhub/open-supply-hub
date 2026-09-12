@@ -1,4 +1,5 @@
 import { createAction } from 'redux-act';
+import { isEmpty } from 'lodash';
 
 import apiRequest from '../util/apiRequest';
 import {
@@ -62,9 +63,25 @@ export const resetPendingModerationEvent = createAction(
     'RESET_PENDING_MODERATION_EVENT',
 );
 
+// Builds the axios config carrying the ?duplicate_override / ?ignore_warnings
+// query params that resubmit past the backend's duplicate and quality
+// checks once the contributor has confirmed the corresponding dialog. Shared
+// by the POST (create) and PATCH (update) flows, since both run the same
+// checks. Returns undefined when neither override is granted so the request
+// is sent with no query string at all.
+const makeCheckOverridesConfig = (duplicateOverride, ignoreWarnings) => {
+    const params = {
+        ...(duplicateOverride ? { duplicate_override: true } : {}),
+        ...(ignoreWarnings ? { ignore_warnings: true } : {}),
+    };
+
+    return isEmpty(params) ? undefined : { params };
+};
+
 export function createProductionLocation(
     contribData,
     duplicateOverride = false,
+    ignoreWarnings = false,
 ) {
     const requestData = parseContribData(contribData);
 
@@ -75,9 +92,7 @@ export function createProductionLocation(
             const { data } = await apiRequest.post(
                 makeProductionLocationURL(),
                 requestData,
-                duplicateOverride
-                    ? { params: { duplicate_override: true } }
-                    : undefined,
+                makeCheckOverridesConfig(duplicateOverride, ignoreWarnings),
             );
             return dispatch(completeCreateProductionLocation(data));
         } catch (err) {
@@ -92,7 +107,12 @@ export function createProductionLocation(
     };
 }
 
-export function updateProductionLocation(contribData, osID) {
+export function updateProductionLocation(
+    contribData,
+    osID,
+    duplicateOverride = false,
+    ignoreWarnings = false,
+) {
     const requestData = parseContribData(contribData);
 
     return async dispatch => {
@@ -102,6 +122,7 @@ export function updateProductionLocation(contribData, osID) {
             const { data } = await apiRequest.patch(
                 makeProductionLocationURL(osID),
                 requestData,
+                makeCheckOverridesConfig(duplicateOverride, ignoreWarnings),
             );
             return dispatch(completeUpdateProductionLocation(data));
         } catch (err) {

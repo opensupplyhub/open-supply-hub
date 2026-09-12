@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { array, bool, func, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
@@ -135,6 +135,7 @@ function FilterSidebarSearchTab({
     partnerContributors,
 }) {
     const filterListHeight = useFilterListHeight();
+    const processingTypeSearchRef = useRef(null);
 
     const extendedFields = [
         contributorTypes,
@@ -161,12 +162,21 @@ function FilterSidebarSearchTab({
         );
     }
 
+    const handleSearchClick = () => {
+        const pendingQueryIsValid = processingTypeSearchRef.current?.commitPendingQuery?.();
+        if (pendingQueryIsValid === false) {
+            return;
+        }
+
+        searchForFacilities(vectorTileFlagIsActive);
+    };
+
     const searchButton = (
         <Button
             variant="contained"
             type="submit"
             className={`${classes.font} ${classes.actionButton}`}
-            onClick={() => searchForFacilities(vectorTileFlagIsActive)}
+            onClick={handleSearchClick}
             disabled={fetchingOptions}
         >
             Search
@@ -223,7 +233,9 @@ function FilterSidebarSearchTab({
                             <></>
                         </FeatureFlag>
                     </ShowOnly>
-                    <FilterSidebarExtendedSearch />
+                    <FilterSidebarExtendedSearch
+                        ref={processingTypeSearchRef}
+                    />
                 </div>
             </div>
 

@@ -12,7 +12,6 @@ __pycache__/
 *.tfstate
 *.tfstate.backup
 .terraform.lock*
-deployment/environments/ci-deployment/*.tfvars
 
 
 # Ansible
@@ -81,6 +80,14 @@ tools/endpoint_comp/reports/*
 deployment/terraform/lambda-functions/**/*.out
 deployment/terraform/lambda-functions/**/src/*
 deployment/terraform/lambda-functions/contribot_*/*.zip
+# Built by each function's Makefile at plan time (deployment/infra) and handed
+# to apply through S3. Committing these is how the alert_* archives went stale:
+# the tracked zips were built by hand from the wrong directory in 2023, so the
+# handler module sat at src/<name>.py instead of the archive root and both
+# functions failed with Runtime.ImportModuleError. Do not commit them again.
+# The two Lambda@Edge archives have no Makefile and stay tracked.
+deployment/terraform/lambda-functions/alert_batch_failures/*.zip
+deployment/terraform/lambda-functions/alert_sfn_failures/*.zip
 !deployment/terraform/lambda-functions/alert_batch_failures/src/alert_batch_failures.py
 !deployment/terraform/lambda-functions/alert_sfn_failures/src/alert_sfn_failures.py
 

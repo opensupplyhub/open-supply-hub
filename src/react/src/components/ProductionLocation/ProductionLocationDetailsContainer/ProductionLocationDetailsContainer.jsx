@@ -42,6 +42,7 @@ function ProductionLocationDetailsContainer({
     data,
     fetching,
     error,
+    requestedOsId,
     contributors,
     useProductionLocationPage,
     embed,
@@ -93,9 +94,7 @@ function ProductionLocationDetailsContainer({
     const requestedId = normalizedOsID || '';
     const loadedId = data?.id || '';
     const isStaleData =
-        requestedId &&
-        loadedId &&
-        requestedId.toLowerCase() !== loadedId.toLowerCase();
+        requestedId && requestedOsId && requestedOsId !== requestedId;
 
     if (fetching || (isStaleData && !error?.length)) {
         return (
@@ -119,9 +118,11 @@ function ProductionLocationDetailsContainer({
         );
     }
 
-    const isSameFacility = requestedId.toLowerCase() === loadedId.toLowerCase();
-    const needsCanonicalRedirect = isSameFacility && requestedId !== loadedId;
-    if (data?.id && needsCanonicalRedirect) {
+    // When redirecting to a facility alias from a merged/deleted facility, or
+    // when URL casing does not match the canonical OS ID, redirect to the
+    // appropriate production location URL. Only redirect once the loaded data
+    // corresponds to the current URL request (see requestedOsId).
+    if (data?.id && requestedOsId === requestedId && requestedId !== loadedId) {
         return (
             <Redirect
                 to={makeFacilityDetailLinkOnRedirect(
@@ -162,7 +163,7 @@ function ProductionLocationDetailsContainer({
 
 const mapStateToProps = ({
     facilities: {
-        singleFacility: { data, fetching, error },
+        singleFacility: { data, fetching, error, requestedOsId },
     },
     filters: { contributors },
     featureFlags,
@@ -172,6 +173,7 @@ const mapStateToProps = ({
     data,
     fetching,
     error,
+    requestedOsId,
     contributors: contributors || [],
     useProductionLocationPage: shouldUseProductionLocationPage(featureFlags),
     embed,

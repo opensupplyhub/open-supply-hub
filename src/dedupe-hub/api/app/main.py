@@ -11,7 +11,7 @@ from random import randint
 from typing import Set, Any
 from fastapi import FastAPI
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-from kafka import TopicPartition
+from aiokafka import TopicPartition
 
 from app.utils.rollbar import init_rollbar
 from app.matching.matcher.gazeteer.gazetteer_cache import GazetteerCache

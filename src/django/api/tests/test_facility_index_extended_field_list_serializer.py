@@ -2,6 +2,7 @@ from django.test import SimpleTestCase
 
 from api.serializers.facility.facility_index_extended_field_list_serializer \
     import FacilityIndexExtendedFieldListSerializer
+from api.constants import MASKED_CONTRIBUTOR_LABEL
 from api.services.masked_contributors import MaskedContributors
 
 
@@ -72,9 +73,12 @@ class IsFromClaimTest(SimpleTestCase):
         self.assertFalse(data['is_from_claim'])
 
     def test_masked_claimant_contribution_is_not_from_claim(self):
-        # A masked (anonymized) contribution must not be linked to the
-        # publicly named claimant by the badge, even when the contributor
-        # ids match.
+        # A masked claimant's contribution is NOT labeled as claim data:
+        # the claimant is publicly named on the profile, so the label would
+        # tie the masked contribution back to them by inference and undo
+        # the masking. This supersedes the earlier OSDEV-3170 review call
+        # (label regardless of masking) — OSDEV-3142 shipped the
+        # suppression on main and the claim-marking surfaces follow it.
         data = serialize_one(
             make_extended_field(),
             context_overrides={
@@ -83,5 +87,20 @@ class IsFromClaimTest(SimpleTestCase):
                     contributor_ids={10},
                 ),
             },
+        )
+        self.assertFalse(data['is_from_claim'])
+        # identity masked as before
+        self.assertEqual(data['contributor_name'], MASKED_CONTRIBUTOR_LABEL)
+        self.assertIsNone(data['contributor_id'])
+
+    def test_anonymized_claimant_contribution_is_not_from_claim(self):
+        # Same rule for source-level anonymization (OSDEV-3142): an
+        # anonymized contribution from the claimant must not carry the
+        # claim label, or the badge would de-anonymize it by inference.
+        field = make_extended_field()
+        field['is_anonymized'] = True
+        data = serialize_one(
+            field,
+            context_overrides={'claimant_contributor_id': 10},
         )
         self.assertFalse(data['is_from_claim'])

@@ -7,7 +7,7 @@ module "database_private_link_consumer" {
   project_identifier                = var.project
   vpc_id                            = module.vpc.id
   subnet_ids                        = module.vpc.private_subnet_ids
-  vpc_endpoint_service_name         = var.database_private_link_vpc_endpoint_service_name
+  vpc_endpoint_service_name         = local.database_private_link_vpc_endpoint_service_name
   db_port                           = module.database_enc.port
   target_consumer_security_group_id = aws_security_group.batch.id
 }

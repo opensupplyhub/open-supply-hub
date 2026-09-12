@@ -1,4 +1,4 @@
-LAMBDA_FUNCTIONS = contribot_fetch_lists contribot_process_list contribot_notify
+LAMBDA_FUNCTIONS = contribot_fetch_lists contribot_process_list contribot_notify contribot_retry_failed_lists
 
 all: $(LAMBDA_FUNCTIONS)
 
