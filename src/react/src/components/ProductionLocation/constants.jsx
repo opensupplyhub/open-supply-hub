@@ -173,7 +173,7 @@ export const DATA_CENTER_FIELD_GROUPS = Object.freeze([
                 key: 'name_tenant',
                 label: 'Tenant',
                 tooltipText:
-                    'The entity that leases or rents out the space at this location.',
+                    'The entity that leases or rents the space at this location.',
             },
             {
                 key: 'name_permit_holder',
