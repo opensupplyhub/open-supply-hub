@@ -193,6 +193,9 @@ class SubmissionQualityService:
                 f'Country: {country_name}'
             )
         except Exception:
+            # This exact message is matched by the CloudWatch metric
+            # filter in deployment/terraform/alarms.tf that alerts on
+            # fail-open outages; change them together.
             logger.exception(
                 'Submission quality check failed; skipping (fail open).'
             )

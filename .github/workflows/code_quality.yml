@@ -505,7 +505,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.13"
       - name: Install ContriBot test dependencies
         run: |
           pip install --require-hashes --only-binary=:all: -r src/contribot/requirements-dev.txt
@@ -554,7 +554,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Run the shellcheck linter check
-        run: shellcheck scripts/*
+        # Files only, and not recursively: `shellcheck scripts/*` fails
+        # outright ("inappropriate type (is a directory)") as soon as any
+        # subdirectory exists under scripts/, which has nothing to do with
+        # the shell scripts being linted. Coverage is unchanged - every
+        # script directly in scripts/ is still checked.
+        run: find scripts -maxdepth 1 -type f -exec shellcheck {} +
 
   run-flake8-linter:
     needs: detect-changes

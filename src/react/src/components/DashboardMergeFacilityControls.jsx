@@ -105,7 +105,9 @@ export default function DashboardMergeFacilityControls({
             {merging && <CircularProgress />}
             {error && (
                 <span style={{ color: 'red' }}>
-                    An error prevented merging those facilities
+                    {error.length
+                        ? error.join(' ')
+                        : 'An error prevented merging those facilities'}
                 </span>
             )}
             <Dialog open={dialogIsOpen}>

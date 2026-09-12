@@ -6,6 +6,7 @@ from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
 )
+from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
 from api.services.facility_processing_filter import FacilityProcessingFilter
@@ -2540,6 +2541,15 @@ class FacilitiesViewSet(ListModelMixin,
 
         target = Facility.objects.get(id=target_id)
         merge = Facility.objects.get(id=merge_id)
+
+        # On the RBA private instance, merging away a publicly-synced record
+        # produces state the one-way sync cannot repair: it recreates that
+        # record on the next run because it still exists publicly. Only the
+        # merged-away record is at risk, so a synced target is fine. Refuse
+        # before any writes. See api/helpers/rba_instance.
+        rejection = merge_rejection_reason(merge)
+        if rejection:
+            raise ValidationError({'detail': rejection})
 
         inactive_match_statuses = (FacilityMatch.PENDING,
                                    FacilityMatch.REJECTED)
