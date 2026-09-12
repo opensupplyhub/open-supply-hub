@@ -8,7 +8,7 @@ import AccountCircleIcon from '@material-ui/icons/AccountCircleOutlined';
 import { submitLogOut } from '../../actions/auth';
 import {
     authLoginFormRoute,
-    mainRoute,
+    mapRoute,
     facilitiesRoute,
 } from '../../util/constants';
 import {
@@ -130,7 +130,7 @@ function mapDispatchToProps(
             dispatch(submitLogOut());
 
             if (
-                pathname !== mainRoute &&
+                pathname !== mapRoute &&
                 !startsWith(pathname, facilitiesRoute)
             ) {
                 push(facilitiesRoute);

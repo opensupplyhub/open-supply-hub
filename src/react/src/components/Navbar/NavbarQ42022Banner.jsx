@@ -21,7 +21,7 @@ export default function NavbarQ42022Banner() {
                 accessible to all, by{' '}
                 <a
                     className="banner-link"
-                    href="https://givebutter.com/opensupplyhub2022"
+                    href="https://info.opensupplyhub.org/resources/donations"
                 >
                     donating to our campaign
                 </a>

@@ -18,7 +18,7 @@ import {
     DEFAULT_COUNTRY_CODE,
     SILVER_MAP_STYLE,
     facilitiesRoute,
-    mainRoute,
+    mapRoute,
 } from '../util/constants';
 
 import { makeFacilityDetailLink, getIsMobile } from '../util/util';
@@ -241,7 +241,7 @@ function mapDispatchToProps(
     { history: { push, replace, location }, match: { params } },
 ) {
     const navigateToFacilities = () => {
-        if (location?.pathname === mainRoute) {
+        if (location?.pathname === mapRoute) {
             replace(`${facilitiesRoute}/${location?.search}`);
         }
         return noop();

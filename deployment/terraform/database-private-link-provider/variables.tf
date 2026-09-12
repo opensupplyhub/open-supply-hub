@@ -27,15 +27,9 @@ variable "db_instance_identifier" {
   type        = string
 }
 
-variable "db_username" {
-  description = "Username for the database"
+variable "rds_master_secret_arn" {
+  description = "ARN of the CLI-owned RDS master Secrets Manager secret (JSON {username,password})"
   type        = string
-}
-
-variable "db_password" {
-  description = "Password for the database"
-  type        = string
-  sensitive   = true
 }
 
 variable "db_port" {

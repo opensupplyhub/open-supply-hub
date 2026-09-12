@@ -21,7 +21,6 @@ const makeClaimInfo = (overrides = {}) => ({
         affiliations: ['Fair Trade'],
         certifications: ['ISO 9001'],
         opening_date: '2010',
-        closing_date: '2020-01',
         estimated_annual_throughput: 20000,
         actual_annual_energy_consumption: null,
         description: 'A sample facility.',
@@ -145,7 +144,6 @@ describe('ClaimDataContainer — field labels and values', () => {
             'Average Lead Time',
             'Percentage of Female Workers',
             'Opening Date',
-            'Closing Date',
             'Estimated Annual Throughput',
             'Industry / Sectors',
             'Location Type(s)',
@@ -270,9 +268,7 @@ describe('ClaimDataContainer — field ordering', () => {
         expect(indexOf('Percentage of Female Workers')).toBeLessThan(
             indexOf('Estimated Annual Throughput'),
         );
-        expect(indexOf('Opening Date')).toBeLessThan(indexOf('Closing Date'));
-
-        expect(indexOf('Closing Date')).toBeLessThan(
+        expect(indexOf('Opening Date')).toBeLessThan(
             indexOf('Industry / Sectors'),
         );
     });
@@ -290,7 +286,6 @@ describe('ClaimDataContainer — field tooltips', () => {
         'Contact Email',
         'Office Phone Number',
         'Opening Date',
-        'Closing Date',
     ])('renders a tooltip icon for the "%s" field', label => {
         const { getByText } = renderComponent();
         expect(hasTooltipIcon(getByText, label)).toBe(true);

@@ -9,7 +9,6 @@ from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.conf import settings
-from django.db import connection
 
 from rest_framework.authentication import get_authorization_header
 from rest_framework.authtoken.models import Token
@@ -18,6 +17,7 @@ from django.http import HttpResponse
 
 from api.models import RequestLog
 from api.limits import get_api_block
+from api.middlewares.utils import is_health_check_request
 from oar.rollbar import report_error_to_rollbar
 
 
@@ -118,26 +118,6 @@ class RequestMeterMiddleware:
         return response
 
 
-class OriginSourceMiddleware:
-    def __init__(self, get_response):
-        self.get_response = get_response
-        self.default_origin_source = getattr(
-            settings,
-            'INSTANCE_SOURCE',
-            'os_hub'
-        )
-
-    def __call__(self, request):
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SET app.origin_source TO %s",
-                [self.default_origin_source]
-            )
-
-        response = self.get_response(request)
-        return response
-
-
 class DarkVisitorsMiddleware:
     """
     Middleware to log visits to the Dark Visitors API.
@@ -155,6 +135,9 @@ class DarkVisitorsMiddleware:
 
     def __call__(self, request):
         response = self.get_response(request)
+
+        if is_health_check_request(request):
+            return response
 
         if self.TOKEN:
             allowed_headers = ['user-agent', 'referer', 'host']

@@ -31,10 +31,12 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     postgresql-server-dev-16
 
-# Download the PostGIS source archive, build and install the PostGIS package.
+# Download the PostGIS source archive, apply the upstream GDAL 3.13
+# compatibility fix, then build and install the PostGIS package.
 RUN wget https://download.osgeo.org/postgis/source/postgis-3.4.2.tar.gz && \
     tar -xvzf postgis-3.4.2.tar.gz &&  \
     cd /postgis-3.4.2 && \
+    sed -i 's/num_bands = MIN(/num_bands = Min(/' raster/rt_pg/rtpg_geometry.c && \
     ./configure && \
     make && \
     make install && \

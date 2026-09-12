@@ -1,6 +1,9 @@
 from unittest.mock import Mock, patch
 
-from api.geocoding import geocode_address
+from api.geocoding import (
+    GEOCODING_REQUEST_TIMEOUT_SECONDS,
+    geocode_address,
+)
 from api.tests.test_data import (
     geocoding_data,
     geocoding_data_no_country,
@@ -21,6 +24,18 @@ class GeocodingTest(TestCase):
         self.assertIn("geocoded_point", geocoded_data)
         self.assertIn("lat", geocoded_data["geocoded_point"])
         self.assertIn("lng", geocoded_data["geocoded_point"])
+
+    @patch("api.geocoding.requests.get")
+    def test_geocode_request_has_a_timeout(self, mock_get):
+        mock_get.return_value = Mock(ok=True, status_code=200)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        geocode_address("990 Spring Garden St, Philly", "US")
+
+        self.assertEqual(
+            mock_get.call_args.kwargs["timeout"],
+            GEOCODING_REQUEST_TIMEOUT_SECONDS
+        )
 
     @patch("api.geocoding.requests.get")
     def test_ungeocodable_address_returns_zero_resusts(self, mock_get):

@@ -23,7 +23,6 @@ import {
     updateClaimAFacilityUploadFiles,
     updateClaimAFacilityBusinessUploadFiles,
     updateClaimOpeningDate,
-    updateClaimClosingDate,
     updateClaimEstimatedAnnualThroughput,
     updateClaimEnergyCoal,
     updateClaimEnergyNaturalGas,
@@ -60,7 +59,6 @@ const setFormField = key => (state, payload) =>
 
 const FREE_EMISSIONS_FIELDS = [
     [updateClaimOpeningDate, 'openingDate'],
-    [updateClaimClosingDate, 'closingDate'],
     [updateClaimEstimatedAnnualThroughput, 'estimatedAnnualThroughput'],
     [updateClaimEnergyCoal, 'energyCoal'],
     [updateClaimEnergyNaturalGas, 'energyNaturalGas'],
@@ -105,7 +103,6 @@ const initialState = Object.freeze({
             agreement: 'no',
             // Free Emissions Estimate fields
             openingDate: '',
-            closingDate: '',
             estimatedAnnualThroughput: '',
             energyCoal: '',
             energyNaturalGas: '',

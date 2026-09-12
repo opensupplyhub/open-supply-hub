@@ -95,7 +95,8 @@ class FacilityMatch(models.Model):
     def should_display_association(self):
         return (self.is_active
                 and self.facility_list_item.source.is_active
-                and self.facility_list_item.source.is_public)
+                and self.facility_list_item.source.is_public
+                and not self.facility_list_item.source.is_anonymized)
 
     def __str__(self):
         return f'{self.facility_list_item} - {self.facility} - {self.status}'

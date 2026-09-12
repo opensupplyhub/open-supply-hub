@@ -37,10 +37,42 @@ variable "r53_private_hosted_zone" {
 variable "r53_public_hosted_zone" {
 }
 
+# Route 53 query logging ownership. A public hosted zone can hold only one query
+# logging configuration, and several environments point at the same zone inside
+# one AWS account, so exactly one environment must opt in per zone. See the
+# ownership table in route53_query_logging.tf.
+variable "route53_query_logging_enabled" {
+  description = "Whether this environment owns, and therefore creates, the Route 53 query logging configuration for the zone named by r53_public_hosted_zone."
+  type        = bool
+  default     = false
+}
+
+variable "route53_query_log_extra_zones" {
+  description = "Additional public hosted zone names whose Route 53 query logging configuration this environment owns. For zones that are not any environment's r53_public_hosted_zone, such as openapparel.org."
+  type        = list(string)
+  default     = []
+}
+
+variable "route53_query_log_retention_days" {
+  description = "Retention, in days, of the CloudWatch Logs log groups that receive Route 53 public hosted zone DNS query logs."
+  type        = number
+  default     = 365
+
+  validation {
+    condition = contains(
+      [0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653],
+      var.route53_query_log_retention_days
+    )
+    error_message = "route53_query_log_retention_days must be a retention period CloudWatch Logs accepts (0 for never expire, or 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653)."
+  }
+}
+
 variable "cloudfront_price_class" {
 }
 
 variable "cloudfront_auth_token" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -145,6 +177,8 @@ variable "vpc_cidr_block" {
 }
 
 variable "external_access_cidr_blocks" {
+  type      = list(string)
+  default   = []
   sensitive = true
 }
 
@@ -182,6 +216,14 @@ variable "rds_storage_type" {
   default = "gp2"
 }
 
+variable "rds_iops" {
+  # Required by AWS when rds_storage_type is "gp3" and allocated storage is at
+  # or above the striping threshold (>= 400 GiB for PostgreSQL), where the valid
+  # range is 12000-64000 and the 12000 baseline is included at no extra cost.
+  # Leave at 0 for gp2, where IOPS scale automatically with storage size.
+  default = 0
+}
+
 variable "rds_database_identifier" {
 }
 
@@ -190,10 +232,14 @@ variable "rds_database_name" {
 }
 
 variable "rds_database_username" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "rds_database_password" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -282,6 +328,44 @@ variable "rds_log_autovacuum_min_duration" {
   default = "250"
 }
 
+variable "rds_shared_preload_libraries" {
+  description = "Comma-separated libraries loaded at PostgreSQL server start. Must include pgaudit so that database activity auditing is available (SOC 2). Static parameter: an instance reboot is required for changes to take effect."
+  type        = string
+  default     = "pg_stat_statements,pgaudit"
+
+  validation {
+    condition     = contains([for library in split(",", lower(replace(var.rds_shared_preload_libraries, " ", ""))) : library], "pgaudit")
+    error_message = "rds_shared_preload_libraries must include pgaudit. Database activity auditing is a SOC 2 requirement (OSDEV-2997) and pgaudit only loads at server start."
+  }
+
+  validation {
+    condition     = contains([for library in split(",", lower(replace(var.rds_shared_preload_libraries, " ", ""))) : library], "pg_stat_statements")
+    error_message = "rds_shared_preload_libraries must include pg_stat_statements. Setting this parameter in a custom parameter group replaces the postgres16 family default outright, so dropping it from the list disables query statistics silently rather than raising an error."
+  }
+}
+
+variable "rds_pgaudit_log" {
+  description = "Comma-separated classes of SQL statements recorded by pgaudit. Classes: none, all, ddl, function, misc, misc_set, read, role, write; a class can be subtracted by prefixing it with '-' (e.g. \"all,-misc\"). Deliberately \"none\" for phase 1 of the staged rollout: CREATE EXTENSION pgaudit has to land before this is set, or DDL records are written without object type or object name. OSDEV-3236 flips it to \"ddl,role\". See doc/ops/database-auditing.md."
+  type        = string
+  default     = "none"
+
+  validation {
+    condition = alltrue([
+      for class in split(",", lower(replace(var.rds_pgaudit_log, " ", ""))) :
+      contains([
+        "none", "all", "ddl", "function", "misc", "misc_set", "read", "role", "write",
+        "-all", "-ddl", "-function", "-misc", "-misc_set", "-read", "-role", "-write"
+      ], class)
+    ])
+    error_message = "rds_pgaudit_log accepts only the pgaudit classes none, all, ddl, function, misc, misc_set, read, role and write, optionally prefixed with '-' to subtract. An unsupported class makes pgaudit raise an error at session start."
+  }
+
+  validation {
+    condition     = !contains([for class in split(",", lower(replace(var.rds_pgaudit_log, " ", ""))) : class], "none") || lower(replace(var.rds_pgaudit_log, " ", "")) == "none"
+    error_message = "rds_pgaudit_log cannot combine \"none\" with other classes. Use \"none\" on its own to disable session auditing during the first phase of the staged rollout."
+  }
+}
+
 variable "rds_cpu_threshold_percent" {
   default = "75"
 }
@@ -291,15 +375,22 @@ variable "rds_disk_queue_threshold" {
 }
 
 variable "rds_free_disk_threshold_bytes" {
-  default = "5000000000"
+  description = "FreeStorageSpace below which SNS pages (~10% of rds_allocated_storage; set per env in deployment/environments)"
+  default     = "5000000000"
 }
 
 variable "rds_free_memory_threshold_bytes" {
-  default = "128000000"
+  description = "FreeableMemory below which SNS pages (~5% of instance RAM; set per env in deployment/environments)"
+  default     = "128000000"
 }
 
 variable "rds_cpu_credit_balance_threshold" {
   default = "30"
+}
+
+variable "rds_database_connections_alarm_threshold" {
+  description = "Average DatabaseConnections above which SNS pages (~80% of instance max_connections; set per env in deployment/environments)"
+  default     = "90"
 }
 
 variable "rds_work_mem" {
@@ -381,40 +472,61 @@ variable "gunicorn_worker_timeout" {
   default = "180"
 }
 
+variable "gunicorn_workers" {
+  default = "1"
+}
+
 variable "google_server_side_api_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "google_client_side_api_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "google_analytics_key" {
+  type      = string
   default   = ""
   sensitive = true
 }
 
 variable "rollbar_server_side_access_token" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "rollbar_client_side_access_token" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "django_secret_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "default_from_email" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "data_from_email" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
 variable "notification_email_to" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -583,6 +695,8 @@ variable "aws_lambda_service_role_policy_arn" {
 }
 
 variable "oar_client_key" {
+  type      = string
+  default   = ""
   sensitive = true
 }
 
@@ -627,7 +741,8 @@ variable "ec_memcached_alarm_cpu_threshold_percent" {
 }
 
 variable "ec_memcached_alarm_memory_threshold_bytes" {
-  default = "10000000"
+  description = "FreeableMemory below which SNS pages (~16% of cache.t3.medium RAM / 500 MB; shared across envs)"
+  default     = "500000000"
 }
 
 variable "ec_memcached_max_item_size" {
@@ -669,7 +784,9 @@ variable "security_protocol" {
 }
 
 variable "claim_from_email" {
-  default = "claims@opensupplyhub.org"
+  type      = string
+  default   = ""
+  sensitive = true
 }
 
 variable "dedupe_hub_live" {
@@ -804,6 +921,41 @@ variable "anonymized_database_password" {
   sensitive = true
 }
 
+variable "codebuild_github_runner_enabled" {
+  description = "Toggle to enable the CodeBuild project acting as an ephemeral GitHub Actions runner"
+  type        = bool
+  default     = false
+}
+
+variable "codebuild_github_runner_project_name" {
+  description = "CodeBuild project name; workflows reference it as runs-on: codebuild-<name>-.... Must stay in sync with the runs-on labels in .github/workflows."
+  type        = string
+  default     = "osh-github-actions-runner"
+}
+
+variable "codebuild_github_runner_repository_url" {
+  type    = string
+  default = "https://github.com/opensupplyhub/open-supply-hub.git"
+}
+
+variable "codebuild_github_runner_connection_arn" {
+  description = "ARN of the manually created CodeConnections connection to the opensupplyhub GitHub org"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "codebuild_github_runner_compute_type" {
+  type    = string
+  default = "BUILD_GENERAL1_LARGE"
+}
+
+variable "codebuild_github_runner_build_timeout" {
+  description = "Build timeout in minutes for runner jobs (DB dump/restore run 85-150 minutes)"
+  type        = number
+  default     = 300
+}
+
 variable "export_csv_enabled" {
   description = "Toggle to enable or disable the export csv scheduled job"
   type        = bool
@@ -818,6 +970,7 @@ variable "export_csv_schedule_expression" {
 
 variable "google_service_account_creds_base64" {
   type        = string
+  default     = ""
   sensitive   = true
   description = "Base64-encoded Google service account key"
 }
@@ -924,17 +1077,35 @@ variable "enable_legacy_info_site_redirect" {
   default = false
 }
 
+variable "enable_homepage_proxy" {
+  type        = bool
+  default     = false
+  description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage."
+}
+
+variable "craft_cms_origin_domain" {
+  type        = string
+  default     = ""
+  description = "Hostname of the Craft CMS origin (Servd) used when enable_homepage_proxy is true. Set per-environment in tfvars (e.g. open-supply.staging.servd.dev)."
+  validation {
+    condition     = !var.enable_homepage_proxy || trimspace(var.craft_cms_origin_domain) != ""
+    error_message = "craft_cms_origin_domain must be set when enable_homepage_proxy is true."
+  }
+}
+
 
 # Stripe variables
 
 variable "stripe_secret_key" {
   type        = string
+  default     = ""
   sensitive   = true
   description = "Stripe secret key for payment processing"
 }
 
 variable "stripe_webhook_secret" {
   type        = string
+  default     = ""
   sensitive   = true
   description = "Stripe webhook secret for payment processing"
 }
@@ -949,26 +1120,29 @@ variable "stripe_price_id" {
 
 variable "dark_visitors_project_key" {
   type        = string
+  default     = ""
   description = "Dark Visitors project key"
   sensitive   = true
 }
 
 variable "dark_visitors_token" {
   type        = string
+  default     = ""
   description = "Dark Visitors token"
   sensitive   = true
 }
 
 variable "dromo_license_key" {
   type        = string
+  default     = ""
   description = "Dromo license key for data management"
   sensitive   = true
 }
 
 variable "dromo_schema_id" {
   type        = string
+  default     = ""
   description = "Dromo schema ID for data management"
-  sensitive   = true
 }
 
 # VPN EC2 variables
@@ -1057,4 +1231,337 @@ variable "database_private_link_vpc_endpoint_service_name" {
   sensitive   = true
   description = "The name of the VPC endpoint service in the provider VPC"
   default     = ""
+}
+
+# AWS Chatbot → Slack (CloudWatch alarms on aws_sns_topic.global).
+# One Slack channel may have only one Chatbot config per AWS account. See doc/ops/monitoring.md.
+
+variable "aws_chatbot_manage_channel_configuration" {
+  type        = bool
+  description = "If true, this env creates/updates the Chatbot Slack channel config (and IAM role). Set false for sibling envs that share the same AWS account and Slack channel."
+  default     = true
+}
+
+variable "aws_chatbot_additional_sns_topic_arns" {
+  type        = list(string)
+  description = "Extra SNS topic ARNs to attach to this env's Chatbot channel config (sibling envs in the same AWS account). Prefer aws_chatbot_additional_sns_topic_arns_secret_name (SM JSON list); this direct var is the fallback when the secret name is omitted. Leave empty until sibling topics exist."
+  sensitive   = true
+  default     = []
+}
+
+variable "aws_chatbot_slack_config_secret_name" {
+  type        = string
+  description = "SM secret name for Chatbot Slack IDs as JSON {\"team_id\":\"…\",\"channel_id\":\"…\"}. Required when aws_chatbot_manage_channel_configuration is true."
+  default     = ""
+
+  validation {
+    condition     = !var.aws_chatbot_manage_channel_configuration || var.aws_chatbot_slack_config_secret_name != ""
+    error_message = "When aws_chatbot_manage_channel_configuration is true, set aws_chatbot_slack_config_secret_name."
+  }
+}
+
+# ContriBot variables
+
+variable "contribot_monday_board_id" {
+  type        = string
+  description = "ID of the Monday board where ContriBot posts updates."
+  default     = ""
+}
+
+variable "contribot_google_drive_shared_directory_id" {
+  type        = string
+  description = "Google Drive folder ID where ContriBot uploads ContriCleaner reports."
+  default     = ""
+}
+
+variable "contribot_schedule_expression" {
+  type        = string
+  description = "Schedule expression for the ContriBot Step Functions workflow."
+  default     = "rate(5 minutes)"
+}
+
+variable "contribot_last_list_id" {
+  type        = string
+  description = "Initial fetch_lists resume watermark when the DynamoDB cursor item is missing or invalid."
+  default     = "NaN"
+}
+
+variable "contribot_max_attempts" {
+  type        = number
+  description = "Maximum process_list attempts before a FAILED facility list is left for ops follow-up."
+  default     = 3
+
+  validation {
+    condition     = var.contribot_max_attempts >= 1 && floor(var.contribot_max_attempts) == var.contribot_max_attempts
+    error_message = "contribot_max_attempts must be a positive integer."
+  }
+}
+
+variable "bedrock_submission_quality_region" {
+  type        = string
+  description = "Region of the Bedrock inference profiles the SLC submission quality check may invoke. Must match the app's BEDROCK_AWS_REGION."
+  default     = "eu-west-1"
+}
+
+variable "bedrock_submission_quality_inference_profiles" {
+  type        = list(string)
+  description = "Bedrock inference profile IDs the SLC submission quality check may invoke. The active one is selected by the app's BEDROCK_SUBMISSION_QUALITY_MODEL_ID env var; keep the two in sync."
+  default     = ["eu.anthropic.claude-haiku-4-5-20251001-v1:0"]
+}
+
+variable "bedrock_submission_quality_foundation_models" {
+  type        = list(string)
+  description = "Foundation model IDs underlying the inference profiles above. Granted region-wildcarded because cross-region profiles route across regions."
+  default     = ["anthropic.claude-haiku-4-5-20251001-v1:0"]
+}
+
+variable "bedrock_invocations_alarm_hourly_threshold" {
+  type        = number
+  description = "Hourly sum of Bedrock Invocations above which the runaway alarm fires. Organic SLC submission-quality volume is a handful of calls per day, so keep this orders of magnitude above real traffic; it exists to catch retry loops and scripted abuse within the hour."
+  default     = 100
+}
+
+variable "manage_bedrock_cost_budget" {
+  type        = bool
+  description = "Whether this environment creates the account-level AWS Budget for Bedrock spend. Budgets are account-wide: set true in exactly one environment per AWS account, like aws_chatbot_manage_channel_configuration."
+  default     = false
+}
+
+variable "bedrock_cost_budget_monthly_limit_usd" {
+  type        = string
+  description = "Monthly USD limit for the Bedrock cost budget. Alerts at 80% actual and 100% forecasted spend via the global SNS topic (Slack)."
+  default     = "25"
+}
+
+variable "lambda_errors_alarm_threshold" {
+  type        = number
+  description = "Sum of AWS/Lambda Errors over 5 minutes, across all functions in the environment's region, above which the alarm pages Slack. Defaults to 0 so any single Lambda error is surfaced; raise it per environment only if a known-noisy function makes that impractical."
+  default     = 0
+}
+
+# ---------------------------------------------------------------------------
+# AWS Secrets Manager secret names (public tfvars). Values are CLI-owned in SM.
+# When a name is set, Terraform resolves ARN/value via data sources in secrets.tf.
+# ---------------------------------------------------------------------------
+
+variable "rds_master_secret_name" {
+  type        = string
+  default     = ""
+  description = "SM secret name for RDS master credentials JSON {username,password}."
+}
+
+variable "django_secret_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "cloudfront_auth_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "default_from_email_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "data_from_email_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "notification_email_to_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "claim_from_email_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_server_side_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_client_side_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_analytics_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "google_service_account_creds_base64_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "rollbar_server_side_access_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "rollbar_client_side_access_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "oar_client_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "hubspot_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "stripe_secret_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "stripe_webhook_secret_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "dark_visitors_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "dark_visitors_project_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "dromo_license_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "external_access_cidr_blocks_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "ip_denylist_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "ip_whitelist_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_name_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_username_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_password_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymized_database_kms_key_id_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "codebuild_github_runner_connection_secret_name" {
+  description = "SM secret name for the CodeConnections ARN (plain string). When set, overrides codebuild_github_runner_connection_arn. Test uses oshub/test/codebuild-github-runner-connection."
+  type        = string
+  default     = ""
+}
+
+variable "aws_chatbot_additional_sns_topic_arns_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "vanta_assumed_role_external_ids_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "vanta_assumed_role_principals_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymizer_destination_aws_account_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "anonymizer_kms_key_admin_users_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_name_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_user_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_password_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "source_db_port_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "database_private_link_vpc_endpoint_service_name_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "email_anonymization_secret_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_os_hub_api_token_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_monday_api_key_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_slack_api_url_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_slack_failures_api_url_secret_name" {
+  type    = string
+  default = ""
+}
+
+variable "contribot_google_drive_service_key_secret_name" {
+  type    = string
+  default = ""
 }

@@ -8,24 +8,21 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 const mockUpdateModerationEvent = jest.fn();
 const mockCloseDialog = jest.fn();
 
-jest.mock("react-draft-wysiwyg", () => {
-    // eslint-disable-next-line global-require
-    const { EditorState, ContentState } = require("draft-js");
-    return {
-        Editor: ({ editorState, onEditorStateChange }) => (
-            <textarea
-                data-testid="fake-editor"
-                value={editorState.getCurrentContent().getPlainText()}
-                onChange={(e) => {
-                    const newState = EditorState.createWithContent(
-                        ContentState.createFromText(e.target.value),
-                    );
-                    onEditorStateChange(newState);
-                }}
-            />
-        ),
-    };
-});
+jest.mock('react-quill-new', () => ({ value, onChange }) => (
+    <textarea
+        data-testid="fake-editor"
+        value={value.replace(/<\/?p>/g, '').replace(/&nbsp;/g, ' ')}
+        onChange={(e) => {
+            const text = e.target.value;
+            // Mimic Quill's getSemanticHTML(), which encodes every
+            // space as &nbsp; in the emitted HTML.
+            const html = `<p>${text.replace(/ /g, '&nbsp;')}</p>`;
+            onChange(html, null, 'user', {
+                getText: () => `${text}\n`,
+            });
+        }}
+    />
+));
 
 jest.mock('@material-ui/core/Tooltip', () => ({ children, title, open, onOpen, onClose }) => (
     <div
@@ -100,9 +97,31 @@ describe('RejectModerationEventDialog component', () => {
         expect(mockUpdateModerationEvent).toHaveBeenCalledWith(
             MODERATION_STATUSES_ENUM.REJECTED,
             validText,
-            `<p>${validText}</p>\n`,
+            `<p>${validText}</p>`,
         );
         expect(mockCloseDialog).toHaveBeenCalledTimes(1);
+    });
+
+    test('decodes quill &nbsp; space encoding in the submitted HTML', () => {
+        const { getByRole, getByTestId } = renderWithProviders(
+            <RejectModerationEventDialog {...defaultProps} />
+        );
+        const fakeEditor = getByTestId('fake-editor');
+        const textWithSpaces = 'just a few fixes are needed before we accept';
+
+        fireEvent.change(fakeEditor, { target: { value: textWithSpaces } });
+
+        // Typing spaces must not be swallowed by the value round-trip.
+        expect(fakeEditor).toHaveValue(textWithSpaces);
+
+        fireEvent.click(getByRole('button', { name: /Reject/i }));
+
+        // The submitted HTML uses regular spaces, not &nbsp;.
+        expect(mockUpdateModerationEvent).toHaveBeenCalledWith(
+            MODERATION_STATUSES_ENUM.REJECTED,
+            textWithSpaces,
+            `<p>${textWithSpaces}</p>`,
+        );
     });
 
     test('displays tooltip on hover when reject button is disabled', () => {

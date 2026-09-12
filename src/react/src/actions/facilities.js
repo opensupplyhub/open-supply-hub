@@ -39,6 +39,8 @@ export const completeFetchSingleFacility = createAction(
 );
 export const resetSingleFacility = createAction('RESET_SINGLE_FACILITY');
 
+let nextSingleFacilityRequestToken = 0;
+
 export function fetchFacilities({
     pageSize = FACILITIES_REQUEST_PAGE_SIZE,
     pushNewRoute = noop,
@@ -152,8 +154,10 @@ export function fetchSingleFacility(
     contributors = null,
     useCreatedAtForDataPoints = false,
 ) {
-    return dispatch => {
-        dispatch(startFetchSingleFacility());
+    return (dispatch, getState) => {
+        nextSingleFacilityRequestToken += 1;
+        const requestToken = nextSingleFacilityRequestToken;
+        dispatch(startFetchSingleFacility({ osID, requestToken }));
 
         if (!osID) {
             return dispatch(
@@ -174,17 +178,28 @@ export function fetchSingleFacility(
               )
             : makeGetFacilityByOSIdURL(osID, useCreatedAtForDataPoints);
 
+        const isCurrentRequest = () =>
+            getState().facilities.singleFacility.requestToken === requestToken;
+
         return apiRequest
             .get(fetchUrl)
-            .then(({ data }) => dispatch(completeFetchSingleFacility(data)))
-            .catch(err =>
+            .then(({ data }) => {
+                if (!isCurrentRequest()) {
+                    return;
+                }
+                dispatch(completeFetchSingleFacility(data));
+            })
+            .catch(err => {
+                if (!isCurrentRequest()) {
+                    return;
+                }
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching that facility',
                         failFetchSingleFacility,
                     ),
-                ),
-            );
+                );
+            });
     };
 }

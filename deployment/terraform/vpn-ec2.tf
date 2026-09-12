@@ -97,7 +97,7 @@ resource "aws_security_group" "vpn_sg" {
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    cidr_blocks     = var.external_access_cidr_blocks
+    cidr_blocks     = local.external_access_cidr_blocks
     security_groups = [module.vpc.bastion_security_group_id]
     description     = "SSH access to EC2 instance"
   }

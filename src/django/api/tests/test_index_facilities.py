@@ -1,4 +1,6 @@
 import json
+from datetime import date
+
 from api.constants import FacilityClaimStatuses
 from api.models import FacilityClaim
 from api.models.facility.facility_index import FacilityIndex
@@ -134,6 +136,22 @@ class IndexFacilitiesTest(FacilityAPITestCaseBase):
             expected_production_types,
             facility_production_types_processed
         )
+
+    def test_approved_claim_indexes_do_not_expose_closing_date(self):
+        FacilityClaim.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            status=FacilityClaimStatuses.APPROVED,
+            opening_date=date(2020, 1, 1),
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+
+        self.assertNotIn(
+            "closing_date",
+            facility_index.claim_info["facility"],
+        )
+        self.assertNotIn("closing_date", facility_index.approved_claim)
 
     def test_create_extendedfields_for_claim_syncs_claim_type_fields(self):
         claim = FacilityClaim.objects.create(

@@ -13,7 +13,7 @@ import DialogActions from '@material-ui/core/DialogActions';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import { getSelectStyles } from '../../../../../util/util';
-import { mainRoute } from '../../../../../util/constants';
+import { mapRoute } from '../../../../../util/constants';
 import eligibilityStepStyles from './styles';
 import RELATIONSHIP_OPTIONS from './constants';
 import InputErrorText from '../../../../Contribute/InputErrorText';
@@ -52,7 +52,7 @@ const EligibilityStep = ({
     };
 
     const handleGoToMainPage = () => {
-        history.push(mainRoute);
+        history.push(mapRoute);
     };
 
     return (

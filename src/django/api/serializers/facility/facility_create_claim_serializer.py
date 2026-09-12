@@ -74,19 +74,6 @@ def validate_non_future_date(value):
     return value
 
 
-def validate_date_range(opening_date, closing_date):
-    '''Validate that opening date is before or equal to closing date.'''
-    if opening_date and closing_date and opening_date > closing_date:
-        raise DRFValidationError({
-            'opening_date': (
-                'Opening date must be before or equal to closing date.'
-            ),
-            'closing_date': (
-                'Closing date must be after or equal to opening date.'
-            )
-        })
-
-
 class FacilityCreateClaimSerializer(serializers.Serializer):
     your_name = serializers.CharField(
         max_length=200,
@@ -150,10 +137,6 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         validators=[validate_files]
     )
     opening_date = serializers.DateField(
-        required=False,
-        validators=[validate_non_future_date]
-    )
-    closing_date = serializers.DateField(
         required=False,
         validators=[validate_non_future_date]
     )
@@ -339,11 +322,5 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
             raise BadRequestException(
                 "There is already an approved claim on this facility."
             )
-
-        # Validate date relationships for free emissions estimate.
-        validate_date_range(
-            data.get('opening_date'),
-            data.get('closing_date')
-        )
 
         return data

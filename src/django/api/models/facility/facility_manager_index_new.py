@@ -2,7 +2,6 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
 from django.db.models import Q
 
-from api.facility_type_processing_type import get_facility_and_processing_type
 from api.constants import FacilitiesQueryParams
 from api.helpers.helpers import (
     clean,
@@ -11,10 +10,16 @@ from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
+from api.services.facility_processing_filter import FacilityProcessingFilter
+from api.services.facility_processing_query import FacilityProcessingQuery
 
 
 class FacilityIndexNewManager(models.Manager):
-    def filter_by_query_params(self, params):
+    def filter_by_query_params(
+        self,
+        params,
+        facility_processing_filter=None,
+    ):
         """
         Create a Facility queryset filtered by a list of request query params.
 
@@ -22,6 +27,9 @@ class FacilityIndexNewManager(models.Manager):
         self (queryset) -- A queryset on the Facility model
         params (dict) -- Request query parameters whose potential choices are
                         enumerated in `api.constants.FacilitiesQueryParams`.
+        facility_processing_filter (FacilityProcessingFilter) -- Optional
+                        preclassified filter reused by callers that also
+                        annotate relevance.
 
         Returns:
         A queryset on the Facility model
@@ -55,11 +63,12 @@ class FacilityIndexNewManager(models.Manager):
 
         parent_companies = params.getlist(FacilitiesQueryParams.PARENT_COMPANY)
 
-        facility_types = params.getlist(FacilitiesQueryParams.FACILITY_TYPE)
-
-        processing_types = params.getlist(
-            FacilitiesQueryParams.PROCESSING_TYPE
-        )
+        if facility_processing_filter is None:
+            facility_processing_filter = (
+                FacilityProcessingFilter.from_result(
+                    FacilityProcessingQuery(params).parse()
+                )
+            )
 
         product_types = params.getlist(FacilitiesQueryParams.PRODUCT_TYPE)
 
@@ -157,29 +166,11 @@ class FacilityIndexNewManager(models.Manager):
                     Q(parent_company_name__overlap=parent_company_name)
                 )
 
-        if len(facility_types):
-            standard_facility_types = []
-            for facility_type in facility_types:
-                standard_type = get_facility_and_processing_type(
-                    facility_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_facility_types.append(standard_type[2])
-            facilities_qs = facilities_qs.filter(
-                facility_type__overlap=standard_facility_types
-            )
-
-        if len(processing_types):
-            standard_processing_types = []
-            for processing_type in processing_types:
-                standard_type = get_facility_and_processing_type(
-                    processing_type, ['Apparel']
-                )
-                if standard_type[0] is not None:
-                    standard_processing_types.append(standard_type[3])
-            facilities_qs = facilities_qs.filter(
-                processing_type__overlap=standard_processing_types
-            )
+        facilities_qs, has_fp_filter = (
+            facility_processing_filter.annotate_match(facilities_qs)
+        )
+        if has_fp_filter:
+            facilities_qs = facilities_qs.filter(_fp_match=True)
 
         if len(product_types):
             clean_product_types = []

@@ -18,6 +18,7 @@ import DashboardLinkToOsId from './DashboardLinkToOsId';
 import DashboardGeocoder from './DashboardGeocoder';
 import DashboardModerationQueue from './Dashboard/DashboardModerationQueue';
 import DashboardContributionRecord from './Dashboard/DashboardContributionRecord';
+import ClaimsV2Dashboard from './ClaimsV2/ClaimsV2Dashboard';
 import FeatureFlag from './FeatureFlag';
 import RouteNotFound from './RouteNotFound';
 import RequireAuthNotice from './RequireAuthNotice';
@@ -26,9 +27,11 @@ import { checkWhetherUserHasDashboardAccess } from '../util/util';
 
 import {
     CLAIM_A_FACILITY,
+    ENABLE_CLAIMS_V2_DASHBOARD,
     dashboardRoute,
     dashboardListsRoute,
     dashboardClaimsRoute,
+    dashboardClaimsV2Route,
     dashboardClaimsDetailsRoute,
     dashboardDeleteFacilityRoute,
     dashboardMergeFacilitiesRoute,
@@ -109,6 +112,11 @@ function Dashboard({
             <FeatureFlag flag={CLAIM_A_FACILITY}>
                 <Link to={dashboardClaimsRoute}>View Facility Claims</Link>
             </FeatureFlag>
+            <FeatureFlag flag={ENABLE_CLAIMS_V2_DASHBOARD}>
+                <Link to={dashboardClaimsV2Route}>
+                    Claims Moderation v2 (beta)
+                </Link>
+            </FeatureFlag>
             <Link to={dashboardDeleteFacilityRoute}>Delete a Facility</Link>
             <Link to={dashboardMergeFacilitiesRoute}>Merge Two Facilities</Link>
             <Link to={dashboardModerationQueueRoute}>Moderation Queue</Link>
@@ -166,6 +174,20 @@ function Dashboard({
                                 >
                                     {makeClickableDashboardLinkFn(
                                         'Facility Claims',
+                                    )()}
+                                </FeatureFlag>
+                            )}
+                        />
+                        <Route
+                            exact
+                            path={dashboardClaimsV2Route}
+                            render={() => (
+                                <FeatureFlag
+                                    flag={ENABLE_CLAIMS_V2_DASHBOARD}
+                                    alternative={TITLE}
+                                >
+                                    {makeClickableDashboardLinkFn(
+                                        'Claims Moderation v2',
                                     )()}
                                 </FeatureFlag>
                             )}
@@ -310,6 +332,18 @@ function Dashboard({
                                 alternative={linkSection}
                             >
                                 <Route component={DashboardClaims} />
+                            </FeatureFlag>
+                        )}
+                    />
+                    <Route
+                        exact
+                        path={dashboardClaimsV2Route}
+                        render={() => (
+                            <FeatureFlag
+                                flag={ENABLE_CLAIMS_V2_DASHBOARD}
+                                alternative={<RouteNotFound />}
+                            >
+                                <Route component={ClaimsV2Dashboard} />
                             </FeatureFlag>
                         )}
                     />

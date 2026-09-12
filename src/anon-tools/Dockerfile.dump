@@ -20,7 +20,7 @@ ENV POSTGRES_USER=anondb
 ENV POSTGRES_DB=anondb
 
 RUN set -ex && apk update && apk add --no-cache openssh-client
-RUN set -ex && apk update && apk add --no-cache aws-cli
+RUN set -ex && apk update && apk add --no-cache --upgrade libexpat aws-cli
 
 RUN mkdir -p /dumps/
 RUN mkdir -p /keys/

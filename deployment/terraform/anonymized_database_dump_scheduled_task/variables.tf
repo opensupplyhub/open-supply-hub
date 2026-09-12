@@ -7,8 +7,9 @@ variable "anonymized_database_name" {
 variable "anonymized_database_username" {
 }
 
-variable "anonymized_database_password" {
-  sensitive = true
+variable "anonymized_database_password_secret_arn" {
+  type        = string
+  description = "ARN of the CLI-owned anonymized database password secret for valueFrom"
 }
 
 variable "project" {

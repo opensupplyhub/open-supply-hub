@@ -18,12 +18,15 @@ const {
     makeGetFacilityByOSIdURL,
     makeClaimFacilityAPIURL,
     makeMergeTwoFacilitiesAPIURL,
+    makeLogDownloadUrl,
     makeGetFacilitiesURLWithQueryString,
+    makeGetProcessingTypeSuggestionsURL,
     getValueFromObject,
     createQueryStringFromSearchFilters,
     allFiltersAreEmpty,
     hasAppliedSearchFilters,
     createFiltersFromQueryString,
+    getAlgorithm,
     getValueFromEvent,
     getCheckedFromEvent,
     getFileFromInputRef,
@@ -93,6 +96,8 @@ const {
     getFilteredSearchForEmbed,
     makeFacilityDetailLinkOnRedirect,
     splitContributorsIntoPublicAndNonPublic,
+    restoreExactProcessingTypeLabels,
+    hasEmbeddedSeparator,
 } = require('../util/util');
 
 const {
@@ -190,6 +195,22 @@ it('creates API URLs for getting contributor, contributor type, country, and sec
 it('creates an API URL for getting all facilities', () => {
     const expectedMatch = '/api/facilities/';
     expect(makeGetFacilitiesURL()).toEqual(expectedMatch);
+});
+
+it('creates an API URL for getting processing type suggestions', () => {
+    expect(makeGetProcessingTypeSuggestionsURL()).toEqual(
+        '/api/processing-type-suggestions/?q=',
+    );
+    expect(
+        makeGetProcessingTypeSuggestionsURL('dyeing', [
+            'Final Product Assembly',
+            'Textile or Material Production',
+        ]),
+    ).toEqual(
+        '/api/processing-type-suggestions/?q=dyeing' +
+            '&facility_type=Final+Product+Assembly' +
+            '&facility_type=Textile+or+Material+Production',
+    );
 });
 
 it('creates an API URL for getting a single facility by OS ID', () => {
@@ -387,7 +408,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
         }
     };
 
@@ -422,7 +443,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: 'AND',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -448,7 +469,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'name_asc',
           }
     };
 
@@ -484,7 +505,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -519,7 +540,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -554,7 +575,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -585,7 +606,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -618,7 +639,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -651,7 +672,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -684,13 +705,108 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
     expect(
         createFiltersFromQueryString(processingTypeString),
     ).toMatchObject(expectedProcessingTypeMatch);
+
+    const freeTextProcessingTypeString =
+        '?processing_type=cement%20mixing';
+    const expectedFreeTextProcessingTypeMatch = {
+        processingType: [{
+            value: 'cement mixing',
+            label: 'cement mixing',
+        }],
+    };
+
+    expect(
+        createFiltersFromQueryString(freeTextProcessingTypeString),
+    ).toMatchObject(expectedFreeTextProcessingTypeMatch);
+
+    expect(
+        createFiltersFromQueryString(
+            '?processing_type=300&processing_type=00300' +
+                '&processing_type_exact=00300',
+        ),
+    ).toMatchObject({
+        processingType: [
+            { value: '300', label: '300' },
+            { value: '00300', label: '00300', isExact: true },
+        ],
+    });
+
+    const exactProcessingTypeString =
+        '?processing_type=CAPS&processing_type=Caps' +
+        '&processing_type=cement%20mixing' +
+        '&processing_type_exact=caps&processing_type_exact=orphan';
+    expect(
+        createFiltersFromQueryString(exactProcessingTypeString),
+    ).toMatchObject({
+        processingType: [
+            { value: 'CAPS', label: 'CAPS', isExact: true },
+            { value: 'cement mixing', label: 'cement mixing' },
+        ],
+    });
+
+    expect(
+        createQueryStringFromSearchFilters({
+            processingType: [
+                { value: 'CAPS', label: 'Caps', isExact: true },
+                { value: 'cement mixing', label: 'cement mixing' },
+            ],
+        }),
+    ).toBe(
+        'processing_type=CAPS&processing_type=cement+mixing' +
+            '&processing_type_exact=CAPS',
+    );
+
+    const hydratedExactProcessingTypes = createFiltersFromQueryString(
+        '?processing_type=DYEING&processing_type=Custom%20CAPS' +
+            '&processing_type_exact=DYEING' +
+            '&processing_type_exact=Custom%20CAPS',
+    ).processingType;
+    expect(
+        restoreExactProcessingTypeLabels(hydratedExactProcessingTypes, [
+            {
+                facilityType: 'Printing',
+                processingTypes: ['Dyeing'],
+            },
+        ]),
+    ).toEqual([
+        { value: 'DYEING', label: 'Dyeing', isExact: true },
+        {
+            value: 'Custom CAPS',
+            label: 'Custom CAPS',
+            isExact: true,
+        },
+    ]);
+
+    const punctuationVariant = [
+        {
+            value: 'Warehousing Distribution',
+            label: 'Warehousing Distribution',
+            isExact: true,
+        },
+        {
+            value: 'Serigraphie',
+            label: 'Serigraphie',
+            isExact: true,
+        },
+    ];
+    expect(
+        restoreExactProcessingTypeLabels(punctuationVariant, [
+            {
+                facilityType: 'Warehouse',
+                processingTypes: [
+                    'Warehousing / Distribution',
+                    'Sérigraphie',
+                ],
+            },
+        ]),
+    ).toBe(punctuationVariant);
 
     const productTypeString = '?product_type=Beauty&product_type=Jackets/Blazers'
     const expectedProductTypeMatch = {
@@ -717,7 +833,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -750,7 +866,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -776,7 +892,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -819,7 +935,7 @@ it('creates a set of filters from a querystring', () => {
         combineContributors: '',
         boundary: null,
         sortAlgorithm: {
-            value: 'name_asc', label: 'A to Z',
+            value: 'contributors_desc',
           }
     };
 
@@ -839,6 +955,15 @@ it('creates a set of filters from a querystring', () => {
     expect(
         createFiltersFromQueryString(combinedPartnersString),
     ).toMatchObject(expectedCombinedPartnersMatch);
+});
+
+it('defaults a missing or unknown sort_by to contributors_desc', () => {
+    expect(getAlgorithm('').value).toBe('contributors_desc');
+    expect(getAlgorithm('not-a-real-sort').value).toBe('contributors_desc');
+    expect(getAlgorithm('name_asc').value).toBe('name_asc');
+    expect(
+        createFiltersFromQueryString('?contributors=1632').sortAlgorithm.value,
+    ).toBe('contributors_desc');
 });
 
 it('creates a facility detail link', () => {
@@ -1013,6 +1138,30 @@ it('creates a list of field errors from a Django error object', () => {
         'email: this email is already used',
         'name: this name has too few characters',
         'name: this name has too few vowels',
+    ];
+
+    const errorMessages = createErrorListFromResponseObject(djangoErrors);
+
+    expect(errorMessages).toEqual(expectedErrorMessages);
+});
+
+it('creates a list of field errors from nested Django ListField errors', () => {
+    const djangoErrors = {
+        facility_product_types: {
+            0: ['Ensure this field has no more than 50 characters.'],
+        },
+        facility_production_types: {
+            0: ['Ensure this field has no more than 50 characters.'],
+        },
+        business_website: [
+            'Ensure this field has no more than 200 characters.',
+        ],
+    };
+
+    const expectedErrorMessages = [
+        'facility_product_types: Ensure this field has no more than 50 characters.',
+        'facility_production_types: Ensure this field has no more than 50 characters.',
+        'business_website: Ensure this field has no more than 200 characters.',
     ];
 
     const errorMessages = createErrorListFromResponseObject(djangoErrors);
@@ -2549,6 +2698,68 @@ describe('slcValidationSchema', () => {
         );
     });
 
+    it('fails when a product type value contains a vertical bar', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            productType: [
+                { label: 'Assembly|Cut and Sew', value: 'Assembly|Cut and Sew' },
+            ],
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Product type(s) must be entered as separate values.'
+        );
+    });
+
+    it('fails when a location type value contains a vertical bar', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            locationType: [
+                { label: 'Office|Warehouse', value: 'Office|Warehouse' },
+            ],
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Location type(s) must be entered as separate values.'
+        );
+    });
+
+    it('fails when a processing type value contains a vertical bar', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            processingType: [
+                { label: 'Dyeing|Finishing', value: 'Dyeing|Finishing' },
+            ],
+        };
+        await expect(slcValidationSchema.validate(data)).rejects.toThrow(
+            'Processing type(s) must be entered as separate values.'
+        );
+    });
+
+    it('passes when type values contain commas, slashes, ampersands, or "and"', async () => {
+        const data = {
+            name: 'Valid Name',
+            address: '123 Street',
+            country: { value: 'AI', label: 'Anguilla' },
+            productType: [
+                { label: 'Assembly, Cut and Sew', value: 'Assembly, Cut and Sew' },
+            ],
+            locationType: [
+                { label: 'Office/Warehouse', value: 'Office/Warehouse' },
+            ],
+            processingType: [
+                { label: 'Dyeing & Finishing', value: 'Dyeing & Finishing' },
+            ],
+        };
+        await expect(
+            slcValidationSchema.validate(data)
+        ).resolves.toBeTruthy();
+    });
+
     // Number of workers field.
     it('fails when number of workers has trailing and leading spaces', async () => {
         const data = {
@@ -3131,5 +3342,93 @@ describe('splitContributorsIntoPublicAndNonPublic', () => {
 
         expect(result.publicContributors).toEqual([]);
         expect(result.nonPublicContributors).toEqual([anonymizedContributor]);
+    });
+});
+
+describe('makeLogDownloadUrl', () => {
+    it('encodes the path so multi-filter searches survive as a single param', () => {
+        const path =
+            '/facilities?contributors=123&contributors=456&combine_contributors=AND&countries=BD';
+        const url = makeLogDownloadUrl(path, 50);
+
+        // The path is percent-encoded, so its internal `&`/`=`/`?` cannot be
+        // mistaken for the log-download request's own query-string delimiters.
+        expect(url).toBe(
+            `/api/log-download/?path=${encodeURIComponent(path)}&record_count=50`,
+        );
+
+        // Parsing the request the way the server does must recover the FULL
+        // path, including combine_contributors (previously dropped because the
+        // path was truncated at its first ampersand).
+        const params = new URLSearchParams(url.substring(url.indexOf('?') + 1));
+        expect(params.get('path')).toBe(path);
+        expect(params.get('record_count')).toBe('50');
+    });
+
+    it('does not truncate the path at the first ampersand', () => {
+        const path = '/facilities?contributors=123&countries=BD';
+        const url = makeLogDownloadUrl(path, 1);
+        const recoveredPath = new URLSearchParams(
+            url.substring(url.indexOf('?') + 1),
+        ).get('path');
+        expect(recoveredPath).toBe(path);
+        expect(recoveredPath).toContain('countries=BD');
+    });
+
+    it('preserves every filter when the search has many ampersand-separated params', () => {
+        const path =
+            '/facilities?contributors=1&contributors=2&contributors=3&combine_contributors=AND&countries=BD&countries=IN&sectors=Apparel';
+        const url = makeLogDownloadUrl(path, 500);
+        const recoveredPath = new URLSearchParams(
+            url.substring(url.indexOf('?') + 1),
+        ).get('path');
+
+        // The whole path round-trips: nothing after the first `&` is lost.
+        expect(recoveredPath).toBe(path);
+        // Every `&`-separated segment is still present after decoding.
+        const countAmpersands = str => (str.match(/&/g) || []).length;
+        expect(countAmpersands(recoveredPath)).toBe(countAmpersands(path));
+        [
+            'contributors=1',
+            'contributors=2',
+            'contributors=3',
+            'combine_contributors=AND',
+            'countries=BD',
+            'countries=IN',
+            'sectors=Apparel',
+        ].forEach(fragment => expect(recoveredPath).toContain(fragment));
+    });
+});
+
+describe('hasEmbeddedSeparator', () => {
+    it('returns false for a non-array value', () => {
+        expect(hasEmbeddedSeparator(null)).toBe(false);
+        expect(hasEmbeddedSeparator(undefined)).toBe(false);
+        expect(hasEmbeddedSeparator('Assembly')).toBe(false);
+    });
+
+    it('returns false when no item label contains a separator', () => {
+        const values = [{ label: 'Assembly', value: 'assembly' }, { label: 'Sandblasting', value: 'sandblasting' }];
+        expect(hasEmbeddedSeparator(values)).toBe(false);
+    });
+
+    // Only the vertical bar (the backend's multi-value join character) is
+    // treated as an embedded separator; these all appear in legitimate
+    // single values.
+    it.each([
+        ['comma', 'Assembly, Cut and Sew'],
+        ['slash', 'Assembly/Cut'],
+        ['backslash', 'Assembly\\Cut'],
+        ['ampersand', 'Assembly & Sew'],
+        ['the word "and"', 'Assembly and Sew'],
+    ])('returns false when a label contains a %s', (_, label) => {
+        expect(hasEmbeddedSeparator([{ label, value: label }])).toBe(false);
+    });
+
+    it.each([
+        ['bare', 'Assembly|Cut'],
+        ['spaced', 'Assembly | Cut'],
+    ])('returns true when a label contains a %s vertical bar', (_, label) => {
+        expect(hasEmbeddedSeparator([{ label, value: label }])).toBe(true);
     });
 });

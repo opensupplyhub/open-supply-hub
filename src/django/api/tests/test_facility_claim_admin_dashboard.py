@@ -1,5 +1,8 @@
 from django.utils import timezone
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
 from api.models import (
     Contributor,
     Facility,
@@ -494,6 +497,111 @@ class FacilityClaimAdminDashboardTest(APITestCase):
         ).count()
 
         self.assertEqual(notes_count, 1)
+
+        note = FacilityClaimReviewNote.objects.get(
+            claim=self.facility_claim_first
+        )
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.INTERNAL
+        )
+        self.assertEqual(
+            response.data["notes"][0]["note_type"],
+            FacilityClaimReviewNoteTypes.INTERNAL,
+        )
+
+    def test_claimant_update_is_a_valid_note_type(self):
+        # Claimant -> moderator direction, written by the OSDEV-2278
+        # claimant-edit flow when it lands; the schema accepts it now so
+        # that work has a place to record updates.
+        note = FacilityClaimReviewNote.objects.create(
+            claim=self.facility_claim_first,
+            author=self.superuser,
+            note="Claimant uploaded letter-of-authorization.pdf",
+            note_type=FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+        )
+        note.full_clean()
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE
+        )
+
+    def test_review_note_type_defaults_to_internal(self):
+        # Rows created without an explicit type (legacy data and the
+        # status-change notes written by approve/deny/revoke) must read
+        # as INTERNAL.
+        note = FacilityClaimReviewNote.objects.create(
+            claim=self.facility_claim_first,
+            author=self.superuser,
+            note="created without an explicit type",
+        )
+        self.assertEqual(
+            note.note_type, FacilityClaimReviewNoteTypes.INTERNAL
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_status_change_details_exposed_for_decided_claim(self):
+        self.client.post(
+            "/api/facility-claims/{}/deny/".format(
+                self.facility_claim_first.id
+            ),
+            {"reason": "Insufficient documentation"},
+        )
+
+        response = self.client.get(
+            "/api/facility-claims/{}/".format(self.facility_claim_first.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+        status_change = response.data["status_change"]
+        self.assertEqual(
+            "Insufficient documentation",
+            status_change["status_change_reason"],
+        )
+        self.assertEqual(
+            self.superuser.email, status_change["status_change_by"]
+        )
+        self.assertIsNotNone(status_change["status_change_date"])
+
+    @override_switch("claim_a_facility", active=True)
+    def test_decided_claim_with_null_decider_does_not_crash(self):
+        # Legacy decided claims can have status_change_by = NULL; the
+        # serializer must return nulls, not raise AttributeError.
+        claim = self.facility_claim_first
+        claim.status = FacilityClaimStatuses.DENIED
+        claim.status_change_reason = "decided before deciders were recorded"
+        claim.save()
+
+        response = self.client.get(
+            "/api/facility-claims/{}/".format(claim.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+        status_change = response.data["status_change"]
+        self.assertIsNone(status_change["status_change_by"])
+        self.assertEqual(
+            "decided before deciders were recorded",
+            status_change["status_change_reason"],
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_pending_claim_status_change_stays_suppressed(self):
+        # Populate real status-change values on the still-PENDING claim:
+        # a pristine claim's fields are already null, so without this the
+        # test passes even if the suppression guard is deleted.
+        claim = self.facility_claim_first
+        claim.status_change_reason = "should not be exposed while pending"
+        claim.status_change_by = self.superuser
+        claim.status_change_date = timezone.now()
+        claim.save()
+
+        response = self.client.get(
+            "/api/facility-claims/{}/".format(self.facility_claim_first.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+        status_change = response.data["status_change"]
+        self.assertIsNone(status_change["status_change_by"])
+        self.assertIsNone(status_change["status_change_reason"])
+        self.assertIsNone(status_change["status_change_date"])
 
     @override_switch("claim_a_facility", active=True)
     def test_claims_list_API_accessible_only_to_superusers(self):

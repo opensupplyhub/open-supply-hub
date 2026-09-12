@@ -4,7 +4,7 @@ WORKDIR /opt/
 
 RUN set -ex && \
     apk update && \
-    apk add --no-cache aws-cli jq && \
+    apk add --no-cache --upgrade libexpat aws-cli jq && \
     mkdir -p /dumps/
 
 COPY ./dump.sh ./dump.sh

@@ -1,4 +1,4 @@
-FROM node:14-slim
+FROM node:22-slim
 
 WORKDIR /usr/local/src
 
@@ -8,9 +8,7 @@ RUN yarn install
 
 COPY . .
 
-ENV REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest} \
-    CHOKIDAR_USEPOLLING=true \
-    CHOKIDAR_INTERVAL=100 \
-    PORT=6543
+# Watcher polling and port are configured in vite.config.js.
+ENV REACT_APP_GIT_COMMIT=${REACT_APP_GIT_COMMIT:-latest}
 
 CMD ["yarn","start"]

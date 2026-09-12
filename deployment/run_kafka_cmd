@@ -1,0 +1,185 @@
+#!/bin/bash
+
+# Runs an arbitrary command in the AppKafka Fargate task and prints its output.
+#
+# Same pattern as run_cli_task, but targets the AppKafka task definition and the
+# kafka-topics container, which is the only image with the Kafka CLI on it. The
+# command override works because app_kafka.json sets entryPoint ["/bin/bash"].
+#
+# Usage: ./run_kafka_cmd <Environment> '<shell command>'
+#
+#   ./run_kafka_cmd Staging './fix_replication.sh'
+#   ./run_kafka_cmd Staging './bin/kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --describe'
+#
+# Single-quote the command so $BOOTSTRAP_SERVERS expands inside the container
+# (injected by the task definition), not in your local shell.
+
+if [ $# -ne 2 ]; then
+    echo "Usage: $0 <Environment> '<shell command>'" >&2
+    echo "  Environment: Development | Test | Staging | Rba | Preprod | Production" >&2
+    echo "  (case-sensitive - must match 'environment' in deployment/environments/*.tfvars)" >&2
+    echo "" >&2
+    echo "Got $# argument(s). The command must be a single quoted argument -" >&2
+    echo "an unquoted command is split by your shell and would run only in part." >&2
+    echo "  Wrong: $0 Staging ./fix_replication.sh --execute" >&2
+    echo "  Right: $0 Staging './fix_replication.sh --execute'" >&2
+    exit 1
+fi
+
+# Region for the console deep link below. Resolved the same way the AWS CLI
+# resolves it, so the printed URL always matches the region the lookups ran in.
+region="${AWS_REGION:-${AWS_DEFAULT_REGION:-$(aws configure get region)}}"
+region="${region:-eu-west-1}"
+
+vpc_id="$(aws ec2 describe-vpcs --filters=Name=tag:Name,Values=vpcOpenSupplyHub$1 --query 'Vpcs[*].VpcId' --output text)"
+echo "VPC ID: $vpc_id"
+
+if [ -z "$vpc_id" ]; then
+    echo "ERROR: no VPC tagged vpcOpenSupplyHub$1 - check the environment name and your AWS profile." >&2
+    exit 1
+fi
+
+security_groups="$(aws ec2 describe-security-groups --filters "Name=vpc-id,Values=$vpc_id" "Name=tag:Name,Values=sgAppEcsService" --query 'SecurityGroups[*].GroupId' --output text | sed 's/\t/,/g')"
+
+echo "Security Group: $security_groups"
+
+# Subnet selection. The task uses assignPublicIp=ENABLED, so it needs a public
+# subnet to pull the image from ECR; the MSK brokers are reachable from any
+# subnet in the VPC via local routing. Public subnets are identified by
+# map-public-ip-on-launch rather than a Name tag, since the tag scheme lives in
+# the external VPC module. Set KAFKA_TASK_SUBNET_ID to pin a specific subnet.
+if [ -n "${KAFKA_TASK_SUBNET_ID:-}" ]; then
+    subnet_id="$KAFKA_TASK_SUBNET_ID"
+    if ! aws ec2 describe-subnets --subnet-ids "$subnet_id" \
+        --query 'Subnets[?VpcId==`'"$vpc_id"'`].SubnetId' --output text | grep -q .; then
+        echo "ERROR: KAFKA_TASK_SUBNET_ID=$subnet_id is not in VPC $vpc_id." >&2
+        exit 1
+    fi
+    echo "Subnet ID: $subnet_id (pinned via KAFKA_TASK_SUBNET_ID)"
+else
+    subnet_candidates="$(aws ec2 describe-subnets \
+        --filters "Name=vpc-id,Values=$vpc_id" "Name=map-public-ip-on-launch,Values=true" \
+        --query 'sort_by(Subnets, &SubnetId)[].SubnetId' --output text)"
+
+    if [ -z "$subnet_candidates" ]; then
+        echo "ERROR: no public subnet found in VPC $vpc_id." >&2
+        echo "The task needs a public subnet for the ECR image pull (assignPublicIp=ENABLED)." >&2
+        echo "List subnets and pin one explicitly:" >&2
+        echo "  aws ec2 describe-subnets --filters Name=vpc-id,Values=$vpc_id \\" >&2
+        echo "    --query 'Subnets[].[SubnetId,CidrBlock,AvailabilityZone,MapPublicIpOnLaunch]' --output table" >&2
+        echo "  KAFKA_TASK_SUBNET_ID=subnet-xxxx $0 $1 '<command>'" >&2
+        exit 1
+    fi
+
+    # Deterministic pick (lowest subnet ID) so repeat runs land in the same AZ.
+    subnet_id="$(echo "$subnet_candidates" | tr '\t' '\n' | head -n 1)"
+    echo "Public subnet candidates: $(echo "$subnet_candidates" | tr '\t' ' ')"
+    echo "Subnet ID: $subnet_id (lowest ID; override with KAFKA_TASK_SUBNET_ID)"
+fi
+
+revision="$(aws ecs describe-task-definition  --task-definition OpenSupplyHub${1}AppKafka --query 'taskDefinition.revision' --output text)"
+echo "Revision: $revision"
+
+echo "Running task with command: $2"
+
+# Passed as inline JSON rather than the shorthand containerOverrides=[...] syntax
+# used in run_cli_task, because the AWS CLI shorthand parser splits on commas and
+# these commands contain them (awk field separators, grep alternations).
+#
+# Inline rather than file:// so the script works under Git Bash on Windows: a
+# POSIX temp path like /tmp/tmp.XXXX is meaningless to the native aws.exe, which
+# fails with "Unable to load paramfile". No temp file also means no cleanup.
+escaped_cmd=${2//\\/\\\\}     # backslashes first
+escaped_cmd=${escaped_cmd//\"/\\\"}   # then double quotes
+overrides="{\"containerOverrides\":[{\"name\":\"kafka-topics\",\"command\":[\"-c\",\"$escaped_cmd\"]}]}"
+
+# ECS reports placement problems in failures[] alongside a 200 response, so a
+# task ARN must never be assumed. Without this check an empty ARN reaches
+# 'aws ecs wait tasks-stopped', which fails every attempt and spins the retry
+# loop below forever. Both values come back in one call, tab-separated, so the
+# ARN and any failure detail are captured without a JSON parser on the host.
+run_output="$(aws ecs run-task \
+    --cluster ecsOpenSupplyHub${1}Cluster \
+    --task-definition=OpenSupplyHub${1}AppKafka:${revision} \
+    --launch-type "FARGATE" \
+    --network-configuration "awsvpcConfiguration={ assignPublicIp="ENABLED", securityGroups=["$security_groups"], subnets=["$subnet_id"]}" \
+    --overrides "$overrides" \
+    --query '[tasks[0].taskArn, to_string(failures)]' \
+    --output text)"
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: aws ecs run-task failed. See the error above." >&2
+    exit 1
+fi
+
+IFS=$'\t' read -r task_arn failures_json <<< "$run_output"
+
+if [ -z "$task_arn" ] || [ "$task_arn" = "None" ]; then
+    echo "ERROR: ECS started no task." >&2
+    echo "Failures: ${failures_json:-none reported}" >&2
+    exit 1
+fi
+
+if [ -n "$failures_json" ] && [ "$failures_json" != "[]" ] && [ "$failures_json" != "None" ]; then
+    echo "WARNING: ECS reported failures: $failures_json" >&2
+fi
+
+echo "Task ARN: $task_arn"
+id=$(echo $task_arn | awk -F'/' '{print $NF}')
+echo "Log Stream ID: $id"
+
+echo "Task URL: https://${region}.console.aws.amazon.com/ecs/v2/clusters/ecsOpenSupplyHub${1}Cluster/tasks/$id?region=${region}"
+
+echo "Waiting for task to stop..."
+res=1
+attempt=1
+max_attempts=3
+while [ $res -ne 0 ]; do
+    # Check if the maximum number of attempts has been exceeded
+    if [ $attempt -gt $max_attempts ]; then
+        echo "Error: Task did not stop after $max_attempts attempts. Timing out."
+        exit 1
+    fi
+    echo "Continue waiting (Attempt $attempt/$max_attempts): $(date +%T)"
+    aws ecs wait tasks-stopped --cluster "ecsOpenSupplyHub${1}Cluster" --tasks "${task_arn}"
+    res=$?
+    # Increment the loop counter
+    attempt=$((attempt + 1))
+done
+
+echo "Stop time: $(date +%T)"
+
+echo "Task stopped reason:"
+aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[stoppedReason]'
+
+# Captured before the logs are fetched, so a failed log retrieval cannot mask
+# the container's own result.
+exit_code="$(aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].containers[0].exitCode' --output text)"
+echo "Container exit code: $exit_code"
+
+echo "Warning: output may be truncated if the command produced a lot of output. Use the Task URL above to view the full log stream in the AWS console."
+echo "----- Log Stream -----"
+echo ""
+echo ""
+aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppKafka" --log-stream-name "management/kafka-topics/$id" --query 'events[*].[message]' --output text
+echo ""
+echo ""
+echo "----- Log Stream end -----"
+
+# A task killed before the container ran (OOM, ENI failure, image pull error)
+# reports a null exitCode, which the CLI renders as "None" - that is a failure,
+# not a success.
+case "$exit_code" in
+    0)
+        exit 0
+        ;;
+    ''|None|null)
+        echo "ERROR: no container exit code reported - the container did not run to completion." >&2
+        echo "Check the stopped reason above and the Task URL." >&2
+        exit 1
+        ;;
+    *)
+        echo "ERROR: container exited with code $exit_code." >&2
+        exit "$exit_code"
+        ;;
+esac

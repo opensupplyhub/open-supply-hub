@@ -47,6 +47,8 @@ When a release changes an `index_*()` function, **temporarily** add a `backfill_
 Example wiring (remove after deploy):
 
 ```python
+from api.facility_index_backfill.utils import backfill_parallel_worker_count
+
 call_command(
     'backfill_facility_index',
     fields='contributors',
@@ -55,25 +57,7 @@ call_command(
 )
 ```
 
-If environments differ in CLI memory, add a temporary `BACKFILL_PARALLEL_BY_ENVIRONMENT` map and `backfill_parallel_worker_count()` helper in `post_deployment.py`. Remove those helpers together with the backfill call.
-
-```python
-from django.conf import settings
-
-# Each worker is a full Django subprocess (~150–200 MB RSS).
-BACKFILL_PARALLEL_BY_ENVIRONMENT = {
-    'Development': 2,
-    'Test': 10,
-    'Staging': 10,
-    'Preprod': 10,
-    'Production': 10,
-    'Rba': 10,
-}
-
-
-def backfill_parallel_worker_count() -> int:
-    return BACKFILL_PARALLEL_BY_ENVIRONMENT[settings.ENVIRONMENT]
-```
+Use `backfill_parallel_worker_count()` from `facility_index_backfill/utils.py` to size `--parallel` per environment (CLI task memory differs). Adjust `BACKFILL_PARALLEL_BY_ENVIRONMENT` in that utils module if an environment's memory changes.
 
 ## How it works
 
@@ -118,7 +102,7 @@ For example, **`--parallel 10` needs about 2 GB RSS** (11 processes). Row data i
 
 Choose `--parallel` to fit the CLI/ECS task memory limit (`cli_fargate_memory` in Terraform). If the task is killed with OOM, reduce `--parallel` before increasing batch size.
 
-When a backfill is wired into `post_deployment`, worker count may be set per environment via a temporary `BACKFILL_PARALLEL_BY_ENVIRONMENT` map in `post_deployment.py` (remove with the backfill call). For example, **Development** may use **`--parallel 2`** when the CLI task has 1 GB memory and the database is small; larger environments may use **`--parallel 10`**.
+When a backfill is wired into `post_deployment`, use `backfill_parallel_worker_count()` from `facility_index_backfill/utils.py` (backed by `BACKFILL_PARALLEL_BY_ENVIRONMENT`). For example, **Development** may use **`--parallel 1`** when the CLI task has 1 GB memory and the database is small; larger environments may use **`--parallel 10`**.
 
 For manual runs outside `post_deployment`, pass `--parallel` directly on the command line.
 

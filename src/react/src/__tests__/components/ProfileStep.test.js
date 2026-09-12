@@ -278,14 +278,35 @@ describe('ProfileStep component', () => {
             },
         });
 
-        const websiteInputs = screen.queryAllByPlaceholderText('https://company.com');
+        const websiteInputs = screen.queryAllByPlaceholderText(
+            'https://company.com (max 200 characters)',
+        );
         expect(websiteInputs.length).toBe(0);
+    });
+
+    test('shows business website field when persisted value is invalid', () => {
+        renderComponent({
+            formData: {
+                ...defaultProps.formData,
+                businessWebsite: 'not-a-valid-url',
+            },
+        });
+
+        expect(
+            screen.getByPlaceholderText(
+                'https://company.com (max 200 characters)',
+            ),
+        ).toBeInTheDocument();
     });
 
     test('shows business website field when not provided', () => {
         renderComponent();
 
-        expect(screen.getByPlaceholderText('https://company.com')).toBeInTheDocument();
+        expect(
+            screen.getByPlaceholderText(
+                'https://company.com (max 200 characters)',
+            ),
+        ).toBeInTheDocument();
     });
 });
 

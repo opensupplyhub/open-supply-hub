@@ -42,114 +42,6 @@ describe('freeEmissionsEstimateValidationSchema', () => {
                     freeEmissionsEstimateValidationSchema.validate(data),
                 ).resolves.toBeDefined();
             });
-
-            it('rejects opening date after closing date', async () => {
-                const data = {
-                    openingDate: '2023-12-31',
-                    closingDate: '2020-01-01',
-                };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).rejects.toThrow();
-            });
-
-            it('accepts opening date equal to closing date', async () => {
-                const data = {
-                    openingDate: '2020-01-01',
-                    closingDate: '2020-01-01',
-                };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).resolves.toBeDefined();
-            });
-
-            it('accepts opening date before closing date', async () => {
-                const data = {
-                    openingDate: '2020-01-01',
-                    closingDate: '2023-12-31',
-                };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).resolves.toBeDefined();
-            });
-        });
-
-        describe('closingDate', () => {
-            it('accepts a valid past date', async () => {
-                const data = { closingDate: '2023-12-31' };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).resolves.toBeDefined();
-            });
-
-            it('accepts today\'s date', async () => {
-                const today = new Date().toISOString().split('T')[0];
-                const data = { closingDate: today };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).resolves.toBeDefined();
-            });
-
-            it('rejects a future date', async () => {
-                const futureDate = new Date();
-                futureDate.setFullYear(futureDate.getFullYear() + 1);
-                const data = {
-                    closingDate: futureDate.toISOString().split('T')[0],
-                };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).rejects.toThrow('Please enter a valid date (not in the future).');
-            });
-
-            it('rejects an invalid date format', async () => {
-                const data = { closingDate: 'not-a-date' };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).rejects.toThrow('Please enter a valid date (not in the future).');
-            });
-
-            it('accepts empty/null closing date', async () => {
-                const data = { closingDate: '' };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).resolves.toBeDefined();
-            });
-
-            it('rejects closing date before opening date', async () => {
-                const data = {
-                    openingDate: '2023-12-31',
-                    closingDate: '2020-01-01',
-                };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).rejects.toThrow();
-            });
-        });
-
-        describe('Date range validation', () => {
-            it('skips validation when only opening date is provided', async () => {
-                const data = { openingDate: '2020-01-01' };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).resolves.toBeDefined();
-            });
-
-            it('skips validation when only closing date is provided', async () => {
-                const data = { closingDate: '2023-12-31' };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).resolves.toBeDefined();
-            });
-
-            it('validates date range when both dates are provided', async () => {
-                const data = {
-                    openingDate: '2020-01-01',
-                    closingDate: '2019-12-31',
-                };
-                await expect(
-                    freeEmissionsEstimateValidationSchema.validate(data),
-                ).rejects.toThrow();
-            });
         });
     });
 
@@ -400,7 +292,6 @@ describe('freeEmissionsEstimateValidationSchema', () => {
         it('validates a complete valid form', async () => {
             const data = {
                 openingDate: '2020-01-01',
-                closingDate: '2023-12-31',
                 estimatedAnnualThroughput: '100000',
                 energyCoalEnabled: true,
                 energyCoal: '50000',
@@ -429,7 +320,6 @@ describe('freeEmissionsEstimateValidationSchema', () => {
         it('validates a minimal valid form', async () => {
             const data = {
                 openingDate: '',
-                closingDate: '',
                 estimatedAnnualThroughput: '',
                 energyCoalEnabled: false,
                 energyNaturalGasEnabled: false,
@@ -452,7 +342,6 @@ describe('freeEmissionsEstimateValidationSchema', () => {
 
             const data = {
                 openingDate: futureDate.toISOString().split('T')[0],
-                closingDate: '2020-01-01',
                 estimatedAnnualThroughput: '-100',
                 energyCoalEnabled: true,
                 energyCoal: '', // Missing required value.

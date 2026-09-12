@@ -39,7 +39,6 @@ import {
     updateClaimedFacilityProductTypes,
     updateClaimedFacilityProductionTypes,
     updateClaimedFacilityOpeningDate,
-    updateClaimedFacilityClosingDate,
     updateClaimedEstimatedAnnualThroughput,
     updateClaimedEnergyCoal,
     updateClaimedEnergyNaturalGas,
@@ -85,7 +84,6 @@ const setDataField = key => (state, payload) =>
 
 const CLAIMED_EMISSIONS_FIELDS = [
     [updateClaimedFacilityOpeningDate, 'opening_date'],
-    [updateClaimedFacilityClosingDate, 'closing_date'],
     [updateClaimedEstimatedAnnualThroughput, 'estimated_annual_throughput'],
     [updateClaimedEnergyCoal, 'energy_coal'],
     [updateClaimedEnergyNaturalGas, 'energy_natural_gas'],

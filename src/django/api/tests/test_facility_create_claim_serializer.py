@@ -69,7 +69,6 @@ class FacilityCreateClaimSerializerTest(TestCase):
             'business_linkedin_profile':
                 'https://linkedin.com/company/example',
             'opening_date': date(2020, 1, 1),
-            'closing_date': date(2023, 12, 31),
             'estimated_annual_throughput': 100000,
             'energy_coal': 500000,
             'energy_natural_gas': 300000,
@@ -111,71 +110,6 @@ class FacilityCreateClaimSerializerTest(TestCase):
         self.assertIn('opening_date', serializer.errors)
         self.assertIn(
             'Please enter a valid date (not in the future)',
-            str(serializer.errors['opening_date'])
-        )
-
-    def test_closing_date_not_in_future(self):
-        '''Test that closing_date cannot be in the future.'''
-        future_date = date.today() + timedelta(days=1)
-        data = {
-            'your_name': 'John Doe',
-            'your_title': 'Manager',
-            'your_business_website': 'https://example.com',
-            'business_website': 'https://example.com',
-            'business_linkedin_profile':
-                'https://linkedin.com/company/example',
-            "closing_date": future_date,
-        }
-
-        serializer = FacilityCreateClaimSerializer(
-            data=data, context={'facility': self.facility}
-        )
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('closing_date', serializer.errors)
-        self.assertIn(
-            'Please enter a valid date (not in the future)',
-            str(serializer.errors['closing_date'])
-        )
-
-    def test_opening_date_before_or_equal_closing_date(self):
-        '''Test that opening_date must be before or equal to closing_date.'''
-        data = {
-            'your_name': 'John Doe',
-            'your_title': 'Manager',
-            'your_business_website': 'https://example.com',
-            'business_website': 'https://example.com',
-            'business_linkedin_profile':
-                'https://linkedin.com/company/example',
-            'opening_date': date(2020, 1, 1),
-            'closing_date': date(2020, 1, 1),
-        }
-
-        serializer = FacilityCreateClaimSerializer(
-            data=data, context={'facility': self.facility}
-        )
-        self.assertTrue(serializer.is_valid())
-
-    def test_closing_date_before_opening_date_fails(self):
-        '''Test that closing_date cannot be before opening_date.'''
-        data = {
-            'your_name': 'John Doe',
-            'your_title': 'Manager',
-            'your_business_website': 'https://example.com',
-            'business_website': 'https://example.com',
-            'business_linkedin_profile':
-                'https://linkedin.com/company/example',
-            "opening_date": date(2020, 12, 31),
-            "closing_date": date(2020, 1, 1),
-        }
-
-        serializer = FacilityCreateClaimSerializer(
-            data=data, context={'facility': self.facility}
-        )
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('opening_date', serializer.errors)
-        self.assertIn('closing_date', serializer.errors)
-        self.assertIn(
-            'Opening date must be before or equal to closing date',
             str(serializer.errors['opening_date'])
         )
 
@@ -412,7 +346,7 @@ class FacilityCreateClaimSerializerTest(TestCase):
         )
 
     def test_dates_optional(self):
-        '''Test that opening_date and closing_date are optional.'''
+        '''Test that opening_date is optional.'''
         data = {
             'your_name': 'John Doe',
             'your_title': 'Manager',
@@ -429,4 +363,3 @@ class FacilityCreateClaimSerializerTest(TestCase):
         )
         self.assertTrue(serializer.is_valid())
         self.assertNotIn('opening_date', serializer.validated_data)
-        self.assertNotIn('closing_date', serializer.validated_data)

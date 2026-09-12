@@ -28,6 +28,11 @@ rds_multi_az = false
 rds_storage_encrypted = true
 rds_skip_final_snapshot = true
 rds_deletion_protection = false
+# ~80% of capped max_connections for db.m6in.4xlarge (5000)
+rds_database_connections_alarm_threshold = "4000"
+# ~5% of 64 GiB RAM; ~10% of 256 GB storage
+rds_free_memory_threshold_bytes = "3200000000"
+rds_free_disk_threshold_bytes   = "25000000000"
 
 app_ecs_desired_count = "10"
 app_ecs_deployment_min_percent = "100"
@@ -46,6 +51,7 @@ cli_fargate_cpu = "2048"
 cli_fargate_memory = "8192"
 
 gunicorn_worker_timeout = "240"
+gunicorn_workers        = "5"
 
 batch_default_ce_spot_fleet_bid_percentage = 60
 batch_ami_id = "ami-002e2fef4b94f8fd0"
@@ -76,3 +82,43 @@ app_logstash_fargate_memory = 2048
 instance_source= "os_hub"
 
 vpn_ec2_ami = "ami-0940c95b23a1f7cac"
+
+enable_homepage_proxy   = true
+craft_cms_origin_domain = "open-supply.production.servd.dev"
+
+# Shares Chatbot channel config with Test (same AWS account / Slack channel).
+aws_chatbot_manage_channel_configuration = false
+
+waf_enabled = true
+memcached_view_cache_timeout_seconds = 120
+stripe_price_id = "price_1RdvlxPEfpkrtRDTscTnTbOh"
+hubspot_subscription_id = "12847627"
+dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
+google_drive_shared_directory_id = "18ld9-YuqJZZE1GwBx47nih1lUJDM-3m4"
+aws_key_name = "osh-pp"
+
+rds_master_secret_name = "oshub/preprod/rds-master"
+django_secret_key_secret_name = "oshub/preprod/django-secret-key"
+cloudfront_auth_token_secret_name = "oshub/preprod/cloudfront-auth-token"
+default_from_email_secret_name = "oshub/preprod/default-from-email"
+data_from_email_secret_name = "oshub/preprod/data-from-email"
+notification_email_to_secret_name = "oshub/preprod/notification-email-to"
+claim_from_email_secret_name = "oshub/preprod/claim-from-email"
+google_server_side_api_key_secret_name = "oshub/preprod/google-server-side-api-key"
+google_client_side_api_key_secret_name = "oshub/preprod/google-client-side-api-key"
+google_analytics_key_secret_name = "oshub/preprod/google-analytics-key"
+google_service_account_creds_base64_secret_name = "oshub/preprod/google-service-account-creds-base64"
+oar_client_key_secret_name = "oshub/preprod/oar-client-key"
+hubspot_api_key_secret_name = "oshub/preprod/hubspot-api-key"
+stripe_secret_key_secret_name = "oshub/preprod/stripe-secret-key"
+stripe_webhook_secret_secret_name = "oshub/preprod/stripe-webhook-secret"
+dark_visitors_token_secret_name = "oshub/preprod/dark-visitors-token"
+dark_visitors_project_key_secret_name = "oshub/preprod/dark-visitors-project-key"
+dromo_license_key_secret_name = "oshub/preprod/dromo-license-key"
+external_access_cidr_blocks_secret_name = "oshub/preprod/external-access-cidr-blocks"
+ip_denylist_secret_name = "oshub/preprod/ip-denylist"
+contribot_os_hub_api_token_secret_name = "oshub/preprod/contribot-os-hub-api-token"
+contribot_monday_api_key_secret_name = "oshub/preprod/contribot-monday-api-key"
+contribot_slack_api_url_secret_name = "oshub/preprod/contribot-slack-api-url"
+contribot_slack_failures_api_url_secret_name = "oshub/preprod/contribot-slack-failures-api-url"
+contribot_google_drive_service_key_secret_name = "oshub/preprod/contribot-google-drive-service-key"

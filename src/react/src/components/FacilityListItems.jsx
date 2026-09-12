@@ -33,7 +33,7 @@ import {
     assembleAndDownloadFacilityListCSV,
 } from '../actions/facilityListDetails';
 import {
-    mainRoute,
+    mapRoute,
     OARFont,
     listsRoute,
     facilityListItemsRoute,
@@ -227,7 +227,7 @@ const FacilityListItems = ({
         ? `${dashboardListsRoute}${adminSearch || ''}`
         : listsRoute;
 
-    const handleGoToMainPage = () => history.push(mainRoute);
+    const handleGoToMainPage = () => history.push(mapRoute);
 
     const listHeader = (
         <>

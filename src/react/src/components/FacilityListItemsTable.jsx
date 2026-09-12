@@ -625,7 +625,7 @@ class FacilityListItemsTable extends Component {
                     <Table style={{ tableLayout: 'fixed', minWidth: '1200px' }}>
                         <TableHead>
                             <FacilityListItemsTableRow
-                                rowIndex=""
+                                rowIndex="1"
                                 countryName="Country Name"
                                 name="Name"
                                 address="Address"

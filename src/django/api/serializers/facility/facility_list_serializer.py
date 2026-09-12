@@ -21,14 +21,16 @@ class FacilityListSerializer(ModelSerializer):
     statuses = SerializerMethodField()
     status_counts = SerializerMethodField()
     contributor_id = SerializerMethodField()
+    contributor_name = SerializerMethodField()
+    contributor_email = SerializerMethodField()
 
     class Meta:
         model = FacilityList
         fields = ('id', 'name', 'description', 'file_name', 'is_active',
                   'is_public', 'item_count', 'items_url', 'statuses',
-                  'status_counts', 'contributor_id', 'created_at',
-                  'match_responsibility', 'status', 'status_change_reason',
-                  'file', 'parsing_errors')
+                  'status_counts', 'contributor_id', 'contributor_name',
+                  'contributor_email', 'created_at', 'match_responsibility',
+                  'status', 'status_change_reason', 'file', 'parsing_errors')
         read_only_fields = ('created_at', 'match_responsibility')
 
     def get_is_active(self, facility_list):
@@ -174,5 +176,19 @@ class FacilityListSerializer(ModelSerializer):
         try:
             return facility_list.source.contributor.id \
                 if facility_list.source.contributor else None
+        except Source.DoesNotExist:
+            return None
+
+    def get_contributor_name(self, facility_list):
+        try:
+            contributor = facility_list.source.contributor
+            return contributor.name if contributor else None
+        except Source.DoesNotExist:
+            return None
+
+    def get_contributor_email(self, facility_list):
+        try:
+            contributor = facility_list.source.contributor
+            return contributor.admin.email if contributor else None
         except Source.DoesNotExist:
             return None

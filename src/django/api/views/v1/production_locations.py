@@ -30,6 +30,10 @@ from api.moderation_event_actions.creation.location_contribution \
     .location_contribution import LocationContribution
 from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
+from api.serializers.v1.duplicate_override_query_param_serializer \
+    import DuplicateOverrideQueryParamSerializer
+from api.serializers.v1.ignore_warnings_query_param_serializer \
+    import IgnoreWarningsQueryParamSerializer
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
 from api.models.partner_field import PartnerField
@@ -119,6 +123,22 @@ class ProductionLocations(ViewSet):
         # settings.py file.
         return super().get_parsers()
 
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(
+            request, response, *args, **kwargs
+        )
+        # A rejected submission creates no moderation event, so the entry
+        # DuplicateThrottle recorded for it must not block an identical
+        # retry (e.g. resubmitting unchanged data after dismissing the
+        # duplicate or quality-warning dialog). 429 is excluded: that is
+        # the throttle's own rejection, and clearing on it would let every
+        # second identical request through.
+        if (response.status_code >= status.HTTP_400_BAD_REQUEST
+                and response.status_code
+                != status.HTTP_429_TOO_MANY_REQUESTS):
+            DuplicateThrottle().clear(request, self)
+        return response
+
     @handle_errors_decorator
     def list(self, request):
         _, error_response = serialize_params(
@@ -193,6 +213,12 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        check_overrides, error_response = self.__parse_check_overrides(
+            request
+        )
+        if error_response is not None:
+            return error_response
+
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
@@ -200,7 +226,8 @@ class ProductionLocations(ViewSet):
         event_dto = CreateModerationEventDTO(
             contributor=request.user.contributor,
             raw_data=request.data,
-            request_type=ModerationEvent.RequestType.CREATE.value
+            request_type=ModerationEvent.RequestType.CREATE.value,
+            **check_overrides,
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 
@@ -252,6 +279,12 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        check_overrides, error_response = self.__parse_check_overrides(
+            request
+        )
+        if error_response is not None:
+            return error_response
+
         location_contribution_strategy = LocationContribution()
         moderation_event_creator = ModerationEventCreator(
             location_contribution_strategy
@@ -260,7 +293,8 @@ class ProductionLocations(ViewSet):
             contributor=request.user.contributor,
             os=Facility.objects.get(id=pk),
             raw_data=request.data,
-            request_type=ModerationEvent.RequestType.UPDATE.value
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            **check_overrides,
         )
         result = moderation_event_creator.perform_event_creation(event_dto)
 
@@ -284,6 +318,42 @@ class ProductionLocations(ViewSet):
             },
             status=result.status_code
         )
+
+    @staticmethod
+    def __parse_check_overrides(request):
+        '''
+        Reads the ?duplicate_override and ?ignore_warnings query params
+        that let the SLC form resubmit past the DuplicateSubmissionProcessor
+        and SubmissionQualityProcessor checks after the contributor has
+        confirmed the warning. Shared by create (POST) and partial_update
+        (PATCH), since both run the same contribution pipeline. Returns
+        (overrides, None) on success, where overrides are keyword args for
+        CreateModerationEventDTO, or (None, Response) with the 400 to
+        return when either param holds something other than true/false.
+        '''
+        param_serializers = (
+            ('duplicate_override', DuplicateOverrideQueryParamSerializer),
+            ('ignore_warnings', IgnoreWarningsQueryParamSerializer),
+        )
+        overrides = {}
+        for field, serializer_class in param_serializers:
+            serializer = serializer_class(data=request.query_params)
+            if not serializer.is_valid():
+                return None, Response(
+                    {
+                        'detail': (
+                            APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR
+                        ),
+                        'errors': [{
+                            'field': field,
+                            'detail': str(serializer.errors[field][0])
+                        }]
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            overrides[field] = serializer.validated_data[field]
+
+        return overrides, None
 
     def __get_partner_fields(self, pk):
         """

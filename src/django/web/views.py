@@ -1,9 +1,17 @@
 import os
 
 from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render
 
 from api.models import Facility
+
+
+def health_check(request):
+    """
+    App liveness only.
+    """
+    return HttpResponse('ok', content_type='text/plain')
 
 
 def environment(request):

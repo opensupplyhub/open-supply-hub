@@ -152,4 +152,42 @@ describe('ProductionLocationDetailsGeneralFields component', () => {
         const dataPoints = within(container).queryAllByTestId('data-point');
         expect(dataPoints).toHaveLength(0);
     });
+
+    const dataCenterExtendedField = raw => [
+        {
+            value: { raw_value: raw },
+            contributor_id: 1,
+            contributor_name: 'Test Contributor',
+            created_at: '2025-01-01T00:00:00.000Z',
+        },
+    ];
+
+    const dataCenterData = {
+        ...mockDataWithVisibleFields,
+        properties: {
+            ...mockDataWithVisibleFields.properties,
+            is_data_center: true,
+            extended_fields: {
+                ...mockDataWithVisibleFields.properties.extended_fields,
+                name_operator: dataCenterExtendedField('Equinix'),
+                capacity: dataCenterExtendedField('20'),
+                capacity_units: dataCenterExtendedField('MW'),
+            },
+        },
+    };
+
+    test('renders data center field groups when is_data_center is true', () => {
+        renderComponent({ data: dataCenterData });
+        expect(screen.getByText('Named Entities')).toBeInTheDocument();
+        expect(screen.getByText('Utility Usage')).toBeInTheDocument();
+        // Named entity value and a measure combined with its units.
+        expect(screen.getByText('Equinix')).toBeInTheDocument();
+        expect(screen.getByText('20 MW')).toBeInTheDocument();
+    });
+
+    test('does not render data center field groups for a production location', () => {
+        renderComponent();
+        expect(screen.queryByText('Named Entities')).not.toBeInTheDocument();
+        expect(screen.queryByText('Utility Usage')).not.toBeInTheDocument();
+    });
 });

@@ -8,6 +8,7 @@ from api.constants import APIV1ModerationEventErrorMessages
 from api.models import Contributor, ModerationEvent, User
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility_list_item import FacilityListItem
+from api.models.facility.facility_match import FacilityMatch
 from api.models.nonstandard_field import NonstandardField
 from api.models.source import Source
 
@@ -158,6 +159,7 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
     def assert_success_response(self, response, status_code, action_type):
         self.assertEqual(status_code, response.status_code)
         self.assertIn("os_id", response.data)
+        self.assert_created_record_ids_returned(response)
 
         moderation_event = ModerationEvent.objects.get(
             uuid=self.moderation_event_id
@@ -171,11 +173,33 @@ class BaseModerationEventsProductionLocationTest(APITestCase):
             self.superuser.id
         )
 
-    def assert_source_creation(self, source):
+    def assert_created_record_ids_returned(self, response):
+        """
+        The approval reports the ids of the records it created.
+
+        A client acting on the result - promoting the new contribution, for
+        example - can then use them directly instead of re-discovering the
+        match from GET /api/facilities/{os_id}/split/ and inferring which
+        one was just created.
+        """
+        self.assertIn("item_id", response.data)
+        self.assertIn("match_id", response.data)
+        self.assertIsNotNone(response.data["item_id"])
+        self.assertIsNotNone(response.data["match_id"])
+
+        item = FacilityListItem.objects.get(id=response.data["item_id"])
+        self.assertEqual(response.data["os_id"], item.facility_id)
+
+        match = FacilityMatch.objects.get(id=response.data["match_id"])
+        self.assertEqual(item.id, match.facility_list_item_id)
+        self.assertEqual(response.data["os_id"], match.facility_id)
+
+    def assert_source_creation(self, source, is_anonymized=False):
         self.assertIsNotNone(source)
         self.assertEqual(source.source_type, Source.SINGLE)
         self.assertEqual(source.is_active, True)
         self.assertEqual(source.is_public, True)
+        self.assertEqual(source.is_anonymized, is_anonymized)
         self.assertEqual(source.create, True)
 
     def assert_successful_add_production_location_without_geocode_result(

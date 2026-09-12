@@ -6,7 +6,7 @@ import { logErrorToRollbar } from './../util/util';
 
 import {
     facilitiesRoute,
-    mainRoute,
+    mapRoute,
     USER_DEFAULT_STATE,
 } from '../util/constants';
 
@@ -37,7 +37,7 @@ class SidebarWithErrorBoundary extends Component {
                 <Route
                     key={JSON.stringify(this.state.hasError)}
                     exact
-                    path={mainRoute}
+                    path={mapRoute}
                     component={HomepageSidebar}
                 />
             </Switch>

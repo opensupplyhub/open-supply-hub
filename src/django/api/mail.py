@@ -1,16 +1,21 @@
 from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import transaction
 from django.template.loader import get_template
 from waffle import switch_is_active
 from api.models import (
     FacilityList,
     FacilityClaim,
+    FacilityClaimReviewNote,
     ModerationEvent,
     Facility
 )
 from countries.lib.countries import COUNTRY_NAMES
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
 
 
 PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
@@ -100,7 +105,37 @@ def send_claim_facility_confirmation_email(request, facility_claim):
     )
 
 
+@transaction.atomic
 def send_message_to_claimant_email(request, facility_claim, message):
+    """
+    Email a moderator message to the claimant and record it as a
+    CLAIMANT_MESSAGE review note.
+
+    The note is created here, next to the send, keeping the record and
+    the delivery as coupled as an external, irreversible send allows
+    (and so future delivery changes — e.g. bounce handling — happen in
+    one place). It is written before
+    the send on purpose: this function is atomic (nesting as a savepoint
+    under an already-atomic caller), so a failed send raises and rolls
+    the note back regardless of the calling context. Do NOT swallow send
+    errors and return normally — that would commit a CLAIMANT_MESSAGE
+    note for an email that never went out.
+
+    Known, accepted trade-off: if the outer transaction fails AFTER a
+    successful send (e.g. response serialization), the email has gone
+    out but the note rolls back — the claimant may get a duplicate on
+    retry. The reverse design (send after commit) would instead commit
+    phantom "emailed" records on send failure, which corrupts queue-
+    stage derivation; a record-less duplicate email is the cheaper
+    failure.
+    """
+    FacilityClaimReviewNote.objects.create(
+        claim=facility_claim,
+        author=request.user,
+        note=message,
+        note_type=FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
+    )
+
     subj_template = get_template('mail/message_claimant_subject.txt')
     text_template = get_template('mail/message_claimant_body.txt')
     html_template = get_template('mail/message_claimant_body.html')
@@ -115,13 +150,22 @@ def send_message_to_claimant_email(request, facility_claim, message):
         'facility_url': make_facility_url(request, facility_claim.facility),
     }
 
-    send_mail(
+    sent_count = send_mail(
         subj_template.render().rstrip(),
         text_template.render(message_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
         html_message=html_template.render(message_dictionary)
     )
+    if sent_count != 1:
+        # send_mail can report 0 without raising (e.g. an effectively
+        # empty recipient). Treat that as a failed delivery so the
+        # CLAIMANT_MESSAGE note rolls back with it instead of recording
+        # an email nobody received.
+        raise RuntimeError(
+            'Claimant message email was not sent '
+            f'(send_mail returned {sent_count}).'
+        )
 
 
 def send_claim_facility_approval_email(request, facility_claim):

@@ -1,7 +1,10 @@
 import copy
 from typing import Any, Dict, List
 
-from api.constants import CLAIMED_DOWNLOAD_FIELDS_MAPPING
+from api.constants import (
+    CLAIMED_DOWNLOAD_FIELDS_MAPPING,
+    MASKED_CONTRIBUTOR_LABEL,
+)
 from api.csv_download import (
     CLAIMED_DOWNLOAD_FIELDS,
     format_download_claimed_fields,
@@ -112,20 +115,29 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
 
     def get_contributors(self, facility: FacilityIndexNewManager) -> str:
         """Return pipe-separated contributor names, marking the claimer when
-        present."""
+        present.
+
+        Masked (trade union) contributors are relabeled to a neutral
+        "Other" - their name, id and list metadata never reach the download.
+        """
+        masked = self.masked_contributors
         contributors = []
         claim = facility.approved_claim
         if claim is not None:
-            contributors.append("{} (Claimed)".format(
-                claim["contributor"]["name"]
-            ))
+            claim_name = (
+                MASKED_CONTRIBUTOR_LABEL
+                if masked.should_mask(claim["contributor"])
+                else claim["contributor"]["name"]
+            )
+            contributors.append("{} (Claimed)".format(claim_name))
 
         for contributor in facility.contributors:
-            contributors.append(
-                contributor["name"]
-                if contributor["should_display_associations"]
-                else "{}".format(prefix_a_an(contributor["contrib_type"]))
-            )
+            if masked.should_mask(contributor):
+                contributors.append(MASKED_CONTRIBUTOR_LABEL)
+            elif contributor["should_display_associations"]:
+                contributors.append(contributor["name"])
+            else:
+                contributors.append(prefix_a_an(contributor["contrib_type"]))
         return "|".join(contributors)
 
     def get_claimed_fields(

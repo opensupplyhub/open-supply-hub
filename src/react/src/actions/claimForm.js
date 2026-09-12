@@ -32,6 +32,9 @@ export const failSubmitClaimFormData = createAction(
 export const completeSubmitClaimFormData = createAction(
     'COMPLETE_SUBMIT_CLAIM_FORM_DATA',
 );
+export const clearClaimFormSubmissionError = createAction(
+    'CLEAR_CLAIM_FORM_SUBMISSION_ERROR',
+);
 
 const makeClaimFacilityAPIURL = osID => `/api/facilities/${osID}/claim/`;
 

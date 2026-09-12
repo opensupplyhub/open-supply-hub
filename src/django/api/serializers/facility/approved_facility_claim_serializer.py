@@ -39,7 +39,7 @@ class ApprovedFacilityClaimSerializer(ModelSerializer):
                   'office_official_name', 'office_address',
                   'office_country_code', 'office_phone_number',
                   'office_info_publicly_visible',
-                  'opening_date', 'closing_date',
+                  'opening_date',
                   'estimated_annual_throughput', 'energy_coal',
                   'energy_natural_gas', 'energy_diesel', 'energy_kerosene',
                   'energy_biomass', 'energy_charcoal',

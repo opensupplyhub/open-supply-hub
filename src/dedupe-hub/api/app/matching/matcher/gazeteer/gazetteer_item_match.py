@@ -179,8 +179,8 @@ class GazetteerItemMatch(BaseItemMatch):
         ]
 
     @staticmethod
-    def clean_match(sting_one: str, string_two: str) -> bool:
-        clean(sting_one) == clean(string_two)
+    def clean_match(string_one: str, string_two: str) -> bool:
+        return clean(string_one) == clean(string_two)
 
     @staticmethod
     def get_facility(facility_id):

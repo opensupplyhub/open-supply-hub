@@ -20,7 +20,7 @@ import ClaimFacilityAdditionalData from './ClaimFacilityAdditionalData';
 import { submitClaimAFacilityData } from '../actions/claimFacility';
 
 import COLOURS from '../util/COLOURS';
-import { facilityClaimStepsNames } from '../util/constants';
+import { facilityClaimStepsNames, mapRoute } from '../util/constants';
 
 import {
     claimFacilitySupportDocsIsValid,
@@ -332,7 +332,7 @@ const ClaimFacilityStepper = ({
                             <Button
                                 variant="contained"
                                 color="primary"
-                                href="/"
+                                href={mapRoute}
                                 className={classes.popupButtonStyles}
                             >
                                 Search OS Hub

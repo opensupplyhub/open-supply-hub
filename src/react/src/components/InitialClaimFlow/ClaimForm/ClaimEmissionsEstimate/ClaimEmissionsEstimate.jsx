@@ -33,7 +33,6 @@ ClaimEmissionsEstimate.propTypes = {
 const mapStateToProps = ({ claimForm: { formData } }) => ({
     formData: {
         openingDate: formData.openingDate,
-        closingDate: formData.closingDate,
         estimatedAnnualThroughput: formData.estimatedAnnualThroughput,
         energyCoal: formData.energyCoal,
         energyNaturalGas: formData.energyNaturalGas,

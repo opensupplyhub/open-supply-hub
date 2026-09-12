@@ -11,7 +11,7 @@ import { updateBoundaryFilter } from '../actions/filters';
 
 import { fetchFacilities } from '../actions/facilities';
 
-import { facilitiesRoute, mainRoute } from '../util/constants';
+import { facilitiesRoute, mapRoute } from '../util/constants';
 
 const zoomStyles = theme =>
     Object.freeze({
@@ -124,7 +124,7 @@ function SearchControls({
             />
             <Route
                 exact
-                path={mainRoute}
+                path={mapRoute}
                 render={() => (
                     <div className={classes.controlsStyle}>
                         <div>{boundaryButton}</div>

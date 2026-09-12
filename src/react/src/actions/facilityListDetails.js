@@ -1,5 +1,5 @@
 import { createAction } from 'redux-act';
-import querystring from 'querystring';
+import querystring from '../util/qs';
 
 import apiRequest from '../util/apiRequest';
 

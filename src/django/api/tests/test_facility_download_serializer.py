@@ -37,7 +37,6 @@ CLAIM_HEADERS = [
     "claim_parent_company",
     "claim_number_of_workers",
     "claim_opening_date",
-    "claim_closing_date",
     "claim_estimated_annual_throughput_kg_year",
     "claim_energy_coal_j",
     "claim_energy_natural_gas_j",
@@ -175,6 +174,29 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_PARTNER_FIELD_VALUES,
         ]
         self.assertEqual(row, expected_row)
+
+    def test_get_row_uses_claim_address_when_present(self):
+        """Uses the claim address for the address column when the approved
+        claim provides one."""
+        serializer = FacilityDownloadSerializer()
+        self.facility_two.approved_claim["facility_address"] = (
+            "Claimed Facility Address"
+        )
+        row = serializer.get_row(self.facility_two)
+        self.assertEqual(row[3], "Claimed Facility Address")
+
+    def test_get_address_falls_back_when_claim_address_empty(self):
+        """Falls back to the facility address when the claim address is
+        empty or the facility is unclaimed."""
+        self.facility_two.approved_claim["facility_address"] = ""
+        self.assertEqual(
+            FacilityDownloadSerializer.get_address(self.facility_two),
+            self.facility_two.address,
+        )
+        self.assertEqual(
+            FacilityDownloadSerializer.get_address(self.facility_one),
+            self.facility_one.address,
+        )
 
     def test_partner_fields_headers_flatten_object_schema(self):
         """Object fields become dotted headers; primitive fields keep a single

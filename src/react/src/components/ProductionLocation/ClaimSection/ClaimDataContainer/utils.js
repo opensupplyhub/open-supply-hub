@@ -18,7 +18,6 @@ const FIELD_ORDER = [
     'estimated_annual_throughput',
     'actual_annual_energy_consumption',
     'opening_date',
-    'closing_date',
     'sector',
     'facility_type',
     'product_types',

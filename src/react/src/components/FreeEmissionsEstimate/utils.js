@@ -21,21 +21,6 @@ const baseDateValidation = stringYup().test(
     },
 );
 
-const createDateComparisonValidator = (otherFieldName, comparisonFn) =>
-    function (value) {
-        const otherValue = this.parent[otherFieldName];
-
-        // If either date is empty, skip validation.
-        if (!value || !otherValue) {
-            return true;
-        }
-
-        const currentDate = parseDate(value);
-        const otherDate = parseDate(otherValue);
-
-        return comparisonFn(currentDate, otherDate);
-    };
-
 const isValidPositiveInteger = value => {
     const numericValue = parseInt(value, 10);
     return (
@@ -70,22 +55,7 @@ const createEnergyFieldValidation = enabledField =>
 
 // Free emissions estimate Yup validation schema.
 const freeEmissionsEstimateValidationSchema = objectYup({
-    openingDate: baseDateValidation.test(
-        'opening-before-closing',
-        'Opening date must be before or equal to closing date.',
-        createDateComparisonValidator(
-            'closingDate',
-            (opening, closing) => opening <= closing,
-        ),
-    ),
-    closingDate: baseDateValidation.test(
-        'closing-after-opening',
-        'Closing date must be after or equal to opening date.',
-        createDateComparisonValidator(
-            'openingDate',
-            (closing, opening) => closing >= opening,
-        ),
-    ),
+    openingDate: baseDateValidation,
     estimatedAnnualThroughput: createPositiveIntegerValidation(stringYup()),
     energyCoal: createEnergyFieldValidation('energyCoalEnabled'),
     energyNaturalGas: createEnergyFieldValidation('energyNaturalGasEnabled'),

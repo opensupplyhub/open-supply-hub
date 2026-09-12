@@ -7,8 +7,8 @@ import ProductionLocationDialogCloseButton from '../../components/Contribute/Pro
 import {
     MODERATION_STATUSES_ENUM,
     PRODUCTION_LOCATION_CLAIM_STATUSES_ENUM,
+    mapRoute
 } from '../../util/constants';
-
 
 jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
@@ -211,7 +211,7 @@ describe('ProductionLocationDialog', () => {
         const searchOSHubButton = getByRole('button', { name: /Search OS Hub/i });
         fireEvent.click(searchOSHubButton);
 
-        expect(mockHistoryPush).toHaveBeenCalledWith('/');
+        expect(mockHistoryPush).toHaveBeenCalledWith(mapRoute);
     });
 
     test('Submit another Location button should link to the SLC search page', () => {
@@ -255,7 +255,7 @@ describe('ProductionLocationDialog', () => {
         const closeButton = getByRole('button', { name: /close/i });
 
         fireEvent.click(closeButton);
-        expect(mockHistoryPush).toHaveBeenCalledWith('/');
+        expect(mockHistoryPush).toHaveBeenCalledWith(mapRoute);
     });
 });
 

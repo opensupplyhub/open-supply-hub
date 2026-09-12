@@ -64,6 +64,31 @@ resource "aws_db_parameter_group" "default" {
     value = var.rds_work_mem
   }
 
+  # pgaudit must be present in shared_preload_libraries so that the extension is
+  # loaded at server start. This is a static parameter, so the change only takes
+  # effect after the instance is rebooted -- hence apply_method =
+  # "pending-reboot". pg_stat_statements is loaded by default on PostgreSQL 11
+  # and later, and is listed explicitly here so that overriding this parameter
+  # does not silently drop it.
+  parameter {
+    name         = "shared_preload_libraries"
+    value        = var.rds_shared_preload_libraries
+    apply_method = "pending-reboot"
+  }
+
+  # Classes of SQL statements that pgaudit records. Deliberately "none" for now:
+  # CREATE EXTENSION pgaudit installs the event triggers that supply object type
+  # and object name for DDL records, and it can only run once the library above
+  # is loaded at server start. Setting a real class before that would produce
+  # DDL records naming no object. Phase 2 (OSDEV-3236) flips the default to
+  # "ddl,role" once the extension exists in every environment -- see
+  # doc/ops/database-auditing.md.
+  parameter {
+    name         = "pgaudit.log"
+    value        = var.rds_pgaudit_log
+    apply_method = "pending-reboot"
+  }
+
   tags = {
     Name        = "dbpgDatabaseServer"
     Project     = var.project
@@ -76,17 +101,18 @@ resource "aws_db_parameter_group" "default" {
 }
 
 module "database_enc" {
-  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.2.0"
+  source = "github.com/opensupplyhub/terraform-aws-postgresql-rds?ref=3.3.0"
 
   vpc_id                      = module.vpc.id
   allocated_storage           = var.rds_allocated_storage
   engine_version              = var.rds_engine_version
   instance_type               = var.rds_instance_type
   storage_type                = var.rds_storage_type
+  iops                        = var.rds_iops
   database_identifier         = var.rds_database_identifier
   database_name               = var.rds_database_name
-  database_username           = var.rds_database_username
-  database_password           = var.rds_database_password
+  database_username           = local.rds_database_username
+  database_password           = local.rds_database_password
   backup_retention_period     = var.rds_backup_retention_period
   backup_window               = var.rds_backup_window
   maintenance_window          = var.rds_maintenance_window
@@ -103,16 +129,16 @@ module "database_enc" {
   deletion_protection         = var.rds_deletion_protection
   snapshot_identifier         = var.snapshot_identifier
 
-  alarm_cpu_threshold                = var.rds_cpu_threshold_percent
-  alarm_disk_queue_threshold         = var.rds_disk_queue_threshold
-  alarm_free_disk_threshold          = var.rds_free_disk_threshold_bytes
-  alarm_free_memory_threshold        = var.rds_free_memory_threshold_bytes
-  alarm_cpu_credit_balance_threshold = var.rds_cpu_credit_balance_threshold
-  alarm_actions                      = [aws_sns_topic.global.arn]
-  ok_actions                         = [aws_sns_topic.global.arn]
-  insufficient_data_actions          = [aws_sns_topic.global.arn]
+  alarm_cpu_threshold                  = var.rds_cpu_threshold_percent
+  alarm_disk_queue_threshold           = var.rds_disk_queue_threshold
+  alarm_free_disk_threshold            = var.rds_free_disk_threshold_bytes
+  alarm_free_memory_threshold          = var.rds_free_memory_threshold_bytes
+  alarm_cpu_credit_balance_threshold   = var.rds_cpu_credit_balance_threshold
+  alarm_database_connections_threshold = var.rds_database_connections_alarm_threshold
+  alarm_actions                        = [aws_sns_topic.global.arn]
+  ok_actions                           = [aws_sns_topic.global.arn]
+  insufficient_data_actions            = [aws_sns_topic.global.arn]
 
   project     = var.project
   environment = var.environment
 }
-

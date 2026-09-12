@@ -1,10 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { bool, func, object } from 'prop-types';
 
-import { EditorState, convertToRaw } from 'draft-js';
-import draftToHtml from 'draftjs-to-html';
-import { Editor } from 'react-draft-wysiwyg';
-import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 import { withStyles } from '@material-ui/core/styles';
 import {
@@ -23,32 +21,42 @@ import { makeRejectModerationEventDialogStyles } from '../../util/styles';
 
 const MIN_TEXT_INPUT_LENGTH = 30;
 
+const EDITOR_TOOLBAR = [
+    [
+        'bold',
+        'italic',
+        'underline',
+        'strike',
+        'blockquote',
+        'code-block',
+        { script: 'sub' },
+        { script: 'super' },
+    ],
+    [{ header: [1, 2, 3, 4, 5, 6, false] }, { font: [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }, { direction: 'rtl' }],
+    ['link'],
+];
+
 const RejectModerationEventDialog = ({
     updateModerationEvent,
     isOpenDialog,
     closeDialog,
     classes,
 }) => {
-    const [editorState, setEditorState] = useState(EditorState.createEmpty());
+    const [editorContent, setEditorContent] = useState({ html: '', text: '' });
     const [isTooltipOpen, setIsTooltipOpen] = useState(false);
 
-    const { cleanedText, htmlContent } = useMemo(() => {
-        const contentState = editorState.getCurrentContent();
-        return {
-            cleanedText: contentState.getPlainText(),
-            htmlContent: draftToHtml(convertToRaw(contentState)),
-        };
-    }, [editorState]);
+    const { html: htmlContent, text: cleanedText } = editorContent;
 
-    const handleEditorChange = content => {
-        setEditorState(content);
+    const handleEditorChange = (content, delta, source, editor) => {
+        setEditorContent({ html: content, text: editor.getText().trim() });
     };
 
     const handleAction = () => {
         updateModerationEvent(
             MODERATION_STATUSES_ENUM.REJECTED,
             cleanedText,
-            htmlContent,
+            htmlContent.replace(/&nbsp;/g, ' '),
         );
         closeDialog();
     };
@@ -87,19 +95,12 @@ const RejectModerationEventDialog = ({
                     id="dialog-wysiwyg"
                     className={classes.editorContainerStyles}
                 >
-                    <Editor
-                        editorState={editorState}
-                        onEditorStateChange={handleEditorChange}
-                        editorClassName={classes.editorStyles}
-                        toolbar={{
-                            options: [
-                                'inline',
-                                'blockType',
-                                'list',
-                                'link',
-                                'history',
-                            ],
-                        }}
+                    <ReactQuill
+                        theme="snow"
+                        value={htmlContent}
+                        onChange={handleEditorChange}
+                        className={classes.editorStyles}
+                        modules={{ toolbar: EDITOR_TOOLBAR }}
                     />
                 </div>
             </DialogContent>

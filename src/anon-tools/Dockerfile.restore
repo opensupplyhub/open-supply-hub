@@ -3,7 +3,7 @@ FROM postgis/postgis:16-3.4-alpine
 WORKDIR /opt/
 
 RUN set -ex && apk update && apk add --no-cache openssh-client
-RUN set -ex && apk update && apk add --no-cache aws-cli
+RUN set -ex && apk update && apk add --no-cache --upgrade libexpat aws-cli
 ENV POSTGRES_PASSWORD=anondb
 ENV POSTGRES_USER=anondb
 ENV POSTGRES_DB=anondb

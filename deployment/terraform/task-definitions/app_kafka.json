@@ -2,7 +2,8 @@
   {
     "name": "kafka-topics",
     "image": "${image}",
-    "entryPoint": ["./kafka.sh"],
+    "entryPoint": ["/bin/bash"],
+    "command": ["./kafka.sh"],
     "environment": [
       { "name": "BOOTSTRAP_SERVERS", "value": "${bootstrap_servers}" },
       { "name": "TOPIC_DEDUPE_BASIC_NAME", "value": "${topic_dedup_basic_name}" }

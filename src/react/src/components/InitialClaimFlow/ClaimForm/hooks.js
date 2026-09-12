@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
+import {
+    mapSubmissionErrorsToFormFields,
+    getTouchedFieldsFromErrors,
+} from './utils';
 import { claimIntroRoute } from '../../../util/constants';
 
 export const usePrefetchClaimData = (
@@ -70,6 +74,7 @@ export const useClaimForm = (
     updateField,
     onSubmit,
     emissionsHasErrors,
+    clearSubmissionError,
 ) => {
     const formik = useFormik({
         initialValues,
@@ -103,8 +108,13 @@ export const useClaimForm = (
     }, [activeStep]);
 
     // Custom field change handler that syncs to Redux.
+    // Clears the stale server error banner; setFieldValue(..., true) revalidates
+    // so Formik errors come from Yup instead of the previous API response.
     const handleFieldChange = (field, value) => {
-        formik.setFieldValue(field, value);
+        if (clearSubmissionError) {
+            clearSubmissionError();
+        }
+        formik.setFieldValue(field, value, true);
         formik.setFieldTouched(field, true, false);
         updateField({ field, value });
     };
@@ -117,7 +127,10 @@ export const useClaimForm = (
     // the parent verification method in a step without changing the value
     // of the field.
     const updateFieldWithoutTouch = (field, value) => {
-        formik.setFieldValue(field, value);
+        if (clearSubmissionError) {
+            clearSubmissionError();
+        }
+        formik.setFieldValue(field, value, true);
         updateField({ field, value });
         formik.setFieldTouched(field, false, false);
     };
@@ -174,6 +187,39 @@ export const useClaimFormSubmission = (
         dialogIsOpen,
         setDialogIsOpen,
     };
+};
+
+/**
+ * Map server validation errors onto Formik fields for highlighting.
+ */
+export const useApplySubmissionErrorsToForm = (claimForm, submissionError) => {
+    useEffect(() => {
+        if (!submissionError || submissionError.length === 0) {
+            return;
+        }
+
+        const { fieldErrors } = mapSubmissionErrorsToFormFields(
+            submissionError,
+        );
+
+        if (isEmpty(fieldErrors)) {
+            return;
+        }
+
+        claimForm.setErrors({
+            ...claimForm.errors,
+            ...fieldErrors,
+        });
+        claimForm.setTouched(
+            {
+                ...claimForm.touched,
+                ...getTouchedFieldsFromErrors(fieldErrors),
+            },
+            false,
+        );
+        // Only re-apply when a new submission error arrives.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [submissionError]);
 };
 
 /**
