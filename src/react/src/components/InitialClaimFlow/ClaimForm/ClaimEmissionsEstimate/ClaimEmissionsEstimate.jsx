@@ -5,8 +5,12 @@ import EmissionsEstimateForm from '../../../FreeEmissionsEstimate/EmissionsEstim
 import { updateClaimFormField } from '../../../../actions/claimForm';
 
 /**
- * Wrapper component for EmissionsEstimateForm connected to claimForm Redux state.
- * Used in the initial claim flow (ProfileStep).
+ * Wrapper component for EmissionsEstimateForm connected to claimForm Redux
+ * state. Used in the initial claim flow (ProfileStep).
+ *
+ * When formData / change handlers are passed in as props (the pending
+ * claim edit view, whose form state lives in its own slice — OSDEV-3371),
+ * they take precedence over the claimForm slice wiring.
  */
 const ClaimEmissionsEstimate = ({
     formData,
@@ -30,36 +34,40 @@ ClaimEmissionsEstimate.propTypes = {
     onValidationChange: func.isRequired,
 };
 
-const mapStateToProps = ({ claimForm: { formData } }) => ({
-    formData: {
-        openingDate: formData.openingDate,
-        estimatedAnnualThroughput: formData.estimatedAnnualThroughput,
-        energyCoal: formData.energyCoal,
-        energyNaturalGas: formData.energyNaturalGas,
-        energyDiesel: formData.energyDiesel,
-        energyKerosene: formData.energyKerosene,
-        energyBiomass: formData.energyBiomass,
-        energyCharcoal: formData.energyCharcoal,
-        energyAnimalWaste: formData.energyAnimalWaste,
-        energyElectricity: formData.energyElectricity,
-        energyOther: formData.energyOther,
-        energyCoalEnabled: formData.energyCoalEnabled,
-        energyNaturalGasEnabled: formData.energyNaturalGasEnabled,
-        energyDieselEnabled: formData.energyDieselEnabled,
-        energyKeroseneEnabled: formData.energyKeroseneEnabled,
-        energyBiomassEnabled: formData.energyBiomassEnabled,
-        energyCharcoalEnabled: formData.energyCharcoalEnabled,
-        energyAnimalWasteEnabled: formData.energyAnimalWasteEnabled,
-        energyElectricityEnabled: formData.energyElectricityEnabled,
-        energyOtherEnabled: formData.energyOtherEnabled,
-    },
+const pickEmissionsFields = formData => ({
+    openingDate: formData.openingDate,
+    estimatedAnnualThroughput: formData.estimatedAnnualThroughput,
+    energyCoal: formData.energyCoal,
+    energyNaturalGas: formData.energyNaturalGas,
+    energyDiesel: formData.energyDiesel,
+    energyKerosene: formData.energyKerosene,
+    energyBiomass: formData.energyBiomass,
+    energyCharcoal: formData.energyCharcoal,
+    energyAnimalWaste: formData.energyAnimalWaste,
+    energyElectricity: formData.energyElectricity,
+    energyOther: formData.energyOther,
+    energyCoalEnabled: formData.energyCoalEnabled,
+    energyNaturalGasEnabled: formData.energyNaturalGasEnabled,
+    energyDieselEnabled: formData.energyDieselEnabled,
+    energyKeroseneEnabled: formData.energyKeroseneEnabled,
+    energyBiomassEnabled: formData.energyBiomassEnabled,
+    energyCharcoalEnabled: formData.energyCharcoalEnabled,
+    energyAnimalWasteEnabled: formData.energyAnimalWasteEnabled,
+    energyElectricityEnabled: formData.energyElectricityEnabled,
+    energyOtherEnabled: formData.energyOtherEnabled,
 });
 
-const mapDispatchToProps = dispatch => ({
-    onEmissionsValueChange: (field, value) =>
-        dispatch(updateClaimFormField({ field, value })),
-    onEmissionsEnabledChange: (field, value) =>
-        dispatch(updateClaimFormField({ field, value })),
+const mapStateToProps = ({ claimForm: { formData } }, ownProps) => ({
+    formData: pickEmissionsFields(ownProps.formData || formData),
+});
+
+const mapDispatchToProps = (dispatch, ownProps) => ({
+    onEmissionsValueChange:
+        ownProps.onEmissionsValueChange ||
+        ((field, value) => dispatch(updateClaimFormField({ field, value }))),
+    onEmissionsEnabledChange:
+        ownProps.onEmissionsEnabledChange ||
+        ((field, value) => dispatch(updateClaimFormField({ field, value }))),
 });
 
 export default connect(
