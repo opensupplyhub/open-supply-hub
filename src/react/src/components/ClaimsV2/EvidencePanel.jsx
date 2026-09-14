@@ -28,7 +28,25 @@ const TABS = Object.freeze({
 const defaultTabFor = doc =>
     doc && isPdfFile(doc.file_name) ? TABS.TRANSLATED : TABS.DOCUMENT;
 
-export default function EvidencePanel({ attachments, review, matchValues }) {
+/*
+ * Attachment URL, compatible with both sides of OSDEV-2278 (PR #1274):
+ * today the serializer carries a presigned claim_attachment URL; after
+ * that PR merges it carries only the attachment id, and files are
+ * fetched through the authorization-checked download action (a 302 to
+ * a short-lived presigned URL), which works directly as an <img src>
+ * or window.open target because the browser follows the redirect with
+ * the session cookie.
+ */
+const attachmentHref = (claimID, doc) =>
+    doc.claim_attachment ||
+    `/api/facility-claims/${claimID}/attachments/${doc.id}/download/`;
+
+export default function EvidencePanel({
+    attachments,
+    review,
+    matchValues,
+    claimID,
+}) {
     const docs = Array.isArray(attachments) ? attachments : [];
     // Spec §5b: the first document auto-opens on claim load.
     const [openIndex, setOpenIndex] = useState(docs.length > 0 ? 0 : null);
@@ -50,7 +68,7 @@ export default function EvidencePanel({ attachments, review, matchValues }) {
         setTab(defaultTabFor(docs[index]));
         const doc = docs[index];
         if (doc && isPdfFile(doc.file_name)) {
-            window.open(doc.claim_attachment, '_blank', 'noopener');
+            window.open(attachmentHref(claimID, doc), '_blank', 'noopener');
         }
     };
 
@@ -79,7 +97,7 @@ export default function EvidencePanel({ attachments, review, matchValues }) {
             return (
                 <div>
                     <img
-                        src={openDoc.claim_attachment}
+                        src={attachmentHref(claimID, openDoc)}
                         alt={openDoc.file_name}
                         style={styles.evidenceImage}
                     />
@@ -95,7 +113,7 @@ export default function EvidencePanel({ attachments, review, matchValues }) {
                     ? 'PDF — the original opens in a new tab: '
                     : 'No extracted text for this document — '}
                 <a
-                    href={openDoc.claim_attachment}
+                    href={attachmentHref(claimID, openDoc)}
                     target="_blank"
                     rel="noopener noreferrer"
                 >

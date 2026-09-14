@@ -19,6 +19,9 @@ import {
     SORT_ORDERS,
 } from './railUtils';
 
+import QueueRail from './QueueRail';
+import styles from './styles';
+
 const formatDate = value => {
     const date = new Date(value);
     return Number.isNaN(date.getTime())
@@ -29,8 +32,6 @@ const formatDate = value => {
               day: 'numeric',
           });
 };
-import QueueRail from './QueueRail';
-import styles from './styles';
 
 /*
  * Claims moderation dashboard v2 — scaffolding shell (OSDEV-3355).
@@ -183,6 +184,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <EvidencePanel
                     attachments={detail.attachments}
                     review={review}
+                    claimID={detail.id}
                     matchValues={[
                         ['Name', detail.facility?.properties?.name],
                         ['Address', detail.facility?.properties?.address],
