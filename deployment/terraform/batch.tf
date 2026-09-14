@@ -349,7 +349,6 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
       aws_batch_job_queue.export_csv.arn,
       var.environment == "Rba" ? aws_batch_job_definition.db_sync[0].arn : "",
       var.environment == "Rba" ? aws_batch_job_queue.db_sync[0].arn : "",
-      var.environment == "Rba" ? aws_batch_job_definition.reassert_rba_promotions[0].arn : "",
     ])
   }
 }
@@ -569,88 +568,5 @@ resource "aws_cloudwatch_event_target" "db_sync" {
   batch_target {
     job_definition = aws_batch_job_definition.db_sync[0].arn
     job_name       = "job${local.short}DbSync"
-  }
-}
-
-#
-# Promotion re-assert resources (RBA instance only)
-#
-# The sync above overwrites every synced field of a shared facility,
-# including created_from, so a promotion made on this instance is reverted
-# whenever the public record next changes. reassert_rba_promotions restores
-# them, and has to run after the overwrite it repairs. The sync has no fixed
-# duration - it checkpoints and resumes - so this runs off the sync job's own
-# completion event rather than a second cron expression guessing at how long
-# the sync takes.
-#
-
-data "template_file" "reassert_rba_promotions_job_definition" {
-  count = var.environment == "Rba" ? 1 : 0
-
-  template = file("job-definitions/reassert_rba_promotions.json")
-
-  vars = {
-    image_url              = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
-    postgres_host          = aws_route53_record.database.name
-    postgres_port          = module.database_enc.port
-    postgres_db            = var.rds_database_name
-    environment            = var.environment
-    instance_source        = var.instance_source
-    aws_region             = var.aws_region
-    log_group_name         = "log${local.short}Batch"
-    ecs_execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
-    rds_master_secret_arn  = local.rds_master_secret_arn
-    django_secret_key_arn  = local.django_secret_key_arn
-  }
-}
-
-resource "aws_batch_job_definition" "reassert_rba_promotions" {
-  count = var.environment == "Rba" ? 1 : 0
-
-  name           = "job${local.short}ReassertRbaPromotions"
-  type           = "container"
-  propagate_tags = true
-
-  platform_capabilities = ["EC2"]
-
-  container_properties = data.template_file.reassert_rba_promotions_job_definition[0].rendered
-
-  # No retry_strategy, unlike db_sync. A non-zero exit here means a specific
-  # promotion could not be restored - a created_from collision, say - and
-  # repeating the run reproduces it rather than clearing it. One FAILED job
-  # raises one alert a human reads, instead of three burying the first.
-}
-
-resource "aws_cloudwatch_event_rule" "reassert_rba_promotions" {
-  count       = var.environment == "Rba" ? 1 : 0
-  name        = "rule${local.short}ReassertRbaPromotions"
-  description = "Runs the promotion re-assert after the database sync job succeeds"
-  is_enabled  = var.reassert_rba_promotions_enabled
-
-  # Matches the sync job only. Scoping by queue alone would also match this
-  # job's own SUCCEEDED event and resubmit it forever, since the re-assert
-  # runs on the same queue. The job name is what separates the two, and it
-  # survives job definition revisions, which the ARN does not - EventBridge
-  # appends a suffix to the name it submits, hence a prefix match.
-  event_pattern = jsonencode({
-    source        = ["aws.batch"]
-    "detail-type" = ["Batch Job State Change"]
-    detail = {
-      status   = ["SUCCEEDED"]
-      jobQueue = [aws_batch_job_queue.db_sync[0].arn]
-      jobName  = [{ prefix = "job${local.short}DbSync" }]
-    }
-  })
-}
-
-resource "aws_cloudwatch_event_target" "reassert_rba_promotions" {
-  count    = var.environment == "Rba" ? 1 : 0
-  rule     = aws_cloudwatch_event_rule.reassert_rba_promotions[0].name
-  arn      = aws_batch_job_queue.db_sync[0].arn
-  role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
-
-  batch_target {
-    job_definition = aws_batch_job_definition.reassert_rba_promotions[0].arn
-    job_name       = "job${local.short}ReassertRbaPromotions"
   }
 }

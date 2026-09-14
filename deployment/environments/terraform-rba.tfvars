@@ -88,7 +88,6 @@ vpn_ec2_ami = "ami-0940c95b23a1f7cac"
 
 db_sync_enabled                   = true
 db_sync_schedule_expression       = "cron(0 7 * * ? *)" # (7:00 AM UTC)
-reassert_rba_promotions_enabled   = true                # Runs when the sync above succeeds, not on a clock.
 is_database_private_link_consumer = true
 
 enable_homepage_proxy   = false

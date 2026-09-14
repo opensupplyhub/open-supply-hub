@@ -4,11 +4,14 @@ import datetime
 import hashlib
 import hmac
 
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 from django.utils import timezone
 from django.db.models import EmailField
 from django.db import connections
+
+from api.helpers.rba_instance import is_rba_instance
 
 from api.models.extended_field import ExtendedField
 from api.models.user import User
@@ -1101,3 +1104,16 @@ class Command(BaseCommand):
                 self.style.ERROR(f'Synchronization failed: {e}')
             )
             raise CommandError(f'Synchronization failed: {e}')
+
+        # The sync overwrites created_from on shared facilities, which
+        # reverts promotions made on this instance. Re-assert them in the
+        # same job so they follow the overwrite without a second schedule
+        # guessing how long the sync takes. Skip elsewhere: the command
+        # refuses to run outside RBA, and failing the sync job for that
+        # would be the wrong signal. A re-assert failure is left as
+        # CommandError so it is not relabelled a sync failure.
+        if is_rba_instance():
+            call_command(
+                'reassert_rba_promotions',
+                dry_run=options['dry_run'],
+            )
