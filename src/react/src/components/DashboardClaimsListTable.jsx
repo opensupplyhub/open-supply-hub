@@ -163,7 +163,7 @@ function DashboardClaimsListTable({
             {loading || fetching ? (
                 <TableBody>
                     <TableRow>
-                        <TableCell colSpan={8}>
+                        <TableCell colSpan={9}>
                             <CircularProgress
                                 size={25}
                                 className={classes.loaderStyle}
@@ -219,6 +219,13 @@ function DashboardClaimsListTable({
                             </TableCell>
                             <TableCell padding="dense">
                                 {moment(claim.updated_at).format('LL')}
+                            </TableCell>
+                            <TableCell padding="dense">
+                                {claim.claimant_updated_at !== null
+                                    ? moment(claim.claimant_updated_at).format(
+                                          'LL',
+                                      )
+                                    : EMPTY_PLACEHOLDER}
                             </TableCell>
                         </TableRow>
                     ))}
