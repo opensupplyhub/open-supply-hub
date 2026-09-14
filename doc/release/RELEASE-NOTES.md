@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: September 17, 2026
 
 ### Database changes
 
@@ -60,6 +60,18 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * After deployment, run the one-off backfill for locations approved via moderation events between the 2.29 deploy and this release (targeted: only rows with facility_type/processing_type extended fields are touched):
     * `backfill_facility_index --fields facility_type,processing_type`
 
+
+## Release 2.29.2
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: August 31, 2026
+
+### Architecture/Environment changes
+* [OSDEV-3350](https://opensupplyhub.atlassian.net/browse/OSDEV-3350) - **This release activated the AWS ContriBot instance in production.** Production was the only environment missing the two non-secret ContriBot variables, so Terraform defaults applied: `contribot_last_list_id` (default `"NaN"`, which made the fetch Lambda raise `ValueError: Invalid LAST_LIST_ID` on every scheduled run before it reached the API) and `contribot_google_drive_shared_directory_id` (default empty, which would have failed report upload). Setting both is what started production list processing on the AWS instance. Configuration only - no image, service, schema or database parameter change. `contribot_last_list_id` is `9636`, so the instance starts at list 9637 and does not reprocess lists the legacy instance already handled. `contribot_monday_board_id` points at the live approval-queue board, so ContriBot items appear alongside real moderation work. The legacy EC2 instance keeps running in parallel; retiring it is gated on verified production health and tracked on [OSDEV-2545](https://opensupplyhub.atlassian.net/browse/OSDEV-2545) and [OSDEV-3454](https://opensupplyhub.atlassian.net/browse/OSDEV-3454).
+
+### Release instructions
+* Run **Deploy to AWS** with `deploy-mode` set to `terraform-plan-and-apply`. No reboot, migration or reindex is required.
 
 ## Release 2.29.0
 
