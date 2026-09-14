@@ -123,3 +123,7 @@ contribot_monday_api_key_secret_name = "oshub/staging/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/staging/contribot-slack-api-url"
 contribot_slack_failures_api_url_secret_name = "oshub/staging/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/staging/contribot-google-drive-service-key"
+
+# OSDEV-3374: automated-claims pipeline Lambda execution role, allowed to
+# read claim attachments directly (s3:GetObject on claim_attachments/* only).
+claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]
