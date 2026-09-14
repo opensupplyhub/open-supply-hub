@@ -2,7 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
-import { useClaimsList, useClaimDetail } from './hooks';
+import { useClaimsList, useClaimDetail, useClaimActions } from './hooks';
+import { parseAutomatedReview, P1_MARKER } from './automatedReviewUtils';
+import EvidencePanel from './EvidencePanel';
+import MessageComposer from './MessageComposer';
 import { deriveClaimStage, CLAIM_STAGES, NOTE_TYPES } from './stageUtils';
 import {
     buildQueueGroups,
@@ -39,7 +42,8 @@ const STAGE_LABELS = Object.freeze({
 });
 
 function ClaimWorkspace({ claimID }) {
-    const { detail, fetching, error } = useClaimDetail(claimID);
+    const { detail, fetching, error, refetchDetail } = useClaimDetail(claimID);
+    const { acting, actionError, messageClaimant } = useClaimActions(claimID);
 
     if (!claimID) {
         return (
@@ -59,6 +63,7 @@ function ClaimWorkspace({ claimID }) {
     }
 
     const stage = deriveClaimStage(detail.notes);
+    const review = parseAutomatedReview(detail.notes);
     const facilityName =
         detail.facility?.properties?.name || `Claim #${detail.id}`;
     const statusChange = detail.status_change || {};
@@ -107,6 +112,27 @@ function ClaimWorkspace({ claimID }) {
                     ticket ↗
                 </a>
             </Typography>
+            {/* Workbench (§5b): evidence beside the composer, so the
+                extracted/translated text sits next to the draft. Keyed
+                by claim so the first document auto-opens on J/K moves. */}
+            <div style={styles.workbench} key={detail.id}>
+                <EvidencePanel
+                    attachments={detail.attachments}
+                    review={review}
+                />
+                <MessageComposer
+                    detail={detail}
+                    review={review}
+                    messageClaimant={messageClaimant}
+                    acting={acting}
+                    onSent={refetchDetail}
+                />
+            </div>
+            {actionError && (
+                <Typography variant="body1" style={styles.evidenceHint}>
+                    {actionError}
+                </Typography>
+            )}
             <div>
                 {timelineNotes.map(note => (
                     <div key={note.id} style={styles.noteItem}>
@@ -121,7 +147,25 @@ function ClaimWorkspace({ claimID }) {
                                     NOTE_TAG_LABELS[NOTE_TYPES.INTERNAL]}
                             </span>
                         </div>
-                        <div>{note.note}</div>
+                        <div>
+                            {/* The pipeline's machine-readable block is
+                                parsed into the workbench, not read as
+                                prose — show only the human part here. */}
+                            {note.note?.includes(P1_MARKER) ? (
+                                <>
+                                    {note.note
+                                        .slice(0, note.note.indexOf(P1_MARKER))
+                                        .trim()}
+                                    <div style={styles.evidenceHint}>
+                                        🤖 Automated review data attached (shown
+                                        in the evidence viewer and suggested
+                                        draft).
+                                    </div>
+                                </>
+                            ) : (
+                                note.note
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
