@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0238_add_claims_v2_dashboard_switch'),
+        ('api', '0240_claim_attachment_cascade_and_upload_prefix'),
     ]
 
     operations = [

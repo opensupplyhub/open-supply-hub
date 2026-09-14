@@ -30,6 +30,7 @@ import {
     facilityDetailsRoute,
     contributeProductionLocationRoute,
     ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+    CLAIM_PII_WARNING_TEXT,
 } from '../../../../../util/constants';
 import { selectStyles } from '../../styles';
 
@@ -281,7 +282,7 @@ const BusinessStep = ({
             <div className={classes.documentUploadContainer}>
                 {showDocumentUpload && (
                     <Grid item xs={12}>
-                        <ImportantNote text="We do NOT require and you should NOT submit documents containing sensitive personal information such as salary information, personal phone numbers, home addresses, or personal ID numbers." />
+                        <ImportantNote text={CLAIM_PII_WARNING_TEXT} />
                         <ClaimAttachmentsUploader
                             inputId="company-address-verification-documents"
                             title="Upload your documents"
