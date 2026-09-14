@@ -1,0 +1,32 @@
+{
+  "image": "${image_url}",
+  "vcpus": 1,
+  "memory": 2048,
+  "executionRoleArn": "${ecs_execution_role_arn}",
+  "command": [ "python", "manage.py", "reassert_rba_promotions" ],
+  "environment": [
+      { "name": "AWS_DEFAULT_REGION", "value": "${aws_region}" },
+      { "name": "POSTGRES_HOST", "value": "${postgres_host}" },
+      { "name": "POSTGRES_PORT", "value": "${postgres_port}" },
+      { "name": "POSTGRES_DB", "value": "${postgres_db}" },
+      { "name": "DJANGO_ENV", "value": "${environment}" },
+      { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
+      { "name": "DJANGO_LOG_LEVEL", "value": "INFO" },
+      { "name": "PYTHONUNBUFFERED", "value": "1" },
+      { "name": "TZ", "value": "UTC" }
+  ],
+  "secrets": [
+      { "name": "POSTGRES_USER", "valueFrom": "${rds_master_secret_arn}:username::" },
+      { "name": "POSTGRES_PASSWORD", "valueFrom": "${rds_master_secret_arn}:password::" },
+      { "name": "DJANGO_SECRET_KEY", "valueFrom": "${django_secret_key_arn}" }
+  ],
+  "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+          "awslogs-group": "${log_group_name}",
+          "awslogs-region": "${aws_region}",
+          "awslogs-stream-prefix": "reassert-promotions",
+          "awslogs-datetime-format": "%Y-%m-%d %H:%M:%S"
+      }
+  }
+}
