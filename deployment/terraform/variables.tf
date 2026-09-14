@@ -347,7 +347,7 @@ variable "rds_shared_preload_libraries" {
 variable "rds_pgaudit_log" {
   description = "Comma-separated classes of SQL statements recorded by pgaudit. Classes: none, all, ddl, function, misc, misc_set, read, role, write; a class can be subtracted by prefixing it with '-' (e.g. \"all,-misc\"). Deliberately \"none\" for phase 1 of the staged rollout: CREATE EXTENSION pgaudit has to land before this is set, or DDL records are written without object type or object name. OSDEV-3236 flips it to \"ddl,role\". See doc/ops/database-auditing.md."
   type        = string
-  default     = "none"
+  default     = "ddl,role"
 
   validation {
     condition = alltrue([
@@ -1564,4 +1564,17 @@ variable "contribot_slack_failures_api_url_secret_name" {
 variable "contribot_google_drive_service_key_secret_name" {
   type    = string
   default = ""
+}
+
+# IAM role ARNs (typically in another AWS account, e.g. the
+# automated-claims pipeline's Lambda execution role) that may read claim
+# attachment objects directly from the files bucket. Granted s3:GetObject
+# on the claim_attachments/ prefix only, via the bucket policy
+# (storage.tf). Set per environment in uncommitted tfvars; empty by
+# default so no cross-account access exists unless explicitly configured.
+# To get this value from the AWS console:
+# Lambda → auto-claims-moderate-claim → Configuration → Permissions → Execution role.
+variable "claim_attachments_reader_role_arns" {
+  type    = list(string)
+  default = []
 }

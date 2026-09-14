@@ -32,7 +32,8 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
 
     class Meta:
         model = FacilityClaim
-        fields = ('id', 'created_at', 'updated_at', 'contact_person', 'email',
+        fields = ('id', 'created_at', 'updated_at', 'claimant_updated_at',
+                  'contact_person', 'email',
                   'company_name', 'website', 'facility_description', 'status',
                   'contributor', 'facility', 'status_change', 'notes',
                   'facility_parent_company', 'job_title', 'linkedin_profile',
@@ -86,5 +87,19 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
 
     def get_attachments(self, claim):
         attachments = FacilityClaimAttachments.objects.filter(claim=claim)
-        serializer = FacilityClaimAttachmentsSerializer(attachments, many=True)
-        return serializer.data
+        data = FacilityClaimAttachmentsSerializer(attachments, many=True).data
+
+        # storage_key is the attachment's S3 object key (an opaque UUID
+        # name under claim_attachments/ — never a URL and never the
+        # uploader's filename). It is exposed only on this staff-facing
+        # serializer so the automated-claims pipeline can read the
+        # object directly via IAM (OSDEV-3374) instead of receiving a
+        # presigned URL. The claimant-facing PendingClaimSerializer
+        # deliberately does not expose it.
+        storage_keys = {
+            attachment.id: attachment.claim_attachment.name
+            for attachment in attachments
+        }
+        for item in data:
+            item['storage_key'] = storage_keys.get(item['id'])
+        return data

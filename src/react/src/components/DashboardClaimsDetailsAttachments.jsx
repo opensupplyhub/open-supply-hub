@@ -1,9 +1,10 @@
 import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { number } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
 
 import { facilityClaimAttachmentsPropType } from '../util/propTypes';
+import { makeFacilityClaimAttachmentDownloadURL } from '../util/util';
 
 const dashboardClaimsDetailsAttachmentsStyles = Object.freeze({
     containerStyles: Object.freeze({
@@ -17,7 +18,10 @@ const dashboardClaimsDetailsAttachmentsStyles = Object.freeze({
     }),
 });
 
-export default function DashboardClaimsDetailsAttachments({ attachments }) {
+export default function DashboardClaimsDetailsAttachments({
+    claimId,
+    attachments,
+}) {
     return (
         <Paper style={dashboardClaimsDetailsAttachmentsStyles.containerStyles}>
             <Typography variant="title">Claim documentation</Typography>
@@ -28,10 +32,19 @@ export default function DashboardClaimsDetailsAttachments({ attachments }) {
                     }
                 >
                     {attachments.map(attachment => (
-                        <li key={uuidv4()}>
+                        <li key={attachment.id}>
                             <Typography variant="body1">
+                                {/*
+                                    The API responds with a short-lived
+                                    redirect to the file after checking the
+                                    viewer is authorized; attachments carry
+                                    no direct storage URLs (OSDEV-3370).
+                                */}
                                 <a
-                                    href={attachment.claim_attachment}
+                                    href={makeFacilityClaimAttachmentDownloadURL(
+                                        claimId,
+                                        attachment.id,
+                                    )}
                                     rel="noreferrer"
                                     target="_blank"
                                 >
@@ -53,5 +66,6 @@ DashboardClaimsDetailsAttachments.defaultProps = {
 };
 
 DashboardClaimsDetailsAttachments.propTypes = {
+    claimId: number.isRequired,
     attachments: facilityClaimAttachmentsPropType,
 };

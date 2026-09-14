@@ -148,6 +148,10 @@ def send_message_to_claimant_email(request, facility_claim, message):
         'facility_address': facility_claim.facility.address,
         'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
+        # OSDEV-2278: claimants update pending claims (fields and
+        # documents) on the platform instead of replying with
+        # attachments by email.
+        'claimed_url': '{}/claimed'.format(make_oshub_url(request)),
     }
 
     sent_count = send_mail(
@@ -240,6 +244,56 @@ def send_claim_facility_revocation_email(request, facility_claim):
         [facility_claim.contributor.admin.email],
         html_message=html_template.render(revocation_dictionary)
     )
+
+
+def send_claim_updated_by_claimant_notice(request, facility_claim, changes):
+    """
+    Internal notice to the Claims team when a claimant edits their own
+    pending claim (OSDEV-3371). `changes` is a list of human-readable
+    change descriptions (changed field names, attachment add/remove
+    events). The email deliberately carries only names and a dashboard
+    link — never document contents or download URLs.
+    """
+    subj_template = get_template('mail/claim_updated_by_claimant_subject.txt')
+    text_template = get_template('mail/claim_updated_by_claimant_body.txt')
+    html_template = get_template('mail/claim_updated_by_claimant_body.html')
+
+    facility = facility_claim.facility
+    notice_dictionary = {
+        'claim_id': facility_claim.id,
+        'facility_name': facility.name,
+        'facility_address': facility.address,
+        'facility_country': COUNTRY_NAMES.get(facility.country_code, ''),
+        'contributor_name': facility_claim.contributor.name,
+        'updated_at': facility_claim.claimant_updated_at,
+        'changes': changes,
+        'claim_dashboard_url': '{}/dashboard/claims/{}'.format(
+            make_oshub_url(request), facility_claim.id
+        ),
+    }
+
+    message = text_template.render(notice_dictionary)
+
+    FacilityClaimReviewNote.objects.create(
+        claim=facility_claim,
+        author=request.user,
+        note=message,
+        note_type=FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+    )
+
+    sent_count = send_mail(
+        subj_template.render(notice_dictionary).rstrip(),
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [settings.NOTIFICATION_EMAIL_TO],
+        html_message=html_template.render(notice_dictionary)
+    )
+
+    if sent_count != 1:
+        raise RuntimeError(
+            'Claim update notice email was not sent '
+            f'(send_mail returned {sent_count}).'
+        )
 
 
 def send_approved_claim_notice_to_one_contributor(request, claim, contributor):

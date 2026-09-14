@@ -11,6 +11,9 @@ from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_claim_attachments import (
+    FacilityClaimAttachments
+)
 from api.models.facility.facility_activity_report import FacilityActivityReport
 from api.models.facility.facility_location import FacilityLocation
 from api.models.facility.facility_alias import FacilityAlias
@@ -121,3 +124,42 @@ for model in [
     FacilityLocation
 ]:
     post_save.connect(set_origin_source_on_create, sender=model)
+
+
+@receiver(
+    post_delete,
+    sender=FacilityClaimAttachments,
+    dispatch_uid='claim_attachment_file_cleanup',
+)
+def claim_attachment_post_delete_file_cleanup(instance, **kwargs):
+    """
+    Remove the stored file when an attachment row is deleted. Django
+    emulates FK cascades in Python, so this also runs for every
+    attachment removed by deleting its claim (e.g. facility deletion).
+    save=False because the row is already gone.
+    """
+    if instance.claim_attachment:
+        try:
+            instance.claim_attachment.delete(save=False)
+        except Exception:
+            # The row is already gone, so the in-memory instance is the
+            # last thing that knows which S3 object this was. Log the
+            # storage key: without it, recovering an orphaned object
+            # would mean diffing the whole bucket against the table.
+            storage_key = instance.claim_attachment.name
+            log.exception(
+                'Failed to delete stored file for claim attachment %s '
+                '(claim %s, storage key %s)',
+                instance.pk,
+                instance.claim_id,
+                storage_key,
+            )
+            report_error_to_rollbar(
+                message='Failed to delete stored claim attachment file',
+                extra_data={
+                    'attachment_id': instance.pk,
+                    'claim_id': instance.claim_id,
+                    'storage_key': storage_key,
+                    'file_name': instance.file_name,
+                },
+            )

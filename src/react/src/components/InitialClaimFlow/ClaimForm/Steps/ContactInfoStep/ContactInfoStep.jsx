@@ -32,6 +32,7 @@ import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import findSelectedOption from '../utils';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import { selectStyles } from '../../styles';
+import { CLAIM_PII_WARNING_TEXT } from '../../../../../util/constants';
 
 const ContactInfoStep = ({
     classes,
@@ -289,7 +290,7 @@ const ContactInfoStep = ({
                     {showDocumentUpload && (
                         <Grid item xs={12} className={classes.gridSpacing}>
                             <div className={classes.importantNoteWrapper}>
-                                <ImportantNote text="We do NOT require and you should NOT submit documents containing sensitive personal information such as salary information, personal phone numbers, home addresses, or personal ID numbers." />
+                                <ImportantNote text={CLAIM_PII_WARNING_TEXT} />
                             </div>
                             <ClaimAttachmentsUploader
                                 inputId="employment-verification-upload"
