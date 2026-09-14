@@ -138,19 +138,24 @@ class DataCenterDownloadHelper:
             rows = rows_by_contributor.setdefault(contributor_label, {})
             row = rows.setdefault(row_key, {})
 
-            if field_name in row:
-                # Two ExtendedField rows for the same field in the same
-                # submission is not a normal outcome of ingestion, but
-                # keep both rather than silently dropping one.
-                existing = row[field_name]
-                if isinstance(existing, list):
-                    existing.append(raw_value)
-                else:
-                    row[field_name] = [existing, raw_value]
-            else:
-                row[field_name] = raw_value
+            self.__add_value_to_row(row, field_name, raw_value)
 
         return {
             contributor_label: list(rows.values())
             for contributor_label, rows in rows_by_contributor.items()
         }
+
+    def __add_value_to_row(self, row: Dict[str, Any], field_name: str, value: Any) -> None:
+        '''
+        Add a value to a row dict, merging with an existing value if
+        present. If the existing value is a list, append to it; if not,
+        convert it to a list and append the new value.
+        '''
+        if field_name in row:
+            existing = row[field_name]
+            if isinstance(existing, list):
+                existing.append(value)
+            else:
+                row[field_name] = [existing, value]
+        else:
+            row[field_name] = value
