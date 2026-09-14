@@ -28,6 +28,7 @@ import { checkWhetherUserHasDashboardAccess } from '../util/util';
 import {
     CLAIM_A_FACILITY,
     ENABLE_CLAIMS_V2_DASHBOARD,
+    OARFont,
     dashboardRoute,
     dashboardListsRoute,
     dashboardClaimsRoute,
@@ -56,6 +57,15 @@ const dashboardStyles = Object.freeze({
     }),
     appGridStyles: Object.freeze({
         marginBottom: '100px',
+    }),
+    fullWidthPageStyles: Object.freeze({
+        padding: '0 24px',
+        marginBottom: '100px',
+    }),
+    fullWidthTitleStyles: Object.freeze({
+        fontFamily: OARFont,
+        fontWeight: 'normal',
+        fontSize: '32px',
     }),
 });
 
@@ -133,253 +143,266 @@ function Dashboard({
         </div>
     );
 
+    /*
+     * The Queue workspace needs the full viewport width (rail +
+     * verification + evidence-beside-composer), so its route renders
+     * outside AppGrid's centered sm={9} column with its own
+     * breadcrumb. Every other dashboard route keeps the shared
+     * AppGrid layout.
+     */
+    const claimsV2FullWidthPage = (
+        <div style={dashboardStyles.fullWidthPageStyles}>
+            <h2 style={dashboardStyles.fullWidthTitleStyles}>
+                {makeClickableDashboardLinkFn('Claims Moderation v2')()}
+            </h2>
+            <FeatureFlag
+                flag={ENABLE_CLAIMS_V2_DASHBOARD}
+                alternative={<RouteNotFound />}
+            >
+                <Route component={ClaimsV2Dashboard} />
+            </FeatureFlag>
+        </div>
+    );
+
     return (
         <AppOverflow>
-            <AppGrid
-                style={dashboardStyles.appGridStyles}
-                title={
-                    <Switch>
-                        <Route
-                            exact
-                            path={dashboardListsRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Contributor Lists',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardClaimsDetailsRoute}
-                            render={() => (
-                                <FeatureFlag
-                                    flag={CLAIM_A_FACILITY}
-                                    alternative={TITLE}
-                                >
-                                    {makeClickableDashboardLinkFn(
-                                        'Facility Claim Details',
+            <Switch>
+                <Route
+                    exact
+                    path={dashboardClaimsV2Route}
+                    render={() => claimsV2FullWidthPage}
+                />
+                <Route>
+                    <AppGrid
+                        style={dashboardStyles.appGridStyles}
+                        title={
+                            <Switch>
+                                <Route
+                                    exact
+                                    path={dashboardListsRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Contributor Lists',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardClaimsDetailsRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_A_FACILITY}
+                                            alternative={TITLE}
+                                        >
+                                            {makeClickableDashboardLinkFn(
+                                                'Facility Claim Details',
+                                                {
+                                                    route: dashboardClaimsRoute,
+                                                    screenTitle:
+                                                        'Facility Claims',
+                                                },
+                                            )()}
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardClaimsRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_A_FACILITY}
+                                            alternative={TITLE}
+                                        >
+                                            {makeClickableDashboardLinkFn(
+                                                'Facility Claims',
+                                            )()}
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardDeleteFacilityRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Delete Facility',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardMergeFacilitiesRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Merge Facilities',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardAdjustFacilityMatchesRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Adjust Facility Matches',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardUpdateFacilityLocationRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Update Facility Location',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardApiBlockRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'API Block',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardApiBlocksRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'API Blocks',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardActivityReportsRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Status Reports',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardLinkOsIdRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Link to New OS ID',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardGeocoderRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Geocoder',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardRoute}
+                                    render={() => 'Dashboard'}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardModerationQueueRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Moderation Queue',
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={dashboardContributionRecordRoute}
+                                    render={makeClickableDashboardLinkFn(
+                                        'Contribution Record',
                                         {
-                                            route: dashboardClaimsRoute,
-                                            screenTitle: 'Facility Claims',
+                                            route: dashboardModerationQueueRoute,
+                                            screenTitle: 'Moderation Queue',
                                         },
-                                    )()}
-                                </FeatureFlag>
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardClaimsRoute}
-                            render={() => (
-                                <FeatureFlag
-                                    flag={CLAIM_A_FACILITY}
-                                    alternative={TITLE}
-                                >
-                                    {makeClickableDashboardLinkFn(
-                                        'Facility Claims',
-                                    )()}
-                                </FeatureFlag>
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardClaimsV2Route}
-                            render={() => (
-                                <FeatureFlag
-                                    flag={ENABLE_CLAIMS_V2_DASHBOARD}
-                                    alternative={TITLE}
-                                >
-                                    {makeClickableDashboardLinkFn(
-                                        'Claims Moderation v2',
-                                    )()}
-                                </FeatureFlag>
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardDeleteFacilityRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Delete Facility',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardMergeFacilitiesRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Merge Facilities',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardAdjustFacilityMatchesRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Adjust Facility Matches',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardUpdateFacilityLocationRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Update Facility Location',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardApiBlockRoute}
-                            render={makeClickableDashboardLinkFn('API Block')}
-                        />
-                        <Route
-                            exact
-                            path={dashboardApiBlocksRoute}
-                            render={makeClickableDashboardLinkFn('API Blocks')}
-                        />
-                        <Route
-                            exact
-                            path={dashboardActivityReportsRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Status Reports',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardLinkOsIdRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Link to New OS ID',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardGeocoderRoute}
-                            render={makeClickableDashboardLinkFn('Geocoder')}
-                        />
-                        <Route
-                            exact
-                            path={dashboardRoute}
-                            render={() => 'Dashboard'}
-                        />
-                        <Route
-                            exact
-                            path={dashboardModerationQueueRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Moderation Queue',
-                            )}
-                        />
-                        <Route
-                            exact
-                            path={dashboardContributionRecordRoute}
-                            render={makeClickableDashboardLinkFn(
-                                'Contribution Record',
-                                {
-                                    route: dashboardModerationQueueRoute,
-                                    screenTitle: 'Moderation Queue',
-                                },
-                            )}
-                        />
-                    </Switch>
-                }
-            >
-                <Switch>
-                    <Route
-                        exact
-                        path={dashboardListsRoute}
-                        component={DashboardLists}
-                    />
-                    <Route
-                        exact
-                        path={dashboardDeleteFacilityRoute}
-                        component={DashboardDeleteFacility}
-                    />
-                    <Route
-                        exact
-                        path={dashboardMergeFacilitiesRoute}
-                        component={DashboardMergeFacilities}
-                    />
-                    <Route
-                        exact
-                        path={dashboardAdjustFacilityMatchesRoute}
-                        component={DashboardAdjustFacilityMatches}
-                    />
-                    <Route
-                        exact
-                        path={dashboardUpdateFacilityLocationRoute}
-                        component={DashboardUpdateFacilityLocation}
-                    />
-                    <Route
-                        exact
-                        path={dashboardModerationQueueRoute}
-                        component={DashboardModerationQueue}
-                    />
-                    <Route
-                        exact
-                        path={dashboardContributionRecordRoute}
-                        component={DashboardContributionRecord}
-                    />
-                    <Route
-                        exact
-                        path={dashboardClaimsDetailsRoute}
-                        render={() => (
-                            <FeatureFlag
-                                flag={CLAIM_A_FACILITY}
-                                alternative={linkSection}
-                            >
-                                <Route component={DashboardClaimsDetails} />
-                            </FeatureFlag>
-                        )}
-                    />
-                    <Route
-                        exact
-                        path={dashboardClaimsRoute}
-                        render={() => (
-                            <FeatureFlag
-                                flag={CLAIM_A_FACILITY}
-                                alternative={linkSection}
-                            >
-                                <Route component={DashboardClaims} />
-                            </FeatureFlag>
-                        )}
-                    />
-                    <Route
-                        exact
-                        path={dashboardClaimsV2Route}
-                        render={() => (
-                            <FeatureFlag
-                                flag={ENABLE_CLAIMS_V2_DASHBOARD}
-                                alternative={<RouteNotFound />}
-                            >
-                                <Route component={ClaimsV2Dashboard} />
-                            </FeatureFlag>
-                        )}
-                    />
-                    <Route
-                        exact
-                        path={dashboardApiBlockRoute}
-                        component={DashboardApiBlock}
-                    />
-                    <Route
-                        exact
-                        path={dashboardApiBlocksRoute}
-                        component={DashboardApiBlocks}
-                    />
-                    <Route
-                        exact
-                        path={dashboardActivityReportsRoute}
-                        component={DashboardActivityReports}
-                    />
-                    <Route
-                        exact
-                        path={dashboardLinkOsIdRoute}
-                        component={DashboardLinkToOsId}
-                    />
-                    <Route
-                        exact
-                        path={dashboardGeocoderRoute}
-                        component={DashboardGeocoder}
-                    />
-                    <Route
-                        exact
-                        path={dashboardRoute}
-                        render={() => linkSection}
-                    />
-                    <Route render={() => <RouteNotFound />} />
-                </Switch>
-            </AppGrid>
+                                    )}
+                                />
+                            </Switch>
+                        }
+                    >
+                        <Switch>
+                            <Route
+                                exact
+                                path={dashboardListsRoute}
+                                component={DashboardLists}
+                            />
+                            <Route
+                                exact
+                                path={dashboardDeleteFacilityRoute}
+                                component={DashboardDeleteFacility}
+                            />
+                            <Route
+                                exact
+                                path={dashboardMergeFacilitiesRoute}
+                                component={DashboardMergeFacilities}
+                            />
+                            <Route
+                                exact
+                                path={dashboardAdjustFacilityMatchesRoute}
+                                component={DashboardAdjustFacilityMatches}
+                            />
+                            <Route
+                                exact
+                                path={dashboardUpdateFacilityLocationRoute}
+                                component={DashboardUpdateFacilityLocation}
+                            />
+                            <Route
+                                exact
+                                path={dashboardModerationQueueRoute}
+                                component={DashboardModerationQueue}
+                            />
+                            <Route
+                                exact
+                                path={dashboardContributionRecordRoute}
+                                component={DashboardContributionRecord}
+                            />
+                            <Route
+                                exact
+                                path={dashboardClaimsDetailsRoute}
+                                render={() => (
+                                    <FeatureFlag
+                                        flag={CLAIM_A_FACILITY}
+                                        alternative={linkSection}
+                                    >
+                                        <Route
+                                            component={DashboardClaimsDetails}
+                                        />
+                                    </FeatureFlag>
+                                )}
+                            />
+                            <Route
+                                exact
+                                path={dashboardClaimsRoute}
+                                render={() => (
+                                    <FeatureFlag
+                                        flag={CLAIM_A_FACILITY}
+                                        alternative={linkSection}
+                                    >
+                                        <Route component={DashboardClaims} />
+                                    </FeatureFlag>
+                                )}
+                            />
+                            <Route
+                                exact
+                                path={dashboardApiBlockRoute}
+                                component={DashboardApiBlock}
+                            />
+                            <Route
+                                exact
+                                path={dashboardApiBlocksRoute}
+                                component={DashboardApiBlocks}
+                            />
+                            <Route
+                                exact
+                                path={dashboardActivityReportsRoute}
+                                component={DashboardActivityReports}
+                            />
+                            <Route
+                                exact
+                                path={dashboardLinkOsIdRoute}
+                                component={DashboardLinkToOsId}
+                            />
+                            <Route
+                                exact
+                                path={dashboardGeocoderRoute}
+                                component={DashboardGeocoder}
+                            />
+                            <Route
+                                exact
+                                path={dashboardRoute}
+                                render={() => linkSection}
+                            />
+                            <Route render={() => <RouteNotFound />} />
+                        </Switch>
+                    </AppGrid>
+                </Route>
+            </Switch>
         </AppOverflow>
     );
 }

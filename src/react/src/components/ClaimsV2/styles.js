@@ -16,9 +16,7 @@ export default Object.freeze({
         display: 'flex',
         alignItems: 'flex-start',
         gap: '16px',
-        padding: '16px',
-        fontSize: '16px',
-        lineHeight: 1.5,
+        padding: '8px 0 16px',
     }),
     sectionLabel: Object.freeze({
         textTransform: 'uppercase',
@@ -347,7 +345,7 @@ export default Object.freeze({
     }),
     evidenceText: Object.freeze({
         margin: 0,
-        maxHeight: '360px',
+        maxHeight: '560px',
         overflow: 'auto',
         whiteSpace: 'pre-wrap',
         overflowWrap: 'anywhere',
@@ -360,7 +358,7 @@ export default Object.freeze({
     }),
     evidenceImage: Object.freeze({
         maxWidth: '100%',
-        maxHeight: '360px',
+        maxHeight: '560px',
         display: 'block',
         borderRadius: '4px',
     }),
