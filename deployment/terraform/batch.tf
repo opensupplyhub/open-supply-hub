@@ -349,7 +349,7 @@ data "aws_iam_policy_document" "cloudwatch_events_batch_policy" {
       aws_batch_job_queue.export_csv.arn,
       var.environment == "Rba" ? aws_batch_job_definition.db_sync[0].arn : "",
       var.environment == "Rba" ? aws_batch_job_queue.db_sync[0].arn : "",
-      var.environment == "Rba" ? aws_batch_job_definition.reassert_promotions[0].arn : "",
+      var.environment == "Rba" ? aws_batch_job_definition.reassert_rba_promotions[0].arn : "",
     ])
   }
 }
@@ -584,10 +584,10 @@ resource "aws_cloudwatch_event_target" "db_sync" {
 # the sync takes.
 #
 
-data "template_file" "reassert_promotions_job_definition" {
+data "template_file" "reassert_rba_promotions_job_definition" {
   count = var.environment == "Rba" ? 1 : 0
 
-  template = file("job-definitions/reassert_promotions.json")
+  template = file("job-definitions/reassert_rba_promotions.json")
 
   vars = {
     image_url              = "${module.ecr_repository_batch.repository_url}:${var.image_tag}"
@@ -604,16 +604,16 @@ data "template_file" "reassert_promotions_job_definition" {
   }
 }
 
-resource "aws_batch_job_definition" "reassert_promotions" {
+resource "aws_batch_job_definition" "reassert_rba_promotions" {
   count = var.environment == "Rba" ? 1 : 0
 
-  name           = "job${local.short}ReassertPromotions"
+  name           = "job${local.short}ReassertRbaPromotions"
   type           = "container"
   propagate_tags = true
 
   platform_capabilities = ["EC2"]
 
-  container_properties = data.template_file.reassert_promotions_job_definition[0].rendered
+  container_properties = data.template_file.reassert_rba_promotions_job_definition[0].rendered
 
   # No retry_strategy, unlike db_sync. A non-zero exit here means a specific
   # promotion could not be restored - a created_from collision, say - and
@@ -621,9 +621,9 @@ resource "aws_batch_job_definition" "reassert_promotions" {
   # raises one alert a human reads, instead of three burying the first.
 }
 
-resource "aws_cloudwatch_event_rule" "reassert_promotions" {
+resource "aws_cloudwatch_event_rule" "reassert_rba_promotions" {
   count       = var.environment == "Rba" ? 1 : 0
-  name        = "rule${local.short}ReassertPromotions"
+  name        = "rule${local.short}ReassertRbaPromotions"
   description = "Runs the promotion re-assert after the database sync job succeeds"
   is_enabled  = var.reassert_rba_promotions_enabled
 
@@ -643,14 +643,14 @@ resource "aws_cloudwatch_event_rule" "reassert_promotions" {
   })
 }
 
-resource "aws_cloudwatch_event_target" "reassert_promotions" {
+resource "aws_cloudwatch_event_target" "reassert_rba_promotions" {
   count    = var.environment == "Rba" ? 1 : 0
-  rule     = aws_cloudwatch_event_rule.reassert_promotions[0].name
+  rule     = aws_cloudwatch_event_rule.reassert_rba_promotions[0].name
   arn      = aws_batch_job_queue.db_sync[0].arn
   role_arn = aws_iam_role.cloudwatch_events_batch_role.arn
 
   batch_target {
-    job_definition = aws_batch_job_definition.reassert_promotions[0].arn
-    job_name       = "job${local.short}ReassertPromotions"
+    job_definition = aws_batch_job_definition.reassert_rba_promotions[0].arn
+    job_name       = "job${local.short}ReassertRbaPromotions"
   }
 }
