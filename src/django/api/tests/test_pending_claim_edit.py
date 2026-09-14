@@ -521,6 +521,10 @@ class PendingClaimEditTest(APITestCase):
         # it must carry the storage key, not just the attachment id.
         attachment = self.add_attachment()
         storage_key = attachment.claim_attachment.name
+        # Captured before the delete: Django sets pk=None on the
+        # instance delete() is called on.
+        claim_id = self.claim.id
+        attachment_id = attachment.id
 
         with patch(
             'django.db.models.fields.files.FieldFile.delete',
@@ -531,8 +535,8 @@ class PendingClaimEditTest(APITestCase):
         report.assert_called_once()
         extra = report.call_args.kwargs['extra_data']
         self.assertEqual(storage_key, extra['storage_key'])
-        self.assertEqual(attachment.id, extra['attachment_id'])
-        self.assertEqual(self.claim.id, extra['claim_id'])
+        self.assertEqual(attachment_id, extra['attachment_id'])
+        self.assertEqual(claim_id, extra['claim_id'])
         self.assertEqual('existing.png', extra['file_name'])
 
 
