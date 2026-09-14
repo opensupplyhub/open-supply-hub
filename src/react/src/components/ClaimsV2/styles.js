@@ -576,13 +576,22 @@ export default Object.freeze({
         marginTop: '2px',
         opacity: 0.85,
     }),
-    verificationHeadRow: Object.freeze({
+    provenanceTag: Object.freeze({
+        display: 'inline-block',
+        marginBottom: '2px',
+        padding: '0 6px',
+        borderRadius: '4px',
         background: COLOURS.LIGHT_GREY,
+        color: COLOURS.DARK_GREY,
+        fontSize: '11.5px',
         fontWeight: 700,
-        fontSize: '12.5px',
         textTransform: 'uppercase',
         letterSpacing: '.05em',
+    }),
+    counterpartLine: Object.freeze({
+        marginTop: '3px',
         color: COLOURS.DARK_GREY,
+        fontSize: '13px',
     }),
     detailKey: Object.freeze({
         flex: 'none',
