@@ -71,7 +71,7 @@ export default function VerificationPanel({ detail, review }) {
                     chip={scoreChip(review, 'name')}
                 />
                 <Row
-                    label="Organization"
+                    label="Claimant Account"
                     profileValue={detail.company_name}
                     chip={organizationRowStatus(
                         review,
@@ -91,7 +91,7 @@ export default function VerificationPanel({ detail, review }) {
                     chip={scoreChip(review, 'person')}
                 />
                 <Row
-                    label="Affiliation"
+                    label="Claimant Email"
                     profileValue={affiliationValue}
                     chip={scoreChip(review, 'affiliation')}
                 />
