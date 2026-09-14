@@ -625,7 +625,7 @@ resource "aws_cloudwatch_event_rule" "reassert_promotions" {
   count       = var.environment == "Rba" ? 1 : 0
   name        = "rule${local.short}ReassertPromotions"
   description = "Runs the promotion re-assert after the database sync job succeeds"
-  is_enabled  = var.reassert_promotions_enabled
+  is_enabled  = var.reassert_rba_promotions_enabled
 
   # Matches the sync job only. Scoping by queue alone would also match this
   # job's own SUCCEEDED event and resubmit it forever, since the re-assert

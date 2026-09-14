@@ -1212,7 +1212,7 @@ variable "db_sync_schedule_expression" {
   default     = "cron(0 7 * * ? *)"
 }
 
-variable "reassert_promotions_enabled" {
+variable "reassert_rba_promotions_enabled" {
   description = "Whether to run the promotion re-assert job after each successful database sync. RBA instance only; has no effect elsewhere."
   type        = bool
   default     = false
