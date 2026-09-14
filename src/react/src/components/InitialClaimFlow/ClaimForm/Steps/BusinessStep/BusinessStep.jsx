@@ -110,18 +110,18 @@ const BusinessStep = ({
         ? formData.companyAddress ?? ''
         : locationAddress;
 
-    const readOnlyInputProps = {
-        className: classes.disabledField,
-        disabled: true,
+    // The aria-label lives inside InputProps.inputProps because the lint
+    // rule react/jsx-no-duplicate-props treats `inputProps` and `InputProps`
+    // on the same element as duplicates.
+    const getCompanyFieldInputProps = ariaLabel => ({
+        ...(isNameAddressEditable
+            ? {}
+            : { className: classes.disabledField, disabled: true }),
+        inputProps: { 'aria-label': ariaLabel },
         classes: {
             notchedOutline: classes.notchedOutlineStyles,
         },
-    };
-    const editableInputProps = {
-        classes: {
-            notchedOutline: classes.notchedOutlineStyles,
-        },
-    };
+    });
     const documentsMatchNoteText = isNameAddressEditable
         ? 'Verification documents must show the same name and address as entered above.'
         : 'Verification documents must show the same name and address as listed on Open Supply Hub.';
@@ -155,15 +155,10 @@ const BusinessStep = ({
                     multiline
                     name="companyName"
                     id="companyName"
-                    inputProps={{ 'aria-label': 'Company Name' }}
                     value={companyNameValue}
                     onChange={e => handleChange('companyName', e.target.value)}
                     onBlur={() => handleBlur('companyName')}
-                    InputProps={
-                        isNameAddressEditable
-                            ? editableInputProps
-                            : readOnlyInputProps
-                    }
+                    InputProps={getCompanyFieldInputProps('Company Name')}
                     error={isCompanyNameError}
                     helperText={
                         isCompanyNameError && (
@@ -187,17 +182,12 @@ const BusinessStep = ({
                     multiline
                     name="companyAddress"
                     id="companyAddress"
-                    inputProps={{ 'aria-label': 'Company Address' }}
                     value={companyAddressValue}
                     onChange={e =>
                         handleChange('companyAddress', e.target.value)
                     }
                     onBlur={() => handleBlur('companyAddress')}
-                    InputProps={
-                        isNameAddressEditable
-                            ? editableInputProps
-                            : readOnlyInputProps
-                    }
+                    InputProps={getCompanyFieldInputProps('Company Address')}
                     error={isCompanyAddressError}
                     helperText={
                         isCompanyAddressError && (
