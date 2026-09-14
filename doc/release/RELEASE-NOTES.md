@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.31.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Database changes
+
+#### Migrations
+* `0241_add_claim_name_address_edit_switch.py` - Adds the `enable_claim_name_address_edit` waffle switch, created inactive, gating editable Company Name and Company Address fields in the claim form. See OSDEV-3404.
+
+### Code/API changes
+* [OSDEV-3404](https://opensupplyhub.atlassian.net/browse/OSDEV-3404) - The claim form's Business step can now let a claimant edit the Company Name and Company Address fields, behind the new inactive `enable_claim_name_address_edit` waffle switch. When the switch is on, both fields are prefilled from the production location, required and non-empty (200 characters max), and submitted with the claim as `company_name` and `company_address` (the claim endpoint ignores them for now; a moderation event and backend handling follow in later tickets). A warning under the fields tells claimants that the entered name and address will be shown on the production location page once the claim is approved, that they must match the document or web page submitted for verification, and points them to the Single Location Contribution form when the location has moved and needs a new OS ID. The document-upload note also reads "as entered above" instead of "as listed on Open Supply Hub" while the switch is on. With the switch off the fields stay read-only and nothing changes.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+
 ## Release 2.30.0
 
 ## Introduction
@@ -19,7 +37,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0238_add_claims_v2_dashboard_switch.py` - Adds the `enable_claims_v2_dashboard` waffle switch, created inactive, gating the new `/dashboard/claims-v2` route. See OSDEV-3355.
 * `0239_add_claimant_updated_at.py` - Adds the nullable `claimant_updated_at` column to `api_facilityclaim` and `api_historicalfacilityclaim`. See OSDEV-3371.
 * `0240_claim_attachment_cascade_and_upload_prefix.py` - Changes `FacilityClaimAttachments.claim` from `on_delete=PROTECT` to `CASCADE` (a claim with attachments previously raised `ProtectedError` and aborted the whole facility deletion) and moves the `claim_attachment` FileField's `upload_to` to the `claim_attachments/` prefix. See OSDEV-3370.
-* `0241_add_claim_name_address_edit_switch.py` - Adds the `enable_claim_name_address_edit` waffle switch, created inactive, gating editable Company Name and Company Address fields in the claim form. See OSDEV-3404.
 
 #### Schema changes
 * [OSDEV-3242](https://opensupplyhub.atlassian.net/browse/OSDEV-3242) - `Facility` gains candidate-distinguishing columns for the Earth Genome satellite-detection integration: `is_candidate` (default `false`, indexed), `polygon` (nullable `geometry(Polygon,4326)` detection footprint, GiST-indexed), `confidence` (nullable float), and `external_id` + `source` (NULL/empty for normal facilities; unique together for ingest idempotency). Purely additive — nothing reads the fields yet. The default-manager exclusion that hides candidates from existing surfaces ships separately in [OSDEV-3380](https://opensupplyhub.atlassian.net/browse/OSDEV-3380).
@@ -40,7 +57,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-3370](https://opensupplyhub.atlassian.net/browse/OSDEV-3370) - Claimant-facing pending-claim API (parent [OSDEV-2278](https://opensupplyhub.atlassian.net/browse/OSDEV-2278)): `GET/PATCH /api/facility-claims/{id}/pending/` (view/edit own PENDING claim; owning contributor only, everything else 404s so claim ids don't leak; validation shared with claim creation via `EditPendingClaimSerializer`, with `allow_null` on the clearable numeric/date fields so a partial PATCH can actually clear a value), `POST/DELETE /api/facility-claims/{id}/attachments/` (the 20-file cap now applies to the claim's lifetime, and magic-byte content validation rejects e.g. HTML posing as a PDF), and `GET /api/facility-claims/{id}/attachments/{id}/download/` (owner or superuser; 302 to a 60-second single-object presigned URL minted by a dedicated STS signing role). Raw `claim_attachment` storage URLs are removed from every API payload — the moderator dashboard uses the download endpoint too. Mutating endpoints take a `select_for_update` row lock on the claim so concurrent uploads cannot race past the attachment cap.
 * [OSDEV-3371](https://opensupplyhub.atlassian.net/browse/OSDEV-3371) - `GET /api/facilities/claimed/` accepts a `statuses` parameter (validated; default stays APPROVED-only for existing consumers). Every claimant save sends a `claim_updated_by_claimant` notification to `NOTIFICATION_EMAIL_TO` (deferred with `transaction.on_commit`; lists changed field names and document add/removals by filename — never documents or URLs). The message-claimant email templates now direct claimants to update their pending claim on the platform (My Account > My Facilities) instead of replying with attachments, with replying kept as a fallback. Claim list/detail payloads and the claims-queue XLSX export include `claimant_updated_at` ("Updated by Claimant" column).
 * [OSDEV-3374](https://opensupplyhub.atlassian.net/browse/OSDEV-3374) - The staff claim-details payload (`GET /api/facility-claims/{id}/`) exposes each attachment's opaque S3 `storage_key` and the claim's `claimant_updated_at`, so the automated-claims pipeline can read documents directly via IAM instead of presigned URLs and reprocess claims edited after their last run. The claimant-facing pending payload exposes neither.
-* [OSDEV-3404](https://opensupplyhub.atlassian.net/browse/OSDEV-3404) - The claim form's Business step can now let a claimant edit the Company Name and Company Address fields, behind the new inactive `enable_claim_name_address_edit` waffle switch. When the switch is on, both fields are prefilled from the production location, required and non-empty (200 characters max), and submitted with the claim as `company_name` and `company_address` (the claim endpoint ignores them for now; a moderation event and backend handling follow in later tickets). A warning under the fields tells claimants that the entered name and address will be shown on the production location page once the claim is approved, that they must match the document or web page submitted for verification, and points them to the Single Location Contribution form when the location has moved and needs a new OS ID. The document-upload note also reads "as entered above" instead of "as listed on Open Supply Hub" while the switch is on. With the switch off the fields stay read-only and nothing changes.
 
 ### Architecture/Environment changes
 * [OSDEV-2644](https://opensupplyhub.atlassian.net/browse/OSDEV-2644) - **Code Quality** now skips jobs whose trees did not change in the PR, via `dorny/paths-filter` and job-level `if` (not workflow `paths`, so required checks still report). Docs, `deployment/`, `src/batch`, `src/anon-tools`, `src/kafka-tools`, `src/maintenance-page`, and other unmapped paths skip the heavy suites. Matching trees still run React, Django `api`, countries, contricleaner, Dedupe Hub, ContriBot, and integration. Countries and contricleaner run only for their app plus Django image/deps (`Dockerfile`, `requirements.txt`, `docker-compose.yml`), not `oar/**` or `manage.py`. Flake8 skips `manage.py`, `settings.py`, and `api/migrations`. Changing `.github/workflows/code_quality.yml` forces every job.
