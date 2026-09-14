@@ -65,7 +65,9 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         super().__init__(*args, **kwargs)
         self.__mit_living_wage_helper = MITLivingWageDownloadHelper()
         self.__wage_indicator_helper = WageIndicatorDownloadHelper()
-        self.__data_center_helper = DataCenterDownloadHelper()
+        self.__data_center_helper = DataCenterDownloadHelper(
+            self.masked_contributors
+        )
 
         partner_fields_override = partner_fields is not None
         fields = (
