@@ -4,6 +4,7 @@ import Typography from '@material-ui/core/Typography';
 
 import { useClaimsList, useClaimDetail, useClaimActions } from './hooks';
 import { parseAutomatedReview, P1_MARKER } from './automatedReviewUtils';
+import ClaimantDetailsPanel from './ClaimantDetailsPanel';
 import DecisionPanel from './DecisionPanel';
 import EvidencePanel from './EvidencePanel';
 import InternalNoteBox from './InternalNoteBox';
@@ -160,6 +161,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
                             )}
                         </div>
                     )}
+                    <ClaimantDetailsPanel detail={detail} />
                     <VerificationPanel detail={detail} review={review} />
                 </div>
                 {detail.status === 'PENDING' && (

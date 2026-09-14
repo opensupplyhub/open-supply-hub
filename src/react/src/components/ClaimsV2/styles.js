@@ -576,4 +576,26 @@ export default Object.freeze({
         marginTop: '2px',
         opacity: 0.85,
     }),
+    verificationHeadRow: Object.freeze({
+        background: COLOURS.LIGHT_GREY,
+        fontWeight: 700,
+        fontSize: '12.5px',
+        textTransform: 'uppercase',
+        letterSpacing: '.05em',
+        color: COLOURS.DARK_GREY,
+    }),
+    detailKey: Object.freeze({
+        flex: 'none',
+        width: '170px',
+        color: COLOURS.DARK_GREY,
+    }),
+    detailToggle: Object.freeze({
+        display: 'block',
+        width: '100%',
+        textAlign: 'left',
+        border: 'none',
+        background: 'none',
+        padding: 0,
+        cursor: 'pointer',
+    }),
 });
