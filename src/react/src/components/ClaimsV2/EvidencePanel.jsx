@@ -46,6 +46,7 @@ export default function EvidencePanel({
     review,
     matchValues,
     claimID,
+    requestedDoc,
 }) {
     const docs = Array.isArray(attachments) ? attachments : [];
     // Spec §5b: the first document auto-opens on claim load.
@@ -79,6 +80,23 @@ export default function EvidencePanel({
         setTab(defaultTabFor(docs[0]));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [docs.length]);
+
+    /* A verification row's source link requested a document: open it
+       (same semantics as clicking its chip, so a PDF's original still
+       opens in a new tab). `seq` distinguishes repeated requests for
+       the same file. */
+    useEffect(() => {
+        if (!requestedDoc || !requestedDoc.name) {
+            return;
+        }
+        const index = docs.findIndex(
+            doc => doc.file_name === requestedDoc.name,
+        );
+        if (index !== -1) {
+            selectDoc(index);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [requestedDoc && requestedDoc.seq]);
 
     const renderViewerBody = () => {
         if (!openDoc) {

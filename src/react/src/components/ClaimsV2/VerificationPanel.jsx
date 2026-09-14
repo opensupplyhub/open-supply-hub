@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { getExtract } from './automatedReviewUtils';
 import {
     scoreChip,
     organizationRowStatus,
@@ -30,7 +31,16 @@ export const PROVENANCE = Object.freeze({
     CLAIMANT: 'Claimant',
 });
 
-function Row({ label, value, provenance, counterpart, chip, footnote }) {
+function Row({
+    label,
+    value,
+    provenance,
+    counterpart,
+    extract,
+    onShowDocument,
+    chip,
+    footnote,
+}) {
     return (
         <div style={styles.verificationRow}>
             <div style={styles.verificationLabel}>{label}</div>
@@ -62,6 +72,21 @@ function Row({ label, value, provenance, counterpart, chip, footnote }) {
                         {chip.reasoning}
                     </div>
                 )}
+                {extract && (
+                    <div style={styles.counterpartLine}>
+                        From documents: {extract.value}
+                        {extract.source && (
+                            <button
+                                type="button"
+                                style={styles.docSourceLink}
+                                onClick={() => onShowDocument(extract.source)}
+                                title="Open this document in the evidence viewer"
+                            >
+                                📄 {extract.source}
+                            </button>
+                        )}
+                    </div>
+                )}
                 {footnote && (
                     <div style={styles.verificationFootnote}>{footnote}</div>
                 )}
@@ -70,7 +95,7 @@ function Row({ label, value, provenance, counterpart, chip, footnote }) {
     );
 }
 
-export default function VerificationPanel({ detail, review }) {
+export default function VerificationPanel({ detail, review, onShowDocument }) {
     const facility = detail.facility?.properties || {};
     const personValue = [detail.contact_person, detail.job_title]
         .filter(Boolean)
@@ -85,6 +110,8 @@ export default function VerificationPanel({ detail, review }) {
             <div style={styles.verificationTable}>
                 <Row
                     label="Name"
+                    extract={getExtract(review, 'name')}
+                    onShowDocument={onShowDocument}
                     value={facility.name}
                     provenance={PROVENANCE.PROFILE}
                     counterpart={{
@@ -95,6 +122,8 @@ export default function VerificationPanel({ detail, review }) {
                 />
                 <Row
                     label="Claimant Account"
+                    extract={getExtract(review, 'organization')}
+                    onShowDocument={onShowDocument}
                     value={detail.company_name}
                     provenance={PROVENANCE.CLAIMANT}
                     counterpart={{
@@ -110,18 +139,24 @@ export default function VerificationPanel({ detail, review }) {
                 />
                 <Row
                     label="Address"
+                    extract={getExtract(review, 'address')}
+                    onShowDocument={onShowDocument}
                     value={facility.address}
                     provenance={PROVENANCE.PROFILE}
                     chip={scoreChip(review, 'address')}
                 />
                 <Row
                     label="Person & title"
+                    extract={getExtract(review, 'person')}
+                    onShowDocument={onShowDocument}
                     value={personValue}
                     provenance={PROVENANCE.CLAIMANT}
                     chip={scoreChip(review, 'person')}
                 />
                 <Row
                     label="Claimant Email"
+                    extract={getExtract(review, 'affiliation')}
+                    onShowDocument={onShowDocument}
                     value={emailValue}
                     provenance={PROVENANCE.CLAIMANT}
                     chip={scoreChip(review, 'affiliation')}

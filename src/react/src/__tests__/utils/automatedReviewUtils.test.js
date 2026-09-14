@@ -3,6 +3,7 @@
 import {
     parseAutomatedReview,
     getEvidenceText,
+    getExtract,
     getSuggestedDraft,
     isPdfFile,
     P1_MARKER,
@@ -108,5 +109,39 @@ describe('isPdfFile', () => {
         expect(isPdfFile('DOC.PDF')).toBe(true);
         expect(isPdfFile('scan.png')).toBe(false);
         expect(isPdfFile(undefined)).toBe(false);
+    });
+});
+
+describe('getExtract', () => {
+    const review = {
+        extracts: {
+            address: {
+                value: 'Atlantijas iela 15, Riga',
+                source: 'utility-bill.png',
+            },
+            person: { value: 'Demo Claimant 1' },
+            broken: { source: 'x.png' },
+        },
+    };
+
+    it('returns the value and source for a present extract', () => {
+        expect(getExtract(review, 'address')).toEqual({
+            value: 'Atlantijas iela 15, Riga',
+            source: 'utility-bill.png',
+        });
+    });
+
+    it('tolerates a missing source', () => {
+        expect(getExtract(review, 'person')).toEqual({
+            value: 'Demo Claimant 1',
+            source: null,
+        });
+    });
+
+    it('returns null for absent/invalid extracts or no review', () => {
+        expect(getExtract(review, 'name')).toBeNull();
+        expect(getExtract(review, 'broken')).toBeNull();
+        expect(getExtract(null, 'address')).toBeNull();
+        expect(getExtract({}, 'address')).toBeNull();
     });
 });

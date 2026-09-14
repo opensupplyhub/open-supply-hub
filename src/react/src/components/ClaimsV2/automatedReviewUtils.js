@@ -67,6 +67,24 @@ export const getEvidenceText = (review, fileName) => {
     };
 };
 
+/*
+ * Per-criterion value extracted from the documents (the P2 tier-2
+ * extension of the block: optional "extracts" — {key: {value, source}}
+ * where source is the attachment file name it was found in). Returns
+ * null until the pipeline ships it; the verification rows degrade to
+ * reasoning-only.
+ */
+export const getExtract = (review, key) => {
+    const entry = review?.extracts?.[key];
+    if (!entry || typeof entry.value !== 'string' || entry.value === '') {
+        return null;
+    }
+    return {
+        value: entry.value,
+        source: typeof entry.source === 'string' ? entry.source : null,
+    };
+};
+
 export const getSuggestedDraft = review =>
     typeof review?.draft === 'string' && review.draft.trim() !== ''
         ? review.draft

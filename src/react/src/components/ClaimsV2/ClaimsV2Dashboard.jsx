@@ -59,6 +59,21 @@ const STAGE_LABELS = Object.freeze({
 
 function ClaimWorkspace({ claimID, onDecided }) {
     const { detail, fetching, error, refetchDetail } = useClaimDetail(claimID);
+    const [requestedDoc, setRequestedDoc] = useState(null);
+    const workbenchRef = useRef(null);
+
+    const showDocument = name => {
+        setRequestedDoc(current => ({
+            name,
+            seq: (current?.seq || 0) + 1,
+        }));
+        if (workbenchRef.current) {
+            workbenchRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+            });
+        }
+    };
     const {
         acting,
         actionError,
@@ -162,7 +177,11 @@ function ClaimWorkspace({ claimID, onDecided }) {
                         </div>
                     )}
                     <ClaimantDetailsPanel detail={detail} />
-                    <VerificationPanel detail={detail} review={review} />
+                    <VerificationPanel
+                        detail={detail}
+                        review={review}
+                        onShowDocument={showDocument}
+                    />
                 </div>
                 {detail.status === 'PENDING' && (
                     <DecisionPanel
@@ -182,11 +201,12 @@ function ClaimWorkspace({ claimID, onDecided }) {
             {/* Workbench (§5b): evidence beside the composer, so the
                 extracted/translated text sits next to the draft. Keyed
                 by claim so the first document auto-opens on J/K moves. */}
-            <div style={styles.workbench} key={detail.id}>
+            <div style={styles.workbench} key={detail.id} ref={workbenchRef}>
                 <EvidencePanel
                     attachments={detail.attachments}
                     review={review}
                     claimID={detail.id}
+                    requestedDoc={requestedDoc}
                     matchValues={[
                         ['Name', detail.facility?.properties?.name],
                         ['Address', detail.facility?.properties?.address],

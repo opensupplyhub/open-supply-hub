@@ -607,4 +607,13 @@ export default Object.freeze({
         padding: 0,
         cursor: 'pointer',
     }),
+    docSourceLink: Object.freeze({
+        marginLeft: '8px',
+        padding: '1px 8px',
+        border: `1px solid ${COLOURS.GREY}`,
+        borderRadius: '10px',
+        background: COLOURS.WHITE,
+        cursor: 'pointer',
+        fontSize: '12.5px',
+    }),
 });
