@@ -32,6 +32,7 @@ export default function DecisionPanel({
     detail,
     stage,
     acting,
+    actionError,
     approveClaim,
     denyClaim,
     addNote,
@@ -47,19 +48,50 @@ export default function DecisionPanel({
         setInternalNote('');
     };
 
+    /*
+     * The decision and the optional internal note are separate posts
+     * with different failure meanings. A failed DECISION keeps the
+     * dialog open with the error visible so the moderator can retry —
+     * nothing was decided. A failed NOTE after a successful decision
+     * must NOT invite a retry: the claim is already decided, so
+     * re-submitting would re-post the decision. The dialog closes, the
+     * queue refreshes, and a toast tells the moderator to re-add the
+     * note from the Activity box.
+     */
     const decide = () => {
         const action =
             openDialog === DIALOGS.APPROVE ? approveClaim : denyClaim;
         const verb = openDialog === DIALOGS.APPROVE ? 'approved' : 'denied';
         const note = internalNote.trim();
         action(reason.trim())
-            .then(() => (note !== '' ? addNote(note) : null))
             .then(() => {
-                toast(`Claim #${detail.id} ${verb}`);
-                close();
-                onDecided();
+                const finish = () => {
+                    close();
+                    onDecided();
+                };
+                if (note === '') {
+                    toast(`Claim #${detail.id} ${verb}`);
+                    finish();
+                    return;
+                }
+                addNote(note)
+                    .then(() => {
+                        toast(`Claim #${detail.id} ${verb}`);
+                        finish();
+                    })
+                    .catch(() => {
+                        toast(
+                            `Claim #${detail.id} ${verb} — but the ` +
+                                'internal note failed to save. Re-add it ' +
+                                'from the Activity box.',
+                        );
+                        finish();
+                    });
             })
-            .catch(() => {});
+            .catch(() => {
+                // actionError renders inside the dialog; nothing was
+                // decided, so retrying is safe.
+            });
     };
 
     const denyBlocked = openDialog === DIALOGS.DENY && reason.trim() === '';
@@ -145,6 +177,14 @@ export default function DecisionPanel({
                         style={styles.dialogTextarea}
                         onChange={event => setReason(event.target.value)}
                     />
+                    {actionError && (
+                        <Typography
+                            variant="body1"
+                            style={styles.claimantFacingWarning}
+                        >
+                            {actionError} Nothing was decided — you can retry.
+                        </Typography>
+                    )}
                     {openDialog === DIALOGS.DENY && (
                         <textarea
                             value={internalNote}

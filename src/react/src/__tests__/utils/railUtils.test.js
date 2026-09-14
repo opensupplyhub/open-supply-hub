@@ -98,6 +98,19 @@ describe('buildQueueGroups', () => {
         expect(visibleIds).toEqual([1, 2, 3]);
     });
 
+    it('excludes collapsed sections from visibleIds but not groups', () => {
+        const claims = [
+            claim(1),
+            claim(2, { notes_meta: messagedAt('2026-09-28T00:00:00Z') }),
+        ];
+        const { groups, visibleIds } = buildQueueGroups(claims, {
+            now: NOW,
+            collapsed: { [CLAIM_STAGES.NEW]: true },
+        });
+        expect(groups[CLAIM_STAGES.NEW].map(c => c.id)).toEqual([1]);
+        expect(visibleIds).toEqual([2]);
+    });
+
     it('handles claims with missing notes_meta as new', () => {
         const { groups } = buildQueueGroups(
             [claim(9, { notes_meta: undefined })],

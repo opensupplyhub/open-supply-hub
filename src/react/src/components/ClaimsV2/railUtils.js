@@ -71,7 +71,8 @@ export const regionOptions = claims => {
  *                `stageInfo` ({ stage, reason, waitingBusinessDays, ... })
  *                so cards can render waiting badges without re-deriving.
  *   visibleIds — claim ids flattened in on-screen order (STAGE_ORDER,
- *                then the sort inside each section): the J/K walk order.
+ *                then the sort inside each section), excluding claims in
+ *                collapsed sections: the J/K walk order.
  */
 export const buildQueueGroups = (
     claims,
@@ -80,6 +81,7 @@ export const buildQueueGroups = (
         region = ALL_REGIONS,
         sort = SORT_ORDERS.OLDEST,
         now = new Date(),
+        collapsed = {},
     } = {},
 ) => {
     const groups = {};
@@ -107,7 +109,9 @@ export const buildQueueGroups = (
         );
     });
 
-    const visibleIds = STAGE_ORDER.reduce(
+    // Collapsed sections show no cards, so their claims are not
+    // "visible": J/K navigation and auto-select skip them.
+    const visibleIds = STAGE_ORDER.filter(stage => !collapsed[stage]).reduce(
         (ids, stage) => ids.concat(groups[stage].map(claim => claim.id)),
         [],
     );

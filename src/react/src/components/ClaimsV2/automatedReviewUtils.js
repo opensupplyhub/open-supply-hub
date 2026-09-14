@@ -36,6 +36,14 @@ const parseBlock = text => {
 };
 
 /*
+ * Whether a note's machine-readable block parses as a version we
+ * understand — the timeline compacts a note only when it does;
+ * otherwise the raw note stays visible so unparseable automation
+ * output is never unreachable.
+ */
+export const hasValidReviewBlock = text => parseBlock(text) !== null;
+
+/*
  * Find the automated review for a claim from its notes. The newest
  * valid block wins — the pipeline may re-run on a claim.
  */

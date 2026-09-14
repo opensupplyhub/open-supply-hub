@@ -4,6 +4,7 @@ import {
     parseAutomatedReview,
     getEvidenceText,
     getExtract,
+    hasValidReviewBlock,
     getSuggestedDraft,
     isPdfFile,
     P1_MARKER,
@@ -143,5 +144,16 @@ describe('getExtract', () => {
         expect(getExtract(review, 'broken')).toBeNull();
         expect(getExtract(null, 'address')).toBeNull();
         expect(getExtract({}, 'address')).toBeNull();
+    });
+});
+
+describe('hasValidReviewBlock', () => {
+    it('is true only for notes whose block actually parses', () => {
+        expect(hasValidReviewBlock(block(validPayload))).toBe(true);
+        expect(hasValidReviewBlock(`${P1_MARKER}\n{not json`)).toBe(false);
+        expect(
+            hasValidReviewBlock(block({ ...validPayload, v: 2 })),
+        ).toBe(false);
+        expect(hasValidReviewBlock('a plain note')).toBe(false);
     });
 });

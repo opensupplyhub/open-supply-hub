@@ -3,14 +3,18 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 
 import { useClaimsList, useClaimDetail, useClaimActions } from './hooks';
-import { parseAutomatedReview, P1_MARKER } from './automatedReviewUtils';
+import {
+    parseAutomatedReview,
+    hasValidReviewBlock,
+    P1_MARKER,
+} from './automatedReviewUtils';
 import ClaimantDetailsPanel from './ClaimantDetailsPanel';
 import DecisionPanel from './DecisionPanel';
 import EvidencePanel from './EvidencePanel';
 import InternalNoteBox from './InternalNoteBox';
 import MessageComposer from './MessageComposer';
 import VerificationPanel from './VerificationPanel';
-import { deriveClaimStage, CLAIM_STAGES, NOTE_TYPES } from './stageUtils';
+import { deriveClaimStage, STAGE_LABELS, NOTE_TYPES } from './stageUtils';
 import {
     buildQueueGroups,
     nextVisibleClaimID,
@@ -21,18 +25,8 @@ import {
 } from './railUtils';
 
 import QueueRail from './QueueRail';
+import { formatDate } from '../../util/util';
 import styles from './styles';
-
-const formatDate = value => {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime())
-        ? String(value)
-        : date.toLocaleDateString(undefined, {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-          });
-};
 
 /*
  * Claims moderation dashboard v2 — scaffolding shell (OSDEV-3355).
@@ -51,16 +45,16 @@ const NOTE_TAG_LABELS = Object.freeze({
     [NOTE_TYPES.CLAIMANT_UPDATE]: 'Claimant update',
 });
 
-const STAGE_LABELS = Object.freeze({
-    [CLAIM_STAGES.NEW]: 'New — needs review',
-    [CLAIM_STAGES.AWAITING]: 'Awaiting claimant',
-    [CLAIM_STAGES.OVERDUE]: 'Reply overdue — decide',
-});
-
 function ClaimWorkspace({ claimID, onDecided }) {
     const { detail, fetching, error, refetchDetail } = useClaimDetail(claimID);
     const [requestedDoc, setRequestedDoc] = useState(null);
     const workbenchRef = useRef(null);
+
+    /* A source-link request belongs to one claim: navigating away
+       clears it so a remount never replays it (see EvidencePanel). */
+    useEffect(() => {
+        setRequestedDoc(null);
+    }, [claimID]);
 
     const showDocument = name => {
         setRequestedDoc(current => ({
@@ -118,8 +112,8 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <span style={styles.noteMeta}>Claim #{detail.id}</span>
             </Typography>
             <p style={styles.workspaceSub}>
-                Submitted <strong>{formatDate(detail.created_at)}</strong> (
-                {claimAgeDays(detail.created_at)} days ago) by{' '}
+                Submitted <strong>{formatDate(detail.created_at, 'll')}</strong>{' '}
+                ({claimAgeDays(detail.created_at)} days ago) by{' '}
                 <strong>{detail.contact_person}</strong>
                 {detail.job_title ? `, ${detail.job_title}` : ''} ·{' '}
                 <strong>{detail.email}</strong>
@@ -188,6 +182,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
                         detail={detail}
                         stage={stage}
                         acting={acting}
+                        actionError={actionError}
                         approveClaim={approveClaim}
                         denyClaim={denyClaim}
                         addNote={addNote}
@@ -227,6 +222,8 @@ function ClaimWorkspace({ claimID, onDecided }) {
                     onSent={refetchDetail}
                 />
             </div>
+            {/* Composer/note failures surface here; decision failures
+                render inside the dialog (DecisionPanel). */}
             {actionError && (
                 <Typography variant="body1" style={styles.evidenceHint}>
                     {actionError}
@@ -256,7 +253,8 @@ function ClaimWorkspace({ claimID, onDecided }) {
                             {/* The pipeline's machine-readable block is
                                 parsed into the workbench, not read as
                                 prose — show only the human part here. */}
-                            {note.note?.includes(P1_MARKER) ? (
+                            {note.note?.includes(P1_MARKER) &&
+                            hasValidReviewBlock(note.note) ? (
                                 <>
                                     {note.note
                                         .slice(0, note.note.indexOf(P1_MARKER))
@@ -292,13 +290,39 @@ export default function ClaimsV2Dashboard() {
     const [region, setRegion] = useState(ALL_REGIONS);
     const [sort, setSort] = useState(SORT_ORDERS.OLDEST);
     const [railCollapsed, setRailCollapsed] = useState(false);
+    const [collapsedStages, setCollapsedStages] = useState({});
+    /* Stages depend on elapsed business days: re-derive on a slow tick
+       so a dashboard left open moves claims from "awaiting" to
+       "overdue" without a refetch. */
+    const [nowTick, setNowTick] = useState(() => new Date());
     const searchInputRef = useRef(null);
 
+    useEffect(() => {
+        const timer = setInterval(() => setNowTick(new Date()), 60 * 1000);
+        return () => clearInterval(timer);
+    }, []);
+
     const { groups, visibleIds } = useMemo(
-        () => buildQueueGroups(claims, { query, region, sort }),
-        [claims, query, region, sort],
+        () =>
+            buildQueueGroups(claims, {
+                query,
+                region,
+                sort,
+                now: nowTick,
+                collapsed: collapsedStages,
+            }),
+        [claims, query, region, sort, nowTick, collapsedStages],
     );
     const regions = useMemo(() => regionOptions(claims), [claims]);
+
+    /* A refetch can remove the last claim of the selected region; the
+       browser would display "All regions" while the stale filter still
+       hides everything, so snap the state back explicitly. */
+    useEffect(() => {
+        if (region !== ALL_REGIONS && !regions.includes(region)) {
+            setRegion(ALL_REGIONS);
+        }
+    }, [regions, region]);
 
     /*
      * Auto-select the first visible claim on load, and move the
@@ -326,6 +350,11 @@ export default function ClaimsV2Dashboard() {
                 event.altKey ||
                 isTypingTarget(event.target)
             ) {
+                return;
+            }
+            /* The dialog owns the keyboard while open: a J/K here would
+               switch claims and destroy a typed deny reason. */
+            if (document.querySelector('[role="dialog"]')) {
                 return;
             }
             const key = event.key.toLowerCase();
@@ -388,6 +417,14 @@ export default function ClaimsV2Dashboard() {
                 searchInputRef={searchInputRef}
                 railCollapsed={railCollapsed}
                 onToggleRail={() => setRailCollapsed(current => !current)}
+                collapsed={collapsedStages}
+                onToggleSection={stage =>
+                    setCollapsedStages(prev => ({
+                        ...prev,
+                        [stage]: !prev[stage],
+                    }))
+                }
+                now={nowTick}
             />
             <main style={styles.workspace}>
                 <ClaimWorkspace

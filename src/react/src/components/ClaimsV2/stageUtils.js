@@ -21,6 +21,12 @@ export const CLAIM_STAGES = Object.freeze({
     OVERDUE: 'overdue',
 });
 
+export const STAGE_LABELS = Object.freeze({
+    [CLAIM_STAGES.NEW]: 'New — needs review',
+    [CLAIM_STAGES.AWAITING]: 'Awaiting claimant',
+    [CLAIM_STAGES.OVERDUE]: 'Reply overdue — decide',
+});
+
 export const NOTE_TYPES = Object.freeze({
     INTERNAL: 'INTERNAL',
     CLAIMANT_MESSAGE: 'CLAIMANT_MESSAGE',

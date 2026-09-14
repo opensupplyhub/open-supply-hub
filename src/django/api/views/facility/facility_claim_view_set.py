@@ -45,7 +45,7 @@ from ...permissions import (
 )
 from ...serializers import (
     ApprovedFacilityClaimSerializer,
-    FacilityClaimSerializer,
+    FacilityClaimDashboardSerializer,
     FacilityClaimDetailsSerializer,
     FacilityClaimListQueryParamsSerializer
 )
@@ -169,7 +169,7 @@ class FacilityClaimViewSet(ModelViewSet):
         'contributor__admin',
         'status_change_by'
     ).all()
-    serializer_class = FacilityClaimSerializer
+    serializer_class = FacilityClaimDashboardSerializer
     permission_classes = [IsSuperuser]
     swagger_schema = None
     throttle_classes = []
@@ -203,7 +203,9 @@ class FacilityClaimViewSet(ModelViewSet):
         if countries:
             queryset = queryset.filter(facility__country_code__in=countries)
 
-        response_data = FacilityClaimSerializer(queryset, many=True).data
+        response_data = FacilityClaimDashboardSerializer(
+            queryset, many=True
+        ).data
 
         return Response(response_data)
 

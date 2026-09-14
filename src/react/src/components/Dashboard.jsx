@@ -152,13 +152,13 @@ function Dashboard({
      */
     const claimsV2FullWidthPage = (
         <div style={dashboardStyles.fullWidthPageStyles}>
-            <h2 style={dashboardStyles.fullWidthTitleStyles}>
-                {makeClickableDashboardLinkFn('Claims Moderation v2')()}
-            </h2>
             <FeatureFlag
                 flag={ENABLE_CLAIMS_V2_DASHBOARD}
                 alternative={<RouteNotFound />}
             >
+                <h2 style={dashboardStyles.fullWidthTitleStyles}>
+                    {makeClickableDashboardLinkFn('Claims Moderation v2')()}
+                </h2>
                 <Route component={ClaimsV2Dashboard} />
             </FeatureFlag>
         </div>

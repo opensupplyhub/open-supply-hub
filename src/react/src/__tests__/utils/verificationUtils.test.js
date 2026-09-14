@@ -10,6 +10,7 @@ import {
 
 const review = {
     scores: { name: 0.85, address: 0.55, affiliation: 0.61 },
+    thresholds: { name: 0.6, address: 0.6, affiliation: 0.6 },
     reasoning: { address: 'Street number missing from the profile.' },
 };
 
@@ -31,8 +32,18 @@ describe('scoreChip', () => {
     });
 
     it('respects a per-criterion thresholds snapshot when present', () => {
-        const strict = { ...review, thresholds: { name: 0.9 } };
+        const strict = {
+            ...review,
+            thresholds: { ...review.thresholds, name: 0.9 },
+        };
         expect(scoreChip(strict, 'name').status).toBe(CHIP_STATUS.CHECK);
+    });
+
+    it('renders the score without judgement when the review has no threshold', () => {
+        const noThresholds = { scores: { name: 0.85 } };
+        const chip = scoreChip(noThresholds, 'name');
+        expect(chip.status).toBe(CHIP_STATUS.NONE);
+        expect(chip.text).toBe('Score 0.85 — no threshold in the review');
     });
 
     it('degrades to needs-your-judgement without automation data', () => {
@@ -79,7 +90,10 @@ describe('organizationRowStatus', () => {
     });
 
     it('never renders a mismatch on string logic alone', () => {
-        const failing = { scores: { affiliation: 0.2 } };
+        const failing = {
+            scores: { affiliation: 0.2 },
+            thresholds: { affiliation: 0.6 },
+        };
         const status = organizationRowStatus(
             failing,
             'Karavela SIA',

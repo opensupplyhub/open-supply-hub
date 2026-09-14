@@ -14,10 +14,6 @@ export const CHIP_STATUS = Object.freeze({
     NONE: 'none',
 });
 
-// Matches the pipeline's default; a review may carry its own
-// per-criterion thresholds snapshot.
-const DEFAULT_THRESHOLD = 0.6;
-
 const round2 = value => Number(value).toFixed(2);
 
 export const scoreChip = (review, key) => {
@@ -29,10 +25,18 @@ export const scoreChip = (review, key) => {
             reasoning: null,
         };
     }
-    const threshold =
-        typeof review?.thresholds?.[key] === 'number'
-            ? review.thresholds[key]
-            : DEFAULT_THRESHOLD;
+    // Thresholds come only from the review's own snapshot — the
+    // pipeline's policy values are not hardcoded client-side (public
+    // repository hygiene). Without one, the score renders without a
+    // pass/fail judgement.
+    const threshold = review?.thresholds?.[key];
+    if (typeof threshold !== 'number') {
+        return {
+            status: CHIP_STATUS.NONE,
+            text: `Score ${round2(score)} — no threshold in the review`,
+            reasoning: review?.reasoning?.[key] || null,
+        };
+    }
     if (score >= threshold) {
         return {
             status: CHIP_STATUS.PASS,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 
 import { getEvidenceText, isPdfFile } from './automatedReviewUtils';
@@ -37,9 +37,16 @@ const defaultTabFor = doc =>
  * or window.open target because the browser follows the redirect with
  * the session cookie.
  */
-const attachmentHref = (claimID, doc) =>
-    doc.claim_attachment ||
-    `/api/facility-claims/${claimID}/attachments/${doc.id}/download/`;
+const attachmentHref = (claimID, doc) => {
+    if (doc.claim_attachment) {
+        return doc.claim_attachment;
+    }
+    // The download endpoint needs the attachment id, which the API only
+    // sends once OSDEV-2278 lands — without it there is no valid URL.
+    return doc.id != null
+        ? `/api/facility-claims/${claimID}/attachments/${doc.id}/download/`
+        : null;
+};
 
 export default function EvidencePanel({
     attachments,
@@ -68,10 +75,17 @@ export default function EvidencePanel({
         setOpenIndex(index);
         setTab(defaultTabFor(docs[index]));
         const doc = docs[index];
-        if (doc && isPdfFile(doc.file_name)) {
-            window.open(attachmentHref(claimID, doc), '_blank', 'noopener');
+        const href = doc && attachmentHref(claimID, doc);
+        if (doc && isPdfFile(doc.file_name) && href) {
+            window.open(href, '_blank', 'noopener');
         }
     };
+
+    /* Only a request issued after this mount may open a document —
+       initializing to the current seq means a remount (navigation,
+       refetch) never replays the previous request, which for a PDF
+       would spawn an unrequested tab. */
+    const handledSeq = useRef(requestedDoc ? requestedDoc.seq : 0);
 
     /* Reset the auto-open when the attachments list itself changes
        (e.g. a refetch after an action added documents). */
@@ -86,9 +100,14 @@ export default function EvidencePanel({
        opens in a new tab). `seq` distinguishes repeated requests for
        the same file. */
     useEffect(() => {
-        if (!requestedDoc || !requestedDoc.name) {
+        if (
+            !requestedDoc ||
+            !requestedDoc.name ||
+            requestedDoc.seq === handledSeq.current
+        ) {
             return;
         }
+        handledSeq.current = requestedDoc.seq;
         const index = docs.findIndex(
             doc => doc.file_name === requestedDoc.name,
         );
@@ -111,11 +130,16 @@ export default function EvidencePanel({
                 return <pre style={styles.evidenceText}>{text}</pre>;
             }
         }
-        if (tab === TABS.DOCUMENT && !isPdfFile(openDoc.file_name)) {
+        const openHref = attachmentHref(claimID, openDoc);
+        if (
+            tab === TABS.DOCUMENT &&
+            !isPdfFile(openDoc.file_name) &&
+            openHref
+        ) {
             return (
                 <div>
                     <img
-                        src={attachmentHref(claimID, openDoc)}
+                        src={openHref}
                         alt={openDoc.file_name}
                         style={styles.evidenceImage}
                     />
@@ -130,13 +154,17 @@ export default function EvidencePanel({
                 {tab === TABS.DOCUMENT
                     ? 'PDF — the original opens in a new tab: '
                     : 'No extracted text for this document — '}
-                <a
-                    href={attachmentHref(claimID, openDoc)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    open the original ↗
-                </a>
+                {openHref ? (
+                    <a
+                        href={openHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        open the original ↗
+                    </a>
+                ) : (
+                    'original unavailable until the download endpoint ships'
+                )}
             </Typography>
         );
     };

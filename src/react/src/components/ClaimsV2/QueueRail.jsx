@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Typography from '@material-ui/core/Typography';
 
-import { CLAIM_STAGES } from './stageUtils';
+import { CLAIM_STAGES, STAGE_LABELS } from './stageUtils';
 import {
     STAGE_ORDER,
     SORT_ORDERS,
@@ -17,12 +17,6 @@ import styles from './styles';
  * owned by the dashboard; this component just renders and reports
  * clicks. Visual spec: the prototype's rail.
  */
-
-const STAGE_HEADINGS = Object.freeze({
-    [CLAIM_STAGES.NEW]: 'New — needs review',
-    [CLAIM_STAGES.AWAITING]: 'Awaiting claimant',
-    [CLAIM_STAGES.OVERDUE]: 'Reply overdue — decide',
-});
 
 const STAGE_ACCENTS = Object.freeze({
     [CLAIM_STAGES.NEW]: styles.stageAccentNew,
@@ -76,12 +70,9 @@ export default function QueueRail({
     now,
     railCollapsed,
     onToggleRail,
+    collapsed,
+    onToggleSection,
 }) {
-    const [collapsed, setCollapsed] = useState({});
-
-    const toggleSection = stage =>
-        setCollapsed(prev => ({ ...prev, [stage]: !prev[stage] }));
-
     /* Collapsed rail: a slim strip with the count — J/K navigation
        still works, the workspace gets the full width. */
     if (railCollapsed) {
@@ -166,10 +157,10 @@ export default function QueueRail({
                                 ...styles.stageHead,
                                 ...STAGE_ACCENTS[stage],
                             }}
-                            onClick={() => toggleSection(stage)}
+                            onClick={() => onToggleSection(stage)}
                             aria-expanded={!isCollapsed}
                         >
-                            {STAGE_HEADINGS[stage]}
+                            {STAGE_LABELS[stage]}
                             <span style={styles.stageCount}>
                                 {stageClaims.length}
                                 {isCollapsed ? ' ▸' : ' ▾'}

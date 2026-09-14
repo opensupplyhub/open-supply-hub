@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import isURL from 'validator/lib/isURL';
 
 import styles from './styles';
 
@@ -9,14 +10,12 @@ import styles from './styles';
  * compactly and only when present.
  */
 
-const isUrl = value => /^https?:\/\//i.test(value || '');
-
 function DetailRow({ label, value }) {
     return (
         <div style={styles.matchRow}>
             <span style={styles.detailKey}>{label}</span>
             <span style={styles.matchValue}>
-                {isUrl(value) ? (
+                {isURL(value || '', { require_protocol: true }) ? (
                     <a href={value} target="_blank" rel="noopener noreferrer">
                         {value} ↗
                     </a>

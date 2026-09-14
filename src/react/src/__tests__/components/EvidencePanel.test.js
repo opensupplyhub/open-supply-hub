@@ -82,4 +82,18 @@ describe('EvidencePanel', () => {
             '/api/facility-claims/7/attachments/9/download/',
         );
     });
+
+    it('handles a doc with neither URL nor id without broken links', () => {
+        render(
+            <EvidencePanel
+                attachments={[{ file_name: 'orphan.pdf' }]}
+                claimID={7}
+            />,
+        );
+        fireEvent.click(screen.getByRole('button', { name: /orphan\.pdf/ }));
+        expect(window.open).not.toHaveBeenCalled();
+        expect(
+            screen.getByText(/original unavailable until the download/),
+        ).toBeInTheDocument();
+    });
 });
