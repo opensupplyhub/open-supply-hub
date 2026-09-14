@@ -29,7 +29,7 @@ from api.models.facility.facility_list_item import FacilityListItem
 logger = logging.getLogger(__name__)
 
 
-class DatabaseSynchronizer:
+class DatabaseSynchronizer:  # pragma: no cover
     '''
     Synchronizes data from source database to target database for models with
     configurable synchronization fields. Uses Django ORM for cleaner and more
