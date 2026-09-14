@@ -145,7 +145,12 @@ class DataCenterDownloadHelper:
             for contributor_label, rows in rows_by_contributor.items()
         }
 
-    def __add_value_to_row(self, row: Dict[str, Any], field_name: str, value: Any) -> None:
+    def __add_value_to_row(
+        self,
+        row: Dict[str, Any],
+        field_name: str,
+        value: Any
+    ) -> None:
         '''
         Add a value to a row dict, merging with an existing value if
         present. If the existing value is a list, append to it; if not,
