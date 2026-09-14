@@ -14,9 +14,21 @@ import {
     buildQueueGroups,
     nextVisibleClaimID,
     regionOptions,
+    claimAgeDays,
     ALL_REGIONS,
     SORT_ORDERS,
 } from './railUtils';
+
+const formatDate = value => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? String(value)
+        : date.toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+          });
+};
 import QueueRail from './QueueRail';
 import styles from './styles';
 
@@ -88,11 +100,19 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 {facilityName}{' '}
                 <span style={styles.noteMeta}>Claim #{detail.id}</span>
             </Typography>
-            <Typography variant="body1">
-                {detail.contact_person}
-                {detail.job_title ? ` — ${detail.job_title}` : ''} ·{' '}
-                {detail.email}
-            </Typography>
+            <p style={styles.workspaceSub}>
+                Submitted <strong>{formatDate(detail.created_at)}</strong> (
+                {claimAgeDays(detail.created_at)} days ago) by{' '}
+                <strong>{detail.contact_person}</strong>
+                {detail.job_title ? `, ${detail.job_title}` : ''} ·{' '}
+                <strong>{detail.email}</strong>
+            </p>
+            <p style={styles.workspaceSub}>
+                Organization: <strong>{detail.company_name || '—'}</strong>
+                {detail.facility?.properties?.country_name
+                    ? ` · ${detail.facility.properties.country_name}`
+                    : ''}
+            </p>
             {/* Top grid (§5b): profile/status main column beside the
                 ~38% Decision rail. The verification panel joins the
                 main column in a later increment. */}
@@ -100,6 +120,30 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <div style={styles.topGridMain}>
                     <div style={styles.stageBox}>
                         <strong>{STAGE_LABELS[stage.stage]}</strong>
+                    </div>
+                    {/* Profile anchor (§4/§5b): what the claimant is
+                        claiming, with the jump to the live profile. */}
+                    <div style={styles.profileAnchor}>
+                        <div style={styles.sectionLabel}>
+                            OS Hub profile — what the claimant is claiming
+                        </div>
+                        <div style={styles.profileName}>
+                            {detail.facility?.properties?.name || '—'}
+                        </div>
+                        <div style={styles.profileAddress}>
+                            {detail.facility?.properties?.address || ''}
+                        </div>
+                        {detail.facility?.id && (
+                            <div style={styles.profileOsId}>
+                                <a
+                                    href={`/facilities/${detail.facility.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {detail.facility.id} — open profile ↗
+                                </a>
+                            </div>
+                        )}
                     </div>
                     {detail.status !== 'PENDING' && (
                         <div style={styles.stageBox}>
@@ -139,6 +183,17 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <EvidencePanel
                     attachments={detail.attachments}
                     review={review}
+                    matchValues={[
+                        ['Name', detail.facility?.properties?.name],
+                        ['Address', detail.facility?.properties?.address],
+                        [
+                            'Person & title',
+                            [detail.contact_person, detail.job_title]
+                                .filter(Boolean)
+                                .join(' — '),
+                        ],
+                        ['Email', detail.email],
+                    ]}
                 />
                 <MessageComposer
                     detail={detail}

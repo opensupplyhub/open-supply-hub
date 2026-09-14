@@ -75,6 +75,9 @@ export default function DecisionPanel({
                     disabled={acting}
                 >
                     Approve claim
+                    <span style={styles.decisionButtonSub}>
+                        Grants the claimant control of this profile
+                    </span>
                 </button>
                 <button
                     type="button"
@@ -82,7 +85,10 @@ export default function DecisionPanel({
                     onClick={() => setOpenDialog(DIALOGS.DENY)}
                     disabled={acting}
                 >
-                    Deny…
+                    Deny claim…
+                    <span style={styles.decisionButtonSub}>
+                        Requires a reason — emailed to claimant &amp; logged
+                    </span>
                 </button>
             </div>
             <div style={styles.stageBox}>

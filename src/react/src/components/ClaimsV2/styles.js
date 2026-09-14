@@ -506,4 +506,74 @@ export default Object.freeze({
         fontFamily: 'inherit',
         boxSizing: 'border-box',
     }),
+    profileAnchor: Object.freeze({
+        padding: '12px 14px',
+        margin: '8px 0',
+        border: `1px solid ${COLOURS.GREY}`,
+        borderRadius: '6px',
+    }),
+    profileName: Object.freeze({
+        fontWeight: 700,
+        fontSize: '17px',
+    }),
+    profileAddress: Object.freeze({
+        margin: '2px 0 6px',
+    }),
+    profileOsId: Object.freeze({
+        fontSize: '14px',
+    }),
+    workspaceSub: Object.freeze({
+        margin: '2px 0',
+        color: COLOURS.DARK_GREY,
+        fontSize: '14.5px',
+    }),
+    viewerBody: Object.freeze({
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+    }),
+    viewerContent: Object.freeze({
+        flex: 1.6,
+        minWidth: 0,
+    }),
+    viewerCaption: Object.freeze({
+        marginTop: '4px',
+        color: COLOURS.DARK_GREY,
+        fontSize: '12.5px',
+    }),
+    matchBox: Object.freeze({
+        flex: 1,
+        minWidth: '220px',
+        padding: '10px 12px',
+        border: `1px solid ${COLOURS.GREY}`,
+        borderRadius: '6px',
+        background: COLOURS.WHITE,
+        fontSize: '13.5px',
+    }),
+    matchTitle: Object.freeze({
+        fontWeight: 700,
+        marginBottom: '6px',
+        fontSize: '13px',
+    }),
+    matchRow: Object.freeze({
+        display: 'flex',
+        gap: '8px',
+        padding: '3px 0',
+    }),
+    matchKey: Object.freeze({
+        flex: 'none',
+        width: '96px',
+        color: COLOURS.DARK_GREY,
+    }),
+    matchValue: Object.freeze({
+        minWidth: 0,
+        overflowWrap: 'anywhere',
+    }),
+    decisionButtonSub: Object.freeze({
+        display: 'block',
+        fontWeight: 400,
+        fontSize: '12.5px',
+        marginTop: '2px',
+        opacity: 0.85,
+    }),
 });

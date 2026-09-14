@@ -28,7 +28,7 @@ const TABS = Object.freeze({
 const defaultTabFor = doc =>
     doc && isPdfFile(doc.file_name) ? TABS.TRANSLATED : TABS.DOCUMENT;
 
-export default function EvidencePanel({ attachments, review }) {
+export default function EvidencePanel({ attachments, review, matchValues }) {
     const docs = Array.isArray(attachments) ? attachments : [];
     // Spec §5b: the first document auto-opens on claim load.
     const [openIndex, setOpenIndex] = useState(docs.length > 0 ? 0 : null);
@@ -77,11 +77,16 @@ export default function EvidencePanel({ attachments, review }) {
         }
         if (tab === TABS.DOCUMENT && !isPdfFile(openDoc.file_name)) {
             return (
-                <img
-                    src={openDoc.claim_attachment}
-                    alt={openDoc.file_name}
-                    style={styles.evidenceImage}
-                />
+                <div>
+                    <img
+                        src={openDoc.claim_attachment}
+                        alt={openDoc.file_name}
+                        style={styles.evidenceImage}
+                    />
+                    <div style={styles.viewerCaption}>
+                        Original document — as uploaded by the claimant.
+                    </div>
+                </div>
             );
         }
         return (
@@ -182,7 +187,31 @@ export default function EvidencePanel({ attachments, review }) {
                             </button>
                         </span>
                     </div>
-                    {renderViewerBody()}
+                    {/* The values this document must corroborate,
+                        pinned beside the evidence (prototype's
+                        match-box). */}
+                    <div style={styles.viewerBody}>
+                        <div style={styles.viewerContent}>
+                            {renderViewerBody()}
+                        </div>
+                        {Array.isArray(matchValues) && matchValues.length > 0 && (
+                            <div style={styles.matchBox}>
+                                <div style={styles.matchTitle}>
+                                    Match against OS Hub profile
+                                </div>
+                                {matchValues.map(([key, value]) => (
+                                    <div key={key} style={styles.matchRow}>
+                                        <span style={styles.matchKey}>
+                                            {key}
+                                        </span>
+                                        <span style={styles.matchValue}>
+                                            {value || '—'}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </section>
