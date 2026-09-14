@@ -9,9 +9,10 @@ class Command(BaseCommand):
         'Restore promotions that the one-way sync from OS Hub has reverted. '
         'The sync overwrites every synced field of a shared facility, '
         'including created_from, so a promotion made on this instance is '
-        'undone whenever the public record changes. Intended to run after '
-        'each sync. Safe to run repeatedly: facilities already created from '
-        'their newest RBA match are not selected.'
+        'undone whenever the public record changes. sync_databases invokes '
+        'this at the end of each run on the RBA instance; it can also be '
+        'run by hand. Safe to run repeatedly: facilities already created '
+        'from their newest RBA match are not selected.'
     )
 
     def add_arguments(self, parser):

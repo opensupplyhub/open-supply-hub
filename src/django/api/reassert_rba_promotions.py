@@ -1,9 +1,12 @@
 import logging
 
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import transaction
 from django.utils import timezone
 
 from api.constants import OriginSource, ProcessingAction
+from api.helpers.rba_instance import is_rba_instance
 from api.models import Facility, FacilityListItem, FacilityMatch
 
 logger = logging.getLogger(__name__)
@@ -339,3 +342,24 @@ def reassert_rba_promotions(dry_run=False, limit=None):
     )
 
     return summary
+
+
+def after_database_sync(error_count=0, dry_run=False):
+    '''
+    Run after sync_all() returns without raising.
+
+    A partial sync counts per-model errors and returns normally; re-asserting
+    promotions against that mixed state would be wrong, so this fails the
+    command instead. On an error-free RBA run, restore promotions the
+    overwrite just reverted. Elsewhere the restore is skipped.
+    '''
+    if error_count:
+        raise CommandError(
+            'Synchronization completed with '
+            '{} error(s).'.format(error_count)
+        )
+
+    if not is_rba_instance():
+        return
+
+    call_command('reassert_rba_promotions', dry_run=dry_run)
