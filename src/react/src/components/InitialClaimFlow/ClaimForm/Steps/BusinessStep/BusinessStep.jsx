@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { func, object } from 'prop-types';
+import { bool, func, object } from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -26,7 +26,11 @@ import {
 import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
 import findSelectedOption from '../utils';
-import { facilityDetailsRoute } from '../../../../../util/constants';
+import {
+    facilityDetailsRoute,
+    contributeProductionLocationRoute,
+    ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+} from '../../../../../util/constants';
 import { selectStyles } from '../../styles';
 
 const BusinessStep = ({
@@ -38,6 +42,7 @@ const BusinessStep = ({
     touched,
     productionLocationData,
     updateFieldWithoutTouch,
+    isNameAddressEditable,
 }) => {
     const [prevVerificationMethod, setPrevVerificationMethod] = useState(
         formData.locationAddressVerificationMethod || '',
@@ -89,6 +94,36 @@ const BusinessStep = ({
         touched.companyAddressVerificationDocuments &&
         errors.companyAddressVerificationDocuments
     );
+    const isCompanyNameError = !!(touched.companyName && errors.companyName);
+    const isCompanyAddressError = !!(
+        touched.companyAddress && errors.companyAddress
+    );
+
+    // While the switch is off the fields are read-only copies of the
+    // production location's values. While it is on they are bound to the
+    // form so the claimant's edits are submitted with the claim.
+    const companyNameValue = isNameAddressEditable
+        ? formData.companyName ?? ''
+        : locationName;
+    const companyAddressValue = isNameAddressEditable
+        ? formData.companyAddress ?? ''
+        : locationAddress;
+
+    const readOnlyInputProps = {
+        className: classes.disabledField,
+        disabled: true,
+        classes: {
+            notchedOutline: classes.notchedOutlineStyles,
+        },
+    };
+    const editableInputProps = {
+        classes: {
+            notchedOutline: classes.notchedOutlineStyles,
+        },
+    };
+    const documentsMatchNoteText = isNameAddressEditable
+        ? 'Verification documents must show the same name and address as entered above.'
+        : 'Verification documents must show the same name and address as listed on Open Supply Hub.';
 
     return (
         <div>
@@ -118,13 +153,24 @@ const BusinessStep = ({
                     variant="outlined"
                     multiline
                     name="companyName"
-                    value={locationName}
-                    InputProps={{
-                        className: classes.disabledField,
-                        disabled: true,
-                        classes: {
-                            notchedOutline: classes.notchedOutlineStyles,
-                        },
+                    id="companyName"
+                    inputProps={{ 'aria-label': 'Company Name' }}
+                    value={companyNameValue}
+                    onChange={e => handleChange('companyName', e.target.value)}
+                    onBlur={() => handleBlur('companyName')}
+                    InputProps={
+                        isNameAddressEditable
+                            ? editableInputProps
+                            : readOnlyInputProps
+                    }
+                    error={isCompanyNameError}
+                    helperText={
+                        isCompanyNameError && (
+                            <InputErrorText text={errors.companyName} />
+                        )
+                    }
+                    FormHelperTextProps={{
+                        className: classes.helperText,
                     }}
                 />
             </div>
@@ -139,16 +185,56 @@ const BusinessStep = ({
                     variant="outlined"
                     multiline
                     name="companyAddress"
-                    value={locationAddress}
-                    InputProps={{
-                        className: classes.disabledField,
-                        disabled: true,
-                        classes: {
-                            notchedOutline: classes.notchedOutlineStyles,
-                        },
+                    id="companyAddress"
+                    inputProps={{ 'aria-label': 'Company Address' }}
+                    value={companyAddressValue}
+                    onChange={e =>
+                        handleChange('companyAddress', e.target.value)
+                    }
+                    onBlur={() => handleBlur('companyAddress')}
+                    InputProps={
+                        isNameAddressEditable
+                            ? editableInputProps
+                            : readOnlyInputProps
+                    }
+                    error={isCompanyAddressError}
+                    helperText={
+                        isCompanyAddressError && (
+                            <InputErrorText text={errors.companyAddress} />
+                        )
+                    }
+                    FormHelperTextProps={{
+                        className: classes.helperText,
                     }}
                 />
             </div>
+            {isNameAddressEditable && (
+                <div className={classes.nameAddressNoteWrapper}>
+                    <ImportantNote
+                        text={
+                            <>
+                                The name and address you enter here will be
+                                shown on the production location page once your
+                                claim is approved, and they must match the name
+                                and address on the document or web page you
+                                submit for verification. If this production
+                                location has moved to a new address, do not edit
+                                the address here. Instead, submit the new
+                                location through the{' '}
+                                <Link
+                                    to={contributeProductionLocationRoute}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={classes.noteLink}
+                                >
+                                    Single Location Contribution form
+                                </Link>{' '}
+                                so a new OS ID can be created.
+                            </>
+                        }
+                    />
+                </div>
+            )}
             <div className={classes.formFieldContainer}>
                 <FormFieldTitle
                     label="Company Address Verification"
@@ -220,7 +306,7 @@ const BusinessStep = ({
                             </div>
                         )}
                         <div className={classes.importantNoteWrapper}>
-                            <ImportantNote text="Verification documents must show the same name and address as listed on Open Supply Hub." />
+                            <ImportantNote text={documentsMatchNoteText} />
                         </div>
                     </Grid>
                 )}
@@ -299,6 +385,7 @@ BusinessStep.defaultProps = {
     errors: {},
     touched: {},
     productionLocationData: {},
+    isNameAddressEditable: false,
 };
 
 BusinessStep.propTypes = {
@@ -310,14 +397,17 @@ BusinessStep.propTypes = {
     errors: object,
     touched: object,
     productionLocationData: object,
+    isNameAddressEditable: bool,
 };
 
 const mapStateToProps = ({
     contributeProductionLocation: {
         singleProductionLocation: { data: productionLocationData },
     },
+    featureFlags: { flags },
 }) => ({
     productionLocationData,
+    isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
 });
 
 export default connect(mapStateToProps)(

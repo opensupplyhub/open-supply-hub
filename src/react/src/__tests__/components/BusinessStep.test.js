@@ -406,4 +406,111 @@ describe('BusinessStep component', () => {
             unmount();
         });
     });
+    describe('editable company name and address (enable_claim_name_address_edit)', () => {
+        const SLC_NOTE_TEXT = /will be shown on the production location page once your claim is approved/;
+        const stateWithFlag = active => ({
+            ...preloadedState,
+            featureFlags: {
+                fetching: false,
+                flags: { enable_claim_name_address_edit: active },
+            },
+        });
+        const editableFormData = {
+            ...defaultProps.formData,
+            companyName: 'Edited Name',
+            companyAddress: '9 Edited Road',
+        };
+
+        test('fields are read-only and show the location values when the switch is off', () => {
+            renderComponent({ formData: editableFormData }, stateWithFlag(false));
+
+            const nameInput = screen.getByLabelText('Company Name');
+            const addressInput = screen.getByLabelText('Company Address');
+
+            expect(nameInput).toBeDisabled();
+            expect(addressInput).toBeDisabled();
+            expect(nameInput).toHaveValue('Test Production Location');
+            expect(addressInput).toHaveValue(
+                '1234 Production St, City, State, 12345',
+            );
+            expect(screen.queryByText(SLC_NOTE_TEXT)).not.toBeInTheDocument();
+        });
+
+        test('fields are editable and bound to the form when the switch is on', () => {
+            renderComponent({ formData: editableFormData }, stateWithFlag(true));
+
+            const nameInput = screen.getByLabelText('Company Name');
+            const addressInput = screen.getByLabelText('Company Address');
+
+            expect(nameInput).not.toBeDisabled();
+            expect(addressInput).not.toBeDisabled();
+            expect(nameInput).toHaveValue('Edited Name');
+            expect(addressInput).toHaveValue('9 Edited Road');
+
+            fireEvent.change(nameInput, { target: { value: 'New Name' } });
+            expect(mockHandleChange).toHaveBeenCalledWith('companyName', 'New Name');
+
+            fireEvent.change(addressInput, { target: { value: 'New Address' } });
+            expect(mockHandleChange).toHaveBeenCalledWith(
+                'companyAddress',
+                'New Address',
+            );
+
+            fireEvent.blur(nameInput);
+            expect(mockHandleBlur).toHaveBeenCalledWith('companyName');
+        });
+
+        test('shows the document-match warning with an SLC link only when the switch is on', () => {
+            renderComponent({ formData: editableFormData }, stateWithFlag(true));
+
+            expect(screen.getByText(SLC_NOTE_TEXT)).toBeInTheDocument();
+            const slcLink = screen.getByText('Single Location Contribution form');
+            expect(slcLink.closest('a')).toHaveAttribute(
+                'href',
+                '/contribute/single-location',
+            );
+            expect(slcLink.closest('a')).toHaveAttribute('target', '_blank');
+        });
+
+        test('document note refers to the entered values only when the switch is on', () => {
+            const withDocs = {
+                formData: {
+                    ...editableFormData,
+                    locationAddressVerificationMethod:
+                        'Utility bill showing company name and address',
+                },
+            };
+
+            const { unmount } = renderComponent(withDocs, stateWithFlag(false));
+            expect(
+                screen.getByText(/same name and address as listed on Open Supply Hub/),
+            ).toBeInTheDocument();
+            unmount();
+
+            renderComponent(withDocs, stateWithFlag(true));
+            expect(
+                screen.getByText(/same name and address as entered above/),
+            ).toBeInTheDocument();
+            expect(
+                screen.queryByText(/as listed on Open Supply Hub/),
+            ).not.toBeInTheDocument();
+        });
+
+        test('displays validation errors for company name and address', () => {
+            renderComponent(
+                {
+                    formData: { ...editableFormData, companyName: '', companyAddress: '' },
+                    touched: { companyName: true, companyAddress: true },
+                    errors: {
+                        companyName: 'Company name is required',
+                        companyAddress: 'Company address is required',
+                    },
+                },
+                stateWithFlag(true),
+            );
+
+            expect(screen.getByText('Company name is required')).toBeInTheDocument();
+            expect(screen.getByText('Company address is required')).toBeInTheDocument();
+        });
+    });
 });

@@ -122,7 +122,30 @@ const getCompanyUrlValidationSchema = label =>
                 .required('The company address verification URL is required'),
     });
 
-export const businessStepSchema = Yup.object().shape({
+const COMPANY_NAME_MAX_LENGTH = 200;
+const COMPANY_ADDRESS_MAX_LENGTH = 200;
+
+// Company name and address are only editable (and therefore only validated)
+// while the `enable_claim_name_address_edit` switch is active. When it is
+// off, the fields are read-only copies of the production location's values.
+const editableNameAddressSchema = {
+    companyName: Yup.string()
+        .trim()
+        .max(
+            COMPANY_NAME_MAX_LENGTH,
+            `Company name must be ${COMPANY_NAME_MAX_LENGTH} characters or fewer`,
+        )
+        .required('Company name is required'),
+    companyAddress: Yup.string()
+        .trim()
+        .max(
+            COMPANY_ADDRESS_MAX_LENGTH,
+            `Company address must be ${COMPANY_ADDRESS_MAX_LENGTH} characters or fewer`,
+        )
+        .required('Company address is required'),
+};
+
+const businessStepBaseSchema = {
     locationAddressVerificationMethod: Yup.string().required(
         'Company address verification method is required',
     ),
@@ -140,7 +163,19 @@ export const businessStepSchema = Yup.object().shape({
                     .required('Verification documents are required'),
         },
     ),
+};
+
+export const businessStepSchema = Yup.object().shape(businessStepBaseSchema);
+
+const editableBusinessStepSchema = Yup.object().shape({
+    ...editableNameAddressSchema,
+    ...businessStepBaseSchema,
 });
+
+// Both variants are built once so the schema identity is stable across
+// renders, as it was when the business step had a single constant schema.
+export const getBusinessStepSchema = ({ isNameAddressEditable = false } = {}) =>
+    isNameAddressEditable ? editableBusinessStepSchema : businessStepSchema;
 
 const SELECT_OPTION_MAX_LENGTH = 50;
 const FACILITY_TYPE_JOINED_MAX_LENGTH = 300;
@@ -298,11 +333,16 @@ export const profileStepSchema = Yup.object().shape({
     facilityCertifications: Yup.array(),
 });
 
-export const getValidationSchemaForStep = stepIndex => {
+export const getValidationSchemaForStep = (
+    stepIndex,
+    { isNameAddressEditable = false } = {},
+) => {
     const schemas = {
         [CLAIM_FORM_STEPS.ELIGIBILITY]: eligibilityStepSchema,
         [CLAIM_FORM_STEPS.CONTACT]: contactStepSchema,
-        [CLAIM_FORM_STEPS.BUSINESS]: businessStepSchema,
+        [CLAIM_FORM_STEPS.BUSINESS]: getBusinessStepSchema({
+            isNameAddressEditable,
+        }),
         [CLAIM_FORM_STEPS.PROFILE]: profileStepSchema,
     };
 
