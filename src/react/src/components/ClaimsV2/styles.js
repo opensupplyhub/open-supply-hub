@@ -5,9 +5,10 @@ import COLOURS from '../../util/COLOURS';
  * style objects, matching Dashboard.jsx's approach; visual spec:
  * https://claims-moderation-prototype.vercel.app
  *
- * Type scale: 15px base / 13px secondary / 12.5px hints — kept a step
- * larger than the prototype for readability at moderation-session
- * lengths.
+ * Type scale: 16px base / 13.5px secondary / 13px hints — the
+ * prototype's hierarchy (uppercase letterspaced section labels,
+ * 600-weight card titles, muted metas) at a substantially larger size
+ * for readability at moderation-session lengths.
  */
 
 export default Object.freeze({
@@ -16,8 +17,16 @@ export default Object.freeze({
         alignItems: 'flex-start',
         gap: '16px',
         padding: '16px',
-        fontSize: '15px',
-        lineHeight: 1.45,
+        fontSize: '16px',
+        lineHeight: 1.5,
+    }),
+    sectionLabel: Object.freeze({
+        textTransform: 'uppercase',
+        letterSpacing: '.07em',
+        fontWeight: 700,
+        fontSize: '13px',
+        color: COLOURS.DARK_GREY,
+        margin: '4px 0 8px',
     }),
     rail: Object.freeze({
         width: '320px',
@@ -54,14 +63,16 @@ export default Object.freeze({
         borderRadius: '6px',
         background: COLOURS.WHITE,
         cursor: 'pointer',
-        fontSize: '15px',
+        fontSize: '16px',
+        fontWeight: 600,
     }),
     railCardSelected: Object.freeze({
         borderColor: COLOURS.NAVY_BLUE,
     }),
     railCardMeta: Object.freeze({
         color: COLOURS.DARK_GREY,
-        fontSize: '13px',
+        fontSize: '13.5px',
+        fontWeight: 400,
         marginTop: '2px',
     }),
     workspace: Object.freeze({
@@ -100,7 +111,7 @@ export default Object.freeze({
         color: COLOURS.WHITE,
         cursor: 'pointer',
         fontWeight: 700,
-        fontSize: '14px',
+        fontSize: '15px',
     }),
     denyButton: Object.freeze({
         flex: 1,
@@ -111,14 +122,14 @@ export default Object.freeze({
         color: COLOURS.RED,
         cursor: 'pointer',
         fontWeight: 700,
-        fontSize: '14px',
+        fontSize: '15px',
     }),
     jiraBox: Object.freeze({
         padding: '10px 12px',
         margin: '8px 0',
         border: `1px solid ${COLOURS.GREY}`,
         borderRadius: '6px',
-        fontSize: '14px',
+        fontSize: '15px',
     }),
     claimantFacingWarning: Object.freeze({
         padding: '10px 12px',
@@ -134,7 +145,7 @@ export default Object.freeze({
         padding: '10px',
         border: `1px solid ${COLOURS.GREY}`,
         borderRadius: '6px',
-        fontSize: '15px',
+        fontSize: '16px',
         fontFamily: 'inherit',
         boxSizing: 'border-box',
         marginTop: '10px',
@@ -146,7 +157,7 @@ export default Object.freeze({
         padding: '10px',
         border: `1px dashed ${COLOURS.GREY}`,
         borderRadius: '6px',
-        fontSize: '14px',
+        fontSize: '15px',
         fontFamily: 'inherit',
         boxSizing: 'border-box',
         marginTop: '10px',
@@ -157,25 +168,25 @@ export default Object.freeze({
         border: `1px solid ${COLOURS.GREY}`,
         borderRadius: '6px',
         background: COLOURS.LIGHT_GREY,
-        fontSize: '14px',
+        fontSize: '15px',
     }),
     noteItem: Object.freeze({
         padding: '10px 0',
         borderTop: `1px solid ${COLOURS.GREY}`,
-        fontSize: '15px',
+        fontSize: '16px',
     }),
     noteTag: Object.freeze({
         display: 'inline-block',
         marginLeft: '6px',
-        padding: '1px 7px',
+        padding: '2px 8px',
         borderRadius: '4px',
-        fontSize: '12px',
+        fontSize: '12.5px',
         fontWeight: 700,
         background: COLOURS.LIGHT_GREY,
     }),
     noteMeta: Object.freeze({
         color: COLOURS.DARK_GREY,
-        fontSize: '13px',
+        fontSize: '13.5px',
     }),
     railSearch: Object.freeze({
         width: '100%',
@@ -183,7 +194,7 @@ export default Object.freeze({
         marginBottom: '6px',
         border: `1px solid ${COLOURS.GREY}`,
         borderRadius: '6px',
-        fontSize: '14px',
+        fontSize: '15px',
         boxSizing: 'border-box',
     }),
     railControls: Object.freeze({
@@ -202,7 +213,7 @@ export default Object.freeze({
         border: `1px solid ${COLOURS.GREY}`,
         borderRadius: '6px',
         background: COLOURS.WHITE,
-        fontSize: '13px',
+        fontSize: '14px',
     }),
     railSortButton: Object.freeze({
         flex: 'none',
@@ -211,7 +222,7 @@ export default Object.freeze({
         borderRadius: '6px',
         background: COLOURS.WHITE,
         cursor: 'pointer',
-        fontSize: '13px',
+        fontSize: '14px',
     }),
     stageHead: Object.freeze({
         display: 'flex',
@@ -225,6 +236,8 @@ export default Object.freeze({
         cursor: 'pointer',
         fontWeight: 700,
         fontSize: '13.5px',
+        textTransform: 'uppercase',
+        letterSpacing: '.06em',
         textAlign: 'left',
     }),
     stageAccentNew: Object.freeze({
@@ -242,22 +255,22 @@ export default Object.freeze({
     }),
     stageEmpty: Object.freeze({
         color: COLOURS.DARK_GREY,
-        fontSize: '13px',
+        fontSize: '13.5px',
         padding: '2px 10px 6px',
     }),
     waitingBadge: Object.freeze({
         display: 'inline-block',
         marginLeft: '6px',
-        padding: '1px 6px',
+        padding: '2px 7px',
         borderRadius: '4px',
-        fontSize: '12px',
+        fontSize: '12.5px',
         fontWeight: 700,
         background: COLOURS.LIGHT_GREY,
     }),
     kbdHint: Object.freeze({
         marginTop: '10px',
         color: COLOURS.DARK_GREY,
-        fontSize: '12.5px',
+        fontSize: '13px',
     }),
     workbench: Object.freeze({
         display: 'flex',
@@ -288,7 +301,7 @@ export default Object.freeze({
         borderRadius: '14px',
         background: COLOURS.WHITE,
         cursor: 'pointer',
-        fontSize: '13px',
+        fontSize: '14px',
     }),
     evidenceChipOpen: Object.freeze({
         borderColor: COLOURS.NAVY_BLUE,
@@ -308,7 +321,7 @@ export default Object.freeze({
         marginBottom: '6px',
     }),
     evidenceViewerName: Object.freeze({
-        fontSize: '13px',
+        fontSize: '14px',
         fontWeight: 700,
         overflowWrap: 'anywhere',
     }),
@@ -319,7 +332,7 @@ export default Object.freeze({
         borderRadius: '4px',
         background: COLOURS.WHITE,
         cursor: 'pointer',
-        fontSize: '12.5px',
+        fontSize: '14px',
     }),
     evidenceTabActive: Object.freeze({
         borderColor: COLOURS.NAVY_BLUE,
@@ -338,7 +351,7 @@ export default Object.freeze({
         overflow: 'auto',
         whiteSpace: 'pre-wrap',
         overflowWrap: 'anywhere',
-        fontSize: '14px',
+        fontSize: '15px',
         lineHeight: 1.5,
         fontFamily: 'inherit',
         background: COLOURS.WHITE,
@@ -353,7 +366,7 @@ export default Object.freeze({
     }),
     evidenceHint: Object.freeze({
         color: COLOURS.DARK_GREY,
-        fontSize: '13px',
+        fontSize: '13.5px',
     }),
     templateChips: Object.freeze({
         display: 'flex',
@@ -367,7 +380,7 @@ export default Object.freeze({
         borderRadius: '14px',
         background: COLOURS.WHITE,
         cursor: 'pointer',
-        fontSize: '13px',
+        fontSize: '15px',
     }),
     templateChipSelected: Object.freeze({
         borderColor: COLOURS.NAVY_BLUE,
@@ -387,7 +400,7 @@ export default Object.freeze({
         padding: '10px',
         border: `1px solid ${COLOURS.GREY}`,
         borderRadius: '6px',
-        fontSize: '15px',
+        fontSize: '16px',
         lineHeight: 1.5,
         fontFamily: 'inherit',
         boxSizing: 'border-box',
@@ -404,7 +417,7 @@ export default Object.freeze({
         borderRadius: '6px',
         background: COLOURS.WHITE,
         cursor: 'pointer',
-        fontSize: '14px',
+        fontSize: '15px',
     }),
     composerSend: Object.freeze({
         padding: '8px 16px',
@@ -414,6 +427,85 @@ export default Object.freeze({
         color: COLOURS.WHITE,
         cursor: 'pointer',
         fontWeight: 700,
-        fontSize: '14px',
+        fontSize: '15px',
+    }),
+    verificationTable: Object.freeze({
+        border: `1px solid ${COLOURS.GREY}`,
+        borderRadius: '6px',
+        overflow: 'hidden',
+    }),
+    verificationRow: Object.freeze({
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '12px',
+        padding: '10px 12px',
+        borderBottom: `1px solid ${COLOURS.GREY}`,
+        fontSize: '15px',
+    }),
+    verificationLabel: Object.freeze({
+        flex: 'none',
+        width: '105px',
+        fontWeight: 700,
+        fontSize: '13.5px',
+        color: COLOURS.DARK_GREY,
+        paddingTop: '2px',
+    }),
+    verificationValue: Object.freeze({
+        flex: 1,
+        minWidth: 0,
+        overflowWrap: 'anywhere',
+    }),
+    verificationStatus: Object.freeze({
+        flex: 1.4,
+        minWidth: 0,
+    }),
+    verificationChip: Object.freeze({
+        display: 'inline-block',
+        padding: '3px 10px',
+        borderRadius: '8px',
+        fontSize: '13.5px',
+        fontWeight: 700,
+        lineHeight: 1.45,
+    }),
+    verificationChipPass: Object.freeze({
+        background: COLOURS.GREEN,
+        color: COLOURS.MATERIAL_GREEN,
+    }),
+    verificationChipCheck: Object.freeze({
+        // Advisory amber, never red (SPEC.md §5a).
+        background: COLOURS.PALE_LIGHT_YELLOW,
+        color: '#8a6d1a',
+    }),
+    verificationChipNone: Object.freeze({
+        background: COLOURS.LIGHT_GREY,
+        color: COLOURS.DARK_GREY,
+    }),
+    verificationReasoning: Object.freeze({
+        marginTop: '4px',
+        color: COLOURS.DARK_GREY,
+        fontSize: '13.5px',
+    }),
+    verificationFootnote: Object.freeze({
+        marginTop: '4px',
+        color: COLOURS.DARK_GREY,
+        fontSize: '13px',
+        fontStyle: 'italic',
+    }),
+    internalNoteBox: Object.freeze({
+        margin: '10px 0',
+        padding: '10px 12px',
+        border: `1px dashed ${COLOURS.GREY}`,
+        borderRadius: '6px',
+    }),
+    internalNoteTextarea: Object.freeze({
+        width: '100%',
+        minHeight: '70px',
+        resize: 'vertical',
+        padding: '10px',
+        border: `1px solid ${COLOURS.GREY}`,
+        borderRadius: '6px',
+        fontSize: '15px',
+        fontFamily: 'inherit',
+        boxSizing: 'border-box',
     }),
 });

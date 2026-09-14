@@ -66,7 +66,7 @@ export default function DecisionPanel({
 
     return (
         <aside style={styles.decisionRail} aria-label="Decision">
-            <Typography variant="subheading">Decision</Typography>
+            <div style={styles.sectionLabel}>Decision</div>
             <div style={styles.decisionButtons}>
                 <button
                     type="button"

@@ -102,9 +102,7 @@ export default function EvidencePanel({ attachments, review }) {
 
     return (
         <section style={styles.evidenceHalf} aria-label="Evidence">
-            <Typography variant="subheading">
-                Evidence ({docs.length})
-            </Typography>
+            <div style={styles.sectionLabel}>Evidence ({docs.length})</div>
             <div style={styles.evidenceStrip}>
                 {docs.map((doc, index) => (
                     <button

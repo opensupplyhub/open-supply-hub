@@ -6,7 +6,9 @@ import { useClaimsList, useClaimDetail, useClaimActions } from './hooks';
 import { parseAutomatedReview, P1_MARKER } from './automatedReviewUtils';
 import DecisionPanel from './DecisionPanel';
 import EvidencePanel from './EvidencePanel';
+import InternalNoteBox from './InternalNoteBox';
 import MessageComposer from './MessageComposer';
+import VerificationPanel from './VerificationPanel';
 import { deriveClaimStage, CLAIM_STAGES, NOTE_TYPES } from './stageUtils';
 import {
     buildQueueGroups,
@@ -113,9 +115,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
                             )}
                         </div>
                     )}
-                    <Typography variant="body1" style={styles.noteMeta}>
-                        {detail.facility?.properties?.address || ''}
-                    </Typography>
+                    <VerificationPanel detail={detail} review={review} />
                 </div>
                 {detail.status === 'PENDING' && (
                     <DecisionPanel
@@ -154,6 +154,12 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 </Typography>
             )}
             <div>
+                <div style={styles.sectionLabel}>Activity</div>
+                <InternalNoteBox
+                    addNote={addNote}
+                    acting={acting}
+                    onAdded={refetchDetail}
+                />
                 {timelineNotes.map(note => (
                     <div key={note.id} style={styles.noteItem}>
                         <div style={styles.noteMeta}>

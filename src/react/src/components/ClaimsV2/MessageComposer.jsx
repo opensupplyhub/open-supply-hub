@@ -78,7 +78,7 @@ export default function MessageComposer({
 
     return (
         <section style={styles.composerHalf} aria-label="Message claimant">
-            <Typography variant="subheading">Message claimant</Typography>
+            <div style={styles.sectionLabel}>Message claimant</div>
             <div style={styles.templateChips}>
                 {Object.entries(MESSAGE_TEMPLATES).map(([key, template]) => (
                     <button
