@@ -142,11 +142,24 @@ def claim_attachment_post_delete_file_cleanup(instance, **kwargs):
         try:
             instance.claim_attachment.delete(save=False)
         except Exception:
+            # The row is already gone, so the in-memory instance is the
+            # last thing that knows which S3 object this was. Log the
+            # storage key: without it, recovering an orphaned object
+            # would mean diffing the whole bucket against the table.
+            storage_key = instance.claim_attachment.name
             log.exception(
-                'Failed to delete stored file for claim attachment %s',
+                'Failed to delete stored file for claim attachment %s '
+                '(claim %s, storage key %s)',
                 instance.pk,
+                instance.claim_id,
+                storage_key,
             )
             report_error_to_rollbar(
                 message='Failed to delete stored claim attachment file',
-                extra_data={'attachment_id': instance.pk},
+                extra_data={
+                    'attachment_id': instance.pk,
+                    'claim_id': instance.claim_id,
+                    'storage_key': storage_key,
+                    'file_name': instance.file_name,
+                },
             )

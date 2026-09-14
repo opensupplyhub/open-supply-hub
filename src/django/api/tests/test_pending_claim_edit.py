@@ -1,5 +1,6 @@
 import json
 from datetime import date
+from unittest.mock import patch
 
 from api.constants import FacilityClaimStatuses
 from api.models import (
@@ -512,6 +513,27 @@ class PendingClaimEditTest(APITestCase):
                 pk=attachment.id
             ).exists()
         )
+
+    @override_switch('claim_a_facility', active=True)
+    def test_failed_file_cleanup_reports_storage_key(self):
+        # The post_delete cleanup fires after the row is gone, so the
+        # report is the last record of which S3 object was orphaned —
+        # it must carry the storage key, not just the attachment id.
+        attachment = self.add_attachment()
+        storage_key = attachment.claim_attachment.name
+
+        with patch(
+            'django.db.models.fields.files.FieldFile.delete',
+            side_effect=Exception('simulated storage outage'),
+        ), patch('api.signals.report_error_to_rollbar') as report:
+            self.claim.delete()
+
+        report.assert_called_once()
+        extra = report.call_args.kwargs['extra_data']
+        self.assertEqual(storage_key, extra['storage_key'])
+        self.assertEqual(attachment.id, extra['attachment_id'])
+        self.assertEqual(self.claim.id, extra['claim_id'])
+        self.assertEqual('existing.png', extra['file_name'])
 
 
 class PendingClaimNotificationAndListTest(APITestCase):
