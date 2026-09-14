@@ -23,6 +23,8 @@ class SyncDatabasesReassertHookTest(SimpleTestCase):
     hook without running the synchronizer.
     '''
 
+    databases = []
+
     def _run(self, extra_args=None):
         args = list(SYNC_ARGS)
         if extra_args:
