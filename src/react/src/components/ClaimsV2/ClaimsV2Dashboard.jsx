@@ -4,6 +4,7 @@ import Typography from '@material-ui/core/Typography';
 
 import { useClaimsList, useClaimDetail, useClaimActions } from './hooks';
 import { parseAutomatedReview, P1_MARKER } from './automatedReviewUtils';
+import DecisionPanel from './DecisionPanel';
 import EvidencePanel from './EvidencePanel';
 import MessageComposer from './MessageComposer';
 import { deriveClaimStage, CLAIM_STAGES, NOTE_TYPES } from './stageUtils';
@@ -15,7 +16,6 @@ import {
     SORT_ORDERS,
 } from './railUtils';
 import QueueRail from './QueueRail';
-import { makeClaimTrackerTicketSearchURL } from './jiraUtils';
 import styles from './styles';
 
 /*
@@ -41,9 +41,16 @@ const STAGE_LABELS = Object.freeze({
     [CLAIM_STAGES.OVERDUE]: 'Reply overdue — decide',
 });
 
-function ClaimWorkspace({ claimID }) {
+function ClaimWorkspace({ claimID, onDecided }) {
     const { detail, fetching, error, refetchDetail } = useClaimDetail(claimID);
-    const { acting, actionError, messageClaimant } = useClaimActions(claimID);
+    const {
+        acting,
+        actionError,
+        messageClaimant,
+        approveClaim,
+        denyClaim,
+        addNote,
+    } = useClaimActions(claimID);
 
     if (!claimID) {
         return (
@@ -84,34 +91,47 @@ function ClaimWorkspace({ claimID }) {
                 {detail.job_title ? ` — ${detail.job_title}` : ''} ·{' '}
                 {detail.email}
             </Typography>
-            <div style={styles.stageBox}>
-                <strong>{STAGE_LABELS[stage.stage]}</strong>
-                <div style={styles.noteMeta}>{stage.reason}</div>
-            </div>
-            {detail.status !== 'PENDING' && (
-                <div style={styles.stageBox}>
-                    <strong>{detail.status}</strong>
-                    {statusChange.status_change_by
-                        ? ` by ${statusChange.status_change_by}`
-                        : ''}
-                    {statusChange.status_change_reason && (
-                        <div style={styles.noteMeta}>
-                            Emailed to claimant:{' '}
-                            {statusChange.status_change_reason}
+            {/* Top grid (§5b): profile/status main column beside the
+                ~38% Decision rail. The verification panel joins the
+                main column in a later increment. */}
+            <div style={styles.topGrid}>
+                <div style={styles.topGridMain}>
+                    <div style={styles.stageBox}>
+                        <strong>{STAGE_LABELS[stage.stage]}</strong>
+                    </div>
+                    {detail.status !== 'PENDING' && (
+                        <div style={styles.stageBox}>
+                            <strong>{detail.status}</strong>
+                            {statusChange.status_change_by
+                                ? ` by ${statusChange.status_change_by}`
+                                : ''}
+                            {statusChange.status_change_reason && (
+                                <div style={styles.noteMeta}>
+                                    Emailed to claimant:{' '}
+                                    {statusChange.status_change_reason}
+                                </div>
+                            )}
                         </div>
                     )}
+                    <Typography variant="body1" style={styles.noteMeta}>
+                        {detail.facility?.properties?.address || ''}
+                    </Typography>
                 </div>
-            )}
-            <Typography variant="body1">
-                <a
-                    href={makeClaimTrackerTicketSearchURL(detail.id)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Assignment is managed in Jira — open this claim&apos;s
-                    ticket ↗
-                </a>
-            </Typography>
+                {detail.status === 'PENDING' && (
+                    <DecisionPanel
+                        detail={detail}
+                        stage={stage}
+                        acting={acting}
+                        approveClaim={approveClaim}
+                        denyClaim={denyClaim}
+                        addNote={addNote}
+                        onDecided={() => {
+                            refetchDetail();
+                            onDecided();
+                        }}
+                    />
+                )}
+            </div>
             {/* Workbench (§5b): evidence beside the composer, so the
                 extracted/translated text sits next to the draft. Keyed
                 by claim so the first document auto-opens on J/K moves. */}
@@ -186,6 +206,7 @@ export default function ClaimsV2Dashboard() {
     const [query, setQuery] = useState('');
     const [region, setRegion] = useState(ALL_REGIONS);
     const [sort, setSort] = useState(SORT_ORDERS.OLDEST);
+    const [railCollapsed, setRailCollapsed] = useState(false);
     const searchInputRef = useRef(null);
 
     const { groups, visibleIds } = useMemo(
@@ -280,9 +301,14 @@ export default function ClaimsV2Dashboard() {
                     )
                 }
                 searchInputRef={searchInputRef}
+                railCollapsed={railCollapsed}
+                onToggleRail={() => setRailCollapsed(current => !current)}
             />
             <main style={styles.workspace}>
-                <ClaimWorkspace claimID={selectedClaimID} />
+                <ClaimWorkspace
+                    claimID={selectedClaimID}
+                    onDecided={refetchClaims}
+                />
             </main>
         </div>
     );

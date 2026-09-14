@@ -74,14 +74,55 @@ export default function QueueRail({
     onToggleSort,
     searchInputRef,
     now,
+    railCollapsed,
+    onToggleRail,
 }) {
     const [collapsed, setCollapsed] = useState({});
 
     const toggleSection = stage =>
         setCollapsed(prev => ({ ...prev, [stage]: !prev[stage] }));
 
+    /* Collapsed rail: a slim strip with the count — J/K navigation
+       still works, the workspace gets the full width. */
+    if (railCollapsed) {
+        return (
+            <nav
+                style={styles.railCollapsed}
+                aria-label="Pending claims queue (collapsed)"
+            >
+                <button
+                    type="button"
+                    style={styles.railToggle}
+                    onClick={onToggleRail}
+                    aria-label="Expand the claims queue"
+                    title="Expand the claims queue"
+                >
+                    »
+                </button>
+                <span style={styles.railCollapsedCount}>
+                    {visibleCount} pending
+                </span>
+            </nav>
+        );
+    }
+
     return (
         <nav style={styles.rail} aria-label="Pending claims queue">
+            <div style={styles.railControls}>
+                <button
+                    type="button"
+                    style={styles.railToggle}
+                    onClick={onToggleRail}
+                    aria-label="Collapse the claims queue"
+                    title="Collapse the claims queue"
+                >
+                    «
+                </button>
+                <Typography variant="body1" style={styles.railCountLine}>
+                    {visibleCount} pending claim(s)
+                    {region !== ALL_REGIONS || query ? ' (filtered)' : ''}
+                </Typography>
+            </div>
             <input
                 ref={searchInputRef}
                 type="search"
@@ -114,10 +155,6 @@ export default function QueueRail({
                         : 'Sorted: newest first ⇅'}
                 </button>
             </div>
-            <Typography variant="body1" gutterBottom>
-                {visibleCount} pending claim(s)
-                {region !== ALL_REGIONS || query ? ' (filtered)' : ''}
-            </Typography>
             {STAGE_ORDER.map(stage => {
                 const stageClaims = groups[stage] || [];
                 const isCollapsed = !!collapsed[stage];
