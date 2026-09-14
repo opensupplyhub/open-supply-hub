@@ -20,9 +20,6 @@ const ATTACHMENTS = [
     },
 ];
 
-const viewerName = () =>
-    document.querySelector('[aria-label="Evidence"] span').textContent;
-
 describe('EvidencePanel', () => {
     beforeEach(() => {
         window.open = jest.fn();

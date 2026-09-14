@@ -26,7 +26,7 @@ const parseBlock = text => {
     }
     try {
         const parsed = JSON.parse(text.slice(jsonStart));
-        if (parsed && parsed.v === 1 && parsed.kind === 'automated_review') {
+        if (parsed?.v === 1 && parsed?.kind === 'automated_review') {
             return parsed;
         }
     } catch (e) {

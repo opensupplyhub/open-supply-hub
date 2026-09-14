@@ -85,7 +85,7 @@ export default function EvidencePanel({
        initializing to the current seq means a remount (navigation,
        refetch) never replays the previous request, which for a PDF
        would spawn an unrequested tab. */
-    const handledSeq = useRef(requestedDoc ? requestedDoc.seq : 0);
+    const handledSeq = useRef(requestedDoc?.seq || 0);
 
     /* Reset the auto-open when the attachments list itself changes
        (e.g. a refetch after an action added documents). */
@@ -100,11 +100,7 @@ export default function EvidencePanel({
        opens in a new tab). `seq` distinguishes repeated requests for
        the same file. */
     useEffect(() => {
-        if (
-            !requestedDoc ||
-            !requestedDoc.name ||
-            requestedDoc.seq === handledSeq.current
-        ) {
+        if (!requestedDoc?.name || requestedDoc.seq === handledSeq.current) {
             return;
         }
         handledSeq.current = requestedDoc.seq;
@@ -115,7 +111,7 @@ export default function EvidencePanel({
             selectDoc(index);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [requestedDoc && requestedDoc.seq]);
+    }, [requestedDoc?.seq]);
 
     const renderViewerBody = () => {
         if (!openDoc) {

@@ -47,7 +47,7 @@ function Row({
             <div style={styles.verificationValue}>
                 <span style={styles.provenanceTag}>{provenance}</span>
                 <div>{value || '—'}</div>
-                {counterpart && counterpart.value && (
+                {counterpart?.value && (
                     <div style={styles.counterpartLine}>
                         {counterpart.label}: {counterpart.value}
                     </div>

@@ -60,7 +60,10 @@ export const regionOptions = claims => {
             names.add(claim.facility_country_name);
         }
     });
-    return [ALL_REGIONS, ...Array.from(names).sort()];
+    return [
+        ALL_REGIONS,
+        ...Array.from(names).sort((a, b) => a.localeCompare(b)),
+    ];
 };
 
 /*
