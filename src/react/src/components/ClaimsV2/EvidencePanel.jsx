@@ -223,18 +223,16 @@ export default function EvidencePanel({
                             </button>
                         </span>
                     </div>
-                    {/* The values this document must corroborate,
-                        pinned beside the evidence (prototype's
-                        match-box). */}
-                    <div style={styles.viewerBody}>
-                        <div style={styles.viewerContent}>
-                            {renderViewerBody()}
-                        </div>
-                        {Array.isArray(matchValues) && matchValues.length > 0 && (
-                            <div style={styles.matchBox}>
-                                <div style={styles.matchTitle}>
-                                    Match against OS Hub profile
-                                </div>
+                    {renderViewerBody()}
+                    {/* The values this document must corroborate — the
+                        match-box sits below the viewer so the document
+                        itself gets the full width. */}
+                    {Array.isArray(matchValues) && matchValues.length > 0 && (
+                        <div style={styles.matchBox}>
+                            <div style={styles.matchTitle}>
+                                Match against OS Hub profile
+                            </div>
+                            <div style={styles.matchGrid}>
                                 {matchValues.map(([key, value]) => (
                                     <div key={key} style={styles.matchRow}>
                                         <span style={styles.matchKey}>
@@ -246,8 +244,8 @@ export default function EvidencePanel({
                                     </div>
                                 ))}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             )}
         </section>

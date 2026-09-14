@@ -1,5 +1,9 @@
 import COLOURS from '../../util/COLOURS';
 
+// Structural borders: heavier than the D2D2D2 hairline so panels and
+// cards separate clearly at a glance (readability pass, 2026-09-14).
+const MID_BORDER = '#A9ADB6';
+
 /*
  * Styles for the claims dashboard v2 (OSDEV-3355/3356). Plain frozen
  * style objects, matching Dashboard.jsx's approach; visual spec:
@@ -68,8 +72,8 @@ export default Object.freeze({
         borderColor: COLOURS.NAVY_BLUE,
     }),
     railCardMeta: Object.freeze({
-        color: COLOURS.DARK_GREY,
-        fontSize: '13.5px',
+        color: COLOURS.DARK_SLATE_GREY,
+        fontSize: '14px',
         fontWeight: 400,
         marginTop: '2px',
     }),
@@ -92,7 +96,7 @@ export default Object.freeze({
         flex: 'none',
         width: '38%',
         padding: '12px',
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
     }),
     decisionButtons: Object.freeze({
@@ -125,7 +129,7 @@ export default Object.freeze({
     jiraBox: Object.freeze({
         padding: '10px 12px',
         margin: '8px 0',
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
         fontSize: '15px',
     }),
@@ -163,7 +167,7 @@ export default Object.freeze({
     stageBox: Object.freeze({
         padding: '10px 12px',
         margin: '8px 0',
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
         background: COLOURS.LIGHT_GREY,
         fontSize: '15px',
@@ -183,8 +187,8 @@ export default Object.freeze({
         background: COLOURS.LIGHT_GREY,
     }),
     noteMeta: Object.freeze({
-        color: COLOURS.DARK_GREY,
-        fontSize: '13.5px',
+        color: COLOURS.DARK_SLATE_GREY,
+        fontSize: '14px',
     }),
     railSearch: Object.freeze({
         width: '100%',
@@ -276,7 +280,7 @@ export default Object.freeze({
         gap: '16px',
         margin: '16px 0',
         padding: '12px',
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
     }),
     evidenceHalf: Object.freeze({
@@ -306,7 +310,7 @@ export default Object.freeze({
         fontWeight: 700,
     }),
     evidenceViewer: Object.freeze({
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
         background: COLOURS.LIGHT_GREY,
         padding: '10px',
@@ -363,8 +367,8 @@ export default Object.freeze({
         borderRadius: '4px',
     }),
     evidenceHint: Object.freeze({
-        color: COLOURS.DARK_GREY,
-        fontSize: '13.5px',
+        color: COLOURS.DARK_SLATE_GREY,
+        fontSize: '14px',
     }),
     templateChips: Object.freeze({
         display: 'flex',
@@ -428,7 +432,7 @@ export default Object.freeze({
         fontSize: '15px',
     }),
     verificationTable: Object.freeze({
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
         overflow: 'hidden',
     }),
@@ -442,10 +446,10 @@ export default Object.freeze({
     }),
     verificationLabel: Object.freeze({
         flex: 'none',
-        width: '105px',
+        width: '110px',
         fontWeight: 700,
-        fontSize: '13.5px',
-        color: COLOURS.DARK_GREY,
+        fontSize: '14px',
+        color: COLOURS.DARK_SLATE_GREY,
         paddingTop: '2px',
     }),
     verificationValue: Object.freeze({
@@ -459,9 +463,9 @@ export default Object.freeze({
     }),
     verificationChip: Object.freeze({
         display: 'inline-block',
-        padding: '3px 10px',
+        padding: '4px 10px',
         borderRadius: '8px',
-        fontSize: '13.5px',
+        fontSize: '14px',
         fontWeight: 700,
         lineHeight: 1.45,
     }),
@@ -480,8 +484,8 @@ export default Object.freeze({
     }),
     verificationReasoning: Object.freeze({
         marginTop: '4px',
-        color: COLOURS.DARK_GREY,
-        fontSize: '13.5px',
+        color: COLOURS.DARK_SLATE_GREY,
+        fontSize: '14px',
     }),
     verificationFootnote: Object.freeze({
         marginTop: '4px',
@@ -509,7 +513,7 @@ export default Object.freeze({
     profileAnchor: Object.freeze({
         padding: '12px 14px',
         margin: '8px 0',
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
     }),
     profileName: Object.freeze({
@@ -524,17 +528,8 @@ export default Object.freeze({
     }),
     workspaceSub: Object.freeze({
         margin: '2px 0',
-        color: COLOURS.DARK_GREY,
-        fontSize: '14.5px',
-    }),
-    viewerBody: Object.freeze({
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '12px',
-    }),
-    viewerContent: Object.freeze({
-        flex: 1.6,
-        minWidth: 0,
+        color: COLOURS.DARK_SLATE_GREY,
+        fontSize: '15px',
     }),
     viewerCaption: Object.freeze({
         marginTop: '4px',
@@ -542,13 +537,17 @@ export default Object.freeze({
         fontSize: '12.5px',
     }),
     matchBox: Object.freeze({
-        flex: 1,
-        minWidth: '220px',
+        marginTop: '10px',
         padding: '10px 12px',
-        border: `1px solid ${COLOURS.GREY}`,
+        border: `1px solid ${MID_BORDER}`,
         borderRadius: '6px',
         background: COLOURS.WHITE,
-        fontSize: '13.5px',
+        fontSize: '14px',
+    }),
+    matchGrid: Object.freeze({
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        columnGap: '18px',
     }),
     matchTitle: Object.freeze({
         fontWeight: 700,
@@ -563,7 +562,7 @@ export default Object.freeze({
     matchKey: Object.freeze({
         flex: 'none',
         width: '96px',
-        color: COLOURS.DARK_GREY,
+        color: COLOURS.DARK_SLATE_GREY,
     }),
     matchValue: Object.freeze({
         minWidth: 0,
@@ -590,13 +589,13 @@ export default Object.freeze({
     }),
     counterpartLine: Object.freeze({
         marginTop: '3px',
-        color: COLOURS.DARK_GREY,
-        fontSize: '13px',
+        color: COLOURS.DARK_SLATE_GREY,
+        fontSize: '14px',
     }),
     detailKey: Object.freeze({
         flex: 'none',
         width: '170px',
-        color: COLOURS.DARK_GREY,
+        color: COLOURS.DARK_SLATE_GREY,
     }),
     detailToggle: Object.freeze({
         display: 'block',
