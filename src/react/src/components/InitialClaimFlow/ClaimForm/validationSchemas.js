@@ -129,14 +129,14 @@ const COMPANY_ADDRESS_MAX_LENGTH = 200;
 // while the `enable_claim_name_address_edit` switch is active. When it is
 // off, the fields are read-only copies of the production location's values.
 const editableNameAddressSchema = {
-    companyName: Yup.string()
+    facilityNameEnglish: Yup.string()
         .trim()
         .max(
             COMPANY_NAME_MAX_LENGTH,
             `Company name must be ${COMPANY_NAME_MAX_LENGTH} characters or fewer`,
         )
         .required('Company name is required'),
-    companyAddress: Yup.string()
+    facilityAddress: Yup.string()
         .trim()
         .max(
             COMPANY_ADDRESS_MAX_LENGTH,

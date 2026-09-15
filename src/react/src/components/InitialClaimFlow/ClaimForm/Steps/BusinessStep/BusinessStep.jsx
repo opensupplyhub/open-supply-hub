@@ -95,19 +95,21 @@ const BusinessStep = ({
         touched.companyAddressVerificationDocuments &&
         errors.companyAddressVerificationDocuments
     );
-    const isCompanyNameError = !!(touched.companyName && errors.companyName);
+    const isCompanyNameError = !!(
+        touched.facilityNameEnglish && errors.facilityNameEnglish
+    );
     const isCompanyAddressError = !!(
-        touched.companyAddress && errors.companyAddress
+        touched.facilityAddress && errors.facilityAddress
     );
 
     // While the switch is off the fields are read-only copies of the
     // production location's values. While it is on they are bound to the
     // form so the claimant's edits are submitted with the claim.
     const companyNameValue = isNameAddressEditable
-        ? formData.companyName ?? ''
+        ? formData.facilityNameEnglish ?? ''
         : locationName;
     const companyAddressValue = isNameAddressEditable
-        ? formData.companyAddress ?? ''
+        ? formData.facilityAddress ?? ''
         : locationAddress;
 
     // The aria-label lives inside InputProps.inputProps because the lint
@@ -153,16 +155,18 @@ const BusinessStep = ({
                     fullWidth
                     variant="outlined"
                     multiline
-                    name="companyName"
-                    id="companyName"
+                    name="facilityNameEnglish"
+                    id="facilityNameEnglish"
                     value={companyNameValue}
-                    onChange={e => handleChange('companyName', e.target.value)}
-                    onBlur={() => handleBlur('companyName')}
+                    onChange={e =>
+                        handleChange('facilityNameEnglish', e.target.value)
+                    }
+                    onBlur={() => handleBlur('facilityNameEnglish')}
                     InputProps={getCompanyFieldInputProps('Company Name')}
                     error={isCompanyNameError}
                     helperText={
                         isCompanyNameError && (
-                            <InputErrorText text={errors.companyName} />
+                            <InputErrorText text={errors.facilityNameEnglish} />
                         )
                     }
                     FormHelperTextProps={{
@@ -180,18 +184,18 @@ const BusinessStep = ({
                     fullWidth
                     variant="outlined"
                     multiline
-                    name="companyAddress"
-                    id="companyAddress"
+                    name="facilityAddress"
+                    id="facilityAddress"
                     value={companyAddressValue}
                     onChange={e =>
-                        handleChange('companyAddress', e.target.value)
+                        handleChange('facilityAddress', e.target.value)
                     }
-                    onBlur={() => handleBlur('companyAddress')}
+                    onBlur={() => handleBlur('facilityAddress')}
                     InputProps={getCompanyFieldInputProps('Company Address')}
                     error={isCompanyAddressError}
                     helperText={
                         isCompanyAddressError && (
-                            <InputErrorText text={errors.companyAddress} />
+                            <InputErrorText text={errors.facilityAddress} />
                         )
                     }
                     FormHelperTextProps={{

@@ -684,13 +684,13 @@ describe('ClaimForm component', () => {
             },
         };
 
-        test('seeds companyName and companyAddress from the production location', async () => {
+        test('seeds facilityNameEnglish and facilityAddress from the production location', async () => {
             const { reduxStore } = renderComponent(stateWithLocation);
 
             await waitFor(() => {
                 const { formData } = reduxStore.getState().claimForm;
-                expect(formData.companyName).toBe('Test Facility');
-                expect(formData.companyAddress).toBe('123 Test St');
+                expect(formData.facilityNameEnglish).toBe('Test Facility');
+                expect(formData.facilityAddress).toBe('123 Test St');
             });
         });
 
@@ -701,8 +701,8 @@ describe('ClaimForm component', () => {
                     ...stateWithLocation.claimForm,
                     formData: {
                         ...stateWithLocation.claimForm.formData,
-                        companyName: 'Edited Name',
-                        companyAddress: '',
+                        facilityNameEnglish: 'Edited Name',
+                        facilityAddress: '',
                     },
                 },
             };
@@ -711,9 +711,9 @@ describe('ClaimForm component', () => {
 
             await waitFor(() => {
                 const { formData } = reduxStore.getState().claimForm;
-                expect(formData.companyAddress).toBe('123 Test St');
+                expect(formData.facilityAddress).toBe('123 Test St');
             });
-            expect(reduxStore.getState().claimForm.formData.companyName).toBe(
+            expect(reduxStore.getState().claimForm.formData.facilityNameEnglish).toBe(
                 'Edited Name',
             );
         });

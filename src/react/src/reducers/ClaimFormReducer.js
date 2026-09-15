@@ -33,8 +33,8 @@ const initialState = Object.freeze({
         claimantLinkedinProfileUrl: '',
 
         // Business step.
-        companyName: '',
-        companyAddress: '',
+        facilityNameEnglish: '',
+        facilityAddress: '',
         locationAddressVerificationMethod: '',
         businessLinkedinProfile: '',
         businessWebsite: '',

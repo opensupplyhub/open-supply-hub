@@ -417,8 +417,8 @@ describe('BusinessStep component', () => {
         });
         const editableFormData = {
             ...defaultProps.formData,
-            companyName: 'Edited Name',
-            companyAddress: '9 Edited Road',
+            facilityNameEnglish: 'Edited Name',
+            facilityAddress: '9 Edited Road',
         };
 
         test('fields are read-only and show the location values when the switch is off', () => {
@@ -448,16 +448,16 @@ describe('BusinessStep component', () => {
             expect(addressInput).toHaveValue('9 Edited Road');
 
             fireEvent.change(nameInput, { target: { value: 'New Name' } });
-            expect(mockHandleChange).toHaveBeenCalledWith('companyName', 'New Name');
+            expect(mockHandleChange).toHaveBeenCalledWith('facilityNameEnglish', 'New Name');
 
             fireEvent.change(addressInput, { target: { value: 'New Address' } });
             expect(mockHandleChange).toHaveBeenCalledWith(
-                'companyAddress',
+                'facilityAddress',
                 'New Address',
             );
 
             fireEvent.blur(nameInput);
-            expect(mockHandleBlur).toHaveBeenCalledWith('companyName');
+            expect(mockHandleBlur).toHaveBeenCalledWith('facilityNameEnglish');
         });
 
         test('shows the document-match warning with an SLC link only when the switch is on', () => {
@@ -499,11 +499,11 @@ describe('BusinessStep component', () => {
         test('displays validation errors for company name and address', () => {
             renderComponent(
                 {
-                    formData: { ...editableFormData, companyName: '', companyAddress: '' },
-                    touched: { companyName: true, companyAddress: true },
+                    formData: { ...editableFormData, facilityNameEnglish: '', facilityAddress: '' },
+                    touched: { facilityNameEnglish: true, facilityAddress: true },
                     errors: {
-                        companyName: 'Company name is required',
-                        companyAddress: 'Company address is required',
+                        facilityNameEnglish: 'Company name is required',
+                        facilityAddress: 'Company address is required',
                     },
                 },
                 stateWithFlag(true),

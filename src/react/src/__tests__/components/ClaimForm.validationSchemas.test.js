@@ -17,13 +17,13 @@ describe('Business step schema: company name and address', () => {
         const schema = getBusinessStepSchema({ isNameAddressEditable: false });
 
         expect(Object.keys(schema.describe().fields)).not.toContain(
-            'companyName',
+            'facilityNameEnglish',
         );
         await expect(
             schema.validate({
                 ...validBusinessValues,
-                companyName: '',
-                companyAddress: '',
+                facilityNameEnglish: '',
+                facilityAddress: '',
             }),
         ).resolves.toBeTruthy();
     });
@@ -32,11 +32,11 @@ describe('Business step schema: company name and address', () => {
         const schema = getBusinessStepSchema({ isNameAddressEditable: true });
 
         expect(Object.keys(schema.describe().fields)).toEqual(
-            expect.arrayContaining(['companyName', 'companyAddress']),
+            expect.arrayContaining(['facilityNameEnglish', 'facilityAddress']),
         );
         await expect(
             schema.validate(
-                { ...validBusinessValues, companyName: '', companyAddress: '   ' },
+                { ...validBusinessValues, facilityNameEnglish: '', facilityAddress: '   ' },
                 { abortEarly: false },
             ),
         ).rejects.toMatchObject({
@@ -48,8 +48,8 @@ describe('Business step schema: company name and address', () => {
         await expect(
             schema.validate({
                 ...validBusinessValues,
-                companyName: 'Factory',
-                companyAddress: '1 Main St',
+                facilityNameEnglish: 'Factory',
+                facilityAddress: '1 Main St',
             }),
         ).resolves.toBeTruthy();
     });
@@ -60,8 +60,8 @@ describe('Business step schema: company name and address', () => {
         await expect(
             schema.validate({
                 ...validBusinessValues,
-                companyName: 'a'.repeat(201),
-                companyAddress: '1 Main St',
+                facilityNameEnglish: 'a'.repeat(201),
+                facilityAddress: '1 Main St',
             }),
         ).rejects.toThrow('Company name must be 200 characters or fewer');
     });
@@ -77,12 +77,12 @@ describe('Business step schema: company name and address', () => {
             isNameAddressEditable: true,
         });
 
-        expect(Object.keys(business.describe().fields)).toContain('companyName');
+        expect(Object.keys(business.describe().fields)).toContain('facilityNameEnglish');
         expect(Object.keys(businessDefault.describe().fields)).not.toContain(
-            'companyName',
+            'facilityNameEnglish',
         );
         expect(Object.keys(contact.describe().fields)).not.toContain(
-            'companyName',
+            'facilityNameEnglish',
         );
     });
 });

@@ -185,15 +185,15 @@ const ClaimForm = ({
         if (!locationOsId) {
             return;
         }
-        if (!formData.companyName) {
+        if (!formData.facilityNameEnglish) {
             updateFieldWithoutTouch(
-                'companyName',
+                'facilityNameEnglish',
                 productionLocationData.name || '',
             );
         }
-        if (!formData.companyAddress) {
+        if (!formData.facilityAddress) {
             updateFieldWithoutTouch(
-                'companyAddress',
+                'facilityAddress',
                 productionLocationData.address || '',
             );
         }
