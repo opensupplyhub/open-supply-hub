@@ -28,6 +28,7 @@ class ModerationEventCreator:
             source=processed_event.source,
             os=processed_event.os,
             backfilled_fields=processed_event.backfilled_fields,
+            claim=processed_event.claim,
         )
 
         return event_dto
