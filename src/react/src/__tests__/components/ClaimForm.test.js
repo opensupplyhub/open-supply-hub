@@ -668,4 +668,54 @@ describe('ClaimForm component', () => {
             expect(state.contributeProductionLocation.singleProductionLocation.data).toEqual({});
         });
     });
+    describe('Company name and address prefill', () => {
+        const stateWithLocation = {
+            ...defaultPreloadedState,
+            contributeProductionLocation: {
+                singleProductionLocation: {
+                    data: {
+                        os_id: mockOsID,
+                        name: 'Test Facility',
+                        address: '123 Test St',
+                    },
+                    fetching: false,
+                    error: null,
+                },
+            },
+        };
+
+        test('seeds facilityNameEnglish and facilityAddress from the production location', async () => {
+            const { reduxStore } = renderComponent(stateWithLocation);
+
+            await waitFor(() => {
+                const { formData } = reduxStore.getState().claimForm;
+                expect(formData.facilityNameEnglish).toBe('Test Facility');
+                expect(formData.facilityAddress).toBe('123 Test St');
+            });
+        });
+
+        test('does not overwrite values the claimant has already entered', async () => {
+            const stateWithEdits = {
+                ...stateWithLocation,
+                claimForm: {
+                    ...stateWithLocation.claimForm,
+                    formData: {
+                        ...stateWithLocation.claimForm.formData,
+                        facilityNameEnglish: 'Edited Name',
+                        facilityAddress: '',
+                    },
+                },
+            };
+
+            const { reduxStore } = renderComponent(stateWithEdits);
+
+            await waitFor(() => {
+                const { formData } = reduxStore.getState().claimForm;
+                expect(formData.facilityAddress).toBe('123 Test St');
+            });
+            expect(reduxStore.getState().claimForm.formData.facilityNameEnglish).toBe(
+                'Edited Name',
+            );
+        });
+    });
 });

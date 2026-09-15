@@ -69,6 +69,15 @@ const businessStepStyles = theme =>
         importantNoteWrapper: Object.freeze({
             marginTop: theme.spacing.unit * 2.5,
         }),
+        nameAddressNoteWrapper: Object.freeze({
+            maxWidth: '1071px',
+            marginTop: theme.spacing.unit * 2.5,
+        }),
+        noteLink: Object.freeze({
+            color: 'inherit',
+            fontWeight: 600,
+            textDecoration: 'underline',
+        }),
     });
 
 export default businessStepStyles;
