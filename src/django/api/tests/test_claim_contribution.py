@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.gis.geos import Point
 from django.db.models.signals import post_save
 from django.test import override_settings
@@ -10,6 +12,7 @@ from api.models import (
     ExtendedField,
     Facility,
     FacilityClaim,
+    FacilityClaimReviewNote,
     FacilityList,
     FacilityListItem,
     FacilityMatch,
@@ -19,9 +22,38 @@ from api.models import (
     User,
 )
 from api.services.claim_contribution_service import (
+    CLAIM_ADDRESS_PIN_MOVE_SWITCH,
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
 )
 from api.signals import moderation_event_update_handler_for_opensearch
+
+GEOCODE_PATH = 'api.services.claim_contribution_service.geocode_address'
+
+
+def geocode_result(lat, lng, location_type='ROOFTOP'):
+    return {
+        'result_count': 1,
+        'geocoded_point': {'lat': lat, 'lng': lng},
+        'geocoded_address': 'Formatted Address',
+        'full_response': {
+            'results': [
+                {
+                    'geometry': {
+                        'location': {'lat': lat, 'lng': lng},
+                        'location_type': location_type,
+                    }
+                }
+            ]
+        },
+    }
+
+
+NO_GEOCODE_RESULTS = {
+    'result_count': 0,
+    'geocoded_point': None,
+    'geocoded_address': None,
+    'full_response': {'results': []},
+}
 
 
 @override_settings(DEBUG=True)
@@ -132,10 +164,16 @@ class ClaimContributionTestBase(APITestCase):
         self.assertAlmostEqual(lng, point.x, places=6)
         self.assertAlmostEqual(lat, point.y, places=6)
 
+    def pin_notes(self, claim):
+        return FacilityClaimReviewNote.objects.filter(
+            claim=claim, note__icontains='pin'
+        )
+
 
 class ApprovalRecordsContributionTest(ClaimContributionTestBase):
 
-    def test_approval_records_contribution_and_promotes(self):
+    @patch(GEOCODE_PATH)
+    def test_approval_records_contribution_and_promotes(self, geocode):
         claim = self.make_claim(
             facility_name_english='Claimed Name',
             facility_address='1 Original Street',
@@ -184,11 +222,16 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
         ]
         self.assertIn('Claimant Co', contributor_names)
 
-        # The item sits at the current pin; the pin itself is untouched.
+        # Same address as the location: nothing geocoded, pin unchanged.
+        geocode.assert_not_called()
         self.facility.refresh_from_db()
         self.assertPointEqual(self.facility.location, 0, 0)
+        self.assertEqual(0, self.pin_notes(claim).count())
 
-    def test_approval_without_name_or_address_records_nothing(self):
+    @patch(GEOCODE_PATH)
+    def test_approval_without_name_or_address_records_nothing(
+        self, geocode
+    ):
         claim = self.make_claim()
 
         self.approve(claim)
@@ -200,9 +243,11 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
                 source__contributor=self.claimant
             ).count(),
         )
+        geocode.assert_not_called()
 
     @override_switch(CLAIM_NAME_ADDRESS_EDIT_SWITCH, active=False)
-    def test_nothing_is_recorded_while_the_switch_is_off(self):
+    @patch(GEOCODE_PATH)
+    def test_nothing_is_recorded_while_the_switch_is_off(self, geocode):
         claim = self.make_claim(
             facility_name_english='Claimed Name',
             facility_address='2 New Street',
@@ -213,6 +258,7 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
         claim.refresh_from_db()
         self.assertEqual(FacilityClaimStatuses.APPROVED, claim.status)
         self.assertEqual(0, self.claim_events(claim).count())
+        geocode.assert_not_called()
         # The claim fields still promote on their own, as before.
         self.assertTrue(
             ExtendedField.objects.filter(
@@ -220,7 +266,8 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
             ).exists()
         )
 
-    def test_approval_backfills_the_missing_value(self):
+    @patch(GEOCODE_PATH)
+    def test_approval_backfills_the_missing_value(self, geocode):
         claim = self.make_claim(facility_name_english='Claimed Name')
 
         self.approve(claim)
@@ -230,8 +277,12 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
         item = FacilityListItem.objects.get(moderation_event=event)
         self.assertEqual('Claimed Name', item.name)
         self.assertEqual('1 Original Street', item.address)
+        geocode.assert_not_called()
 
-    def test_unknown_claim_sectors_are_not_passed_as_product_types(self):
+    @patch(GEOCODE_PATH)
+    def test_unknown_claim_sectors_are_not_passed_as_product_types(
+        self, geocode
+    ):
         claim = self.make_claim(
             facility_name_english='Claimed Name',
             sector=['Not A Real Sector'],
@@ -250,7 +301,13 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
             ).exists()
         )
 
-    def test_changed_address_places_item_at_current_pin(self):
+
+@override_switch(CLAIM_ADDRESS_PIN_MOVE_SWITCH, active=True)
+class ApprovalMovesPinTest(ClaimContributionTestBase):
+
+    @patch(GEOCODE_PATH)
+    def test_changed_address_moves_pin_within_limit(self, geocode):
+        geocode.return_value = geocode_result(0.01, 0.02)
         claim = self.make_claim(
             facility_name_english='Claimed Name',
             facility_address='2 New Street',
@@ -258,31 +315,131 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
 
         self.approve(claim)
 
-        item = FacilityListItem.objects.get(moderation_event__claim=claim)
-        self.assertEqual('2 New Street', item.address)
-        self.assertPointEqual(item.geocoded_point, 0, 0)
-        geocode_steps = [
-            step for step in item.processing_results
-            if step['action'] == 'geocode'
-        ]
-        self.assertEqual(1, len(geocode_steps))
-        self.assertTrue(geocode_steps[0]['skipped_geocoder'])
+        geocode.assert_called_once_with('2 New Street', 'US')
         self.facility.refresh_from_db()
-        self.assertPointEqual(self.facility.location, 0, 0)
-
-    def test_claimant_pin_is_used_when_set(self):
-        claim = self.make_claim(
-            facility_name_english='Claimed Name',
-            facility_address='2 New Street',
-            facility_location=Point(0.02, 0.01),
-        )
-
-        self.approve(claim)
+        claim.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0.02, 0.01)
+        self.assertPointEqual(claim.facility_location, 0.02, 0.01)
+        self.assertEqual(0, self.pin_notes(claim).count())
 
         item = FacilityListItem.objects.get(moderation_event__claim=claim)
         self.assertPointEqual(item.geocoded_point, 0.02, 0.01)
+        self.assertEqual('Formatted Address', item.geocoded_address)
+
+        # The approval template saves the facility again afterwards (to
+        # bump updated_at), so look for the reason rather than at the
+        # latest history row.
+        self.assertTrue(
+            self.facility.history.filter(
+                history_change_reason__contains=f'FacilityClaim ({claim.id})'
+            ).exists()
+        )
+
+    @override_switch(CLAIM_ADDRESS_PIN_MOVE_SWITCH, active=False)
+    @patch(GEOCODE_PATH)
+    def test_pin_switch_off_places_item_at_current_pin(self, geocode):
+        claim = self.make_claim(
+            facility_name_english='Claimed Name',
+            facility_address='2 New Street',
+        )
+
+        self.approve(claim)
+
+        geocode.assert_not_called()
+        self.assertEqual(1, self.claim_events(claim).count())
+        item = FacilityListItem.objects.get(moderation_event__claim=claim)
+        self.assertPointEqual(item.geocoded_point, 0, 0)
+        self.facility.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0, 0)
+        self.assertEqual(0, self.pin_notes(claim).count())
+
+    @patch(GEOCODE_PATH)
+    def test_far_geocode_keeps_pin_and_notes_it(self, geocode):
+        # ~1570 km from the current pin.
+        geocode.return_value = geocode_result(10.0, 10.0)
+        claim = self.make_claim(
+            facility_name_english='Claimed Name',
+            facility_address='2 New Street',
+        )
+
+        self.approve(claim)
+
+        self.facility.refresh_from_db()
+        claim.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0, 0)
+        self.assertIsNone(claim.facility_location)
+        note = self.pin_notes(claim).get()
+        self.assertIn('was not moved', note.note)
+        self.assertIn('km from the current pin', note.note)
+
+        # The contribution still records where the address resolves to.
+        item = FacilityListItem.objects.get(moderation_event__claim=claim)
+        self.assertPointEqual(item.geocoded_point, 10.0, 10.0)
+
+    @patch(GEOCODE_PATH)
+    def test_approximate_geocode_keeps_pin(self, geocode):
+        geocode.return_value = geocode_result(
+            0.01, 0.02, location_type='APPROXIMATE'
+        )
+        claim = self.make_claim(
+            facility_name_english='Claimed Name',
+            facility_address='2 New Street',
+        )
+
+        self.approve(claim)
+
+        self.facility.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0, 0)
+        self.assertIn('APPROXIMATE', self.pin_notes(claim).get().note)
+
+    @patch(GEOCODE_PATH)
+    def test_no_geocode_results_keeps_pin(self, geocode):
+        geocode.return_value = NO_GEOCODE_RESULTS
+        claim = self.make_claim(
+            facility_name_english='Claimed Name',
+            facility_address='2 New Street',
+        )
+
+        self.approve(claim)
+
+        self.facility.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0, 0)
+        self.assertIn('no geocoding results', self.pin_notes(claim).get().note)
+        item = FacilityListItem.objects.get(moderation_event__claim=claim)
+        self.assertPointEqual(item.geocoded_point, 0, 0)
+
+    @patch(GEOCODE_PATH)
+    def test_geocoder_error_does_not_fail_approval(self, geocode):
+        geocode.side_effect = ValueError('Geocoding request failed')
+        claim = self.make_claim(
+            facility_name_english='Claimed Name',
+            facility_address='2 New Street',
+        )
+
+        self.approve(claim)
+
+        claim.refresh_from_db()
+        self.assertEqual(FacilityClaimStatuses.APPROVED, claim.status)
+        self.assertEqual(1, self.claim_events(claim).count())
+        self.facility.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0, 0)
+        self.assertIn('geocoder error', self.pin_notes(claim).get().note)
+
+    @patch(GEOCODE_PATH)
+    def test_unchanged_address_is_not_geocoded_even_if_formatted_differently(
+        self, geocode
+    ):
+        claim = self.make_claim(
+            facility_name_english='Claimed Name',
+            facility_address='1, ORIGINAL STREET',
+        )
+
+        self.approve(claim)
+
+        geocode.assert_not_called()
 
 
+@override_switch(CLAIM_ADDRESS_PIN_MOVE_SWITCH, active=True)
 class ClaimedDetailsEditRecordsContributionTest(ClaimContributionTestBase):
 
     def put_claimed(self, claim, **fields):
@@ -306,7 +463,8 @@ class ClaimedDetailsEditRecordsContributionTest(ClaimContributionTestBase):
         self.assertEqual(200, response.status_code, response.content)
         return response
 
-    def test_name_change_records_a_second_event(self):
+    @patch(GEOCODE_PATH)
+    def test_name_change_records_a_second_event(self, geocode):
         claim = self.make_claim(
             facility_name_english='Claimed Name',
             facility_address='1 Original Street',
@@ -328,13 +486,31 @@ class ClaimedDetailsEditRecordsContributionTest(ClaimContributionTestBase):
         self.assertTrue(
             FacilityMatch.objects.get(facility_list_item=items[0]).is_active
         )
+        geocode.assert_not_called()
 
         properties = self.client.get(
             f'/api/facilities/{self.facility.id}/'
         ).json()['properties']
         self.assertEqual('Renamed', properties['name'])
 
-    def test_unrelated_edit_records_nothing(self):
+    @patch(GEOCODE_PATH)
+    def test_address_change_geocodes_and_moves_pin(self, geocode):
+        geocode.return_value = geocode_result(0.01, 0.02)
+        claim = self.make_claim(
+            facility_name_english='Claimed Name',
+            facility_address='1 Original Street',
+        )
+        self.approve(claim)
+
+        self.put_claimed(claim, facility_address='2 New Street')
+
+        geocode.assert_called_once_with('2 New Street', 'US')
+        self.facility.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0.02, 0.01)
+        self.assertEqual(2, self.claim_events(claim).count())
+
+    @patch(GEOCODE_PATH)
+    def test_unrelated_edit_records_nothing(self, geocode):
         claim = self.make_claim(
             facility_name_english='Claimed Name',
             facility_address='1 Original Street',
@@ -344,3 +520,4 @@ class ClaimedDetailsEditRecordsContributionTest(ClaimContributionTestBase):
         self.put_claimed(claim, facility_description='new description')
 
         self.assertEqual(1, self.claim_events(claim).count())
+        geocode.assert_not_called()

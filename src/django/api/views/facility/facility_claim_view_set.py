@@ -316,7 +316,8 @@ class FacilityClaimViewSet(ModelViewSet):
             create_extendedfields_for_claim(claim)
 
             # Record the claimed name and address as a contribution so the
-            # location's submission history shows them. Runs inside this
+            # location's submission history shows them, and move the pin
+            # to the claimed address where that is safe. Runs inside this
             # transaction, before any email goes out: if it fails the
             # approval rolls back rather than going live with its history
             # missing.

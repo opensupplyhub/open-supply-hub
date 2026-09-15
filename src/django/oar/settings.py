@@ -63,6 +63,15 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 # Set environment instance source
 INSTANCE_SOURCE = os.getenv('INSTANCE_SOURCE', 'os_hub')
 
+# When an approved claim carries an address that differs from the production
+# location's, the address is geocoded and the location pin follows it - but
+# only within this many kilometres of the current pin. A larger jump means
+# a mistyped address or a location that actually moved (which needs a new
+# OS ID via SLC), so the pin stays and a review note flags it instead.
+CLAIM_ADDRESS_PIN_MOVE_MAX_KM = float(
+    os.getenv('CLAIM_ADDRESS_PIN_MOVE_MAX_KM', '25')
+)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
 
