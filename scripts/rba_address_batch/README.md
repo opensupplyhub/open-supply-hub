@@ -22,10 +22,10 @@ check before the batch is treated as done.
 > On such an instance the sync overwrites every synced field of a shared
 > location, including the record of which contribution is primary. A
 > promotion this tool applies is therefore silently undone the next time
-> the public record changes — there is no schedule to it, so a batch can
-> look entirely correct for days and then decay. The `reassert_rba_promotions`
-> management command restores promotions after each sync and must be in
-> place first. If you are not certain it is deployed, ask the Open Supply
+> the public record changes — a batch can look entirely correct for days
+> and then decay. `sync_databases` restores promotions at the end of each
+> run on the RBA instance, via `reassert_rba_promotions`, and that must
+> be deployed first. If you are not certain it is, ask the Open Supply
 > Hub team before running a batch rather than after.
 
 You need four things. The first three are one-time setup.

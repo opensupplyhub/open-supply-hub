@@ -34,19 +34,23 @@ resource "aws_cloudwatch_event_rule" "alert_batch_failures" {
   name        = "rule${local.short}AlertBatchFailures"
   description = "Rule to send alerts when batch jobs fail."
 
-  event_pattern = <<PATTERN
-{
-  "source": ["aws.batch"],
-  "detail-type": ["Batch Job State Change"],
-  "detail": {
-    "status": ["FAILED"],
-    "jobQueue": [
-      "${aws_batch_job_queue.default.arn}"
-    ]
-  }
-}
-PATTERN
-
+  # The db_sync queue is listed because a FAILED nightly sync — including a
+  # promotion re-assert that fails at the end of that same job — is otherwise
+  # silent. A re-assert failure leaves promotions reverted, which is the decay
+  # it exists to prevent, and nothing else would report it.
+  event_pattern = jsonencode({
+    source        = ["aws.batch"]
+    "detail-type" = ["Batch Job State Change"]
+    detail = {
+      status = ["FAILED"]
+      # Splat rather than an index: db_sync is count-gated, and this yields an
+      # empty list where it does not exist instead of an out-of-range index.
+      jobQueue = concat(
+        [aws_batch_job_queue.default.arn],
+        aws_batch_job_queue.db_sync[*].arn,
+      )
+    }
+  })
 }
 
 resource "aws_cloudwatch_event_target" "alert_batch_failures" {
