@@ -193,3 +193,102 @@ def test_init_requires_list_id(tmp_path):
         ContribotWorkbook(
             work_dir=tmp_path, source_path=tmp_path / "list.xlsx", list_id="  "
         )
+
+
+def test_illegal_characters_regex_matches_openpyxl(tmp_path):
+    """Our copy of the pattern must stay in lockstep with the library's.
+
+    Fail here, in CI, rather than in prod the next time openpyxl changes what
+    it will accept in a worksheet cell.
+    """
+    import contribot_workbook
+    from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE as OPENPYXL_RE
+
+    assert contribot_workbook.ILLEGAL_CHARACTERS_RE.pattern == OPENPYXL_RE.pattern
+
+
+def test_transform_csv_with_control_characters_converts(tmp_path):
+    """A bad encoding conversion upstream must not fail the whole list.
+
+    Reproduces a production failure: a Turkish name exported through a
+    non-Unicode codepage arrived with 0x1A (SUB) where each dotted capital I
+    used to be, and openpyxl refused to write the cell.
+    """
+    csv_path = tmp_path / "list.csv"
+    csv_path.write_text(
+        "country,name,address\n"
+        "Turkey,Ornek Tekstil HAZIR G\x1aY\x1aM,1 Main St\n",
+        encoding="utf-8",
+    )
+
+    dest = ContribotWorkbook(
+        work_dir=tmp_path, source_path=csv_path, list_id="105"
+    ).transform()
+
+    wb = openpyxl.load_workbook(dest)
+    assert wb.active["B2"].value == "Ornek Tekstil HAZIR G�Y�M"
+    assert wb.active["A2"].value == "Turkey"
+    assert wb.active["C2"].value == "1 Main St"
+
+
+def test_transform_csv_cleans_control_characters_in_header(tmp_path):
+    csv_path = tmp_path / "list.csv"
+    csv_path.write_text("country,na\x1ame,address\nTurkey,Acme,1 Main St\n")
+
+    dest = ContribotWorkbook(
+        work_dir=tmp_path, source_path=csv_path, list_id="102"
+    ).transform()
+
+    wb = openpyxl.load_workbook(dest)
+    assert wb.active["B1"].value == "na�me"
+    assert wb.active["B2"].value == "Acme"
+
+
+def test_transform_csv_preserves_legal_whitespace(tmp_path):
+    """Tab, newline and carriage return are legal; C0013-C0015 flag them."""
+    csv_path = tmp_path / "list.csv"
+    csv_path.write_text(
+        'country,name,address\nTurkey,"tab\there","new\nline"\n',
+    )
+
+    dest = ContribotWorkbook(
+        work_dir=tmp_path, source_path=csv_path, list_id="103"
+    ).transform()
+
+    wb = openpyxl.load_workbook(dest)
+    assert wb.active["B2"].value == "tab\there"
+    assert wb.active["C2"].value == "new\nline"
+
+
+def test_transform_csv_without_control_characters_is_untouched(tmp_path):
+    csv_path = tmp_path / "list.csv"
+    csv_path.write_text(
+        "country,name,address\nTurkey,Ornek Tekstil HAZIR GİYİM,1 Main St\n",
+        encoding="utf-8",
+    )
+
+    dest = ContribotWorkbook(
+        work_dir=tmp_path, source_path=csv_path, list_id="104"
+    ).transform()
+
+    wb = openpyxl.load_workbook(dest)
+    assert wb.active["B2"].value == "Ornek Tekstil HAZIR GİYİM"
+
+
+def test_transform_csv_logs_the_damaged_cells(tmp_path, caplog):
+    csv_path = tmp_path / "list.csv"
+    csv_path.write_text(
+        "country,name,address\n"
+        "Turkey,Ornek Tekstil HAZIR G\x1aY\x1aM,1 Main St\n"
+        "Turkey,Clean Co,2 Main St\n",
+        encoding="utf-8",
+    )
+
+    with caplog.at_level("WARNING"):
+        ContribotWorkbook(
+            work_dir=tmp_path, source_path=csv_path, list_id="106"
+        ).transform()
+
+    assert "List 106" in caplog.text
+    assert "1 cell(s)" in caplog.text
+    assert "row 2 column 'name'" in caplog.text
