@@ -76,13 +76,18 @@ class ModerationEvent(models.Model):
         help_text='Linked facility OS ID for this moderation event.'
     )
 
-    claim = models.OneToOneField(
+    claim = models.ForeignKey(
         FacilityClaim,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='moderation_event_claim',
-        help_text='Linked claim id for this production location.'
+        related_name='moderation_events',
+        help_text=(
+            'The facility claim a CLAIM event records a contribution for. '
+            'One claim produces several events over its life: one when the '
+            'claim is approved and one for each later name or address edit '
+            'the claimant makes, so this is a plain foreign key.'
+        )
     )
 
     request_type = models.CharField(
