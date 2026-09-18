@@ -2422,6 +2422,10 @@ class FacilitiesViewSet(ListModelMixin,
                     "facility_production_types"
                 ),
                 facility_type=validated_data.get("facility_type"),
+                facility_name_english=validated_data.get(
+                    "facility_name_english"
+                ),
+                facility_address=validated_data.get("facility_address"),
             )
 
             sectors = validated_data.get("sectors")
