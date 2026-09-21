@@ -142,6 +142,11 @@ vanta_assumed_role_principals_secret_name = "oshub/production/vanta-assumed-role
 anonymizer_destination_aws_account_secret_name = "oshub/production/anonymizer-destination-aws-account"
 anonymizer_kms_key_admin_users_secret_name = "oshub/production/anonymizer-kms-key-admin-users"
 contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-token"
+# OSDEV-3375: paused. The AWS instance posts to the live approval queue
+# alongside the legacy Airflow instance, so every list was carded twice. Flip
+# to true once the board target is decided; the DynamoDB cursor is untouched,
+# so it resumes from where it stopped rather than backfilling.
+contribot_schedule_enabled = false
 contribot_monday_board_id = "3514246658"
 contribot_last_list_id = "9636"
 contribot_google_drive_shared_directory_id = "1eRc0dlAvlo467NfGZI0PoE1TX2J7xTg0"
