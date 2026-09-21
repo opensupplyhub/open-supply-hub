@@ -306,7 +306,7 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
 class ApprovalMovesPinTest(ClaimContributionTestBase):
 
     @patch(GEOCODE_PATH)
-    def test_changed_address_moves_pin_within_limit(self, geocode):
+    def test_changed_address_moves_pin(self, geocode):
         geocode.return_value = geocode_result(0.01, 0.02)
         claim = self.make_claim(
             facility_name_english='Claimed Name',
@@ -352,29 +352,6 @@ class ApprovalMovesPinTest(ClaimContributionTestBase):
         self.facility.refresh_from_db()
         self.assertPointEqual(self.facility.location, 0, 0)
         self.assertEqual(0, self.pin_notes(claim).count())
-
-    @patch(GEOCODE_PATH)
-    def test_far_geocode_keeps_pin_and_notes_it(self, geocode):
-        # ~1570 km from the current pin.
-        geocode.return_value = geocode_result(10.0, 10.0)
-        claim = self.make_claim(
-            facility_name_english='Claimed Name',
-            facility_address='2 New Street',
-        )
-
-        self.approve(claim)
-
-        self.facility.refresh_from_db()
-        claim.refresh_from_db()
-        self.assertPointEqual(self.facility.location, 0, 0)
-        self.assertIsNone(claim.facility_location)
-        note = self.pin_notes(claim).get()
-        self.assertIn('was not moved', note.note)
-        self.assertIn('km from the current pin', note.note)
-
-        # The contribution still records where the address resolves to.
-        item = FacilityListItem.objects.get(moderation_event__claim=claim)
-        self.assertPointEqual(item.geocoded_point, 10.0, 10.0)
 
     @patch(GEOCODE_PATH)
     def test_approximate_geocode_keeps_pin(self, geocode):

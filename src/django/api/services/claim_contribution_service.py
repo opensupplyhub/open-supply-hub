@@ -19,10 +19,8 @@ moderation queue - and be picked up by the external auto-approval
 automation - independently of the claim decision.
 '''
 import logging
-from math import asin, cos, radians, sin, sqrt
 from typing import Dict, Optional, Tuple
 
-from django.conf import settings
 from django.contrib.gis.geos import Point
 from waffle import switch_is_active
 
@@ -68,8 +66,6 @@ CLAIM_ADDRESS_PIN_MOVE_SWITCH = 'enable_claim_address_pin_move'
 # locality or region centroid. Such a point must never replace a pin that
 # somebody positioned on the actual building.
 IMPRECISE_GEOCODE_LOCATION_TYPES = ('APPROXIMATE',)
-
-EARTH_RADIUS_KM = 6371.0
 
 
 class ClaimContributionError(Exception):
@@ -208,13 +204,14 @@ def _resolve_location(
       punctuation: keep the pin. Re-geocoding an unchanged address could
       only displace a pin a moderator positioned by hand.
     - Otherwise geocode. The pin moves when the geocoder returned a
-      result, the result is not a bare locality centroid, and it lies
-      within CLAIM_ADDRESS_PIN_MOVE_MAX_KM of the current pin. When any
-      of those fails the pin stays, the list item still records the
-      geocode (that is what the address resolves to, and a moderator can
-      promote it), and an internal review note says why the pin did not
-      move. A geocoder error never fails the caller: the pin stays and
-      the note records the error.
+      result and the result is not a bare locality centroid. How far the
+      new address lies from the current pin is not checked here: that
+      belongs to validation at claim submission, not to the approval.
+      When either condition fails the pin stays, the list item still
+      records the geocode (that is what the address resolves to, and a
+      moderator can promote it), and an internal review note says why
+      the pin did not move. A geocoder error never fails the caller: the
+      pin stays and the note records the error.
     '''
     facility = claim.facility
     current = facility.location
@@ -253,7 +250,7 @@ def _resolve_location(
     geocoded = geocode_result['geocoded_point']
     point = Point(geocoded['lng'], geocoded['lat'])
 
-    blocker = _pin_move_blocker(geocode_result, point, current)
+    blocker = _pin_move_blocker(geocode_result)
     if blocker:
         _add_note(
             claim, acting_user,
@@ -285,26 +282,12 @@ def _same_address(a: Optional[str], b: Optional[str]) -> bool:
     return normalize(a) == normalize(b)
 
 
-def _pin_move_blocker(
-    geocode_result: Dict, point: Point, current: Optional[Point]
-) -> Optional[str]:
+def _pin_move_blocker(geocode_result: Dict) -> Optional[str]:
     location_type = _geocode_location_type(geocode_result)
     if location_type in IMPRECISE_GEOCODE_LOCATION_TYPES:
         return (
             f'the geocoder could only place it approximately '
             f'({location_type}), so it may be a town or region centroid.'
-        )
-
-    if current is None:
-        return None
-
-    distance_km = _haversine_km(current, point)
-    max_km = settings.CLAIM_ADDRESS_PIN_MOVE_MAX_KM
-    if distance_km > max_km:
-        return (
-            f'it is {distance_km:.1f} km from the current pin (limit '
-            f'{max_km:g} km). If the location has actually moved it needs '
-            'a new OS ID; otherwise the address may be mistyped.'
         )
     return None
 
@@ -322,14 +305,6 @@ def _geocode_location_type(geocode_result: Dict) -> Optional[str]:
         if geometry.get('location') == target:
             return geometry.get('location_type')
     return None
-
-
-def _haversine_km(a: Point, b: Point) -> float:
-    lat1, lng1, lat2, lng2 = map(radians, (a.y, a.x, b.y, b.x))
-    d_lat = lat2 - lat1
-    d_lng = lng2 - lng1
-    h = sin(d_lat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(d_lng / 2) ** 2
-    return 2 * EARTH_RADIUS_KM * asin(sqrt(h))
 
 
 def _add_note(claim: FacilityClaim, author: User, text: str) -> None:
