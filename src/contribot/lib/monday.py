@@ -11,17 +11,23 @@ from urllib.request import Request, urlopen
 import boto3
 
 # Title aliases on the Contributor List Approval Queue (and copies of it).
+# The live board's own titles come first; the remaining aliases cover board
+# copies used for parallel runs and testing. Titles are matched exactly
+# (case-insensitively), so an unlisted title silently leaves the column blank —
+# keep this in sync with the board.
 COLUMN_TITLES = {
-    "contributor_name": ("Contributor Name", "contributor name"),
+    "contributor_name": ("Contributor", "Contributor Name", "contributor name"),
     "contributor_id": ("Contributor ID", "contributor id"),
     "processed_data": ("Processed Data", "Processed Data Drive"),
     "os_hub_link": (
+        "Link on OS Hub",
         "OS Hub List Link",
         "OS Hub Link",
         "OS Hub list link",
         "OS Hub",
     ),
-    "list_size": ("List Size", "list size"),
+    "list_size": ("# List Size", "List Size", "list size"),
+    "error_ratio": ("# Errors", "Errors"),
 }
 
 
@@ -70,20 +76,31 @@ class MondayBoard:
         processed_url: Optional[str] = None,
         os_hub_url: Optional[str] = None,
         list_size: Optional[int] = None,
+        error_ratio: Optional[float] = None,
     ) -> str:
         """Create an approval-queue item and return its Monday item id."""
         columns = self._column_map()
         values: dict[str, Any] = {}
 
-        self._set_text(values, columns, "contributor_name", contributor_name)
-        if contributor_id is not None and str(contributor_id):
-            self._set_text(values, columns, "contributor_id", str(contributor_id))
+        has_id = str(contributor_id) if contributor_id is not None else ""
+        if has_id and "contributor_id" in columns:
+            self._set_text(values, columns, "contributor_name", contributor_name)
+            self._set_text(values, columns, "contributor_id", has_id)
+        else:
+            # Boards without a separate ID column carry it inline, the way
+            # moderators already read it: "Contributor Name (1234)".
+            contributor_text = contributor_name
+            if has_id:
+                contributor_text = f"{contributor_name} ({has_id})".strip()
+            self._set_text(values, columns, "contributor_name", contributor_text)
         if processed_url:
             self._set_link(values, columns, "processed_data", processed_url)
         if os_hub_url:
             self._set_link(values, columns, "os_hub_link", os_hub_url)
         if list_size is not None:
             self._set_number(values, columns, "list_size", list_size)
+        if error_ratio is not None:
+            self._set_number(values, columns, "error_ratio", error_ratio)
 
         payload = self._graphql(
             """
@@ -170,7 +187,7 @@ class MondayBoard:
         values: dict[str, Any],
         columns: dict[str, dict[str, Any]],
         key: str,
-        number: int,
+        number: float,
     ) -> None:
         column = columns.get(key)
         if column:

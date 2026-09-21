@@ -23,6 +23,19 @@ COLUMNS = [
     {"id": "size_col", "title": "List Size", "type": "numbers"},
 ]
 
+# The column ids, titles and types actually present on the live Contributor
+# List Approval Queue. Mapping against invented titles is what let every
+# column except "Processed Data" ship silently blank, so the live schema is
+# pinned here as its own fixture.
+LIVE_CLAQ_COLUMNS = [
+    {"id": "long_text", "title": "Contributor", "type": "long_text"},
+    {"id": "text1", "title": "Raw Data", "type": "text"},
+    {"id": "text7", "title": "Processed Data", "type": "text"},
+    {"id": "text", "title": "Link on OS Hub", "type": "text"},
+    {"id": "numbers11", "title": "# List Size", "type": "numbers"},
+    {"id": "numbers", "title": "# Errors", "type": "numbers"},
+]
+
 
 def _fake_urlopen(responses):
     captured = []
@@ -114,6 +127,43 @@ def test_create_item_maps_titles_and_posts_column_values(monkeypatch):
         "text": "https://example.com/lists/101",
     }
     assert values["size_col"] == "200"
+
+
+def test_create_item_fills_every_column_on_the_live_board(monkeypatch):
+    captured, fake_urlopen = _fake_urlopen(
+        [
+            json.dumps(
+                {"data": {"boards": [{"columns": LIVE_CLAQ_COLUMNS}]}}
+            ).encode(),
+            json.dumps({"data": {"create_item": {"id": "99"}}}).encode(),
+        ]
+    )
+    monkeypatch.setattr("lib.monday.urlopen", fake_urlopen)
+
+    board = MondayBoard(
+        api_url="https://api.monday.com/v2",
+        board_id="1234567890",
+        token="tok",
+    )
+    board.create_item(
+        item_name="Example List Sept 2026",
+        contributor_name="Example Brand",
+        contributor_id="1668",
+        processed_url="https://drive.example/report",
+        os_hub_url="https://opensupplyhub.org/lists/9698",
+        list_size=241,
+        error_ratio=0.0124,
+    )
+
+    values = json.loads(
+        json.loads(captured[1].data.decode("utf-8"))["variables"]["columnValues"]
+    )
+    # The live board has no separate ID column, so the id rides along inline.
+    assert values["long_text"] == "Example Brand (1668)"
+    assert values["text7"] == "https://drive.example/report"
+    assert values["text"] == "https://opensupplyhub.org/lists/9698"
+    assert values["numbers11"] == "241"
+    assert values["numbers"] == "0.0124"
 
 
 def test_create_item_wraps_graphql_errors(monkeypatch):

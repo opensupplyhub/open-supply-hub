@@ -113,6 +113,7 @@ resource "aws_cloudwatch_event_rule" "contribot" {
   name                = "eventRule${local.short}Contribot"
   description         = "Run ContriBot workflow on schedule (${var.contribot_schedule_expression})"
   schedule_expression = var.contribot_schedule_expression
+  state               = var.contribot_schedule_enabled ? "ENABLED" : "DISABLED"
 
   tags = merge(local.default_tags, {
     Name = "eventRuleContribot"
@@ -130,6 +131,7 @@ resource "aws_cloudwatch_event_rule" "contribot_retry" {
   name                = "eventRule${local.short}ContribotRetry"
   description         = "Run ContriBot FAILED-list retry on schedule (${var.contribot_schedule_expression})"
   schedule_expression = var.contribot_schedule_expression
+  state               = var.contribot_schedule_enabled ? "ENABLED" : "DISABLED"
 
   tags = merge(local.default_tags, {
     Name = "eventRuleContribotRetry"

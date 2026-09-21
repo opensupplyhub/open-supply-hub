@@ -75,6 +75,36 @@ def repo_slack_monday(env):
         yield repo, slack, monday
 
 
+def test_item_name_appends_contributor_email(env):
+    """Board items are named "<list name> <contributor email>".
+
+    Every item already on the approval queue follows that convention and
+    moderators search by email, so an item named with the bare list name is
+    effectively unfindable alongside the rest.
+    """
+    repo, slack, monday = _mocks()
+    with patch.object(handler, "ListsRepository", return_value=repo), patch.object(
+        handler, "SlackWebhook", return_value=slack
+    ), patch.object(handler, "MondayBoard", return_value=monday):
+        handler.handler({"list_id": "101"}, None)
+
+    assert (
+        monday.create_item.call_args.kwargs["item_name"]
+        == "Spring Facilities brand@example.com"
+    )
+
+
+def test_item_name_omits_email_when_unknown(env):
+    """With no contributor email there is nothing to append — no stray space."""
+    repo, slack, monday = _mocks({**LIST_ITEM, "contributor_email": ""})
+    with patch.object(handler, "ListsRepository", return_value=repo), patch.object(
+        handler, "SlackWebhook", return_value=slack
+    ), patch.object(handler, "MondayBoard", return_value=monday):
+        handler.handler({"list_id": "101"}, None)
+
+    assert monday.create_item.call_args.kwargs["item_name"] == "Spring Facilities"
+
+
 def test_handler_posts_success_message(repo_slack_monday):
     repo, slack, monday = repo_slack_monday
 
@@ -95,12 +125,13 @@ def test_handler_posts_success_message(repo_slack_monday):
     assert "File spring.xlsx" in message
     assert ":rotating_light:" not in message
     monday.create_item.assert_called_once_with(
-        item_name="Spring Facilities",
+        item_name="Spring Facilities brand@example.com",
         contributor_name="Example Brand",
         contributor_id="5",
         processed_url=None,
         os_hub_url="https://example.com/lists/101",
         list_size=None,
+        error_ratio=None,
     )
     repo.update_list.assert_called_once_with("101", status=STATUS_PROCESSED)
 
@@ -166,12 +197,13 @@ def test_handler_includes_report_stats_when_present(repo_slack_monday):
     assert "<https://docs.google.com/spreadsheets/d/abc|Checked report>" in message
     assert "(200/20) Error ratio: 10.0% :confused:" in message
     monday.create_item.assert_called_once_with(
-        item_name="Spring Facilities",
+        item_name="Spring Facilities brand@example.com",
         contributor_name="Example Brand",
         contributor_id="5",
         processed_url="https://docs.google.com/spreadsheets/d/abc",
         os_hub_url="https://example.com/lists/101",
         list_size=200,
+        error_ratio=0.1,
     )
 
 
@@ -241,6 +273,7 @@ def test_handler_tolerates_missing_dynamodb_row(env):
         processed_url=None,
         os_hub_url="https://example.com/lists/999",
         list_size=None,
+        error_ratio=None,
     )
     repo.update_list.assert_called_once_with("999", status=STATUS_PROCESSED)
 

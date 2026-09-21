@@ -3,6 +3,36 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.31.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Database changes
+
+#### Migrations
+* None.
+
+#### Schema changes
+* None.
+
+### Code/API changes
+* None.
+
+### Architecture/Environment changes
+* [OSDEV-3375](https://opensupplyhub.atlassian.net/browse/OSDEV-3375) - New `contribot_schedule_enabled` Terraform variable (bool, default `true`) governs both ContriBot EventBridge schedules — the fetch rule and the FAILED-list retry rule — via `state = "ENABLED" | "DISABLED"`, so the instance can be paused without destroying anything. Both rules are deliberately governed by the one flag: disabling only the fetch rule leaves the retry rule re-driving `FAILED` lists straight into the state machine, which looks like the pause did not work. Pausing leaves the DynamoDB `__CURSOR__` untouched, so re-enabling resumes from where it stopped rather than backfilling every list uploaded in the meantime. **Set to `false` for Production in this release**, because the AWS instance posts to the live approval-queue board alongside the legacy Airflow instance and every list was being carded twice; flip it back to `true` once the board target is decided. Previously neither rule set `state` at all, so the provider default (`ENABLED`) meant a hand-disabled rule was drift and the next apply silently switched ContriBot back on.
+
+### Bugfix
+* [OSDEV-3375](https://opensupplyhub.atlassian.net/browse/OSDEV-3375) - ContriBot approval-queue items created by the AWS instance are no longer near-empty. `MondayBoard` resolves column ids by matching column *titles* against a hardcoded alias list, and the aliases had never been checked against the live approval-queue board: only `Processed Data` matched, so **Contributor**, **Link on OS Hub** and **# List Size** were silently left blank on every item the AWS instance created — the write path returns early when a title is unmapped, with no error and no log line, so nothing surfaced. The board's own titles are now the first alias for each column (`Contributor`, `Link on OS Hub`, `# List Size`), with the previous names kept so copies of the board used for parallel runs still resolve; `# Errors` is now populated from the error ratio the notify step already received; and where a board has no separate ID column the contributor id is folded into the contributor text as `Name (1234)`, matching what moderators already read on the live board. Items are also now named `<list name> <contributor email>` rather than the bare list name, matching the convention every existing item on the board follows and which moderators search by — the email was already on the DynamoDB row `notify` reads for its Slack message. The unit tests had asserted against the same invented titles as the code, so the mismatch passed them; the live board's real column ids, titles and types are now pinned as a fixture asserting every column is filled, so title drift fails the suite instead of shipping blank items.
+
+### What's new
+* Moderators see complete ContriBot items on the Contributor List Approval Queue again — contributor, OS Hub link, list size and error ratio are populated, and items are named the same way as every other item on the board. No user-facing changes outside the internal moderation queue.
+
+### Release instructions
+* Standard deploy. No migrations, no backfill.
+* This release sets `contribot_schedule_enabled = false` for Production, so applying it leaves the AWS ContriBot schedules **disabled** (they were already disabled by hand ahead of this release; this makes that state declared rather than drift). The legacy Airflow instance is unaffected and continues to process lists.
+
 ## Release 2.30.0
 
 ## Introduction
