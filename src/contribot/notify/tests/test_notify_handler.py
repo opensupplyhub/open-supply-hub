@@ -101,6 +101,7 @@ def test_handler_posts_success_message(repo_slack_monday):
         processed_url=None,
         os_hub_url="https://example.com/lists/101",
         list_size=None,
+        error_ratio=None,
     )
     repo.update_list.assert_called_once_with("101", status=STATUS_PROCESSED)
 
@@ -172,6 +173,7 @@ def test_handler_includes_report_stats_when_present(repo_slack_monday):
         processed_url="https://docs.google.com/spreadsheets/d/abc",
         os_hub_url="https://example.com/lists/101",
         list_size=200,
+        error_ratio=0.1,
     )
 
 
@@ -241,6 +243,7 @@ def test_handler_tolerates_missing_dynamodb_row(env):
         processed_url=None,
         os_hub_url="https://example.com/lists/999",
         list_size=None,
+        error_ratio=None,
     )
     repo.update_list.assert_called_once_with("999", status=STATUS_PROCESSED)
 

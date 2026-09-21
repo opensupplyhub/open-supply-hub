@@ -86,6 +86,7 @@ def handler(event, context):
                 processed_url=event.get("report_url"),
                 os_hub_url=f"{base_url}/lists/{list_id}",
                 list_size=event.get("num_lines"),
+                error_ratio=event.get("error_ratio"),
             )
         except (ClientError, RuntimeError):
             logger.exception("Monday notification failed")
