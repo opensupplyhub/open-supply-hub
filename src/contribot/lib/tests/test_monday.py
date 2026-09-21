@@ -142,12 +142,12 @@ def test_create_item_fills_every_column_on_the_live_board(monkeypatch):
 
     board = MondayBoard(
         api_url="https://api.monday.com/v2",
-        board_id="3514246658",
+        board_id="1234567890",
         token="tok",
     )
     board.create_item(
-        item_name="Kiabi Sept 21, 2026",
-        contributor_name="KIABI",
+        item_name="Example List Sept 2026",
+        contributor_name="Example Brand",
         contributor_id="1668",
         processed_url="https://drive.example/report",
         os_hub_url="https://opensupplyhub.org/lists/9698",
@@ -159,7 +159,7 @@ def test_create_item_fills_every_column_on_the_live_board(monkeypatch):
         json.loads(captured[1].data.decode("utf-8"))["variables"]["columnValues"]
     )
     # The live board has no separate ID column, so the id rides along inline.
-    assert values["long_text"] == "KIABI (1668)"
+    assert values["long_text"] == "Example Brand (1668)"
     assert values["text7"] == "https://drive.example/report"
     assert values["text"] == "https://opensupplyhub.org/lists/9698"
     assert values["numbers11"] == "241"
