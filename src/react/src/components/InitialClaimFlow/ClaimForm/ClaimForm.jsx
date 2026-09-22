@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -63,7 +63,11 @@ import {
     useClaimFormCleanup,
     useApplySubmissionErrorsToForm,
 } from './hooks';
-import { claimIntroRoute, mapRoute } from '../../../util/constants';
+import {
+    claimIntroRoute,
+    mapRoute,
+    ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+} from '../../../util/constants';
 
 const iconMapping = {
     Security,
@@ -105,6 +109,7 @@ const ClaimForm = ({
     parentCompaniesError,
     productionLocationError,
     userHasSignedIn,
+    isNameAddressEditable,
     fetchCountries,
     fetchFacilityProcessingType,
     fetchParentCompanies,
@@ -168,7 +173,33 @@ const ClaimForm = ({
         handleSubmit,
         emissionsHasErrors,
         clearSubmissionError,
+        isNameAddressEditable,
     );
+
+    // Seed the editable company name and address from the production
+    // location once it loads, but only while the waffle switch is on so a
+    // switch-off claim never carries these values. Only empty fields are
+    // filled so a claimant's edits survive step changes; the intro page
+    // resets the form when the OS ID changes, so values never leak between
+    // locations.
+    const locationOsId = productionLocationData?.os_id;
+    useEffect(() => {
+        if (!isNameAddressEditable || !locationOsId) {
+            return;
+        }
+        if (!formData.facilityNameEnglish) {
+            updateFieldWithoutTouch(
+                'facilityNameEnglish',
+                productionLocationData.name || '',
+            );
+        }
+        if (!formData.facilityAddress) {
+            updateFieldWithoutTouch(
+                'facilityAddress',
+                productionLocationData.address || '',
+            );
+        }
+    }, [isNameAddressEditable, locationOsId]);
 
     useApplySubmissionErrorsToForm(claimForm, submissionError);
 
@@ -228,7 +259,9 @@ const ClaimForm = ({
 
     const handleNext = async () => {
         // Get all fields from current step's validation schema.
-        const schema = getValidationSchemaForStep(activeStep);
+        const schema = getValidationSchemaForStep(activeStep, {
+            isNameAddressEditable,
+        });
         const schemaFields = schema.describe().fields;
 
         // Mark all fields in current step as touched to show validation errors.
@@ -408,6 +441,7 @@ ClaimForm.propTypes = {
     parentCompaniesError: array,
     productionLocationError: array,
     userHasSignedIn: bool.isRequired,
+    isNameAddressEditable: bool.isRequired,
     fetchCountries: func.isRequired,
     fetchFacilityProcessingType: func.isRequired,
     fetchParentCompanies: func.isRequired,
@@ -451,6 +485,7 @@ const mapStateToProps = ({
     auth: {
         user: { user },
     },
+    featureFlags: { flags },
 }) => ({
     activeStep,
     completedSteps,
@@ -470,6 +505,7 @@ const mapStateToProps = ({
     parentCompaniesError,
     productionLocationError,
     userHasSignedIn: !user.isAnon,
+    isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
 });
 
 const mapDispatchToProps = dispatch => ({

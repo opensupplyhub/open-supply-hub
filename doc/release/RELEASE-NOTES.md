@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.31.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: TBD
+
+### Database changes
+
+#### Migrations
+* `0241_add_claim_name_address_edit_switch.py` - Adds the `enable_claim_name_address_edit` waffle switch, created inactive, gating editable Company Name and Company Address fields in the claim form. See OSDEV-3404.
+
+### Code/API changes
+* [OSDEV-3404](https://opensupplyhub.atlassian.net/browse/OSDEV-3404) - The claim form's Business step can now let a claimant edit the Company Name and Company Address fields, behind the new inactive `enable_claim_name_address_edit` waffle switch. When the switch is on, both fields are prefilled from the production location, required and non-empty (200 characters max), and submitted with the claim as `facility_name_english` and `facility_address` (the claim endpoint ignores them for now; a moderation event and backend handling follow in later tickets). A warning under the fields tells claimants that the entered name and address will be shown on the production location page once the claim is approved, that they must match the document or web page submitted for verification, and points them to the Single Location Contribution form when the location has moved and needs a new OS ID. The document-upload note also reads "as entered above" instead of "as listed on Open Supply Hub" while the switch is on. With the switch off the fields stay read-only and nothing changes.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+
 ## Release 2.30.0
 
 ## Introduction
