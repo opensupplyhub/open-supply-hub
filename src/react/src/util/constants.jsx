@@ -604,6 +604,7 @@ export const ENABLE_PRODUCTION_LOCATION_PAGE =
 export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
 export const ENABLE_CLAIMS_V2_DASHBOARD = 'enable_claims_v2_dashboard';
 export const ENABLE_CLAIM_NAME_ADDRESS_EDIT = 'enable_claim_name_address_edit';
+export const ENABLE_CLAIM_ADDRESS_PIN_MOVE = 'enable_claim_address_pin_move';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
