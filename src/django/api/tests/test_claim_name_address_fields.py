@@ -245,3 +245,76 @@ class ClaimNameAddressFieldsTest(APITestCase):
         ).json()
         self.assertEqual('Claimed Name', details['facility_name_english'])
         self.assertEqual('2 New Street', details['facility_address'])
+
+    def put_claimed(self, claim, **fields):
+        self.client.login(
+            email=self.claimant_email, password=self.password
+        )
+        payload = {
+            'facility_name_english': claim.facility_name_english or '',
+            'facility_address': claim.facility_address or '',
+            'facility_description': '',
+            'facility_phone_number_publicly_visible': False,
+            'point_of_contact_publicly_visible': False,
+            'office_info_publicly_visible': False,
+            'facility_website_publicly_visible': False,
+        }
+        payload.update(fields)
+        return self.client.put(
+            f'/api/facility-claims/{claim.id}/claimed/', payload
+        )
+
+    def make_approved_claim(self):
+        return self.make_claim(
+            status=FacilityClaimStatuses.APPROVED,
+            facility_name_english='Claimed Name',
+            facility_address='1 Original Street',
+        )
+
+    def test_claimed_details_put_strips_and_stores_the_values(self):
+        claim = self.make_approved_claim()
+
+        response = self.put_claimed(
+            claim,
+            facility_name_english='  Renamed  ',
+            facility_address=' 2 New Street ',
+        )
+
+        self.assertEqual(200, response.status_code, response.content)
+        self.assertEqual('Renamed', response.json()['facility_name_english'])
+        self.assertEqual('2 New Street', response.json()['facility_address'])
+        claim.refresh_from_db()
+        self.assertEqual('Renamed', claim.facility_name_english)
+        self.assertEqual('2 New Street', claim.facility_address)
+
+    def test_claimed_details_put_stores_blank_as_null(self):
+        claim = self.make_approved_claim()
+
+        response = self.put_claimed(
+            claim, facility_name_english='   ', facility_address=''
+        )
+
+        self.assertEqual(200, response.status_code, response.content)
+        claim.refresh_from_db()
+        self.assertIsNone(claim.facility_name_english)
+        self.assertIsNone(claim.facility_address)
+
+    def test_claimed_details_put_rejects_punctuation_only_values(self):
+        claim = self.make_approved_claim()
+
+        response = self.put_claimed(claim, facility_name_english='-- , /')
+
+        self.assertEqual(400, response.status_code, response.content)
+        self.assertIn('facility_name_english', response.json())
+        claim.refresh_from_db()
+        self.assertEqual('Claimed Name', claim.facility_name_english)
+
+    def test_claimed_details_put_rejects_values_over_200_characters(self):
+        claim = self.make_approved_claim()
+
+        response = self.put_claimed(claim, facility_address='a' * 201)
+
+        self.assertEqual(400, response.status_code, response.content)
+        self.assertIn('facility_address', response.json())
+        claim.refresh_from_db()
+        self.assertEqual('1 Original Street', claim.facility_address)

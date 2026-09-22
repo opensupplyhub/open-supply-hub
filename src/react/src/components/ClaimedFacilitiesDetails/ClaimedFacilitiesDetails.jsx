@@ -17,6 +17,7 @@ import get from 'lodash/get';
 import map from 'lodash/map';
 import { isInt } from 'validator';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import AppOverflow from '../AppOverflow';
 import AppGrid from '../AppGrid';
 import ClaimedFacilitiesDetailsSidebar from '../ClaimedFacilitiesDetailsSidebar';
@@ -27,11 +28,14 @@ import {
 } from '../CheckComponentStatus';
 import InputSection from '../InputSection';
 import InputErrorText from '../Contribute/InputErrorText';
+import ImportantNote from '../InitialClaimFlow/Shared/ImportantNote/ImportantNote';
 
 import {
     fetchClaimedFacilityDetails,
     clearClaimedFacilityDetails,
     updateClaimedFacilityNameNativeLanguage,
+    updateClaimedFacilityNameEnglish,
+    updateClaimedFacilityAddress,
     updateClaimedFacilityWorkersCount,
     updateClaimedFacilityFemaleWorkersPercentage,
     updateClaimedFacilityAffiliations,
@@ -99,7 +103,13 @@ import {
     logErrorToRollbar,
 } from '../../util/util';
 
-import { USER_DEFAULT_STATE, mockedSectors } from '../../util/constants';
+import {
+    USER_DEFAULT_STATE,
+    mockedSectors,
+    ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+    ENABLE_CLAIM_ADDRESS_PIN_MOVE,
+    contributeProductionLocationRoute,
+} from '../../util/constants';
 import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
 import { freeEmissionsEstimateFormConfig } from '../FreeEmissionsEstimate/constants.jsx';
 import YearPicker from '../FreeEmissionsEstimate/YearPicker.jsx';
@@ -122,6 +132,14 @@ const mergedStyles = {
     paddedTitle: {
         padding: '10px 0',
     },
+    nameAddressNoteWrapper: {
+        margin: '10px 0 20px',
+    },
+    noteLink: {
+        color: 'inherit',
+        fontWeight: 600,
+        textDecoration: 'underline',
+    },
 };
 
 function ClaimedFacilitiesDetails({
@@ -135,6 +153,8 @@ function ClaimedFacilitiesDetails({
     getDetails,
     clearDetails,
     updateFacilityNameNativeLanguage,
+    updateFacilityNameEnglish,
+    updateFacilityAddress,
     updateFacilityLocation,
     updateSector,
     updateFacilityPhone,
@@ -167,6 +187,8 @@ function ClaimedFacilitiesDetails({
     energyValueUpdaters,
     energyEnabledUpdaters,
     userHasSignedIn,
+    isNameAddressEditable,
+    isAddressPinMoveEnabled,
     classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
@@ -204,11 +226,18 @@ function ClaimedFacilitiesDetails({
         ],
     });
 
+    // The PUT propagates the returned point to the production location pin,
+    // so only an address the claimant actually changed is geocoded, and only
+    // while the enable_claim_address_pin_move switch is on: re-geocoding an
+    // unchanged address could displace a pin somebody positioned by hand,
+    // and while the switch is off the pin is not meant to follow the
+    // address at all. A cleared address resolves to no point, which the
+    // backend treats as reverting the pin.
     const geocodeAddress = (address, initialAddress, initialLocation) => {
-        if (isEmpty(address)) {
+        if (!(address || '').trim()) {
             return Promise.resolve(null);
         }
-        if (address === initialAddress && initialLocation) {
+        if (address === initialAddress || !isAddressPinMoveEnabled) {
             return Promise.resolve(initialLocation);
         }
         return apiRequest
@@ -248,13 +277,21 @@ function ClaimedFacilitiesDetails({
 
     const facilityData = data || {};
 
+    // The English name and address are validated only while they are shown,
+    // so a stored value the form cannot display never blocks Save silently.
     const claimedValidationValues = useMemo(
         () => ({
+            ...(isNameAddressEditable
+                ? {
+                      facility_name_english: facilityData.facility_name_english,
+                      facility_address: facilityData.facility_address,
+                  }
+                : {}),
             facility_website: facilityData.facility_website,
             point_of_contact_email: facilityData.point_of_contact_email,
             facility_workers_count: facilityData.facility_workers_count,
         }),
-        [facilityData],
+        [facilityData, isNameAddressEditable],
     );
 
     const claimedValidationErrors = useMemo(() => {
@@ -465,6 +502,88 @@ function ClaimedFacilitiesDetails({
                         <Typography variant="title">
                             Facility Details
                         </Typography>
+                        {isNameAddressEditable && (
+                            <>
+                                <InputSection
+                                    label="Facility name (English)"
+                                    value={data.facility_name_english || ''}
+                                    onChange={updateFacilityNameEnglish}
+                                    disabled={updating}
+                                    hasValidationErrorFn={() =>
+                                        Boolean(
+                                            getClaimedValidationError(
+                                                'facility_name_english',
+                                            ),
+                                        )
+                                    }
+                                />
+                                {getClaimedValidationError(
+                                    'facility_name_english',
+                                ) && (
+                                    <InputErrorText
+                                        text={getClaimedValidationError(
+                                            'facility_name_english',
+                                        )}
+                                    />
+                                )}
+                                <InputSection
+                                    label="Facility address"
+                                    value={data.facility_address || ''}
+                                    onChange={updateFacilityAddress}
+                                    disabled={updating}
+                                    hasValidationErrorFn={() =>
+                                        Boolean(
+                                            getClaimedValidationError(
+                                                'facility_address',
+                                            ),
+                                        )
+                                    }
+                                />
+                                {getClaimedValidationError(
+                                    'facility_address',
+                                ) && (
+                                    <InputErrorText
+                                        text={getClaimedValidationError(
+                                            'facility_address',
+                                        )}
+                                    />
+                                )}
+                                <div className={classes.nameAddressNoteWrapper}>
+                                    <ImportantNote
+                                        text={
+                                            <>
+                                                The name and address you enter
+                                                here are shown on the production
+                                                location page while your claim
+                                                is approved, and they should
+                                                match the name and address on
+                                                the documents or web page you
+                                                submitted to verify your claim.
+                                                Leave a field blank to keep the
+                                                name or address currently listed
+                                                on Open Supply Hub. If this
+                                                production location has moved to
+                                                a new address, do not edit the
+                                                address here. Instead, submit
+                                                the new location through the{' '}
+                                                <Link
+                                                    to={
+                                                        contributeProductionLocationRoute
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={classes.noteLink}
+                                                >
+                                                    Single Location Contribution
+                                                    form
+                                                </Link>{' '}
+                                                so a new OS ID can be created.
+                                            </>
+                                        }
+                                    />
+                                </div>
+                            </>
+                        )}
                         <InputSection
                             label="Facility name (native language)"
                             value={data.facility_name_native_language}
@@ -903,6 +1022,8 @@ ClaimedFacilitiesDetails.defaultProps = {
     errors: null,
     data: null,
     errorUpdating: null,
+    isNameAddressEditable: false,
+    isAddressPinMoveEnabled: false,
 };
 
 ClaimedFacilitiesDetails.propTypes = {
@@ -918,6 +1039,8 @@ ClaimedFacilitiesDetails.propTypes = {
     getDetails: func.isRequired,
     clearDetails: func.isRequired,
     updateFacilityNameNativeLanguage: func.isRequired,
+    updateFacilityNameEnglish: func.isRequired,
+    updateFacilityAddress: func.isRequired,
     updateFacilityLocation: func.isRequired,
     updateSector: func.isRequired,
     updateFacilityWorkersCount: func.isRequired,
@@ -950,6 +1073,8 @@ ClaimedFacilitiesDetails.propTypes = {
     energyValueUpdaters: object.isRequired,
     energyEnabledUpdaters: object.isRequired,
     userHasSignedIn: bool.isRequired,
+    isNameAddressEditable: bool,
+    isAddressPinMoveEnabled: bool,
     classes: object.isRequired,
 };
 
@@ -962,6 +1087,7 @@ function mapStateToProps({
         updateData: { fetching: updating, error: errorUpdating },
         data,
     },
+    featureFlags: { flags },
 }) {
     return {
         user,
@@ -971,6 +1097,8 @@ function mapStateToProps({
         updating,
         errorUpdating,
         userHasSignedIn: !user.isAnon,
+        isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
+        isAddressPinMoveEnabled: !!flags[ENABLE_CLAIM_ADDRESS_PIN_MOVE],
     };
 }
 
@@ -996,6 +1124,12 @@ function mapDispatchToProps(
         clearDetails: () => dispatch(clearClaimedFacilityDetails()),
         updateFacilityNameNativeLanguage: makeDispatchValueFn(
             updateClaimedFacilityNameNativeLanguage,
+        ),
+        updateFacilityNameEnglish: makeDispatchValueFn(
+            updateClaimedFacilityNameEnglish,
+        ),
+        updateFacilityAddress: makeDispatchValueFn(
+            updateClaimedFacilityAddress,
         ),
         updateFacilityLocation: location =>
             dispatch(updateClaimedFacilityLocation(location)),

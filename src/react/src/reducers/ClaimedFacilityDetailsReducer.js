@@ -13,6 +13,8 @@ import {
     failUpdateClaimedFacilityDetails,
     completeUpdateClaimedFacilityDetails,
     updateClaimedFacilityNameNativeLanguage,
+    updateClaimedFacilityNameEnglish,
+    updateClaimedFacilityAddress,
     updateClaimedFacilityLocation,
     updateClaimedSector,
     updateClaimedFacilityPhone,
@@ -233,6 +235,24 @@ export default createReducer(
                 },
                 data: {
                     facility_name_native_language: { $set: name },
+                },
+            }),
+        [updateClaimedFacilityNameEnglish]: (state, name) =>
+            update(state, {
+                updateData: {
+                    error: { $set: initialState.updateData.error },
+                },
+                data: {
+                    facility_name_english: { $set: name },
+                },
+            }),
+        [updateClaimedFacilityAddress]: (state, address) =>
+            update(state, {
+                updateData: {
+                    error: { $set: initialState.updateData.error },
+                },
+                data: {
+                    facility_address: { $set: address },
                 },
             }),
         [updateClaimedFacilityWorkersCount]: (state, workersCount) =>
