@@ -177,12 +177,14 @@ const ClaimForm = ({
     );
 
     // Seed the editable company name and address from the production
-    // location once it loads. Only empty fields are filled so a claimant's
-    // edits survive step changes; the intro page resets the form when the
-    // OS ID changes, so values never leak between locations.
+    // location once it loads, but only while the waffle switch is on so a
+    // switch-off claim never carries these values. Only empty fields are
+    // filled so a claimant's edits survive step changes; the intro page
+    // resets the form when the OS ID changes, so values never leak between
+    // locations.
     const locationOsId = productionLocationData?.os_id;
     useEffect(() => {
-        if (!locationOsId) {
+        if (!isNameAddressEditable || !locationOsId) {
             return;
         }
         if (!formData.facilityNameEnglish) {
@@ -197,7 +199,7 @@ const ClaimForm = ({
                 productionLocationData.address || '',
             );
         }
-    }, [locationOsId]);
+    }, [isNameAddressEditable, locationOsId]);
 
     useApplySubmissionErrorsToForm(claimForm, submissionError);
 
