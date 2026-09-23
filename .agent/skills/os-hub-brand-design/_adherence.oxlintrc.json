@@ -1,0 +1,242 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/core/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Darker Grotesque|DM Sans))/i]",
+        "message": "Font not provided by the design system. Available: Darker Grotesque, DM Sans."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|size|children|onClick|disabled|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: variant, size, children, onClick, disabled."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|accent|outline|inverse)$/]",
+        "message": "<Button> variant must be one of 'primary' | 'accent' | 'outline' | 'inverse'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:tone|keyline|padding|children|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: tone, keyline, padding, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:white|offwhite|dark|yellow|greenTint)$/]",
+        "message": "<Card> tone must be one of 'white' | 'offwhite' | 'dark' | 'yellow' | 'greenTint'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Eyebrow'] > JSXAttribute > JSXIdentifier[name!=/^(?:color|children|key|ref|className|style|children)$/]",
+        "message": "<Eyebrow> doesn't accept that prop. Declared props: color, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SpeechBubble'] > JSXAttribute > JSXIdentifier[name!=/^(?:color|children|key|ref|className|style|children)$/]",
+        "message": "<SpeechBubble> doesn't accept that prop. Declared props: color, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SpeechBubble'] > JSXAttribute[name.name='color'] > Literal[value!=/^(?:yellow|pink|green|white)$/]",
+        "message": "<SpeechBubble> color must be one of 'yellow' | 'pink' | 'green' | 'white'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Stat'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|label|sublabel|color|align|key|ref|className|style|children)$/]",
+        "message": "<Stat> doesn't accept that prop. Declared props: value, label, sublabel, color, align."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Stat'] > JSXAttribute[name.name='align'] > Literal[value!=/^(?:left|center)$/]",
+        "message": "<Stat> align must be one of 'left' | 'center'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Tag'] > JSXAttribute > JSXIdentifier[name!=/^(?:color|children|key|ref|className|style|children)$/]",
+        "message": "<Tag> doesn't accept that prop. Declared props: color, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Tag'] > JSXAttribute[name.name='color'] > Literal[value!=/^(?:yellow|purple|green|pink|dark|outline)$/]",
+        "message": "<Tag> color must be one of 'yellow' | 'purple' | 'green' | 'pink' | 'dark' | 'outline'."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "Eyebrow": {
+        "replaces": []
+      },
+      "SpeechBubble": {
+        "replaces": []
+      },
+      "Stat": {
+        "replaces": []
+      },
+      "Tag": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--accent-alert",
+      "--accent-positive",
+      "--accent-primary",
+      "--accent-soft",
+      "--border-keyline",
+      "--border-strong",
+      "--border-width",
+      "--font-body",
+      "--font-display",
+      "--leading-body",
+      "--leading-display",
+      "--link-color",
+      "--link-hover-color",
+      "--osh-green",
+      "--osh-green-tint",
+      "--osh-off-black",
+      "--osh-off-white",
+      "--osh-pink",
+      "--osh-purple",
+      "--osh-purple-deep",
+      "--osh-red",
+      "--osh-white",
+      "--osh-yellow",
+      "--radius-card",
+      "--radius-none",
+      "--radius-pill",
+      "--shadow-none",
+      "--slide-margin",
+      "--space-1",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-7",
+      "--surface-card",
+      "--surface-highlight",
+      "--surface-page",
+      "--surface-page-dark",
+      "--text-body",
+      "--text-body-lg",
+      "--text-body-md",
+      "--text-eyebrow",
+      "--text-h1",
+      "--text-h2",
+      "--text-h3",
+      "--text-heading",
+      "--text-hero",
+      "--text-inverse",
+      "--text-muted",
+      "--tracking-eyebrow",
+      "--weight-body",
+      "--weight-body-bold",
+      "--weight-body-medium",
+      "--weight-display-black",
+      "--weight-display-bold"
+    ],
+    "tokenKinds": {
+      "--osh-off-black": "color",
+      "--osh-purple": "color",
+      "--osh-purple-deep": "color",
+      "--osh-red": "color",
+      "--osh-pink": "color",
+      "--osh-green": "color",
+      "--osh-green-tint": "color",
+      "--osh-yellow": "color",
+      "--osh-off-white": "color",
+      "--osh-white": "color",
+      "--text-body": "font",
+      "--text-heading": "font",
+      "--text-inverse": "font",
+      "--text-muted": "font",
+      "--surface-page": "color",
+      "--surface-page-dark": "color",
+      "--surface-card": "color",
+      "--surface-highlight": "color",
+      "--accent-primary": "color",
+      "--accent-positive": "color",
+      "--accent-alert": "color",
+      "--accent-soft": "color",
+      "--border-strong": "color",
+      "--link-color": "color",
+      "--link-hover-color": "color",
+      "--font-display": "font",
+      "--font-body": "font",
+      "--weight-display-bold": "font",
+      "--weight-display-black": "font",
+      "--weight-body": "font",
+      "--weight-body-medium": "font",
+      "--weight-body-bold": "font",
+      "--text-hero": "font",
+      "--text-h1": "font",
+      "--text-h2": "font",
+      "--text-h3": "font",
+      "--text-body-lg": "font",
+      "--text-body-md": "font",
+      "--text-eyebrow": "font",
+      "--leading-display": "font",
+      "--leading-body": "font",
+      "--tracking-eyebrow": "font",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-7": "spacing",
+      "--slide-margin": "spacing",
+      "--radius-none": "radius",
+      "--radius-card": "radius",
+      "--radius-pill": "radius",
+      "--border-width": "spacing",
+      "--border-keyline": "color",
+      "--shadow-none": "shadow"
+    },
+    "fontFamilies": [
+      "DM Sans",
+      "Darker Grotesque"
+    ]
+  }
+}

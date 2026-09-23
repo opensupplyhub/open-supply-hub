@@ -1,0 +1,26 @@
+/* Open Supply Hub — webfonts
+   Variable latin subsets fetched from Google Fonts (exact families used in decks). */
+
+@font-face {
+  font-family: "Darker Grotesque";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("../assets/fonts/DarkerGrotesque-Variable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../assets/fonts/DMSans-Variable-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "DM Sans";
+  font-style: italic;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url("../assets/fonts/DMSans-Italic-Variable-latin.woff2") format("woff2");
+}

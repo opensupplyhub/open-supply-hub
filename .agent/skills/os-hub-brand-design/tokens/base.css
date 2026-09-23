@@ -1,0 +1,21 @@
+/* Open Supply Hub — minimal base rules */
+
+body {
+  font-family: var(--font-body);
+  font-weight: var(--weight-body);
+  color: var(--text-body);
+  background: var(--surface-page);
+  line-height: var(--leading-body);
+  margin: 0;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display-bold);
+  line-height: var(--leading-display);
+  color: var(--text-heading);
+  margin: 0;
+}
+
+a { color: var(--link-color); text-decoration: underline; }
+a:hover { color: var(--link-hover-color); }
