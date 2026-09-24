@@ -63,6 +63,14 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 # Set environment instance source
 INSTANCE_SOURCE = os.getenv('INSTANCE_SOURCE', 'os_hub')
 
+# The account the claims automation pipeline acts as. Review notes it
+# authors (LLM review notes, reminder emails) are flagged is_automated
+# on the claim-details payload so the claims dashboard can distinguish
+# a moderator's ask from an automated nudge (OSDEV-3357).
+CLAIMS_AUTOMATION_ACCOUNT_EMAIL = os.getenv(
+    'CLAIMS_AUTOMATION_ACCOUNT_EMAIL', 'data@opensupplyhub.org'
+)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
 

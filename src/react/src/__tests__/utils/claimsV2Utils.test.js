@@ -204,3 +204,44 @@ describe('claimIDFromLocation', () => {
         expect(claimIDFromLocation()).toBeNull();
     });
 });
+
+describe('automated reminder messages', () => {
+    it('a bot reminder does not reset the reply window', () => {
+        // Moderator asked long ago (overdue); the pipeline's reminder
+        // is stored as an is_automated CLAIMANT_MESSAGE and must not
+        // flip the claim back to awaiting.
+        const result = deriveClaimStage(
+            [
+                note('CLAIMANT_MESSAGE', '2026-08-07T09:00:00Z'),
+                {
+                    ...note('CLAIMANT_MESSAGE', '2026-08-31T09:00:00Z'),
+                    is_automated: true,
+                },
+            ],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.OVERDUE);
+        expect(result.lastMessagedAt).toBe('2026-08-07T09:00:00Z');
+    });
+
+    it('claims messaged only by the bot count as never messaged', () => {
+        const result = deriveClaimStage(
+            [
+                {
+                    ...note('CLAIMANT_MESSAGE', '2026-08-31T09:00:00Z'),
+                    is_automated: true,
+                },
+            ],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.NEW);
+    });
+
+    it('payloads without the flag keep prior behavior', () => {
+        const result = deriveClaimStage(
+            [note('CLAIMANT_MESSAGE', '2026-08-25T09:00:00Z')],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.AWAITING);
+    });
+});
