@@ -105,3 +105,24 @@ describe('useClaimsList', () => {
         expect(apiRequest.get).toHaveBeenCalledTimes(2);
     });
 });
+
+describe('useClaimsList initialLoading vs refresh', () => {
+    beforeEach(() => apiRequest.get.mockReset());
+
+    test('initialLoading is true only before the first response', async () => {
+        apiRequest.get.mockResolvedValue({ data: [{ id: 1 }] });
+        const { result } = renderHook(() => useClaimsList());
+        expect(result.current.initialLoading).toBe(true);
+
+        await flushPromises();
+        expect(result.current.initialLoading).toBe(false);
+
+        // A refresh keeps the stale list available: fetching flips on,
+        // but initialLoading stays false and claims stay populated.
+        act(() => result.current.refetchClaims());
+        expect(result.current.initialLoading).toBe(false);
+        expect(result.current.fetching).toBe(true);
+        expect(result.current.claims).toHaveLength(1);
+        await flushPromises();
+    });
+});

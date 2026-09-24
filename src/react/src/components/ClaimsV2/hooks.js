@@ -21,6 +21,10 @@ import {
 export const useClaimsList = (statuses = 'PENDING') => {
     const [claims, setClaims] = useState([]);
     const [fetching, setFetching] = useState(false);
+    // True once any response has arrived: lets the UI distinguish the
+    // initial load (nothing to show yet) from a refresh after an
+    // action, which should keep the stale list on screen (OSDEV-3357).
+    const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(null);
     const [fetchCount, setFetchCount] = useState(0);
 
@@ -38,7 +42,10 @@ export const useClaimsList = (statuses = 'PENDING') => {
                 makeGetFacilityClaimsURLWithQueryString(`statuses=${statuses}`),
             )
             .then(({ data }) => {
-                if (!cancelled) setClaims(data);
+                if (!cancelled) {
+                    setClaims(data);
+                    setLoaded(true);
+                }
             })
             .catch(() => {
                 if (!cancelled) {
@@ -55,7 +62,13 @@ export const useClaimsList = (statuses = 'PENDING') => {
 
     const refetchClaims = useCallback(() => setFetchCount(n => n + 1), []);
 
-    return { claims, fetching, error, refetchClaims };
+    return {
+        claims,
+        fetching,
+        initialLoading: fetching && !loaded,
+        error,
+        refetchClaims,
+    };
 };
 
 export const useClaimDetail = claimID => {
