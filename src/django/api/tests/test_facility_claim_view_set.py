@@ -1,6 +1,8 @@
 from smtplib import SMTPException
 from unittest.mock import patch
 
+from waffle.testutils import override_switch
+
 from api.constants import FacilityClaimReviewNoteTypes
 from api.models import (
     Contributor,
@@ -313,6 +315,26 @@ class FacilityClaimViewSetTest(APITestCase):
             response.data['notes'][0]['note_type'],
             FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
         )
+
+    @override_switch('claim_a_facility', active=True)
+    def test_notes_flag_automation_authored_notes(self):
+        # OSDEV-3357: the pipeline's notes (LLM reviews, reminder emails
+        # sent through message-claimant) are flagged is_automated so the
+        # v2 dashboard's reply-window stage doesn't reset on reminders.
+        response = self._post_message_claimant(
+            self.facility_claim_first.id, "Hello, claimant!"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        moderator_note = response.data['notes'][0]
+        self.assertFalse(moderator_note['is_automated'])
+
+        with self.settings(
+            CLAIMS_AUTOMATION_ACCOUNT_EMAIL=self.superuser.email
+        ):
+            response = self.client.get(
+                f'/api/facility-claims/{self.facility_claim_first.id}/'
+            )
+        self.assertTrue(response.data['notes'][0]['is_automated'])
 
     def test_message_claimant_email_points_to_pending_claim_edit(self):
         # OSDEV-2278: the email directs claimants to update their
