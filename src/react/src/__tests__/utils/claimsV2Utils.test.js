@@ -12,6 +12,7 @@ import {
     makeClaimTrackerTicketSearchURL,
     makeClaimTrackerBoardURL,
 } from '../../components/ClaimsV2/jiraUtils';
+import { claimIDFromLocation } from '../../components/ClaimsV2/ClaimsV2Dashboard';
 
 const NOW = new Date('2026-09-01T12:00:00Z'); // a Tuesday
 
@@ -168,5 +169,38 @@ describe('claim tracker Jira links', () => {
         expect(makeClaimTrackerTicketSearchURL('12abc')).toBe(
             makeClaimTrackerBoardURL(),
         );
+    });
+});
+
+describe('siteOrigin and environment-aware template links', () => {
+    it('the address-update action link uses the current origin', () => {
+        const message = composeMessage(['addressUpdate'], {
+            facilityAddress: 'Atlantijas iela 15, Riga',
+            osID: 'LV2023146T90PXR',
+        });
+        expect(message).toContain(
+            `${window.location.origin}/contribute/single-location/LV2023146T90PXR/info/`,
+        );
+        expect(message).not.toContain(
+            'https://opensupplyhub.org/contribute',
+        );
+    });
+});
+
+describe('claimIDFromLocation', () => {
+    const setSearch = search => {
+        window.history.replaceState(null, '', `/dashboard/claims-v2${search}`);
+    };
+
+    it('reads a numeric ?claim param', () => {
+        setSearch('?claim=5881');
+        expect(claimIDFromLocation()).toBe(5881);
+    });
+
+    it('rejects non-numeric and missing values', () => {
+        setSearch('?claim=drop-tables');
+        expect(claimIDFromLocation()).toBeNull();
+        setSearch('');
+        expect(claimIDFromLocation()).toBeNull();
     });
 });

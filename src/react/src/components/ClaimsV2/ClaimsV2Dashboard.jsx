@@ -283,9 +283,25 @@ const isTypingTarget = target =>
         target.tagName === 'SELECT' ||
         target.isContentEditable);
 
+/*
+ * Deep link (OSDEV-3357): /dashboard/claims-v2?claim=123 preselects
+ * that claim — the hop from a Claims Tracker Jira ticket, and the
+ * format the eventual old-route redirect maps ids onto.
+ */
+export const claimIDFromLocation = () => {
+    const raw = new URLSearchParams(window.location.search).get('claim');
+    return raw && /^\d+$/.test(raw) ? Number(raw) : null;
+};
+
 export default function ClaimsV2Dashboard() {
-    const { claims, fetching, error, refetchClaims } = useClaimsList();
-    const [selectedClaimID, setSelectedClaimID] = useState(null);
+    const {
+        claims,
+        fetching,
+        initialLoading,
+        error,
+        refetchClaims,
+    } = useClaimsList();
+    const [selectedClaimID, setSelectedClaimID] = useState(claimIDFromLocation);
     const [query, setQuery] = useState('');
     const [region, setRegion] = useState(ALL_REGIONS);
     const [sort, setSort] = useState(SORT_ORDERS.OLDEST);
@@ -328,14 +344,33 @@ export default function ClaimsV2Dashboard() {
      * Auto-select the first visible claim on load, and move the
      * selection back into view when a filter change hides it —
      * the workspace should never show a claim absent from the rail.
+     * Inert while fetching so an in-flight load can't clobber a
+     * ?claim deep-link selection before the list arrives.
      */
     useEffect(() => {
+        if (fetching) {
+            return;
+        }
         if (visibleIds.length === 0) {
             setSelectedClaimID(null);
         } else if (!visibleIds.includes(selectedClaimID)) {
             setSelectedClaimID(visibleIds[0]);
         }
-    }, [visibleIds, selectedClaimID]);
+    }, [fetching, visibleIds, selectedClaimID]);
+
+    /*
+     * Mirror the selection into ?claim= so the browser URL is always a
+     * shareable deep link to the claim on screen. replaceState keeps
+     * history clean (J/K walks don't pile up back-button entries).
+     */
+    useEffect(() => {
+        const base = window.location.pathname;
+        window.history.replaceState(
+            null,
+            '',
+            selectedClaimID ? `${base}?claim=${selectedClaimID}` : base,
+        );
+    }, [selectedClaimID]);
 
     /*
      * Global keys (spec §4): J/K and ↓/↑ walk the rail in on-screen
@@ -380,10 +415,13 @@ export default function ClaimsV2Dashboard() {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [visibleIds]);
 
-    if (fetching) {
+    // Full-page spinner only before the first response; a refresh after
+    // an action keeps the (stale) queue on screen instead of blanking
+    // the whole workspace (OSDEV-3357).
+    if (initialLoading) {
         return <CircularProgress size={50} />;
     }
-    if (error) {
+    if (error && claims.length === 0) {
         return (
             <div>
                 <Typography variant="body1">{error}</Typography>
