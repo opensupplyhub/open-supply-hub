@@ -145,6 +145,13 @@ def record_claim_contribution(
     if sectors:
         raw_data['sector'] = sectors
 
+    # The event's source is deliberately left empty: CLAIM events have no
+    # source type (see ModerationEvent.source). That is also what keeps
+    # this contribution attributed to the claimant. The approval template
+    # anonymizes a Source only when the event's source is SLC, so the
+    # approved-claimant exemption in that check is never consulted here.
+    # The claim is already APPROVED at this point, so that exemption would
+    # still hold if CLAIM events ever carried a source type.
     event_dto = CreateModerationEventDTO(
         contributor=claim.contributor,
         os=facility,

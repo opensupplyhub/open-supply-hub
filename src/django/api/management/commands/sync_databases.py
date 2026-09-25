@@ -10,6 +10,8 @@ from django.utils import timezone
 from django.db.models import EmailField
 from django.db import connections
 
+from api.reassert_rba_promotions import after_database_sync
+
 from api.models.extended_field import ExtendedField
 from api.models.user import User
 from api.models.source import Source
@@ -279,6 +281,10 @@ class DatabaseSynchronizer:
 
         # Set up database connection.
         self.__setup_source_database_connection()
+
+    @property
+    def error_count(self):
+        return self.__stats['errors']
 
     def sync_all(self):
         '''Synchronize all configured models in dependency order.'''
@@ -1101,3 +1107,8 @@ class Command(BaseCommand):
                 self.style.ERROR(f'Synchronization failed: {e}')
             )
             raise CommandError(f'Synchronization failed: {e}')
+
+        after_database_sync(
+            error_count=synchronizer.error_count,
+            dry_run=options['dry_run'],
+        )
