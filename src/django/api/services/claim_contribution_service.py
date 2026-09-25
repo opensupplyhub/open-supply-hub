@@ -24,7 +24,12 @@ from typing import Dict, Optional, Tuple
 from django.contrib.gis.geos import Point
 from waffle import switch_is_active
 
+from api.constants import FacilityClaimReviewNoteTypes
+from api.geocoding import geocode_address
 from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_claim_review_note import (
+    FacilityClaimReviewNote,
+)
 from api.models.moderation_event import ModerationEvent
 from api.models.sector import Sector
 from api.models.user import User
@@ -38,6 +43,7 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
 from api.moderation_event_actions.creation.moderation_event_creator import (
     ModerationEventCreator,
 )
+from contricleaner.lib.helpers.clean import clean
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +55,17 @@ LOG_PREFIX = '[Claim Contribution]'
 # together: without it, a claimed-details edit of an approved claim's
 # name or address would already start producing history.
 CLAIM_NAME_ADDRESS_EDIT_SWITCH = 'enable_claim_name_address_edit'
+
+# Lets a changed claimed address move the production location pin
+# (OSDEV-3406, created inactive by migration 0243). Separate from the
+# switch above because it alters live location data: while off, the
+# contribution is placed at the current pin and nothing is geocoded.
+CLAIM_ADDRESS_PIN_MOVE_SWITCH = 'enable_claim_address_pin_move'
+
+# Google reports APPROXIMATE when it could only place an address at a
+# locality or region centroid. Such a point must never replace a pin that
+# somebody positioned on the actual building.
+IMPRECISE_GEOCODE_LOCATION_TYPES = ('APPROXIMATE',)
 
 
 class ClaimContributionError(Exception):
@@ -178,17 +195,129 @@ def _resolve_location(
     claim: FacilityClaim, acting_user: User
 ) -> Tuple[Point, Optional[Dict]]:
     '''
-    Decide where the contribution's list item is placed. Returns the point
-    and the geocode result to record on the item (None: nothing geocoded).
+    Decide where the contribution's list item is placed, and move the
+    production location pin to follow the claimed address when that is
+    safe. Returns the point for the list item and the geocode result to
+    record on it (None when nothing was geocoded).
 
-    The claimant's own pin wins when they have placed one (the
-    claimed-details form geocodes on the client and the PUT propagates the
-    point to the facility). Otherwise the item sits at the production
-    location's current pin, recorded as skipped_geocoder: a claimed
-    address is a correction of the same place, and a CONFIRMED_MATCH
-    contribution never moves the pin. Moving the pin to follow a changed
-    claimed address is OSDEV-3406.
+    The rule is that the promoted address and the pin should agree, while
+    the enable_claim_address_pin_move switch is on (off: the item sits at
+    the current pin and nothing is geocoded):
+
+    - The claimant already placed the pin (the claimed-details form
+      geocodes on the client and the PUT propagates the point to the
+      facility): reuse that point, nothing to geocode.
+    - The claimed address is the location's address, ignoring case and
+      punctuation: keep the pin. Re-geocoding an unchanged address could
+      only displace a pin a moderator positioned by hand.
+    - Otherwise geocode. The pin moves when the geocoder returned a
+      result and the result is not a bare locality centroid. How far the
+      new address lies from the current pin is not checked here: that
+      belongs to validation at claim submission, not to the approval.
+      When either condition fails the pin stays, the list item still
+      records the geocode (that is what the address resolves to, and a
+      moderator can promote it), and an internal review note says why
+      the pin did not move. A geocoder error never fails the caller: the
+      pin stays and the note records the error.
     '''
+    facility = claim.facility
+    current = facility.location
+
     if claim.facility_location is not None:
         return claim.facility_location, None
-    return claim.facility.location, None
+
+    if not switch_is_active(CLAIM_ADDRESS_PIN_MOVE_SWITCH):
+        return current, None
+
+    address = (claim.facility_address or '').strip()
+    if not address or _same_address(address, facility.address):
+        return current, None
+
+    try:
+        geocode_result = geocode_address(address, facility.country_code)
+    except Exception as err:  # noqa: BLE001 - approval must not fail here
+        log.exception(
+            f'{LOG_PREFIX} Geocoding failed for claim {claim.id}.'
+        )
+        _add_note(
+            claim, acting_user,
+            'The claimed address could not be geocoded (geocoder error: '
+            f'{err}). The location pin was left where it was.'
+        )
+        return current, None
+
+    if not geocode_result.get('result_count'):
+        _add_note(
+            claim, acting_user,
+            'The claimed address returned no geocoding results. The '
+            'location pin was left where it was.'
+        )
+        return current, None
+
+    geocoded = geocode_result['geocoded_point']
+    point = Point(geocoded['lng'], geocoded['lat'])
+
+    blocker = _pin_move_blocker(geocode_result)
+    if blocker:
+        _add_note(
+            claim, acting_user,
+            f'The claimed address geocoded to {point.y:.5f}, {point.x:.5f} '
+            f'but the location pin was not moved: {blocker}'
+        )
+        return current, geocode_result
+
+    claim.facility_location = point
+    claim.save(update_fields=['facility_location'])
+    facility.location = point
+    facility._change_reason = (
+        f'Location updated from geocoded address on FacilityClaim '
+        f'({claim.id})'
+    )
+    facility.save()
+    return point, geocode_result
+
+
+def _same_address(a: Optional[str], b: Optional[str]) -> bool:
+    '''
+    ContriCleaner's clean() lowercases, transliterates and strips most
+    separators but keeps periods, so 'St.' and 'St' would otherwise count
+    as a change and trigger a needless geocode.
+    '''
+    def normalize(value):
+        return clean(value or '').replace('.', '')
+
+    return normalize(a) == normalize(b)
+
+
+def _pin_move_blocker(geocode_result: Dict) -> Optional[str]:
+    location_type = _geocode_location_type(geocode_result)
+    if location_type in IMPRECISE_GEOCODE_LOCATION_TYPES:
+        return (
+            f'the geocoder could only place it approximately '
+            f'({location_type}), so it may be a town or region centroid.'
+        )
+    return None
+
+
+def _geocode_location_type(geocode_result: Dict) -> Optional[str]:
+    '''
+    Recover Google's location_type for the result geocode_address picked.
+    The formatted result only carries the point, so match it back against
+    the raw response.
+    '''
+    target = geocode_result.get('geocoded_point')
+    full_response = geocode_result.get('full_response') or {}
+    for result in full_response.get('results', []):
+        geometry = result.get('geometry', {})
+        if geometry.get('location') == target:
+            return geometry.get('location_type')
+    return None
+
+
+def _add_note(claim: FacilityClaim, author: User, text: str) -> None:
+    FacilityClaimReviewNote.objects.create(
+        claim=claim,
+        author=author,
+        note=text,
+        note_type=FacilityClaimReviewNoteTypes.INTERNAL,
+    )

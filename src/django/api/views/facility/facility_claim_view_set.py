@@ -67,6 +67,9 @@ from ...serializers.facility.edit_pending_claim_serializer import (
     EditPendingClaimSerializer,
     PendingClaimSerializer,
 )
+from ...serializers.facility.facility_create_claim_serializer import (
+    validate_claimed_name_or_address,
+)
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
 
@@ -119,6 +122,19 @@ CLAIM_PROFILE_SIMPLE_FIELDS = (
     'office_info_publicly_visible',
 )
 
+# The claimant's asserted name and address (OSDEV-3405). Also in
+# CLAIM_PROFILE_SIMPLE_FIELDS, but validated and normalized with the rules
+# of claim submission before the bulk copy: a changed value is recorded as
+# a contribution, which ContriCleaner would otherwise reject after the fact.
+CLAIM_NAME_ADDRESS_FIELDS = (
+    'facility_name_english',
+    'facility_address',
+)
+
+CLAIM_NAME_ADDRESS_MAX_LENGTH = FacilityClaim._meta.get_field(
+    'facility_name_english'
+).max_length
+
 # Fields get_claimed_details assigns individually rather than through the
 # group loops above. A new individually-assigned field must be added here
 # by hand, or edits touching only that field would be dropped as "no-op".
@@ -143,6 +159,32 @@ CLAIM_PROFILE_TRACKED_FIELDS = (
     + CLAIM_PROFILE_EMISSION_FIELDS
     + CLAIM_PROFILE_SIMPLE_FIELDS
 )
+
+
+def validate_claimed_name_address(data):
+    """Validate and normalize the name and address of a claimed-details
+    PUT with the rules the claim form applies at submission: stripped,
+    blank stored as NULL, at most the column length, and never only
+    punctuation or whitespace. Returns {field_name: value_or_None}.
+    Raises ValidationError, keyed by field, for a rejected value.
+    """
+    normalized = {}
+    for field_name in CLAIM_NAME_ADDRESS_FIELDS:
+        value = data.get(field_name)
+        if value is not None and not isinstance(value, str):
+            raise ValidationError({field_name: ['Not a valid string.']})
+        if value is not None and len(value) > CLAIM_NAME_ADDRESS_MAX_LENGTH:
+            raise ValidationError({field_name: [
+                'Ensure this field has no more than '
+                f'{CLAIM_NAME_ADDRESS_MAX_LENGTH} characters.'
+            ]})
+        try:
+            normalized[field_name] = validate_claimed_name_or_address(
+                field_name, value
+            )
+        except ValidationError as exc:
+            raise ValidationError({field_name: exc.detail}) from exc
+    return normalized
 
 
 def get_tracked_claim_value(claim, field_name):
@@ -316,7 +358,8 @@ class FacilityClaimViewSet(ModelViewSet):
             create_extendedfields_for_claim(claim)
 
             # Record the claimed name and address as a contribution so the
-            # location's submission history shows them. Runs inside this
+            # location's submission history shows them, and move the pin
+            # to the claimed address where that is safe. Runs inside this
             # transaction, before any email goes out: if it fails the
             # approval rolls back rather than going live with its history
             # missing.
@@ -481,12 +524,16 @@ class FacilityClaimViewSet(ModelViewSet):
                 for field in CLAIM_PROFILE_TRACKED_FIELDS
             }
 
+            claimed_name_address = validate_claimed_name_address(
+                request.data
+            )
+
             prev_location = claim.facility_location
             location_data = request.data.get('facility_location') or ''
             if location_data != '':
                 claim.facility_location = GEOSGeometry(
                     json.dumps(location_data))
-            if request.data.get('facility_address', '') == '':
+            if claimed_name_address['facility_address'] is None:
                 claim.facility_location = None
 
             parent_company_data = request.data.get('facility_parent_company')
@@ -586,6 +633,9 @@ class FacilityClaimViewSet(ModelViewSet):
             for field_name in CLAIM_PROFILE_SIMPLE_FIELDS:
                 setattr(claim, field_name, request.data.get(field_name))
 
+            for field_name, value in claimed_name_address.items():
+                setattr(claim, field_name, value)
+
             # Skip the save (and its side effects: updated_at bump, claim
             # reindex trigger, extended-field rebuild, notification email)
             # when no tracked value actually changed.
@@ -633,7 +683,7 @@ class FacilityClaimViewSet(ModelViewSet):
             # value they have asserted, not just the latest.
             name_or_address_changed = any(
                 snapshot[field] != get_tracked_claim_value(claim, field)
-                for field in ('facility_name_english', 'facility_address')
+                for field in CLAIM_NAME_ADDRESS_FIELDS
             )
             if name_or_address_changed:
                 record_claim_contribution(claim, request.user)
