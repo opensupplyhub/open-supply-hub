@@ -48,12 +48,12 @@ class GazetteerCache:
     def _rebuild_gazetteer(cls) -> Union[Gazetteer, StaticGazetteer, None]:
         logger.info('Rebuilding gazetteer')
         with get_session() as session:
-            db_facility_version = (
-                session.query(func.max(HistoricalFacility.history_id).label("max_id")).limit(1)
-            )
-            db_match_version = (
-                session.query(func.max(HistoricalFacilityMatch.history_id).label("max_id")).limit(1)
-            )
+            db_facility_version = session.query(
+                func.max(HistoricalFacility.history_id)
+            ).scalar()
+            db_match_version = session.query(
+                func.max(HistoricalFacilityMatch.history_id)
+            ).scalar()
 
             # We expect `get_canonical_items` to return a list rather than a
             # QuerySet so that we can close the transaction as quickly as
@@ -75,9 +75,9 @@ class GazetteerCache:
         facility_changes = []
         latest_facility_dedupe_records = {}
         with get_session() as session:
-            db_facility_version = (
-                session.query(func.max(HistoricalFacility.history_id).label("max_id")).limit(1)
-            )
+            db_facility_version = session.query(
+                func.max(HistoricalFacility.history_id)
+            ).scalar()
 
             if db_facility_version != cls._facility_version:
                 if cls._facility_version is None:
@@ -95,10 +95,10 @@ class GazetteerCache:
                     HistoricalFacility.history_id
                 ). \
                 filter(
-                    HistoricalFacility.history_id == last_facility_version_id
+                    HistoricalFacility.history_id > last_facility_version_id
                 ). \
                 order_by(
-                    HistoricalFacility.history_id.desc()
+                    HistoricalFacility.history_id.asc()
                 )
                 facility_changes: List[Dict[str, str or int]] = []
                 for item in historical_facility_q:
@@ -130,7 +130,9 @@ class GazetteerCache:
         latest_match_records = {}
         latest_matched_facility_dedupe_records = {}
         with get_session() as session:
-            db_match_version = session.query(func.max(HistoricalFacility.history_id).label("max_id")).limit(1)
+            db_match_version = session.query(
+                func.max(HistoricalFacilityMatch.history_id)
+            ).scalar()
 
             if db_match_version != cls._match_version:
                 if cls._match_version is None:
@@ -148,9 +150,9 @@ class GazetteerCache:
                     HistoricalFacilityMatch.history_id
                     ). \
                     filter(
-                        HistoricalFacilityMatch.history_id==last_match_version_id
+                        HistoricalFacilityMatch.history_id > last_match_version_id
                     ). \
-                    order_by(HistoricalFacilityMatch.history_id.desc())
+                    order_by(HistoricalFacilityMatch.history_id.asc())
                 )
 
                 # We use an dictionary comprehension so that we can load
@@ -267,7 +269,7 @@ class GazetteerCache:
                             record = dedupe_record_for_match_item(item)
                             logger.debug(f'Indexing match {record}')
                             cls._gazetter.index(record)
-                    cls._match_version = item['history_id']
+                cls._match_version = item['history_id']
 
         except Exception as e:
             logger.error(f'[Matching] Get latest Gazetteer Error: {e}')
