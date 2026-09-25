@@ -5,6 +5,9 @@ from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
 from api.constants import FacilityClaimStatuses
+from api.moderation_event_actions.approval.event_approval_template import (
+    ANONYMIZE_SLC_SOURCES_SWITCH,
+)
 from api.models import (
     Contributor,
     ExtendedField,
@@ -135,6 +138,7 @@ class ClaimContributionTestBase(APITestCase):
 
 class ApprovalRecordsContributionTest(ClaimContributionTestBase):
 
+    @override_switch(ANONYMIZE_SLC_SOURCES_SWITCH, active=True)
     def test_approval_records_contribution_and_promotes(self):
         claim = self.make_claim(
             facility_name_english='Claimed Name',
@@ -164,6 +168,8 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
         self.assertEqual(self.facility, item.facility)
         self.assertEqual(Source.SINGLE, item.source.source_type)
         self.assertEqual(self.claimant, item.source.contributor)
+        # Not anonymized even with the SLC anonymization switch on: a
+        # CLAIM event has no source type, so the SLC rule never applies.
         self.assertFalse(item.source.is_anonymized)
 
         match = FacilityMatch.objects.get(facility_list_item=item)
