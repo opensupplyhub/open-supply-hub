@@ -682,7 +682,34 @@ describe('ClaimForm component', () => {
                     error: null,
                 },
             },
+            featureFlags: {
+                fetching: false,
+                flags: { enable_claim_name_address_edit: true },
+            },
         };
+
+        test('does not seed the fields while the waffle switch is off', async () => {
+            const stateWithSwitchOff = {
+                ...stateWithLocation,
+                featureFlags: {
+                    fetching: false,
+                    flags: { enable_claim_name_address_edit: false },
+                },
+            };
+
+            const { reduxStore } = renderComponent(stateWithSwitchOff);
+
+            // Give any pending effects a chance to run before asserting.
+            await waitFor(() => {
+                expect(
+                    reduxStore.getState().contributeProductionLocation
+                        .singleProductionLocation.data.os_id,
+                ).toBe(mockOsID);
+            });
+            const { formData } = reduxStore.getState().claimForm;
+            expect(formData.facilityNameEnglish).toBeUndefined();
+            expect(formData.facilityAddress).toBeUndefined();
+        });
 
         test('seeds facilityNameEnglish and facilityAddress from the production location', async () => {
             const { reduxStore } = renderComponent(stateWithLocation);
