@@ -109,8 +109,8 @@ resource "aws_route53_record" "ses_dkim" {
 
 #
 # OSDEV-3112: UNTP mock Identity Resolver sandbox (Trust Provenance).
-# Pilot-lifetime record — teardown due 2026-10-01 (ticket AC#2) unless
-# Trust Provenance requests an extension before then.
+# Pilot-lifetime record — teardown due 2026-10-31 (ticket AC#2) unless
+# Trust Provenance requests a further extension before then.
 #
 resource "aws_route53_record" "untp_idr_sandbox" {
   count   = var.environment == "Staging" ? 1 : 0
