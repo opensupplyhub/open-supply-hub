@@ -2,7 +2,9 @@ import json
 from datetime import date
 
 from api.constants import FacilityClaimStatuses
+from api.signals import moderation_event_update_handler_for_opensearch
 from api.models import (
+    ModerationEvent,
     Contributor,
     Facility,
     FacilityClaim,
@@ -16,11 +18,18 @@ from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
 from django.contrib.gis.geos import Point
+from django.db.models.signals import post_save
 from django.urls import reverse
 
 
 class FacilityClaimTest(APITestCase):
     def setUp(self):
+        # A claimed-details edit of the name or address now records a
+        # moderation event; its OpenSearch propagation is outside unit
+        # tests, like in the moderation event test base.
+        post_save.disconnect(
+            moderation_event_update_handler_for_opensearch, ModerationEvent
+        )
         self.email = "test@example.com"
         self.password = "example123"
         self.user = User.objects.create(email=self.email)
