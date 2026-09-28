@@ -271,6 +271,26 @@ class ClaimNameAddressFieldsTest(APITestCase):
             facility_address='1 Original Street',
         )
 
+    def test_claimed_details_get_returns_the_locations_own_values(self):
+        # The form pre-fills a claim that asserts nothing with these, so
+        # they must come from the Facility row the PUT compares against,
+        # not from the index copy.
+        claim = self.make_claim(status=FacilityClaimStatuses.APPROVED)
+        self.facility.name = 'Renamed By Moderator'
+        self.facility.save()
+        self.client.login(
+            email=self.claimant_email, password=self.password
+        )
+
+        details = self.client.get(
+            f'/api/facility-claims/{claim.id}/claimed/'
+        ).json()
+
+        self.assertIsNone(details['facility_name_english'])
+        self.assertIsNone(details['facility_address'])
+        self.assertEqual('Renamed By Moderator', details['location_name'])
+        self.assertEqual('1 Original Street', details['location_address'])
+
     def test_claimed_details_put_strips_and_stores_the_values(self):
         claim = self.make_approved_claim()
 

@@ -15,7 +15,6 @@ import {
     updateClaimedFacilityNameNativeLanguage,
     updateClaimedFacilityNameEnglish,
     updateClaimedFacilityAddress,
-    updateClaimedFacilityLocation,
     updateClaimedSector,
     updateClaimedFacilityPhone,
     updateClaimedFacilityPhoneVisibility,
@@ -196,7 +195,6 @@ export default createReducer(
                         ...data,
                         sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
-                        initial_facility_address: data.facility_address,
                     },
                 },
             }),
@@ -224,7 +222,6 @@ export default createReducer(
                         ...data,
                         sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
-                        initial_facility_address: data.facility_address,
                     },
                 },
             }),
@@ -317,15 +314,6 @@ export default createReducer(
                     facility_production_types: {
                         $set: orderBy(productionTypes, identity),
                     },
-                },
-            }),
-        [updateClaimedFacilityLocation]: (state, location) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    facility_location: { $set: location },
                 },
             }),
         [updateClaimedSector]: (state, sectors) =>

@@ -583,7 +583,84 @@ class ClaimedDetailsEditRecordsContributionTest(ClaimContributionTestBase):
         geocode.assert_not_called()
         self.facility.refresh_from_db()
         self.assertPointEqual(self.facility.location, 0, 0)
+        # By design: the claim's stored pin is dropped with the address it
+        # belonged to, and nothing replaces it or notes it while the
+        # pin-move switch is off.
+        claim.refresh_from_db()
+        self.assertIsNone(claim.facility_location)
+        self.assertEqual(0, self.pin_notes(claim).count())
         self.assertEqual(2, self.claim_events(claim).count())
+
+    @patch(GEOCODE_PATH)
+    def test_name_only_edit_does_not_geocode_an_unpinned_address(
+        self, geocode
+    ):
+        # An approximate result leaves the claimed address without a pin.
+        # A later name-only edit must not try the geocoder again: it
+        # would write another review note on every save and could move
+        # the pin on a name change if the geocoder answered differently.
+        geocode.return_value = geocode_result(
+            0.01, 0.02, location_type='APPROXIMATE'
+        )
+        claim = self.make_approved_claim()
+        self.put_claimed(claim, facility_address='2 New Street')
+        self.assertEqual(1, geocode.call_count)
+        self.assertEqual(1, self.pin_notes(claim).count())
+        claim.refresh_from_db()
+        self.assertEqual('2 New Street', claim.facility_address)
+
+        geocode.return_value = geocode_result(0.01, 0.02)
+        self.put_claimed(claim, facility_name_english='Renamed')
+
+        self.assertEqual(1, geocode.call_count)
+        self.assertEqual(1, self.pin_notes(claim).count())
+        self.facility.refresh_from_db()
+        self.assertPointEqual(self.facility.location, 0, 0)
+        claim.refresh_from_db()
+        self.assertIsNone(claim.facility_location)
+        self.assertEqual(3, self.claim_events(claim).count())
+        item = FacilityListItem.objects.get(
+            moderation_event=self.claim_events(claim).last()
+        )
+        self.assertEqual('Renamed', item.name)
+        self.assertEqual('2 New Street', item.address)
+
+    @patch(GEOCODE_PATH)
+    def test_first_name_asserted_through_the_form_backfills_address(
+        self, geocode
+    ):
+        # A claim approved before the fields existed asserts nothing, so
+        # approval recorded no contribution. Typing a name into the form
+        # (the address left as the location's pre-filled value) is the
+        # claimant's first assertion: it is stored, recorded with the
+        # address backfilled, and the untouched address stays NULL.
+        claim = self.make_claim()
+        self.approve(claim)
+        self.assertEqual(0, self.claim_events(claim).count())
+
+        self.put_claimed(
+            claim,
+            facility_name_english='Asserted Name',
+            facility_address='1 Original Street',
+        )
+
+        claim.refresh_from_db()
+        self.assertEqual('Asserted Name', claim.facility_name_english)
+        self.assertIsNone(claim.facility_address)
+        events = self.claim_events(claim)
+        self.assertEqual(1, events.count())
+        event = events.first()
+        self.assertEqual(self.claimant_user, event.action_perform_by)
+        self.assertEqual(['address'], event.backfilled_fields)
+        item = FacilityListItem.objects.get(moderation_event=event)
+        self.assertEqual('Asserted Name', item.name)
+        self.assertEqual('1 Original Street', item.address)
+        self.assertEqual(self.claimant, item.source.contributor)
+        geocode.assert_not_called()
+        properties = self.client.get(
+            f'/api/facilities/{self.facility.id}/'
+        ).json()['properties']
+        self.assertEqual('Asserted Name', properties['name'])
 
     @patch(GEOCODE_PATH)
     def test_update_notice_skips_claimant_and_calls_out_name_change(

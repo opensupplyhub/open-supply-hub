@@ -28,7 +28,6 @@ from ...services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
 )
-from ...geocoding import geocode_address
 from ...mail import (
     send_approved_claim_notice_to_list_contributors,
     send_claim_facility_approval_email,
@@ -672,7 +671,10 @@ class FacilityClaimViewSet(ModelViewSet):
             # the pin left by an earlier geocode is dropped first. The
             # claimed-details form always echoes the pin it was given, so
             # only a point that differs from the stored one counts as a
-            # pin the claimant placed, and that one is kept as is.
+            # pin the claimant placed, and that one is kept as is. The
+            # service is told whether the address changed at all, so a
+            # name-only edit never geocodes, even when the claim's address
+            # holds no pin from an earlier blocked geocode.
             address_changed = (
                 snapshot['facility_address']
                 != get_tracked_claim_value(claim, 'facility_address')
@@ -749,7 +751,9 @@ class FacilityClaimViewSet(ModelViewSet):
                 for field in CLAIM_NAME_ADDRESS_FIELDS
             )
             if name_or_address_changed:
-                record_claim_contribution(claim, request.user)
+                record_claim_contribution(
+                    claim, request.user, geocode=address_changed
+                )
 
             try:
                 send_claim_update_notice_to_list_contributors(
@@ -764,36 +768,6 @@ class FacilityClaimViewSet(ModelViewSet):
             raise NotFound() from exc
         except Contributor.DoesNotExist as exc:
             raise NotFound('No contributor found for that user') from exc
-
-    @action(detail=True,
-            methods=['get'],
-            url_path='geocode',
-            permission_classes=(IsRegisteredAndConfirmed,))
-    def geocode_claim_address(self, request, pk=None):
-        """
-        Reduce the potential misuse of the server-side geocoder by requiring
-        that geocode requests are made by an account with an approved claim.
-        """
-        claim = (
-            FacilityClaim
-            .objects
-            .filter(contributor=request.user.contributor)
-            .filter(status=FacilityClaimStatuses.APPROVED)
-            .get(pk=pk)
-        )
-        if request.user.contributor != claim.contributor:
-            raise NotFound()
-
-        country_code = request.query_params.get('country_code', None)
-        if country_code is None:
-            country_code = claim.facility.country_code
-
-        address = request.query_params.get('address', None)
-        if address is None:
-            raise BadRequestException('Missing address')
-
-        geocode_result = geocode_address(address, country_code)
-        return Response(geocode_result)
 
     @staticmethod
     def __stamp_claimant_update(claim):
