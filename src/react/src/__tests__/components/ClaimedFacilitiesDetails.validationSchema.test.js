@@ -15,13 +15,19 @@ describe('Claimed facility details schema: English name and address', () => {
         ).resolves.toBeTruthy();
     });
 
-    it('accepts blank, whitespace-only and null values', async () => {
+    it('rejects blank, whitespace-only and null values as required', async () => {
+        const required = {
+            errors: expect.arrayContaining([
+                'Facility name is required',
+                'Facility address is required',
+            ]),
+        };
         await expect(
             validate({ facility_name_english: '', facility_address: '   ' }),
-        ).resolves.toBeTruthy();
+        ).rejects.toMatchObject(required);
         await expect(
             validate({ facility_name_english: null, facility_address: null }),
-        ).resolves.toBeTruthy();
+        ).rejects.toMatchObject(required);
     });
 
     it('rejects values over the maximum length', async () => {

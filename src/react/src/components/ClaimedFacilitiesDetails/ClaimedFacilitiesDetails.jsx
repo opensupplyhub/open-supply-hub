@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string, object, shape } from 'prop-types';
+import { arrayOf, bool, func, string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -42,7 +42,6 @@ import {
     updateClaimedFacilityCertifications,
     updateClaimedFacilityProductTypes,
     updateClaimedFacilityProductionTypes,
-    updateClaimedFacilityLocation,
     updateClaimedSector,
     updateClaimedFacilityPhone,
     updateClaimedFacilityPhoneVisibility,
@@ -83,37 +82,30 @@ import {
     submitClaimedFacilityDetailsUpdate,
 } from '../../actions/claimedFacilityDetails';
 
-import {
-    approvedFacilityClaimPropType,
-    userPropType,
-} from '../../util/propTypes';
+import { approvedFacilityClaimPropType } from '../../util/propTypes';
 
 import {
     claimedFacilitiesDetailsStyles,
     textFieldErrorStyles,
 } from '../../util/styles';
 
-import apiRequest from '../../util/apiRequest';
-
 import {
     getValueFromEvent,
     getCheckedFromEvent,
     mapDjangoChoiceTuplesToSelectOptions,
-    makeClaimGeocoderURL,
-    logErrorToRollbar,
 } from '../../util/util';
 
 import {
-    USER_DEFAULT_STATE,
     mockedSectors,
     ENABLE_CLAIM_NAME_ADDRESS_EDIT,
-    ENABLE_CLAIM_ADDRESS_PIN_MOVE,
     contributeProductionLocationRoute,
 } from '../../util/constants';
 import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
 import { freeEmissionsEstimateFormConfig } from '../FreeEmissionsEstimate/constants.jsx';
 import YearPicker from '../FreeEmissionsEstimate/YearPicker.jsx';
-import claimedFacilityDetailsSchema from './validationSchema';
+import claimedFacilityDetailsSchema, {
+    claimedFacilityDetailsBaseSchema,
+} from './validationSchema';
 
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
@@ -143,10 +135,6 @@ const mergedStyles = {
 };
 
 function ClaimedFacilitiesDetails({
-    user,
-    match: {
-        params: { claimID },
-    },
     fetching,
     errors,
     data,
@@ -155,7 +143,6 @@ function ClaimedFacilitiesDetails({
     updateFacilityNameNativeLanguage,
     updateFacilityNameEnglish,
     updateFacilityAddress,
-    updateFacilityLocation,
     updateSector,
     updateFacilityPhone,
     updateFacilityWebsite,
@@ -188,7 +175,6 @@ function ClaimedFacilitiesDetails({
     energyEnabledUpdaters,
     userHasSignedIn,
     isNameAddressEditable,
-    isAddressPinMoveEnabled,
     classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
@@ -218,61 +204,14 @@ function ClaimedFacilitiesDetails({
         }
     }, [isSavingForm, setIsSavingForm, updating, errorUpdating]);
 
-    const geocodeDataToGeoJSON = geocodedData => ({
-        type: 'Point',
-        coordinates: [
-            geocodedData.geocoded_point.lng,
-            geocodedData.geocoded_point.lat,
-        ],
-    });
-
-    // The PUT propagates the returned point to the production location pin,
-    // so only an address the claimant actually changed is geocoded, and only
-    // while the enable_claim_address_pin_move switch is on: re-geocoding an
-    // unchanged address could displace a pin somebody positioned by hand,
-    // and while the switch is off the pin is not meant to follow the
-    // address at all. A cleared address resolves to no point, which the
-    // backend treats as reverting the pin.
-    const geocodeAddress = (address, initialAddress, initialLocation) => {
-        if (!(address || '').trim()) {
-            return Promise.resolve(null);
-        }
-        if (address === initialAddress || !isAddressPinMoveEnabled) {
-            return Promise.resolve(initialLocation);
-        }
-        return apiRequest
-            .get(makeClaimGeocoderURL(claimID), {
-                params: {
-                    address,
-                },
-            })
-            .then(({ data: geocodedData }) => {
-                if (geocodedData?.result_count === 0) {
-                    throw new Error(
-                        'There was a problem finding a location for the specified address',
-                    );
-                }
-                return geocodeDataToGeoJSON(geocodedData);
-            });
-    };
-
+    // A changed address is geocoded by the backend when it records the
+    // contribution, with the same guards as claim approval (no move on an
+    // approximate result, a review note when the pin stays). The form only
+    // sends back the pin it was given, which the backend reads as "the
+    // claimant did not place a pin".
     const saveForm = () => {
-        geocodeAddress(
-            data.facility_address,
-            data.initial_facility_address,
-            data.facility_location,
-        )
-            .then(location => {
-                updateFacilityLocation(location);
-                submitUpdate();
-                setIsSavingForm(true);
-            })
-            .catch(err => {
-                toast.error(
-                    'There was a problem finding a location for the specified address',
-                );
-                logErrorToRollbar(window, err, user);
-            });
+        submitUpdate();
+        setIsSavingForm(true);
     };
 
     const facilityData = data || {};
@@ -294,9 +233,13 @@ function ClaimedFacilitiesDetails({
         [facilityData, isNameAddressEditable],
     );
 
+    const claimedValidationSchema = isNameAddressEditable
+        ? claimedFacilityDetailsSchema
+        : claimedFacilityDetailsBaseSchema;
+
     const claimedValidationErrors = useMemo(() => {
         try {
-            claimedFacilityDetailsSchema.validateSync(claimedValidationValues, {
+            claimedValidationSchema.validateSync(claimedValidationValues, {
                 abortEarly: false,
             });
             return {};
@@ -311,7 +254,7 @@ function ClaimedFacilitiesDetails({
             }
             return {};
         }
-    }, [claimedValidationValues]);
+    }, [claimedValidationSchema, claimedValidationValues]);
 
     const getClaimedValidationError = key => claimedValidationErrors[key];
     const hasClaimedValidationErrors = !isEmpty(claimedValidationErrors);
@@ -559,13 +502,11 @@ function ClaimedFacilitiesDetails({
                                                 match the name and address on
                                                 the documents or web page you
                                                 submitted to verify your claim.
-                                                Leave a field blank to keep the
-                                                name or address currently listed
-                                                on Open Supply Hub. If this
-                                                production location has moved to
-                                                a new address, do not edit the
-                                                address here. Instead, submit
-                                                the new location through the{' '}
+                                                If this production location has
+                                                moved to a new address, do not
+                                                edit the address here. Instead,
+                                                submit the new location through
+                                                the{' '}
                                                 <Link
                                                     to={
                                                         contributeProductionLocationRoute
@@ -1018,21 +959,13 @@ function ClaimedFacilitiesDetails({
 }
 
 ClaimedFacilitiesDetails.defaultProps = {
-    user: USER_DEFAULT_STATE,
     errors: null,
     data: null,
     errorUpdating: null,
     isNameAddressEditable: false,
-    isAddressPinMoveEnabled: false,
 };
 
 ClaimedFacilitiesDetails.propTypes = {
-    user: userPropType,
-    match: shape({
-        params: shape({
-            claimID: string.isRequired,
-        }).isRequired,
-    }).isRequired,
     fetching: bool.isRequired,
     errors: arrayOf(string),
     data: approvedFacilityClaimPropType,
@@ -1041,7 +974,6 @@ ClaimedFacilitiesDetails.propTypes = {
     updateFacilityNameNativeLanguage: func.isRequired,
     updateFacilityNameEnglish: func.isRequired,
     updateFacilityAddress: func.isRequired,
-    updateFacilityLocation: func.isRequired,
     updateSector: func.isRequired,
     updateFacilityWorkersCount: func.isRequired,
     updateFacilityFemaleWorkersPercentage: func.isRequired,
@@ -1074,7 +1006,6 @@ ClaimedFacilitiesDetails.propTypes = {
     energyEnabledUpdaters: object.isRequired,
     userHasSignedIn: bool.isRequired,
     isNameAddressEditable: bool,
-    isAddressPinMoveEnabled: bool,
     classes: object.isRequired,
 };
 
@@ -1090,7 +1021,6 @@ function mapStateToProps({
     featureFlags: { flags },
 }) {
     return {
-        user,
         fetching: fetchingData,
         data,
         errors: error || errorUpdating,
@@ -1098,7 +1028,6 @@ function mapStateToProps({
         errorUpdating,
         userHasSignedIn: !user.isAnon,
         isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
-        isAddressPinMoveEnabled: !!flags[ENABLE_CLAIM_ADDRESS_PIN_MOVE],
     };
 }
 
@@ -1131,8 +1060,6 @@ function mapDispatchToProps(
         updateFacilityAddress: makeDispatchValueFn(
             updateClaimedFacilityAddress,
         ),
-        updateFacilityLocation: location =>
-            dispatch(updateClaimedFacilityLocation(location)),
         updateSector: makeDispatchMultiSelectFn(updateClaimedSector),
         updateFacilityPhone: makeDispatchValueFn(updateClaimedFacilityPhone),
         updateFacilityPhoneVisibility: makeDispatchCheckedFn(

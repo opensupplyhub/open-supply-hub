@@ -25,6 +25,7 @@ from api.constants import (
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
 from ...services.claim_contribution_service import (
+    CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
 )
 from ...geocoding import geocode_address
@@ -131,6 +132,12 @@ CLAIM_NAME_ADDRESS_FIELDS = (
     'facility_address',
 )
 
+# The production location field each claim field replaces when asserted.
+CLAIM_NAME_ADDRESS_FACILITY_FIELDS = {
+    'facility_name_english': 'name',
+    'facility_address': 'address',
+}
+
 CLAIM_NAME_ADDRESS_MAX_LENGTH = FacilityClaim._meta.get_field(
     'facility_name_english'
 ).max_length
@@ -161,13 +168,24 @@ CLAIM_PROFILE_TRACKED_FIELDS = (
 )
 
 
-def validate_claimed_name_address(data):
+def validate_claimed_name_address(data, claim):
     """Validate and normalize the name and address of a claimed-details
-    PUT with the rules the claim form applies at submission: stripped,
-    blank stored as NULL, at most the column length, and never only
-    punctuation or whitespace. Returns {field_name: value_or_None}.
-    Raises ValidationError, keyed by field, for a rejected value.
+    PUT with the rules the claim form applies at submission: stripped, at
+    most the column length, and never only punctuation or whitespace.
+    Returns {field_name: value_or_None}. Raises ValidationError, keyed by
+    field, for a rejected value.
+
+    While the enable_claim_name_address_edit switch is on both values are
+    required: the form shows them pre-filled with the values the location
+    currently lists, so a blank can only be a deliberate deletion, and a
+    claim with no name or address would fall back to those values anyway.
+    Echoing the location's current value back for a claim that does not
+    assert its own keeps the claim's NULL: nothing new is being asserted,
+    so nothing should be recorded, and the claimed section's "last
+    updated" date should not move. With the switch off blank is stored as
+    NULL, as before the fields were editable.
     """
+    required = switch_is_active(CLAIM_NAME_ADDRESS_EDIT_SWITCH)
     normalized = {}
     for field_name in CLAIM_NAME_ADDRESS_FIELDS:
         value = data.get(field_name)
@@ -179,11 +197,21 @@ def validate_claimed_name_address(data):
                 f'{CLAIM_NAME_ADDRESS_MAX_LENGTH} characters.'
             ]})
         try:
-            normalized[field_name] = validate_claimed_name_or_address(
-                field_name, value
-            )
+            value = validate_claimed_name_or_address(field_name, value)
         except ValidationError as exc:
             raise ValidationError({field_name: exc.detail}) from exc
+        if value is None and required:
+            raise ValidationError({field_name: ['This field is required.']})
+        if (
+            value is not None
+            and getattr(claim, field_name) is None
+            and value == getattr(
+                claim.facility,
+                CLAIM_NAME_ADDRESS_FACILITY_FIELDS[field_name],
+            )
+        ):
+            value = None
+        normalized[field_name] = value
     return normalized
 
 
@@ -525,7 +553,7 @@ class FacilityClaimViewSet(ModelViewSet):
             }
 
             claimed_name_address = validate_claimed_name_address(
-                request.data
+                request.data, claim
             )
 
             prev_location = claim.facility_location
@@ -636,6 +664,32 @@ class FacilityClaimViewSet(ModelViewSet):
             for field_name, value in claimed_name_address.items():
                 setattr(claim, field_name, value)
 
+            # A changed address is geocoded by record_claim_contribution,
+            # which moves the pin under the same guards as claim approval
+            # (nothing while enable_claim_address_pin_move is off, no move
+            # on an approximate result, a review note when the pin stays).
+            # The service geocodes only when the claim holds no pin, so
+            # the pin left by an earlier geocode is dropped first. The
+            # claimed-details form always echoes the pin it was given, so
+            # only a point that differs from the stored one counts as a
+            # pin the claimant placed, and that one is kept as is.
+            address_changed = (
+                snapshot['facility_address']
+                != get_tracked_claim_value(claim, 'facility_address')
+            )
+            claimant_placed_pin = (
+                claim.facility_location is not None
+                and claim.facility_location != prev_location
+            )
+            regeocode_address = (
+                address_changed
+                and claim.facility_address is not None
+                and not claimant_placed_pin
+                and switch_is_active(CLAIM_NAME_ADDRESS_EDIT_SWITCH)
+            )
+            if regeocode_address:
+                claim.facility_location = None
+
             # Skip the save (and its side effects: updated_at bump, claim
             # reindex trigger, extended-field rebuild, notification email)
             # when no tracked value actually changed.
@@ -650,6 +704,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)
 
+            # Read the diff now: the contribution recording below may save
+            # the claim again (to store a geocoded pin), and the notice
+            # email would otherwise report only that later save.
+            changes = claim.get_changes()
+
             create_extendedfields_for_claim(claim)
 
             # Conditionally update the facility location if it was changed on
@@ -662,6 +721,10 @@ class FacilityClaimViewSet(ModelViewSet):
                         'Location updated on FacilityClaim ({})'.format(
                             claim.id)
                     claim.facility.save()
+            elif regeocode_address:
+                # The pin follows the new address, or stays, as the
+                # contribution recording decides.
+                pass
             else:
                 if prev_location is not None:
                     claim.facility.location = \
@@ -689,7 +752,9 @@ class FacilityClaimViewSet(ModelViewSet):
                 record_claim_contribution(claim, request.user)
 
             try:
-                send_claim_update_notice_to_list_contributors(request, claim)
+                send_claim_update_notice_to_list_contributors(
+                    request, claim, changes
+                )
             except Exception:
                 _report_facility_claim_email_error_to_rollbar(claim)
 

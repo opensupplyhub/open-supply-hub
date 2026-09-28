@@ -138,7 +138,6 @@ const renderComponent = (overrides = {}) =>
             updateFacilityNameNativeLanguage={jest.fn()}
             updateFacilityNameEnglish={jest.fn()}
             updateFacilityAddress={jest.fn()}
-            updateFacilityLocation={jest.fn()}
             updateSector={jest.fn()}
             updateFacilityPhone={jest.fn()}
             updateFacilityWebsite={jest.fn()}
@@ -226,7 +225,7 @@ describe('ClaimedFacilitiesDetails', () => {
             screen.queryByTestId('input-Facility address'),
         ).not.toBeInTheDocument();
         expect(
-            screen.queryByText(/Leave a field blank to keep the name/),
+            screen.queryByText(/should match the name and address/),
         ).not.toBeInTheDocument();
         expect(
             screen.getByTestId('input-Facility name (native language)'),
@@ -243,13 +242,32 @@ describe('ClaimedFacilitiesDetails', () => {
             screen.getByTestId('input-Facility address'),
         ).toBeInTheDocument();
         expect(
-            screen.getByText(/Leave a field blank to keep the name/),
+            screen.getByText(/should match the name and address/),
         ).toBeInTheDocument();
         expect(
             screen.getByRole('link', {
                 name: /Single Location Contribution form/,
             }),
         ).toHaveAttribute('href', '/contribute/single-location');
+    });
+
+    it('requires the English name and address while the switch is on', () => {
+        renderComponent({
+            isNameAddressEditable: true,
+            data: {
+                ...baseClaimData,
+                facility_name_english: '',
+                facility_address: '   ',
+            },
+        });
+
+        expect(
+            screen.getByText('Facility name is required'),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('Facility address is required'),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 
     it('does not let a hidden English name block saving while the switch is off', () => {
