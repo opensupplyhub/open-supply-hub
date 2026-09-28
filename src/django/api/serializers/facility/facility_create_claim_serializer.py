@@ -57,10 +57,13 @@ def validate_claimed_name_or_address(field_name, value):
     '''
     Strip and normalize a claimed name or address: blank becomes None
     (the model columns are nullable and the tracked-change logic treats
-    NULL and '' as equal), and a value that cleans to nothing - only
-    punctuation or whitespace - is rejected with ContriCleaner's wording,
-    since that is the rule the value must pass when it is recorded as a
-    contribution at approval.
+    NULL and '' as equal), and a value that ContriCleaner's clean()
+    reduces to nothing is rejected with ContriCleaner's wording, since
+    that is the rule the value must pass when it is recorded as a
+    contribution at approval. clean() only strips whitespace and a fixed
+    set of characters (newlines, -, /, ', ,, : and surrounding quotes), so
+    other punctuation-only values such as '...' pass here just as they
+    would in a list upload.
     '''
     if value is None:
         return None
