@@ -145,8 +145,9 @@ contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-
 # OSDEV-3375: paused pending reconciliation of the 9/18 activation's duplicate
 # cards. Board-target decision resolved: AWS keeps posting to the live
 # approval queue alongside legacy (mixed cards accepted, not a separate
-# parallel-run board). Flip to true to re-enable; the DynamoDB cursor is
-# untouched, so it resumes from where it stopped rather than backfilling.
+# parallel-run board). Leave paused until those duplicate cards have been
+# reconciled, then flip to true; the DynamoDB cursor is untouched, so it
+# resumes from where it stopped rather than backfilling.
 contribot_schedule_enabled = false
 contribot_monday_board_id = "3514246658"
 contribot_last_list_id = "9684"
