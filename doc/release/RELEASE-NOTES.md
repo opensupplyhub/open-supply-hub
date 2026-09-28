@@ -25,6 +25,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-3525](https://opensupplyhub.atlassian.net/browse/OSDEV-3525) - Updated the local-development `minio` service image from `quay.io/minio/minio` to `ghcr.io/opensupplyhub/minio` (same pinned tag `RELEASE.2025-09-07T16-13-09Z`). Quay.io began blocking anonymous pulls on 2026-09-23, breaking `start_code_quality_dev` and every other workflow that runs `docker compose up` locally. MinIO has no official AWS ECR Public Gallery image (`public.ecr.aws/minio/minio` does not exist — their request for it was closed as out of scope). The fix is a mirror pushed to OS Hub's GitHub Container Registry namespace (`ghcr.io/opensupplyhub/minio`), which allows anonymous pulls without credentials. The long-term fix (automated mirroring to OS Hub's own ECR account) is tracked in [OSDEV-3453](https://opensupplyhub.atlassian.net/browse/OSDEV-3453).
+* [OSDEV-3530](https://opensupplyhub.atlassian.net/browse/OSDEV-3530) - Updated terraform global configuration to enable `Block Public Access` setting for account-level.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
