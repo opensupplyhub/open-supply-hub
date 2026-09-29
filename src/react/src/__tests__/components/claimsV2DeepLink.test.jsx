@@ -92,3 +92,22 @@ describe('ClaimsV2Dashboard ?claim deep link', () => {
         );
     });
 });
+
+describe('ClaimsV2Dashboard initial-load failure', () => {
+    it('shows the error and Retry instead of an eternal spinner', async () => {
+        window.history.replaceState(null, '', '/dashboard/claims-v2');
+        apiRequest.get.mockReset();
+        apiRequest.get.mockRejectedValue(new Error('network'));
+
+        render(<ClaimsV2Dashboard />);
+
+        // Previously: `loaded` never became true, so initialLoading kept
+        // returning the spinner and this branch was unreachable.
+        expect(
+            await screen.findByText(
+                'An error prevented fetching the claims list.',
+            ),
+        ).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
+    });
+});

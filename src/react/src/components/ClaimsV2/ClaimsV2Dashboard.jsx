@@ -421,7 +421,10 @@ export default function ClaimsV2Dashboard() {
     // Full-page spinner only before the first response; a refresh after
     // an action keeps the (stale) queue on screen instead of blanking
     // the whole workspace (OSDEV-3357).
-    if (initialLoading) {
+    // The !error gate matters: a failed FIRST load leaves `loaded`
+    // false forever, so without it the spinner would never yield to
+    // the error/Retry branch below (CodeRabbit finding on #1301).
+    if (initialLoading && !error) {
         return <CircularProgress size={50} />;
     }
     if (error && claims.length === 0) {
