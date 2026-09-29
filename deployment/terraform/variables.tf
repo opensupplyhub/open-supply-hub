@@ -1280,6 +1280,18 @@ variable "contribot_schedule_expression" {
   default     = "rate(5 minutes)"
 }
 
+variable "contribot_schedule_enabled" {
+  type        = bool
+  description = <<-EOT
+    Whether the ContriBot fetch and retry schedules are active. Set to false to
+    pause the instance without destroying anything -- the DynamoDB cursor is
+    left untouched, so re-enabling resumes from where it stopped. Both rules are
+    governed together: disabling only the fetch rule leaves the retry rule
+    re-driving FAILED lists.
+  EOT
+  default     = true
+}
+
 variable "contribot_last_list_id" {
   type        = string
   description = "Initial fetch_lists resume watermark when the DynamoDB cursor item is missing or invalid."

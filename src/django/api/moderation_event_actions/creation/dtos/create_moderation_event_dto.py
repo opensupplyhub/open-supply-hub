@@ -6,6 +6,7 @@ from rest_framework import status
 from api.models.moderation_event import ModerationEvent
 from api.models.contributor.contributor import Contributor
 from api.models.facility.facility import Facility
+from api.models.facility.facility_claim import FacilityClaim
 
 
 @dataclass
@@ -24,3 +25,6 @@ class CreateModerationEventDTO:
     duplicate_override: bool = False
     ignore_warnings: bool = False
     warnings: List[Dict] = field(default_factory=list)
+    # Set only for CLAIM events: the claim whose name and address the
+    # event records as a contribution.
+    claim: FacilityClaim = None

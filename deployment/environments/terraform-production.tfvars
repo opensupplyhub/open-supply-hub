@@ -142,8 +142,15 @@ vanta_assumed_role_principals_secret_name = "oshub/production/vanta-assumed-role
 anonymizer_destination_aws_account_secret_name = "oshub/production/anonymizer-destination-aws-account"
 anonymizer_kms_key_admin_users_secret_name = "oshub/production/anonymizer-kms-key-admin-users"
 contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-token"
+# OSDEV-3375: paused pending reconciliation of the 9/18 activation's duplicate
+# cards. Board-target decision resolved: AWS keeps posting to the live
+# approval queue alongside legacy (mixed cards accepted, not a separate
+# parallel-run board). Leave paused until those duplicate cards have been
+# reconciled, then flip to true; the DynamoDB cursor is untouched, so it
+# resumes from where it stopped rather than backfilling.
+contribot_schedule_enabled = false
 contribot_monday_board_id = "3514246658"
-contribot_last_list_id = "9636"
+contribot_last_list_id = "9684"
 contribot_google_drive_shared_directory_id = "1eRc0dlAvlo467NfGZI0PoE1TX2J7xTg0"
 contribot_monday_api_key_secret_name = "oshub/production/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/production/contribot-slack-api-url"

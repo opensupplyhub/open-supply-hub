@@ -208,7 +208,12 @@ class FacilityClaim(models.Model):
         max_length=200,
         null=True,
         blank=True,
-        help_text='Not editable official English facility name for the claim.',
+        help_text=(
+            'The official English facility name asserted by the claimant. '
+            'Editable through the claim form and the claimed-details form; '
+            'promoted on the production location page while the claim is '
+            'approved.'
+        ),
         verbose_name='facility name in English')
     facility_name_native_language = models.CharField(
         max_length=200,
@@ -221,7 +226,11 @@ class FacilityClaim(models.Model):
         null=True,
         blank=True,
         verbose_name='address',
-        help_text='Not editable facility address for this claim.')
+        help_text=(
+            'The facility address asserted by the claimant. Editable '
+            'through the claim form and the claimed-details form; promoted '
+            'on the production location page while the claim is approved.'
+        ))
     facility_location = gis_models.PointField(
         null=True,
         verbose_name='location',
