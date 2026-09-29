@@ -28,6 +28,9 @@ from ...services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
 )
+from ...services.facility_claim_review_note_service import (
+    create_review_note,
+)
 from ...mail import (
     send_approved_claim_notice_to_list_contributors,
     send_claim_facility_approval_email,
@@ -48,9 +51,6 @@ from ...models.extended_field import ExtendedField
 from ...models.facility.facility_claim import FacilityClaim
 from ...models.facility.facility_claim_attachments import (
     FacilityClaimAttachments
-)
-from ...models.facility.facility_claim_review_note import (
-    FacilityClaimReviewNote
 )
 from ...models.facility.facility import Facility
 from ...permissions import (
@@ -376,11 +376,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             create_extendedfields_for_claim(claim)
 
@@ -436,11 +432,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             send_claim_facility_denial_email(request, claim)
 
@@ -480,11 +472,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             send_claim_facility_revocation_email(request, claim)
 
@@ -510,11 +498,11 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=request.data.get('note'),
-                note_type=FacilityClaimReviewNoteTypes.INTERNAL,
+            create_review_note(
+                claim,
+                request.user,
+                request.data.get('note'),
+                FacilityClaimReviewNoteTypes.INTERNAL,
             )
 
             response_data = FacilityClaimDetailsSerializer(claim).data

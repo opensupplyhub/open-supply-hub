@@ -7,7 +7,6 @@ from waffle import switch_is_active
 from api.models import (
     FacilityList,
     FacilityClaim,
-    FacilityClaimReviewNote,
     ModerationEvent,
     Facility
 )
@@ -15,6 +14,9 @@ from countries.lib.countries import COUNTRY_NAMES
 from api.constants import (
     FacilityClaimReviewNoteTypes,
     FacilityClaimStatuses,
+)
+from api.services.facility_claim_review_note_service import (
+    create_review_note,
 )
 
 
@@ -129,11 +131,11 @@ def send_message_to_claimant_email(request, facility_claim, message):
     stage derivation; a record-less duplicate email is the cheaper
     failure.
     """
-    FacilityClaimReviewNote.objects.create(
-        claim=facility_claim,
-        author=request.user,
-        note=message,
-        note_type=FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
+    create_review_note(
+        facility_claim,
+        request.user,
+        message,
+        FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
     )
 
     subj_template = get_template('mail/message_claimant_subject.txt')
@@ -274,11 +276,11 @@ def send_claim_updated_by_claimant_notice(request, facility_claim, changes):
 
     message = text_template.render(notice_dictionary)
 
-    FacilityClaimReviewNote.objects.create(
-        claim=facility_claim,
-        author=request.user,
-        note=message,
-        note_type=FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+    create_review_note(
+        facility_claim,
+        request.user,
+        message,
+        FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
     )
 
     sent_count = send_mail(

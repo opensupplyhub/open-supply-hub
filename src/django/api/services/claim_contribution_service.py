@@ -24,12 +24,8 @@ from typing import Dict, Optional, Tuple
 from django.contrib.gis.geos import Point
 from waffle import switch_is_active
 
-from api.constants import FacilityClaimReviewNoteTypes
 from api.geocoding import geocode_address
 from api.models.facility.facility_claim import FacilityClaim
-from api.models.facility.facility_claim_review_note import (
-    FacilityClaimReviewNote,
-)
 from api.models.moderation_event import ModerationEvent
 from api.models.sector import Sector
 from api.models.user import User
@@ -42,6 +38,9 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
     import CreateModerationEventDTO
 from api.moderation_event_actions.creation.moderation_event_creator import (
     ModerationEventCreator,
+)
+from api.services.facility_claim_review_note_service import (
+    create_review_note,
 )
 from contricleaner.lib.helpers.clean import clean
 
@@ -251,7 +250,7 @@ def _resolve_location(
         log.exception(
             f'{LOG_PREFIX} Geocoding failed for claim {claim.id}.'
         )
-        _add_note(
+        create_review_note(
             claim, acting_user,
             'The claimed address could not be geocoded (geocoder error: '
             f'{err}). The location pin was left where it was.'
@@ -259,7 +258,7 @@ def _resolve_location(
         return current, None
 
     if not geocode_result.get('result_count'):
-        _add_note(
+        create_review_note(
             claim, acting_user,
             'The claimed address returned no geocoding results. The '
             'location pin was left where it was.'
@@ -271,7 +270,7 @@ def _resolve_location(
 
     blocker = _pin_move_blocker(geocode_result)
     if blocker:
-        _add_note(
+        create_review_note(
             claim, acting_user,
             f'The claimed address geocoded to {point.y:.5f}, {point.x:.5f} '
             f'but the location pin was not moved: {blocker}'
@@ -324,12 +323,3 @@ def _geocode_location_type(geocode_result: Dict) -> Optional[str]:
         if geometry.get('location') == target:
             return geometry.get('location_type')
     return None
-
-
-def _add_note(claim: FacilityClaim, author: User, text: str) -> None:
-    FacilityClaimReviewNote.objects.create(
-        claim=claim,
-        author=author,
-        note=text,
-        note_type=FacilityClaimReviewNoteTypes.INTERNAL,
-    )
