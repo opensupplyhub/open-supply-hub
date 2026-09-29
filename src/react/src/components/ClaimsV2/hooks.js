@@ -65,7 +65,8 @@ export const useClaimsList = (statuses = 'PENDING') => {
     return {
         claims,
         fetching,
-        initialLoading: fetching && !loaded,
+        loaded,
+        initialLoading: !loaded,
         error,
         refetchClaims,
     };

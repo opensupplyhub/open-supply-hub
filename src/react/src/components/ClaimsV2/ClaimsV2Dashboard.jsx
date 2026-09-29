@@ -297,6 +297,7 @@ export default function ClaimsV2Dashboard() {
     const {
         claims,
         fetching,
+        loaded,
         initialLoading,
         error,
         refetchClaims,
@@ -344,11 +345,13 @@ export default function ClaimsV2Dashboard() {
      * Auto-select the first visible claim on load, and move the
      * selection back into view when a filter change hides it —
      * the workspace should never show a claim absent from the rail.
-     * Inert while fetching so an in-flight load can't clobber a
-     * ?claim deep-link selection before the list arrives.
+     * Inert until the first load completes AND no fetch is in flight:
+     * `fetching` alone is not enough — it is still false during the
+     * first commit (the fetch effect hasn't run yet), and this effect
+     * would clobber a ?claim deep-link selection with an empty list.
      */
     useEffect(() => {
-        if (fetching) {
+        if (fetching || !loaded) {
             return;
         }
         if (visibleIds.length === 0) {
@@ -356,7 +359,7 @@ export default function ClaimsV2Dashboard() {
         } else if (!visibleIds.includes(selectedClaimID)) {
             setSelectedClaimID(visibleIds[0]);
         }
-    }, [fetching, visibleIds, selectedClaimID]);
+    }, [fetching, loaded, visibleIds, selectedClaimID]);
 
     /*
      * Mirror the selection into ?claim= so the browser URL is always a
@@ -433,43 +436,60 @@ export default function ClaimsV2Dashboard() {
     }
 
     return (
-        <div style={styles.shell}>
-            <QueueRail
-                groups={groups}
-                visibleCount={visibleIds.length}
-                selectedClaimID={selectedClaimID}
-                onSelect={setSelectedClaimID}
-                query={query}
-                onQueryChange={setQuery}
-                region={region}
-                onRegionChange={setRegion}
-                regions={regions}
-                sort={sort}
-                onToggleSort={() =>
-                    setSort(current =>
-                        current === SORT_ORDERS.OLDEST
-                            ? SORT_ORDERS.NEWEST
-                            : SORT_ORDERS.OLDEST,
-                    )
-                }
-                searchInputRef={searchInputRef}
-                railCollapsed={railCollapsed}
-                onToggleRail={() => setRailCollapsed(current => !current)}
-                collapsed={collapsedStages}
-                onToggleSection={stage =>
-                    setCollapsedStages(prev => ({
-                        ...prev,
-                        [stage]: !prev[stage],
-                    }))
-                }
-                now={nowTick}
-            />
-            <main style={styles.workspace}>
-                <ClaimWorkspace
-                    claimID={selectedClaimID}
-                    onDecided={refetchClaims}
+        <>
+            {/* A refresh failure must be visible, not silent — but with
+                a list already loaded it stays inline instead of
+                replacing the workspace. */}
+            {error && (
+                <Typography
+                    variant="body1"
+                    style={styles.evidenceHint}
+                    role="alert"
+                >
+                    {error}{' '}
+                    <button type="button" onClick={refetchClaims}>
+                        Retry
+                    </button>
+                </Typography>
+            )}
+            <div style={styles.shell}>
+                <QueueRail
+                    groups={groups}
+                    visibleCount={visibleIds.length}
+                    selectedClaimID={selectedClaimID}
+                    onSelect={setSelectedClaimID}
+                    query={query}
+                    onQueryChange={setQuery}
+                    region={region}
+                    onRegionChange={setRegion}
+                    regions={regions}
+                    sort={sort}
+                    onToggleSort={() =>
+                        setSort(current =>
+                            current === SORT_ORDERS.OLDEST
+                                ? SORT_ORDERS.NEWEST
+                                : SORT_ORDERS.OLDEST,
+                        )
+                    }
+                    searchInputRef={searchInputRef}
+                    railCollapsed={railCollapsed}
+                    onToggleRail={() => setRailCollapsed(current => !current)}
+                    collapsed={collapsedStages}
+                    onToggleSection={stage =>
+                        setCollapsedStages(prev => ({
+                            ...prev,
+                            [stage]: !prev[stage],
+                        }))
+                    }
+                    now={nowTick}
                 />
-            </main>
-        </div>
+                <main style={styles.workspace}>
+                    <ClaimWorkspace
+                        claimID={selectedClaimID}
+                        onDecided={refetchClaims}
+                    />
+                </main>
+            </div>
+        </>
     );
 }
