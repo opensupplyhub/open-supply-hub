@@ -46,6 +46,17 @@ class FacilityManager(models.Manager):
     * Reverse FK managers on a Facility instance
       (``facility.facilitymatch_set``) belong to the related model and are
       unaffected.
+    * ``ForeignKey.validate()``, which ``full_clean()`` runs, uses
+      ``_base_manager``, so a claim or match that points at a candidate
+      still validates. ModelForm and admin FK *form fields* build their
+      choices from ``_default_manager`` instead, so an admin change form on
+      such a claim fails with "select a valid choice" (admin handling is
+      OSDEV-3379).
+    * ``validate_unique()`` and ``validate_constraints()`` also go through
+      ``_default_manager``, so form-level validation cannot see a clash
+      with a candidate's ``id`` or ``(source, external_id)``. The database
+      constraints still reject it, but as an ``IntegrityError`` rather
+      than a field error.
     """
 
     def get_queryset(self):

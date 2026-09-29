@@ -14,7 +14,11 @@ from api.models.facility.facility_manager import (
     FacilityIncludingCandidatesManager,
     FacilityManager,
 )
+from api.os_id import make_os_id
+from django import forms
 from django.contrib.gis.geos import GEOSGeometry, Point
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.db.models import Manager
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -148,13 +152,15 @@ class FacilityDefaultManagerTest(TestCase):
 
     def test_os_id_generation_avoids_candidate_ids(self):
         """save() checks new IDs against including_candidates."""
+        fresh_id = make_os_id('US')
+
         with patch(
             'api.models.facility.facility.make_os_id',
-            side_effect=[self.candidate.id, 'US2026999ZZZZZ'],
+            side_effect=[self.candidate.id, fresh_id],
         ):
             facility = self._create_facility()
 
-        self.assertEqual(facility.id, 'US2026999ZZZZZ')
+        self.assertEqual(facility.id, fresh_id)
 
     # --- Django entry points that use _default_manager --------------------
 
@@ -179,6 +185,55 @@ class FacilityDefaultManagerTest(TestCase):
         )
         with self.assertRaises(serializers.ValidationError):
             field.to_internal_value(self.candidate.id)
+
+    def test_fk_validate_accepts_a_candidate_but_form_field_rejects_it(self):
+        """full_clean() validates FKs via _base_manager; ModelForm and admin
+        FK fields build their choices from _default_manager."""
+        claim = FacilityClaim(
+            contributor=self.contributor, facility=self.candidate
+        )
+        other_fields = [
+            f.name for f in FacilityClaim._meta.fields if f.name != 'facility'
+        ]
+
+        claim.full_clean(exclude=other_fields)  # must not raise
+
+        ClaimForm = forms.modelform_factory(FacilityClaim, fields=['facility'])
+        self.assertTrue(
+            ClaimForm(data={'facility': self.facility.id}).is_valid()
+        )
+        form = ClaimForm(data={'facility': self.candidate.id})
+        self.assertFalse(form.is_valid())
+        self.assertIn('facility', form.errors)
+
+    def test_validate_unique_cannot_see_a_candidate_pk_clash(self):
+        """Form-level uniqueness runs through _default_manager, so a clash
+        with a candidate only surfaces from the database constraint."""
+        duplicate = Facility(
+            id=self.candidate.id,
+            name='Dup',
+            address='Address',
+            country_code='US',
+            location=Point(0, 0),
+            created_from=self._create_list_item(),
+        )
+
+        duplicate.validate_unique()  # passes: the candidate is invisible
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                duplicate.save(force_insert=True)
+
+        clashing_confirmed = Facility(
+            id=self.facility.id,
+            name='Dup',
+            address='Address',
+            country_code='US',
+            location=Point(0, 0),
+            created_from=self._create_list_item(),
+        )
+        with self.assertRaises(ValidationError):
+            clashing_confirmed.validate_unique()
 
     # --- AC #4: related-object traversal semantics -----------------------
 
@@ -281,4 +336,7 @@ class FacilityDefaultManagerTest(TestCase):
         qs = Facility.objects.filter_by_query_params(QueryDict('countries=US'))
 
         self.assertIs(qs.model, Facility)
-        self.assertNotIn(self.candidate, qs)
+        # The ids come from FacilityIndex, which has no row for the
+        # candidate here, so membership would pass vacuously. Check that
+        # the returned queryset itself carries the manager's filter.
+        self.assertIn('"api_facility"."is_candidate"', str(qs.query))
