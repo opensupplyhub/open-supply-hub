@@ -24,6 +24,12 @@ from api.constants import (
 )
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
+from ...services.claim_contribution_service import (
+    record_claim_contribution,
+)
+from ...services.facility_claim_review_note_service import (
+    create_review_note,
+)
 from ...geocoding import geocode_address
 from ...mail import (
     send_approved_claim_notice_to_list_contributors,
@@ -45,9 +51,6 @@ from ...models.extended_field import ExtendedField
 from ...models.facility.facility_claim import FacilityClaim
 from ...models.facility.facility_claim_attachments import (
     FacilityClaimAttachments
-)
-from ...models.facility.facility_claim_review_note import (
-    FacilityClaimReviewNote
 )
 from ...models.facility.facility import Facility
 from ...permissions import (
@@ -304,14 +307,19 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
+
+            create_extendedfields_for_claim(claim)
+
+            # Record the claimed name and address as a contribution so the
+            # location's submission history shows them, and move the pin
+            # to the claimed address where that is safe. Runs inside this
+            # transaction, before any email goes out: if it fails the
+            # approval rolls back rather than going live with its history
+            # missing.
+            record_claim_contribution(claim, request.user)
 
             send_claim_facility_approval_email(request, claim)
-            create_extendedfields_for_claim(claim)
 
             try:
                 send_approved_claim_notice_to_list_contributors(request,
@@ -355,11 +363,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             send_claim_facility_denial_email(request, claim)
 
@@ -399,11 +403,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             send_claim_facility_revocation_email(request, claim)
 
@@ -429,11 +429,11 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=request.data.get('note'),
-                note_type=FacilityClaimReviewNoteTypes.INTERNAL,
+            create_review_note(
+                claim,
+                request.user,
+                request.data.get('note'),
+                FacilityClaimReviewNoteTypes.INTERNAL,
             )
 
             response_data = FacilityClaimDetailsSerializer(claim).data
@@ -616,6 +616,16 @@ class FacilityClaimViewSet(ModelViewSet):
             # claim UPDATE and refreshes the claim-derived FacilityIndex
             # columns (including claim_info) via
             # perform_facility_claim_indexing. See OSDEV-2679.
+
+            # A changed name or address is a new contribution from the
+            # claimant: record it so the submission history keeps every
+            # value they have asserted, not just the latest.
+            name_or_address_changed = any(
+                snapshot[field] != get_tracked_claim_value(claim, field)
+                for field in ('facility_name_english', 'facility_address')
+            )
+            if name_or_address_changed:
+                record_claim_contribution(claim, request.user)
 
             try:
                 send_claim_update_notice_to_list_contributors(request, claim)

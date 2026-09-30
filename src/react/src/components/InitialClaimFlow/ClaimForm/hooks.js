@@ -75,10 +75,12 @@ export const useClaimForm = (
     onSubmit,
     emissionsHasErrors,
     clearSubmissionError,
+    isNameAddressEditable = false,
 ) => {
+    const schemaOptions = { isNameAddressEditable };
     const formik = useFormik({
         initialValues,
-        validationSchema: getValidationSchemaForStep(activeStep),
+        validationSchema: getValidationSchemaForStep(activeStep, schemaOptions),
         onSubmit,
     });
 
@@ -89,7 +91,9 @@ export const useClaimForm = (
      * changes.
      */
     useEffect(() => {
-        const schema = getValidationSchemaForStep(activeStep);
+        const schema = getValidationSchemaForStep(activeStep, {
+            isNameAddressEditable,
+        });
         const currentStepFields = Object.keys(schema.describe().fields);
 
         // Mark fields with values as touched when returning to a step.
@@ -105,7 +109,7 @@ export const useClaimForm = (
             // Validate to populate errors for current step.
             formik.validateForm();
         }
-    }, [activeStep]);
+    }, [activeStep, isNameAddressEditable]);
 
     // Custom field change handler that syncs to Redux.
     // Clears the stale server error banner; setFieldValue(..., true) revalidates
@@ -137,7 +141,7 @@ export const useClaimForm = (
 
     // Calculate button disabled state for current step.
     const getButtonDisabledState = () => {
-        const schema = getValidationSchemaForStep(activeStep);
+        const schema = getValidationSchemaForStep(activeStep, schemaOptions);
         const currentStepFields = Object.keys(schema.describe().fields);
 
         // Check if there are validation errors on touched fields only.

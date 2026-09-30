@@ -2422,6 +2422,17 @@ class FacilitiesViewSet(ListModelMixin,
                     "facility_production_types"
                 ),
                 facility_type=validated_data.get("facility_type"),
+                # The claim form sends these two fields as empty strings
+                # while the enable_claim_name_address_edit switch is off;
+                # the serializer normalizes blank to None, which is also
+                # what Django's default wrote to these nullable columns
+                # before they were passed here. Only the response shape
+                # changes: both keys are now present (as null) on claims
+                # created without them.
+                facility_name_english=validated_data.get(
+                    "facility_name_english"
+                ),
+                facility_address=validated_data.get("facility_address"),
             )
 
             sectors = validated_data.get("sectors")

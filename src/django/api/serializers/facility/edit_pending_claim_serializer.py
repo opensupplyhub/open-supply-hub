@@ -62,6 +62,8 @@ class EditPendingClaimSerializer(FacilityCreateClaimSerializer):
         'energy_other',
         'number_of_workers',
         'facility_female_workers_percentage',
+        'facility_name_english',
+        'facility_address',
     )
 
     def __init__(self, *args, **kwargs):
@@ -156,6 +158,8 @@ class PendingClaimSerializer(serializers.Serializer):
     facility_product_types = serializers.ListField()
     facility_production_types = serializers.ListField()
     facility_type = serializers.CharField()
+    facility_name_english = serializers.CharField()
+    facility_address = serializers.CharField()
 
     attachments = serializers.SerializerMethodField()
 

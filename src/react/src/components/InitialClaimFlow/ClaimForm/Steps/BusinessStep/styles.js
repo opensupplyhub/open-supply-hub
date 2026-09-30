@@ -6,6 +6,14 @@ const formLabel = Object.freeze({
     fontWeight: 600,
 });
 
+// Shared by the document upload block and the editable name/address note so
+// both span the full form width with the same spacing above them.
+const wideSectionContainer = theme =>
+    Object.freeze({
+        maxWidth: '1071px',
+        marginTop: theme.spacing.unit * 2.5,
+    });
+
 const businessStepStyles = theme =>
     Object.freeze({
         formLabel: Object.freeze({
@@ -22,10 +30,7 @@ const businessStepStyles = theme =>
                 maxWidth: '100%',
             },
         }),
-        documentUploadContainer: Object.freeze({
-            maxWidth: '1071px',
-            marginTop: theme.spacing.unit * 2.5,
-        }),
+        documentUploadContainer: wideSectionContainer(theme),
         disabledField: Object.freeze({
             cursor: 'default',
             boxSizing: 'border-box',
@@ -68,6 +73,12 @@ const businessStepStyles = theme =>
         }),
         importantNoteWrapper: Object.freeze({
             marginTop: theme.spacing.unit * 2.5,
+        }),
+        nameAddressNoteWrapper: wideSectionContainer(theme),
+        noteLink: Object.freeze({
+            color: 'inherit',
+            fontWeight: 600,
+            textDecoration: 'underline',
         }),
     });
 
