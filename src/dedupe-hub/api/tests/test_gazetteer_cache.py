@@ -373,6 +373,37 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
 
         self.assertEqual(GazetteerCache._facility_version, 120)
 
+    def test_match_marker_ahead_of_the_table_is_reconciled(self):
+        """The match half of the same reconciliation."""
+        GazetteerCache._match_version = 9000
+
+        ordered = MagicMock()
+        ordered.__iter__ = lambda self: iter([])
+        match_q = MagicMock()
+        match_q.order_by.return_value = ordered
+        filtered = MagicMock()
+        filtered.filter.return_value = match_q
+        joined = MagicMock()
+        joined.filter.return_value = []
+        facility_match_q = MagicMock()
+        facility_match_q.join.return_value = joined
+        facility_q = MagicMock()
+        facility_q.filter.return_value = []
+
+        session = MagicMock()
+        session.query.side_effect = [
+            MagicMock(**{'scalar.return_value': 150}),
+            filtered,
+            facility_match_q,
+            facility_q,
+        ]
+
+        with patch('{}.get_session'.format(MODULE)) as get_session:
+            get_session.return_value.__enter__.return_value = session
+            GazetteerCache._get_new_match_history()
+
+        self.assertEqual(GazetteerCache._match_version, 150)
+
 
 if __name__ == '__main__':
     unittest.main()

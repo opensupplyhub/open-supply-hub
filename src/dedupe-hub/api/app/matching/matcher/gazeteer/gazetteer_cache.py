@@ -33,7 +33,6 @@ MatchHistory = Tuple[
 ]
 
 
-
 class GazetteerCache:
     """
     A container for holding a single, trained and indexed Gazetteer in memory,
@@ -128,6 +127,12 @@ class GazetteerCache:
                     # anonymized dump restarts the sequence lower. Left
                     # unreconciled, the guard stays true on a permanently
                     # empty backlog and the cache stops indexing for good.
+                    # Logged because reconciling also means the rows below
+                    # the marker are never indexed by this task.
+                    logger.warning(
+                        'Facility marker %s is ahead of the table; '
+                        'reconciling to %s',
+                        cls._facility_version, db_facility_version)
                     cls._facility_version = db_facility_version
 
                 # A subquery rather than a list of bind parameters: one
@@ -182,6 +187,10 @@ class GazetteerCache:
                 )
                 if not match_changes:
                     # See the note on the facility marker above.
+                    logger.warning(
+                        'Match marker %s is ahead of the table; '
+                        'reconciling to %s',
+                        cls._match_version, db_match_version)
                     cls._match_version = db_match_version
 
                 # Selected by match id. Filtering on `history_id` — the
