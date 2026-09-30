@@ -19,6 +19,8 @@ from rest_framework.test import APITestCase
 
 from django.contrib.gis.geos import Point
 from django.core import mail
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 
 class FacilityClaimViewSetTest(APITestCase):
@@ -316,6 +318,21 @@ class FacilityClaimViewSetTest(APITestCase):
             FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
         )
 
+    def _create_bot_note(self, claim, text="Reminder email sent."):
+        # A distinct automation account, authored directly (not through
+        # message-claimant) so the note's author and the request's user
+        # are different people — the flag must key off the author.
+        # Mixed-case address on purpose: User.save() lowercases emails
+        # on write, and the comparison must survive a mixed-case
+        # setting value too.
+        bot, _ = User.objects.get_or_create(email="Data.Bot@Example.org")
+        return FacilityClaimReviewNote.objects.create(
+            claim=claim,
+            author=bot,
+            note=text,
+            note_type=FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
+        )
+
     @override_switch('claim_a_facility', active=True)
     def test_notes_flag_automation_authored_notes(self):
         # OSDEV-3357: the pipeline's notes (LLM reviews, reminder emails
@@ -325,16 +342,32 @@ class FacilityClaimViewSetTest(APITestCase):
             self.facility_claim_first.id, "Hello, claimant!"
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        moderator_note = response.data['notes'][0]
-        self.assertFalse(moderator_note['is_automated'])
+        self._create_bot_note(self.facility_claim_first)
 
+        # Mixed-case setting value: the author's stored email is
+        # lowercased, the comparison must be case-insensitive.
         with self.settings(
-            CLAIMS_AUTOMATION_ACCOUNT_EMAIL=self.superuser.email
+            CLAIMS_AUTOMATION_ACCOUNT_EMAIL="DATA.BOT@example.org"
         ):
             response = self.client.get(
                 f'/api/facility-claims/{self.facility_claim_first.id}/'
             )
-        self.assertTrue(response.data['notes'][0]['is_automated'])
+        flags = {
+            n['author']: n['is_automated'] for n in response.data['notes']
+        }
+        self.assertFalse(flags[self.superuser.email])
+        self.assertTrue(flags['data.bot@example.org'])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_empty_automation_account_setting_flags_nothing(self):
+        self._create_bot_note(self.facility_claim_first)
+        with self.settings(CLAIMS_AUTOMATION_ACCOUNT_EMAIL=''):
+            response = self.client.get(
+                f'/api/facility-claims/{self.facility_claim_first.id}/'
+            )
+        self.assertFalse(
+            any(n['is_automated'] for n in response.data['notes'])
+        )
 
     def test_message_claimant_email_points_to_pending_claim_edit(self):
         # OSDEV-2278: the email directs claimants to update their
@@ -428,3 +461,48 @@ class FacilityClaimViewSetTest(APITestCase):
             "Expected three claims for 'US' and 'TR' \
             countries with statuses 'PENDING and 'REVOKED'"
         )
+
+    @override_switch('claim_a_facility', active=True)
+    def test_both_note_payloads_agree_on_is_automated(self):
+        # deriveClaimStage has two production callers fed by different
+        # serializers: the workspace uses the detail payload's `notes`
+        # (FacilityClaimReviewNoteSerializer) and the queue rail uses
+        # the list payload's `notes_meta`
+        # (FacilityClaimDashboardSerializer). Both must report the same
+        # is_automated for the same note, or the rail and workspace
+        # derive different stages for the same claim.
+        self._post_message_claimant(self.facility_claim_first.id, "Hi")
+
+        with self.settings(
+            CLAIMS_AUTOMATION_ACCOUNT_EMAIL=self.superuser.email
+        ):
+            detail = self.client.get(
+                f'/api/facility-claims/{self.facility_claim_first.id}/'
+            )
+            listing = self.client.get('/api/facility-claims/')
+
+        claim_row = next(
+            c for c in listing.data if c['id'] == self.facility_claim_first.id
+        )
+        self.assertEqual(
+            claim_row['notes_meta'][0].get('is_automated'),
+            detail.data['notes'][0]['is_automated'],
+        )
+
+    @override_switch('claim_a_facility', active=True)
+    def test_list_query_count_does_not_climb_with_notes(self):
+        # notes_meta reads note.author.email for is_automated — the
+        # list prefetch must select_related the author or every note
+        # adds a query.
+        self._post_message_claimant(self.facility_claim_first.id, "One")
+
+        with CaptureQueriesContext(connection) as first:
+            self.client.get('/api/facility-claims/')
+
+        self._create_bot_note(self.facility_claim_first)
+        self._post_message_claimant(self.facility_claim_first.id, "Two")
+
+        with CaptureQueriesContext(connection) as second:
+            self.client.get('/api/facility-claims/')
+
+        self.assertEqual(len(first), len(second))

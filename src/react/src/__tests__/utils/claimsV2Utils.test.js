@@ -245,3 +245,21 @@ describe('automated reminder messages', () => {
         expect(result.stage).toBe(CLAIM_STAGES.AWAITING);
     });
 });
+
+describe('stage reason with automated-only outbound', () => {
+    it('does not claim the timeline is empty when a bot reminder exists', () => {
+        const result = deriveClaimStage(
+            [
+                {
+                    ...note('CLAIMANT_MESSAGE', '2026-08-25T09:00:00Z'),
+                    is_automated: true,
+                },
+            ],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.NEW);
+        expect(result.reason).toContain(
+            'automated messages do not start the reply window',
+        );
+    });
+});
