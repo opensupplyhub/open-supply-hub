@@ -99,6 +99,12 @@ from api.throttles import DataUploadThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
+from api.services.claim_quality_check_service import (
+    check_claim_quality,
+)
+from api.serializers.facility.claim_quality_check_serializer import (
+    ClaimQualityCheckSerializer,
+)
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
 
@@ -2467,6 +2473,48 @@ class FacilitiesViewSet(ListModelMixin,
             raise NotFound(detail='Facility not found.') from exc
         except Contributor.DoesNotExist as exc:
             raise NotFound(detail='Contributor not found.') from exc
+
+    @swagger_auto_schema(auto_schema=None, methods=['POST'])
+    @action(detail=True, methods=['POST'],
+            url_path='claim/quality-check',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def claim_quality_check(self, request, pk=None):
+        """
+        Advisory LLM data-quality check of the name and address a
+        claimant is about to assert for this location (OSDEV-3489),
+        called by the claim form on leaving the Business step and by
+        the claimed-details form before saving. Returns
+        {"warnings": [{type, title, message}]}, empty when nothing is
+        flagged, the check is switched off, the values are the ones
+        the location already lists, or the model call failed (the
+        check fails open). Never writes anything: a claimant who
+        continues past the warnings reports them as
+        `dismissed_warnings` on the write that follows.
+
+        Rate limited by DataUploadThrottle like every POST on this
+        viewset, which is what bounds per-user model calls; see
+        doc/ops/monitoring.md.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+
+        try:
+            facility = Facility.objects.get(pk=pk)
+            contributor = request.user.contributor
+        except Facility.DoesNotExist as exc:
+            raise NotFound(detail='Facility not found.') from exc
+        except Contributor.DoesNotExist as exc:
+            raise NotFound(detail='Contributor not found.') from exc
+
+        serializer = ClaimQualityCheckSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        warnings = check_claim_quality(
+            facility,
+            serializer.validated_data['facility_name_english'],
+            serializer.validated_data['facility_address'],
+            contributor.id,
+        )
+        return Response({'warnings': warnings})
 
     def __handle_file_upload(self, file, facility_claim):
         # Storage and naming are shared with the pending-claim edit
