@@ -42,6 +42,9 @@ class EditPendingClaimSerializer(FacilityCreateClaimSerializer):
     '''
     # Attachment files are sub-resource operations on pending claims.
     files = None
+    # The quality-check dismissals belong to the claim form's submission
+    # (and the claimed-details form); the pending edit form has no check.
+    dismissed_warnings = None
 
     # In a partial PATCH an omitted field means "unchanged", so the
     # only way a claimant can clear one of these optional values is to
