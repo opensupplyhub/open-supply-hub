@@ -77,10 +77,9 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         queries it issues, and hands back the mocks worth asserting on.
         """
         q = SimpleNamespace(
-            limited=MagicMock(), ordered=MagicMock(), history=MagicMock(),
+            ordered=MagicMock(), history=MagicMock(),
             filtered=MagicMock(), facility=MagicMock(), session=MagicMock())
-        q.limited.all.return_value = rows or []
-        q.ordered.limit.return_value = q.limited
+        q.ordered.all.return_value = rows or []
         q.history.order_by.return_value = q.ordered
         q.filtered.filter.return_value = q.history
         q.facility.filter.return_value = []
@@ -324,7 +323,7 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         GazetteerCache._facility_version = 100
         q = self._run_facility_history(db_max=102)
 
-        q.limited.all.assert_called_once_with()
+        q.ordered.all.assert_called_once_with()
         # the changed ids go in as a subquery, not one bind parameter per row
         sql = self._normalized_sql(q.facility.filter.call_args[0][0])
         self.assertIn('SELECT api_historicalfacility.id', sql)

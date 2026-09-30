@@ -32,11 +32,6 @@ MatchHistory = Tuple[
     List[HistoricalFacilityMatch], LatestMatchRecords, Set[str]
 ]
 
-# Upper bound on the rows one refresh materializes. The backlog grows with
-# idle time rather than upload volume, since `get_latest` only runs when a
-# Kafka message arrives. The marker makes the read resumable, so anything
-# past this bound is picked up by the next call.
-MAX_HISTORY_ROWS_PER_REFRESH = 50000
 
 
 class GazetteerCache:
@@ -112,8 +107,7 @@ class GazetteerCache:
                 ). \
                 order_by(
                     HistoricalFacility.history_id.asc()
-                ). \
-                limit(MAX_HISTORY_ROWS_PER_REFRESH)
+                )
                 # A Query re-issues its statement on every iteration, so it
                 # is materialized once. The result set is now the whole
                 # backlog, and a second pass would also read a different
@@ -129,11 +123,6 @@ class GazetteerCache:
                     }
                     for item in historical_facility_q.all()
                 ]
-                if len(facility_changes) == MAX_HISTORY_ROWS_PER_REFRESH:
-                    logger.warning(
-                        'Facility history backlog exceeded %d rows; the '
-                        'remainder is indexed on the next refresh',
-                        MAX_HISTORY_ROWS_PER_REFRESH)
                 if not facility_changes:
                     # The marker can end up ahead of the table: a restored
                     # anonymized dump restarts the sequence lower. Left
@@ -146,9 +135,7 @@ class GazetteerCache:
                 # limit, which `get_latest` re-raises rather than degrades.
                 changed_facility_ids = select(HistoricalFacility.id).where(
                     HistoricalFacility.history_id > last_facility_version_id
-                ).order_by(
-                    HistoricalFacility.history_id.asc()
-                ).limit(MAX_HISTORY_ROWS_PER_REFRESH)
+                )
                 # We use an dictionary comprehension so that we can load
                 # all the data and exit the transaction as soon as possible
                 latest_facility_dedupe_records = {
@@ -191,14 +178,8 @@ class GazetteerCache:
                     filter(
                         HistoricalFacilityMatch.history_id > last_match_version_id
                     ). \
-                    order_by(HistoricalFacilityMatch.history_id.asc()). \
-                    limit(MAX_HISTORY_ROWS_PER_REFRESH)
+                    order_by(HistoricalFacilityMatch.history_id.asc())
                 )
-                if len(match_changes) == MAX_HISTORY_ROWS_PER_REFRESH:
-                    logger.warning(
-                        'Match history backlog exceeded %d rows; the '
-                        'remainder is indexed on the next refresh',
-                        MAX_HISTORY_ROWS_PER_REFRESH)
                 if not match_changes:
                     # See the note on the facility marker above.
                     cls._match_version = db_match_version
@@ -210,9 +191,7 @@ class GazetteerCache:
                 # match was ever indexed.
                 changed_match_ids = select(HistoricalFacilityMatch.id).where(
                     HistoricalFacilityMatch.history_id > last_match_version_id
-                ).order_by(
-                    HistoricalFacilityMatch.history_id.asc()
-                ).limit(MAX_HISTORY_ROWS_PER_REFRESH)
+                )
                 # We use an dictionary comprehension so that we can load
                 # all the data and exit the transaction as soon as possible.
                 # `record` is the contributor's submitted spelling, which
