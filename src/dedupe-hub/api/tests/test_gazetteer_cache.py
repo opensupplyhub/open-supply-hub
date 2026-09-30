@@ -14,12 +14,9 @@ MODULE = 'app.matching.matcher.gazeteer.gazetteer_cache'
 
 class Row:
     """
-    Stands in for the SQLAlchemy ``LegacyRow`` the production queries return.
-
-    `get_latest` reads history rows as ``item['id']`` while
-    `dedupe_record_for_match_item` reads the same row as ``item.id``, so a
-    fixture has to support both. A plain dict silently skips the attribute
-    path, which is how a broken confirmed-match branch stayed green.
+    Stands in for the SQLAlchemy ``LegacyRow`` the production queries return,
+    which supports both ``row.id`` and ``row['id']``. A plain dict skips the
+    attribute path, which is how a broken branch stays green.
     """
 
     def __init__(self, **values):
@@ -224,12 +221,9 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
 
     def test_match_records_are_keyed_by_match_id_not_history_id(self):
         """
-        `latest_match_records` is read back as
-        `latest_match_records[item['id']]`, a `FacilityMatch` id. Selecting
-        those rows by `history_id` — the history table's own surrogate key,
-        from a different sequence — makes the lookup miss on every row, so
-        `is_confirmed_match_with_facility` is never true and no confirmed
-        match is ever indexed.
+        `latest_match_records` is read back by `FacilityMatch` id. Selecting
+        those rows by `history_id`, from a different sequence, makes the
+        lookup miss every row, so no confirmed match is ever indexed.
         """
         GazetteerCache._match_version = 200
 
@@ -389,11 +383,8 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
     def test_marker_ahead_of_the_table_is_reconciled(self):
         """
         Restoring an anonymized dump under a running task restarts
-        `history_id` lower than the in-memory marker. The `!=` guard then
-        stays true forever while `history_id > marker` returns nothing, so
-        without reconciling, the cache stops indexing for the life of the
-        task — silently, and in exactly the way this class is meant to
-        prevent.
+        `history_id` below the in-memory marker. The guard then stays true
+        while the backlog stays empty, and the cache stops indexing for good.
         """
         GazetteerCache._facility_version = 9000
 

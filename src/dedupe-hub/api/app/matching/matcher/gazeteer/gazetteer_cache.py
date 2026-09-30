@@ -32,12 +32,10 @@ MatchHistory = Tuple[
     List[HistoricalFacilityMatch], LatestMatchRecords, Set[str]
 ]
 
-# Upper bound on how many history rows a single refresh will materialize.
-# `get_latest` only runs when a Kafka message arrives, so the backlog grows
-# with idle time rather than with upload volume: a quiet period spanning a
-# bulk write on the Django side can leave a very large one. The version
-# marker makes the read resumable, so anything past this bound is picked up
-# by the following call instead of being loaded in one shot.
+# Upper bound on the rows one refresh materializes. The backlog grows with
+# idle time rather than upload volume, since `get_latest` only runs when a
+# Kafka message arrives. The marker makes the read resumable, so anything
+# past this bound is picked up by the next call.
 MAX_HISTORY_ROWS_PER_REFRESH = 50000
 
 
@@ -57,14 +55,11 @@ class GazetteerCache:
     @classmethod
     def _rebuild_gazetteer(cls) -> Union[Gazetteer, StaticGazetteer, None]:
         logger.info('Rebuilding gazetteer')
-        # The version markers are read in their own short-lived session. They
-        # have to be read *before* training so that anything written while the
-        # model trains is picked up by the next incremental refresh rather than
-        # skipped, but training and indexing take minutes, and leaving this
-        # session open around them would hold a connection `idle in
-        # transaction` on the primary for that whole time, pinning a snapshot
-        # against VACUUM and exposing the rebuild to
-        # `idle_in_transaction_session_timeout`.
+        # The markers get their own short-lived session: training takes
+        # minutes, and holding this one open around it would leave a
+        # connection `idle in transaction` on the primary throughout. Read
+        # before training, so rows written during it are replayed next
+        # refresh rather than skipped.
         with get_session() as session:
             db_facility_version = session.query(
                 func.max(HistoricalFacility.history_id)
@@ -119,11 +114,9 @@ class GazetteerCache:
                     HistoricalFacility.history_id.asc()
                 ). \
                 limit(MAX_HISTORY_ROWS_PER_REFRESH)
-                # `historical_facility_q` is a Query, so every iteration of
-                # it issues the statement again. It is materialized once here
-                # and reused: now that the filter is `>` rather than `==` the
-                # result set is the whole backlog, not a single row, and the
-                # second pass would both double the work and read a different
+                # A Query re-issues its statement on every iteration, so it
+                # is materialized once. The result set is now the whole
+                # backlog, and a second pass would also read a different
                 # READ COMMITTED snapshot.
                 facility_changes: List[Dict[str, str or int]] = [
                     {
@@ -142,18 +135,15 @@ class GazetteerCache:
                         'remainder is indexed on the next refresh',
                         MAX_HISTORY_ROWS_PER_REFRESH)
                 if not facility_changes:
-                    # The marker can end up *ahead* of the table — restoring
-                    # an anonymized dump under a running task restarts the
-                    # sequence lower. Left unreconciled the `!=` guard stays
-                    # true while the backlog stays empty, and the cache
-                    # silently stops indexing for the life of the task.
+                    # The marker can end up ahead of the table: a restored
+                    # anonymized dump restarts the sequence lower. Left
+                    # unreconciled, the guard stays true on a permanently
+                    # empty backlog and the cache stops indexing for good.
                     cls._facility_version = db_facility_version
 
-                # The changed ids are passed as a subquery rather than as a
-                # materialized list of bind parameters. The backlog is
-                # unbounded for the same reason as above, and one parameter
-                # per row would run into PostgreSQL's 65535 bind-parameter
-                # limit, which `get_latest` re-raises rather than degrading.
+                # A subquery rather than a list of bind parameters: one
+                # parameter per backlog row would meet PostgreSQL's 65535
+                # limit, which `get_latest` re-raises rather than degrades.
                 changed_facility_ids = select(HistoricalFacility.id).where(
                     HistoricalFacility.history_id > last_facility_version_id
                 ).order_by(
@@ -187,13 +177,11 @@ class GazetteerCache:
                     last_match_version_id = cls._match_version
 
                 # We call `list` so that we can get all the data and exit
-                # the transaction as soon as possible
+                # the transaction as soon as possible.
                 # `HistoricalFacilityMatch.facility_id` is deliberately not
-                # selected: it records the facility the match pointed at when
-                # the history row was written, which a later merge may have
-                # reassigned. The live value from `latest_match_records` is
-                # the one used, so leaving the stale column out of reach
-                # removes the trap rather than inviting it back.
+                # selected: it records the facility as of the history row,
+                # which a merge may since have reassigned. The live value
+                # from `latest_match_records` is used instead.
                 match_changes = list(
                     session.query(
                     HistoricalFacilityMatch.id, 
@@ -215,13 +203,11 @@ class GazetteerCache:
                     # See the note on the facility marker above.
                     cls._match_version = db_match_version
 
-                # `FacilityMatch` rows are selected by match id. The port
-                # filtered on `history_id` instead, which is the surrogate key
-                # of the history table and belongs to a different sequence, so
-                # the `latest_match_records[item['id']]` lookup in
-                # `get_latest` never resolved and no confirmed match was ever
-                # indexed incrementally. As above, the ids go in as subqueries
-                # rather than as one bind parameter per backlog row.
+                # Selected by match id. Filtering on `history_id` — the
+                # history table's own surrogate key, from a different
+                # sequence — made the `latest_match_records[item['id']]`
+                # lookup in `get_latest` miss every row, so no confirmed
+                # match was ever indexed.
                 changed_match_ids = select(HistoricalFacilityMatch.id).where(
                     HistoricalFacilityMatch.history_id > last_match_version_id
                 ).order_by(
@@ -229,16 +215,10 @@ class GazetteerCache:
                 ).limit(MAX_HISTORY_ROWS_PER_REFRESH)
                 # We use an dictionary comprehension so that we can load
                 # all the data and exit the transaction as soon as possible.
-                # `record` is the contributor's submitted spelling, joined
-                # from `FacilityListItem`, because that is what
-                # `get_canonical_items` indexes under the synthetic
-                # `<facility>_MATCH-<id>` id when the model is trained. The
-                # alternative spelling is the entire reason the synthetic id
-                # exists; re-keying the facility's own values under it, as
-                # this path used to, adds a duplicate of the plain facility
-                # record and no new matching signal, and leaves a cold start
-                # and an incremental refresh holding different indexes for
-                # the same match.
+                # `record` is the contributor's submitted spelling, which
+                # is what `get_canonical_items` indexes under the synthetic
+                # `<facility>_MATCH-<id>` id at train time. The facility's
+                # own values there would just duplicate its plain record.
                 latest_match_records = {
                     m['id']: {
                         'facility': m['facility_id'],
@@ -266,26 +246,21 @@ class GazetteerCache:
                         ). \
                         filter(
                             FacilityMatch.id.in_(changed_match_ids),
-                            # `get_latest` can only index a confirmed match,
-                            # and after a large upload the backlog is mostly
-                            # AUTOMATIC rows, so building a cleaned record
-                            # for those is wasted work. Mirrors the filter
-                            # `get_canonical_items` applies at train time.
+                            # Only a confirmed match can be indexed, and
+                            # the backlog is mostly AUTOMATIC rows after a
+                            # large upload. Mirrors `get_canonical_items`.
                             FacilityMatch.status == FacilityMatch.CONFIRMED,
                         )
                 }
 
-                # The facilities the *live* matches point at. A merge can
-                # reassign `FacilityMatch.facility_id`, in which case the
-                # history row still carries the old one.
+                # The facilities the live matches point at; a merge can
+                # reassign `FacilityMatch.facility_id`.
                 matched_facility_ids = select(FacilityMatch.facility_id).where(
                     FacilityMatch.id.in_(changed_match_ids),
                     FacilityMatch.status == FacilityMatch.CONFIRMED,
                 )
-                # `get_latest` only tests membership here — the record it
-                # indexes comes from `latest_match_records` — so this is a
-                # set of ids. Selecting and cleaning the facilities' own
-                # field values would be discarded work.
+                # Only membership is tested in `get_latest`; the record it
+                # indexes comes from `latest_match_records`.
                 existing_facility_ids = {
                     row.id for row in
                     session.query(Facility.id).filter(
@@ -331,10 +306,8 @@ class GazetteerCache:
                 match = (latest_match_records[item['id']]
                          if item['id'] in latest_match_records
                          else None)
-                # The history row carries the facility the match pointed at
-                # when it was written, which a later merge may have changed,
-                # so the live value from `latest_match_records` is the one
-                # checked here and the one the synthetic id is built from.
+                # The live facility, not the history row's: a merge may
+                # have reassigned it since.
                 has_facility = (
                     match is not None
                     and match['facility'] in existing_facility_ids)
