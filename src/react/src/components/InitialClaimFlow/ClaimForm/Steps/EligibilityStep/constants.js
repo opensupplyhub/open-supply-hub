@@ -27,6 +27,6 @@ const RELATIONSHIP_OPTIONS = [
 // relaxed_claim_eligibility switch is on: employees are directly
 // eligible, no supervisor verification.
 export const RELAXED_WORKER_LABEL =
-    'I am an employee of the production location';
+    'I am an employee working at this production location';
 
 export default RELATIONSHIP_OPTIONS;
