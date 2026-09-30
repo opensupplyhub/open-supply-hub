@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, List, Tuple, Union
 from dedupe import Gazetteer, StaticGazetteer
+from sqlalchemy import select
 from sqlalchemy.sql import func
 
 from app.utils.rollbar import try_reporting_error_to_rollbar
@@ -47,6 +48,14 @@ class GazetteerCache:
     @classmethod
     def _rebuild_gazetteer(cls) -> Union[Gazetteer, StaticGazetteer, None]:
         logger.info('Rebuilding gazetteer')
+        # The version markers are read in their own short-lived session. They
+        # have to be read *before* training so that anything written while the
+        # model trains is picked up by the next incremental refresh rather than
+        # skipped, but training and indexing take minutes, and leaving this
+        # session open around them would hold a connection `idle in
+        # transaction` on the primary for that whole time, pinning a snapshot
+        # against VACUUM and exposing the rebuild to
+        # `idle_in_transaction_session_timeout`.
         with get_session() as session:
             db_facility_version = session.query(
                 func.max(HistoricalFacility.history_id)
@@ -55,20 +64,20 @@ class GazetteerCache:
                 func.max(HistoricalFacilityMatch.history_id)
             ).scalar()
 
-            # We expect `get_canonical_items` to return a list rather than a
-            # QuerySet so that we can close the transaction as quickly as
-            # possible
-            canonical = get_canonical_items()
-            if len(canonical.keys()) == 0:
-                raise NoCanonicalRecordsError()
-            # We expect `get_messy_items_for_training` to return a list rather
-            # than a QuerySet so that we can close the transaction as quickly
-            # as possible
-            messy = get_messy_items_for_training()
-            cls._gazetter = gazetteer_train(messy, canonical, should_index=True)
-            cls._facility_version = db_facility_version
-            cls._match_version = db_match_version
-            return cls._gazetter
+        # We expect `get_canonical_items` to return a list rather than a
+        # QuerySet so that we can close the transaction as quickly as
+        # possible
+        canonical = get_canonical_items()
+        if len(canonical.keys()) == 0:
+            raise NoCanonicalRecordsError()
+        # We expect `get_messy_items_for_training` to return a list rather
+        # than a QuerySet so that we can close the transaction as quickly
+        # as possible
+        messy = get_messy_items_for_training()
+        cls._gazetter = gazetteer_train(messy, canonical, should_index=True)
+        cls._facility_version = db_facility_version
+        cls._match_version = db_match_version
+        return cls._gazetter
 
     @classmethod
     def _get_new_facility_history(cls) -> FacilityHistory:
@@ -100,9 +109,14 @@ class GazetteerCache:
                 order_by(
                     HistoricalFacility.history_id.asc()
                 )
-                facility_changes: List[Dict[str, str or int]] = []
-                for item in historical_facility_q:
-                    dict_item = {
+                # `historical_facility_q` is a Query, so every iteration of
+                # it issues the statement again. It is materialized once here
+                # and reused: now that the filter is `>` rather than `==` the
+                # result set is the whole backlog, not a single row, and the
+                # second pass would both double the work and read a different
+                # READ COMMITTED snapshot.
+                facility_changes: List[Dict[str, str or int]] = [
+                    {
                         'id': item.id,
                         'country': item.country_code,
                         'name': item.name,
@@ -110,16 +124,24 @@ class GazetteerCache:
                         'history_type': item.history_type,
                         'history_id': item.history_id
                     }
-                    facility_changes.append(dict_item)
+                    for item in historical_facility_q.all()
+                ]
 
-                changed_facility_ids_qs = [item.id for item in historical_facility_q]
+                # The changed ids are passed as a subquery rather than as a
+                # materialized list of bind parameters. The backlog is
+                # unbounded for the same reason as above, and one parameter
+                # per row would run into PostgreSQL's 65535 bind-parameter
+                # limit, which `get_latest` re-raises rather than degrading.
+                changed_facility_ids = select(HistoricalFacility.id).where(
+                    HistoricalFacility.history_id > last_facility_version_id
+                )
                 # We use an dictionary comprehension so that we can load
                 # all the data and exit the transaction as soon as possible
                 latest_facility_dedupe_records = {
                     f['id']: facility_values_to_dedupe_record(f)
                     for f in
                     transform_to_dict(session.query(Facility.id, Facility.country_code, Facility.name, Facility.address). \
-                        filter(Facility.id.in_(changed_facility_ids_qs)))
+                        filter(Facility.id.in_(changed_facility_ids)))
                 }
 
             return facility_changes, latest_facility_dedupe_records
@@ -155,29 +177,47 @@ class GazetteerCache:
                     order_by(HistoricalFacilityMatch.history_id.asc())
                 )
 
+                # `FacilityMatch` rows are selected by match id. The port
+                # filtered on `history_id` instead, which is the surrogate key
+                # of the history table and belongs to a different sequence, so
+                # the `latest_match_records[item['id']]` lookup in
+                # `get_latest` never resolved and no confirmed match was ever
+                # indexed incrementally. As above, the ids go in as subqueries
+                # rather than as one bind parameter per backlog row.
+                changed_match_ids = select(HistoricalFacilityMatch.id).where(
+                    HistoricalFacilityMatch.history_id > last_match_version_id
+                )
                 # We use an dictionary comprehension so that we can load
                 # all the data and exit the transaction as soon as possible
-                history_id_list = [item.history_id for item in match_changes]
                 latest_match_records = {
                     m['id']: {
                         'facility': m['facility_id'],
                         'status': m['status'],
                         'is_active': m['is_active'],
-                    } for m in session.query(FacilityMatch.id, 
-                                             FacilityMatch.facility_id, 
-                                             FacilityMatch.status, 
+                    } for m in session.query(FacilityMatch.id,
+                                             FacilityMatch.facility_id,
+                                             FacilityMatch.status,
                                              FacilityMatch.is_active). \
                         filter(
-                            FacilityMatch.id.in_(history_id_list)
+                            FacilityMatch.id.in_(changed_match_ids)
                         )
                 }
 
+                matched_facility_ids = select(
+                    HistoricalFacilityMatch.facility_id
+                ).where(
+                    HistoricalFacilityMatch.history_id > last_match_version_id
+                )
                 # We use an dictionary comprehension so that we can load
-                # all the data and exit the transaction as soon as possible
-                facility_id_list = [item.facility_id for item in match_changes]
+                # all the data and exit the transaction as soon as possible.
+                # Only the four columns `transform_to_dict` reads are
+                # selected; loading whole `Facility` entities would pull the
+                # PostGIS geometry column into the identity map for every
+                # facility in the backlog.
                 latest_matched_facility_dedupe_records = {
                     f['id']: facility_values_to_dedupe_record(f) for f in
-                    transform_to_dict(session.query(Facility).filter(Facility.id.in_(facility_id_list)))
+                    transform_to_dict(session.query(Facility.id, Facility.country_code, Facility.name, Facility.address). \
+                        filter(Facility.id.in_(matched_facility_ids)))
                 }
 
             return (match_changes, latest_match_records,

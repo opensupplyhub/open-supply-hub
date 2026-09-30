@@ -4,10 +4,28 @@ from unittest.mock import MagicMock, patch
 
 from sqlalchemy.sql import operators
 
+from app.database.models.facility_match import FacilityMatch
 from app.database.models.historical_facility import HistoricalFacility
 from app.matching.matcher.gazeteer.gazetteer_cache import GazetteerCache
 
 MODULE = 'app.matching.matcher.gazeteer.gazetteer_cache'
+
+
+class Row:
+    """
+    Stands in for the SQLAlchemy ``LegacyRow`` the production queries return.
+
+    `get_latest` reads history rows as ``item['id']`` while
+    `dedupe_record_for_match_item` reads the same row as ``item.id``, so a
+    fixture has to support both. A plain dict silently skips the attribute
+    path, which is how a broken confirmed-match branch stayed green.
+    """
+
+    def __init__(self, **values):
+        self.__dict__.update(values)
+
+    def __getitem__(self, key):
+        return self.__dict__[key]
 
 
 class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
@@ -44,6 +62,19 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
             'history_id': history_id,
         }
 
+    @staticmethod
+    def _match_row(match_id, facility_id, history_id, history_type='+'):
+        return Row(
+            id=match_id,
+            facility_id=facility_id,
+            history_type=history_type,
+            history_id=history_id,
+        )
+
+    @staticmethod
+    def _normalized_sql(expression):
+        return ' '.join(str(expression).split())
+
     def test_fetches_all_history_after_the_marker(self):
         """
         The history query must select everything *newer than* the marker. An
@@ -53,7 +84,9 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         GazetteerCache._facility_version = 100
 
         history_q = MagicMock()
-        history_q.order_by.return_value = []
+        ordered = MagicMock()
+        ordered.all.return_value = []
+        history_q.order_by.return_value = ordered
         filtered = MagicMock()
         filtered.filter.return_value = history_q
         facility_q = MagicMock()
@@ -145,10 +178,8 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         a growing tail of history.
         """
         match_changes = [
-            {'id': 1, 'facility_id': 'US1', 'history_type': '+',
-             'history_id': 201},
-            {'id': 2, 'facility_id': 'US2', 'history_type': '+',
-             'history_id': 202},
+            self._match_row(match_id=1, facility_id='US1', history_id=201),
+            self._match_row(match_id=2, facility_id='US2', history_id=202),
         ]
         GazetteerCache._gazetter = MagicMock()
 
@@ -187,6 +218,148 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
 
         self.assertEqual(GazetteerCache._facility_version, 7)
         self.assertEqual(GazetteerCache._match_version, 9)
+
+    def test_match_records_are_keyed_by_match_id_not_history_id(self):
+        """
+        `latest_match_records` is read back as
+        `latest_match_records[item['id']]`, a `FacilityMatch` id. Selecting
+        those rows by `history_id` — the history table's own surrogate key,
+        from a different sequence — makes the lookup miss on every row, so
+        `is_confirmed_match_with_facility` is never true and no confirmed
+        match is ever indexed.
+        """
+        GazetteerCache._match_version = 200
+
+        ordered = MagicMock()
+        ordered.__iter__ = lambda self: iter([])
+        match_q = MagicMock()
+        match_q.order_by.return_value = ordered
+        filtered = MagicMock()
+        filtered.filter.return_value = match_q
+        facility_match_q = MagicMock()
+        facility_match_q.filter.return_value = []
+        facility_q = MagicMock()
+        facility_q.filter.return_value = []
+
+        session = MagicMock()
+        session.query.side_effect = [
+            MagicMock(**{'scalar.return_value': 202}),
+            filtered,
+            facility_match_q,
+            facility_q,
+        ]
+
+        with patch('{}.get_session'.format(MODULE)) as get_session:
+            get_session.return_value.__enter__.return_value = session
+            GazetteerCache._get_new_match_history()
+
+        sql = self._normalized_sql(facility_match_q.filter.call_args[0][0])
+        self.assertIn('api_facilitymatch.id IN', sql)
+        self.assertIn('SELECT api_historicalfacilitymatch.id', sql)
+        self.assertNotIn('SELECT api_historicalfacilitymatch.history_id', sql)
+
+    def test_confirmed_match_is_indexed(self):
+        """
+        Confirmed matches are indexed under a synthetic
+        `<facility>_MATCH-<id>` id. This is the branch the wrong lookup key
+        silently disabled.
+        """
+        match_changes = [
+            self._match_row(match_id=11, facility_id='US1', history_id=201),
+        ]
+        latest_match_records = {
+            11: {
+                'facility': 'US1',
+                'status': FacilityMatch.CONFIRMED,
+                'is_active': True,
+            }
+        }
+        facilities = {
+            'US1': {'US1': {'country': 'us', 'name': 'a', 'address': 'b'}}
+        }
+        gazetteer = MagicMock()
+        GazetteerCache._gazetter = gazetteer
+
+        with patch.object(
+            GazetteerCache, '_get_new_facility_history',
+            return_value=([], {})
+        ), patch.object(
+            GazetteerCache, '_get_new_match_history',
+            return_value=(match_changes, latest_match_records, facilities)
+        ):
+            GazetteerCache.get_latest()
+
+        gazetteer.index.assert_called_once_with(
+            {'US1_MATCH-11': {'country': 'us', 'name': 'a', 'address': 'b'}}
+        )
+        self.assertEqual(GazetteerCache._match_version, 201)
+
+    def test_facility_history_is_read_once(self):
+        """
+        The history query object is a `Query`; iterating it twice issues the
+        statement twice and reads two different READ COMMITTED snapshots.
+        With `>` restored that is the whole backlog, not one row.
+        """
+        GazetteerCache._facility_version = 100
+
+        ordered = MagicMock()
+        ordered.all.return_value = []
+        history_q = MagicMock()
+        history_q.order_by.return_value = ordered
+        filtered = MagicMock()
+        filtered.filter.return_value = history_q
+        facility_q = MagicMock()
+        facility_q.filter.return_value = []
+
+        session = MagicMock()
+        session.query.side_effect = [
+            MagicMock(**{'scalar.return_value': 102}),
+            filtered,
+            facility_q,
+        ]
+
+        with patch('{}.get_session'.format(MODULE)) as get_session:
+            get_session.return_value.__enter__.return_value = session
+            GazetteerCache._get_new_facility_history()
+
+        ordered.all.assert_called_once_with()
+        # the changed ids go in as a subquery, not one bind parameter per row
+        sql = self._normalized_sql(facility_q.filter.call_args[0][0])
+        self.assertIn('SELECT api_historicalfacility.id', sql)
+
+    def test_rebuild_closes_the_marker_session_before_training(self):
+        """
+        `gazetteer_train` takes minutes. Reading the markers with `.scalar()`
+        opens a real transaction, so training inside that block would leave a
+        connection `idle in transaction` on the primary for the whole rebuild.
+        """
+        events = []
+
+        session = MagicMock()
+        session.query.side_effect = [
+            MagicMock(**{'scalar.return_value': 7}),
+            MagicMock(**{'scalar.return_value': 9}),
+        ]
+        session_cm = MagicMock()
+        session_cm.__enter__.return_value = session
+        session_cm.__exit__.side_effect = (
+            lambda *args: events.append('session closed')
+        )
+
+        def train(*args, **kwargs):
+            events.append('gazetteer trained')
+            return MagicMock()
+
+        with patch('{}.get_session'.format(MODULE),
+                   return_value=session_cm), \
+                patch('{}.get_canonical_items'.format(MODULE),
+                      return_value={'US1': {'name': 'a'}}), \
+                patch('{}.get_messy_items_for_training'.format(MODULE),
+                      return_value={}), \
+                patch('{}.gazetteer_train'.format(MODULE), side_effect=train):
+            GazetteerCache._rebuild_gazetteer()
+
+        self.assertEqual(events, ['session closed', 'gazetteer trained'])
 
 
 if __name__ == '__main__':
