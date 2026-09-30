@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 from sqlalchemy.sql import operators
 
+from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_match import FacilityMatch
 from app.database.models.historical_facility import HistoricalFacility
 from app.matching.matcher.gazeteer.gazetteer_cache import GazetteerCache
@@ -236,8 +237,10 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         match_q.order_by.return_value = ordered
         filtered = MagicMock()
         filtered.filter.return_value = match_q
+        joined = MagicMock()
+        joined.filter.return_value = []
         facility_match_q = MagicMock()
-        facility_match_q.filter.return_value = []
+        facility_match_q.join.return_value = joined
         facility_q = MagicMock()
         facility_q.filter.return_value = []
 
@@ -253,10 +256,20 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
             get_session.return_value.__enter__.return_value = session
             GazetteerCache._get_new_match_history()
 
-        sql = self._normalized_sql(facility_match_q.filter.call_args[0][0])
+        sql = self._normalized_sql(joined.filter.call_args[0][0])
         self.assertIn('api_facilitymatch.id IN', sql)
         self.assertIn('SELECT api_historicalfacilitymatch.id', sql)
         self.assertNotIn('SELECT api_historicalfacilitymatch.history_id', sql)
+
+        # the submitted spelling is joined in from `FacilityListItem`, the
+        # same source `get_canonical_items` uses at train time
+        self.assertIs(
+            facility_match_q.join.call_args[0][0], FacilityListItem
+        )
+        selected = self._normalized_sql(facility_q.filter.call_args[0][0])
+        # the facility existence check follows the *live* match, not the
+        # facility id recorded on the history row
+        self.assertIn('SELECT api_facilitymatch.facility_id', selected)
 
     def test_confirmed_match_is_indexed(self):
         """
@@ -267,11 +280,19 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         match_changes = [
             self._match_row(match_id=11, facility_id='US1', history_id=201),
         ]
+        submitted = {
+            'US1_MATCH-11': {
+                'country': 'us',
+                'name': 'contributor spelling',
+                'address': 'contributor address',
+            }
+        }
         latest_match_records = {
             11: {
                 'facility': 'US1',
                 'status': FacilityMatch.CONFIRMED,
                 'is_active': True,
+                'record': submitted,
             }
         }
         facilities = {
@@ -289,9 +310,9 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         ):
             GazetteerCache.get_latest()
 
-        gazetteer.index.assert_called_once_with(
-            {'US1_MATCH-11': {'country': 'us', 'name': 'a', 'address': 'b'}}
-        )
+        # the contributor's spelling, not a re-keyed copy of the facility's
+        # own values, which would add no new matching signal
+        gazetteer.index.assert_called_once_with(submitted)
         self.assertEqual(GazetteerCache._match_version, 201)
 
     def test_facility_history_is_read_once(self):

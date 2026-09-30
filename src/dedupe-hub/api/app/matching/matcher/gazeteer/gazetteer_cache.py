@@ -8,6 +8,7 @@ from app.utils.rollbar import try_reporting_error_to_rollbar
 from app.database.sqlalchemy import get_session
 from app.exceptions import NoCanonicalRecordsError
 from app.database.models.facility import Facility
+from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_match import FacilityMatch
 from app.database.models.historical_facility import HistoricalFacility
 from app.database.models.historical_facility_match import HistoricalFacilityMatch
@@ -188,25 +189,52 @@ class GazetteerCache:
                     HistoricalFacilityMatch.history_id > last_match_version_id
                 )
                 # We use an dictionary comprehension so that we can load
-                # all the data and exit the transaction as soon as possible
+                # all the data and exit the transaction as soon as possible.
+                # `record` is the contributor's submitted spelling, joined
+                # from `FacilityListItem`, because that is what
+                # `get_canonical_items` indexes under the synthetic
+                # `<facility>_MATCH-<id>` id when the model is trained. The
+                # alternative spelling is the entire reason the synthetic id
+                # exists; re-keying the facility's own values under it, as
+                # this path used to, adds a duplicate of the plain facility
+                # record and no new matching signal, and leaves a cold start
+                # and an incremental refresh holding different indexes for
+                # the same match.
                 latest_match_records = {
                     m['id']: {
                         'facility': m['facility_id'],
                         'status': m['status'],
                         'is_active': m['is_active'],
+                        'record': facility_values_to_dedupe_record({
+                            'id': match_detail_to_extended_facility_id(
+                                str(m['facility_id']), str(m['id'])
+                            ),
+                            'country': m['country_code'],
+                            'name': m['name'],
+                            'address': m['address'],
+                        }),
                     } for m in session.query(FacilityMatch.id,
                                              FacilityMatch.facility_id,
                                              FacilityMatch.status,
-                                             FacilityMatch.is_active). \
+                                             FacilityMatch.is_active,
+                                             FacilityListItem.country_code,
+                                             FacilityListItem.name,
+                                             FacilityListItem.address). \
+                        join(
+                            FacilityListItem,
+                            FacilityListItem.id ==
+                            FacilityMatch.facility_list_item_id
+                        ). \
                         filter(
                             FacilityMatch.id.in_(changed_match_ids)
                         )
                 }
 
-                matched_facility_ids = select(
-                    HistoricalFacilityMatch.facility_id
-                ).where(
-                    HistoricalFacilityMatch.history_id > last_match_version_id
+                # The facilities the *live* matches point at. A merge can
+                # reassign `FacilityMatch.facility_id`, in which case the
+                # history row still carries the old one.
+                matched_facility_ids = select(FacilityMatch.facility_id).where(
+                    FacilityMatch.id.in_(changed_match_ids)
                 )
                 # We use an dictionary comprehension so that we can load
                 # all the data and exit the transaction as soon as possible.
@@ -254,41 +282,18 @@ class GazetteerCache:
              latest_matched_facility_dedupe_records) = \
                 cls._get_new_match_history()
 
-            def dedupe_record_for_match_item(
-                item: FacilityMatch
-            ) -> Dict[str, Dict[str, str]]:
-                facility_id = item.facility_id
-                key = match_detail_to_extended_facility_id(
-                    facility_id, item.id)
-                """
-                The latest_matched_facility_dedupe_records dictionary looks
-                like this:
-
-                {
-                    facility_id: {
-                        facility_id: {
-                            field1: value1,
-                            field2, value2
-                        }
-                    }
-                }
-
-                We want to get the inner object and change the key from a real
-                facility ID to a "synthetic" facility ID which we use to index
-                confirmed matches.
-                """
-                value = (
-                    latest_matched_facility_dedupe_records
-                    [facility_id][facility_id]
-                )
-                return {key: value}
-
             for item in match_changes:
                 match = (latest_match_records[item['id']]
                          if item['id'] in latest_match_records
                          else None)
+                # The history row carries the facility the match pointed at
+                # when it was written, which a later merge may have changed,
+                # so the live value from `latest_match_records` is the one
+                # checked here and the one the synthetic id is built from.
                 has_facility = (
-                    item['facility_id'] in latest_matched_facility_dedupe_records)
+                    match is not None
+                    and match['facility'] in
+                    latest_matched_facility_dedupe_records)
                 is_confirmed_match_with_facility = (
                     match
                     and match['status'] == FacilityMatch.CONFIRMED
@@ -306,7 +311,7 @@ class GazetteerCache:
                         # been deleted. We don't need to index a deleted
                         # facility.
                         if match and match['is_active']:
-                            record = dedupe_record_for_match_item(item)
+                            record = match['record']
                             logger.debug(f'Indexing match {record}')
                             cls._gazetter.index(record)
                 cls._match_version = item['history_id']
