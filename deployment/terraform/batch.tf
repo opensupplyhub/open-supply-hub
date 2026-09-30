@@ -75,6 +75,7 @@ data "template_file" "default_job_definition" {
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
     instance_source                  = var.instance_source
+    claims_automation_account_email  = var.claims_automation_account_email
     ecs_execution_role_arn           = aws_iam_role.ecs_task_execution_role.arn
     rds_master_secret_arn            = local.rds_master_secret_arn
     django_secret_key_arn            = local.django_secret_key_arn
@@ -173,6 +174,7 @@ data "template_file" "notifications_job_definition" {
     opensearch_ssl                   = var.opensearch_ssl
     opensearch_ssl_cert_verification = var.opensearch_ssl_cert_verification
     instance_source                  = var.instance_source
+    claims_automation_account_email  = var.claims_automation_account_email
     ecs_execution_role_arn           = aws_iam_role.ecs_task_execution_role.arn
     rds_master_secret_arn            = local.rds_master_secret_arn
     django_secret_key_arn            = local.django_secret_key_arn
@@ -262,6 +264,7 @@ data "template_file" "export_csv_job_definition" {
     log_group_name                          = "log${local.short}Batch"
     google_drive_shared_directory_id        = var.google_drive_shared_directory_id
     instance_source                         = var.instance_source
+    claims_automation_account_email         = var.claims_automation_account_email
     ecs_execution_role_arn                  = aws_iam_role.ecs_task_execution_role.arn
     rds_master_secret_arn                   = local.rds_master_secret_arn
     django_secret_key_arn                   = local.django_secret_key_arn
@@ -516,6 +519,7 @@ data "template_file" "db_sync_job_definition" {
     batch_job_def_name             = "job${local.short}DbSync"
     log_group_name                 = "log${local.short}Batch"
     instance_source                = var.instance_source
+    claims_automation_account_email = var.claims_automation_account_email
     aws_region                     = var.aws_region
     aws_storage_bucket_name        = local.files_bucket_name
     efs_file_system_id             = aws_efs_file_system.efs_db_sync[0].id
