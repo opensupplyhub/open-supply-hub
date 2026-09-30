@@ -1,5 +1,6 @@
 import unittest
 from operator import gt
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from sqlalchemy.sql import operators
@@ -70,6 +71,30 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         )
 
     @staticmethod
+    def _run_facility_history(db_max, rows=None):
+        """
+        Drives `_get_new_facility_history` against mocks for the three
+        queries it issues, and hands back the mocks worth asserting on.
+        """
+        q = SimpleNamespace(
+            limited=MagicMock(), ordered=MagicMock(), history=MagicMock(),
+            filtered=MagicMock(), facility=MagicMock(), session=MagicMock())
+        q.limited.all.return_value = rows or []
+        q.ordered.limit.return_value = q.limited
+        q.history.order_by.return_value = q.ordered
+        q.filtered.filter.return_value = q.history
+        q.facility.filter.return_value = []
+        q.session.query.side_effect = [
+            MagicMock(**{'scalar.return_value': db_max}),
+            q.filtered,
+            q.facility,
+        ]
+        with patch('{}.get_session'.format(MODULE)) as get_session:
+            get_session.return_value.__enter__.return_value = q.session
+            GazetteerCache._get_new_facility_history()
+        return q
+
+    @staticmethod
     def _normalized_sql(expression):
         return ' '.join(str(expression).split())
 
@@ -80,31 +105,10 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         one facility per refresh.
         """
         GazetteerCache._facility_version = 100
-
-        history_q = MagicMock()
-        ordered = MagicMock()
-        limited = MagicMock()
-        limited.all.return_value = []
-        ordered.limit.return_value = limited
-        history_q.order_by.return_value = ordered
-        filtered = MagicMock()
-        filtered.filter.return_value = history_q
-        facility_q = MagicMock()
-        facility_q.filter.return_value = []
-
-        session = MagicMock()
-        session.query.side_effect = [
-            MagicMock(**{'scalar.return_value': 102}),
-            filtered,
-            facility_q,
-        ]
-
-        with patch('{}.get_session'.format(MODULE)) as get_session:
-            get_session.return_value.__enter__.return_value = session
-            GazetteerCache._get_new_facility_history()
+        q = self._run_facility_history(db_max=102)
 
         # the comparison handed to .filter() must be `history_id > marker`
-        expr = filtered.filter.call_args[0][0]
+        expr = q.filtered.filter.call_args[0][0]
         self.assertIs(expr.operator, gt)
         self.assertEqual(expr.left.name, 'history_id')
         self.assertEqual(
@@ -113,7 +117,7 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         self.assertEqual(expr.right.value, 100)
 
         # oldest-first, so the marker ends on the newest row
-        order_expr = history_q.order_by.call_args[0][0]
+        order_expr = q.history.order_by.call_args[0][0]
         self.assertIs(order_expr.modifier, operators.asc_op)
 
     def test_indexes_every_new_facility_not_just_one(self):
@@ -318,32 +322,11 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         With `>` restored that is the whole backlog, not one row.
         """
         GazetteerCache._facility_version = 100
+        q = self._run_facility_history(db_max=102)
 
-        history_q = MagicMock()
-        ordered = MagicMock()
-        limited = MagicMock()
-        limited.all.return_value = []
-        ordered.limit.return_value = limited
-        history_q.order_by.return_value = ordered
-        filtered = MagicMock()
-        filtered.filter.return_value = history_q
-        facility_q = MagicMock()
-        facility_q.filter.return_value = []
-
-        session = MagicMock()
-        session.query.side_effect = [
-            MagicMock(**{'scalar.return_value': 102}),
-            filtered,
-            facility_q,
-        ]
-
-        with patch('{}.get_session'.format(MODULE)) as get_session:
-            get_session.return_value.__enter__.return_value = session
-            GazetteerCache._get_new_facility_history()
-
-        limited.all.assert_called_once_with()
+        q.limited.all.assert_called_once_with()
         # the changed ids go in as a subquery, not one bind parameter per row
-        sql = self._normalized_sql(facility_q.filter.call_args[0][0])
+        sql = self._normalized_sql(q.facility.filter.call_args[0][0])
         self.assertIn('SELECT api_historicalfacility.id', sql)
 
     def test_rebuild_closes_the_marker_session_before_training(self):
@@ -387,28 +370,7 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         while the backlog stays empty, and the cache stops indexing for good.
         """
         GazetteerCache._facility_version = 9000
-
-        limited = MagicMock()
-        limited.all.return_value = []
-        ordered = MagicMock()
-        ordered.limit.return_value = limited
-        history_q = MagicMock()
-        history_q.order_by.return_value = ordered
-        filtered = MagicMock()
-        filtered.filter.return_value = history_q
-        facility_q = MagicMock()
-        facility_q.filter.return_value = []
-
-        session = MagicMock()
-        session.query.side_effect = [
-            MagicMock(**{'scalar.return_value': 120}),
-            filtered,
-            facility_q,
-        ]
-
-        with patch('{}.get_session'.format(MODULE)) as get_session:
-            get_session.return_value.__enter__.return_value = session
-            GazetteerCache._get_new_facility_history()
+        self._run_facility_history(db_max=120)
 
         self.assertEqual(GazetteerCache._facility_version, 120)
 
