@@ -170,3 +170,31 @@ describe('claim tracker Jira links', () => {
         );
     });
 });
+
+describe('relaxed eligibility template wording', () => {
+    const context = {
+        facilityName: 'Karavela SIA',
+        jobTitle: 'Operator',
+        emailDomain: 'karavela.lv',
+    };
+
+    it('person/relationship templates keep manager wording by default', () => {
+        const message = composeMessage(['person', 'relationship'], context);
+        expect(message).toContain('senior manager or owner');
+        expect(message).toContain('owner or senior management');
+        expect(message).not.toContain('employee of the production location');
+    });
+
+    it('person/relationship templates swap to employee wording when relaxed', () => {
+        const message = composeMessage(['person', 'relationship'], {
+            ...context,
+            relaxedEligibility: true,
+        });
+        expect(message).not.toContain('senior manager or owner');
+        expect(message).not.toContain('owner or senior management');
+        const employeeMentions = message.split(
+            'an employee of the production location or its parent company',
+        );
+        expect(employeeMentions.length - 1).toBe(2);
+    });
+});

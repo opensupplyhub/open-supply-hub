@@ -22,6 +22,9 @@ from api.services.facility_claim_review_note_service import (
 
 PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
 MODERATION_PAUSE_EMAILS_SWITCH = 'enable_moderation_pause_info'
+# Relaxed claim-eligibility policy (employees may claim): swaps the
+# owner/senior-management wording in claimant-facing copy.
+RELAXED_CLAIM_ELIGIBILITY_SWITCH = 'relaxed_claim_eligibility'
 
 
 def make_oshub_url(request: Request):
@@ -96,6 +99,9 @@ def send_claim_facility_confirmation_email(request, facility_claim):
         'facility_name': facility_claim.facility.name,
         'facility_address': facility_claim.facility.address,
         'facility_url': make_facility_url(request, facility_claim.facility),
+        'relaxed_eligibility': switch_is_active(
+            RELAXED_CLAIM_ELIGIBILITY_SWITCH
+        ),
     }
 
     send_mail(

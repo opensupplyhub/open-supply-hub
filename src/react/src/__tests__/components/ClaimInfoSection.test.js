@@ -4,7 +4,12 @@ import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimInfoSection from '../../components/InitialClaimFlow/ClaimIntro/ClaimInfoSection';
 
 describe('ClaimInfoSection component', () => {
-    const renderComponent = () => renderWithProviders(<ClaimInfoSection />);
+    const renderComponent = (flags = {}) =>
+        renderWithProviders(<ClaimInfoSection />, {
+            preloadedState: {
+                featureFlags: { fetching: false, flags },
+            },
+        });
 
     test('renders without crashing', () => {
         renderComponent();
@@ -17,17 +22,27 @@ describe('ClaimInfoSection component', () => {
             expect(getByText('Confirm Your Eligibility')).toBeInTheDocument();
         });
 
-        test('displays eligibility requirements', () => {
-            const { getByText, queryByText } = renderComponent();
+        test('displays the owner/manager requirements by default', () => {
+            const { getByText } = renderComponent();
+
+            expect(
+                getByText(/Claim requests must be submitted by an owner or manager/)
+            ).toBeInTheDocument();
+            expect(
+                getByText(/providing your supervisor's contact information/)
+            ).toBeInTheDocument();
+        });
+
+        test('relaxed_claim_eligibility swaps to employee requirements', () => {
+            const { getByText, queryByText } = renderComponent({
+                relaxed_claim_eligibility: true,
+            });
 
             expect(
                 getByText(/Claim requests must be submitted by an employee of the production location or of its parent company/)
             ).toBeInTheDocument();
-            // The supervisor-verification path was removed along with the
-            // owner/manager requirement: employees are directly eligible.
-            expect(
-                queryByText(/supervisor/)
-            ).not.toBeInTheDocument();
+            // Employees are directly eligible: no supervisor path.
+            expect(queryByText(/supervisor/)).not.toBeInTheDocument();
         });
     });
 

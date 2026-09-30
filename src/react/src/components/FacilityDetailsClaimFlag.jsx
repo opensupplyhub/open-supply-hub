@@ -12,7 +12,10 @@ import {
     makeClaimFacilityLinkWithFeatureFlag,
     convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../util/util';
-import { ENABLE_V1_CLAIMS_FLOW } from '../util/constants';
+import {
+    ENABLE_V1_CLAIMS_FLOW,
+    RELAXED_CLAIM_ELIGIBILITY,
+} from '../util/constants';
 
 const claimFlagBaseStyles = theme =>
     Object.freeze({
@@ -51,9 +54,13 @@ const getBackgroundColor = (isClaimed, isPending) => {
     return COLOURS.LIGHT_RED;
 };
 
-const getMainText = (isClaimed, isPending) => {
+const getMainText = (isClaimed, isPending, isRelaxedEligibility) => {
     if (isClaimed) {
-        return 'This production location has been claimed by an owner or manager';
+        // Relaxed policy: employees may claim, so the banner must not
+        // overstate who the claimant is.
+        return isRelaxedEligibility
+            ? 'This production location has been claimed by an owner or employee'
+            : 'This production location has been claimed by an owner or manager';
     }
     if (isPending) {
         return 'There is a pending claim for this production location';
@@ -68,6 +75,7 @@ const FacilityDetailsClaimFlag = ({
     isPending,
     isEmbed,
     isV1ClaimsFlowEnabled,
+    isRelaxedEligibility,
 }) => {
     if (isEmbed) return null;
     const backgroundColor = getBackgroundColor(isClaimed, isPending);
@@ -86,7 +94,7 @@ const FacilityDetailsClaimFlag = ({
                     <BadgeClaimed />
                 </Icon>
                 <Typography className={classes.itemPadding}>
-                    {getMainText(isClaimed, isPending)}
+                    {getMainText(isClaimed, isPending, isRelaxedEligibility)}
                 </Typography>
                 {!isClaimed && !isPending ? (
                     <Typography className={classes.itemPadding}>
@@ -111,6 +119,9 @@ const mapStateToProps = ({ featureFlags: { flags } }) => {
     return {
         isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
             ENABLE_V1_CLAIMS_FLOW,
+        ),
+        isRelaxedEligibility: activeFeatureFlags.includes(
+            RELAXED_CLAIM_ELIGIBILITY,
         ),
     };
 };

@@ -3,8 +3,12 @@ import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import DialogTooltip from '../../Contribute/DialogTooltip';
+import FeatureFlag from '../../FeatureFlag';
 import ImportantNote from '../Shared/ImportantNote/ImportantNote';
-import { ClaimFacilityInfoLink } from '../../../util/constants';
+import {
+    ClaimFacilityInfoLink,
+    RELAXED_CLAIM_ELIGIBILITY,
+} from '../../../util/constants';
 import { claimInfoStyles } from './styles';
 import ExampleImage from './ExampleImage';
 
@@ -26,17 +30,49 @@ const ClaimInfoSection = ({ classes, children }) => (
                     </span>
                 </Typography>
                 <ul className={classes.boxList}>
-                    <li>
-                        <Typography
-                            variant="body2"
-                            className={classes.boxDescription}
-                        >
-                            Claim requests must be submitted by an employee of
-                            the production location or of its parent company.
-                            Claim Requests submitted by a buyer or other
-                            stakeholder will not be approved.
-                        </Typography>
-                    </li>
+                    <FeatureFlag
+                        flag={RELAXED_CLAIM_ELIGIBILITY}
+                        alternative={
+                            <>
+                                <li>
+                                    <Typography
+                                        variant="body2"
+                                        className={classes.boxDescription}
+                                    >
+                                        Claim requests must be submitted by an
+                                        owner or manager of the production
+                                        location or of its parent company. Claim
+                                        Requests submitted by a buyer or other
+                                        stakeholder will not be approved.
+                                    </Typography>
+                                </li>
+                                <li>
+                                    <Typography
+                                        variant="body2"
+                                        className={classes.boxDescription}
+                                    >
+                                        If you&apos;re an employee of the
+                                        production location but not an owner or
+                                        manager, you can still proceed by
+                                        providing your supervisor&apos;s contact
+                                        information for approval.
+                                    </Typography>
+                                </li>
+                            </>
+                        }
+                    >
+                        <li>
+                            <Typography
+                                variant="body2"
+                                className={classes.boxDescription}
+                            >
+                                Claim requests must be submitted by an employee
+                                of the production location or of its parent
+                                company. Claim Requests submitted by a buyer or
+                                other stakeholder will not be approved.
+                            </Typography>
+                        </li>
+                    </FeatureFlag>
                 </ul>
             </div>
         </div>

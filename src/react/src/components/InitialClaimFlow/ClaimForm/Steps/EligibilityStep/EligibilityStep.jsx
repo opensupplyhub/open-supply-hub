@@ -12,10 +12,16 @@ import DialogActions from '@material-ui/core/DialogActions';
 
 import withScrollReset from '../../../HOCs/withScrollReset';
 import StyledSelect from '../../../../Filters/StyledSelect';
-import { getSelectStyles } from '../../../../../util/util';
-import { mapRoute } from '../../../../../util/constants';
+import {
+    convertFeatureFlagsObjectToListOfActiveFlags,
+    getSelectStyles,
+} from '../../../../../util/util';
+import {
+    mapRoute,
+    RELAXED_CLAIM_ELIGIBILITY,
+} from '../../../../../util/constants';
 import eligibilityStepStyles from './styles';
-import RELATIONSHIP_OPTIONS from './constants';
+import RELATIONSHIP_OPTIONS, { RELAXED_WORKER_LABEL } from './constants';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import findSelectedOption from '../utils';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
@@ -30,12 +36,22 @@ const EligibilityStep = ({
     userEmail,
     organizationName,
     handleBlur,
+    isRelaxedEligibility,
 }) => {
     const history = useHistory();
     const [ineligibleDialogOpen, setIneligibleDialogOpen] = useState(false);
 
+    // Relaxed policy (relaxed_claim_eligibility switch): employees are
+    // directly eligible, so the worker option drops its
+    // supervisor-verification caveat. Values are unchanged either way.
+    const relationshipOptions = RELATIONSHIP_OPTIONS.map(option =>
+        option.value === 'worker' && isRelaxedEligibility
+            ? { ...option, label: RELAXED_WORKER_LABEL }
+            : option,
+    );
+
     const selectedRelationship = findSelectedOption(
-        RELATIONSHIP_OPTIONS,
+        relationshipOptions,
         formData.claimantLocationRelationship,
     );
 
@@ -92,7 +108,7 @@ const EligibilityStep = ({
                     name="claimantLocationRelationship"
                     aria-label="Select your relationship to this production location"
                     label={null}
-                    options={RELATIONSHIP_OPTIONS}
+                    options={relationshipOptions}
                     onBlur={() => handleBlur('claimantLocationRelationship')}
                     value={selectedRelationship}
                     onChange={valueObject => {
@@ -186,9 +202,13 @@ const mapStateToProps = ({
     auth: {
         user: { user },
     },
+    featureFlags: { flags },
 }) => ({
     userEmail: user?.email,
     organizationName: user?.name,
+    isRelaxedEligibility: convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    ).includes(RELAXED_CLAIM_ELIGIBILITY),
 });
 
 export default connect(mapStateToProps)(

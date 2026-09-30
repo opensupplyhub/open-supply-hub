@@ -10,7 +10,8 @@ const RELATIONSHIP_OPTIONS = [
     },
     {
         value: 'worker',
-        label: 'I am an employee of the production location',
+        label:
+            "I work here but don't have management authority (will require supervisor verification)",
     },
     {
         value: 'partner',
@@ -21,5 +22,11 @@ const RELATIONSHIP_OPTIONS = [
         label: 'Other relationship',
     },
 ];
+
+// Shown instead of the worker option's label when the
+// relaxed_claim_eligibility switch is on: employees are directly
+// eligible, no supervisor verification.
+export const RELAXED_WORKER_LABEL =
+    'I am an employee of the production location';
 
 export default RELATIONSHIP_OPTIONS;

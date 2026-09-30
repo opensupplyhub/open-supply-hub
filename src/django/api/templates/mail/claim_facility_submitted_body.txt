@@ -7,7 +7,7 @@ You are receiving this email because you submitted a request to claim the follow
 - Address of Production Location: {{ facility_address }}
 - OS Hub Profile: {{ facility_url }}
 
-Please note: Buyers can refer their suppliers to claim their profiles on OS Hub; however, the claim request will only be approved when it is submitted by an owner or senior management associated with the production location in question. Requests submitted by a buyer will not be approved. 
+Please note: Buyers can refer their suppliers to claim their profiles on OS Hub; however, the claim request will only be approved when it is submitted by {% if relaxed_eligibility %}an employee of the production location or its parent company{% else %}an owner or senior management associated with the production location in question{% endif %}. Requests submitted by a buyer will not be approved. 
 
 The OS Hub Team will review your request and be in touch soon. The expected processing time for the initial review of a claim is 10-14 days.
 
