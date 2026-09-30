@@ -1,8 +1,15 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimedFacilitiesDetails from '../../components/ClaimedFacilitiesDetails/ClaimedFacilitiesDetails';
+import apiRequest from '../../util/apiRequest';
+
+jest.mock('../../util/apiRequest', () => ({
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+}));
 
 jest.mock('react-redux', () => {
     const actual = jest.requireActual('react-redux');
@@ -293,5 +300,158 @@ describe('ClaimedFacilitiesDetails', () => {
         ).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
-});
 
+    describe('quality check on save', () => {
+        const warning = {
+            type: 'name_quality',
+            title: 'Name May Not Look Like a Facility Name',
+            message: 'Looks like test data.',
+        };
+        const loadedNameAddress = {
+            name: 'Loaded Name',
+            address: '123 Test St',
+        };
+        const checkURL = '/api/facilities/fac-1/claim/quality-check/';
+
+        beforeEach(() => {
+            apiRequest.post.mockReset();
+        });
+
+        it('checks a changed name before saving and shows the warnings', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledWith(checkURL, {
+                facility_name_english: 'Mock Facility',
+                facility_address: '123 Test St',
+            });
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
+        it('"Save anyway" saves with the dismissed warnings', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText('Save anyway'));
+
+            expect(submitUpdate).toHaveBeenCalledWith([
+                { type: 'name_quality', message: 'Looks like test data.' },
+            ]);
+        });
+
+        it('"Go back and edit" closes the dialog without saving', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText('Go back and edit'));
+
+            await waitFor(() => {
+                expect(
+                    screen.queryByText(warning.title),
+                ).not.toBeInTheDocument();
+            });
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
+        it('saves directly when the name and address are unchanged', async () => {
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress: {
+                    name: 'mock facility ',
+                    address: '123 Test St',
+                },
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+
+        it('saves when the check returns no warnings', async () => {
+            apiRequest.post.mockResolvedValue({ data: { warnings: [] } });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+        });
+
+        it('saves when the check request fails (fail open)', async () => {
+            apiRequest.post.mockRejectedValue(new Error('network'));
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+        });
+
+        it('does not check while the switch is off', async () => {
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: false,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+    });
+});

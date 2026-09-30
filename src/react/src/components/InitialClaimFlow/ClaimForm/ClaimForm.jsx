@@ -18,6 +18,12 @@ import BusinessStep from './Steps/BusinessStep/BusinessStep';
 import ProfileStep from './Steps/ProfileStep/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
 import SubmissionErrorsBanner from './SubmissionErrorsBanner/SubmissionErrorsBanner';
+import ContributionWarningDialog from '../../Contribute/ContributionWarningDialog';
+import {
+    fetchClaimQualityWarnings,
+    makeDismissal,
+    nameAddressUnchanged,
+} from '../../../util/claimQualityCheck';
 import ClaimOutcomeDialog from '../../ClaimOutcomeDialog';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
@@ -125,6 +131,12 @@ const ClaimForm = ({
 }) => {
     // Track emissions validation errors from ProfileStep.
     const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
+
+    // The advisory data-quality warnings returned for an edited name or
+    // address on the Business step (OSDEV-3489), shown in a dialog
+    // before the step advances; and whether that check is in flight.
+    const [qualityWarnings, setQualityWarnings] = useState([]);
+    const [checkingQuality, setCheckingQuality] = useState(false);
 
     // Redirect to intro page if user accessed form directly via URL.
     useRequireIntroAccess(history, osID);
@@ -257,6 +269,65 @@ const ClaimForm = ({
     const currentStepComponent = stepComponents[activeStep];
     const StepComponent = currentStepComponent || EligibilityStep;
 
+    const advanceStep = () => {
+        markComplete(activeStep);
+        setStep(getNextStep(activeStep));
+    };
+
+    const currentNameAddress = () => ({
+        name: claimForm.values.facilityNameEnglish,
+        address: claimForm.values.facilityAddress,
+    });
+
+    // On leaving the Business step an edited name or address goes
+    // through the backend's advisory quality check before the step
+    // advances, so the claimant is warned while the fields are still in
+    // front of them rather than at submit, two steps and a document
+    // upload later. Skipped when the values are the ones the location
+    // already lists (nothing new is asserted) and when the claimant has
+    // already continued past warnings for exactly these values. The
+    // check fails open: a failed request advances the step.
+    const passesQualityCheck = async () => {
+        if (
+            activeStep !== CLAIM_FORM_STEPS.BUSINESS ||
+            !isNameAddressEditable
+        ) {
+            return true;
+        }
+        const values = currentNameAddress();
+        const listed = {
+            name: productionLocationData?.name,
+            address: productionLocationData?.address,
+        };
+        const dismissal = claimForm.values.qualityWarningsDismissed;
+        if (
+            nameAddressUnchanged(values, listed) ||
+            (dismissal && nameAddressUnchanged(values, dismissal))
+        ) {
+            return true;
+        }
+        setCheckingQuality(true);
+        const warnings = await fetchClaimQualityWarnings(osID, values);
+        setCheckingQuality(false);
+        if (warnings.length === 0) {
+            return true;
+        }
+        setQualityWarnings(warnings);
+        return false;
+    };
+
+    // "Continue anyway": remember which warnings were dismissed, and for
+    // which values, so the submission can report them and a later edit
+    // of either value runs the check again.
+    const continuePastQualityWarnings = () => {
+        updateFieldWithoutTouch(
+            'qualityWarningsDismissed',
+            makeDismissal(currentNameAddress(), qualityWarnings),
+        );
+        setQualityWarnings([]);
+        advanceStep();
+    };
+
     const handleNext = async () => {
         // Get all fields from current step's validation schema.
         const schema = getValidationSchemaForStep(activeStep, {
@@ -275,13 +346,13 @@ const ClaimForm = ({
         // Validate only the current step's fields, not the entire form.
         try {
             await schema.validate(claimForm.values, { abortEarly: false });
-            // If validation passes, proceed to next step.
-            markComplete(activeStep);
-            const nextStepIndex = getNextStep(activeStep);
-            setStep(nextStepIndex);
         } catch (validationErrors) {
             // Validation failed for current step, stay on this step.
             // Errors will be displayed via Formik's error state.
+            return;
+        }
+        if (await passesQualityCheck()) {
+            advanceStep();
         }
     };
 
@@ -361,9 +432,13 @@ const ClaimForm = ({
                                         variant="contained"
                                         onClick={handleNext}
                                         className={classes.buttonPrimary}
-                                        disabled={isButtonDisabled}
+                                        disabled={
+                                            isButtonDisabled || checkingQuality
+                                        }
                                     >
-                                        {NEXT_BUTTON_TEXT[activeStep]}
+                                        {checkingQuality
+                                            ? 'Checking...'
+                                            : NEXT_BUTTON_TEXT[activeStep]}
                                     </Button>
                                 )}
                                 {isLastStep(activeStep) && (
@@ -387,6 +462,13 @@ const ClaimForm = ({
                     </Paper>
                 </form>
             </div>
+            <ContributionWarningDialog
+                open={qualityWarnings.length > 0}
+                onClose={() => setQualityWarnings([])}
+                onSubmitAnyway={continuePastQualityWarnings}
+                warnings={qualityWarnings}
+                submitAnywayLabel="Continue anyway"
+            />
             <ClaimOutcomeDialog
                 open={dialogIsOpen}
                 title="Thank you for submitting your claim request!"
