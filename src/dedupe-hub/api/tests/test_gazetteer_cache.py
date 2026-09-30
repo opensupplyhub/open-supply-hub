@@ -86,7 +86,9 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
 
         history_q = MagicMock()
         ordered = MagicMock()
-        ordered.all.return_value = []
+        limited = MagicMock()
+        limited.all.return_value = []
+        ordered.limit.return_value = limited
         history_q.order_by.return_value = ordered
         filtered = MagicMock()
         filtered.filter.return_value = history_q
@@ -137,7 +139,7 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
             return_value=(changes, records)
         ), patch.object(
             GazetteerCache, '_get_new_match_history',
-            return_value=([], {}, {})
+            return_value=([], {}, set())
         ):
             GazetteerCache.get_latest()
 
@@ -165,7 +167,7 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
             return_value=(changes, {})
         ), patch.object(
             GazetteerCache, '_get_new_match_history',
-            return_value=([], {}, {})
+            return_value=([], {}, set())
         ):
             GazetteerCache.get_latest()
 
@@ -323,9 +325,11 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
         """
         GazetteerCache._facility_version = 100
 
-        ordered = MagicMock()
-        ordered.all.return_value = []
         history_q = MagicMock()
+        ordered = MagicMock()
+        limited = MagicMock()
+        limited.all.return_value = []
+        ordered.limit.return_value = limited
         history_q.order_by.return_value = ordered
         filtered = MagicMock()
         filtered.filter.return_value = history_q
@@ -343,7 +347,7 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
             get_session.return_value.__enter__.return_value = session
             GazetteerCache._get_new_facility_history()
 
-        ordered.all.assert_called_once_with()
+        limited.all.assert_called_once_with()
         # the changed ids go in as a subquery, not one bind parameter per row
         sql = self._normalized_sql(facility_q.filter.call_args[0][0])
         self.assertIn('SELECT api_historicalfacility.id', sql)
@@ -381,6 +385,41 @@ class TestGazetteerCacheIncrementalIndex(unittest.TestCase):
             GazetteerCache._rebuild_gazetteer()
 
         self.assertEqual(events, ['session closed', 'gazetteer trained'])
+
+    def test_marker_ahead_of_the_table_is_reconciled(self):
+        """
+        Restoring an anonymized dump under a running task restarts
+        `history_id` lower than the in-memory marker. The `!=` guard then
+        stays true forever while `history_id > marker` returns nothing, so
+        without reconciling, the cache stops indexing for the life of the
+        task — silently, and in exactly the way this class is meant to
+        prevent.
+        """
+        GazetteerCache._facility_version = 9000
+
+        limited = MagicMock()
+        limited.all.return_value = []
+        ordered = MagicMock()
+        ordered.limit.return_value = limited
+        history_q = MagicMock()
+        history_q.order_by.return_value = ordered
+        filtered = MagicMock()
+        filtered.filter.return_value = history_q
+        facility_q = MagicMock()
+        facility_q.filter.return_value = []
+
+        session = MagicMock()
+        session.query.side_effect = [
+            MagicMock(**{'scalar.return_value': 120}),
+            filtered,
+            facility_q,
+        ]
+
+        with patch('{}.get_session'.format(MODULE)) as get_session:
+            get_session.return_value.__enter__.return_value = session
+            GazetteerCache._get_new_facility_history()
+
+        self.assertEqual(GazetteerCache._facility_version, 120)
 
 
 if __name__ == '__main__':
