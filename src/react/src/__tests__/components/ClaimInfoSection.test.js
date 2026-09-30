@@ -18,14 +18,16 @@ describe('ClaimInfoSection component', () => {
         });
 
         test('displays eligibility requirements', () => {
-            const { getByText } = renderComponent();
+            const { getByText, queryByText } = renderComponent();
 
             expect(
-                getByText(/Claim requests must be submitted by an owner or manager/)
+                getByText(/Claim requests must be submitted by an employee of the production location or of its parent company/)
             ).toBeInTheDocument();
+            // The supervisor-verification path was removed along with the
+            // owner/manager requirement: employees are directly eligible.
             expect(
-                getByText(/If you're an employee of the production location but not an owner or manager/)
-            ).toBeInTheDocument();
+                queryByText(/supervisor/)
+            ).not.toBeInTheDocument();
         });
     });
 

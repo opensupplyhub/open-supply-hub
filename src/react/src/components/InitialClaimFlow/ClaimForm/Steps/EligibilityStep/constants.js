@@ -10,8 +10,7 @@ const RELATIONSHIP_OPTIONS = [
     },
     {
         value: 'worker',
-        label:
-            "I work here but don't have management authority (will require supervisor verification)",
+        label: 'I am an employee of the production location',
     },
     {
         value: 'partner',
