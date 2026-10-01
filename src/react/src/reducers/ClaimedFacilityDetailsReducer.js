@@ -13,7 +13,8 @@ import {
     failUpdateClaimedFacilityDetails,
     completeUpdateClaimedFacilityDetails,
     updateClaimedFacilityNameNativeLanguage,
-    updateClaimedFacilityLocation,
+    updateClaimedFacilityNameEnglish,
+    updateClaimedFacilityAddress,
     updateClaimedSector,
     updateClaimedFacilityPhone,
     updateClaimedFacilityPhoneVisibility,
@@ -194,7 +195,6 @@ export default createReducer(
                         ...data,
                         sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
-                        initial_facility_address: data.facility_address,
                     },
                 },
             }),
@@ -222,7 +222,6 @@ export default createReducer(
                         ...data,
                         sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
-                        initial_facility_address: data.facility_address,
                     },
                 },
             }),
@@ -233,6 +232,24 @@ export default createReducer(
                 },
                 data: {
                     facility_name_native_language: { $set: name },
+                },
+            }),
+        [updateClaimedFacilityNameEnglish]: (state, name) =>
+            update(state, {
+                updateData: {
+                    error: { $set: initialState.updateData.error },
+                },
+                data: {
+                    facility_name_english: { $set: name },
+                },
+            }),
+        [updateClaimedFacilityAddress]: (state, address) =>
+            update(state, {
+                updateData: {
+                    error: { $set: initialState.updateData.error },
+                },
+                data: {
+                    facility_address: { $set: address },
                 },
             }),
         [updateClaimedFacilityWorkersCount]: (state, workersCount) =>
@@ -297,15 +314,6 @@ export default createReducer(
                     facility_production_types: {
                         $set: orderBy(productionTypes, identity),
                     },
-                },
-            }),
-        [updateClaimedFacilityLocation]: (state, location) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    facility_location: { $set: location },
                 },
             }),
         [updateClaimedSector]: (state, sectors) =>
