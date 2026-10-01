@@ -459,6 +459,66 @@ resource "aws_iam_policy" "bastion_ssm_ci_access" {
   policy      = data.aws_iam_policy_document.bastion_ssm_ci_access.json
 }
 
+# OSDEV-3531: what people need to reach this environment's bastion from
+# their own computer with SSM, replacing SSH: an interactive shell
+# (SSM-SessionManagerRunShell, which runs as ssm-user with sudo) and port
+# forwarding, e.g. to the database. Attach it to the IAM users or group of
+# the people who need bastion access; it is not attached here.
+data "aws_iam_policy_document" "bastion_ssm_user_access" {
+  # SessionDocumentAccessCheck makes StartSession also require permission on
+  # the session document, so only the two documents below can be used.
+  statement {
+    sid       = "StartSessionOnBastion"
+    effect    = "Allow"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["Bastion"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Environment"
+      values   = [var.environment]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "ssm:SessionDocumentAccessCheck"
+      values   = ["true"]
+    }
+  }
+
+  # SSM-SessionManagerRunShell is an account-level document (it holds the
+  # Session Manager preferences), so its ARN includes the account ID; AWS-*
+  # documents are owned by AWS and their ARNs have no account ID.
+  statement {
+    sid     = "SessionDocuments"
+    effect  = "Allow"
+    actions = ["ssm:StartSession"]
+    resources = [
+      "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/SSM-SessionManagerRunShell",
+      "arn:aws:ssm:${var.aws_region}::document/AWS-StartPortForwardingSessionToRemoteHost",
+    ]
+  }
+
+  statement {
+    sid       = "ManageOwnSessions"
+    effect    = "Allow"
+    actions   = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = ["arn:aws:ssm:*:*:session/$${aws:username}-*"]
+  }
+}
+
+resource "aws_iam_policy" "bastion_ssm_user_access" {
+  name        = "bastion${local.short}SsmUserAccess"
+  description = "SSM shell and port forwarding on the ${var.environment} bastion for people"
+  policy      = data.aws_iam_policy_document.bastion_ssm_user_access.json
+}
+
 #
 # Batch IAM resources
 #
