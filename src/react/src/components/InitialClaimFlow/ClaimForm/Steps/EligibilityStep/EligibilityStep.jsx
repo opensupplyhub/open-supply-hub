@@ -41,19 +41,6 @@ const EligibilityStep = ({
     const history = useHistory();
     const [ineligibleDialogOpen, setIneligibleDialogOpen] = useState(false);
 
-    // Relaxed policy (relaxed_claim_eligibility switch): employees are
-    // directly eligible, so the worker option drops its
-    // supervisor-verification caveat. Only the displayed label changes:
-    // the form stores the option's canonical label (the switch-off
-    // wording) whichever way the switch is set, so the persisted
-    // claimant_location_relationship string stays the same across the
-    // switch and round-trips when the flags arrive after a selection.
-    const relationshipOptions = RELATIONSHIP_OPTIONS.map(option =>
-        option.value === 'worker' && isRelaxedEligibility
-            ? { ...option, label: RELAXED_WORKER_LABEL }
-            : option,
-    );
-
     const canonicalLabel = value =>
         RELATIONSHIP_OPTIONS.find(option => option.value === value)?.label;
 
@@ -67,6 +54,32 @@ const EligibilityStep = ({
         ],
         formData.claimantLocationRelationship,
     );
+
+    // Relaxed policy (relaxed_claim_eligibility switch): employees are
+    // directly eligible, so the worker option drops its
+    // supervisor-verification caveat and the manager option goes away —
+    // managers are employees, so under the relaxed policy the two
+    // options were the same answer twice. A pending claim saved with
+    // "manager" while the switch was off keeps its option (the stored
+    // answer stays valid and visible; only new picks are constrained).
+    // Only the menu and displayed labels change: the form stores the
+    // option's canonical label (the switch-off wording) whichever way
+    // the switch is set, so the persisted claimant_location_relationship
+    // string stays the same across the switch and round-trips when the
+    // flags arrive after a selection.
+    const relationshipOptions = RELATIONSHIP_OPTIONS.filter(
+        option =>
+            !(
+                isRelaxedEligibility &&
+                option.value === 'manager' &&
+                storedOption?.value !== 'manager'
+            ),
+    ).map(option =>
+        option.value === 'worker' && isRelaxedEligibility
+            ? { ...option, label: RELAXED_WORKER_LABEL }
+            : option,
+    );
+
     const selectedRelationship = storedOption
         ? relationshipOptions.find(
               option => option.value === storedOption.value,

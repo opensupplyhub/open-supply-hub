@@ -397,4 +397,37 @@ describe('EligibilityStep with the relaxed_claim_eligibility switch', () => {
             'worker',
         );
     });
+
+    const managerLabel = RELATIONSHIP_OPTIONS.find(o => o.value === 'manager')
+        .label;
+
+    test('removes the manager option under the switch — managers are employees', () => {
+        renderWithProviders(<EligibilityStep {...baseProps} />, {
+            preloadedState: stateWithSwitch(true),
+        });
+
+        expect(screen.queryByText(managerLabel)).not.toBeInTheDocument();
+    });
+
+    test('keeps the manager option with the switch off', () => {
+        renderWithProviders(<EligibilityStep {...baseProps} />, {
+            preloadedState: stateWithSwitch(false),
+        });
+
+        expect(screen.getByText(managerLabel)).toBeInTheDocument();
+    });
+
+    test('a manager selection stored before the switch stays displayed', () => {
+        renderWithProviders(
+            <EligibilityStep
+                {...baseProps}
+                formData={{ claimantLocationRelationship: managerLabel }}
+            />,
+            { preloadedState: stateWithSwitch(true) },
+        );
+
+        expect(screen.getByTestId('relationship-select')).toHaveValue(
+            'manager',
+        );
+    });
 });
