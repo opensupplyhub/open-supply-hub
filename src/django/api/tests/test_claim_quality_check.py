@@ -146,44 +146,6 @@ class ClaimQualityCheckTestBase(APITestCase):
         values.update(overrides)
         return FacilityClaim.objects.create(**values)
 
-    def valid_form_data(self, **overrides):
-        data = {
-            'your_name': 'Claimant',
-            'your_title': 'Owner',
-            'your_business_website': '',
-            'business_website': '',
-            'business_linkedin_profile':
-                'https://www.linkedin.com/company/example',
-            'sectors': 'Apparel',
-        }
-        data.update(overrides)
-        return data
-
-    def post_claim(self, **overrides):
-        self.login()
-        return self.client.post(
-            f'/api/facilities/{self.facility.id}/claim/',
-            self.valid_form_data(**overrides),
-        )
-
-    def put_claimed(self, claim, **fields):
-        self.login()
-        payload = {
-            'facility_name_english': claim.facility_name_english or '',
-            'facility_address': claim.facility_address or '',
-            'facility_description': '',
-            'facility_phone_number_publicly_visible': False,
-            'point_of_contact_publicly_visible': False,
-            'office_info_publicly_visible': False,
-            'facility_website_publicly_visible': False,
-        }
-        payload.update(fields)
-        return self.client.put(
-            f'/api/facility-claims/{claim.id}/claimed/',
-            payload,
-            format='json',
-        )
-
     def make_approved_claim(self):
         return self.make_claim(
             status=FacilityClaimStatuses.APPROVED,
