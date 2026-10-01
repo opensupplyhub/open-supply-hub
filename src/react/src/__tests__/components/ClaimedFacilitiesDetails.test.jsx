@@ -387,6 +387,37 @@ describe('ClaimedFacilitiesDetails', () => {
             expect(submitUpdate).not.toHaveBeenCalled();
         });
 
+        it('re-shows the warnings on a second Save with the same values without a second request', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText('Go back and edit'));
+            // The dialog leaves the DOM after its close transition; the
+            // page behind it is aria-hidden until then.
+            await waitFor(() => {
+                expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledTimes(1);
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
         it('saves directly when the name and address are unchanged', async () => {
             const submitUpdate = jest.fn();
             renderComponent({

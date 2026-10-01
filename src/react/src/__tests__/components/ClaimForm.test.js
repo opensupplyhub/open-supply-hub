@@ -877,6 +877,32 @@ describe('ClaimForm component', () => {
             });
         });
 
+        test('re-shows the warnings on a second Continue with the same values without a second request', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const { getByText, queryByText, reduxStore } = renderComponent(
+                makeState(),
+            );
+
+            fireEvent.click(getByText('Continue'));
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(getByText('Go back and edit'));
+            await waitFor(() => {
+                expect(queryByText(warning.title)).not.toBeInTheDocument();
+            });
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledTimes(1);
+            expect(reduxStore.getState().claimForm.activeStep).toBe(2);
+        });
+
         test('advances without a check when the values are the ones listed', async () => {
             const { getByText, reduxStore } = renderComponent(
                 makeState({

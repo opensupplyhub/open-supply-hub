@@ -23,6 +23,8 @@ import {
     fetchClaimQualityWarnings,
     makeDismissal,
     nameAddressUnchanged,
+    rememberCheck,
+    rememberedWarningsFor,
 } from '../../../util/claimQualityCheck';
 import ClaimOutcomeDialog from '../../ClaimOutcomeDialog';
 import RequireAuthNotice from '../../RequireAuthNotice';
@@ -137,6 +139,7 @@ const ClaimForm = ({
     // before the step advances; and whether that check is in flight.
     const [qualityWarnings, setQualityWarnings] = useState([]);
     const [checkingQuality, setCheckingQuality] = useState(false);
+    const [lastQualityCheck, setLastQualityCheck] = useState(null);
 
     // Redirect to intro page if user accessed form directly via URL.
     useRequireIntroAccess(history, osID);
@@ -285,8 +288,9 @@ const ClaimForm = ({
     // front of them rather than at submit, two steps and a document
     // upload later. Skipped when the values are the ones the location
     // already lists (nothing new is asserted) and when the claimant has
-    // already continued past warnings for exactly these values. The
-    // check fails open: a failed request advances the step.
+    // already continued past warnings for exactly these values; values
+    // the check already answered re-show that answer rather than asking
+    // again. The check fails open: a failed request advances the step.
     const passesQualityCheck = async () => {
         if (
             activeStep !== CLAIM_FORM_STEPS.BUSINESS ||
@@ -306,9 +310,13 @@ const ClaimForm = ({
         ) {
             return true;
         }
-        setCheckingQuality(true);
-        const warnings = await fetchClaimQualityWarnings(osID, values);
-        setCheckingQuality(false);
+        let warnings = rememberedWarningsFor(values, lastQualityCheck);
+        if (warnings === null) {
+            setCheckingQuality(true);
+            warnings = await fetchClaimQualityWarnings(osID, values);
+            setCheckingQuality(false);
+            setLastQualityCheck(rememberCheck(values, warnings));
+        }
         if (warnings.length === 0) {
             return true;
         }

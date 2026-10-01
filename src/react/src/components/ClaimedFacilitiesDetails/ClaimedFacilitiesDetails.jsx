@@ -32,6 +32,8 @@ import ContributionWarningDialog from '../Contribute/ContributionWarningDialog';
 import {
     fetchClaimQualityWarnings,
     nameAddressUnchanged,
+    rememberCheck,
+    rememberedWarningsFor,
     toDismissedWarnings,
 } from '../../util/claimQualityCheck';
 import ImportantNote from '../InitialClaimFlow/Shared/ImportantNote/ImportantNote';
@@ -196,10 +198,12 @@ function ClaimedFacilitiesDetails({
     /* eslint-enable react-hooks/exhaustive-deps */
     const [isSavingForm, setIsSavingForm] = useState(false);
     // The advisory data-quality warnings returned for a changed name or
-    // address (OSDEV-3489), shown before the save goes through; and
-    // whether that check is in flight.
+    // address (OSDEV-3489), shown before the save goes through; whether
+    // that check is in flight; and the last check's result with the
+    // values it was for, re-shown when those values are saved again.
     const [qualityWarnings, setQualityWarnings] = useState([]);
     const [checkingQuality, setCheckingQuality] = useState(false);
+    const [lastQualityCheck, setLastQualityCheck] = useState(null);
     const TITLE = 'Claimed Facility Details';
 
     useEffect(() => {
@@ -228,8 +232,9 @@ function ClaimedFacilitiesDetails({
 
     // A changed name or address goes through the backend's advisory
     // quality check first (OSDEV-3489); the same values as loaded assert
-    // nothing new and save directly. The check fails open: a failed
-    // request saves as if nothing had been flagged.
+    // nothing new and save directly, and values the check already
+    // answered re-show that answer rather than asking again. The check
+    // fails open: a failed request saves as if nothing had been flagged.
     const saveForm = async () => {
         const values = {
             name: data?.facility_name_english,
@@ -239,12 +244,16 @@ function ClaimedFacilitiesDetails({
             isNameAddressEditable &&
             !nameAddressUnchanged(values, loadedNameAddress)
         ) {
-            setCheckingQuality(true);
-            const warnings = await fetchClaimQualityWarnings(
-                get(data, 'facility.id'),
-                values,
-            );
-            setCheckingQuality(false);
+            let warnings = rememberedWarningsFor(values, lastQualityCheck);
+            if (warnings === null) {
+                setCheckingQuality(true);
+                warnings = await fetchClaimQualityWarnings(
+                    get(data, 'facility.id'),
+                    values,
+                );
+                setCheckingQuality(false);
+                setLastQualityCheck(rememberCheck(values, warnings));
+            }
             if (warnings.length > 0) {
                 setQualityWarnings(warnings);
                 return;

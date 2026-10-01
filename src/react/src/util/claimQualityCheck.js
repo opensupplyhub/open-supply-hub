@@ -6,8 +6,11 @@ import { makeClaimQualityCheckURL } from './util';
 // claimed-details form. The backend returns the same
 // `warnings: [{type, title, message}]` shape as the SLC quality check.
 
-// Same comparison the backend makes before deciding whether to call the
-// model: case-insensitive, with whitespace collapsed.
+// A client-side approximation of the backend's "nothing new asserted"
+// test (case-insensitive, whitespace collapsed). The backend's own test
+// is looser (it also ignores punctuation and transliterates), so a value
+// this treats as changed may still be answered without a model call;
+// the forms only use this to avoid requests that cannot be needed.
 const normalize = value =>
     (value ?? '').toString().replace(/\s+/g, ' ').trim().toLowerCase();
 
@@ -32,6 +35,25 @@ export const fetchClaimQualityWarnings = (osID, { name, address }) =>
             Array.isArray(data?.warnings) ? data.warnings : [],
         )
         .catch(() => []);
+
+// The result of the last check a form ran, kept with the values it was
+// for. A repeat of exactly those values ("Go back and edit", then saving
+// again with nothing changed) re-shows this result instead of asking
+// again: the backend answers a byte-identical repeat within its
+// duplicate-throttle window with a 429, which the fail-open fetch above
+// would otherwise turn into "no warnings".
+export const rememberCheck = (values, warnings) => ({
+    name: (values.name ?? '').toString().trim(),
+    address: (values.address ?? '').toString().trim(),
+    warnings,
+});
+
+// The remembered warnings for these values, or null when the last check
+// was for different values (or there was none) and a request is needed.
+export const rememberedWarningsFor = (values, lastCheck) =>
+    lastCheck && nameAddressUnchanged(values, lastCheck)
+        ? lastCheck.warnings
+        : null;
 
 // What a write reports back as `dismissed_warnings`: the type and the
 // reason the claimant was shown. The title is looked up server side.

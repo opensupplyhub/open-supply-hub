@@ -4,6 +4,8 @@ import {
     fetchClaimQualityWarnings,
     makeDismissal,
     nameAddressUnchanged,
+    rememberCheck,
+    rememberedWarningsFor,
     toDismissedWarnings,
 } from '../../util/claimQualityCheck';
 
@@ -148,6 +150,33 @@ describe('claimQualityCheck util', () => {
             expect(
                 dismissedWarningsFor({ name: 'x', address: 'y' }, null),
             ).toEqual([]);
+        });
+    });
+
+    describe('rememberCheck / rememberedWarningsFor', () => {
+        it('re-shows the last result for the same values, including an empty one', () => {
+            const values = { name: ' Test test ', address: 'asdf' };
+            const flagged = rememberCheck(values, warnings);
+            expect(
+                rememberedWarningsFor(
+                    { name: 'test TEST', address: ' asdf' },
+                    flagged,
+                ),
+            ).toEqual(warnings);
+            expect(
+                rememberedWarningsFor(values, rememberCheck(values, [])),
+            ).toEqual([]);
+        });
+
+        it('is null when there is no last check or the values changed', () => {
+            const values = { name: 'Test test', address: 'asdf' };
+            expect(rememberedWarningsFor(values, null)).toBeNull();
+            expect(
+                rememberedWarningsFor(
+                    { name: 'Test test', address: '9 Elsewhere Road' },
+                    rememberCheck(values, warnings),
+                ),
+            ).toBeNull();
         });
     });
 });
