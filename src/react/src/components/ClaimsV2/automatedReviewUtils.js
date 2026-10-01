@@ -58,13 +58,32 @@ export const parseAutomatedReview = notes => {
     return candidates.length > 0 ? candidates[0].review : null;
 };
 
+/* Filename without its final extension ("badge.pdf" → "badge"). */
+const stemOf = name => String(name).replace(/\.[^./\\]+$/, '');
+
 /*
  * Extracted/translated text for one attachment, or null when the
  * pipeline has none for it (cached-translation gap, non-document
  * files, or no automation at all — SPEC.md §P1 known data gap).
+ *
+ * Lookup is exact-first with a stem fallback: blocks posted before the
+ * pipeline carried original_file_name key evidence by the derived
+ * artifact name ("badge.pdf" text sits under "badge.json"), so matching
+ * on the stem recovers the text for every already-posted note.
  */
 export const getEvidenceText = (review, fileName) => {
-    const entry = review?.evidence?.[fileName];
+    const evidence = review?.evidence;
+    if (!evidence || !fileName) {
+        return null;
+    }
+    let entry = evidence[fileName];
+    if (!entry) {
+        const stem = stemOf(fileName);
+        const legacyKey = Object.keys(evidence).find(
+            key => stemOf(key) === stem,
+        );
+        entry = legacyKey ? evidence[legacyKey] : undefined;
+    }
     if (!entry || (!entry.original && !entry.translated)) {
         return null;
     }

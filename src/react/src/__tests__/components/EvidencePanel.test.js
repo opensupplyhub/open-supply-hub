@@ -4,7 +4,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import EvidencePanel from '../../components/ClaimsV2/EvidencePanel';
+import EvidencePanel, { buildUrlEvidence } from '../../components/ClaimsV2/EvidencePanel';
 
 const ATTACHMENTS = [
     { id: 11, file_name: 'utility-bill.png', claim_attachment: 'http://x/1' },
@@ -92,5 +92,106 @@ describe('EvidencePanel', () => {
         expect(
             screen.getByText(/original unavailable until the download/),
         ).toBeInTheDocument();
+    });
+});
+
+describe('buildUrlEvidence', () => {
+    it('collects, labels, normalizes and dedupes the four URL fields', () => {
+        const detail = {
+            facility_website: 'https://arthurmetz.com/fr',
+            website: 'arthurmetz.com/fr', // scheme-less dupe of the above
+            linkedin_profile: '',
+            claimant_linkedin_profile_url: 'https://www.linkedin.com/in/cg',
+        };
+        expect(buildUrlEvidence(detail)).toEqual([
+            {
+                file_name: 'https://arthurmetz.com/fr',
+                label: 'Production location website',
+                is_url: true,
+            },
+            {
+                file_name: 'https://www.linkedin.com/in/cg',
+                label: 'Claimant LinkedIn',
+                is_url: true,
+            },
+        ]);
+    });
+
+    it('returns nothing for blank or absent fields', () => {
+        expect(buildUrlEvidence({})).toEqual([]);
+        expect(buildUrlEvidence({ website: '   ' })).toEqual([]);
+        expect(buildUrlEvidence(undefined)).toEqual([]);
+    });
+});
+
+describe('EvidencePanel URL evidence', () => {
+    beforeEach(() => {
+        window.open = jest.fn();
+    });
+
+    const URL_DOC = {
+        file_name: 'https://arthurmetz.com/fr',
+        label: 'Production location website',
+        is_url: true,
+    };
+    const REVIEW = {
+        evidence: {
+            'https://arthurmetz.com/fr': {
+                kind: 'url',
+                translated: 'Arthur Metz winery, Marlenheim, Alsace',
+            },
+        },
+    };
+
+    it('renders a link chip after the attachments and counts it', () => {
+        render(
+            <EvidencePanel
+                attachments={ATTACHMENTS}
+                urlEvidence={[URL_DOC]}
+                claimID={1}
+            />,
+        );
+        expect(screen.getByText(/Evidence \(4\)/)).toBeInTheDocument();
+        expect(
+            screen.getByText(/🔗 Production location website/),
+        ).toBeInTheDocument();
+    });
+
+    it('opens the link in a new tab and shows the page text inline', () => {
+        render(
+            <EvidencePanel
+                attachments={ATTACHMENTS}
+                urlEvidence={[URL_DOC]}
+                review={REVIEW}
+                claimID={1}
+            />,
+        );
+        fireEvent.click(screen.getByText(/🔗 Production location website/));
+        expect(window.open).toHaveBeenCalledWith(
+            'https://arthurmetz.com/fr',
+            '_blank',
+            'noopener',
+        );
+        expect(
+            screen.getByText(/Arthur Metz winery, Marlenheim, Alsace/),
+        ).toBeInTheDocument();
+    });
+
+    it('degrades to an open-the-link hint when the block has no page text', () => {
+        render(
+            <EvidencePanel
+                attachments={[]}
+                urlEvidence={[URL_DOC]}
+                claimID={1}
+            />,
+        );
+        // Auto-opened (only doc) without spawning a tab.
+        expect(window.open).not.toHaveBeenCalled();
+        expect(
+            screen.getByText(/No page text recorded for this link/),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: /open the link/ }),
+        ).toHaveAttribute('href', 'https://arthurmetz.com/fr');
     });
 });

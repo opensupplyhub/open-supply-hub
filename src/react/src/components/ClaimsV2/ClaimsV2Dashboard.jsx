@@ -10,7 +10,7 @@ import {
 } from './automatedReviewUtils';
 import ClaimantDetailsPanel from './ClaimantDetailsPanel';
 import DecisionPanel from './DecisionPanel';
-import EvidencePanel from './EvidencePanel';
+import EvidencePanel, { buildUrlEvidence } from './EvidencePanel';
 import InternalNoteBox from './InternalNoteBox';
 import MessageComposer from './MessageComposer';
 import VerificationPanel from './VerificationPanel';
@@ -199,6 +199,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
             <div style={styles.workbench} key={detail.id} ref={workbenchRef}>
                 <EvidencePanel
                     attachments={detail.attachments}
+                    urlEvidence={buildUrlEvidence(detail)}
                     review={review}
                     claimID={detail.id}
                     requestedDoc={requestedDoc}

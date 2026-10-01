@@ -87,6 +87,39 @@ describe('getEvidenceText', () => {
         expect(getEvidenceText(review, 'no-text.png')).toBeNull();
         expect(getEvidenceText(null, 'utility-bill.png')).toBeNull();
     });
+
+    /*
+     * Blocks posted before the pipeline carried original_file_name key
+     * evidence by the derived artifact name — badge.pdf's text sits
+     * under badge.json. Every production block before Oct 2026 looks
+     * like this, so the stem fallback is what makes their text visible.
+     */
+    it('falls back to a stem match for legacy .json evidence keys', () => {
+        const legacyReview = parseAutomatedReview([
+            note(
+                block({
+                    ...validPayload,
+                    evidence: {
+                        'registration-document.json': {
+                            translated: 'BUSINESS LICENSE Arthur Metz',
+                            lang: 'fr',
+                        },
+                    },
+                }),
+            ),
+        ]);
+        expect(
+            getEvidenceText(legacyReview, 'registration-document.pdf'),
+        ).toEqual({
+            original: null,
+            translated: 'BUSINESS LICENSE Arthur Metz',
+            lang: 'fr',
+        });
+        // Exact keys still win and unrelated stems still miss.
+        expect(
+            getEvidenceText(legacyReview, 'other-file.pdf'),
+        ).toBeNull();
+    });
 });
 
 describe('getSuggestedDraft', () => {

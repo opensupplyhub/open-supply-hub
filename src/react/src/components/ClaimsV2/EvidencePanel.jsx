@@ -23,10 +23,49 @@ const TABS = Object.freeze({
 /*
  * Images render inline (§5b), so the image is an image doc's default
  * view; a PDF's inline view is its extracted text (the original lives
- * in the new tab), so text is the default there.
+ * in the new tab), so text is the default there. A URL's inline view is
+ * the page text the pipeline fetched — the page itself opens in a new
+ * tab, like a PDF's original.
  */
 const defaultTabFor = doc =>
-    doc && isPdfFile(doc.file_name) ? TABS.TRANSLATED : TABS.DOCUMENT;
+    doc && (doc.is_url || isPdfFile(doc.file_name))
+        ? TABS.TRANSLATED
+        : TABS.DOCUMENT;
+
+/*
+ * Links submitted as claim evidence, as pseudo-documents for the strip.
+ * The claim stores them across four fields (two claim-flow generations);
+ * the pipeline normalizes a scheme-less value with an https:// prefix
+ * and dedupes before fetching, and the note block keys the page text by
+ * that normalized URL — so build the names identically here or the
+ * viewer's text lookup misses.
+ */
+const URL_EVIDENCE_FIELDS = [
+    ['facility_website', 'Production location website'],
+    ['linkedin_profile', 'LinkedIn'],
+    ['claimant_linkedin_profile_url', 'Claimant LinkedIn'],
+    ['website', 'Business website'],
+];
+
+export const buildUrlEvidence = detail => {
+    const seen = new Set();
+    const urlDocs = [];
+    URL_EVIDENCE_FIELDS.forEach(([field, label]) => {
+        const raw = detail?.[field];
+        if (typeof raw !== 'string' || raw.trim() === '') {
+            return;
+        }
+        let url = raw.trim();
+        if (!url.startsWith('http')) {
+            url = `https://${url}`;
+        }
+        if (!seen.has(url)) {
+            seen.add(url);
+            urlDocs.push({ file_name: url, label, is_url: true });
+        }
+    });
+    return urlDocs;
+};
 
 /*
  * Attachment URL, compatible with both sides of OSDEV-2278 (PR #1274):
@@ -38,6 +77,9 @@ const defaultTabFor = doc =>
  * the session cookie.
  */
 const attachmentHref = (claimID, doc) => {
+    if (doc.is_url) {
+        return doc.file_name;
+    }
     if (doc.claim_attachment) {
         return doc.claim_attachment;
     }
@@ -50,12 +92,15 @@ const attachmentHref = (claimID, doc) => {
 
 export default function EvidencePanel({
     attachments,
+    urlEvidence,
     review,
     matchValues,
     claimID,
     requestedDoc,
 }) {
-    const docs = Array.isArray(attachments) ? attachments : [];
+    const docs = (Array.isArray(attachments) ? attachments : []).concat(
+        Array.isArray(urlEvidence) ? urlEvidence : [],
+    );
     // Spec §5b: the first document auto-opens on claim load.
     const [openIndex, setOpenIndex] = useState(docs.length > 0 ? 0 : null);
     const [tab, setTab] = useState(defaultTabFor(docs[0]));
@@ -76,7 +121,7 @@ export default function EvidencePanel({
         setTab(defaultTabFor(docs[index]));
         const doc = docs[index];
         const href = doc && attachmentHref(claimID, doc);
-        if (doc && isPdfFile(doc.file_name) && href) {
+        if (doc && (doc.is_url || isPdfFile(doc.file_name)) && href) {
             window.open(href, '_blank', 'noopener');
         }
     };
@@ -129,6 +174,7 @@ export default function EvidencePanel({
         const openHref = attachmentHref(claimID, openDoc);
         if (
             tab === TABS.DOCUMENT &&
+            !openDoc.is_url &&
             !isPdfFile(openDoc.file_name) &&
             openHref
         ) {
@@ -145,18 +191,27 @@ export default function EvidencePanel({
                 </div>
             );
         }
+        /* eslint-disable no-nested-ternary */
+        const hint = openDoc.is_url
+            ? tab === TABS.DOCUMENT
+                ? 'Web link — the page opens in a new tab: '
+                : 'No page text recorded for this link — '
+            : tab === TABS.DOCUMENT
+            ? 'PDF — the original opens in a new tab: '
+            : 'No extracted text for this document — ';
+        /* eslint-enable no-nested-ternary */
         return (
             <Typography variant="body1" style={styles.evidenceHint}>
-                {tab === TABS.DOCUMENT
-                    ? 'PDF — the original opens in a new tab: '
-                    : 'No extracted text for this document — '}
+                {hint}
                 {openHref ? (
                     <a
                         href={openHref}
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        open the original ↗
+                        {openDoc.is_url
+                            ? 'open the link ↗'
+                            : 'open the original ↗'}
                     </a>
                 ) : (
                     'original unavailable until the download endpoint ships'
@@ -180,9 +235,20 @@ export default function EvidencePanel({
                                 : {}),
                         }}
                         onClick={() => selectDoc(index)}
+                        title={doc.is_url ? doc.file_name : undefined}
                     >
-                        {isPdfFile(doc.file_name) ? '📄 ' : '🖼 '}
-                        {doc.file_name}
+                        {/* eslint-disable-next-line no-nested-ternary */}
+                        {doc.is_url
+                            ? '🔗 '
+                            : isPdfFile(doc.file_name)
+                            ? '📄 '
+                            : '🖼 '}
+                        {doc.is_url
+                            ? `${doc.label}: ${doc.file_name.replace(
+                                  /^https?:\/\/(www\.)?/,
+                                  '',
+                              )}`
+                            : doc.file_name}
                     </button>
                 ))}
                 {docs.length === 0 && (
@@ -211,7 +277,7 @@ export default function EvidencePanel({
                                 }}
                                 onClick={() => setTab(TABS.DOCUMENT)}
                             >
-                                Document
+                                {openDoc.is_url ? 'Link' : 'Document'}
                             </button>
                             <button
                                 type="button"
@@ -223,7 +289,9 @@ export default function EvidencePanel({
                                 }}
                                 onClick={() => setTab(TABS.TRANSLATED)}
                             >
-                                English translation
+                                {openDoc.is_url
+                                    ? 'Page text (English)'
+                                    : 'English translation'}
                             </button>
                             <button
                                 type="button"

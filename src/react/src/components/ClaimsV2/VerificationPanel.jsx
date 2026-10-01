@@ -103,6 +103,15 @@ export default function VerificationPanel({ detail, review, onShowDocument }) {
     const emailValue = [detail.email, detail.website]
         .filter(Boolean)
         .join(' · ');
+    /*
+     * company_name is only set by the legacy claim flow — the new flow
+     * never writes it, so fall back to the claimant's account
+     * (contributor) name, which is registration data from the same
+     * person. Both the row and its consistency chip must use the same
+     * resolved value or they'd judge different strings.
+     */
+    const claimantAccountName =
+        detail.company_name || detail.contributor?.name || '';
 
     return (
         <section aria-label="Verification">
@@ -124,7 +133,7 @@ export default function VerificationPanel({ detail, review, onShowDocument }) {
                     label="Claimant Account"
                     extract={getExtract(review, 'organization')}
                     onShowDocument={onShowDocument}
-                    value={detail.company_name}
+                    value={claimantAccountName}
                     provenance={PROVENANCE.CLAIMANT}
                     counterpart={{
                         label: 'OS Hub profile',
@@ -133,7 +142,7 @@ export default function VerificationPanel({ detail, review, onShowDocument }) {
                     chip={organizationRowStatus(
                         review,
                         facility.name,
-                        detail.company_name,
+                        claimantAccountName,
                     )}
                     footnote="Account name is claimant-stated registration data."
                 />
