@@ -1,8 +1,18 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 
 import apiRequest from '../../util/apiRequest';
 import ClaimsV2Dashboard from '../../components/ClaimsV2/ClaimsV2Dashboard';
+import renderWithProviders from '../../util/testUtils/renderWithProviders';
+
+// MessageComposer is connected (relaxed_claim_eligibility wording), so the
+// dashboard needs a real store; flags state mirrors a fetched, all-off set.
+const renderDashboard = () =>
+    renderWithProviders(<ClaimsV2Dashboard />, {
+        preloadedState: {
+            featureFlags: { fetching: false, flags: {} },
+        },
+    });
 
 jest.mock('../../util/apiRequest', () => ({
     __esModule: true,
@@ -71,7 +81,7 @@ describe('ClaimsV2Dashboard ?claim deep link', () => {
         // clobbered the deep-linked selection with an empty list.
         window.history.replaceState(null, '', '/dashboard/claims-v2?claim=2');
 
-        render(<ClaimsV2Dashboard />);
+        renderDashboard();
 
         await waitFor(() =>
             expect(window.location.search).toBe('?claim=2'),
@@ -85,7 +95,7 @@ describe('ClaimsV2Dashboard ?claim deep link', () => {
     it('falls back to the first visible claim without a ?claim param', async () => {
         window.history.replaceState(null, '', '/dashboard/claims-v2');
 
-        render(<ClaimsV2Dashboard />);
+        renderDashboard();
 
         await waitFor(() =>
             expect(window.location.search).toBe('?claim=1'),
@@ -99,7 +109,7 @@ describe('ClaimsV2Dashboard initial-load failure', () => {
         apiRequest.get.mockReset();
         apiRequest.get.mockRejectedValue(new Error('network'));
 
-        render(<ClaimsV2Dashboard />);
+        renderDashboard();
 
         // Previously: `loaded` never became true, so initialLoading kept
         // returning the spinner and this branch was unreachable.

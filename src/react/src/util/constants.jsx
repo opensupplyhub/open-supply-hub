@@ -599,6 +599,9 @@ export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 export const PRIVATE_INSTANCE = 'private_instance';
 export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
 export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
+// Relaxed claim eligibility (employees may claim) — swaps the
+// owner/manager wording across claimant- and moderator-facing copy.
+export const RELAXED_CLAIM_ELIGIBILITY = 'relaxed_claim_eligibility';
 export const ENABLE_PRODUCTION_LOCATION_PAGE =
     'enable_production_location_page';
 export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
