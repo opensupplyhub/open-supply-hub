@@ -68,11 +68,17 @@ const stemOf = name => String(name).replace(/\.[^./\\]+$/, '');
  * "badge.pdf" sits under "badge.json". Only that ".json" shape may
  * stand in — any other same-stem key ("license.jpg" next to
  * "license.pdf") is a different document and must never be shown as
- * this one's text.
+ * this one's text. URL evidence is keyed by the exact URL and never
+ * stem-matched: ".../license.pdf" and ".../license.json" are different
+ * pages, and legacy artifact names are bare filenames, so nothing
+ * containing "://" is ever a legacy key.
  */
 export const matchesEvidenceKey = (fileName, key) =>
     key === fileName ||
-    (/\.json$/i.test(String(key)) && stemOf(key) === stemOf(fileName));
+    (!String(fileName).includes('://') &&
+        !String(key).includes('://') &&
+        /\.json$/i.test(String(key)) &&
+        stemOf(key) === stemOf(fileName));
 
 /*
  * Extracted/translated text for one attachment, or null when the

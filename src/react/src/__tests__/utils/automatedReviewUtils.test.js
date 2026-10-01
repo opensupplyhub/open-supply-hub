@@ -156,6 +156,24 @@ describe('matchesEvidenceKey', () => {
             matchesEvidenceKey('https://example.com', 'https://example.com'),
         ).toBe(true);
     });
+
+    it('never stem-matches URL evidence — exact URLs only', () => {
+        // .../license.pdf and .../license.json are different pages;
+        // the legacy fallback exists for bare attachment artifact
+        // names, so nothing containing :// may use it, on either side.
+        expect(
+            matchesEvidenceKey(
+                'https://example.com/license.pdf',
+                'https://example.com/license.json',
+            ),
+        ).toBe(false);
+        expect(
+            matchesEvidenceKey('license.pdf', 'https://x.com/license.json'),
+        ).toBe(false);
+        expect(
+            matchesEvidenceKey('https://x.com/license.pdf', 'license.json'),
+        ).toBe(false);
+    });
 });
 
 describe('getSuggestedDraft', () => {

@@ -64,7 +64,13 @@ export const buildUrlEvidence = detail => {
             return;
         }
         let url = raw.trim();
-        if (!url.startsWith('http')) {
+        // Full scheme check, case-insensitive — `startsWith('http')`
+        // skipped the prefix for bare hosts like httpbin.org (dropping
+        // them at validation) and double-prefixed uppercase schemes.
+        // Must stay identical to the pipeline's normalization in
+        // _collect_url_evidence, or the note block's evidence keys stop
+        // matching this component's lookups.
+        if (!/^https?:\/\//i.test(url)) {
             url = `https://${url}`;
         }
         if (!isURL(url, { require_protocol: true })) {

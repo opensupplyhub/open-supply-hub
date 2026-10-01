@@ -141,11 +141,27 @@ describe('buildUrlEvidence', () => {
     it('drops free-text values that are not URLs', () => {
         // The legacy `website` field is free text; none of these may
         // become a clickable chip or count as evidence.
-        ['N/A', 'none', 'www.a.com, www.b.com', 'HTTP://X.COM'].forEach(
-            website => {
-                expect(buildUrlEvidence({ website })).toEqual([]);
+        ['N/A', 'none', 'www.a.com, www.b.com'].forEach(website => {
+            expect(buildUrlEvidence({ website })).toEqual([]);
+        });
+    });
+
+    it('normalizes schemes case-insensitively and completely', () => {
+        // A bare host that merely starts with "http" still needs the
+        // prefix — startsWith('http') used to skip it, and the evidence
+        // was then dropped at protocol validation.
+        expect(buildUrlEvidence({ website: 'httpbin.org' })).toEqual([
+            {
+                file_name: 'https://httpbin.org',
+                label: 'Business website',
+                is_url: true,
             },
-        );
+        ]);
+        // Schemes are case-insensitive: an uppercase scheme is already
+        // complete and must not be double-prefixed.
+        expect(buildUrlEvidence({ website: 'HTTP://X.COM' })).toEqual([
+            { file_name: 'HTTP://X.COM', label: 'Business website', is_url: true },
+        ]);
     });
 
     it('returns nothing for blank or absent fields', () => {
