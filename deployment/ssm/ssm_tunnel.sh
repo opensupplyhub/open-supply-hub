@@ -44,7 +44,8 @@ ensure_plugin() {
 
   local deb
   deb="$(mktemp --suffix=.deb)"
-  curl -fsSL -o "$deb" \
+  # Only HTTPS (also for redirects) and TLS 1.2+.
+  curl --proto '=https' --tlsv1.2 -fsSL -o "$deb" \
     "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/${arch_dir}/session-manager-plugin.deb"
 
   local sudo=""
