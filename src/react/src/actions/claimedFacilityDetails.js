@@ -15,6 +15,26 @@ import {
     logErrorAndDispatchFailure,
     makeGetOrUpdateApprovedFacilityClaimURL,
 } from '../util/util';
+import { ENABLE_CLAIM_NAME_ADDRESS_EDIT } from '../util/constants';
+
+// While the name and address are editable they are required, so a claim
+// that does not assert its own (every claim approved before the fields
+// existed) is shown with the name and address the location holds
+// (`location_name` / `location_address`, read by the backend from the
+// same row it compares an echoed value against). The backend keeps the
+// claim's value NULL when the submitted value is the location's, so the
+// PUT response needs the same fallback.
+const withNameAddressFallback = (data, flags) => {
+    if (!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT]) {
+        return data;
+    }
+    return {
+        ...data,
+        facility_name_english:
+            data.facility_name_english || data.location_name || '',
+        facility_address: data.facility_address || data.location_address || '',
+    };
+};
 
 export const startFetchClaimedFacilityDetails = createAction(
     'START_FETCH_CLAIMED_FACILITY_DETAILS',
@@ -30,7 +50,7 @@ export const clearClaimedFacilityDetails = createAction(
 );
 
 export function fetchClaimedFacilityDetails(claimID) {
-    return dispatch => {
+    return (dispatch, getState) => {
         if (!claimID) {
             return null;
         }
@@ -48,7 +68,16 @@ export function fetchClaimedFacilityDetails(claimID) {
                     return v;
                 }),
             )
-            .then(data => dispatch(completeFetchClaimedFacilityDetails(data)))
+            .then(data =>
+                dispatch(
+                    completeFetchClaimedFacilityDetails(
+                        withNameAddressFallback(
+                            data,
+                            getState().featureFlags.flags,
+                        ),
+                    ),
+                ),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
@@ -145,7 +174,8 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 'affiliation_choices',
                 'certification_choices',
                 'production_type_choices',
-                'initial_facility_address',
+                'location_name',
+                'location_address',
                 ...energyEnabledKeys,
             ]),
             {
@@ -182,7 +212,14 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 }),
             )
             .then(responseData =>
-                dispatch(completeUpdateClaimedFacilityDetails(responseData)),
+                dispatch(
+                    completeUpdateClaimedFacilityDetails(
+                        withNameAddressFallback(
+                            responseData,
+                            getState().featureFlags.flags,
+                        ),
+                    ),
+                ),
             )
             .catch(err =>
                 dispatch(
@@ -198,6 +235,12 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
 
 export const updateClaimedFacilityNameNativeLanguage = createAction(
     'UPDATE_CLAIMED_FACILITY_NAME_NATIVE_LANGUAGE',
+);
+export const updateClaimedFacilityNameEnglish = createAction(
+    'UPDATE_CLAIMED_FACILITY_NAME_ENGLISH',
+);
+export const updateClaimedFacilityAddress = createAction(
+    'UPDATE_CLAIMED_FACILITY_ADDRESS',
 );
 export const updateClaimedSector = createAction('UPDATE_CLAIMED_SECTOR');
 export const updateClaimedFacilityPhone = createAction(
@@ -268,10 +311,6 @@ export const updateClaimedFacilityProductTypes = createAction(
 );
 export const updateClaimedFacilityProductionTypes = createAction(
     'UPDATE_CLAIMED_FACILITY_PRODUCTION_TYPES',
-);
-
-export const updateClaimedFacilityLocation = createAction(
-    'UPDATE_CLAIMED_FACILITY_LOCATION',
 );
 
 export const updateClaimedFacilityOpeningDate = createAction(
