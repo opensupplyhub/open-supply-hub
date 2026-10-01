@@ -39,7 +39,7 @@ describe('ClaimInfoSection component', () => {
             });
 
             expect(
-                getByText(/Claim requests must be submitted by an employee of the production location or of its parent company/)
+                getByText(/Claim requests must be submitted by an authorized employee of the production location or of its parent company/)
             ).toBeInTheDocument();
             // Employees are directly eligible: no supervisor path.
             expect(queryByText(/supervisor/)).not.toBeInTheDocument();

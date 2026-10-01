@@ -66,10 +66,11 @@ const ClaimInfoSection = ({ classes, children }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Claim requests must be submitted by an employee
-                                of the production location or of its parent
-                                company. Claim Requests submitted by a buyer or
-                                other stakeholder will not be approved.
+                                Claim requests must be submitted by an
+                                authorized employee of the production location
+                                or of its parent company. Claim Requests
+                                submitted by a buyer, contractor or other
+                                stakeholder will not be approved.
                             </Typography>
                         </li>
                     </FeatureFlag>

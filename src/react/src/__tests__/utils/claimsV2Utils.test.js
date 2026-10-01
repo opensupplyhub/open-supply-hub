@@ -193,7 +193,7 @@ describe('relaxed eligibility template wording', () => {
         expect(message).not.toContain('senior manager or owner');
         expect(message).not.toContain('owner or senior management');
         const employeeMentions = message.split(
-            'an employee of the production location or its parent company',
+            'an authorized employee of the production location or its parent company',
         );
         expect(employeeMentions.length - 1).toBe(2);
     });

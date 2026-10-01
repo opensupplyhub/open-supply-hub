@@ -36,8 +36,9 @@ export const MESSAGE_TEMPLATES = Object.freeze({
                 'As per our claim policy ',
                 '(https://info.opensupplyhub.org/resources/claim-a-facility), ',
                 relaxedEligibility
-                    ? 'the claim needs to be submitted by an employee of ' +
-                      'the production location or its parent company.\n\n'
+                    ? 'the claim needs to be submitted by an authorized ' +
+                      'employee of the production location or its parent ' +
+                      'company.\n\n'
                     : 'the claim needs to be submitted by a senior manager ' +
                       'or owner.\n\n',
                 `You listed yourself as a "${jobTitle}". At this point, `,
@@ -60,8 +61,8 @@ export const MESSAGE_TEMPLATES = Object.freeze({
                 `company) between ${emailDomain} and ${facilityName}.\n\n`,
                 'Please note that the claim request will only be approved ',
                 relaxedEligibility
-                    ? 'when it is submitted by an employee of the ' +
-                      'production location or its parent company.\n\n'
+                    ? 'when it is submitted by an authorized employee of ' +
+                      'the production location or its parent company.\n\n'
                     : 'when it is submitted by an owner or senior ' +
                       'management associated with the production location ' +
                       'in question.\n\n',

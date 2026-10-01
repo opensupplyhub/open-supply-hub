@@ -59,7 +59,7 @@ const getMainText = (isClaimed, isPending, isRelaxedEligibility) => {
         // Relaxed policy: employees may claim, so the banner must not
         // overstate who the claimant is.
         return isRelaxedEligibility
-            ? 'This production location has been claimed by an owner or employee'
+            ? 'This production location has been claimed by an owner or authorized employee'
             : 'This production location has been claimed by an owner or manager';
     }
     if (isPending) {
