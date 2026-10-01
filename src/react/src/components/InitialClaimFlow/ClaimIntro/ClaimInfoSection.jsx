@@ -1,14 +1,15 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import DialogTooltip from '../../Contribute/DialogTooltip';
-import FeatureFlag from '../../FeatureFlag';
 import ImportantNote from '../Shared/ImportantNote/ImportantNote';
 import {
     ClaimFacilityInfoLink,
     RELAXED_CLAIM_ELIGIBILITY,
 } from '../../../util/constants';
+import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
 import { claimInfoStyles } from './styles';
 import ExampleImage from './ExampleImage';
 
@@ -19,7 +20,7 @@ import employeeIdExample from '../../../images/employee-id-example.jpg';
 import employmentLetterExample from '../../../images/employment-letter-example.jpg';
 import businessCardExample from '../../../images/business-card-example.jpg';
 
-const ClaimInfoSection = ({ classes, children }) => (
+const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
     <div className={classes.root}>
         <div className={classes.boxContainerWrapper}>
             <div className={`${classes.boxContainer} ${classes.blueStep}`}>
@@ -30,37 +31,12 @@ const ClaimInfoSection = ({ classes, children }) => (
                     </span>
                 </Typography>
                 <ul className={classes.boxList}>
-                    <FeatureFlag
-                        flag={RELAXED_CLAIM_ELIGIBILITY}
-                        alternative={
-                            <>
-                                <li>
-                                    <Typography
-                                        variant="body2"
-                                        className={classes.boxDescription}
-                                    >
-                                        Claim requests must be submitted by an
-                                        owner or manager of the production
-                                        location or of its parent company. Claim
-                                        Requests submitted by a buyer or other
-                                        stakeholder will not be approved.
-                                    </Typography>
-                                </li>
-                                <li>
-                                    <Typography
-                                        variant="body2"
-                                        className={classes.boxDescription}
-                                    >
-                                        If you&apos;re an employee of the
-                                        production location but not an owner or
-                                        manager, you can still proceed by
-                                        providing your supervisor&apos;s contact
-                                        information for approval.
-                                    </Typography>
-                                </li>
-                            </>
-                        }
-                    >
+                    {/* Connected rather than via <FeatureFlag>, which
+                        renders null while flags load and left this box
+                        empty under its heading — the current (switch-
+                        off) wording shows until the flags land, same
+                        degradation as the eligibility step's options. */}
+                    {isRelaxedEligibility ? (
                         <li>
                             <Typography
                                 variant="body2"
@@ -73,7 +49,34 @@ const ClaimInfoSection = ({ classes, children }) => (
                                 stakeholder will not be approved.
                             </Typography>
                         </li>
-                    </FeatureFlag>
+                    ) : (
+                        <>
+                            <li>
+                                <Typography
+                                    variant="body2"
+                                    className={classes.boxDescription}
+                                >
+                                    Claim requests must be submitted by an owner
+                                    or manager of the production location or of
+                                    its parent company. Claim Requests submitted
+                                    by a buyer or other stakeholder will not be
+                                    approved.
+                                </Typography>
+                            </li>
+                            <li>
+                                <Typography
+                                    variant="body2"
+                                    className={classes.boxDescription}
+                                >
+                                    If you&apos;re an employee of the production
+                                    location but not an owner or manager, you
+                                    can still proceed by providing your
+                                    supervisor&apos;s contact information for
+                                    approval.
+                                </Typography>
+                            </li>
+                        </>
+                    )}
                 </ul>
             </div>
         </div>
@@ -288,6 +291,15 @@ const ClaimInfoSection = ({ classes, children }) => (
 ClaimInfoSection.propTypes = {
     classes: PropTypes.object.isRequired,
     children: PropTypes.node.isRequired,
+    isRelaxedEligibility: PropTypes.bool.isRequired,
 };
 
-export default withStyles(claimInfoStyles)(ClaimInfoSection);
+const mapStateToProps = ({ featureFlags: { flags } }) => ({
+    isRelaxedEligibility: convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    ).includes(RELAXED_CLAIM_ELIGIBILITY),
+});
+
+export default connect(mapStateToProps)(
+    withStyles(claimInfoStyles)(ClaimInfoSection),
+);

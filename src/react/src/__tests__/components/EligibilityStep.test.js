@@ -350,7 +350,7 @@ describe('EligibilityStep with the relaxed_claim_eligibility switch', () => {
 
     afterEach(() => jest.clearAllMocks());
 
-    test('shows the employee label but stores the canonical worker label', () => {
+    test('shows the employee label and stores exactly what was shown', () => {
         renderWithProviders(<EligibilityStep {...baseProps} />, {
             preloadedState: stateWithSwitch(true),
         });
@@ -363,11 +363,11 @@ describe('EligibilityStep with the relaxed_claim_eligibility switch', () => {
         });
         expect(mockHandleChange).toHaveBeenCalledWith(
             'claimantLocationRelationship',
-            workerLabel,
+            RELAXED_WORKER_LABEL,
         );
     });
 
-    test('stores the same canonical label with the switch off', () => {
+    test('stores the canonical label with the switch off', () => {
         renderWithProviders(<EligibilityStep {...baseProps} />, {
             preloadedState: stateWithSwitch(false),
         });
@@ -429,5 +429,28 @@ describe('EligibilityStep with the relaxed_claim_eligibility switch', () => {
         expect(screen.getByTestId('relationship-select')).toHaveValue(
             'manager',
         );
+    });
+
+    test('a manager filing a new claim is not recorded as lacking management authority', () => {
+        renderWithProviders(<EligibilityStep {...baseProps} />, {
+            preloadedState: stateWithSwitch(true),
+        });
+
+        // A manager has no option describing their role, so the employee
+        // option is the only one they can truthfully pick.
+        expect(screen.queryByText(managerLabel)).not.toBeInTheDocument();
+        expect(screen.getByText(RELAXED_WORKER_LABEL)).toBeInTheDocument();
+
+        fireEvent.change(screen.getByTestId('relationship-select'), {
+            target: { value: 'worker' },
+        });
+
+        const [, storedRelationship] = mockHandleChange.mock.calls[0];
+
+        // Whatever is persisted must not assert things the claimant never
+        // selected: that they lack management authority, and that they need
+        // the supervisor verification this switch exists to remove.
+        expect(storedRelationship).not.toMatch(/management authority/i);
+        expect(storedRelationship).not.toMatch(/supervisor verification/i);
     });
 });

@@ -33,6 +33,20 @@ describe('ClaimInfoSection component', () => {
             ).toBeInTheDocument();
         });
 
+        test('shows the current bullets while the flags are still loading', () => {
+            // Regression: <FeatureFlag> returned null during the fetch,
+            // leaving the eligibility heading above an empty list.
+            const { getByText } = renderWithProviders(<ClaimInfoSection />, {
+                preloadedState: {
+                    featureFlags: { fetching: true, flags: {} },
+                },
+            });
+
+            expect(
+                getByText(/Claim requests must be submitted by an owner or manager/)
+            ).toBeInTheDocument();
+        });
+
         test('relaxed_claim_eligibility swaps to employee requirements', () => {
             const { getByText, queryByText } = renderComponent({
                 relaxed_claim_eligibility: true,

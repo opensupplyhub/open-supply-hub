@@ -21,25 +21,38 @@ class ClaimSubmittedEmailEligibilityTest(TestCase):
     )
 
     def render(self, template, relaxed):
-        return get_template(template).render(
+        body = get_template(template).render(
             {**self.CONTEXT, 'relaxed_eligibility': relaxed}
         )
+        # Collapse the HTML template's line wrapping so sentence-level
+        # assertions hold for both the .txt and .html bodies — an
+        # assertion with the wrapping baked in silently passes on the
+        # single-line .txt templates no matter what they say.
+        return ' '.join(body.split())
 
     def test_default_keeps_owner_senior_management_wording(self):
         for template in self.TEMPLATES:
             body = self.render(template, relaxed=False)
-            self.assertIn('owner or senior management', body, template)
-            self.assertNotIn(
-                'employee\n            of the production location', body,
+            self.assertIn(
+                'an owner or senior management associated with the '
+                'production location',
+                body,
                 template,
+            )
+            self.assertNotIn(
+                'employee of the production location', body, template
             )
 
     def test_relaxed_switch_swaps_to_employee_wording(self):
         for template in self.TEMPLATES:
             body = self.render(template, relaxed=True)
+            self.assertIn(
+                'submitted by an authorized employee of the production '
+                'location or its parent company',
+                body,
+                template,
+            )
             self.assertNotIn('owner or senior management', body, template)
-            self.assertIn('employee', body, template)
-            self.assertIn('parent', body, template)
 
 
 class MessageClaimantEmailEligibilityTest(TestCase):

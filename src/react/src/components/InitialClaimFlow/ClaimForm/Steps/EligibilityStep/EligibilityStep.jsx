@@ -41,9 +41,6 @@ const EligibilityStep = ({
     const history = useHistory();
     const [ineligibleDialogOpen, setIneligibleDialogOpen] = useState(false);
 
-    const canonicalLabel = value =>
-        RELATIONSHIP_OPTIONS.find(option => option.value === value)?.label;
-
     // Accept either the canonical label or the relaxed one (a pending
     // claim saved while the switch was on), then show the current label
     // for that value.
@@ -62,11 +59,10 @@ const EligibilityStep = ({
     // options were the same answer twice. A pending claim saved with
     // "manager" while the switch was off keeps its option (the stored
     // answer stays valid and visible; only new picks are constrained).
-    // Only the menu and displayed labels change: the form stores the
-    // option's canonical label (the switch-off wording) whichever way
-    // the switch is set, so the persisted claimant_location_relationship
-    // string stays the same across the switch and round-trips when the
-    // flags arrive after a selection.
+    // The stored claimant_location_relationship is whichever label the
+    // claimant saw and picked; findSelectedOption above accepts both
+    // generations of the worker label, so stored values round-trip
+    // whichever way the switch is set when the claim is reopened.
     const relationshipOptions = RELATIONSHIP_OPTIONS.filter(
         option =>
             !(
@@ -150,10 +146,15 @@ const EligibilityStep = ({
                         ) {
                             setIneligibleDialogOpen(true);
                         } else {
+                            // Store the label the claimant actually saw
+                            // and chose: the stored string is claimant
+                            // data (claim history, admin, exports), so
+                            // it must never assert the supervisor-
+                            // verification caveat to someone who picked
+                            // the relaxed employee option.
                             handleChange(
                                 'claimantLocationRelationship',
-                                canonicalLabel(valueObject.value) ??
-                                    valueObject.label,
+                                valueObject.label,
                             );
                         }
                     }}
