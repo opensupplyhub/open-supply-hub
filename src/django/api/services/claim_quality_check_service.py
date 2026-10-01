@@ -21,14 +21,14 @@ blocked, and any failure of the model call means no warnings.
 '''
 import json
 import logging
-import re
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from waffle import switch_is_active
 
 from api.models.facility.facility import Facility
 from api.services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
+    same_claimed_value,
 )
 from api.services.claim_quality_service import ClaimQualityService
 from api.services.claim_quality_warnings import WARNING_TITLES
@@ -46,7 +46,16 @@ logger = logging.getLogger(__name__)
 # blocking claims.
 CLAIM_QUALITY_CHECK_SWITCH = 'claim_quality_check'
 
-_WHITESPACE = re.compile(r'\s+')
+# Verdicts that judge one field on its own. They are not reported when
+# that field is the one already listed: the claimant neither wrote nor
+# changed it, so there is nothing to warn them about. The remaining
+# verdicts (multiple_locations, different_location) judge the pair and
+# are always reported.
+_NAME_ONLY_VERDICTS = frozenset({'name_quality'})
+_ADDRESS_ONLY_VERDICTS = frozenset({
+    'address_quality',
+    'address_country_mismatch',
+})
 
 
 def is_claim_quality_check_active() -> bool:
@@ -54,6 +63,26 @@ def is_claim_quality_check_active() -> bool:
         switch_is_active(CLAIM_NAME_ADDRESS_EDIT_SWITCH)
         and switch_is_active(CLAIM_QUALITY_CHECK_SWITCH)
     )
+
+
+def listed_name_and_address(facility: Facility) -> Tuple[str, str]:
+    '''
+    The name and address the location page currently shows, which is
+    what a claimant is confirming or correcting. Approving a claim
+    records its name and address as a contribution but never rewrites
+    facility.name or facility.address, so for a claimed location they
+    are the approved claim's values where it asserts them, and the
+    facility's own otherwise. (A location with an approved claim cannot
+    be claimed again, so on the claim form this is always the facility's
+    own listing.)
+    '''
+    name = facility.name or ''
+    address = facility.address or ''
+    claim = facility.get_approved_claim()
+    if claim is not None:
+        name = (claim.facility_name_english or '').strip() or name
+        address = (claim.facility_address or '').strip() or address
+    return name, address
 
 
 def check_claim_quality(
@@ -72,6 +101,13 @@ def check_claim_quality(
     there is nothing to judge and no call to pay for), or when the
     model call fails (the service logs that; this fails open).
 
+    A blank value asserts nothing and stands for the listed one, the
+    way the write path backfills it. "The same" is judged the way the
+    write path judges whether an address changed (same_claimed_value),
+    so the check never warns about an edit the write treats as a no-op.
+    When only one of the two values is new, the verdicts that judge the
+    other on its own are not reported.
+
     Every evaluated pair logs one INFO line carrying the judged fields,
     so that what the check saw can be compared with what was later
     submitted (the write endpoints' outcome line, OSDEV-3537). Only the name,
@@ -82,14 +118,12 @@ def check_claim_quality(
     if not is_claim_quality_check_active():
         return []
 
-    name = (name or '').strip()
-    address = (address or '').strip()
-    current_name = facility.name or ''
-    current_address = facility.address or ''
-    if (
-        _same_value(name, current_name)
-        and _same_value(address, current_address)
-    ):
+    listed_name, listed_address = listed_name_and_address(facility)
+    name = (name or '').strip() or listed_name
+    address = (address or '').strip() or listed_address
+    name_changed = not same_claimed_value(name, listed_name)
+    address_changed = not same_claimed_value(address, listed_address)
+    if not name_changed and not address_changed:
         logger.info(
             'Claim quality check skipped (values unchanged): '
             'contributor=%s facility=%s',
@@ -104,41 +138,46 @@ def check_claim_quality(
         name=name,
         address=address,
         country_name=country_name,
-        current_name=current_name,
-        current_address=current_address,
+        current_name=listed_name,
+        current_address=listed_address,
     )
 
     warnings = []
     if verdicts is not None:
+        suppressed = set()
+        if not name_changed:
+            suppressed |= _NAME_ONLY_VERDICTS
+        if not address_changed:
+            suppressed |= _ADDRESS_ONLY_VERDICTS
         for warning_type, title in WARNING_TITLES.items():
-            verdict = getattr(verdicts, warning_type)
-            if verdict.flagged:
+            if warning_type in suppressed:
+                continue
+            # A warning the verdict schema does not know is skipped
+            # rather than raised on, so a vocabulary mismatch degrades
+            # to a missing warning on an endpoint that must fail open.
+            verdict = getattr(verdicts, warning_type, None)
+            if verdict is not None and verdict.flagged:
                 warnings.append({
                     'type': warning_type,
                     'title': title,
                     'message': verdict.reason,
                 })
 
-    # Logged whether or not anything was flagged (and even when the
-    # model call failed, with an empty list), so that every evaluated
-    # pair has a line to compare against the outcome line of the write
-    # that follows, if any.
+    # Logged whether or not anything was flagged, and when the model
+    # call failed too (model=failed, with an empty list), so that every
+    # evaluated pair has a line to compare against the outcome line of
+    # the write that follows, if any, and a fail-open empty list can be
+    # told from a clean verdict.
     logger.info(
         'Claim quality check evaluated: contributor=%s facility=%s '
-        'warnings=%s fields=%s',
+        'model=%s warnings=%s fields=%s',
         contributor_id,
         facility.id,
+        'ok' if verdicts is not None else 'failed',
         [warning['type'] for warning in warnings],
         _describe_fields(name, address, country_code),
     )
     return warnings
-
-
-def _same_value(left: str, right: str) -> bool:
-    return (
-        _WHITESPACE.sub(' ', left).strip().casefold()
-        == _WHITESPACE.sub(' ', right).strip().casefold()
-    )
 
 
 def _describe_fields(name: str, address: str, country_code) -> str:

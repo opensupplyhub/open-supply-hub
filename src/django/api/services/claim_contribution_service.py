@@ -241,7 +241,7 @@ def _resolve_location(
         return current, None
 
     address = (claim.facility_address or '').strip()
-    if not address or _same_address(address, facility.address):
+    if not address or same_claimed_value(address, facility.address):
         return current, None
 
     try:
@@ -288,11 +288,17 @@ def _resolve_location(
     return point, geocode_result
 
 
-def _same_address(a: Optional[str], b: Optional[str]) -> bool:
+def same_claimed_value(a: Optional[str], b: Optional[str]) -> bool:
     '''
+    Whether two claimed values (a name or an address) say the same
+    thing. This is the write path's definition of "changed": a claimed
+    address that passes here is not geocoded, and the quality check
+    (claim_quality_check_service) uses the same test so it never judges
+    or warns about an edit the write treats as a no-op.
+
     ContriCleaner's clean() lowercases, transliterates and strips most
     separators but keeps periods, so 'St.' and 'St' would otherwise count
-    as a change and trigger a needless geocode.
+    as a change.
     '''
     def normalize(value):
         return clean(value or '').replace('.', '')

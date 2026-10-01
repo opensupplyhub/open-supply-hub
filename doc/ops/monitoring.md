@@ -212,8 +212,8 @@ To follow what the claim check does in production, the app logs one line per eve
 
 | Line | When |
 | --- | --- |
-| `Claim quality check evaluated: … warnings=[…] fields={…}` | Every model evaluation, flagged or not (empty `warnings` after a fail-open failure too) |
-| `Claim quality check skipped (values unchanged): …` | The check endpoint was called with the values the location already lists; no model call |
+| `Claim quality check evaluated: … model=ok\|failed warnings=[…] fields={…}` | Every model evaluation, flagged or not. `model=failed` marks a fail-open failure (its `warnings` is always empty), so a clean verdict and an outage are not confused when watching the `different_location` false-positive rate |
+| `Claim quality check skipped (values unchanged): …` | The check endpoint was called with the values the location already lists (for a claimed location, the approved claim's values); no model call |
 
 ## Suggested triage order
 

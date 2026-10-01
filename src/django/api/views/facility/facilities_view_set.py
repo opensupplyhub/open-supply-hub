@@ -95,7 +95,7 @@ from api.serializers import (
 )
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
-from api.throttles import DataUploadThrottle
+from api.throttles import DataUploadThrottle, DuplicateThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
@@ -168,7 +168,14 @@ class FacilitiesViewSet(ListModelMixin,
 
     def get_throttles(self):
         if self.request.method == 'POST':
-            return [DataUploadThrottle()]
+            throttles = [DataUploadThrottle()]
+            if self.action == 'claim_quality_check':
+                # The advisory check is retried with a byte-identical
+                # body (a double-click, a re-run after a failed request),
+                # which DuplicateThrottle collapses so each only reaches
+                # the model once; the SLC check it mirrors does the same.
+                throttles.append(DuplicateThrottle())
+            return throttles
 
         return super().get_throttles()
 
@@ -2492,7 +2499,9 @@ class FacilitiesViewSet(ListModelMixin,
         `dismissed_warnings` on the write that follows.
 
         Rate limited by DataUploadThrottle like every POST on this
-        viewset, which is what bounds per-user model calls; see
+        viewset, which is what bounds per-user model calls, and by
+        DuplicateThrottle, which turns an identical repeat within its
+        window into a 429 instead of another model call; see
         doc/ops/monitoring.md.
         """
         if not switch_is_active('claim_a_facility'):
