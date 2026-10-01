@@ -160,6 +160,12 @@ def send_message_to_claimant_email(request, facility_claim, message):
         # documents) on the platform instead of replying with
         # attachments by email.
         'claimed_url': '{}/claimed'.format(make_oshub_url(request)),
+        # Same eligibility sentence switch as the confirmation email, so
+        # the wrapper never contradicts the relaxed message body it
+        # carries.
+        'relaxed_eligibility': switch_is_active(
+            RELAXED_CLAIM_ELIGIBILITY_SWITCH
+        ),
     }
 
     sent_count = send_mail(

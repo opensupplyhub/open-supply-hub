@@ -43,17 +43,35 @@ const EligibilityStep = ({
 
     // Relaxed policy (relaxed_claim_eligibility switch): employees are
     // directly eligible, so the worker option drops its
-    // supervisor-verification caveat. Values are unchanged either way.
+    // supervisor-verification caveat. Only the displayed label changes:
+    // the form stores the option's canonical label (the switch-off
+    // wording) whichever way the switch is set, so the persisted
+    // claimant_location_relationship string stays the same across the
+    // switch and round-trips when the flags arrive after a selection.
     const relationshipOptions = RELATIONSHIP_OPTIONS.map(option =>
         option.value === 'worker' && isRelaxedEligibility
             ? { ...option, label: RELAXED_WORKER_LABEL }
             : option,
     );
 
-    const selectedRelationship = findSelectedOption(
-        relationshipOptions,
+    const canonicalLabel = value =>
+        RELATIONSHIP_OPTIONS.find(option => option.value === value)?.label;
+
+    // Accept either the canonical label or the relaxed one (a pending
+    // claim saved while the switch was on), then show the current label
+    // for that value.
+    const storedOption = findSelectedOption(
+        [
+            ...RELATIONSHIP_OPTIONS,
+            { value: 'worker', label: RELAXED_WORKER_LABEL },
+        ],
         formData.claimantLocationRelationship,
     );
+    const selectedRelationship = storedOption
+        ? relationshipOptions.find(
+              option => option.value === storedOption.value,
+          ) || null
+        : null;
 
     // This checks if the relationship field has been touched and either has validation errors
     // or no value selected
@@ -121,7 +139,8 @@ const EligibilityStep = ({
                         } else {
                             handleChange(
                                 'claimantLocationRelationship',
-                                valueObject.label,
+                                canonicalLabel(valueObject.value) ??
+                                    valueObject.label,
                             );
                         }
                     }}

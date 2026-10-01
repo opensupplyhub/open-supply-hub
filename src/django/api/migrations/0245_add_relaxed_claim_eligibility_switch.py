@@ -19,7 +19,9 @@ def delete_switch(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0243_add_claim_address_pin_move_switch'),
+        # Follows #1307's 0244 (OSDEV-3489), which also branched from
+        # 0243, so the api migration graph keeps a single leaf.
+        ('api', '0244_add_claim_quality_check_switch'),
     ]
 
     operations = [

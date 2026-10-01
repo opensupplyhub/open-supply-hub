@@ -2,6 +2,9 @@ import React from 'react';
 import { fireEvent, screen } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import EligibilityStep from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/EligibilityStep';
+import RELATIONSHIP_OPTIONS, {
+    RELAXED_WORKER_LABEL,
+} from '../../components/InitialClaimFlow/ClaimForm/Steps/EligibilityStep/constants';
 import { mapRoute } from '../../util/constants';
 
 const mockHistoryPush = jest.fn();
@@ -317,5 +320,81 @@ describe('EligibilityStep component', () => {
         expect(
             screen.queryByText('Not Eligible to File Claim')
         ).not.toBeInTheDocument();
+    });
+});
+
+describe('EligibilityStep with the relaxed_claim_eligibility switch', () => {
+    const workerLabel = RELATIONSHIP_OPTIONS.find(o => o.value === 'worker')
+        .label;
+    const mockHandleChange = jest.fn();
+    const baseProps = {
+        formData: { claimantLocationRelationship: null },
+        handleChange: mockHandleChange,
+        onNext: jest.fn(),
+        onBack: jest.fn(),
+        errors: {},
+        touched: {},
+        handleBlur: () => {},
+    };
+    const stateWithSwitch = active => ({
+        auth: {
+            user: {
+                user: { email: 'test@example.com', name: 'Org', isAnon: false },
+            },
+        },
+        featureFlags: {
+            fetching: false,
+            flags: { relaxed_claim_eligibility: active },
+        },
+    });
+
+    afterEach(() => jest.clearAllMocks());
+
+    test('shows the employee label but stores the canonical worker label', () => {
+        renderWithProviders(<EligibilityStep {...baseProps} />, {
+            preloadedState: stateWithSwitch(true),
+        });
+
+        expect(screen.getByText(RELAXED_WORKER_LABEL)).toBeInTheDocument();
+        expect(screen.queryByText(workerLabel)).not.toBeInTheDocument();
+
+        fireEvent.change(screen.getByTestId('relationship-select'), {
+            target: { value: 'worker' },
+        });
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'claimantLocationRelationship',
+            workerLabel,
+        );
+    });
+
+    test('stores the same canonical label with the switch off', () => {
+        renderWithProviders(<EligibilityStep {...baseProps} />, {
+            preloadedState: stateWithSwitch(false),
+        });
+
+        fireEvent.change(screen.getByTestId('relationship-select'), {
+            target: { value: 'worker' },
+        });
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'claimantLocationRelationship',
+            workerLabel,
+        );
+    });
+
+    test.each([
+        ['canonical label', workerLabel],
+        ['relaxed label saved while the switch was on', RELAXED_WORKER_LABEL],
+    ])('a stored %s selects the worker option under the switch', (_, stored) => {
+        renderWithProviders(
+            <EligibilityStep
+                {...baseProps}
+                formData={{ claimantLocationRelationship: stored }}
+            />,
+            { preloadedState: stateWithSwitch(true) },
+        );
+
+        expect(screen.getByTestId('relationship-select')).toHaveValue(
+            'worker',
+        );
     });
 });
