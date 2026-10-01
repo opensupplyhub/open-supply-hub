@@ -87,8 +87,8 @@ class MessageClaimantEmailEligibilityTest(TestCase):
         for template in self.TEMPLATES:
             body = self.render(template, relaxed=True)
             self.assertIn(
-                'submitted by an authorized employee of the production location '
-                'or its parent company',
+                'submitted by an authorized employee of the production '
+                'location or its parent company',
                 body,
                 template,
             )
