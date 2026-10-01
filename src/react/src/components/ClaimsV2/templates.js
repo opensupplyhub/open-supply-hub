@@ -42,12 +42,16 @@ export const MESSAGE_TEMPLATES = Object.freeze({
     },
     person: {
         label: 'Person verification',
-        build: ({ facilityName, jobTitle }) =>
+        build: ({ facilityName, jobTitle, relaxedEligibility }) =>
             [
                 'As per our claim policy ',
                 '(https://info.opensupplyhub.org/resources/claim-a-facility), ',
-                'the claim needs to be submitted by a senior manager or ',
-                'owner.\n\n',
+                relaxedEligibility
+                    ? 'the claim needs to be submitted by an authorized ' +
+                      'employee of the production location or its parent ' +
+                      'company.\n\n'
+                    : 'the claim needs to be submitted by a senior manager ' +
+                      'or owner.\n\n',
                 `You listed yourself as a "${jobTitle}". At this point, `,
                 "we'll need to verify your title and affiliation with the ",
                 'company. Please provide a document or website that shows ',
@@ -59,7 +63,7 @@ export const MESSAGE_TEMPLATES = Object.freeze({
     },
     relationship: {
         label: 'Relationship verification',
-        build: ({ facilityName, emailDomain }) =>
+        build: ({ facilityName, emailDomain, relaxedEligibility }) =>
             [
                 'Your company email extension and the production location ',
                 "for which you submitted a claim request don't match. To ",
@@ -67,8 +71,12 @@ export const MESSAGE_TEMPLATES = Object.freeze({
                 'confirming the relationship (like ownership or parent ',
                 `company) between ${emailDomain} and ${facilityName}.\n\n`,
                 'Please note that the claim request will only be approved ',
-                'when it is submitted by an owner or senior management ',
-                'associated with the production location in question.\n\n',
+                relaxedEligibility
+                    ? 'when it is submitted by an authorized employee of ' +
+                      'the production location or its parent company.\n\n'
+                    : 'when it is submitted by an owner or senior ' +
+                      'management associated with the production location ' +
+                      'in question.\n\n',
                 SENSITIVE_INFO_NOTICE,
             ].join(''),
     },
