@@ -2,7 +2,6 @@ FROM postgis/postgis:16-3.4-alpine
 
 WORKDIR /opt/
 
-RUN set -ex && apk update && apk add --no-cache openssh-client
 RUN set -ex && apk update && apk add --no-cache --upgrade libexpat aws-cli
 ENV POSTGRES_PASSWORD=anondb
 ENV POSTGRES_USER=anondb
@@ -16,16 +15,8 @@ ARG DATABASE_NAME
 ARG DATABASE_USERNAME
 ARG DATABASE_PASSWORD
 
-
 RUN mkdir -p /dumps/
-RUN mkdir -p /keys/
-RUN mkdir ~/.ssh
-RUN chmod 700 ~/.ssh
-RUN touch ~/.ssh/known_hosts
-RUN chmod 644 ~/.ssh/known_hosts
 
 COPY ./do_restore.sh ./
-
-VOLUME /keys
 
 CMD ["sh", "do_restore.sh"]
