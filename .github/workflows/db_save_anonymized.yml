@@ -29,9 +29,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Dump database for ${{ github.event.inputs['deploy-env'] }}
         env:
-          KEY_FILE_DEV: ${{ secrets.KEY_FILE_DEV }}
-          KEY_FILE_RBA: ${{ secrets.KEY_FILE_RBA }}
-          KEY_FILE_PROD: ${{ secrets.KEY_FILE_PROD }}
           AWS_ACCESS_KEY_ID_PROD: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
           AWS_SECRET_ACCESS_KEY_PROD: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
           AWS_DEFAULT_REGION_PROD: eu-west-1
@@ -40,22 +37,12 @@ jobs:
           AWS_DEFAULT_REGION_TEST: eu-west-1
           BASTION_INSTANCE_ID: ${{ secrets.RBA_BASTION_ID }}
         run: |
-          cd ./src/anon-tools
-          mkdir -p ./keys
           ENV_NAME="${{ github.event.inputs['deploy-env'] }}"
-          # Prepare optional bastion override for Rba
-          EXTRA_ENV=""
-          if [ "$ENV_NAME" = "Rba" ]; then
-            EXTRA_ENV="-e BASTION_INSTANCE_ID"
+          # Optional explicit bastion instance for Rba; the other environments
+          # resolve their bastion by tag (see deployment/ssm/ssm_tunnel.sh).
+          if [ "$ENV_NAME" != "Rba" ]; then
+            unset BASTION_INSTANCE_ID
           fi
-          if [ "$ENV_NAME" = "Development" ]; then
-            printf "%s" "$KEY_FILE_DEV" | tr -d '\r' > ./keys/key
-          elif [ "$ENV_NAME" = "Rba" ]; then
-            printf "%s" "$KEY_FILE_RBA" | tr -d '\r' > ./keys/key
-          else
-            printf "%s" "$KEY_FILE_PROD" | tr -d '\r' > ./keys/key
-          fi
-          chmod 600 ./keys/key
 
           # Fetch RDS master credentials from Secrets Manager in the source account.
           # Development shares the non-prod account with Test; Rba/Production use prod keys.
@@ -86,8 +73,15 @@ jobs:
           DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
           DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
 
+          # Forward localhost:5433 to the source database through its bastion
+          # (SSM), using the credentials of the account that owns it.
+          TUNNEL="$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh"
+          ENVIRONMENT="$ENV_NAME" bash "$TUNNEL" start database.service.osh.internal 5432 5433
+          trap 'bash "$TUNNEL" stop 5433' EXIT
+
+          cd ./src/anon-tools
           docker build -t dump_image -f Dockerfile.dump .
-          docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
+          docker run --network host --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID_PROD \
               -e AWS_SECRET_ACCESS_KEY_PROD \
               -e AWS_DEFAULT_REGION_PROD \
@@ -98,5 +92,4 @@ jobs:
               -e DATABASE_NAME=opensupplyhub \
               -e DATABASE_USERNAME="$DB_USER" \
               -e DATABASE_PASSWORD="$DB_PASS" \
-              $EXTRA_ENV \
               dump_image
