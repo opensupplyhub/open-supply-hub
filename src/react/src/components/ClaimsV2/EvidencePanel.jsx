@@ -248,7 +248,7 @@ export default function EvidencePanel({
                                 : {}),
                         }}
                         onClick={() => selectDoc(index)}
-                        title={doc.is_url ? doc.file_name : undefined}
+                        title={doc.file_name}
                     >
                         {/* eslint-disable-next-line no-nested-ternary */}
                         {doc.is_url
