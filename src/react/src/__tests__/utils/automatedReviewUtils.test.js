@@ -4,6 +4,7 @@ import {
     parseAutomatedReview,
     getEvidenceText,
     getExtract,
+    matchesEvidenceKey,
     hasValidReviewBlock,
     getSuggestedDraft,
     isPdfFile,
@@ -101,7 +102,7 @@ describe('getEvidenceText', () => {
                     ...validPayload,
                     evidence: {
                         'registration-document.json': {
-                            translated: 'BUSINESS LICENSE Arthur Metz',
+                            translated: 'BUSINESS LICENSE Example Winery',
                             lang: 'fr',
                         },
                     },
@@ -112,13 +113,48 @@ describe('getEvidenceText', () => {
             getEvidenceText(legacyReview, 'registration-document.pdf'),
         ).toEqual({
             original: null,
-            translated: 'BUSINESS LICENSE Arthur Metz',
+            translated: 'BUSINESS LICENSE Example Winery',
             lang: 'fr',
         });
         // Exact keys still win and unrelated stems still miss.
         expect(
             getEvidenceText(legacyReview, 'other-file.pdf'),
         ).toBeNull();
+    });
+
+    it('never borrows another document with the same stem', () => {
+        // license.jpg was OCRed, license.pdf produced nothing: the PDF
+        // must show no text rather than the JPG's.
+        const sameStemReview = parseAutomatedReview([
+            note(
+                block({
+                    ...validPayload,
+                    evidence: {
+                        'license.jpg': { translated: 'JPG text', lang: 'en' },
+                    },
+                }),
+            ),
+        ]);
+        expect(getEvidenceText(sameStemReview, 'license.pdf')).toBeNull();
+        expect(getEvidenceText(sameStemReview, 'license.jpg')).toEqual({
+            original: null,
+            translated: 'JPG text',
+            lang: 'en',
+        });
+    });
+});
+
+describe('matchesEvidenceKey', () => {
+    it('accepts the exact key and the legacy .json artifact name only', () => {
+        expect(matchesEvidenceKey('badge.pdf', 'badge.pdf')).toBe(true);
+        expect(matchesEvidenceKey('badge.pdf', 'badge.json')).toBe(true);
+        expect(matchesEvidenceKey('badge.pdf', 'badge.JSON')).toBe(true);
+        // A same-stem key with another extension is a different document.
+        expect(matchesEvidenceKey('license.pdf', 'license.jpg')).toBe(false);
+        expect(matchesEvidenceKey('badge.pdf', 'other.json')).toBe(false);
+        expect(
+            matchesEvidenceKey('https://example.com', 'https://example.com'),
+        ).toBe(true);
     });
 });
 

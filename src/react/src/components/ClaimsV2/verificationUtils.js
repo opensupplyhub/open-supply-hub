@@ -55,6 +55,16 @@ export const scoreChip = (review, key) => {
     };
 };
 
+/*
+ * The organization the claimant stated. company_name is only written
+ * by the legacy claim flow — the new flow never sets it — so fall back
+ * to the claimant's account (contributor) name, registration data from
+ * the same person. Every surface that shows the organization must use
+ * this one resolution or they contradict each other on screen.
+ */
+export const claimantOrganization = detail =>
+    detail?.company_name || detail?.contributor?.name || '';
+
 export const normalizeOrgName = value =>
     (value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 

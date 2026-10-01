@@ -1,7 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Typography from '@material-ui/core/Typography';
+import isURL from 'validator/lib/isURL';
 
-import { getEvidenceText, isPdfFile } from './automatedReviewUtils';
+import {
+    getEvidenceText,
+    isPdfFile,
+    matchesEvidenceKey,
+} from './automatedReviewUtils';
 import styles from './styles';
 
 /*
@@ -38,7 +43,10 @@ const defaultTabFor = doc =>
  * the pipeline normalizes a scheme-less value with an https:// prefix
  * and dedupes before fetching, and the note block keys the page text by
  * that normalized URL — so build the names identically here or the
- * viewer's text lookup misses.
+ * viewer's text lookup misses. The legacy `website` field is free text
+ * ("N/A", "none", two addresses in one), so only values that are a URL
+ * after normalization become chips — anything else is neither linkable
+ * nor evidence.
  */
 const URL_EVIDENCE_FIELDS = [
     ['facility_website', 'Production location website'],
@@ -58,6 +66,9 @@ export const buildUrlEvidence = detail => {
         let url = raw.trim();
         if (!url.startsWith('http')) {
             url = `https://${url}`;
+        }
+        if (!isURL(url, { require_protocol: true })) {
+            return;
         }
         if (!seen.has(url)) {
             seen.add(url);
@@ -143,14 +154,16 @@ export default function EvidencePanel({
     /* A verification row's source link requested a document: open it
        (same semantics as clicking its chip, so a PDF's original still
        opens in a new tab). `seq` distinguishes repeated requests for
-       the same file. */
+       the same file. Legacy blocks name the source by the derived
+       artifact ("badge.json" for badge.pdf), so match like the text
+       lookup does. */
     useEffect(() => {
         if (!requestedDoc?.name || requestedDoc.seq === handledSeq.current) {
             return;
         }
         handledSeq.current = requestedDoc.seq;
-        const index = docs.findIndex(
-            doc => doc.file_name === requestedDoc.name,
+        const index = docs.findIndex(doc =>
+            matchesEvidenceKey(doc.file_name, requestedDoc.name),
         );
         if (index !== -1) {
             selectDoc(index);

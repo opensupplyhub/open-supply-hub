@@ -27,6 +27,7 @@ import {
 import QueueRail from './QueueRail';
 import { formatDate } from '../../util/util';
 import styles from './styles';
+import { claimantOrganization } from './verificationUtils';
 
 /*
  * Claims moderation dashboard v2 — scaffolding shell (OSDEV-3355).
@@ -119,7 +120,8 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <strong>{detail.email}</strong>
             </p>
             <p style={styles.workspaceSub}>
-                Organization: <strong>{detail.company_name || '—'}</strong>
+                Organization:{' '}
+                <strong>{claimantOrganization(detail) || '—'}</strong>
                 {detail.facility?.properties?.country_name
                     ? ` · ${detail.facility.properties.country_name}`
                     : ''}

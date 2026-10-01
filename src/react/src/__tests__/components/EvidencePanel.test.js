@@ -67,6 +67,27 @@ describe('EvidencePanel', () => {
         ).toBeInTheDocument();
     });
 
+    it('resolves a legacy .json source name to its attachment', () => {
+        // Legacy blocks name the extract source by the derived artifact
+        // ("registration-document.json"); the request must still open
+        // registration-document.pdf, like the text lookup does.
+        const { rerender } = render(
+            <EvidencePanel attachments={ATTACHMENTS} claimID={1} />,
+        );
+        rerender(
+            <EvidencePanel
+                attachments={ATTACHMENTS}
+                claimID={1}
+                requestedDoc={{ name: 'registration-document.json', seq: 1 }}
+            />,
+        );
+        expect(window.open).toHaveBeenCalledWith(
+            'http://x/3',
+            '_blank',
+            'noopener',
+        );
+    });
+
     it('falls back to the download endpoint without claim_attachment', () => {
         render(
             <EvidencePanel
@@ -98,23 +119,33 @@ describe('EvidencePanel', () => {
 describe('buildUrlEvidence', () => {
     it('collects, labels, normalizes and dedupes the four URL fields', () => {
         const detail = {
-            facility_website: 'https://arthurmetz.com/fr',
-            website: 'arthurmetz.com/fr', // scheme-less dupe of the above
+            facility_website: 'https://example-winery.com/fr',
+            website: 'example-winery.com/fr', // scheme-less dupe of the above
             linkedin_profile: '',
-            claimant_linkedin_profile_url: 'https://www.linkedin.com/in/cg',
+            claimant_linkedin_profile_url: 'https://www.linkedin.com/in/example',
         };
         expect(buildUrlEvidence(detail)).toEqual([
             {
-                file_name: 'https://arthurmetz.com/fr',
+                file_name: 'https://example-winery.com/fr',
                 label: 'Production location website',
                 is_url: true,
             },
             {
-                file_name: 'https://www.linkedin.com/in/cg',
+                file_name: 'https://www.linkedin.com/in/example',
                 label: 'Claimant LinkedIn',
                 is_url: true,
             },
         ]);
+    });
+
+    it('drops free-text values that are not URLs', () => {
+        // The legacy `website` field is free text; none of these may
+        // become a clickable chip or count as evidence.
+        ['N/A', 'none', 'www.a.com, www.b.com', 'HTTP://X.COM'].forEach(
+            website => {
+                expect(buildUrlEvidence({ website })).toEqual([]);
+            },
+        );
     });
 
     it('returns nothing for blank or absent fields', () => {
@@ -130,15 +161,15 @@ describe('EvidencePanel URL evidence', () => {
     });
 
     const URL_DOC = {
-        file_name: 'https://arthurmetz.com/fr',
+        file_name: 'https://example-winery.com/fr',
         label: 'Production location website',
         is_url: true,
     };
     const REVIEW = {
         evidence: {
-            'https://arthurmetz.com/fr': {
+            'https://example-winery.com/fr': {
                 kind: 'url',
-                translated: 'Arthur Metz winery, Marlenheim, Alsace',
+                translated: 'Example Winery, Exampletown',
             },
         },
     };
@@ -168,12 +199,12 @@ describe('EvidencePanel URL evidence', () => {
         );
         fireEvent.click(screen.getByText(/🔗 Production location website/));
         expect(window.open).toHaveBeenCalledWith(
-            'https://arthurmetz.com/fr',
+            'https://example-winery.com/fr',
             '_blank',
             'noopener',
         );
         expect(
-            screen.getByText(/Arthur Metz winery, Marlenheim, Alsace/),
+            screen.getByText(/Example Winery, Exampletown/),
         ).toBeInTheDocument();
     });
 
@@ -192,6 +223,6 @@ describe('EvidencePanel URL evidence', () => {
         ).toBeInTheDocument();
         expect(
             screen.getByRole('link', { name: /open the link/ }),
-        ).toHaveAttribute('href', 'https://arthurmetz.com/fr');
+        ).toHaveAttribute('href', 'https://example-winery.com/fr');
     });
 });

@@ -8,9 +8,9 @@ import VerificationPanel from '../../components/ClaimsV2/VerificationPanel';
 
 const baseDetail = {
     facility: {
-        properties: { name: 'Arthur Metz', address: '102 rue du GdG' },
+        properties: { name: 'Example Winery', address: '1 Example Street' },
     },
-    contact_person: 'Camille',
+    contact_person: 'Sam Example',
     job_title: 'Quality Manager',
     email: 'c@example.com',
 };
@@ -24,14 +24,14 @@ describe('VerificationPanel claimant account row', () => {
                 detail={{
                     ...baseDetail,
                     company_name: '',
-                    contributor: { name: 'Les Grands Chais de France' },
+                    contributor: { name: 'Example Holdings' },
                 }}
                 review={null}
                 onShowDocument={() => {}}
             />,
         );
         expect(
-            screen.getByText('Les Grands Chais de France'),
+            screen.getByText('Example Holdings'),
         ).toBeInTheDocument();
     });
 
@@ -40,16 +40,16 @@ describe('VerificationPanel claimant account row', () => {
             <VerificationPanel
                 detail={{
                     ...baseDetail,
-                    company_name: 'Arthur Metz SARL',
-                    contributor: { name: 'Les Grands Chais de France' },
+                    company_name: 'Example Winery SARL',
+                    contributor: { name: 'Example Holdings' },
                 }}
                 review={null}
                 onShowDocument={() => {}}
             />,
         );
-        expect(screen.getByText('Arthur Metz SARL')).toBeInTheDocument();
+        expect(screen.getByText('Example Winery SARL')).toBeInTheDocument();
         expect(
-            screen.queryByText('Les Grands Chais de France'),
+            screen.queryByText('Example Holdings'),
         ).not.toBeInTheDocument();
     });
 });

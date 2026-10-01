@@ -62,14 +62,26 @@ export const parseAutomatedReview = notes => {
 const stemOf = name => String(name).replace(/\.[^./\\]+$/, '');
 
 /*
+ * Does an evidence key belong to this attachment? Exact match, or the
+ * legacy artifact name: blocks posted before the pipeline carried the
+ * original file name keyed text by Path(...).with_suffix('.json'), so
+ * "badge.pdf" sits under "badge.json". Only that ".json" shape may
+ * stand in — any other same-stem key ("license.jpg" next to
+ * "license.pdf") is a different document and must never be shown as
+ * this one's text.
+ */
+export const matchesEvidenceKey = (fileName, key) =>
+    key === fileName ||
+    (/\.json$/i.test(String(key)) && stemOf(key) === stemOf(fileName));
+
+/*
  * Extracted/translated text for one attachment, or null when the
  * pipeline has none for it (cached-translation gap, non-document
  * files, or no automation at all — SPEC.md §P1 known data gap).
  *
- * Lookup is exact-first with a stem fallback: blocks posted before the
- * pipeline carried original_file_name key evidence by the derived
- * artifact name ("badge.pdf" text sits under "badge.json"), so matching
- * on the stem recovers the text for every already-posted note.
+ * Lookup is exact-first with a legacy-key fallback (see
+ * matchesEvidenceKey), which recovers the text for every note posted
+ * before the pipeline keyed evidence by the original file name.
  */
 export const getEvidenceText = (review, fileName) => {
     const evidence = review?.evidence;
@@ -78,9 +90,8 @@ export const getEvidenceText = (review, fileName) => {
     }
     let entry = evidence[fileName];
     if (!entry) {
-        const stem = stemOf(fileName);
-        const legacyKey = Object.keys(evidence).find(
-            key => stemOf(key) === stem,
+        const legacyKey = Object.keys(evidence).find(key =>
+            matchesEvidenceKey(fileName, key),
         );
         entry = legacyKey ? evidence[legacyKey] : undefined;
     }
