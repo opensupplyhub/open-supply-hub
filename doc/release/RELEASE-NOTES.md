@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* `0245_add_relaxed_claim_eligibility_switch.py` - Adds the `relaxed_claim_eligibility` waffle switch, created inactive, gating the employee-eligibility wording across the claim form, facility claim banner, confirmation emails and moderator message templates.
+* `0244_add_relaxed_claim_eligibility_switch.py` - Adds the `relaxed_claim_eligibility` waffle switch, created inactive, gating the employee-eligibility wording across the claim form, facility claim banner, confirmation emails and moderator message templates.
 * `0241_add_claim_name_address_edit_switch.py` - Adds the `enable_claim_name_address_edit` waffle switch, created inactive, gating editable Company Name and Company Address fields in the claim form. See OSDEV-3404.
 * `0242_claim_contribution_events.py` - Changes `ModerationEvent.claim` from a one-to-one to a plain foreign key (reverse name `moderation_events`) so a claim can produce one CLAIM-type moderation event at approval and one per later name or address edit, and updates the stale "Not editable" help text on `FacilityClaim.facility_name_english` and `facility_address` (and their history table columns). No data changes. See OSDEV-3510.
 * `0243_add_claim_address_pin_move_switch.py` - Adds the `enable_claim_address_pin_move` waffle switch, created inactive, gating whether an approved claim's changed address moves the production location pin. See OSDEV-3406.
