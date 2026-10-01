@@ -91,6 +91,25 @@ describe('ClaimsV2Dashboard ?claim deep link', () => {
             expect(window.location.search).toBe('?claim=1'),
         );
     });
+
+    it('keeps unrelated query parameters and the hash when syncing ?claim', async () => {
+        // The ?claim writeback must only touch its own parameter — a
+        // deep link arriving with extra params (e.g. a tracking tag)
+        // or a #fragment used to lose them on the first rewrite.
+        window.history.replaceState(
+            null,
+            '',
+            '/dashboard/claims-v2?utm_source=jira&claim=2#notes',
+        );
+
+        render(<ClaimsV2Dashboard />);
+
+        await waitFor(() =>
+            expect(window.location.search).toContain('claim=2'),
+        );
+        expect(window.location.search).toContain('utm_source=jira');
+        expect(window.location.hash).toBe('#notes');
+    });
 });
 
 describe('ClaimsV2Dashboard initial-load failure', () => {
