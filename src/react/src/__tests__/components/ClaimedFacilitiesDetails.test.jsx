@@ -1,5 +1,6 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimedFacilitiesDetails from '../../components/ClaimedFacilitiesDetails/ClaimedFacilitiesDetails';
 
@@ -123,8 +124,9 @@ const preloadedState = {
     },
 };
 
-const renderComponent = () =>
+const renderComponent = (overrides = {}) =>
     renderWithProviders(
+        <MemoryRouter>
         <ClaimedFacilitiesDetails
             match={{ params: { claimID: '123' } }}
             user={preloadedState.auth.user.user}
@@ -134,7 +136,8 @@ const renderComponent = () =>
             getDetails={jest.fn()}
             clearDetails={jest.fn()}
             updateFacilityNameNativeLanguage={jest.fn()}
-            updateFacilityLocation={jest.fn()}
+            updateFacilityNameEnglish={jest.fn()}
+            updateFacilityAddress={jest.fn()}
             updateSector={jest.fn()}
             updateFacilityPhone={jest.fn()}
             updateFacilityWebsite={jest.fn()}
@@ -189,7 +192,9 @@ const renderComponent = () =>
             }}
             userHasSignedIn
             classes={{}}
-        />,
+            {...overrides}
+        />
+        </MemoryRouter>,
         { preloadedState },
     );
 
@@ -208,6 +213,85 @@ describe('ClaimedFacilitiesDetails', () => {
         renderComponent();
 
         expect(screen.getByText('Opening Date')).toBeInTheDocument();
+    });
+
+    it('hides the English name and address fields while the switch is off', () => {
+        renderComponent({ isNameAddressEditable: false });
+
+        expect(
+            screen.queryByTestId('input-Facility name (English)'),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByTestId('input-Facility address'),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByText(/should match the name and address/),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByTestId('input-Facility name (native language)'),
+        ).toBeInTheDocument();
+    });
+
+    it('renders the English name and address fields with a note while the switch is on', () => {
+        renderComponent({ isNameAddressEditable: true });
+
+        expect(
+            screen.getByTestId('input-Facility name (English)'),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByTestId('input-Facility address'),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(/should match the name and address/),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByRole('link', {
+                name: /Single Location Contribution form/,
+            }),
+        ).toHaveAttribute('href', '/contribute/single-location');
+    });
+
+    it('requires the English name and address while the switch is on', () => {
+        renderComponent({
+            isNameAddressEditable: true,
+            data: {
+                ...baseClaimData,
+                facility_name_english: '',
+                facility_address: '   ',
+            },
+        });
+
+        expect(
+            screen.getByText('Facility name is required'),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('Facility address is required'),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    });
+
+    it('does not let a hidden English name block saving while the switch is off', () => {
+        renderComponent({
+            isNameAddressEditable: false,
+            data: { ...baseClaimData, facility_name_english: 'a'.repeat(201) },
+        });
+
+        expect(
+            screen.queryByText('Facility name must be 200 characters or fewer'),
+        ).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Save' })).toBeEnabled();
+    });
+
+    it('shows a validation error for an over-long English name', () => {
+        renderComponent({
+            isNameAddressEditable: true,
+            data: { ...baseClaimData, facility_name_english: 'a'.repeat(201) },
+        });
+
+        expect(
+            screen.getByText('Facility name must be 200 characters or fewer'),
+        ).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
 });
 
