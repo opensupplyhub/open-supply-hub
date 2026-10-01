@@ -350,7 +350,26 @@ def send_approved_claim_notice_to_list_contributors(request, facility_claim):
                                                       contributor)
 
 
-def send_claim_update_note_to_one_contributor(request, claim, contributor):
+# Claim fields whose edit changes the name or address the production
+# location page displays, which the update notice calls out explicitly.
+CLAIM_NAME_ADDRESS_FIELDS = ('facility_name_english', 'facility_address')
+
+# Labels for the update notice where the model's verbose name reads badly.
+CLAIM_CHANGE_LABELS = {
+    'facility_name_english': 'Facility name (English)',
+}
+
+
+def _claim_change_label(change):
+    if change['name'] in CLAIM_CHANGE_LABELS:
+        return CLAIM_CHANGE_LABELS[change['name']]
+    verbose_name = change['verbose_name']
+    return verbose_name[:1].upper() + verbose_name[1:]
+
+
+def send_claim_update_note_to_one_contributor(
+    request, claim, contributor, changes=None
+):
     subj_template = get_template(
         'mail/facility_claim_profile_update_contributor_notice_subject.txt')
     text_template = get_template(
@@ -360,12 +379,15 @@ def send_claim_update_note_to_one_contributor(request, claim, contributor):
 
     facility_country = COUNTRY_NAMES[claim.facility.country_code]
 
-    changes = claim.get_changes()
+    if changes is None:
+        changes = claim.get_changes()
+    name_or_address_changed = False
     if changes:
+        name_or_address_changed = any(
+            c['name'] in CLAIM_NAME_ADDRESS_FIELDS for c in changes
+        )
         changes = [
-            '{}: {}'.format(
-                c['verbose_name'][:1].upper() + c['verbose_name'][1:],
-                c['current'])
+            '{}: {}'.format(_claim_change_label(c), c['current'])
             for c in changes
         ]
 
@@ -375,6 +397,7 @@ def send_claim_update_note_to_one_contributor(request, claim, contributor):
         'facility_country': facility_country,
         'facility_url': make_facility_url(request, claim.facility),
         'changes': changes,
+        'name_or_address_changed': name_or_address_changed,
     }
 
     send_mail(
@@ -386,18 +409,30 @@ def send_claim_update_note_to_one_contributor(request, claim, contributor):
     )
 
 
-def send_claim_update_notice_to_list_contributors(request, facility_claim):
+def send_claim_update_notice_to_list_contributors(
+    request, facility_claim, changes=None
+):
+    '''
+    Notify every contributor listed on the claimed location, except the
+    claimant: recording a claimed name or address as a contribution
+    makes the claimant one of the location's contributors, and they do
+    not need to hear about their own edit. `changes` is the claim diff
+    to report (claim.get_changes() when omitted); the caller passes it
+    when a later save of the claim would have hidden the edit.
+    '''
     list_contributors = [
         source.contributor
         for source in
         facility_claim.facility.sources()
         if source.contributor is not None
+        and source.contributor != facility_claim.contributor
     ]
 
     for contributor in list_contributors:
         send_claim_update_note_to_one_contributor(request,
                                                   facility_claim,
-                                                  contributor)
+                                                  contributor,
+                                                  changes)
 
 
 def send_api_notice(contributor, limit, grace_limit=None):

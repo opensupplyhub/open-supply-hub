@@ -91,7 +91,7 @@ def has_name_or_address(claim: FacilityClaim) -> bool:
 
 
 def record_claim_contribution(
-    claim: FacilityClaim, acting_user: User
+    claim: FacilityClaim, acting_user: User, geocode: bool = True
 ) -> Optional[ModerationEvent]:
     '''
     Create and approve a CLAIM moderation event carrying the claim's
@@ -108,6 +108,13 @@ def record_claim_contribution(
     location, the way an SLC PATCH backfills, so the list item is always
     a complete name/address/country row; the backfilled field names are
     recorded on the event.
+
+    `geocode` says whether the claimed address may be geocoded to move the
+    pin. Approval always allows it; a claimed-details edit passes it only
+    when the address itself changed, so a name-only save of a claim whose
+    address holds no pin (an earlier APPROXIMATE result, or the pin-move
+    switch off at the time) does not call the geocoder again, write
+    another review note, or move the pin on a later, luckier result.
     '''
     if not switch_is_active(CLAIM_NAME_ADDRESS_EDIT_SWITCH):
         return None
@@ -115,7 +122,7 @@ def record_claim_contribution(
         return None
 
     facility = claim.facility
-    point, geocode_result = _resolve_location(claim, acting_user)
+    point, geocode_result = _resolve_location(claim, acting_user, geocode)
 
     raw_data = {
         'name': (claim.facility_name_english or '').strip(),
@@ -191,7 +198,7 @@ def _known_sectors(values) -> list:
 
 
 def _resolve_location(
-    claim: FacilityClaim, acting_user: User
+    claim: FacilityClaim, acting_user: User, geocode: bool
 ) -> Tuple[Point, Optional[Dict]]:
     '''
     Decide where the contribution's list item is placed, and move the
@@ -203,9 +210,11 @@ def _resolve_location(
     the enable_claim_address_pin_move switch is on (off: the item sits at
     the current pin and nothing is geocoded):
 
-    - The claimant already placed the pin (the claimed-details form
-      geocodes on the client and the PUT propagates the point to the
+    - The claimant already placed the pin (a claimed-details PUT with a
+      point that differs from the stored one propagates it to the
       facility): reuse that point, nothing to geocode.
+    - The caller did not change the address (`geocode` is False): keep
+      the pin. Whatever kept the address unpinned before still stands.
     - The claimed address is the location's address, ignoring case and
       punctuation: keep the pin. Re-geocoding an unchanged address could
       only displace a pin a moderator positioned by hand.
@@ -213,11 +222,13 @@ def _resolve_location(
       result and the result is not a bare locality centroid. How far the
       new address lies from the current pin is not checked here: that
       belongs to validation at claim submission, not to the approval.
-      When either condition fails the pin stays, the list item still
-      records the geocode (that is what the address resolves to, and a
-      moderator can promote it), and an internal review note says why
-      the pin did not move. A geocoder error never fails the caller: the
-      pin stays and the note records the error.
+      When the geocoder returns no result, or errors, the pin stays and
+      the list item is placed at the current pin as a manual location.
+      When the result is a bare locality centroid the pin also stays,
+      but the list item records the geocode (that is what the address
+      resolves to, and a moderator can promote it). In every one of
+      those cases an internal review note says why the pin did not
+      move, and a geocoder error never fails the caller.
     '''
     facility = claim.facility
     current = facility.location
@@ -226,6 +237,9 @@ def _resolve_location(
         return claim.facility_location, None
 
     if not switch_is_active(CLAIM_ADDRESS_PIN_MOVE_SWITCH):
+        return current, None
+
+    if not geocode:
         return current, None
 
     address = (claim.facility_address or '').strip()
