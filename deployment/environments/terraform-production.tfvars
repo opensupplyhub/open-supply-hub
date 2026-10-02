@@ -155,7 +155,14 @@ contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-
 # apply; see OSDEV-3545.
 contribot_schedule_enabled = true
 contribot_monday_board_id = "3514246658"
-contribot_last_list_id = "9684"
+# OSDEV-3545: fallback only. Read by lists_repository.get_last_list_id() just
+# when the DynamoDB __CURSOR__ item is missing or unparseable, so it has no
+# effect while the cursor exists. Refreshed from 9684 to the highest list the
+# legacy instance had processed at the 2.31 code freeze, so that if the state
+# table is ever recreated the instance resumes near where production actually
+# is instead of re-carding every still-PENDING list above 9684. Replacing this
+# fallback with a loud failure on a missing cursor is deferred to OSDEV-2545.
+contribot_last_list_id = "9721"
 contribot_google_drive_shared_directory_id = "1eRc0dlAvlo467NfGZI0PoE1TX2J7xTg0"
 contribot_monday_api_key_secret_name = "oshub/production/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/production/contribot-slack-api-url"
