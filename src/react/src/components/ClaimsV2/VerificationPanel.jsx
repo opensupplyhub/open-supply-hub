@@ -5,6 +5,7 @@ import {
     scoreChip,
     organizationRowStatus,
     CHIP_STATUS,
+    claimantOrganization,
 } from './verificationUtils';
 import styles from './styles';
 
@@ -103,6 +104,10 @@ export default function VerificationPanel({ detail, review, onShowDocument }) {
     const emailValue = [detail.email, detail.website]
         .filter(Boolean)
         .join(' · ');
+    /* Both the row and its consistency chip (and the workspace header)
+       must use the same resolved organization or they'd judge and show
+       different strings. */
+    const claimantAccountName = claimantOrganization(detail);
 
     return (
         <section aria-label="Verification">
@@ -124,7 +129,7 @@ export default function VerificationPanel({ detail, review, onShowDocument }) {
                     label="Claimant Account"
                     extract={getExtract(review, 'organization')}
                     onShowDocument={onShowDocument}
-                    value={detail.company_name}
+                    value={claimantAccountName}
                     provenance={PROVENANCE.CLAIMANT}
                     counterpart={{
                         label: 'OS Hub profile',
@@ -133,7 +138,7 @@ export default function VerificationPanel({ detail, review, onShowDocument }) {
                     chip={organizationRowStatus(
                         review,
                         facility.name,
-                        detail.company_name,
+                        claimantAccountName,
                     )}
                     footnote="Account name is claimant-stated registration data."
                 />

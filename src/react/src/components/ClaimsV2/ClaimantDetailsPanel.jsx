@@ -32,7 +32,9 @@ export default function ClaimantDetailsPanel({ detail }) {
 
     const rows = [
         ['LinkedIn', detail.linkedin_profile],
+        ['Claimant LinkedIn', detail.claimant_linkedin_profile_url],
         ['Website', detail.website],
+        ['Production location website', detail.facility_website],
         ['Sector(s)', (detail.sector || []).join(', ')],
         [
             'Workers',
