@@ -270,11 +270,11 @@ function ClaimedFacilitiesDetails({
     // dialog is modal, so those cannot normally differ from what would
     // be saved, but if they do the current values go through the check
     // instead of being saved under the old warnings.
-    const continuePastQualityWarnings = () => {
+    const continuePastQualityWarnings = async () => {
         const { values, warnings } = pendingWarnings;
         setPendingWarnings(null);
         if (!nameAddressUnchanged(currentNameAddress(), values)) {
-            saveForm();
+            await saveForm();
             return;
         }
         submitWithDismissedWarnings(toDismissedWarnings(warnings));

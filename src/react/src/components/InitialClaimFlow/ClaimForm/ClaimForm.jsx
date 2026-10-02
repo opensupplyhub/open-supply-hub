@@ -360,11 +360,11 @@ const ClaimForm = ({
     // fields are locked while the check runs and the dialog is modal, so
     // the two cannot normally differ, but if they do the current values
     // go through the check instead of inheriting the dismissal.
-    const continuePastQualityWarnings = () => {
+    const continuePastQualityWarnings = async () => {
         const { values, warnings } = pendingWarnings;
         setPendingWarnings(null);
         if (!nameAddressUnchanged(currentNameAddress(), values)) {
-            handleNext();
+            await handleNext();
             return;
         }
         updateFieldWithoutTouch(
