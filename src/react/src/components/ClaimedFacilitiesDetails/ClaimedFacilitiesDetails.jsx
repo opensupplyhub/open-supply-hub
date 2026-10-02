@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { connect } from 'react-redux';
-import { arrayOf, bool, func, string, object, shape } from 'prop-types';
+import { arrayOf, bool, func, string, object } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
@@ -17,6 +17,7 @@ import get from 'lodash/get';
 import map from 'lodash/map';
 import { isInt } from 'validator';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import AppOverflow from '../AppOverflow';
 import AppGrid from '../AppGrid';
 import ClaimedFacilitiesDetailsSidebar from '../ClaimedFacilitiesDetailsSidebar';
@@ -27,18 +28,28 @@ import {
 } from '../CheckComponentStatus';
 import InputSection from '../InputSection';
 import InputErrorText from '../Contribute/InputErrorText';
+import ContributionWarningDialog from '../Contribute/ContributionWarningDialog';
+import {
+    fetchClaimQualityWarnings,
+    nameAddressUnchanged,
+    rememberCheck,
+    rememberedWarningsFor,
+    toDismissedWarnings,
+} from '../../util/claimQualityCheck';
+import ImportantNote from '../InitialClaimFlow/Shared/ImportantNote/ImportantNote';
 
 import {
     fetchClaimedFacilityDetails,
     clearClaimedFacilityDetails,
     updateClaimedFacilityNameNativeLanguage,
+    updateClaimedFacilityNameEnglish,
+    updateClaimedFacilityAddress,
     updateClaimedFacilityWorkersCount,
     updateClaimedFacilityFemaleWorkersPercentage,
     updateClaimedFacilityAffiliations,
     updateClaimedFacilityCertifications,
     updateClaimedFacilityProductTypes,
     updateClaimedFacilityProductionTypes,
-    updateClaimedFacilityLocation,
     updateClaimedSector,
     updateClaimedFacilityPhone,
     updateClaimedFacilityPhoneVisibility,
@@ -79,31 +90,30 @@ import {
     submitClaimedFacilityDetailsUpdate,
 } from '../../actions/claimedFacilityDetails';
 
-import {
-    approvedFacilityClaimPropType,
-    userPropType,
-} from '../../util/propTypes';
+import { approvedFacilityClaimPropType } from '../../util/propTypes';
 
 import {
     claimedFacilitiesDetailsStyles,
     textFieldErrorStyles,
 } from '../../util/styles';
 
-import apiRequest from '../../util/apiRequest';
-
 import {
     getValueFromEvent,
     getCheckedFromEvent,
     mapDjangoChoiceTuplesToSelectOptions,
-    makeClaimGeocoderURL,
-    logErrorToRollbar,
 } from '../../util/util';
 
-import { USER_DEFAULT_STATE, mockedSectors } from '../../util/constants';
+import {
+    mockedSectors,
+    ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+    contributeProductionLocationRoute,
+} from '../../util/constants';
 import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
 import { freeEmissionsEstimateFormConfig } from '../FreeEmissionsEstimate/constants.jsx';
 import YearPicker from '../FreeEmissionsEstimate/YearPicker.jsx';
-import claimedFacilityDetailsSchema from './validationSchema';
+import claimedFacilityDetailsSchema, {
+    claimedFacilityDetailsBaseSchema,
+} from './validationSchema';
 
 const createCountrySelectOptions = memoize(
     mapDjangoChoiceTuplesToSelectOptions,
@@ -122,20 +132,25 @@ const mergedStyles = {
     paddedTitle: {
         padding: '10px 0',
     },
+    nameAddressNoteWrapper: {
+        margin: '10px 0 20px',
+    },
+    noteLink: {
+        color: 'inherit',
+        fontWeight: 600,
+        textDecoration: 'underline',
+    },
 };
 
 function ClaimedFacilitiesDetails({
-    user,
-    match: {
-        params: { claimID },
-    },
     fetching,
     errors,
     data,
     getDetails,
     clearDetails,
     updateFacilityNameNativeLanguage,
-    updateFacilityLocation,
+    updateFacilityNameEnglish,
+    updateFacilityAddress,
     updateSector,
     updateFacilityPhone,
     updateFacilityWebsite,
@@ -167,6 +182,8 @@ function ClaimedFacilitiesDetails({
     energyValueUpdaters,
     energyEnabledUpdaters,
     userHasSignedIn,
+    isNameAddressEditable,
+    loadedNameAddress,
     classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
@@ -180,6 +197,14 @@ function ClaimedFacilitiesDetails({
     }, []);
     /* eslint-enable react-hooks/exhaustive-deps */
     const [isSavingForm, setIsSavingForm] = useState(false);
+    // The advisory data-quality warnings returned for a changed name or
+    // address (OSDEV-3489), shown before the save goes through, kept
+    // with the values they were returned for; whether that check is in
+    // flight; and the last check's result with the values it was for,
+    // re-shown when those values are saved again.
+    const [pendingWarnings, setPendingWarnings] = useState(null);
+    const [checkingQuality, setCheckingQuality] = useState(false);
+    const [lastQualityCheck, setLastQualityCheck] = useState(null);
     const TITLE = 'Claimed Facility Details';
 
     useEffect(() => {
@@ -196,70 +221,91 @@ function ClaimedFacilitiesDetails({
         }
     }, [isSavingForm, setIsSavingForm, updating, errorUpdating]);
 
-    const geocodeDataToGeoJSON = geocodedData => ({
-        type: 'Point',
-        coordinates: [
-            geocodedData.geocoded_point.lng,
-            geocodedData.geocoded_point.lat,
-        ],
-    });
-
-    const geocodeAddress = (address, initialAddress, initialLocation) => {
-        if (isEmpty(address)) {
-            return Promise.resolve(null);
-        }
-        if (address === initialAddress && initialLocation) {
-            return Promise.resolve(initialLocation);
-        }
-        return apiRequest
-            .get(makeClaimGeocoderURL(claimID), {
-                params: {
-                    address,
-                },
-            })
-            .then(({ data: geocodedData }) => {
-                if (geocodedData?.result_count === 0) {
-                    throw new Error(
-                        'There was a problem finding a location for the specified address',
-                    );
-                }
-                return geocodeDataToGeoJSON(geocodedData);
-            });
+    // A changed address is geocoded by the backend when it records the
+    // contribution, with the same guards as claim approval (no move on an
+    // approximate result, a review note when the pin stays). The form only
+    // sends back the pin it was given, which the backend reads as "the
+    // claimant did not place a pin".
+    const submitWithDismissedWarnings = dismissedWarnings => {
+        submitUpdate(dismissedWarnings);
+        setIsSavingForm(true);
     };
 
-    const saveForm = () => {
-        geocodeAddress(
-            data.facility_address,
-            data.initial_facility_address,
-            data.facility_location,
-        )
-            .then(location => {
-                updateFacilityLocation(location);
-                submitUpdate();
-                setIsSavingForm(true);
-            })
-            .catch(err => {
-                toast.error(
-                    'There was a problem finding a location for the specified address',
+    // A changed name or address goes through the backend's advisory
+    // quality check first (OSDEV-3489); the same values as loaded assert
+    // nothing new and save directly, and values the check already
+    // answered re-show that answer rather than asking again. The check
+    // fails open: a failed request saves as if nothing had been flagged.
+    const currentNameAddress = () => ({
+        name: data?.facility_name_english,
+        address: data?.facility_address,
+    });
+
+    const saveForm = async () => {
+        const values = currentNameAddress();
+        if (
+            isNameAddressEditable &&
+            !nameAddressUnchanged(values, loadedNameAddress)
+        ) {
+            let warnings = rememberedWarningsFor(values, lastQualityCheck);
+            if (warnings === null) {
+                setCheckingQuality(true);
+                warnings = await fetchClaimQualityWarnings(
+                    get(data, 'facility.id'),
+                    values,
                 );
-                logErrorToRollbar(window, err, user);
-            });
+                setCheckingQuality(false);
+                setLastQualityCheck(rememberCheck(values, warnings));
+            }
+            if (warnings.length > 0) {
+                setPendingWarnings({ values, warnings });
+                return;
+            }
+        }
+        submitWithDismissedWarnings([]);
+    };
+
+    // "Save anyway" saves with the warnings dismissed for the values the
+    // check answered. The fields are locked while the check runs and the
+    // dialog is modal, so those cannot normally differ from what would
+    // be saved, but if they do the current values go through the check
+    // instead of being saved under the old warnings.
+    const continuePastQualityWarnings = async () => {
+        const { values, warnings } = pendingWarnings;
+        setPendingWarnings(null);
+        if (!nameAddressUnchanged(currentNameAddress(), values)) {
+            await saveForm();
+            return;
+        }
+        submitWithDismissedWarnings(toDismissedWarnings(warnings));
     };
 
     const facilityData = data || {};
 
+    // The English name and address are validated only while they are shown,
+    // so a stored value the form cannot display never blocks Save silently.
     const claimedValidationValues = useMemo(
         () => ({
+            ...(isNameAddressEditable
+                ? {
+                      facility_name_english: facilityData.facility_name_english,
+                      facility_address: facilityData.facility_address,
+                  }
+                : {}),
             facility_website: facilityData.facility_website,
             point_of_contact_email: facilityData.point_of_contact_email,
             facility_workers_count: facilityData.facility_workers_count,
         }),
-        [facilityData],
+        [facilityData, isNameAddressEditable],
     );
+
+    const claimedValidationSchema = isNameAddressEditable
+        ? claimedFacilityDetailsSchema
+        : claimedFacilityDetailsBaseSchema;
 
     const claimedValidationErrors = useMemo(() => {
         try {
-            claimedFacilityDetailsSchema.validateSync(claimedValidationValues, {
+            claimedValidationSchema.validateSync(claimedValidationValues, {
                 abortEarly: false,
             });
             return {};
@@ -274,7 +320,7 @@ function ClaimedFacilitiesDetails({
             }
             return {};
         }
-    }, [claimedValidationValues]);
+    }, [claimedValidationSchema, claimedValidationValues]);
 
     const getClaimedValidationError = key => claimedValidationErrors[key];
     const hasClaimedValidationErrors = !isEmpty(claimedValidationErrors);
@@ -465,6 +511,86 @@ function ClaimedFacilitiesDetails({
                         <Typography variant="title">
                             Facility Details
                         </Typography>
+                        {isNameAddressEditable && (
+                            <>
+                                <InputSection
+                                    label="Facility name (English)"
+                                    value={data.facility_name_english || ''}
+                                    onChange={updateFacilityNameEnglish}
+                                    disabled={updating || checkingQuality}
+                                    hasValidationErrorFn={() =>
+                                        Boolean(
+                                            getClaimedValidationError(
+                                                'facility_name_english',
+                                            ),
+                                        )
+                                    }
+                                />
+                                {getClaimedValidationError(
+                                    'facility_name_english',
+                                ) && (
+                                    <InputErrorText
+                                        text={getClaimedValidationError(
+                                            'facility_name_english',
+                                        )}
+                                    />
+                                )}
+                                <InputSection
+                                    label="Facility address"
+                                    value={data.facility_address || ''}
+                                    onChange={updateFacilityAddress}
+                                    disabled={updating || checkingQuality}
+                                    hasValidationErrorFn={() =>
+                                        Boolean(
+                                            getClaimedValidationError(
+                                                'facility_address',
+                                            ),
+                                        )
+                                    }
+                                />
+                                {getClaimedValidationError(
+                                    'facility_address',
+                                ) && (
+                                    <InputErrorText
+                                        text={getClaimedValidationError(
+                                            'facility_address',
+                                        )}
+                                    />
+                                )}
+                                <div className={classes.nameAddressNoteWrapper}>
+                                    <ImportantNote
+                                        text={
+                                            <>
+                                                The name and address you enter
+                                                here are shown on the production
+                                                location page while your claim
+                                                is approved, and they should
+                                                match the name and address on
+                                                the documents or web page you
+                                                submitted to verify your claim.
+                                                If this production location has
+                                                moved to a new address, do not
+                                                edit the address here. Instead,
+                                                submit the new location through
+                                                the{' '}
+                                                <Link
+                                                    to={
+                                                        contributeProductionLocationRoute
+                                                    }
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className={classes.noteLink}
+                                                >
+                                                    Single Location Contribution
+                                                    form
+                                                </Link>{' '}
+                                                so a new OS ID can be created.
+                                            </>
+                                        }
+                                    />
+                                </div>
+                            </>
+                        )}
                         <InputSection
                             label="Facility name (native language)"
                             value={data.facility_name_native_language}
@@ -880,15 +1006,25 @@ function ClaimedFacilitiesDetails({
                                 color="primary"
                                 disabled={
                                     updating ||
+                                    checkingQuality ||
                                     hasClaimedValidationErrors ||
                                     hasEmissionsErrors
                                 }
                             >
                                 Save
                             </Button>
-                            {updating && <CircularProgress />}
+                            {(updating || checkingQuality) && (
+                                <CircularProgress />
+                            )}
                         </div>
                     </div>
+                    <ContributionWarningDialog
+                        open={pendingWarnings !== null}
+                        onClose={() => setPendingWarnings(null)}
+                        onSubmitAnyway={continuePastQualityWarnings}
+                        warnings={pendingWarnings?.warnings ?? []}
+                        submitAnywayLabel="Save anyway"
+                    />
                     <ClaimedFacilitiesDetailsSidebar
                         facilityDetails={data.facility}
                     />
@@ -899,26 +1035,22 @@ function ClaimedFacilitiesDetails({
 }
 
 ClaimedFacilitiesDetails.defaultProps = {
-    user: USER_DEFAULT_STATE,
     errors: null,
     data: null,
     errorUpdating: null,
+    isNameAddressEditable: false,
+    loadedNameAddress: null,
 };
 
 ClaimedFacilitiesDetails.propTypes = {
-    user: userPropType,
-    match: shape({
-        params: shape({
-            claimID: string.isRequired,
-        }).isRequired,
-    }).isRequired,
     fetching: bool.isRequired,
     errors: arrayOf(string),
     data: approvedFacilityClaimPropType,
     getDetails: func.isRequired,
     clearDetails: func.isRequired,
     updateFacilityNameNativeLanguage: func.isRequired,
-    updateFacilityLocation: func.isRequired,
+    updateFacilityNameEnglish: func.isRequired,
+    updateFacilityAddress: func.isRequired,
     updateSector: func.isRequired,
     updateFacilityWorkersCount: func.isRequired,
     updateFacilityFemaleWorkersPercentage: func.isRequired,
@@ -950,6 +1082,8 @@ ClaimedFacilitiesDetails.propTypes = {
     energyValueUpdaters: object.isRequired,
     energyEnabledUpdaters: object.isRequired,
     userHasSignedIn: bool.isRequired,
+    isNameAddressEditable: bool,
+    loadedNameAddress: object,
     classes: object.isRequired,
 };
 
@@ -961,16 +1095,19 @@ function mapStateToProps({
         retrieveData: { fetching: fetchingData, error },
         updateData: { fetching: updating, error: errorUpdating },
         data,
+        loadedNameAddress,
     },
+    featureFlags: { flags },
 }) {
     return {
-        user,
         fetching: fetchingData,
         data,
         errors: error || errorUpdating,
         updating,
         errorUpdating,
         userHasSignedIn: !user.isAnon,
+        isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
+        loadedNameAddress,
     };
 }
 
@@ -997,8 +1134,12 @@ function mapDispatchToProps(
         updateFacilityNameNativeLanguage: makeDispatchValueFn(
             updateClaimedFacilityNameNativeLanguage,
         ),
-        updateFacilityLocation: location =>
-            dispatch(updateClaimedFacilityLocation(location)),
+        updateFacilityNameEnglish: makeDispatchValueFn(
+            updateClaimedFacilityNameEnglish,
+        ),
+        updateFacilityAddress: makeDispatchValueFn(
+            updateClaimedFacilityAddress,
+        ),
         updateSector: makeDispatchMultiSelectFn(updateClaimedSector),
         updateFacilityPhone: makeDispatchValueFn(updateClaimedFacilityPhone),
         updateFacilityPhoneVisibility: makeDispatchCheckedFn(
@@ -1108,8 +1249,10 @@ function mapDispatchToProps(
             ),
             energyOther: makeDispatchCheckedFn(updateClaimedEnergyOtherEnabled),
         },
-        submitUpdate: () =>
-            dispatch(submitClaimedFacilityDetailsUpdate(claimID)),
+        submitUpdate: dismissedWarnings =>
+            dispatch(
+                submitClaimedFacilityDetailsUpdate(claimID, dismissedWarnings),
+            ),
     };
 }
 
