@@ -28,6 +28,14 @@ import {
 } from '../CheckComponentStatus';
 import InputSection from '../InputSection';
 import InputErrorText from '../Contribute/InputErrorText';
+import ContributionWarningDialog from '../Contribute/ContributionWarningDialog';
+import {
+    fetchClaimQualityWarnings,
+    nameAddressUnchanged,
+    rememberCheck,
+    rememberedWarningsFor,
+    toDismissedWarnings,
+} from '../../util/claimQualityCheck';
 import ImportantNote from '../InitialClaimFlow/Shared/ImportantNote/ImportantNote';
 
 import {
@@ -175,6 +183,7 @@ function ClaimedFacilitiesDetails({
     energyEnabledUpdaters,
     userHasSignedIn,
     isNameAddressEditable,
+    loadedNameAddress,
     classes,
 }) {
     /* eslint-disable react-hooks/exhaustive-deps */
@@ -188,6 +197,14 @@ function ClaimedFacilitiesDetails({
     }, []);
     /* eslint-enable react-hooks/exhaustive-deps */
     const [isSavingForm, setIsSavingForm] = useState(false);
+    // The advisory data-quality warnings returned for a changed name or
+    // address (OSDEV-3489), shown before the save goes through, kept
+    // with the values they were returned for; whether that check is in
+    // flight; and the last check's result with the values it was for,
+    // re-shown when those values are saved again.
+    const [pendingWarnings, setPendingWarnings] = useState(null);
+    const [checkingQuality, setCheckingQuality] = useState(false);
+    const [lastQualityCheck, setLastQualityCheck] = useState(null);
     const TITLE = 'Claimed Facility Details';
 
     useEffect(() => {
@@ -209,9 +226,58 @@ function ClaimedFacilitiesDetails({
     // approximate result, a review note when the pin stays). The form only
     // sends back the pin it was given, which the backend reads as "the
     // claimant did not place a pin".
-    const saveForm = () => {
-        submitUpdate();
+    const submitWithDismissedWarnings = dismissedWarnings => {
+        submitUpdate(dismissedWarnings);
         setIsSavingForm(true);
+    };
+
+    // A changed name or address goes through the backend's advisory
+    // quality check first (OSDEV-3489); the same values as loaded assert
+    // nothing new and save directly, and values the check already
+    // answered re-show that answer rather than asking again. The check
+    // fails open: a failed request saves as if nothing had been flagged.
+    const currentNameAddress = () => ({
+        name: data?.facility_name_english,
+        address: data?.facility_address,
+    });
+
+    const saveForm = async () => {
+        const values = currentNameAddress();
+        if (
+            isNameAddressEditable &&
+            !nameAddressUnchanged(values, loadedNameAddress)
+        ) {
+            let warnings = rememberedWarningsFor(values, lastQualityCheck);
+            if (warnings === null) {
+                setCheckingQuality(true);
+                warnings = await fetchClaimQualityWarnings(
+                    get(data, 'facility.id'),
+                    values,
+                );
+                setCheckingQuality(false);
+                setLastQualityCheck(rememberCheck(values, warnings));
+            }
+            if (warnings.length > 0) {
+                setPendingWarnings({ values, warnings });
+                return;
+            }
+        }
+        submitWithDismissedWarnings([]);
+    };
+
+    // "Save anyway" saves with the warnings dismissed for the values the
+    // check answered. The fields are locked while the check runs and the
+    // dialog is modal, so those cannot normally differ from what would
+    // be saved, but if they do the current values go through the check
+    // instead of being saved under the old warnings.
+    const continuePastQualityWarnings = async () => {
+        const { values, warnings } = pendingWarnings;
+        setPendingWarnings(null);
+        if (!nameAddressUnchanged(currentNameAddress(), values)) {
+            await saveForm();
+            return;
+        }
+        submitWithDismissedWarnings(toDismissedWarnings(warnings));
     };
 
     const facilityData = data || {};
@@ -451,7 +517,7 @@ function ClaimedFacilitiesDetails({
                                     label="Facility name (English)"
                                     value={data.facility_name_english || ''}
                                     onChange={updateFacilityNameEnglish}
-                                    disabled={updating}
+                                    disabled={updating || checkingQuality}
                                     hasValidationErrorFn={() =>
                                         Boolean(
                                             getClaimedValidationError(
@@ -473,7 +539,7 @@ function ClaimedFacilitiesDetails({
                                     label="Facility address"
                                     value={data.facility_address || ''}
                                     onChange={updateFacilityAddress}
-                                    disabled={updating}
+                                    disabled={updating || checkingQuality}
                                     hasValidationErrorFn={() =>
                                         Boolean(
                                             getClaimedValidationError(
@@ -940,15 +1006,25 @@ function ClaimedFacilitiesDetails({
                                 color="primary"
                                 disabled={
                                     updating ||
+                                    checkingQuality ||
                                     hasClaimedValidationErrors ||
                                     hasEmissionsErrors
                                 }
                             >
                                 Save
                             </Button>
-                            {updating && <CircularProgress />}
+                            {(updating || checkingQuality) && (
+                                <CircularProgress />
+                            )}
                         </div>
                     </div>
+                    <ContributionWarningDialog
+                        open={pendingWarnings !== null}
+                        onClose={() => setPendingWarnings(null)}
+                        onSubmitAnyway={continuePastQualityWarnings}
+                        warnings={pendingWarnings?.warnings ?? []}
+                        submitAnywayLabel="Save anyway"
+                    />
                     <ClaimedFacilitiesDetailsSidebar
                         facilityDetails={data.facility}
                     />
@@ -963,6 +1039,7 @@ ClaimedFacilitiesDetails.defaultProps = {
     data: null,
     errorUpdating: null,
     isNameAddressEditable: false,
+    loadedNameAddress: null,
 };
 
 ClaimedFacilitiesDetails.propTypes = {
@@ -1006,6 +1083,7 @@ ClaimedFacilitiesDetails.propTypes = {
     energyEnabledUpdaters: object.isRequired,
     userHasSignedIn: bool.isRequired,
     isNameAddressEditable: bool,
+    loadedNameAddress: object,
     classes: object.isRequired,
 };
 
@@ -1017,6 +1095,7 @@ function mapStateToProps({
         retrieveData: { fetching: fetchingData, error },
         updateData: { fetching: updating, error: errorUpdating },
         data,
+        loadedNameAddress,
     },
     featureFlags: { flags },
 }) {
@@ -1028,6 +1107,7 @@ function mapStateToProps({
         errorUpdating,
         userHasSignedIn: !user.isAnon,
         isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
+        loadedNameAddress,
     };
 }
 
@@ -1169,8 +1249,10 @@ function mapDispatchToProps(
             ),
             energyOther: makeDispatchCheckedFn(updateClaimedEnergyOtherEnabled),
         },
-        submitUpdate: () =>
-            dispatch(submitClaimedFacilityDetailsUpdate(claimID)),
+        submitUpdate: dismissedWarnings =>
+            dispatch(
+                submitClaimedFacilityDetailsUpdate(claimID, dismissedWarnings),
+            ),
     };
 }
 

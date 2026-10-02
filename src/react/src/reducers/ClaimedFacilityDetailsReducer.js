@@ -63,6 +63,11 @@ import {
 
 const initialState = Object.freeze({
     data: null,
+    // The name and address as loaded (with the location's values
+    // filled in for a claim asserting none), so Save can tell whether
+    // the claimant changed either and should go through the quality
+    // check (OSDEV-3489).
+    loadedNameAddress: null,
     retrieveData: Object.freeze({
         fetching: false,
         error: null,
@@ -190,6 +195,12 @@ export default createReducer(
                 retrieveData: {
                     $set: initialState.retrieveData,
                 },
+                loadedNameAddress: {
+                    $set: {
+                        name: data.facility_name_english ?? '',
+                        address: data.facility_address ?? '',
+                    },
+                },
                 data: {
                     $set: {
                         ...data,
@@ -216,6 +227,12 @@ export default createReducer(
             update(state, {
                 updateData: {
                     $set: initialState.updateData,
+                },
+                loadedNameAddress: {
+                    $set: {
+                        name: data.facility_name_english ?? '',
+                        address: data.facility_address ?? '',
+                    },
                 },
                 data: {
                     $set: {
