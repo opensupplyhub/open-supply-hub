@@ -11,27 +11,36 @@ with two deliberate differences:
   the claim form the values are entered on the Business step and the
   claim is submitted, with document uploads, two steps later; bouncing
   that submission would send the claimant back and make them re-upload.
-- Dismissed warnings are recorded (OSDEV-3537). SLC stores nothing
-  because no one reviews an approved SLC by hand; a claim is decided by
-  a moderator, so the write endpoints accept the warnings the claimant
-  continued past and leave an INTERNAL review note listing them.
+- Dismissed warnings are recorded. SLC stores nothing because no one
+  reviews an approved SLC by hand; a claim is decided by a moderator,
+  so the write endpoints accept the warnings the claimant continued
+  past and leave an INTERNAL review note listing them.
 
 Everything here is advisory and fails open: the claimant is never
 blocked, and any failure of the model call means no warnings.
 '''
 import json
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple
 
 from waffle import switch_is_active
 
+from api.constants import FacilityClaimReviewNoteTypes
 from api.models.facility.facility import Facility
+from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_claim_review_note import (
+    FacilityClaimReviewNote,
+)
+from api.models.user import User
 from api.services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     same_claimed_value,
 )
 from api.services.claim_quality_service import ClaimQualityService
 from api.services.claim_quality_warnings import WARNING_TITLES
+from api.services.facility_claim_review_note_service import (
+    create_review_note,
+)
 from countries.lib.countries import COUNTRY_NAMES
 
 logger = logging.getLogger(__name__)
@@ -56,6 +65,16 @@ _ADDRESS_ONLY_VERDICTS = frozenset({
     'address_quality',
     'address_country_mismatch',
 })
+
+# Which form the values came through, recorded in the note and the log.
+ClaimQualitySource = Literal['claim_form', 'claimed_details']
+SOURCE_CLAIM_FORM: ClaimQualitySource = 'claim_form'
+SOURCE_CLAIMED_DETAILS: ClaimQualitySource = 'claimed_details'
+
+_SOURCE_DESCRIPTIONS = {
+    SOURCE_CLAIM_FORM: 'submitting the claim form',
+    SOURCE_CLAIMED_DETAILS: 'updating the claimed facility details',
+}
 
 
 def is_claim_quality_check_active() -> bool:
@@ -110,8 +129,8 @@ def check_claim_quality(
 
     Every evaluated pair logs one INFO line carrying the judged fields,
     so that what the check saw can be compared with what was later
-    submitted (the write endpoints' outcome line, OSDEV-3537). Only the name,
-    address and country are logged: they are what the model judges and the
+    submitted (see record_claim_quality_outcome). Only the name, address
+    and country are logged: they are what the model judges and the
     published record of a location anyway. Nothing else in the request
     reaches the log.
     '''
@@ -178,6 +197,77 @@ def check_claim_quality(
         _describe_fields(name, address, country_code),
     )
     return warnings
+
+
+def record_claim_quality_outcome(
+    claim: FacilityClaim,
+    acting_user: User,
+    dismissed_warnings: List[Dict],
+    source: ClaimQualitySource,
+) -> Optional[FacilityClaimReviewNote]:
+    '''
+    Called by a write that stored a claimed name or address, after the
+    claim is saved. Logs the outcome of the quality check for that
+    write - what was submitted, and which warnings, if any, the
+    claimant continued past - and, when any were, leaves an INTERNAL
+    review note on the claim so the moderator deciding it sees exactly
+    what the claimant was told. Returns the note, or None when nothing
+    was dismissed.
+
+    Does nothing while enable_claim_name_address_edit is off, matching
+    the contribution recording: with the switch off the form never
+    shows the fields, so there is nothing to have been warned about.
+    The list is not gated on the LLM switch: it only says what the
+    claimant saw, and if it is non-empty they saw it.
+
+    The dismissed list comes from the client. It is advisory, capped and
+    typed by validate_dismissed_warnings, and only ever read by
+    moderators, so trusting it is the right trade against re-running a
+    model call (and possibly getting different warnings) on the write.
+    '''
+    if not switch_is_active(CLAIM_NAME_ADDRESS_EDIT_SWITCH):
+        return None
+
+    name = (claim.facility_name_english or '').strip()
+    address = (claim.facility_address or '').strip()
+    # Logged before the empty check on purpose: every write of these
+    # fields gets an outcome line, with dismissed=[] when nothing was
+    # dismissed, so it can be paired with the evaluated line of the
+    # check that preceded it and a silent write told from a clean one.
+    logger.info(
+        'Claim quality check outcome: contributor=%s facility=%s claim=%s '
+        'source=%s dismissed=%s fields=%s',
+        claim.contributor_id,
+        claim.facility_id,
+        claim.id,
+        source,
+        [warning['type'] for warning in dismissed_warnings],
+        _describe_fields(name, address, claim.facility.country_code),
+    )
+    if not dismissed_warnings:
+        return None
+
+    # Only the two SOURCE_* values are passed. The write has already
+    # been saved by the time this runs, so an unexpected source falls
+    # back to its raw value in the note rather than failing the request.
+    lines = [
+        'Claimant continued past data-quality warnings when '
+        f'{_SOURCE_DESCRIPTIONS.get(source, source)}:'
+    ]
+    for warning in dismissed_warnings:
+        line = f'- {WARNING_TITLES[warning["type"]]}'
+        if warning.get('message'):
+            line += f': {warning["message"]}'
+        lines.append(line)
+    lines.append(f'Submitted name: {name or "(none)"}')
+    lines.append(f'Submitted address: {address or "(none)"}')
+
+    return create_review_note(
+        claim,
+        acting_user,
+        '\n'.join(lines),
+        FacilityClaimReviewNoteTypes.INTERNAL,
+    )
 
 
 def _describe_fields(name: str, address: str, country_code) -> str:

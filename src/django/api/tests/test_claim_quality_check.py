@@ -8,11 +8,12 @@ from django.test import override_settings
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
-from api.constants import FacilityClaimStatuses
+from api.constants import FacilityClaimReviewNoteTypes, FacilityClaimStatuses
 from api.models import (
     Contributor,
     Facility,
     FacilityClaim,
+    FacilityClaimReviewNote,
     FacilityList,
     FacilityListItem,
     FacilityMatch,
@@ -27,9 +28,13 @@ from api.services.claim_quality_check_service import (
 from api.services.claim_quality_service import (
     ClaimQualityVerdicts,
 )
-from api.services.claim_quality_warnings import WARNING_TITLES
+from api.services.claim_quality_warnings import (
+    WARNING_TITLES,
+    validate_dismissed_warnings,
+)
 from api.services.submission_quality_service import QualityVerdict
 from api.signals import moderation_event_update_handler_for_opensearch
+from rest_framework import serializers
 
 EVALUATE_PATH = (
     'api.services.claim_quality_check_service.ClaimQualityService.evaluate'
@@ -145,6 +150,44 @@ class ClaimQualityCheckTestBase(APITestCase):
         }
         values.update(overrides)
         return FacilityClaim.objects.create(**values)
+
+    def valid_form_data(self, **overrides):
+        data = {
+            'your_name': 'Claimant',
+            'your_title': 'Owner',
+            'your_business_website': '',
+            'business_website': '',
+            'business_linkedin_profile':
+                'https://www.linkedin.com/company/example',
+            'sectors': 'Apparel',
+        }
+        data.update(overrides)
+        return data
+
+    def post_claim(self, **overrides):
+        self.login()
+        return self.client.post(
+            f'/api/facilities/{self.facility.id}/claim/',
+            self.valid_form_data(**overrides),
+        )
+
+    def put_claimed(self, claim, **fields):
+        self.login()
+        payload = {
+            'facility_name_english': claim.facility_name_english or '',
+            'facility_address': claim.facility_address or '',
+            'facility_description': '',
+            'facility_phone_number_publicly_visible': False,
+            'point_of_contact_publicly_visible': False,
+            'office_info_publicly_visible': False,
+            'facility_website_publicly_visible': False,
+        }
+        payload.update(fields)
+        return self.client.put(
+            f'/api/facility-claims/{claim.id}/claimed/',
+            payload,
+            format='json',
+        )
 
     def make_approved_claim(self):
         return self.make_claim(
@@ -477,3 +520,254 @@ class ClaimQualityCheckEndpointTest(ClaimQualityCheckTestBase):
         self.assertEqual(200, first.status_code, first.content)
         self.assertEqual(429, second.status_code, second.content)
         evaluate.assert_called_once()
+
+
+@override_settings(DEBUG=True)
+@override_switch('claim_a_facility', active=True)
+@override_switch(EDIT_SWITCH, active=True)
+@override_switch(CLAIM_QUALITY_CHECK_SWITCH, active=True)
+class ClaimQualityOutcomeTest(ClaimQualityCheckTestBase):
+    '''
+    The claim POST and the claimed-details PUT log what was submitted
+    for the check and record the warnings the claimant continued past
+    as an INTERNAL review note.
+    '''
+
+    def dismissed(self):
+        return [
+            {'type': 'name_quality', 'message': 'Looks like test data.'},
+            {'type': 'different_location', 'message': ''},
+        ]
+
+    def test_claim_post_records_dismissed_warnings_as_internal_note(self):
+        with self.assertLogs(CHECK_LOGGER, level='INFO') as logs:
+            response = self.post_claim(
+                facility_name_english='Test test',
+                facility_address='9 Elsewhere Road',
+                dismissed_warnings=json.dumps(self.dismissed()),
+            )
+        self.assertEqual(200, response.status_code, response.content)
+
+        claim = FacilityClaim.objects.get(facility=self.facility)
+        notes = FacilityClaimReviewNote.objects.filter(claim=claim)
+        self.assertEqual(1, notes.count())
+        note = notes.get()
+        self.assertEqual(FacilityClaimReviewNoteTypes.INTERNAL, note.note_type)
+        self.assertEqual(self.claimant_user, note.author)
+        self.assertEqual(
+            'Claimant continued past data-quality warnings when '
+            'submitting the claim form:\n'
+            '- Name May Not Look Like a Facility Name: Looks like test '
+            'data.\n'
+            '- Details May Describe a Different Location\n'
+            'Submitted name: Test test\n'
+            'Submitted address: 9 Elsewhere Road',
+            note.note,
+        )
+        outcome = [
+            line for line in logs.output
+            if 'Claim quality check outcome:' in line
+        ]
+        self.assertEqual(1, len(outcome))
+        self.assertIn(
+            f'contributor={self.claimant.id} facility={self.facility.id} '
+            f'claim={claim.id} source=claim_form '
+            "dismissed=['name_quality', 'different_location'] fields=",
+            outcome[0],
+        )
+        fields = json.loads(outcome[0].split('fields=', 1)[1])
+        self.assertEqual(
+            {
+                'name': 'Test test',
+                'address': '9 Elsewhere Road',
+                'country': 'US',
+            },
+            fields,
+        )
+
+    def test_claim_post_without_dismissals_logs_but_leaves_no_note(self):
+        with self.assertLogs(CHECK_LOGGER, level='INFO') as logs:
+            response = self.post_claim(
+                facility_name_english='New Name',
+                facility_address='1 Original Street',
+            )
+        self.assertEqual(200, response.status_code, response.content)
+        claim = FacilityClaim.objects.get(facility=self.facility)
+        self.assertFalse(
+            FacilityClaimReviewNote.objects.filter(claim=claim).exists()
+        )
+        self.assertTrue(any(
+            'Claim quality check outcome:' in line
+            and 'source=claim_form dismissed=[] fields=' in line
+            for line in logs.output
+        ))
+
+    def test_claim_post_accepts_an_empty_dismissed_list(self):
+        response = self.post_claim(
+            facility_name_english='New Name',
+            facility_address='1 Original Street',
+            dismissed_warnings='[]',
+        )
+        self.assertEqual(200, response.status_code, response.content)
+
+    def test_claim_post_rejects_an_unknown_warning_type(self):
+        response = self.post_claim(
+            facility_name_english='New Name',
+            dismissed_warnings=json.dumps([{'type': 'made_up'}]),
+        )
+        self.assertEqual(400, response.status_code, response.content)
+        self.assertIn('dismissed_warnings', response.json())
+        self.assertFalse(FacilityClaim.objects.exists())
+
+    def test_claim_post_rejects_a_non_json_dismissed_list(self):
+        response = self.post_claim(
+            facility_name_english='New Name',
+            dismissed_warnings='not json',
+        )
+        self.assertEqual(400, response.status_code, response.content)
+        self.assertIn('dismissed_warnings', response.json())
+
+    @override_switch(EDIT_SWITCH, active=False)
+    def test_claim_post_with_edit_switch_off_records_nothing(self):
+        response = self.post_claim(
+            facility_name_english='New Name',
+            dismissed_warnings=json.dumps(self.dismissed()),
+        )
+        self.assertEqual(200, response.status_code, response.content)
+        claim = FacilityClaim.objects.get(facility=self.facility)
+        self.assertFalse(
+            FacilityClaimReviewNote.objects.filter(claim=claim).exists()
+        )
+
+    def test_pending_claim_patch_ignores_dismissed_warnings(self):
+        # The pending edit form has no quality check; the field is
+        # accepted only by the claim form's serializer.
+        claim = self.make_claim(
+            status=FacilityClaimStatuses.PENDING,
+            facility_name_english='Claimed Name',
+        )
+        self.login()
+        response = self.client.patch(
+            f'/api/facility-claims/{claim.id}/pending/',
+            {
+                'facility_name_english': 'Edited Name',
+                'dismissed_warnings': self.dismissed(),
+            },
+            format='json',
+        )
+        self.assertEqual(200, response.status_code, response.content)
+        claim.refresh_from_db()
+        self.assertEqual('Edited Name', claim.facility_name_english)
+        self.assertFalse(
+            FacilityClaimReviewNote.objects.filter(
+                claim=claim,
+                note__startswith='Claimant continued past',
+            ).exists()
+        )
+
+    def test_claimed_details_put_records_dismissed_warnings(self):
+        claim = self.make_approved_claim()
+        with self.assertLogs(CHECK_LOGGER, level='INFO') as logs:
+            response = self.put_claimed(
+                claim,
+                facility_address='9 Elsewhere Road',
+                dismissed_warnings=[{
+                    'type': 'different_location',
+                    'message': 'Looks like another city.',
+                }],
+            )
+        self.assertEqual(200, response.status_code, response.content)
+        note = FacilityClaimReviewNote.objects.get(
+            claim=claim, note__startswith='Claimant continued past'
+        )
+        self.assertEqual(FacilityClaimReviewNoteTypes.INTERNAL, note.note_type)
+        self.assertEqual(self.claimant_user, note.author)
+        self.assertEqual(
+            'Claimant continued past data-quality warnings when updating '
+            'the claimed facility details:\n'
+            '- Details May Describe a Different Location: Looks like '
+            'another city.\n'
+            'Submitted name: Claimed Name\n'
+            'Submitted address: 9 Elsewhere Road',
+            note.note,
+        )
+        self.assertTrue(any(
+            'Claim quality check outcome:' in line
+            and f'claim={claim.id} source=claimed_details '
+            "dismissed=['different_location'] fields=" in line
+            for line in logs.output
+        ))
+
+    def test_claimed_details_put_with_unchanged_values_records_nothing(
+            self):
+        # Nothing was checked, so nothing can have been dismissed; a
+        # stale list from the client does not become a note.
+        claim = self.make_approved_claim()
+        response = self.put_claimed(
+            claim,
+            facility_description='Only this changed',
+            dismissed_warnings=[{'type': 'name_quality', 'message': 'x'}],
+        )
+        self.assertEqual(200, response.status_code, response.content)
+        self.assertFalse(
+            FacilityClaimReviewNote.objects.filter(
+                claim=claim, note__startswith='Claimant continued past'
+            ).exists()
+        )
+
+    def test_claimed_details_put_rejects_a_malformed_dismissed_list(self):
+        claim = self.make_approved_claim()
+        response = self.put_claimed(
+            claim,
+            facility_name_english='Renamed',
+            dismissed_warnings=[{'type': 'name_quality', 'message': 5}],
+        )
+        self.assertEqual(400, response.status_code, response.content)
+        self.assertIn('dismissed_warnings', response.json())
+        claim.refresh_from_db()
+        self.assertEqual('Claimed Name', claim.facility_name_english)
+
+
+class ValidateDismissedWarningsTest(APITestCase):
+    def test_missing_and_empty_mean_nothing_dismissed(self):
+        self.assertEqual([], validate_dismissed_warnings(None))
+        self.assertEqual([], validate_dismissed_warnings(''))
+        self.assertEqual([], validate_dismissed_warnings([]))
+        self.assertEqual([], validate_dismissed_warnings('[]'))
+
+    def test_accepts_a_list_or_its_json_encoding(self):
+        expected = [{'type': 'name_quality', 'message': 'x'}]
+        self.assertEqual(expected, validate_dismissed_warnings(expected))
+        self.assertEqual(
+            expected, validate_dismissed_warnings(json.dumps(expected))
+        )
+
+    def test_message_is_stripped_and_null_message_becomes_empty(self):
+        self.assertEqual(
+            [{'type': 'name_quality', 'message': 'x'}],
+            validate_dismissed_warnings([
+                {'type': 'name_quality', 'message': '  x  '}
+            ]),
+        )
+        self.assertEqual(
+            [{'type': 'name_quality', 'message': ''}],
+            validate_dismissed_warnings([
+                {'type': 'name_quality', 'message': None}
+            ]),
+        )
+
+    def test_rejects_bad_shapes(self):
+        for value in (
+            'not json',
+            '{}',
+            ['name_quality'],
+            [{'type': 'made_up'}],
+            [{'type': 'name_quality'}, {'type': 'name_quality'}],
+            [{'type': 'name_quality', 'message': 'x' * 501}],
+            [{'type': warning_type} for warning_type in WARNING_TITLES]
+            + [{'type': 'name_quality'}],
+        ):
+            with self.assertRaises(
+                serializers.ValidationError, msg=repr(value)
+            ):
+                validate_dismissed_warnings(value)

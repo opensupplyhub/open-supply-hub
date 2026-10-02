@@ -28,6 +28,11 @@ from ...services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
 )
+from ...services.claim_quality_check_service import (
+    SOURCE_CLAIMED_DETAILS,
+    record_claim_quality_outcome,
+)
+from ...services.claim_quality_warnings import validate_dismissed_warnings
 from ...services.facility_claim_review_note_service import (
     create_review_note,
 )
@@ -542,6 +547,16 @@ class FacilityClaimViewSet(ModelViewSet):
             claimed_name_address = validate_claimed_name_address(
                 request.data, claim
             )
+            # Validated up front, before any write, so a malformed list
+            # rejects the whole save rather than a partially applied one.
+            try:
+                dismissed_warnings = validate_dismissed_warnings(
+                    request.data.get('dismissed_warnings')
+                )
+            except ValidationError as exc:
+                raise ValidationError(
+                    {'dismissed_warnings': exc.detail}
+                ) from exc
 
             prev_location = claim.facility_location
             location_data = request.data.get('facility_location') or ''
@@ -741,6 +756,16 @@ class FacilityClaimViewSet(ModelViewSet):
             if name_or_address_changed:
                 record_claim_contribution(
                     claim, request.user, geocode=address_changed
+                )
+                # Logs what was saved for the quality check (OSDEV-3489)
+                # and leaves the moderators a note of any warnings the
+                # claimant continued past. Only a changed value was
+                # checked, so only a changed value has an outcome.
+                record_claim_quality_outcome(
+                    claim,
+                    request.user,
+                    dismissed_warnings,
+                    SOURCE_CLAIMED_DETAILS,
                 )
 
             try:

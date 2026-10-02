@@ -100,7 +100,9 @@ from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
 from api.services.claim_quality_check_service import (
+    SOURCE_CLAIM_FORM,
     check_claim_quality,
+    record_claim_quality_outcome,
 )
 from api.serializers.facility.claim_quality_check_serializer import (
     ClaimQualityCheckSerializer,
@@ -2457,6 +2459,17 @@ class FacilitiesViewSet(ListModelMixin,
 
             for file in files:
                 self.__handle_file_upload(file, facility_claim)
+
+            # Logs what the claim form submitted for the quality check
+            # (OSDEV-3489) and leaves the moderator a note of any
+            # warnings the claimant continued past. No-op while the
+            # name/address fields are not editable.
+            record_claim_quality_outcome(
+                facility_claim,
+                request.user,
+                validated_data.get('dismissed_warnings') or [],
+                SOURCE_CLAIM_FORM,
+            )
 
             send_claim_facility_confirmation_email(request, facility_claim)
             Facility.update_facility_updated_at_field(facility.id)
