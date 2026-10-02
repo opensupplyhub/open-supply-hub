@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from waffle import switch_is_active
@@ -54,6 +55,9 @@ from ...helpers.claim_attachments import (
 from ...models.contributor.contributor import Contributor
 from ...models.extended_field import ExtendedField
 from ...models.facility.facility_claim import FacilityClaim
+from ...models.facility.facility_claim_review_note import (
+    FacilityClaimReviewNote
+)
 from ...models.facility.facility_claim_attachments import (
     FacilityClaimAttachments
 )
@@ -288,7 +292,14 @@ class FacilityClaimViewSet(ModelViewSet):
             'contributor__admin',
             'status_change_by'
         ).prefetch_related(
-            'facilityclaimreviewnote_set'
+            # select_related('author'): notes_meta reports is_automated
+            # from note.author.email — without this it is an N+1 per note.
+            Prefetch(
+                'facilityclaimreviewnote_set',
+                queryset=FacilityClaimReviewNote.objects.select_related(
+                    'author'
+                ),
+            )
         ).all().order_by('-id')
         if statuses:
             queryset = queryset.filter(status__in=statuses)
