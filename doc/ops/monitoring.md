@@ -194,9 +194,9 @@ Neither is in place today; both edge functions are thin (a redirect and a respon
 
 `aws-ecs-service-autoscaling` raises/lowers desired count on ECS `CPUUtilization` high/low. Those alarms drive scaling policies; they are **not** wired to the global SNS topic unless `sns_topic_arn` is passed (currently omitted). Treat them as capacity signals, not pages.
 
-### Bedrock (SLC submission quality check)
+### Bedrock (SLC submission and claim quality checks)
 
-Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check makes one Bedrock (Claude Haiku) call per new SLC submission — organic volume is tens of calls per **week**. There is deliberately no in-app cap on these calls: per-user volume is bounded by the endpoint's `DataUploadThrottle` (30/minute), and runaway volume (a frontend retry loop, scripted submissions across accounts) is caught by monitoring instead, accepting a bounded-spend risk rather than risking the check or submissions being silently degraded by a cap.
+Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check makes one Bedrock (Claude Haiku) call per new SLC submission — organic volume is tens of calls per **week**. The claim name/address quality check (OSDEV-3489, `POST /api/facilities/{id}/claim/quality-check/`) makes one call each time a claimant leaves the claim form's Business step or saves the claimed-details form with a name or address that differs from the location's listing; claim volume is lower still. Both use the same model, IAM grant, alarms and budget. There is deliberately no in-app cap on these calls: per-user volume is bounded by each endpoint's `DataUploadThrottle` (30/minute), and runaway volume (a frontend retry loop, scripted submissions across accounts) is caught by monitoring instead, accepting a bounded-spend risk rather than risking the check or submissions being silently degraded by a cap.
 
 | Alarm | Metric | Period | Pages when |
 | --- | --- | ---: | --- |
@@ -206,7 +206,14 @@ Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check ma
 
 A monthly AWS Budget on Bedrock spend (`budget…Bedrock`, limit `bedrock_cost_budget_monthly_limit_usd`, default **$25**) alerts at 80% actual and 100% forecasted through the same SNS → Chatbot → Slack path. Budgets are account-wide, so only the account-owner envs create one (`manage_bedrock_cost_budget = true` — Test and Production today, mirroring the Chatbot ownership pattern).
 
-The Django app also logs per-call token usage (`Submission quality check tokens: input=… output=…`) to CloudWatch Logs for verifying actual consumption against expectations (~640 tokens/call).
+The Django app also logs per-call token usage (`Submission quality check tokens: input=… output=… check=slc|claim`) to CloudWatch Logs for verifying actual consumption against expectations (~640 tokens/call for SLC; the claim check's prompt also carries the currently listed name and address). The fail-open line (`Submission quality check failed; skipping (fail open). check=…`) keeps the same text for both checks, so the `SubmissionQualityCheckFailures` metric filter and alarm cover both; the `check=` label tells them apart in Logs Insights.
+
+To follow what the claim check does in production, the app logs one line per event, each with the contributor and facility ids and the judged name, address and country (never any other field):
+
+| Line | When |
+| --- | --- |
+| `Claim quality check evaluated: … model=ok\|failed warnings=[…] fields={…}` | Every model evaluation, flagged or not. `model=failed` marks a fail-open failure (its `warnings` is always empty), so a clean verdict and an outage are not confused when watching the `different_location` false-positive rate |
+| `Claim quality check skipped (values unchanged): …` | The check endpoint was called with the values the location already lists (for a claimed location, the approved claim's values); no model call |
 
 ## Suggested triage order
 
