@@ -8,6 +8,17 @@
  * the shared sensitive-information notice so it appears exactly once.
  */
 
+/*
+ * Action links in messages must point at the environment the message
+ * is composed on — a Test-composed message must not send the claimant
+ * to production (OSDEV-3357). The info-site policy link stays absolute:
+ * that content is environment-independent. Fallback covers non-browser
+ * contexts (tests).
+ */
+export const siteOrigin = () =>
+    (typeof window !== 'undefined' && window.location?.origin) ||
+    'https://opensupplyhub.org';
+
 export const SENSITIVE_INFO_NOTICE =
     'Important: We do NOT require and you should NOT submit documents ' +
     'containing sensitive personal information such as salary ' +
@@ -31,12 +42,16 @@ export const MESSAGE_TEMPLATES = Object.freeze({
     },
     person: {
         label: 'Person verification',
-        build: ({ facilityName, jobTitle }) =>
+        build: ({ facilityName, jobTitle, relaxedEligibility }) =>
             [
                 'As per our claim policy ',
                 '(https://info.opensupplyhub.org/resources/claim-a-facility), ',
-                'the claim needs to be submitted by a senior manager or ',
-                'owner.\n\n',
+                relaxedEligibility
+                    ? 'the claim needs to be submitted by an authorized ' +
+                      'employee of the production location or its parent ' +
+                      'company.\n\n'
+                    : 'the claim needs to be submitted by a senior manager ' +
+                      'or owner.\n\n',
                 `You listed yourself as a "${jobTitle}". At this point, `,
                 "we'll need to verify your title and affiliation with the ",
                 'company. Please provide a document or website that shows ',
@@ -48,7 +63,7 @@ export const MESSAGE_TEMPLATES = Object.freeze({
     },
     relationship: {
         label: 'Relationship verification',
-        build: ({ facilityName, emailDomain }) =>
+        build: ({ facilityName, emailDomain, relaxedEligibility }) =>
             [
                 'Your company email extension and the production location ',
                 "for which you submitted a claim request don't match. To ",
@@ -56,8 +71,12 @@ export const MESSAGE_TEMPLATES = Object.freeze({
                 'confirming the relationship (like ownership or parent ',
                 `company) between ${emailDomain} and ${facilityName}.\n\n`,
                 'Please note that the claim request will only be approved ',
-                'when it is submitted by an owner or senior management ',
-                'associated with the production location in question.\n\n',
+                relaxedEligibility
+                    ? 'when it is submitted by an authorized employee of ' +
+                      'the production location or its parent company.\n\n'
+                    : 'when it is submitted by an owner or senior ' +
+                      'management associated with the production location ' +
+                      'in question.\n\n',
                 SENSITIVE_INFO_NOTICE,
             ].join(''),
     },
@@ -69,7 +88,7 @@ export const MESSAGE_TEMPLATES = Object.freeze({
                 'before we can proceed with approving your claim.\n\n',
                 'Click on this link and update the address in the form, ',
                 "then click 'Submit': ",
-                `https://opensupplyhub.org/contribute/single-location/${osID}/info/\n\n`,
+                `${siteOrigin()}/contribute/single-location/${osID}/info/\n\n`,
                 'The address should match the information listed on your ',
                 'document:\n\n',
                 `${facilityAddress}\n\n`,

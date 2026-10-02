@@ -34,9 +34,9 @@ def validate_dismissed_warnings(value) -> List[Dict]:
     [{type, message}]. Accepts a list, or a JSON-encoded list (the claim
     form posts multipart form data, so its list arrives as a string).
     Missing or empty means nothing was dismissed. Raises a DRF
-    ValidationError for anything else: an unknown warning type, a
-    non-string or over-long message, or more entries than there are
-    checks. The title is not accepted from the client; it is looked up
+    ValidationError for anything else: an unknown or repeated warning
+    type, a non-string or over-long message, or more entries than there
+    are checks. The title is not accepted from the client; it is looked up
     from the type when the note is written.
     '''
     if value is None or value == '':
@@ -67,12 +67,17 @@ def validate_dismissed_warnings(value) -> List[Dict]:
             raise serializers.ValidationError(
                 f'Unknown warning type: {warning_type!r}.'
             )
+        # The check endpoint returns at most one warning per type, so a
+        # repeat can only come from a tampered or buggy client. It is
+        # rejected like the other malformed shapes rather than merged,
+        # which would mean guessing which message the claimant saw.
         if warning_type in seen:
             raise serializers.ValidationError(
                 f'Duplicate warning type: {warning_type!r}.'
             )
         seen.add(warning_type)
-        message = entry.get('message', '')
+        # A missing key and a JSON null both mean no message.
+        message = entry.get('message')
         if message is None:
             message = ''
         if not isinstance(message, str):

@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0243_add_claim_address_pin_move_switch'),
+        ('api', '0244_add_relaxed_claim_eligibility_switch'),
     ]
 
     operations = [

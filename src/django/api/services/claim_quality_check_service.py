@@ -21,7 +21,7 @@ blocked, and any failure of the model call means no warnings.
 '''
 import json
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Literal, Optional, Tuple
 
 from waffle import switch_is_active
 
@@ -46,7 +46,7 @@ from countries.lib.countries import COUNTRY_NAMES
 logger = logging.getLogger(__name__)
 
 # Kill switch for the LLM call alone, toggleable in the Django admin
-# without a deploy (created active by migration 0244). The check also
+# without a deploy (created active by migration 0245). The check also
 # requires enable_claim_name_address_edit, the switch the whole
 # editable name/address feature ships behind, so it stays dark with the
 # fields and can still be turned off on its own if the model misbehaves.
@@ -67,8 +67,9 @@ _ADDRESS_ONLY_VERDICTS = frozenset({
 })
 
 # Which form the values came through, recorded in the note and the log.
-SOURCE_CLAIM_FORM = 'claim_form'
-SOURCE_CLAIMED_DETAILS = 'claimed_details'
+ClaimQualitySource = Literal['claim_form', 'claimed_details']
+SOURCE_CLAIM_FORM: ClaimQualitySource = 'claim_form'
+SOURCE_CLAIMED_DETAILS: ClaimQualitySource = 'claimed_details'
 
 _SOURCE_DESCRIPTIONS = {
     SOURCE_CLAIM_FORM: 'submitting the claim form',
@@ -202,7 +203,7 @@ def record_claim_quality_outcome(
     claim: FacilityClaim,
     acting_user: User,
     dismissed_warnings: List[Dict],
-    source: str,
+    source: ClaimQualitySource,
 ) -> Optional[FacilityClaimReviewNote]:
     '''
     Called by a write that stored a claimed name or address, after the
@@ -229,6 +230,10 @@ def record_claim_quality_outcome(
 
     name = (claim.facility_name_english or '').strip()
     address = (claim.facility_address or '').strip()
+    # Logged before the empty check on purpose: every write of these
+    # fields gets an outcome line, with dismissed=[] when nothing was
+    # dismissed, so it can be paired with the evaluated line of the
+    # check that preceded it and a silent write told from a clean one.
     logger.info(
         'Claim quality check outcome: contributor=%s facility=%s claim=%s '
         'source=%s dismissed=%s fields=%s',
@@ -242,6 +247,9 @@ def record_claim_quality_outcome(
     if not dismissed_warnings:
         return None
 
+    # Only the two SOURCE_* values are passed. The write has already
+    # been saved by the time this runs, so an unexpected source falls
+    # back to its raw value in the note rather than failing the request.
     lines = [
         'Claimant continued past data-quality warnings when '
         f'{_SOURCE_DESCRIPTIONS.get(source, source)}:'
