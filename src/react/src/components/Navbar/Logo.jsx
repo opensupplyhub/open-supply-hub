@@ -7,12 +7,12 @@ import COLOURS from '../../util/COLOURS';
 import { resetAllFilters } from '../../actions/filters';
 
 import { recordSearchTabResetButtonClick } from '../../actions/ui';
-import { mapRoute } from '../../util/constants';
+import { mainRoute } from '../../util/constants';
 
 const Logo = ({ resetFilters }) => (
     <Link
-        to={mapRoute}
-        href={mapRoute}
+        to={mainRoute}
+        href={mainRoute}
         onClick={resetFilters}
         className="header__home"
     >
