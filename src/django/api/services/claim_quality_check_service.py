@@ -37,7 +37,7 @@ from countries.lib.countries import COUNTRY_NAMES
 logger = logging.getLogger(__name__)
 
 # Kill switch for the LLM call alone, toggleable in the Django admin
-# without a deploy (created active by migration 0244). The check also
+# without a deploy (created active by migration 0245). The check also
 # requires enable_claim_name_address_edit, the switch the whole
 # editable name/address feature ships behind, so it stays dark with the
 # fields and can still be turned off on its own if the model misbehaves.

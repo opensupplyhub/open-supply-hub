@@ -222,11 +222,13 @@ def _resolve_location(
       result and the result is not a bare locality centroid. How far the
       new address lies from the current pin is not checked here: that
       belongs to validation at claim submission, not to the approval.
-      When either condition fails the pin stays, the list item still
-      records the geocode (that is what the address resolves to, and a
-      moderator can promote it), and an internal review note says why
-      the pin did not move. A geocoder error never fails the caller: the
-      pin stays and the note records the error.
+      When the geocoder returns no result, or errors, the pin stays and
+      the list item is placed at the current pin as a manual location.
+      When the result is a bare locality centroid the pin also stays,
+      but the list item records the geocode (that is what the address
+      resolves to, and a moderator can promote it). In every one of
+      those cases an internal review note says why the pin did not
+      move, and a geocoder error never fails the caller.
     '''
     facility = claim.facility
     current = facility.location
