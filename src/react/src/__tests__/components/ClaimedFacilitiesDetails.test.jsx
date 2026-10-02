@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimedFacilitiesDetails from '../../components/ClaimedFacilitiesDetails/ClaimedFacilitiesDetails';
@@ -24,7 +24,12 @@ beforeAll(() => {
 });
 
 jest.mock('../../components/InputSection', () => props => (
-    <div data-testid={`input-${props.label}`}>{props.label}</div>
+    <div
+        data-testid={`input-${props.label}`}
+        data-disabled={props.disabled ? 'true' : 'false'}
+    >
+        {props.label}
+    </div>
 ));
 
 // Mock sidebar to avoid facilityDetails shape requirements in this test.
@@ -131,8 +136,7 @@ const preloadedState = {
     },
 };
 
-const renderComponent = (overrides = {}) =>
-    renderWithProviders(
+const makeComponent = (overrides = {}) => (
         <MemoryRouter>
         <ClaimedFacilitiesDetails
             match={{ params: { claimID: '123' } }}
@@ -201,9 +205,11 @@ const renderComponent = (overrides = {}) =>
             classes={{}}
             {...overrides}
         />
-        </MemoryRouter>,
-        { preloadedState },
-    );
+        </MemoryRouter>
+);
+
+const renderComponent = (overrides = {}) =>
+    renderWithProviders(makeComponent(overrides), { preloadedState });
 
 describe('ClaimedFacilitiesDetails', () => {
     it('renders primary section headings', () => {
@@ -383,6 +389,85 @@ describe('ClaimedFacilitiesDetails', () => {
                 expect(
                     screen.queryByText(warning.title),
                 ).not.toBeInTheDocument();
+            });
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
+        it('locks the name and address fields while the check is in flight', async () => {
+            let resolveCheck;
+            apiRequest.post.mockReturnValue(
+                new Promise(resolve => {
+                    resolveCheck = resolve;
+                }),
+            );
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate: jest.fn(),
+            });
+            const nameField = screen.getByTestId(
+                'input-Facility name (English)',
+            );
+            const addressField = screen.getByTestId('input-Facility address');
+            expect(nameField).toHaveAttribute('data-disabled', 'false');
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(nameField).toHaveAttribute('data-disabled', 'true');
+            });
+            expect(addressField).toHaveAttribute('data-disabled', 'true');
+            expect(screen.getByTestId('input-Website')).toHaveAttribute(
+                'data-disabled',
+                'false',
+            );
+
+            await act(async () => {
+                resolveCheck({ data: { warnings: [warning] } });
+            });
+
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(nameField).toHaveAttribute('data-disabled', 'false');
+        });
+
+        it('"Save anyway" checks values changed since the warnings were shown instead of saving them', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            const props = {
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            };
+            const { rerender } = renderComponent(props);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            // The fields are locked while the check runs and the dialog
+            // is modal; a changed prop stands in for any edit that slips
+            // through.
+            rerender(
+                makeComponent({
+                    ...props,
+                    data: {
+                        ...baseClaimData,
+                        facility_name_english: 'Changed Name',
+                    },
+                }),
+            );
+            fireEvent.click(screen.getByText('Save anyway'));
+
+            await waitFor(() => {
+                expect(apiRequest.post).toHaveBeenCalledTimes(2);
+            });
+            expect(apiRequest.post).toHaveBeenLastCalledWith(checkURL, {
+                facility_name_english: 'Changed Name',
+                facility_address: '123 Test St',
             });
             expect(submitUpdate).not.toHaveBeenCalled();
         });

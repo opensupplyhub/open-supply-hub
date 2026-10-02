@@ -136,8 +136,9 @@ const ClaimForm = ({
 
     // The advisory data-quality warnings returned for an edited name or
     // address on the Business step (OSDEV-3489), shown in a dialog
-    // before the step advances; and whether that check is in flight.
-    const [qualityWarnings, setQualityWarnings] = useState([]);
+    // before the step advances, kept with the values they were returned
+    // for; and whether that check is in flight.
+    const [pendingWarnings, setPendingWarnings] = useState(null);
     const [checkingQuality, setCheckingQuality] = useState(false);
     const [lastQualityCheck, setLastQualityCheck] = useState(null);
 
@@ -320,20 +321,8 @@ const ClaimForm = ({
         if (warnings.length === 0) {
             return true;
         }
-        setQualityWarnings(warnings);
+        setPendingWarnings({ values, warnings });
         return false;
-    };
-
-    // "Continue anyway": remember which warnings were dismissed, and for
-    // which values, so the submission can report them and a later edit
-    // of either value runs the check again.
-    const continuePastQualityWarnings = () => {
-        updateFieldWithoutTouch(
-            'qualityWarningsDismissed',
-            makeDismissal(currentNameAddress(), qualityWarnings),
-        );
-        setQualityWarnings([]);
-        advanceStep();
     };
 
     const handleNext = async () => {
@@ -362,6 +351,27 @@ const ClaimForm = ({
         if (await passesQualityCheck()) {
             advanceStep();
         }
+    };
+
+    // "Continue anyway": remember which warnings were dismissed, and for
+    // which values, so the submission can report them and a later edit
+    // of either value runs the check again. The dismissal is for the
+    // values the check answered, not whatever the fields hold now: the
+    // fields are locked while the check runs and the dialog is modal, so
+    // the two cannot normally differ, but if they do the current values
+    // go through the check instead of inheriting the dismissal.
+    const continuePastQualityWarnings = () => {
+        const { values, warnings } = pendingWarnings;
+        setPendingWarnings(null);
+        if (!nameAddressUnchanged(currentNameAddress(), values)) {
+            handleNext();
+            return;
+        }
+        updateFieldWithoutTouch(
+            'qualityWarningsDismissed',
+            makeDismissal(values, warnings),
+        );
+        advanceStep();
     };
 
     const handleBack = () => {
@@ -411,6 +421,7 @@ const ClaimForm = ({
                             handleChange={handleFieldChange}
                             handleBlur={handleBlur}
                             updateFieldWithoutTouch={updateFieldWithoutTouch}
+                            fieldsDisabled={checkingQuality}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
                             countryOptions={countriesOptions}
@@ -471,10 +482,10 @@ const ClaimForm = ({
                 </form>
             </div>
             <ContributionWarningDialog
-                open={qualityWarnings.length > 0}
-                onClose={() => setQualityWarnings([])}
+                open={pendingWarnings !== null}
+                onClose={() => setPendingWarnings(null)}
                 onSubmitAnyway={continuePastQualityWarnings}
-                warnings={qualityWarnings}
+                warnings={pendingWarnings?.warnings ?? []}
                 submitAnywayLabel="Continue anyway"
             />
             <ClaimOutcomeDialog

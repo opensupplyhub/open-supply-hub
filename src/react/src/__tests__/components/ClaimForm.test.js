@@ -44,9 +44,30 @@ jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/ContactInfoStep/Con
     <div data-testid="contact-step">Contact Step</div>
 ));
 
-jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/BusinessStep', () => () => (
-    <div data-testid="business-step">Business Step</div>
-));
+// The Business step mock exposes the company name field so the quality
+// check tests can see it locked while the check runs, and edit it.
+jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/BusinessStep', () => {
+    // eslint-disable-next-line global-require
+    const mockPropTypes = require('prop-types');
+    const MockBusinessStep = ({ formData, handleChange, fieldsDisabled }) => (
+        <div data-testid="business-step">
+            Business Step
+            <input
+                aria-label="Company Name"
+                value={formData.facilityNameEnglish ?? ''}
+                disabled={fieldsDisabled}
+                onChange={e => handleChange('facilityNameEnglish', e.target.value)}
+            />
+        </div>
+    );
+    MockBusinessStep.propTypes = {
+        formData: mockPropTypes.object.isRequired,
+        handleChange: mockPropTypes.func.isRequired,
+        fieldsDisabled: mockPropTypes.bool,
+    };
+    MockBusinessStep.defaultProps = { fieldsDisabled: false };
+    return MockBusinessStep;
+});
 
 jest.mock(
     '../../components/InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep',
@@ -875,6 +896,69 @@ describe('ClaimForm component', () => {
                     },
                 ],
             });
+        });
+
+        test('locks the name and address fields while the check is in flight', async () => {
+            let resolveCheck;
+            apiRequest.post.mockReturnValue(
+                new Promise(resolve => {
+                    resolveCheck = resolve;
+                }),
+            );
+            const { getByText, getByLabelText, getByRole } = renderComponent(
+                makeState(),
+            );
+            expect(getByLabelText('Company Name')).not.toBeDisabled();
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(getByLabelText('Company Name')).toBeDisabled();
+            });
+            expect(getByRole('button', { name: 'Checking...' })).toBeDisabled();
+
+            await act(async () => {
+                resolveCheck({ data: { warnings: [warning] } });
+            });
+
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(getByLabelText('Company Name')).not.toBeDisabled();
+        });
+
+        test('"Continue anyway" checks values edited since the warnings were shown instead of dismissing them', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const { getByText, getByLabelText, reduxStore } = renderComponent(
+                makeState(),
+            );
+
+            fireEvent.click(getByText('Continue'));
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            // The dialog is modal in a browser; the field is reached
+            // directly here to stand in for any edit that slips through.
+            fireEvent.change(getByLabelText('Company Name'), {
+                target: { value: 'Other Name' },
+            });
+            fireEvent.click(getByText('Continue anyway'));
+
+            await waitFor(() => {
+                expect(apiRequest.post).toHaveBeenCalledTimes(2);
+            });
+            expect(apiRequest.post).toHaveBeenLastCalledWith(checkURL, {
+                facility_name_english: 'Other Name',
+                facility_address: '123 Test St',
+            });
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            const { activeStep, formData } = reduxStore.getState().claimForm;
+            expect(activeStep).toBe(2);
+            expect(formData.qualityWarningsDismissed).toBeNull();
         });
 
         test('re-shows the warnings on a second Continue with the same values without a second request', async () => {

@@ -198,10 +198,11 @@ function ClaimedFacilitiesDetails({
     /* eslint-enable react-hooks/exhaustive-deps */
     const [isSavingForm, setIsSavingForm] = useState(false);
     // The advisory data-quality warnings returned for a changed name or
-    // address (OSDEV-3489), shown before the save goes through; whether
-    // that check is in flight; and the last check's result with the
-    // values it was for, re-shown when those values are saved again.
-    const [qualityWarnings, setQualityWarnings] = useState([]);
+    // address (OSDEV-3489), shown before the save goes through, kept
+    // with the values they were returned for; whether that check is in
+    // flight; and the last check's result with the values it was for,
+    // re-shown when those values are saved again.
+    const [pendingWarnings, setPendingWarnings] = useState(null);
     const [checkingQuality, setCheckingQuality] = useState(false);
     const [lastQualityCheck, setLastQualityCheck] = useState(null);
     const TITLE = 'Claimed Facility Details';
@@ -235,11 +236,13 @@ function ClaimedFacilitiesDetails({
     // nothing new and save directly, and values the check already
     // answered re-show that answer rather than asking again. The check
     // fails open: a failed request saves as if nothing had been flagged.
+    const currentNameAddress = () => ({
+        name: data?.facility_name_english,
+        address: data?.facility_address,
+    });
+
     const saveForm = async () => {
-        const values = {
-            name: data?.facility_name_english,
-            address: data?.facility_address,
-        };
+        const values = currentNameAddress();
         if (
             isNameAddressEditable &&
             !nameAddressUnchanged(values, loadedNameAddress)
@@ -255,17 +258,26 @@ function ClaimedFacilitiesDetails({
                 setLastQualityCheck(rememberCheck(values, warnings));
             }
             if (warnings.length > 0) {
-                setQualityWarnings(warnings);
+                setPendingWarnings({ values, warnings });
                 return;
             }
         }
         submitWithDismissedWarnings([]);
     };
 
+    // "Save anyway" saves with the warnings dismissed for the values the
+    // check answered. The fields are locked while the check runs and the
+    // dialog is modal, so those cannot normally differ from what would
+    // be saved, but if they do the current values go through the check
+    // instead of being saved under the old warnings.
     const continuePastQualityWarnings = () => {
-        const dismissedWarnings = toDismissedWarnings(qualityWarnings);
-        setQualityWarnings([]);
-        submitWithDismissedWarnings(dismissedWarnings);
+        const { values, warnings } = pendingWarnings;
+        setPendingWarnings(null);
+        if (!nameAddressUnchanged(currentNameAddress(), values)) {
+            saveForm();
+            return;
+        }
+        submitWithDismissedWarnings(toDismissedWarnings(warnings));
     };
 
     const facilityData = data || {};
@@ -505,7 +517,7 @@ function ClaimedFacilitiesDetails({
                                     label="Facility name (English)"
                                     value={data.facility_name_english || ''}
                                     onChange={updateFacilityNameEnglish}
-                                    disabled={updating}
+                                    disabled={updating || checkingQuality}
                                     hasValidationErrorFn={() =>
                                         Boolean(
                                             getClaimedValidationError(
@@ -527,7 +539,7 @@ function ClaimedFacilitiesDetails({
                                     label="Facility address"
                                     value={data.facility_address || ''}
                                     onChange={updateFacilityAddress}
-                                    disabled={updating}
+                                    disabled={updating || checkingQuality}
                                     hasValidationErrorFn={() =>
                                         Boolean(
                                             getClaimedValidationError(
@@ -1007,10 +1019,10 @@ function ClaimedFacilitiesDetails({
                         </div>
                     </div>
                     <ContributionWarningDialog
-                        open={qualityWarnings.length > 0}
-                        onClose={() => setQualityWarnings([])}
+                        open={pendingWarnings !== null}
+                        onClose={() => setPendingWarnings(null)}
                         onSubmitAnyway={continuePastQualityWarnings}
-                        warnings={qualityWarnings}
+                        warnings={pendingWarnings?.warnings ?? []}
                         submitAnywayLabel="Save anyway"
                     />
                     <ClaimedFacilitiesDetailsSidebar
