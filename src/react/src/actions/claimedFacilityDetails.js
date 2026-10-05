@@ -128,7 +128,12 @@ export const updateClaimedEnergyOtherEnabled = createAction(
     'UPDATE_CLAIMED_ENERGY_OTHER_ENABLED',
 );
 
-export function submitClaimedFacilityDetailsUpdate(claimID) {
+// `dismissedWarnings` is what the claimant continued past in the
+// quality-check dialog (OSDEV-3489), reported so moderators see it.
+export function submitClaimedFacilityDetailsUpdate(
+    claimID,
+    dismissedWarnings = [],
+) {
     return (dispatch, getState) => {
         const {
             claimedFacilityDetails: { data },
@@ -189,6 +194,9 @@ export function submitClaimedFacilityDetailsUpdate(claimID) {
                 opening_date: data.opening_date || null,
                 estimated_annual_throughput:
                     data.estimated_annual_throughput || null,
+                ...(dismissedWarnings.length > 0
+                    ? { dismissed_warnings: dismissedWarnings }
+                    : {}),
             },
             // Only include energy fields if the corresponding checkbox is enabled.
             energyFields.reduce((acc, fieldName) => {

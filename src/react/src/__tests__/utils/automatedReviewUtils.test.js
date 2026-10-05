@@ -4,6 +4,7 @@ import {
     parseAutomatedReview,
     getEvidenceText,
     getExtract,
+    matchesEvidenceKey,
     hasValidReviewBlock,
     getSuggestedDraft,
     isPdfFile,
@@ -86,6 +87,92 @@ describe('getEvidenceText', () => {
         expect(getEvidenceText(review, 'missing.pdf')).toBeNull();
         expect(getEvidenceText(review, 'no-text.png')).toBeNull();
         expect(getEvidenceText(null, 'utility-bill.png')).toBeNull();
+    });
+
+    /*
+     * Blocks posted before the pipeline carried original_file_name key
+     * evidence by the derived artifact name — badge.pdf's text sits
+     * under badge.json. Every production block before Oct 2026 looks
+     * like this, so the stem fallback is what makes their text visible.
+     */
+    it('falls back to a stem match for legacy .json evidence keys', () => {
+        const legacyReview = parseAutomatedReview([
+            note(
+                block({
+                    ...validPayload,
+                    evidence: {
+                        'registration-document.json': {
+                            translated: 'BUSINESS LICENSE Example Winery',
+                            lang: 'fr',
+                        },
+                    },
+                }),
+            ),
+        ]);
+        expect(
+            getEvidenceText(legacyReview, 'registration-document.pdf'),
+        ).toEqual({
+            original: null,
+            translated: 'BUSINESS LICENSE Example Winery',
+            lang: 'fr',
+        });
+        // Exact keys still win and unrelated stems still miss.
+        expect(
+            getEvidenceText(legacyReview, 'other-file.pdf'),
+        ).toBeNull();
+    });
+
+    it('never borrows another document with the same stem', () => {
+        // license.jpg was OCRed, license.pdf produced nothing: the PDF
+        // must show no text rather than the JPG's.
+        const sameStemReview = parseAutomatedReview([
+            note(
+                block({
+                    ...validPayload,
+                    evidence: {
+                        'license.jpg': { translated: 'JPG text', lang: 'en' },
+                    },
+                }),
+            ),
+        ]);
+        expect(getEvidenceText(sameStemReview, 'license.pdf')).toBeNull();
+        expect(getEvidenceText(sameStemReview, 'license.jpg')).toEqual({
+            original: null,
+            translated: 'JPG text',
+            lang: 'en',
+        });
+    });
+});
+
+describe('matchesEvidenceKey', () => {
+    it('accepts the exact key and the legacy .json artifact name only', () => {
+        expect(matchesEvidenceKey('badge.pdf', 'badge.pdf')).toBe(true);
+        expect(matchesEvidenceKey('badge.pdf', 'badge.json')).toBe(true);
+        expect(matchesEvidenceKey('badge.pdf', 'badge.JSON')).toBe(true);
+        // A same-stem key with another extension is a different document.
+        expect(matchesEvidenceKey('license.pdf', 'license.jpg')).toBe(false);
+        expect(matchesEvidenceKey('badge.pdf', 'other.json')).toBe(false);
+        expect(
+            matchesEvidenceKey('https://example.com', 'https://example.com'),
+        ).toBe(true);
+    });
+
+    it('never stem-matches URL evidence — exact URLs only', () => {
+        // .../license.pdf and .../license.json are different pages;
+        // the legacy fallback exists for bare attachment artifact
+        // names, so nothing containing :// may use it, on either side.
+        expect(
+            matchesEvidenceKey(
+                'https://example.com/license.pdf',
+                'https://example.com/license.json',
+            ),
+        ).toBe(false);
+        expect(
+            matchesEvidenceKey('license.pdf', 'https://x.com/license.json'),
+        ).toBe(false);
+        expect(
+            matchesEvidenceKey('https://x.com/license.pdf', 'license.json'),
+        ).toBe(false);
     });
 });
 

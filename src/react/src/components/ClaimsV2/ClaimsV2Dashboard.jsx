@@ -10,7 +10,7 @@ import {
 } from './automatedReviewUtils';
 import ClaimantDetailsPanel from './ClaimantDetailsPanel';
 import DecisionPanel from './DecisionPanel';
-import EvidencePanel from './EvidencePanel';
+import EvidencePanel, { buildUrlEvidence } from './EvidencePanel';
 import InternalNoteBox from './InternalNoteBox';
 import MessageComposer from './MessageComposer';
 import VerificationPanel from './VerificationPanel';
@@ -27,6 +27,7 @@ import {
 import QueueRail from './QueueRail';
 import { formatDate } from '../../util/util';
 import styles from './styles';
+import { claimantOrganization } from './verificationUtils';
 
 /*
  * Claims moderation dashboard v2 — scaffolding shell (OSDEV-3355).
@@ -119,7 +120,8 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <strong>{detail.email}</strong>
             </p>
             <p style={styles.workspaceSub}>
-                Organization: <strong>{detail.company_name || '—'}</strong>
+                Organization:{' '}
+                <strong>{claimantOrganization(detail) || '—'}</strong>
                 {detail.facility?.properties?.country_name
                     ? ` · ${detail.facility.properties.country_name}`
                     : ''}
@@ -199,6 +201,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
             <div style={styles.workbench} key={detail.id} ref={workbenchRef}>
                 <EvidencePanel
                     attachments={detail.attachments}
+                    urlEvidence={buildUrlEvidence(detail)}
                     review={review}
                     claimID={detail.id}
                     requestedDoc={requestedDoc}
