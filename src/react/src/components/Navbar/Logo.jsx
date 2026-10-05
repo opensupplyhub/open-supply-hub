@@ -9,10 +9,7 @@ import { recordSearchTabResetButtonClick } from '../../actions/ui';
 import { externalOSHubLink } from '../../util/constants';
 
 const Logo = () => (
-    <a
-        href={externalOSHubLink}
-        className="header__home"
-    >
+    <a href={externalOSHubLink} className="header__home">
         <span className="visually-hidden">OS Hub</span>
         <div className="header__logo">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 972.96 364.15">
