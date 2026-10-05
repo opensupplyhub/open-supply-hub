@@ -18,26 +18,25 @@ GitHub Actions runner** for the long-running database jobs:
 
 See the [AWS documentation](https://docs.aws.amazon.com/codebuild/latest/userguide/action-runner.html) for details.
 
-The database access pattern is unchanged: job steps still open an SSH tunnel
-through the public bastion of the target environment (see
-`src/anon-tools/do_dump.sh` / `do_restore.sh`). The runner only provides
-compute, disk, and Docker.
+Database access goes through the bastion of the target environment with AWS
+Systems Manager, not SSH (OSDEV-3531). Each job step opens a Session Manager
+port forward on the runner with `deployment/ssm/ssm_tunnel.sh`
+(`localhost:5433` -> `database.service.osh.internal:5432`) and runs the
+anon-tools container with `--network host`, so `src/anon-tools/do_dump.sh` /
+`do_restore.sh` connect to `localhost:5433`. The runner only provides compute,
+disk, and Docker.
 
-Bastion reachability was verified at migration time: the SSH ingress
-allowlist of each environment's bastion (`bastion_ssh_ingress` in
-`deployment/terraform/firewall.tf`, fed by `local.external_access_cidr_blocks`
-from the per-env SM secret `oshub/<env>/external-access-cidr-blocks`) admits
-the runner's AWS egress IPs, so no security group changes were needed. If those
-allowlists are ever tightened, attach this
-CodeBuild project to the Test VPC (private subnets) so its egress goes
-through the NAT gateway's stable Elastic IP, and allowlist that single
-address on the bastions.
+Because Session Manager is reached through the public AWS API, the runner does
+not need network access to the bastion and no security group allowlist is
+involved. The AWS credentials used by each job need the
+`bastion<Project><Env>SsmCiAccess` policy (`deployment/terraform/iam.tf`) for
+the target environment.
 
 The module is enabled only in the **Test** environment
 (`codebuild_github_runner_enabled = true` in
 `deployment/environments/terraform-test.tfvars`); the single runner project
 serves jobs targeting all environments because per-environment AWS
-credentials and SSH keys come from GitHub environment secrets, not from the
+credentials come from GitHub environment secrets, not from the
 runner's own account.
 
 ## One-time manual setup (before the first `terraform apply`)

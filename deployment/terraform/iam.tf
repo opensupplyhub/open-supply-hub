@@ -342,6 +342,184 @@ resource "aws_iam_instance_profile" "container_instance" {
 }
 
 #
+# Bastion IAM resources
+#
+# OSDEV-3531: instance role for the bastion so the SSM agent can register
+# it with Systems Manager. Access to the bastion (interactive shells, DB
+# port forwarding, CI jobs) goes through SSM Session Manager instead of
+# SSH, which lets tcp/22 be closed on the bastion security group.
+resource "aws_iam_role" "bastion" {
+  name               = "bastion${local.short}InstanceRole"
+  assume_role_policy = data.aws_iam_policy_document.container_instance_ec2_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "bastion_ssm" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "bastion" {
+  name = aws_iam_role.bastion.name
+  role = aws_iam_role.bastion.name
+}
+
+# OSDEV-3531: what the GitHub Actions workflows need to reach private
+# resources through this environment's bastion with SSM: DB and OpenSearch
+# port forwarding (deployment/ssm/ssm_tunnel.sh) and Run Command for the
+# Logstash lock files (deployment/clear_opensearch/clear_opensearch.sh).
+# The CI IAM users are not managed here: attach this policy to the user
+# whose access keys the workflows use for this environment.
+data "aws_iam_policy_document" "bastion_ssm_ci_access" {
+  statement {
+    sid       = "DescribeBastion"
+    effect    = "Allow"
+    actions   = ["ec2:DescribeInstances"]
+    resources = ["*"]
+  }
+
+  # SessionDocumentAccessCheck makes StartSession also require permission on
+  # the session document, so the default interactive shell document cannot
+  # be used: only the port forwarding document below is allowed.
+  statement {
+    sid       = "StartSessionOnBastion"
+    effect    = "Allow"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["Bastion"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Environment"
+      values   = [var.environment]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "ssm:SessionDocumentAccessCheck"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    sid       = "PortForwardingDocument"
+    effect    = "Allow"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ssm:${var.aws_region}::document/AWS-StartPortForwardingSessionToRemoteHost"]
+  }
+
+  statement {
+    sid       = "SendCommandToBastion"
+    effect    = "Allow"
+    actions   = ["ssm:SendCommand"]
+    resources = ["arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["Bastion"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Environment"
+      values   = [var.environment]
+    }
+  }
+
+  statement {
+    sid       = "RunShellScriptDocument"
+    effect    = "Allow"
+    actions   = ["ssm:SendCommand"]
+    resources = ["arn:aws:ssm:${var.aws_region}::document/AWS-RunShellScript"]
+  }
+
+  statement {
+    sid       = "ManageOwnSessions"
+    effect    = "Allow"
+    actions   = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = ["arn:aws:ssm:*:*:session/$${aws:username}-*"]
+  }
+
+  statement {
+    sid       = "ReadCommandResults"
+    effect    = "Allow"
+    actions   = ["ssm:GetCommandInvocation"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "bastion_ssm_ci_access" {
+  name        = "bastion${local.short}SsmCiAccess"
+  description = "SSM port forwarding and Run Command on the ${var.environment} bastion for GitHub Actions"
+  policy      = data.aws_iam_policy_document.bastion_ssm_ci_access.json
+}
+
+# OSDEV-3531: what people need to reach this environment's bastion from
+# their own computer with SSM, replacing SSH: an interactive shell
+# (SSM-SessionManagerRunShell, which runs as ssm-user with sudo) and port
+# forwarding, e.g. to the database. Attach it to the IAM users or group of
+# the people who need bastion access; it is not attached here.
+data "aws_iam_policy_document" "bastion_ssm_user_access" {
+  # SessionDocumentAccessCheck makes StartSession also require permission on
+  # the session document, so only the two documents below can be used.
+  statement {
+    sid       = "StartSessionOnBastion"
+    effect    = "Allow"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["Bastion"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Environment"
+      values   = [var.environment]
+    }
+
+    condition {
+      test     = "Bool"
+      variable = "ssm:SessionDocumentAccessCheck"
+      values   = ["true"]
+    }
+  }
+
+  # SSM-SessionManagerRunShell is an account-level document (it holds the
+  # Session Manager preferences), so its ARN includes the account ID; AWS-*
+  # documents are owned by AWS and their ARNs have no account ID.
+  statement {
+    sid     = "SessionDocuments"
+    effect  = "Allow"
+    actions = ["ssm:StartSession"]
+    resources = [
+      "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/SSM-SessionManagerRunShell",
+      "arn:aws:ssm:${var.aws_region}::document/AWS-StartPortForwardingSessionToRemoteHost",
+    ]
+  }
+
+  statement {
+    sid       = "ManageOwnSessions"
+    effect    = "Allow"
+    actions   = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = ["arn:aws:ssm:*:*:session/$${aws:username}-*"]
+  }
+}
+
+resource "aws_iam_policy" "bastion_ssm_user_access" {
+  name        = "bastion${local.short}SsmUserAccess"
+  description = "SSM shell and port forwarding on the ${var.environment} bastion for people"
+  policy      = data.aws_iam_policy_document.bastion_ssm_user_access.json
+}
+
+#
 # Batch IAM resources
 #
 data "aws_iam_policy_document" "container_instance_batch_assume_role" {
