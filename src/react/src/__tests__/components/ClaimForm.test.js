@@ -4,6 +4,17 @@ import { Router } from 'react-router-dom';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimForm from '../../components/InitialClaimFlow/ClaimForm/ClaimForm';
+import apiRequest from '../../util/apiRequest';
+
+// The Business step's quality check posts through apiRequest; nothing
+// else in these tests should reach the network.
+jest.mock('../../util/apiRequest', () => ({
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    patch: jest.fn(),
+    delete: jest.fn(),
+}));
 
 // Mock the useRequireIntroAccess hook to prevent redirect issues in tests.
 jest.mock('../../components/InitialClaimFlow/ClaimForm/hooks', () => ({
@@ -33,9 +44,30 @@ jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/ContactInfoStep/Con
     <div data-testid="contact-step">Contact Step</div>
 ));
 
-jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/BusinessStep', () => () => (
-    <div data-testid="business-step">Business Step</div>
-));
+// The Business step mock exposes the company name field so the quality
+// check tests can see it locked while the check runs, and edit it.
+jest.mock('../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/BusinessStep', () => {
+    // eslint-disable-next-line global-require
+    const mockPropTypes = require('prop-types');
+    const MockBusinessStep = ({ formData, handleChange, fieldsDisabled }) => (
+        <div data-testid="business-step">
+            Business Step
+            <input
+                aria-label="Company Name"
+                value={formData.facilityNameEnglish ?? ''}
+                disabled={fieldsDisabled}
+                onChange={e => handleChange('facilityNameEnglish', e.target.value)}
+            />
+        </div>
+    );
+    MockBusinessStep.propTypes = {
+        formData: mockPropTypes.object.isRequired,
+        handleChange: mockPropTypes.func.isRequired,
+        fieldsDisabled: mockPropTypes.bool,
+    };
+    MockBusinessStep.defaultProps = { fieldsDisabled: false };
+    return MockBusinessStep;
+});
 
 jest.mock(
     '../../components/InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep',
@@ -119,6 +151,12 @@ describe('ClaimForm component', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        // GETs must fail, as they did against the network before the
+        // module was mocked: a GET that resolved with empty data would
+        // leave an options list empty and usePrefetchClaimData would
+        // request it again on every render.
+        apiRequest.get.mockRejectedValue(new Error('not mocked'));
+        apiRequest.post.mockResolvedValue({ data: {} });
         history.push('/');
     });
 
@@ -743,6 +781,282 @@ describe('ClaimForm component', () => {
             expect(reduxStore.getState().claimForm.formData.facilityNameEnglish).toBe(
                 'Edited Name',
             );
+        });
+    });
+
+    describe('Business step quality check', () => {
+        const warning = {
+            type: 'different_location',
+            title: 'Details May Describe a Different Location',
+            message: 'The address looks like another city.',
+        };
+        const businessStepValues = {
+            facilityNameEnglish: 'Edited Name',
+            facilityAddress: '123 Test St',
+            locationAddressVerificationMethod: 'some-method',
+            businessLinkedinProfile: '',
+            businessWebsite: '',
+            companyAddressVerificationDocuments: [],
+            qualityWarningsDismissed: null,
+        };
+        const makeState = ({ flagOn = true, formData = {} } = {}) => ({
+            ...defaultPreloadedState,
+            claimForm: {
+                ...defaultPreloadedState.claimForm,
+                activeStep: 2,
+                formData: {
+                    ...defaultPreloadedState.claimForm.formData,
+                    ...businessStepValues,
+                    ...formData,
+                },
+            },
+            contributeProductionLocation: {
+                singleProductionLocation: {
+                    data: {
+                        os_id: mockOsID,
+                        name: 'Test Facility',
+                        address: '123 Test St',
+                    },
+                    fetching: false,
+                    error: null,
+                },
+            },
+            featureFlags: {
+                fetching: false,
+                flags: { enable_claim_name_address_edit: flagOn },
+            },
+        });
+        const checkURL = `/api/facilities/${mockOsID}/claim/quality-check/`;
+
+        test('checks an edited name before leaving the step and shows the warnings', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const { getByText, reduxStore } = renderComponent(makeState());
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledWith(checkURL, {
+                facility_name_english: 'Edited Name',
+                facility_address: '123 Test St',
+            });
+            expect(getByText(warning.message)).toBeInTheDocument();
+            expect(reduxStore.getState().claimForm.activeStep).toBe(2);
+        });
+
+        test('"Go back and edit" stays on the step without dismissing anything', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const { getByText, queryByText, reduxStore } = renderComponent(
+                makeState(),
+            );
+
+            fireEvent.click(getByText('Continue'));
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(getByText('Go back and edit'));
+
+            await waitFor(() => {
+                expect(queryByText(warning.title)).not.toBeInTheDocument();
+            });
+            const { activeStep, formData } = reduxStore.getState().claimForm;
+            expect(activeStep).toBe(2);
+            expect(formData.qualityWarningsDismissed).toBeNull();
+        });
+
+        test('"Continue anyway" records the dismissal for the values and advances', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const { getByText, reduxStore } = renderComponent(makeState());
+
+            fireEvent.click(getByText('Continue'));
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(getByText('Continue anyway'));
+
+            await waitFor(() => {
+                expect(reduxStore.getState().claimForm.activeStep).toBe(3);
+            });
+            expect(
+                reduxStore.getState().claimForm.formData.qualityWarningsDismissed,
+            ).toEqual({
+                name: 'Edited Name',
+                address: '123 Test St',
+                warnings: [
+                    {
+                        type: 'different_location',
+                        message: 'The address looks like another city.',
+                    },
+                ],
+            });
+        });
+
+        test('locks the name and address fields while the check is in flight', async () => {
+            let resolveCheck;
+            apiRequest.post.mockReturnValue(
+                new Promise(resolve => {
+                    resolveCheck = resolve;
+                }),
+            );
+            const { getByText, getByLabelText, getByRole } = renderComponent(
+                makeState(),
+            );
+            expect(getByLabelText('Company Name')).not.toBeDisabled();
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(getByLabelText('Company Name')).toBeDisabled();
+            });
+            expect(getByRole('button', { name: 'Checking...' })).toBeDisabled();
+
+            await act(async () => {
+                resolveCheck({ data: { warnings: [warning] } });
+            });
+
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(getByLabelText('Company Name')).not.toBeDisabled();
+        });
+
+        test('"Continue anyway" checks values edited since the warnings were shown instead of dismissing them', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const { getByText, getByLabelText, reduxStore } = renderComponent(
+                makeState(),
+            );
+
+            fireEvent.click(getByText('Continue'));
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            // The dialog is modal in a browser; the field is reached
+            // directly here to stand in for any edit that slips through.
+            fireEvent.change(getByLabelText('Company Name'), {
+                target: { value: 'Other Name' },
+            });
+            fireEvent.click(getByText('Continue anyway'));
+
+            await waitFor(() => {
+                expect(apiRequest.post).toHaveBeenCalledTimes(2);
+            });
+            expect(apiRequest.post).toHaveBeenLastCalledWith(checkURL, {
+                facility_name_english: 'Other Name',
+                facility_address: '123 Test St',
+            });
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            const { activeStep, formData } = reduxStore.getState().claimForm;
+            expect(activeStep).toBe(2);
+            expect(formData.qualityWarningsDismissed).toBeNull();
+        });
+
+        test('re-shows the warnings on a second Continue with the same values without a second request', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const { getByText, queryByText, reduxStore } = renderComponent(
+                makeState(),
+            );
+
+            fireEvent.click(getByText('Continue'));
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(getByText('Go back and edit'));
+            await waitFor(() => {
+                expect(queryByText(warning.title)).not.toBeInTheDocument();
+            });
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledTimes(1);
+            expect(reduxStore.getState().claimForm.activeStep).toBe(2);
+        });
+
+        test('advances without a check when the values are the ones listed', async () => {
+            const { getByText, reduxStore } = renderComponent(
+                makeState({
+                    formData: { facilityNameEnglish: ' test facility ' },
+                }),
+            );
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(reduxStore.getState().claimForm.activeStep).toBe(3);
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+
+        test('advances without a second check after dismissing warnings for the same values', async () => {
+            const { getByText, reduxStore } = renderComponent(
+                makeState({
+                    formData: {
+                        qualityWarningsDismissed: {
+                            name: 'Edited Name',
+                            address: '123 Test St',
+                            warnings: [{ type: 'different_location', message: '' }],
+                        },
+                    },
+                }),
+            );
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(reduxStore.getState().claimForm.activeStep).toBe(3);
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+
+        test('advances when the check returns no warnings', async () => {
+            apiRequest.post.mockResolvedValue({ data: { warnings: [] } });
+            const { getByText, reduxStore } = renderComponent(makeState());
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(reduxStore.getState().claimForm.activeStep).toBe(3);
+            });
+            expect(apiRequest.post).toHaveBeenCalledTimes(1);
+        });
+
+        test('advances when the check request fails (fail open)', async () => {
+            apiRequest.post.mockRejectedValue(new Error('network'));
+            const { getByText, reduxStore } = renderComponent(makeState());
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(reduxStore.getState().claimForm.activeStep).toBe(3);
+            });
+        });
+
+        test('does not check while the waffle switch is off', async () => {
+            const { getByText, reduxStore } = renderComponent(
+                makeState({ flagOn: false }),
+            );
+
+            fireEvent.click(getByText('Continue'));
+
+            await waitFor(() => {
+                expect(reduxStore.getState().claimForm.activeStep).toBe(3);
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
         });
     });
 });

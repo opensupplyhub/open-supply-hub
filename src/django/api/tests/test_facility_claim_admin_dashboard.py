@@ -613,3 +613,21 @@ class FacilityClaimAdminDashboardTest(APITestCase):
 
         error_response = self.client.get("/api/facility-claims/")
         self.assertEqual(403, error_response.status_code)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_detail_payload_carries_claimant_linkedin_profile_url(self):
+        # The new claim flow stores the claimant's LinkedIn here; the
+        # claims v2 dashboard renders it as URL evidence (OSDEV-3356).
+        claim = self.facility_claim_first
+        claim.claimant_linkedin_profile_url = "https://www.linkedin.com/in/cg"
+        claim.save()
+
+        response = self.client.get(
+            "/api/facility-claims/{}/".format(claim.id)
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            "https://www.linkedin.com/in/cg",
+            response.data["claimant_linkedin_profile_url"],
+        )

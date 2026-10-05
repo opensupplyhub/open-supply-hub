@@ -245,6 +245,8 @@ export const makeGetFacilitiesDownloadURLWithQueryString = (qs, pageSize) =>
 export const makeGetDownloadLocationsCheckoutSessionURL = () =>
     '/api/v1/download-locations-checkout-session/';
 export const makeClaimFacilityAPIURL = osId => `/api/facilities/${osId}/claim/`;
+export const makeClaimQualityCheckURL = osId =>
+    `/api/facilities/${osId}/claim/quality-check/`;
 export const makeSplitFacilityAPIURL = osID => `/api/facilities/${osID}/split/`;
 export const makeTransferFacilityAPIURL = osID =>
     `/api/facilities/${osID}/move/`;

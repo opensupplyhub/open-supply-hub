@@ -460,6 +460,21 @@ describe('BusinessStep component', () => {
             expect(mockHandleBlur).toHaveBeenCalledWith('facilityNameEnglish');
         });
 
+        test('fieldsDisabled locks the editable fields while the switch is on', () => {
+            renderComponent(
+                { formData: editableFormData, fieldsDisabled: true },
+                stateWithFlag(true),
+            );
+
+            const nameInput = screen.getByLabelText('Company Name');
+            const addressInput = screen.getByLabelText('Company Address');
+
+            expect(nameInput).toBeDisabled();
+            expect(addressInput).toBeDisabled();
+            expect(nameInput).toHaveValue('Edited Name');
+            expect(addressInput).toHaveValue('9 Edited Road');
+        });
+
         test('shows the document-match warning with an SLC link only when the switch is on', () => {
             renderComponent({ formData: editableFormData }, stateWithFlag(true));
 

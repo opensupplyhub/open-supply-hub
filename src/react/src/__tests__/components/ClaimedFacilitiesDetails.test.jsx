@@ -1,8 +1,15 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimedFacilitiesDetails from '../../components/ClaimedFacilitiesDetails/ClaimedFacilitiesDetails';
+import apiRequest from '../../util/apiRequest';
+
+jest.mock('../../util/apiRequest', () => ({
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+}));
 
 jest.mock('react-redux', () => {
     const actual = jest.requireActual('react-redux');
@@ -17,7 +24,12 @@ beforeAll(() => {
 });
 
 jest.mock('../../components/InputSection', () => props => (
-    <div data-testid={`input-${props.label}`}>{props.label}</div>
+    <div
+        data-testid={`input-${props.label}`}
+        data-disabled={props.disabled ? 'true' : 'false'}
+    >
+        {props.label}
+    </div>
 ));
 
 // Mock sidebar to avoid facilityDetails shape requirements in this test.
@@ -124,8 +136,7 @@ const preloadedState = {
     },
 };
 
-const renderComponent = (overrides = {}) =>
-    renderWithProviders(
+const makeComponent = (overrides = {}) => (
         <MemoryRouter>
         <ClaimedFacilitiesDetails
             match={{ params: { claimID: '123' } }}
@@ -194,9 +205,11 @@ const renderComponent = (overrides = {}) =>
             classes={{}}
             {...overrides}
         />
-        </MemoryRouter>,
-        { preloadedState },
-    );
+        </MemoryRouter>
+);
+
+const renderComponent = (overrides = {}) =>
+    renderWithProviders(makeComponent(overrides), { preloadedState });
 
 describe('ClaimedFacilitiesDetails', () => {
     it('renders primary section headings', () => {
@@ -293,5 +306,268 @@ describe('ClaimedFacilitiesDetails', () => {
         ).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
     });
-});
 
+    describe('quality check on save', () => {
+        const warning = {
+            type: 'name_quality',
+            title: 'Name May Not Look Like a Facility Name',
+            message: 'Looks like test data.',
+        };
+        const loadedNameAddress = {
+            name: 'Loaded Name',
+            address: '123 Test St',
+        };
+        const checkURL = '/api/facilities/fac-1/claim/quality-check/';
+
+        beforeEach(() => {
+            apiRequest.post.mockReset();
+        });
+
+        it('checks a changed name before saving and shows the warnings', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledWith(checkURL, {
+                facility_name_english: 'Mock Facility',
+                facility_address: '123 Test St',
+            });
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
+        it('"Save anyway" saves with the dismissed warnings', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText('Save anyway'));
+
+            expect(submitUpdate).toHaveBeenCalledWith([
+                { type: 'name_quality', message: 'Looks like test data.' },
+            ]);
+        });
+
+        it('"Go back and edit" closes the dialog without saving', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText('Go back and edit'));
+
+            await waitFor(() => {
+                expect(
+                    screen.queryByText(warning.title),
+                ).not.toBeInTheDocument();
+            });
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
+        it('locks the name and address fields while the check is in flight', async () => {
+            let resolveCheck;
+            apiRequest.post.mockReturnValue(
+                new Promise(resolve => {
+                    resolveCheck = resolve;
+                }),
+            );
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate: jest.fn(),
+            });
+            const nameField = screen.getByTestId(
+                'input-Facility name (English)',
+            );
+            const addressField = screen.getByTestId('input-Facility address');
+            expect(nameField).toHaveAttribute('data-disabled', 'false');
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(nameField).toHaveAttribute('data-disabled', 'true');
+            });
+            expect(addressField).toHaveAttribute('data-disabled', 'true');
+            expect(screen.getByTestId('input-Website')).toHaveAttribute(
+                'data-disabled',
+                'false',
+            );
+
+            await act(async () => {
+                resolveCheck({ data: { warnings: [warning] } });
+            });
+
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(nameField).toHaveAttribute('data-disabled', 'false');
+        });
+
+        it('"Save anyway" checks values changed since the warnings were shown instead of saving them', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            const props = {
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            };
+            const { rerender } = renderComponent(props);
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            // The fields are locked while the check runs and the dialog
+            // is modal; a changed prop stands in for any edit that slips
+            // through.
+            rerender(
+                makeComponent({
+                    ...props,
+                    data: {
+                        ...baseClaimData,
+                        facility_name_english: 'Changed Name',
+                    },
+                }),
+            );
+            fireEvent.click(screen.getByText('Save anyway'));
+
+            await waitFor(() => {
+                expect(apiRequest.post).toHaveBeenCalledTimes(2);
+            });
+            expect(apiRequest.post).toHaveBeenLastCalledWith(checkURL, {
+                facility_name_english: 'Changed Name',
+                facility_address: '123 Test St',
+            });
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
+        it('re-shows the warnings on a second Save with the same values without a second request', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { warnings: [warning] },
+            });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            fireEvent.click(screen.getByText('Go back and edit'));
+            // The dialog leaves the DOM after its close transition; the
+            // page behind it is aria-hidden until then.
+            await waitFor(() => {
+                expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(screen.getByText(warning.title)).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledTimes(1);
+            expect(submitUpdate).not.toHaveBeenCalled();
+        });
+
+        it('saves directly when the name and address are unchanged', async () => {
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress: {
+                    name: 'mock facility ',
+                    address: '123 Test St',
+                },
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+
+        it('saves when the check returns no warnings', async () => {
+            apiRequest.post.mockResolvedValue({ data: { warnings: [] } });
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+        });
+
+        it('saves when the check request fails (fail open)', async () => {
+            apiRequest.post.mockRejectedValue(new Error('network'));
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: true,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+        });
+
+        it('does not check while the switch is off', async () => {
+            const submitUpdate = jest.fn();
+            renderComponent({
+                isNameAddressEditable: false,
+                loadedNameAddress,
+                submitUpdate,
+            });
+
+            fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+            await waitFor(() => {
+                expect(submitUpdate).toHaveBeenCalledWith([]);
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+    });
+});
