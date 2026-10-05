@@ -49,6 +49,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### What's new
 * Moderators see complete ContriBot items on the Contributor List Approval Queue again — contributor, OS Hub link, list size and error ratio are populated, and items are named the same way as every other item on the board. No user-facing changes outside the internal moderation queue.
+* [OSDEV-3425](https://opensupplyhub.atlassian.net/browse/OSDEV-3425) - Update Navbar icon link to redirect the user to the landing page at `https://info.opensupplyhub.org/home-page` so the user will be able to go back to the home page instead of getting stuck in the platform.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
