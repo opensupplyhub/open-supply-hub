@@ -112,7 +112,7 @@ describe('ClaimsV2Dashboard ?claim deep link', () => {
             '/dashboard/claims-v2?utm_source=jira&claim=2#notes',
         );
 
-        render(<ClaimsV2Dashboard />);
+        renderDashboard();
 
         await waitFor(() =>
             expect(window.location.search).toContain('claim=2'),
