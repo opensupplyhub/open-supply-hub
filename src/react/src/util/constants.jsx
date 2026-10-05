@@ -1675,3 +1675,5 @@ export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
     CLIENT: 'CLIENT',
     SERVER: 'SERVER',
 };
+
+export const externalOSHubLink = 'https://www.opensupplyhub.org/';

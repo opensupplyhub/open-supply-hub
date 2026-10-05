@@ -7,13 +7,11 @@ import COLOURS from '../../util/COLOURS';
 import { resetAllFilters } from '../../actions/filters';
 
 import { recordSearchTabResetButtonClick } from '../../actions/ui';
-import { mainRoute } from '../../util/constants';
+import { externalOSHubLink } from '../../util/constants';
 
-const Logo = ({ resetFilters }) => (
-    <Link
-        to={mainRoute}
-        href={mainRoute}
-        onClick={resetFilters}
+const Logo = () => (
+    <a
+        href={externalOSHubLink}
         className="header__home"
     >
         <span className="visually-hidden">OS Hub</span>
@@ -84,7 +82,7 @@ const Logo = ({ resetFilters }) => (
                 </g>
             </svg>
         </div>
-    </Link>
+    </a>
 );
 
 function mapDispatchToProps(dispatch) {
