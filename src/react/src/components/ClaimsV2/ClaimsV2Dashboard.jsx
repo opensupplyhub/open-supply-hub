@@ -367,14 +367,23 @@ export default function ClaimsV2Dashboard() {
     /*
      * Mirror the selection into ?claim= so the browser URL is always a
      * shareable deep link to the claim on screen. replaceState keeps
-     * history clean (J/K walks don't pile up back-button entries).
+     * history clean (J/K walks don't pile up back-button entries), and
+     * only the claim parameter is touched — any other query parameters
+     * and the hash survive the rewrite.
      */
     useEffect(() => {
-        const base = window.location.pathname;
+        const { pathname, search, hash } = window.location;
+        const params = new URLSearchParams(search);
+        if (selectedClaimID) {
+            params.set('claim', selectedClaimID);
+        } else {
+            params.delete('claim');
+        }
+        const queryString = params.toString();
         window.history.replaceState(
             null,
             '',
-            selectedClaimID ? `${base}?claim=${selectedClaimID}` : base,
+            `${pathname}${queryString ? `?${queryString}` : ''}${hash}`,
         );
     }, [selectedClaimID]);
 
