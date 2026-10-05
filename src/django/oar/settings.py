@@ -63,6 +63,20 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 # Set environment instance source
 INSTANCE_SOURCE = os.getenv('INSTANCE_SOURCE', 'os_hub')
 
+# The account the claims automation pipeline acts as. Review notes it
+# authors (LLM review notes, reminder emails) are flagged is_automated
+# on the claim payloads so the claims dashboard can distinguish a
+# moderator's ask from an automated nudge (OSDEV-3357).
+#
+# Fail-closed by design: empty means NO note is ever flagged automated,
+# so an environment must explicitly name the account. Deployed
+# environments receive the value via the task/job definitions
+# (deployment/terraform, claims_automation_account_email); local dev
+# sets it in docker-compose.yml.
+CLAIMS_AUTOMATION_ACCOUNT_EMAIL = os.getenv(
+    'CLAIMS_AUTOMATION_ACCOUNT_EMAIL', ''
+)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
 

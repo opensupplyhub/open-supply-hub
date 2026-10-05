@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from waffle import switch_is_active
@@ -28,6 +29,11 @@ from ...services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
 )
+from ...services.claim_quality_check_service import (
+    SOURCE_CLAIMED_DETAILS,
+    record_claim_quality_outcome,
+)
+from ...services.claim_quality_warnings import validate_dismissed_warnings
 from ...services.facility_claim_review_note_service import (
     create_review_note,
 )
@@ -49,6 +55,9 @@ from ...helpers.claim_attachments import (
 from ...models.contributor.contributor import Contributor
 from ...models.extended_field import ExtendedField
 from ...models.facility.facility_claim import FacilityClaim
+from ...models.facility.facility_claim_review_note import (
+    FacilityClaimReviewNote
+)
 from ...models.facility.facility_claim_attachments import (
     FacilityClaimAttachments
 )
@@ -283,7 +292,14 @@ class FacilityClaimViewSet(ModelViewSet):
             'contributor__admin',
             'status_change_by'
         ).prefetch_related(
-            'facilityclaimreviewnote_set'
+            # select_related('author'): notes_meta reports is_automated
+            # from note.author.email — without this it is an N+1 per note.
+            Prefetch(
+                'facilityclaimreviewnote_set',
+                queryset=FacilityClaimReviewNote.objects.select_related(
+                    'author'
+                ),
+            )
         ).all().order_by('-id')
         if statuses:
             queryset = queryset.filter(status__in=statuses)
@@ -542,6 +558,16 @@ class FacilityClaimViewSet(ModelViewSet):
             claimed_name_address = validate_claimed_name_address(
                 request.data, claim
             )
+            # Validated up front, before any write, so a malformed list
+            # rejects the whole save rather than a partially applied one.
+            try:
+                dismissed_warnings = validate_dismissed_warnings(
+                    request.data.get('dismissed_warnings')
+                )
+            except ValidationError as exc:
+                raise ValidationError(
+                    {'dismissed_warnings': exc.detail}
+                ) from exc
 
             prev_location = claim.facility_location
             location_data = request.data.get('facility_location') or ''
@@ -741,6 +767,16 @@ class FacilityClaimViewSet(ModelViewSet):
             if name_or_address_changed:
                 record_claim_contribution(
                     claim, request.user, geocode=address_changed
+                )
+                # Logs what was saved for the quality check (OSDEV-3489)
+                # and leaves the moderators a note of any warnings the
+                # claimant continued past. Only a changed value was
+                # checked, so only a changed value has an outcome.
+                record_claim_quality_outcome(
+                    claim,
+                    request.user,
+                    dismissed_warnings,
+                    SOURCE_CLAIMED_DETAILS,
                 )
 
             try:

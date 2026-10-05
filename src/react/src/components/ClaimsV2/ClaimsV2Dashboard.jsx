@@ -10,7 +10,7 @@ import {
 } from './automatedReviewUtils';
 import ClaimantDetailsPanel from './ClaimantDetailsPanel';
 import DecisionPanel from './DecisionPanel';
-import EvidencePanel from './EvidencePanel';
+import EvidencePanel, { buildUrlEvidence } from './EvidencePanel';
 import InternalNoteBox from './InternalNoteBox';
 import MessageComposer from './MessageComposer';
 import VerificationPanel from './VerificationPanel';
@@ -27,6 +27,7 @@ import {
 import QueueRail from './QueueRail';
 import { formatDate } from '../../util/util';
 import styles from './styles';
+import { claimantOrganization } from './verificationUtils';
 
 /*
  * Claims moderation dashboard v2 — scaffolding shell (OSDEV-3355).
@@ -119,7 +120,8 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <strong>{detail.email}</strong>
             </p>
             <p style={styles.workspaceSub}>
-                Organization: <strong>{detail.company_name || '—'}</strong>
+                Organization:{' '}
+                <strong>{claimantOrganization(detail) || '—'}</strong>
                 {detail.facility?.properties?.country_name
                     ? ` · ${detail.facility.properties.country_name}`
                     : ''}
@@ -199,6 +201,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
             <div style={styles.workbench} key={detail.id} ref={workbenchRef}>
                 <EvidencePanel
                     attachments={detail.attachments}
+                    urlEvidence={buildUrlEvidence(detail)}
                     review={review}
                     claimID={detail.id}
                     requestedDoc={requestedDoc}
@@ -364,14 +367,23 @@ export default function ClaimsV2Dashboard() {
     /*
      * Mirror the selection into ?claim= so the browser URL is always a
      * shareable deep link to the claim on screen. replaceState keeps
-     * history clean (J/K walks don't pile up back-button entries).
+     * history clean (J/K walks don't pile up back-button entries), and
+     * only the claim parameter is touched — any other query parameters
+     * and the hash survive the rewrite.
      */
     useEffect(() => {
-        const base = window.location.pathname;
+        const { pathname, search, hash } = window.location;
+        const params = new URLSearchParams(search);
+        if (selectedClaimID) {
+            params.set('claim', selectedClaimID);
+        } else {
+            params.delete('claim');
+        }
+        const queryString = params.toString();
         window.history.replaceState(
             null,
             '',
-            selectedClaimID ? `${base}?claim=${selectedClaimID}` : base,
+            `${pathname}${queryString ? `?${queryString}` : ''}${hash}`,
         );
     }, [selectedClaimID]);
 
