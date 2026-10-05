@@ -22,6 +22,7 @@ const ContributionWarningDialog = ({
     onClose,
     onSubmitAnyway,
     warnings,
+    submitAnywayLabel,
     classes,
 }) => (
     <Dialog
@@ -78,7 +79,7 @@ const ContributionWarningDialog = ({
                     label: classes.buttonLabelStyles,
                 }}
             >
-                Submit anyway
+                {submitAnywayLabel}
             </Button>
         </DialogActions>
     </Dialog>
@@ -94,7 +95,14 @@ ContributionWarningDialog.propTypes = {
             message: string.isRequired,
         }),
     ).isRequired,
+    // The claim forms show the same dialog before a step change or a
+    // save rather than before a submission, so the wording differs.
+    submitAnywayLabel: string,
     classes: object.isRequired,
+};
+
+ContributionWarningDialog.defaultProps = {
+    submitAnywayLabel: 'Submit anyway',
 };
 
 export default withStyles(makeContributionWarningDialogStyles)(
