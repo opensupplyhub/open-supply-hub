@@ -192,6 +192,7 @@ data "template_file" "app" {
     stripe_price_id                               = var.stripe_price_id
     dromo_schema_id                               = var.dromo_schema_id
     memcached_view_cache_timeout_seconds          = var.memcached_view_cache_timeout_seconds
+    earth_genome_contributor_id                   = var.earth_genome_contributor_id
     rds_master_secret_arn                         = local.rds_master_secret_arn
     django_secret_key_arn                         = local.django_secret_key_arn
     default_from_email_arn                        = local.default_from_email_arn

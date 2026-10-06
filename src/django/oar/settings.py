@@ -755,3 +755,50 @@ DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')
 
 # Email anonymization secret for the sync_databases management command.
 EMAIL_ANONYMIZATION_SECRET = os.getenv('EMAIL_ANONYMIZATION_SECRET', '')
+
+# Earth Genome pilot guardrail (OSDEV-3248). The id of the Contributor that
+# the candidate ingest pipeline writes under. Only a Facility created from a
+# list item whose Source belongs to this contributor may be a candidate
+# (is_candidate=True) or carry an empty name or address; every other ORM
+# creation path is rejected in Facility.save(). Unset or blank means None:
+# nobody may create such rows. See api/services/candidate_guard.py.
+_earth_genome_contributor_id = os.getenv(
+    'EARTH_GENOME_CONTRIBUTOR_ID', ''
+).strip()
+EARTH_GENOME_CONTRIBUTOR_ID = (
+    int(_earth_genome_contributor_id)
+    if _earth_genome_contributor_id else None
+)
+
+# Earth Genome candidate validation (OSDEV-3245). States are derived from
+# the live vote tally (design decision D6) by
+# api/services/candidate_validation.py; these knobs are the thresholds.
+# Numeric values are pilot defaults pending Product sign-off.
+#
+# CANDIDATE_VOTE_THRESHOLD: minimum total votes before a candidate can
+#   leave 'unverified'.
+# CANDIDATE_CONFIRM_MARGIN / CANDIDATE_RETIRE_MARGIN: the share of the
+#   total a side needs for consensus (confirmed / retired). Asymmetric on
+#   purpose: retiring is irreversible, so it needs a higher bar.
+# CANDIDATE_AUTO_RETIRE: True retires a candidate (hard delete + tombstone)
+#   on the vote that reaches consensus-no; False (default, pilot safety)
+#   opens a FacilityCandidateRetirementRequest for a moderator instead.
+CANDIDATE_VOTE_THRESHOLD = int(os.getenv('CANDIDATE_VOTE_THRESHOLD', '3'))
+CANDIDATE_CONFIRM_MARGIN = float(
+    os.getenv('CANDIDATE_CONFIRM_MARGIN', '0.6')
+)
+CANDIDATE_RETIRE_MARGIN = float(os.getenv('CANDIDATE_RETIRE_MARGIN', '0.75'))
+CANDIDATE_AUTO_RETIRE = (
+    os.getenv('CANDIDATE_AUTO_RETIRE', 'False').strip().lower()
+    in ('true', '1', 'yes')
+)
+
+# Candidate proximity suggestions (OSDEV-3244). Confirmed facilities within
+# CANDIDATE_SUGGESTION_RADIUS_M metres of a candidate's centroid are
+# suggested as possible existing records for it, nearest first, at most
+# CANDIDATE_SUGGESTION_LIMIT of them. Computed on read by
+# api/services/candidate_matches.py; nothing is stored.
+CANDIDATE_SUGGESTION_RADIUS_M = int(
+    os.getenv('CANDIDATE_SUGGESTION_RADIUS_M', '500')
+)
+CANDIDATE_SUGGESTION_LIMIT = int(os.getenv('CANDIDATE_SUGGESTION_LIMIT', '5'))

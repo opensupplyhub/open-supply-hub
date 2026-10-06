@@ -8,6 +8,12 @@ from api.facility_actions.processing_facility_executor import (
 from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.serializers.facility.facility_candidate_details_serializer import (
+    FacilityCandidateDetailsSerializer,
+    NOINDEX_HEADER,
+    NOINDEX_VALUE,
+)
+from api.services.candidate_retirement import tombstone_payload
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -40,6 +46,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.cache import patch_cache_control
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 from django.conf import settings
@@ -642,6 +649,18 @@ class FacilitiesViewSet(ListModelMixin,
     def retrieve(self, request, pk=None):
         """
         Returns the facility specified by a given OS ID in GeoJSON format (contains Spotlight data under `partner_fields` property).
+
+        ### Candidate production locations
+        Candidates (unconfirmed Earth Genome satellite detections) are reachable only by direct OS ID lookup here and
+        through `GET /api/v1/production-locations/candidates/?bbox=`; they are excluded from `/api/facilities/` search,
+        `/api/facilities-downloads/`, the vector tiles and the v1 `/api/v1/production-locations/` search, so no download
+        or search contract ever receives them. A candidate answers 200 with this same Feature shape, `name` and `address`
+        empty, `properties.is_candidate: true` and `properties.candidate` carrying `source`, `external_id`, `confidence`,
+        `polygon` (GeoJSON or null), the validation `state` (`unverified` | `disputed` | `confirmed` |
+        `retirement_pending`), `tally` (`confirmed` / `not_a_facility` counts), `your_vote`, `voting_open` and
+        `suggested_matches` (nearby confirmed facilities: `os_id`, `name`, `address`, `distance_m`). Confirmed facilities
+        carry no `is_candidate` key. A retired candidate answers 410 Gone. Candidate responses are sent with
+        `X-Robots-Tag: noindex` and `Cache-Control: private`.
 
         ### Sample Response
             {
@@ -1571,12 +1590,39 @@ class FacilitiesViewSet(ListModelMixin,
                 queryset, context=context).data
             return Response(response_data)
         except FacilityIndex.DoesNotExist as exc:
+            # Candidates never get an index row (OSDEV-3243); serve them
+            # labeled from api_facility instead (OSDEV-3249). The payload
+            # carries the caller's own vote, so it is kept out of the two
+            # shared response caches wrapping this method (both honor
+            # Cache-Control: private) and marked noindex for crawlers.
+            candidate = (
+                Facility.including_candidates
+                .filter(pk=pk, is_candidate=True)
+                .select_related('created_from__source__contributor')
+                .first()
+            )
+            if candidate is not None:
+                response = Response(
+                    FacilityCandidateDetailsSerializer(
+                        candidate, context={'request': request}
+                    ).data
+                )
+                patch_cache_control(response, private=True)
+                response[NOINDEX_HEADER] = NOINDEX_VALUE
+                return response
             # If the facility is not found but an alias is available,
-            # redirect to the alias
-            aliases = FacilityAlias.objects.filter(os_id=pk)
-            if len(aliases) == 0:
+            # redirect to the alias. A NOT_A_FACILITY tombstone has no
+            # target facility: the OS ID was retired, so answer 410 Gone
+            # instead of redirecting (OSDEV-3246).
+            alias = FacilityAlias.objects.filter(os_id=pk).first()
+            if alias is None:
                 raise NotFound() from exc
-            os_id = aliases.first().facility.id
+            if alias.facility_id is None:
+                return Response(
+                    tombstone_payload(alias),
+                    status=status.HTTP_410_GONE,
+                )
+            os_id = alias.facility_id
 
             redirect_url = f'/api/facilities/{os_id}/'
             query_string = request.META.get('QUERY_STRING', '')
@@ -3151,7 +3197,13 @@ class FacilitiesViewSet(ListModelMixin,
 
         historical_facility_queryset = Facility.history.filter(id=pk)
 
-        if historical_facility_queryset.count() == 0:
+        # The history manager is not Facility.objects, so a candidate's
+        # rows are visible here (OSDEV-3376). Hide the location while its
+        # latest record is still a candidate; a location that has since
+        # been confirmed keeps its full history, and a deleted one keeps
+        # the DELETE entry it always had.
+        latest_record = historical_facility_queryset.first()
+        if latest_record is None or latest_record.is_candidate:
             raise NotFound()
 
         facility_history = create_facility_history_list(

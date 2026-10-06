@@ -26,6 +26,10 @@ const customJestEnvironment = async () => {
     global.navigator = jsdom.window.navigator;
     global.btoa = str => Buffer.from(str, 'binary').toString('base64');
     global.atob = str => Buffer.from(str, 'base64').toString('binary');
+    // jest-environment-node 26 does not expose Node's AbortController;
+    // use jsdom's so fetch-cancelling components can run in tests.
+    global.AbortController =
+        global.AbortController || jsdom.window.AbortController;
 };
 
 customJestEnvironment();

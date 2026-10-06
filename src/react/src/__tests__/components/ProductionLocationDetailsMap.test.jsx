@@ -24,6 +24,15 @@ jest.mock('../../components/VectorTileFacilitiesLayer', () => ({
 }));
 jest.mock('../../components/VectorTileFacilityGridLayer', () => () => null);
 jest.mock('../../components/VectorTileGridLegend', () => () => null);
+jest.mock('../../components/Candidate/CandidatePolygonsLayer', () => ({
+    __esModule: true,
+    default: () => null,
+}));
+jest.mock('../../components/Candidate/CandidateValidationPanel', () => ({
+    __esModule: true,
+    default: () => null,
+    PANEL_VARIANTS: { OVERLAY: 'overlay', INLINE: 'inline' },
+}));
 
 jest.mock(
     '../../components/ProductionLocation/DataPoint/DataPoint',

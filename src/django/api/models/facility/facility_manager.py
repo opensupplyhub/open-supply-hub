@@ -17,6 +17,54 @@ from api.services.facility_processing_query import FacilityProcessingQuery
 
 
 class FacilityManager(models.Manager):
+    """
+    Default manager for Facility. Excludes candidate rows.
+
+    Candidates (``is_candidate=True``) are unconfirmed detections from an
+    automated source. Every existing ORM code path was written before they
+    existed, so the default manager hides them and access to them has to be
+    an explicit ``Facility.including_candidates`` call.
+
+    What this filter does and does not cover (Django 5.2 semantics, pinned
+    by ``api/tests/test_facility_default_manager.py``):
+
+    * ``Facility.objects`` is declared first on the model, so it is
+      ``_default_manager``. That is what ``get_object_or_404``, the admin
+      changelist, ``dumpdata`` and DRF's auto-generated ``ModelSerializer``
+      FK fields use, so all of those exclude candidates.
+    * ``_base_manager`` is left as Django's plain ``Manager``. Forward FK
+      access (``claim.facility``), reverse one-to-one access
+      (``list_item.created_facility``), ``refresh_from_db()`` and the
+      UPDATE issued by ``save()`` go through it, so they still reach a
+      candidate. Do not set ``Meta.base_manager_name`` to this manager: it
+      would make a claim on a candidate raise ``RelatedObjectDoesNotExist``
+      and break saving candidates.
+    * Filters that JOIN to Facility from another model
+      (``FacilityClaim.objects.filter(facility__name=...)``) never apply the
+      target model's manager, so they include candidates. Code that must
+      exclude them has to filter ``facility__is_candidate=False`` itself.
+    * Reverse FK managers on a Facility instance
+      (``facility.facilitymatch_set``) belong to the related model and are
+      unaffected.
+    * ``ForeignKey.validate()``, which ``full_clean()`` runs, uses
+      ``_base_manager``, so a claim or match that points at a candidate
+      still validates. ModelForm and admin FK *form fields* build their
+      choices from ``_default_manager`` instead, so an admin change form on
+      such a claim fails with "select a valid choice". Every registered
+      admin therefore declares its Facility FK read-only; the Facility
+      admin itself opts in via ``including_candidates`` and shows
+      candidates view-only (OSDEV-3379, pinned by
+      ``api/tests/test_admin_candidates.py``).
+    * ``validate_unique()`` and ``validate_constraints()`` also go through
+      ``_default_manager``, so form-level validation cannot see a clash
+      with a candidate's ``id`` or ``(source, external_id)``. The database
+      constraints still reject it, but as an ``IntegrityError`` rather
+      than a field error.
+    """
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_candidate=False)
+
     def filter_by_query_params(self, params):
         """
         Create a Facility queryset filtered by a list of request query params.
@@ -85,6 +133,9 @@ class FacilityManager(models.Manager):
             from .facility_alias import FacilityAlias
 
             try:
+                # A NOT_A_FACILITY tombstone has facility_id None, so a
+                # retired OS ID rewrites to id=None and matches nothing
+                # rather than redirecting (OSDEV-3246).
                 id = FacilityAlias.objects.get(pk=id).facility_id
             except FacilityAlias.DoesNotExist:
                 pass
@@ -201,3 +252,14 @@ class FacilityManager(models.Manager):
         facilities_qs = Facility.objects.filter(id__in=facility_ids)
 
         return facilities_qs
+
+
+class FacilityIncludingCandidatesManager(models.Manager):
+    """
+    Opt-in manager that returns every Facility row, candidates included.
+
+    Use it only where candidates are the point: ingest and idempotency
+    checks on ``(source, external_id)``, OS ID collision checks, candidate
+    moderation and promotion. Anything user-facing should stay on
+    ``Facility.objects``.
+    """

@@ -21,6 +21,8 @@ from api.views.v1.production_locations \
      import ProductionLocations
 from api.views.v1.moderation_events \
      import ModerationEvents
+from api.views.v1.candidate_retirement_requests \
+     import CandidateRetirementRequests
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -66,6 +68,11 @@ v1_router.register(
     URLNames.MODERATION_EVENTS,
     ModerationEvents,
     basename=URLNames.MODERATION_EVENTS
+)
+v1_router.register(
+    URLNames.CANDIDATE_RETIREMENT_REQUESTS,
+    CandidateRetirementRequests,
+    basename=URLNames.CANDIDATE_RETIREMENT_REQUESTS
 )
 
 v1_custom_routes = [
