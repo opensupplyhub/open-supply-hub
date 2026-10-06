@@ -72,6 +72,28 @@ def tally(facility):
     return counts
 
 
+def tallies(os_ids):
+    """
+    Live tallies for many candidates in one query:
+    ``{os_id: {"confirmed": n, "not_a_facility": m}}``, with a zero tally
+    for every requested id that has no votes.
+    """
+    os_ids = list(os_ids)
+    result = {
+        os_id: {CONFIRMED_VOTE: 0, NOT_A_FACILITY_VOTE: 0}
+        for os_id in os_ids
+    }
+    rows = (
+        FacilityCandidateVote.objects
+        .filter(facility_id__in=os_ids)
+        .values('facility_id', 'vote')
+        .annotate(count=Count('id'))
+    )
+    for row in rows:
+        result[row['facility_id']][row['vote']] = row['count']
+    return result
+
+
 def derive_state(
     vote_tally,
     *,
