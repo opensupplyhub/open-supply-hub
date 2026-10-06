@@ -142,12 +142,19 @@ class GazetteerCache:
                     HistoricalFacility.history_id > last_facility_version_id
                 )
                 # We use an dictionary comprehension so that we can load
-                # all the data and exit the transaction as soon as possible
+                # all the data and exit the transaction as soon as possible.
+                # Candidates (OSDEV-3243) are left out, so a new or updated
+                # candidate is never indexed; a candidate that graduates
+                # (is_candidate -> false) shows up in history and is indexed
+                # on that refresh like any other facility.
                 latest_facility_dedupe_records = {
                     f['id']: facility_values_to_dedupe_record(f)
                     for f in
                     transform_to_dict(session.query(Facility.id, Facility.country_code, Facility.name, Facility.address). \
-                        filter(Facility.id.in_(changed_facility_ids)))
+                        filter(
+                            Facility.id.in_(changed_facility_ids),
+                            Facility.is_candidate.is_(False),
+                        ))
                 }
 
             return facility_changes, latest_facility_dedupe_records
@@ -248,11 +255,14 @@ class GazetteerCache:
                     FacilityMatch.status == FacilityMatch.CONFIRMED,
                 )
                 # Only membership is tested in `get_latest`; the record it
-                # indexes comes from `latest_match_records`.
+                # indexes comes from `latest_match_records`. A candidate
+                # (OSDEV-3243) does not count as an existing facility here,
+                # so no match record pointing at one is ever indexed.
                 existing_facility_ids = {
                     row.id for row in
                     session.query(Facility.id).filter(
-                        Facility.id.in_(matched_facility_ids)
+                        Facility.id.in_(matched_facility_ids),
+                        Facility.is_candidate.is_(False),
                     )
                 }
 
