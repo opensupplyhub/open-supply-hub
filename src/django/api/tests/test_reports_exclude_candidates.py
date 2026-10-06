@@ -16,7 +16,7 @@ from api.models import (
 from api.reports import run_report
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 REPORTS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'reports'
@@ -173,6 +173,11 @@ class ReportsExcludeCandidatesTest(TestCase):
             name='Earth Genome',
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
         source = Source.objects.create(
             source_type=Source.SINGLE,
             is_active=True,
