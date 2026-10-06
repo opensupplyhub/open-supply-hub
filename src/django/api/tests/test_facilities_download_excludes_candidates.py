@@ -1,5 +1,6 @@
 from django.contrib.gis.geos import Point
 from django.http import QueryDict
+from django.test import override_settings
 from rest_framework import status
 
 from api.models import Facility, FacilityListItem
@@ -26,6 +27,11 @@ class FacilitiesDownloadExcludesCandidatesTest(FacilityAPITestCaseBase):
 
     def setUp(self):
         super().setUp()
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
         self.download_url = "/api/facilities-downloads/"
         self.facilities_url = "/api/facilities/"
 

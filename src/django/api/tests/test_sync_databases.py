@@ -85,6 +85,11 @@ class ExcludeCandidateRowsTest(TestCase):
             name='sync contributor',
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
         facility_list = FacilityList.objects.create(
             header='header', file_name='one', name='Sync list'
         )
