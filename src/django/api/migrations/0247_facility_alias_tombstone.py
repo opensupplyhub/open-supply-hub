@@ -77,7 +77,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0242_claim_contribution_events'),
+        ('api', '0246_exclude_candidates_from_facility_index'),
     ]
 
     operations = [
