@@ -13,7 +13,8 @@ import {
     failUpdateClaimedFacilityDetails,
     completeUpdateClaimedFacilityDetails,
     updateClaimedFacilityNameNativeLanguage,
-    updateClaimedFacilityLocation,
+    updateClaimedFacilityNameEnglish,
+    updateClaimedFacilityAddress,
     updateClaimedSector,
     updateClaimedFacilityPhone,
     updateClaimedFacilityPhoneVisibility,
@@ -62,6 +63,11 @@ import {
 
 const initialState = Object.freeze({
     data: null,
+    // The name and address as loaded (with the location's values
+    // filled in for a claim asserting none), so Save can tell whether
+    // the claimant changed either and should go through the quality
+    // check (OSDEV-3489).
+    loadedNameAddress: null,
     retrieveData: Object.freeze({
         fetching: false,
         error: null,
@@ -189,12 +195,17 @@ export default createReducer(
                 retrieveData: {
                     $set: initialState.retrieveData,
                 },
+                loadedNameAddress: {
+                    $set: {
+                        name: data.facility_name_english ?? '',
+                        address: data.facility_address ?? '',
+                    },
+                },
                 data: {
                     $set: {
                         ...data,
                         sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
-                        initial_facility_address: data.facility_address,
                     },
                 },
             }),
@@ -217,12 +228,17 @@ export default createReducer(
                 updateData: {
                     $set: initialState.updateData,
                 },
+                loadedNameAddress: {
+                    $set: {
+                        name: data.facility_name_english ?? '',
+                        address: data.facility_address ?? '',
+                    },
+                },
                 data: {
                     $set: {
                         ...data,
                         sector: normalizeSector(data.sector),
                         ...deriveEnergyEnabledFlags(data),
-                        initial_facility_address: data.facility_address,
                     },
                 },
             }),
@@ -233,6 +249,24 @@ export default createReducer(
                 },
                 data: {
                     facility_name_native_language: { $set: name },
+                },
+            }),
+        [updateClaimedFacilityNameEnglish]: (state, name) =>
+            update(state, {
+                updateData: {
+                    error: { $set: initialState.updateData.error },
+                },
+                data: {
+                    facility_name_english: { $set: name },
+                },
+            }),
+        [updateClaimedFacilityAddress]: (state, address) =>
+            update(state, {
+                updateData: {
+                    error: { $set: initialState.updateData.error },
+                },
+                data: {
+                    facility_address: { $set: address },
                 },
             }),
         [updateClaimedFacilityWorkersCount]: (state, workersCount) =>
@@ -297,15 +331,6 @@ export default createReducer(
                     facility_production_types: {
                         $set: orderBy(productionTypes, identity),
                     },
-                },
-            }),
-        [updateClaimedFacilityLocation]: (state, location) =>
-            update(state, {
-                updateData: {
-                    error: { $set: initialState.updateData.error },
-                },
-                data: {
-                    facility_location: { $set: location },
                 },
             }),
         [updateClaimedSector]: (state, sectors) =>

@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.contrib.gis.geos import GEOSGeometry
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models, transaction
+from django.db.models import Prefetch
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 from waffle import switch_is_active
@@ -25,9 +26,17 @@ from api.constants import (
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
 from ...services.claim_contribution_service import (
+    CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
 )
-from ...geocoding import geocode_address
+from ...services.claim_quality_check_service import (
+    SOURCE_CLAIMED_DETAILS,
+    record_claim_quality_outcome,
+)
+from ...services.claim_quality_warnings import validate_dismissed_warnings
+from ...services.facility_claim_review_note_service import (
+    create_review_note,
+)
 from ...mail import (
     send_approved_claim_notice_to_list_contributors,
     send_claim_facility_approval_email,
@@ -46,11 +55,11 @@ from ...helpers.claim_attachments import (
 from ...models.contributor.contributor import Contributor
 from ...models.extended_field import ExtendedField
 from ...models.facility.facility_claim import FacilityClaim
-from ...models.facility.facility_claim_attachments import (
-    FacilityClaimAttachments
-)
 from ...models.facility.facility_claim_review_note import (
     FacilityClaimReviewNote
+)
+from ...models.facility.facility_claim_attachments import (
+    FacilityClaimAttachments
 )
 from ...models.facility.facility import Facility
 from ...permissions import (
@@ -66,6 +75,9 @@ from ...serializers import (
 from ...serializers.facility.edit_pending_claim_serializer import (
     EditPendingClaimSerializer,
     PendingClaimSerializer,
+)
+from ...serializers.facility.facility_create_claim_serializer import (
+    validate_claimed_name_or_address,
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
 
@@ -119,6 +131,25 @@ CLAIM_PROFILE_SIMPLE_FIELDS = (
     'office_info_publicly_visible',
 )
 
+# The claimant's asserted name and address (OSDEV-3405). Also in
+# CLAIM_PROFILE_SIMPLE_FIELDS, but validated and normalized with the rules
+# of claim submission before the bulk copy: a changed value is recorded as
+# a contribution, which ContriCleaner would otherwise reject after the fact.
+CLAIM_NAME_ADDRESS_FIELDS = (
+    'facility_name_english',
+    'facility_address',
+)
+
+# The production location field each claim field replaces when asserted.
+CLAIM_NAME_ADDRESS_FACILITY_FIELDS = {
+    'facility_name_english': 'name',
+    'facility_address': 'address',
+}
+
+CLAIM_NAME_ADDRESS_MAX_LENGTH = FacilityClaim._meta.get_field(
+    'facility_name_english'
+).max_length
+
 # Fields get_claimed_details assigns individually rather than through the
 # group loops above. A new individually-assigned field must be added here
 # by hand, or edits touching only that field would be dropped as "no-op".
@@ -143,6 +174,53 @@ CLAIM_PROFILE_TRACKED_FIELDS = (
     + CLAIM_PROFILE_EMISSION_FIELDS
     + CLAIM_PROFILE_SIMPLE_FIELDS
 )
+
+
+def validate_claimed_name_address(data, claim):
+    """Validate and normalize the name and address of a claimed-details
+    PUT with the rules the claim form applies at submission: stripped, at
+    most the column length, and never only punctuation or whitespace.
+    Returns {field_name: value_or_None}. Raises ValidationError, keyed by
+    field, for a rejected value.
+
+    While the enable_claim_name_address_edit switch is on both values are
+    required: the form shows them pre-filled with the values the location
+    currently lists, so a blank can only be a deliberate deletion, and a
+    claim with no name or address would fall back to those values anyway.
+    Echoing the location's current value back for a claim that does not
+    assert its own keeps the claim's NULL: nothing new is being asserted,
+    so nothing should be recorded, and the claimed section's "last
+    updated" date should not move. With the switch off blank is stored as
+    NULL, as before the fields were editable.
+    """
+    required = switch_is_active(CLAIM_NAME_ADDRESS_EDIT_SWITCH)
+    normalized = {}
+    for field_name in CLAIM_NAME_ADDRESS_FIELDS:
+        value = data.get(field_name)
+        if value is not None and not isinstance(value, str):
+            raise ValidationError({field_name: ['Not a valid string.']})
+        if value is not None and len(value) > CLAIM_NAME_ADDRESS_MAX_LENGTH:
+            raise ValidationError({field_name: [
+                'Ensure this field has no more than '
+                f'{CLAIM_NAME_ADDRESS_MAX_LENGTH} characters.'
+            ]})
+        try:
+            value = validate_claimed_name_or_address(field_name, value)
+        except ValidationError as exc:
+            raise ValidationError({field_name: exc.detail}) from exc
+        if value is None and required:
+            raise ValidationError({field_name: ['This field is required.']})
+        if (
+            value is not None
+            and getattr(claim, field_name) is None
+            and value == getattr(
+                claim.facility,
+                CLAIM_NAME_ADDRESS_FACILITY_FIELDS[field_name],
+            )
+        ):
+            value = None
+        normalized[field_name] = value
+    return normalized
 
 
 def get_tracked_claim_value(claim, field_name):
@@ -214,7 +292,14 @@ class FacilityClaimViewSet(ModelViewSet):
             'contributor__admin',
             'status_change_by'
         ).prefetch_related(
-            'facilityclaimreviewnote_set'
+            # select_related('author'): notes_meta reports is_automated
+            # from note.author.email — without this it is an N+1 per note.
+            Prefetch(
+                'facilityclaimreviewnote_set',
+                queryset=FacilityClaimReviewNote.objects.select_related(
+                    'author'
+                ),
+            )
         ).all().order_by('-id')
         if statuses:
             queryset = queryset.filter(status__in=statuses)
@@ -307,16 +392,13 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             create_extendedfields_for_claim(claim)
 
             # Record the claimed name and address as a contribution so the
-            # location's submission history shows them. Runs inside this
+            # location's submission history shows them, and move the pin
+            # to the claimed address where that is safe. Runs inside this
             # transaction, before any email goes out: if it fails the
             # approval rolls back rather than going live with its history
             # missing.
@@ -366,11 +448,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             send_claim_facility_denial_email(request, claim)
 
@@ -410,11 +488,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 f'for reason: {claim.status_change_reason}'
             )
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=note,
-            )
+            create_review_note(claim, request.user, note)
 
             send_claim_facility_revocation_email(request, claim)
 
@@ -440,11 +514,11 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
-            FacilityClaimReviewNote.objects.create(
-                claim=claim,
-                author=request.user,
-                note=request.data.get('note'),
-                note_type=FacilityClaimReviewNoteTypes.INTERNAL,
+            create_review_note(
+                claim,
+                request.user,
+                request.data.get('note'),
+                FacilityClaimReviewNoteTypes.INTERNAL,
             )
 
             response_data = FacilityClaimDetailsSerializer(claim).data
@@ -481,12 +555,26 @@ class FacilityClaimViewSet(ModelViewSet):
                 for field in CLAIM_PROFILE_TRACKED_FIELDS
             }
 
+            claimed_name_address = validate_claimed_name_address(
+                request.data, claim
+            )
+            # Validated up front, before any write, so a malformed list
+            # rejects the whole save rather than a partially applied one.
+            try:
+                dismissed_warnings = validate_dismissed_warnings(
+                    request.data.get('dismissed_warnings')
+                )
+            except ValidationError as exc:
+                raise ValidationError(
+                    {'dismissed_warnings': exc.detail}
+                ) from exc
+
             prev_location = claim.facility_location
             location_data = request.data.get('facility_location') or ''
             if location_data != '':
                 claim.facility_location = GEOSGeometry(
                     json.dumps(location_data))
-            if request.data.get('facility_address', '') == '':
+            if claimed_name_address['facility_address'] is None:
                 claim.facility_location = None
 
             parent_company_data = request.data.get('facility_parent_company')
@@ -586,6 +674,38 @@ class FacilityClaimViewSet(ModelViewSet):
             for field_name in CLAIM_PROFILE_SIMPLE_FIELDS:
                 setattr(claim, field_name, request.data.get(field_name))
 
+            for field_name, value in claimed_name_address.items():
+                setattr(claim, field_name, value)
+
+            # A changed address is geocoded by record_claim_contribution,
+            # which moves the pin under the same guards as claim approval
+            # (nothing while enable_claim_address_pin_move is off, no move
+            # on an approximate result, a review note when the pin stays).
+            # The service geocodes only when the claim holds no pin, so
+            # the pin left by an earlier geocode is dropped first. The
+            # claimed-details form always echoes the pin it was given, so
+            # only a point that differs from the stored one counts as a
+            # pin the claimant placed, and that one is kept as is. The
+            # service is told whether the address changed at all, so a
+            # name-only edit never geocodes, even when the claim's address
+            # holds no pin from an earlier blocked geocode.
+            address_changed = (
+                snapshot['facility_address']
+                != get_tracked_claim_value(claim, 'facility_address')
+            )
+            claimant_placed_pin = (
+                claim.facility_location is not None
+                and claim.facility_location != prev_location
+            )
+            regeocode_address = (
+                address_changed
+                and claim.facility_address is not None
+                and not claimant_placed_pin
+                and switch_is_active(CLAIM_NAME_ADDRESS_EDIT_SWITCH)
+            )
+            if regeocode_address:
+                claim.facility_location = None
+
             # Skip the save (and its side effects: updated_at bump, claim
             # reindex trigger, extended-field rebuild, notification email)
             # when no tracked value actually changed.
@@ -600,6 +720,11 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)
 
+            # Read the diff now: the contribution recording below may save
+            # the claim again (to store a geocoded pin), and the notice
+            # email would otherwise report only that later save.
+            changes = claim.get_changes()
+
             create_extendedfields_for_claim(claim)
 
             # Conditionally update the facility location if it was changed on
@@ -612,6 +737,10 @@ class FacilityClaimViewSet(ModelViewSet):
                         'Location updated on FacilityClaim ({})'.format(
                             claim.id)
                     claim.facility.save()
+            elif regeocode_address:
+                # The pin follows the new address, or stays, as the
+                # contribution recording decides.
+                pass
             else:
                 if prev_location is not None:
                     claim.facility.location = \
@@ -633,13 +762,27 @@ class FacilityClaimViewSet(ModelViewSet):
             # value they have asserted, not just the latest.
             name_or_address_changed = any(
                 snapshot[field] != get_tracked_claim_value(claim, field)
-                for field in ('facility_name_english', 'facility_address')
+                for field in CLAIM_NAME_ADDRESS_FIELDS
             )
             if name_or_address_changed:
-                record_claim_contribution(claim, request.user)
+                record_claim_contribution(
+                    claim, request.user, geocode=address_changed
+                )
+                # Logs what was saved for the quality check (OSDEV-3489)
+                # and leaves the moderators a note of any warnings the
+                # claimant continued past. Only a changed value was
+                # checked, so only a changed value has an outcome.
+                record_claim_quality_outcome(
+                    claim,
+                    request.user,
+                    dismissed_warnings,
+                    SOURCE_CLAIMED_DETAILS,
+                )
 
             try:
-                send_claim_update_notice_to_list_contributors(request, claim)
+                send_claim_update_notice_to_list_contributors(
+                    request, claim, changes
+                )
             except Exception:
                 _report_facility_claim_email_error_to_rollbar(claim)
 
@@ -649,36 +792,6 @@ class FacilityClaimViewSet(ModelViewSet):
             raise NotFound() from exc
         except Contributor.DoesNotExist as exc:
             raise NotFound('No contributor found for that user') from exc
-
-    @action(detail=True,
-            methods=['get'],
-            url_path='geocode',
-            permission_classes=(IsRegisteredAndConfirmed,))
-    def geocode_claim_address(self, request, pk=None):
-        """
-        Reduce the potential misuse of the server-side geocoder by requiring
-        that geocode requests are made by an account with an approved claim.
-        """
-        claim = (
-            FacilityClaim
-            .objects
-            .filter(contributor=request.user.contributor)
-            .filter(status=FacilityClaimStatuses.APPROVED)
-            .get(pk=pk)
-        )
-        if request.user.contributor != claim.contributor:
-            raise NotFound()
-
-        country_code = request.query_params.get('country_code', None)
-        if country_code is None:
-            country_code = claim.facility.country_code
-
-        address = request.query_params.get('address', None)
-        if address is None:
-            raise BadRequestException('Missing address')
-
-        geocode_result = geocode_address(address, country_code)
-        return Response(geocode_result)
 
     @staticmethod
     def __stamp_claimant_update(claim):

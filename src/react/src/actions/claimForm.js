@@ -10,6 +10,7 @@ import {
     appendFacilityType,
     appendSimpleField,
 } from '../util/util';
+import { dismissedWarningsFor } from '../util/claimQualityCheck';
 
 // Step navigation actions.
 export const setActiveClaimFormStep = createAction(
@@ -75,12 +76,31 @@ export function submitClaimFormData(osID, freeEmissionsEstimateHasErrors) {
             return null;
         }
 
-        const filteredFormData = filterFreeEmissionsEstimateFields(formData);
+        // The quality-check dismissal is form state, not a claim field:
+        // it is reported separately, and only while it still applies to
+        // the name and address being submitted (OSDEV-3489).
+        const {
+            qualityWarningsDismissed,
+            ...filteredFormData
+        } = filterFreeEmissionsEstimateFields(formData);
 
         const postData = new FormData();
         toPairs(filteredFormData).forEach(([key, value]) => {
             appendFormField(postData, key, value);
         });
+        const dismissedWarnings = dismissedWarningsFor(
+            {
+                name: formData.facilityNameEnglish,
+                address: formData.facilityAddress,
+            },
+            qualityWarningsDismissed,
+        );
+        if (dismissedWarnings.length > 0) {
+            postData.append(
+                'dismissed_warnings',
+                JSON.stringify(dismissedWarnings),
+            );
+        }
 
         dispatch(startSubmitClaimFormData());
 
