@@ -755,3 +755,17 @@ DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')
 
 # Email anonymization secret for the sync_databases management command.
 EMAIL_ANONYMIZATION_SECRET = os.getenv('EMAIL_ANONYMIZATION_SECRET', '')
+
+# Earth Genome pilot guardrail (OSDEV-3248). The id of the Contributor that
+# the candidate ingest pipeline writes under. Only a Facility created from a
+# list item whose Source belongs to this contributor may be a candidate
+# (is_candidate=True) or carry an empty name or address; every other ORM
+# creation path is rejected in Facility.save(). Unset or blank means None:
+# nobody may create such rows. See api/services/candidate_guard.py.
+_earth_genome_contributor_id = os.getenv(
+    'EARTH_GENOME_CONTRIBUTOR_ID', ''
+).strip()
+EARTH_GENOME_CONTRIBUTOR_ID = (
+    int(_earth_genome_contributor_id)
+    if _earth_genome_contributor_id else None
+)
