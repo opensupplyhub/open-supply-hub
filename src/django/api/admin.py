@@ -79,10 +79,105 @@ class OarUserAdmin(UserAdmin):
     list_display = ('email', 'is_active')
 
 
+class FacilityCandidateFilter(admin.SimpleListFilter):
+    """
+    Default-on "Confirmed only" filter for the Facility changelist.
+
+    ``FacilityHistoryAdmin.get_queryset`` opts in to candidates so the
+    change, history and delete views can resolve one. This filter puts the
+    ``Facility.objects`` default back on the changelist: with no parameter
+    in the URL it behaves as "Confirmed only", so staff only ever see
+    candidates after choosing "Candidates only" or "All". Django's built-in
+    "All" choice (which clears the parameter) is replaced for that reason.
+    """
+    title = 'candidate status'
+    parameter_name = 'candidate'
+
+    CONFIRMED = 'confirmed'
+    CANDIDATES = 'candidates'
+    ALL = 'all'
+
+    def lookups(self, request, model_admin):
+        return (
+            (self.CONFIRMED, 'Confirmed only'),
+            (self.CANDIDATES, 'Candidates only'),
+            (self.ALL, 'All'),
+        )
+
+    def value(self):
+        return super().value() or self.CONFIRMED
+
+    def choices(self, changelist):
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == lookup,
+                'query_string': changelist.get_query_string(
+                    {self.parameter_name: lookup}
+                ),
+                'display': title,
+            }
+
+    def queryset(self, request, queryset):
+        if self.value() == self.CANDIDATES:
+            return queryset.filter(is_candidate=True)
+        if self.value() == self.ALL:
+            return queryset
+        return queryset.filter(is_candidate=False)
+
+
 class FacilityHistoryAdmin(GISModelAdmin, SimpleHistoryAdmin):
+    """
+    Candidate treatment (OSDEV-3379):
+
+    * The changelist shows confirmed facilities only, until staff pick
+      "Candidates only" or "All" in the candidate status filter. Wherever
+      a candidate can appear it is badged by the "Candidate" column.
+    * ``get_queryset`` uses ``Facility.including_candidates`` so the
+      filter, ``get_object`` (change and delete views) and
+      SimpleHistoryAdmin's history view can resolve a candidate.
+    * Candidates are view-only: ``has_change_permission`` and
+      ``has_delete_permission`` are False for a candidate, so its change
+      view renders read-only, a POST to it is refused, and the history
+      revert form is disabled. Candidate lifecycle (promotion, rejection)
+      belongs to the moderation flow (OSDEV-3249), not the admin.
+    * ``is_candidate``, ``source`` and ``external_id`` are read-only on
+      every facility, so staff cannot flip a row's candidate state or
+      enter a ``(source, external_id)`` clash the form cannot validate
+      (see ``FacilityManager``).
+
+    Other admins whose models point at Facility (FacilityClaim,
+    FacilityMatch, FacilityListItem, FacilityAlias, ExtendedField) all
+    declare that FK read-only, so saving one of their rows never builds a
+    Facility choice field from ``Facility.objects`` and never rejects a
+    candidate. ``api/tests/test_admin_candidates.py`` pins this.
+    """
+    list_display = ('__str__', 'is_candidate')
+    list_filter = (FacilityCandidateFilter,)
     history_list_display = ('name', 'address', 'location')
 
-    readonly_fields = ('created_from',)
+    readonly_fields = (
+        'created_from',
+        'is_candidate',
+        'source',
+        'external_id',
+    )
+
+    def get_queryset(self, request):
+        qs = models.Facility.including_candidates.get_queryset()
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+
+    def has_change_permission(self, request, obj=None):
+        if obj is not None and obj.is_candidate:
+            return False
+        return super().has_change_permission(request, obj)
+
+    def has_delete_permission(self, request, obj=None):
+        if obj is not None and obj.is_candidate:
+            return False
+        return super().has_delete_permission(request, obj)
 
     gis_widget_kwargs = {
         'attrs': {
