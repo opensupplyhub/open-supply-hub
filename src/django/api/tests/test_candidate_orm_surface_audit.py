@@ -20,7 +20,7 @@ from unittest.mock import Mock, patch
 
 from allauth.account.models import EmailAddress
 from django.contrib.gis.geos import GEOSGeometry, Point
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.exceptions import NotFound
 from rest_framework.test import APITestCase
@@ -87,6 +87,11 @@ class CandidateFixtureMixin:
             name='test contributor 1',
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
         self.list = FacilityList.objects.create(
             header='header', file_name='one', name='First List'
         )
