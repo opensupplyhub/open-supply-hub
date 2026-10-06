@@ -263,8 +263,21 @@ class FacilityClaimReviewNoteAdmin(SimpleHistoryAdmin):
 
 
 class FacilityAliasAdmin(SimpleHistoryAdmin):
+    # A NOT_A_FACILITY tombstone has facility=None; every field here is
+    # read-only so the change form renders it as "-" rather than offering
+    # a required FK select (OSDEV-3246).
     history_list_display = ('os_id', 'facility')
-    readonly_fields = ('os_id', 'facility', 'reason')
+    list_display = ('os_id', 'facility', 'reason', 'created_at')
+    list_filter = ('reason',)
+    search_fields = ('os_id', 'retired_external_id')
+    readonly_fields = (
+        'os_id',
+        'facility',
+        'reason',
+        'retired_source',
+        'retired_external_id',
+        'retirement_tally',
+    )
 
 
 class SourceAdmin(admin.ModelAdmin):
