@@ -123,6 +123,8 @@ class FacilityListItemTest(APITestCase):
             status=FacilityListItem.MATCHED,
         ).first()
         facility = Facility.objects.create(
+            name=list_item.name,
+            address=list_item.address,
             country_code=list_item.country_code,
             created_from=list_item,
             location=Point(0, 0),
