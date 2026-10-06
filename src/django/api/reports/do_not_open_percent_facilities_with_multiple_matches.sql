@@ -15,9 +15,12 @@ FROM (
                     fm.facility_id,
                     z.month as zmonth
                 FROM api_facilitymatch fm
+                JOIN api_facility af ON af.id = fm.facility_id AND af.is_candidate = false
                 JOIN (
                     SELECT to_char(m.created_at, 'YYYY-MM') as month
-                    FROM api_facilitymatch m group by month
+                    FROM api_facilitymatch m
+                    JOIN api_facility zf ON zf.id = m.facility_id AND zf.is_candidate = false
+                    group by month
                 ) z ON to_char(fm.created_at, 'YYYY-MM') <= z.month
                 JOIN api_facilitylistitem i ON i.id = fm.facility_list_item_id
                 JOIN api_source s on i.source_id = s.id

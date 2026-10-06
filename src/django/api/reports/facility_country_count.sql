@@ -6,6 +6,7 @@ FROM (
     country_code,
     min(created_at) AS created_at
     FROM api_facility
+    WHERE is_candidate = false
     GROUP BY country_code
 ) s
 GROUP BY to_char(created_at, 'YYYY-MM')

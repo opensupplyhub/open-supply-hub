@@ -15,9 +15,15 @@ WHERE c.id IN (
   AND is_public = true
   AND "create" = true
   AND id IN (
-    SELECT source_id
-    FROM api_facilitylistitem
-    WHERE status NOT IN ('ERROR', 'ERROR_PARSING', 'ERROR_GEOCODING', 'ERROR_MATCHING')
+    SELECT i.source_id
+    FROM api_facilitylistitem i
+    WHERE i.status NOT IN ('ERROR', 'ERROR_PARSING', 'ERROR_GEOCODING', 'ERROR_MATCHING')
+    AND NOT EXISTS (
+      SELECT 1
+      FROM api_facility f
+      WHERE f.id = i.facility_id
+      AND f.is_candidate = true
+    )
   )
 )
 AND u.email NOT LIKE '%openapparel.org%'
