@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-aws s3 cp s3://oshub-dumps-anonymized/osh_prod_large_anon.dump /dumps/osh_prod_large.dump
+aws s3 cp --only-show-errors s3://oshub-dumps-anonymized/osh_prod_large_anon.dump /dumps/osh_prod_large.dump
 
 # OSDEV-3531: the database is reached through an SSM port forward that the
 # workflow opens on the runner before starting this container (run with
@@ -29,7 +29,7 @@ done
 (
   while true; do
     sleep 240
-    psql -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -w \
+    PGCONNECT_TIMEOUT=10 psql -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -w \
       -c 'SELECT 1' >/dev/null 2>&1 || true
   done
 ) &
@@ -47,3 +47,6 @@ END \$\$;"
 echo "Dropping tables"
 psql -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 -c "$SQL_SCRIPT"
 pg_restore --verbose --clean --if-exists --no-acl --no-owner -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 < /dumps/osh_prod_large.dump
+RESTORE_CODE=$?
+echo "[info] pg_restore finished with exit code $RESTORE_CODE"
+exit $RESTORE_CODE
