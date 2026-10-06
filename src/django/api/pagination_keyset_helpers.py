@@ -11,7 +11,7 @@ def create_query_hash(request, page_size: int) -> str:
         "qp": sorted(
             (key, sorted(values))
             for key, values in request.query_params.lists()
-            if key not in ("page", "pageSize")
+            if key not in ("page", "pageSize", "download_id")
         ),
         "uid": getattr(request.user, "id", None),
         "ps": page_size,
