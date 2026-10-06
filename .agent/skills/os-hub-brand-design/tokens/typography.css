@@ -1,0 +1,34 @@
+/* Open Supply Hub — typography tokens
+   Brand guide (Spring 2022): Darker Grotesque is THE brand typeface (7 weights,
+   Light→Black, free Google font) — suitable for both large headlines AND body copy.
+   Specimen: headings Black 92% line-height / 0 tracking; body Medium 130% line-height.
+   Arial is the approved substitute in everyday tools (Google Docs, HubSpot).
+   The 2026 decks additionally use "DM Sans" for small body text — kept here as
+   the default body face for on-screen legibility at small sizes. */
+
+:root {
+  --font-display: "Darker Grotesque", "Arial Narrow", sans-serif;
+  --font-body: "DM Sans", "Helvetica Neue", Arial, sans-serif;
+
+  /* Weights (both families are variable 300–900 / 100–1000) */
+  --weight-display-bold: 700;
+  --weight-display-black: 800;
+  --weight-body: 400;
+  --weight-body-medium: 500;
+  --weight-body-bold: 700;
+
+  /* Scale (1920×1080 slide reference; divide ~2 for documents) */
+  --text-hero: 96px;        /* single-statement slides */
+  --text-h1: 72px;          /* slide titles */
+  --text-h2: 48px;          /* section subtitles */
+  --text-h3: 34px;          /* card titles */
+  --text-body-lg: 26px;     /* lead paragraphs */
+  --text-body-md: 20px;     /* standard body */
+  --text-eyebrow: 18px;     /* uppercase kickers */
+
+  /* Darker Grotesque has a very tall x-height & short descenders.
+     Brand guide: headings 92% line-height; body 130%. */
+  --leading-display: 0.92;
+  --leading-body: 1.3;
+  --tracking-eyebrow: 0.12em;
+}
