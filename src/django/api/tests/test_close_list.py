@@ -43,6 +43,8 @@ class CloseListTest(TestCase):
         )
 
         self.facility_one = Facility.objects.create(
+            name="Facility one",
+            address="Address one",
             country_code=self.country_code,
             created_from=self.list_item_one,
             facilitylistitem=self.list_item_one,
@@ -60,6 +62,8 @@ class CloseListTest(TestCase):
         )
 
         self.facility_one_b = Facility.objects.create(
+            name="Facility one b",
+            address="Address one b",
             country_code=self.country_code,
             created_from=self.list_item_one_b,
             facilitylistitem=self.list_item_one_b,
@@ -87,6 +91,8 @@ class CloseListTest(TestCase):
         )
 
         self.facility_two = Facility.objects.create(
+            name="Facility two",
+            address="Address two",
             country_code=self.country_code,
             created_from=self.list_item_two,
             facilitylistitem=self.list_item_two,
