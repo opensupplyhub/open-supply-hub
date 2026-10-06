@@ -10,13 +10,16 @@ FROM (
     FROM api_facility f
     JOIN (
         SELECT to_char(m.created_at, 'YYYY-MM') as month
-        FROM api_facility m group by month
+        FROM api_facility m
+        WHERE m.is_candidate = false
+        group by month
     ) z ON to_char(f.created_at, 'YYYY-MM') <= z.month
     LEFT JOIN (
         SELECT status, status_change_date, facility_id
         FROM api_facilityclaim
     ) as fc on f.id = fc.facility_id and to_char(status_change_date, 'YYYY-MM') <= z.month
-    WHERE status = 'APPROVED'
+    WHERE f.is_candidate = false
+    AND status = 'APPROVED'
     GROUP BY zmonth, status
 ) as c
 JOIN (
@@ -26,8 +29,11 @@ JOIN (
     FROM api_facility f
     JOIN (
         SELECT to_char(m.created_at, 'YYYY-MM') as month
-        FROM api_facility m group by month
+        FROM api_facility m
+        WHERE m.is_candidate = false
+        group by month
     ) z ON to_char(f.created_at, 'YYYY-MM') <= z.month
+    WHERE f.is_candidate = false
     GROUP BY zmonth
 ) as t on t.zmonth = c.zmonth
 WHERE status = 'APPROVED';
