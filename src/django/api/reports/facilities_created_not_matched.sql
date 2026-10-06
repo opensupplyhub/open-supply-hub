@@ -4,6 +4,7 @@ SELECT
 FROM api_facilitymatch m
 JOIN api_facility f ON m.facility_id = f.id
 WHERE m.facility_list_item_id = f.created_from_id
+AND f.is_candidate = false
 AND to_char(f.created_at, 'YYYY-MM') < to_char(now(), 'YYYY-MM')
 GROUP BY to_char(f.created_at, 'YYYY-MM')
 ORDER BY to_char(f.created_at, 'YYYY-MM');

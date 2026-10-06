@@ -19,10 +19,13 @@ FROM (
         ON s.contributor_id = c.id
         JOIN (
             SELECT to_char(m.created_at, 'YYYY-MM') as month
-            FROM api_facilitymatch m group by month
+            FROM api_facilitymatch m
+            JOIN api_facility af ON af.id = m.facility_id AND af.is_candidate = false
+            group by month
         ) z ON to_char(fm.created_at, 'YYYY-MM') <= z.month
         WHERE fm.status NOT IN ('PENDING', 'REJECTED')
     ) as fm ON f.id = fm.facility_id
+    WHERE f.is_candidate = false
     GROUP BY zmonth, f.id
 ) as c
 GROUP BY month
