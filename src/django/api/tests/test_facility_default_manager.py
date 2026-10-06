@@ -22,7 +22,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Manager
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework import serializers
 
 CANDIDATE_POLYGON_WKT = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'
@@ -54,6 +54,14 @@ class FacilityDefaultManagerTest(TestCase):
             contributor=self.contributor,
         )
         self.next_row_index = 0
+        # OSDEV-3248: candidates may only be created under the designated
+        # Earth Genome contributor, so point the setting at this fixture's
+        # contributor for the duration of each test.
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
 
         self.facility = self._create_facility(name='Confirmed')
         self.candidate = self._create_candidate()

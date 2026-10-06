@@ -1145,6 +1145,12 @@ variable "dromo_schema_id" {
   description = "Dromo schema ID for data management"
 }
 
+variable "earth_genome_contributor_id" {
+  type        = string
+  default     = ""
+  description = "EARTH_GENOME_CONTRIBUTOR_ID: id of the api_contributor row the Earth Genome candidate ingest writes under. Only this contributor may create candidate (nameless) facilities (OSDEV-3248). Empty means nobody may; set per environment before the ingest runs."
+}
+
 # VPN EC2 variables
 
 variable "vpn_ec2_ami" {

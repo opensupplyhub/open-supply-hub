@@ -11,7 +11,7 @@ from api.models import (
 
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db import IntegrityError, connection, transaction
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 CANDIDATE_POLYGON_WKT = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'
 
@@ -37,6 +37,14 @@ class FacilityCandidateFieldsTest(TestCase):
             contributor=self.contributor,
         )
         self.next_row_index = 0
+        # OSDEV-3248: candidates may only be created under the designated
+        # Earth Genome contributor, so point the setting at this fixture's
+        # contributor for the duration of each test.
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
 
     def _create_list_item(self):
         """Each Facility needs its own list item (created_from is 1:1)."""
