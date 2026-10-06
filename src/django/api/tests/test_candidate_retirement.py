@@ -184,6 +184,30 @@ class CandidateRetirementTest(APITestCase):
         item_id = self.candidate_item.id
         match_id = self.candidate_match.id
         source_id = self.candidate_source.id
+        # OSDEV-3243 keeps candidates out of api_facilityindex at the
+        # trigger, so force a row here: retirement must still clear one
+        # that exists (e.g. rows indexed before that change shipped).
+        FacilityIndex.objects.get_or_create(
+            id=os_id,
+            defaults={
+                'name': self.candidate.name,
+                'address': self.candidate.address,
+                'country_code': self.candidate.country_code,
+                'location': self.candidate.location,
+                'contributors_count': 1,
+                'contributors_id': [self.contributor.id],
+                'contributors': [
+                    {'id': self.contributor.id, 'name': self.contributor.name}
+                ],
+                'contrib_types': [self.contributor.contrib_type],
+                'facility_addresses': [{'address': self.candidate.address}],
+                'extended_fields': [],
+                'lists': [],
+                'approved_claim_ids': [],
+                'facility_names': [],
+                'sector': ['Agriculture'],
+            },
+        )
         self.assertTrue(FacilityIndex.objects.filter(id=os_id).exists())
 
         self._retire()
