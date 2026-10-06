@@ -130,6 +130,9 @@ class FacilityManager(models.Manager):
             from .facility_alias import FacilityAlias
 
             try:
+                # A NOT_A_FACILITY tombstone has facility_id None, so a
+                # retired OS ID rewrites to id=None and matches nothing
+                # rather than redirecting (OSDEV-3246).
                 id = FacilityAlias.objects.get(pk=id).facility_id
             except FacilityAlias.DoesNotExist:
                 pass

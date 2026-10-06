@@ -49,6 +49,25 @@ def location_post_delete_handler_for_opensearch(instance, **kwargs):
             '[Location Deletion] Lost connection to OpenSearch cluster.'
         )
         raise
+    except NotFoundError:
+        # opensearch-py raises on a 404 rather than returning
+        # result='not_found'. A candidate retired as NOT_A_FACILITY
+        # (OSDEV-3246) may never have been indexed, so that is expected
+        # and must not abort the deleting transaction; for a confirmed
+        # facility it is the same inconsistency reported below.
+        if instance.is_candidate:
+            log.info(
+                '[Location Deletion] Candidate %s had no OpenSearch '
+                'document; nothing to remove.',
+                instance.id,
+            )
+            return
+        signal_error_notifier(
+            '[Location Deletion] Facility not found in OpenSearch, '
+            'indicating data inconsistency.',
+            {'result': 'not_found', 'id': instance.id},
+        )
+        return
 
     if response and response.get('result') == 'not_found':
         error_log_message = (

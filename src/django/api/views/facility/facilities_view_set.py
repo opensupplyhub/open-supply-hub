@@ -8,6 +8,7 @@ from api.facility_actions.processing_facility_executor import (
 from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.services.candidate_retirement import tombstone_payload
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -1557,11 +1558,18 @@ class FacilitiesViewSet(ListModelMixin,
             return Response(response_data)
         except FacilityIndex.DoesNotExist as exc:
             # If the facility is not found but an alias is available,
-            # redirect to the alias
-            aliases = FacilityAlias.objects.filter(os_id=pk)
-            if len(aliases) == 0:
+            # redirect to the alias. A NOT_A_FACILITY tombstone has no
+            # target facility: the OS ID was retired, so answer 410 Gone
+            # instead of redirecting (OSDEV-3246).
+            alias = FacilityAlias.objects.filter(os_id=pk).first()
+            if alias is None:
                 raise NotFound() from exc
-            os_id = aliases.first().facility.id
+            if alias.facility_id is None:
+                return Response(
+                    tombstone_payload(alias),
+                    status=status.HTTP_410_GONE,
+                )
+            os_id = alias.facility_id
 
             redirect_url = f'/api/facilities/{os_id}/'
             query_string = request.META.get('QUERY_STRING', '')
