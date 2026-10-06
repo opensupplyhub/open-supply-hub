@@ -50,8 +50,11 @@ class FacilityManager(models.Manager):
       ``_base_manager``, so a claim or match that points at a candidate
       still validates. ModelForm and admin FK *form fields* build their
       choices from ``_default_manager`` instead, so an admin change form on
-      such a claim fails with "select a valid choice" (admin handling is
-      OSDEV-3379).
+      such a claim fails with "select a valid choice". Every registered
+      admin therefore declares its Facility FK read-only; the Facility
+      admin itself opts in via ``including_candidates`` and shows
+      candidates view-only (OSDEV-3379, pinned by
+      ``api/tests/test_admin_candidates.py``).
     * ``validate_unique()`` and ``validate_constraints()`` also go through
       ``_default_manager``, so form-level validation cannot see a clash
       with a candidate's ``id`` or ``(source, external_id)``. The database
