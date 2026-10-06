@@ -48,7 +48,8 @@
         { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
         { "name": "STRIPE_PRICE_ID", "value": "${stripe_price_id}" },
         { "name": "REACT_APP_DROMO_SCHEMA_ID", "value": "${dromo_schema_id}" },
-        { "name": "MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS", "value": "${memcached_view_cache_timeout_seconds}" }
+        { "name": "MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS", "value": "${memcached_view_cache_timeout_seconds}" },
+        { "name": "EARTH_GENOME_CONTRIBUTOR_ID", "value": "${earth_genome_contributor_id}" }
     ],
     "secrets": [
         { "name": "POSTGRES_USER", "valueFrom": "${rds_master_secret_arn}:username::" },

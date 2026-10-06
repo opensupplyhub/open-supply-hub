@@ -54,6 +54,7 @@ services:
       - OPENSEARCH_SSL=False
       - OPENSEARCH_SSL_CERT_VERIFICATION=False
       - EMAIL_ANONYMIZATION_SECRET=secret
+      - EARTH_GENOME_CONTRIBUTOR_ID=
     build:
       context: ./src/django
       dockerfile: Dockerfile

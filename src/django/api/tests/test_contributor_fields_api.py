@@ -84,6 +84,8 @@ class ContributorFieldsApiTest(APITestCase):
         )
 
         self.facility = Facility.objects.create(
+            name=self.list_item.name,
+            address=self.list_item.address,
             country_code=self.list_item.country_code,
             created_from=self.list_item,
             location=Point(0, 0),
@@ -127,6 +129,8 @@ class ContributorFieldsApiTest(APITestCase):
             source=self.api_source,
         )
         self.facility_two = Facility.objects.create(
+            name=self.api_list_item.name,
+            address=self.api_list_item.address,
             country_code=self.api_list_item.country_code,
             created_from=self.api_list_item,
             location=Point(0, 0),
