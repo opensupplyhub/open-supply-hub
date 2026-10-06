@@ -3081,7 +3081,13 @@ class FacilitiesViewSet(ListModelMixin,
 
         historical_facility_queryset = Facility.history.filter(id=pk)
 
-        if historical_facility_queryset.count() == 0:
+        # The history manager is not Facility.objects, so a candidate's
+        # rows are visible here (OSDEV-3376). Hide the location while its
+        # latest record is still a candidate; a location that has since
+        # been confirmed keeps its full history, and a deleted one keeps
+        # the DELETE entry it always had.
+        latest_record = historical_facility_queryset.first()
+        if latest_record is None or latest_record.is_candidate:
             raise NotFound()
 
         facility_history = create_facility_history_list(
