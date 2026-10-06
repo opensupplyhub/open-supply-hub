@@ -387,7 +387,14 @@ CACHES = {
         'BACKEND': CACHE_BACKEND,
         'LOCATION': MEMCACHED_LOCATION,
         'KEY_PREFIX': 'view',
-    }
+    },
+    'facility_downloads': {
+        # Facility download sessions must be visible to every Django
+        # process, so they can't live in the per-process default cache.
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'facility_downloads',
+    },
 }
 
 # Logging

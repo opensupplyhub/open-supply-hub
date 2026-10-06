@@ -237,6 +237,36 @@ class APIErrorMessages:
 
 class FacilitiesDownloadSettings:
     FREE_FACILITIES_DOWNLOAD_LIMIT = 5000
+    # Query param that ties pages 2..N of a download to the session that
+    # was opened (and charged) by page 1.
+    DOWNLOAD_ID_PARAM = 'download_id'
+    # Must be a cache shared by every Django process (memcached), since
+    # consecutive pages can be served by different workers or tasks.
+    SESSION_CACHE_ALIAS = 'facility_downloads'
+    SESSION_TTL_SECONDS = 1800
+
+
+class FacilitiesDownloadErrorMessages:
+    SESSION_REQUIRED = (
+        'Pages after the first one require the download_id returned in the '
+        '"next" link of the first page. Start the download from page 1.'
+    )
+    SESSION_INVALID = (
+        'The download session is invalid or has expired. Please start the '
+        'download again from page 1.'
+    )
+    SESSION_UNAVAILABLE = (
+        'Downloads are temporarily unavailable. Please try again later.'
+    )
+    LOGIN_REQUIRED = 'You must be logged in to download production locations.'
+    EMBED_SINGLE_CONTRIBUTOR = (
+        'Embedded map downloads must filter by exactly one contributor.'
+    )
+    EMBED_NOT_ENABLED = (
+        'Embedded map is not configured for the provided contributor.'
+    )
+    INVALID_PAGE = 'The page parameter must be a positive integer.'
+    INVALID_PAGE_SIZE = 'The pageSize parameter must be a positive integer.'
 
 
 class FacilitiesListSettings:

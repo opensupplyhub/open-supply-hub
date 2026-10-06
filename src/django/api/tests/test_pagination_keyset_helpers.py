@@ -46,3 +46,15 @@ class CreateQueryHashTest(SimpleTestCase):
         )
 
         self.assertEqual(first, second)
+
+    def test_hash_ignores_download_id(self):
+        first = create_query_hash(
+            self._request('countries=US&page=1'),
+            100,
+        )
+        second = create_query_hash(
+            self._request('countries=US&page=2&download_id=abc123'),
+            100,
+        )
+
+        self.assertEqual(first, second)
