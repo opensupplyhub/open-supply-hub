@@ -11,7 +11,7 @@ from api.models.transactions.index_facilities_new import index_facilities_new
 from api.signals import location_post_delete_handler_for_opensearch
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db.models.signals import post_delete
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 CANDIDATE_POLYGON_WKT = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'
 
@@ -45,6 +45,11 @@ class CandidateIndexExclusionTest(TestCase):
             name='test contributor 1',
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
         self.list = FacilityList.objects.create(
             header='header', file_name='one', name='First List'
         )
