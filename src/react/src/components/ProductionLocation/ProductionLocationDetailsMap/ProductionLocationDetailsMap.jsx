@@ -23,6 +23,10 @@ import VectorTileFacilitiesLayer, {
 } from '../../VectorTileFacilitiesLayer';
 import VectorTileFacilityGridLayer from '../../VectorTileFacilityGridLayer';
 import VectorTileGridLegend from '../../VectorTileGridLegend';
+import CandidatePolygonsLayer from '../../Candidate/CandidatePolygonsLayer';
+import CandidateValidationPanel, {
+    PANEL_VARIANTS,
+} from '../../Candidate/CandidateValidationPanel';
 
 import productionLocationDetailsMapStyles from './styles';
 import {
@@ -41,6 +45,7 @@ import {
     productionLocationDetailsRoute,
     SelectedMarkerColor,
 } from '../../../util/constants';
+import { normalizeCandidateFeatureProperties } from '../../../util/candidates';
 
 import MapPointer from '../../Icons/MapPointer';
 import IconComponent from '../../Shared/IconComponent/IconComponent';
@@ -55,7 +60,9 @@ import getSelectedDrawerField from '../utils';
  * Production location detail map: satellite base layer, zoom/center controls,
  * vector-tile facilities (markers when zoomed in, circles with count when zoomed out),
  * and Open in Google Maps. Clicking other locations navigates or shows a popup list
- * when multiple facilities share the same point.
+ * when multiple facilities share the same point. Satellite-detected candidate
+ * footprints in the viewport are drawn by CandidatePolygonsLayer; clicking one
+ * opens the CandidateValidationPanel overlay (OSDEV-3247).
  */
 const ProductionLocationDetailsMap = ({
     classes,
@@ -79,6 +86,13 @@ const ProductionLocationDetailsMap = ({
         openDrawer,
         closeDrawer,
     ] = useDrawerState(null);
+    const [activeCandidate, setActiveCandidate] = useState(null);
+    const [candidateRefreshKey, setCandidateRefreshKey] = useState(0);
+    const isCandidatePage = !!get(
+        singleFacilityData,
+        'properties.is_candidate',
+        false,
+    );
 
     const address = get(singleFacilityData, 'properties.address', '') || '';
     const coordinatesDisplay = hasCoordinates
@@ -189,6 +203,22 @@ const ProductionLocationDetailsMap = ({
             setCurrentMapZoomLevel(newZoom);
         }
     }, []);
+
+    const handleCandidateClick = useCallback(properties => {
+        setActiveCandidate(normalizeCandidateFeatureProperties(properties));
+    }, []);
+
+    const handleCloseCandidate = useCallback(
+        () => setActiveCandidate(null),
+        [],
+    );
+
+    // A recorded vote can change a candidate's state; redraw the layer so
+    // its styling matches without a reload.
+    const handleCandidateValidationChange = useCallback(
+        () => setCandidateRefreshKey(current => current + 1),
+        [],
+    );
 
     return (
         <div
@@ -329,7 +359,22 @@ const ProductionLocationDetailsMap = ({
                                     zoomLevel={currentMapZoomLevel}
                                 />
                             )}
+                            <CandidatePolygonsLayer
+                                onCandidateClick={handleCandidateClick}
+                                selectedOsId={isCandidatePage ? osID : null}
+                                refreshKey={candidateRefreshKey}
+                            />
                         </ReactLeafletMap>
+                        {activeCandidate && (
+                            <CandidateValidationPanel
+                                candidate={activeCandidate}
+                                variant={PANEL_VARIANTS.OVERLAY}
+                                onClose={handleCloseCandidate}
+                                onValidationChange={
+                                    handleCandidateValidationChange
+                                }
+                            />
+                        )}
                     </div>
                 </div>
                 <div

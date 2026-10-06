@@ -93,6 +93,10 @@ function ProductionLocationDetailsContainer({
 
     const requestedId = normalizedOsID || '';
     const loadedId = data?.id || '';
+    // Sidebar actions (suggest correction, report duplicate/closure,
+    // supply chain, section nav) assume a confirmed facility; a
+    // satellite-detected candidate gets only the back link (OSDEV-3247).
+    const isCandidate = !!data?.properties?.is_candidate;
     const isStaleData =
         requestedId && requestedOsId && requestedOsId !== requestedId;
 
@@ -140,13 +144,15 @@ function ProductionLocationDetailsContainer({
                 <div className={classes.backToSearch}>
                     <BackToSearch history={history} />
                 </div>
-                <Grid className={classes.sidebar}>
-                    <div className={classes.navBar}>
-                        <NavBar />
-                    </div>
-                    <ContributeFields osId={osID} />
-                    <SupplyChain />
-                </Grid>
+                {!isCandidate && (
+                    <Grid className={classes.sidebar}>
+                        <div className={classes.navBar}>
+                            <NavBar />
+                        </div>
+                        <ContributeFields osId={osID} />
+                        <SupplyChain />
+                    </Grid>
+                )}
             </Grid>
             <Grid item xs={12} md={10}>
                 <ProductionLocationDetailsContent
