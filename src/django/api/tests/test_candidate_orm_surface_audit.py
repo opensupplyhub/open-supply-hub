@@ -417,6 +417,11 @@ class ModerationApprovalCandidateAuditTest(
         # The base class already made the regular user and superuser;
         # reuse its credentials and only add the facilities.
         self.user_email = self.email
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
         self.user_password = self.password
         self.list = FacilityList.objects.create(
             header='header', file_name='one', name='First List'
