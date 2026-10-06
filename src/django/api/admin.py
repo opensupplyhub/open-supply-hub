@@ -280,6 +280,34 @@ class FacilityAliasAdmin(SimpleHistoryAdmin):
     )
 
 
+class FacilityCandidateVoteAdmin(admin.ModelAdmin):
+    # Read-only (OSDEV-3245): votes are written through the API only.
+    list_display = ('facility', 'user', 'vote', 'created_at', 'updated_at')
+    list_filter = ('vote',)
+    search_fields = ('facility__id', 'user__email')
+    readonly_fields = ('facility', 'user', 'vote', 'created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+class FacilityCandidateRetirementRequestAdmin(admin.ModelAdmin):
+    # Read-only (OSDEV-3245): opened and dissolved by vote writes, closed
+    # by POST /api/v1/candidate-retirement-requests/{id}/approve/.
+    list_display = ('facility', 'tally', 'created_at', 'updated_at')
+    search_fields = ('facility__id',)
+    readonly_fields = ('facility', 'tally', 'created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 class SourceAdmin(admin.ModelAdmin):
     autocomplete_fields = ('contributor', )
     readonly_fields = ('source_type', 'facility_list', 'create')
@@ -510,6 +538,11 @@ admin_site.register(models.FacilityClaim, FacilityClaimAdmin)
 admin_site.register(models.FacilityClaimReviewNote,
                     FacilityClaimReviewNoteAdmin)
 admin_site.register(models.FacilityAlias, FacilityAliasAdmin)
+admin_site.register(models.FacilityCandidateVote, FacilityCandidateVoteAdmin)
+admin_site.register(
+    models.FacilityCandidateRetirementRequest,
+    FacilityCandidateRetirementRequestAdmin,
+)
 admin_site.register(Flag, FlagAdmin)
 admin_site.register(Sample, SampleAdmin)
 admin_site.register(Switch, SwitchAdmin)
