@@ -1,10 +1,12 @@
 from typing import List
+from api.models.zone_set import ZoneSet
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
 from api.partner_fields.india_labour_line_provider import (
     IndiaLabourLineProvider,
 )
 from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
+from api.partner_fields.zone_set_provider import ZoneSetProvider
 
 
 class SystemPartnerFieldRegistry:
@@ -17,8 +19,17 @@ class SystemPartnerFieldRegistry:
 
     @property
     def providers(self) -> List[SystemPartnerFieldProvider]:
-        """Get all registered providers."""
-        return self.__providers
+        """
+        Get all registered providers.
+
+        The hard-wired providers are registered once at startup. Zone
+        set providers are added on each access, one per active
+        `ZoneSet` that has a partner field linked, so a dataset
+        uploaded or retired in the admin takes effect on the next
+        request without a deploy. The lookup is one small query per
+        call (the table holds a handful of rows).
+        """
+        return [*self.__providers, *self.__zone_set_providers()]
 
     def __register_providers(self) -> None:
         """Register all system partner field providers."""
@@ -29,6 +40,15 @@ class SystemPartnerFieldRegistry:
                 IndiaLabourLineProvider(),
             ]
         )
+
+    def __zone_set_providers(self) -> List[ZoneSetProvider]:
+        """Build a provider for every active, linked zone set."""
+        zone_sets = (
+            ZoneSet.objects.filter(active=True, partner_field__isnull=False)
+            .select_related('partner_field')
+            .order_by('name')
+        )
+        return [ZoneSetProvider(zone_set) for zone_set in zone_sets]
 
 
 system_partner_field_registry = SystemPartnerFieldRegistry()
