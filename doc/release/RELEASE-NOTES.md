@@ -17,6 +17,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0243_add_claim_address_pin_move_switch.py` - Adds the `enable_claim_address_pin_move` waffle switch, created inactive, gating whether an approved claim's changed address moves the production location pin. See OSDEV-3406.
 * `0244_add_relaxed_claim_eligibility_switch.py` - Adds the `relaxed_claim_eligibility` waffle switch, created inactive, gating the employee-eligibility wording across the claim form, facility claim banner, confirmation emails and moderator message templates.
 * `0245_add_claim_quality_check_switch.py` - Adds the `claim_quality_check` waffle switch, created active, that is the kill switch for the LLM call behind the claim name/address quality check; the check also requires `enable_claim_name_address_edit`, so deploying changes nothing. See OSDEV-3489.
+* `0246_add_cascale_affiliation.py` - Adds `Cascale` to the `facility_affiliations` choices on `api_facilityclaim` and its history table. The migration is state-only (`SeparateDatabaseAndState` with no database operations) and emits no SQL. `Sustainable Apparel Coalition` is deliberately kept as a valid choice so the claims already storing that string keep validating. See OSDEV-2219.
 
 #### Schema changes
 * [OSDEV-3510](https://opensupplyhub.atlassian.net/browse/OSDEV-3510) - `api_moderationevent.claim_id` loses its unique constraint (one-to-one → foreign key) and gains a plain non-unique index in its place, built by a regular `CREATE INDEX` inside the migration's transaction; the table is small, so the write lock it holds is brief. No new tables or columns.
@@ -50,6 +51,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### What's new
 * Moderators see complete ContriBot items on the Contributor List Approval Queue again — contributor, OS Hub link, list size and error ratio are populated, and items are named the same way as every other item on the board. No user-facing changes outside the internal moderation queue.
 * [OSDEV-3425](https://opensupplyhub.atlassian.net/browse/OSDEV-3425) - Update Navbar icon link to redirect the user to the landing page at `https://info.opensupplyhub.org/home-page` so the user will be able to go back to the home page instead of getting stuck in the platform.
+* [OSDEV-2219](https://opensupplyhub.atlassian.net/browse/OSDEV-2219) - The Affiliations dropdown in the claim form now offers **Cascale**, the current name of the organization previously called the Sustainable Apparel Coalition, and no longer offers the former name, so new claims can only record Cascale. Claims submitted before this release keep their stored `Sustainable Apparel Coalition` value and continue to display and save normally, because that value remains valid on the backend. Converting those existing records to the new name, aligning the Certifications/Standards/Regulations list with StandardsMap, and making both lists editable from the Django admin all remain open on OSDEV-2219 and are not part of this release.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
