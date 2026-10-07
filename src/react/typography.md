@@ -20,7 +20,7 @@ How to use typography across the application: which shared styles to use, how to
 |------|-------------|-----------|-------------------|
 | **Page title** | Main title of a page (e.g. facility/location name) | (custom from `formLabelTight`) | `<Typography component="h1" variant="headline" className={classes.title} />` |
 | **Major section** | Big section blocks (e.g. claim intro) | (custom as needed) | `component="h2"`, `variant="title"` |
-| **Section title** | Subsections ("Understanding Data Sources", "Partner Data", etc.) | `sectionTitle` | `component="h3"`, `variant="title"`, `className` with `...typography.sectionTitle` |
+| **Section title** | Subsections ("Partner Data", "Claim Data", etc.) | `sectionTitle` | `component="h3"`, `variant="title"`, `className` with `...typography.sectionTitle` |
 | **Field / UI label** | Form labels, bold labels ("OS ID:", "CLAIMED PROFILE", "Claimed", "Crowdsourced") | `formLabel` or `formLabelTight` | `component="span"` or `"label"`, `variant="body1"`, `className` with `...typography.formLabelTight` |
 | **Body / paragraph** | Normal paragraphs, descriptions, "Show more" labels | `bodyText` | `component="p"` or `"span"`, `variant="body1"`, `className` with `...typography.bodyText` |
 | **Section description** | Intro or explanatory block under a section | `sectionDescription` | `component="p"`, `variant="body1"`, `className` with `...typography.sectionDescription` |
@@ -64,7 +64,7 @@ How to use typography across the application: which shared styles to use, how to
   `component="h2"`, `variant="title"`, plus custom class if needed.
 
 - **h3 – Section title**
-  Subsections ("Understanding Data Sources", "Partner Data", "Interactive map", etc.).
+  Subsections ("Partner Data", "Claim Data", "Interactive map", etc.).
   `component="h3"`, `variant="title"`, `className` with `...typography.sectionTitle` (and margin overrides as needed, e.g. `marginTop: 0`).
 
 - **h4 / h5 / h6**

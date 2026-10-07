@@ -8,8 +8,12 @@ export const DATA_SOURCES_TOOLTIP_TEXT =
 export const DATA_SOURCES_LEARN_MORE_URL =
     'https://info.opensupplyhub.org/resources/an-open-data-model';
 
+export const DATA_LABELS_TITLE = 'Understanding Data Labels';
+export const DATA_LABELS_BACK_TEXT = 'Data Labels';
+
 export const DATA_SOURCES_ITEMS = Object.freeze([
     Object.freeze({
+        key: 'claimed',
         Icon: CheckCircleOutline,
         iconClassNameKey: 'iconClaimed',
         labelClassNameKey: 'labelClaimed',
@@ -20,6 +24,7 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
             'https://info.opensupplyhub.org/resources/claim-a-facility',
     }),
     Object.freeze({
+        key: 'crowdsourced',
         Icon: People,
         iconClassNameKey: 'iconCrowdsourced',
         labelClassNameKey: 'labelCrowdsourced',
@@ -29,6 +34,7 @@ export const DATA_SOURCES_ITEMS = Object.freeze([
         learnMoreUrl: DATA_SOURCES_LEARN_MORE_URL,
     }),
     Object.freeze({
+        key: 'spotlight',
         Icon: HandshakeIcon,
         iconClassNameKey: 'iconPartner',
         labelClassNameKey: 'labelPartner',
