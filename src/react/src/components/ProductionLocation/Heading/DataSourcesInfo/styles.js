@@ -15,6 +15,19 @@ const TEXT_SIZE = '12px';
 const ICON_SIZE = 12;
 const CHEVRON_SIZE = 14;
 const PANEL_MIN_HEIGHT = 108;
+/*
+The prototype tiles a grey panel onto a white card. Our page background is
+already COLOURS.LIGHT_GREY, so reusing that grey here would make the panel
+vanish into the page. White separates it, and matches the other panels on the
+profile.
+*/
+const PANEL_BG = COLOURS.WHITE;
+/*
+text.secondary is rgba(0, 0, 0, .54), which at 12px clears 4.5:1 on white only
+just. The legend should still read as secondary to the near-black title, so go
+one step darker rather than relying on that margin.
+*/
+const LEGEND_TEXT = COLOURS.MEDIUM_GREY;
 const SLIDE_PADDING = '12px 14px';
 const SLIDE_EASE = 'cubic-bezier(.4, 0, .2, 1)';
 
@@ -52,7 +65,7 @@ export default theme => {
         font: 'inherit',
         textAlign: 'left',
         cursor: 'pointer',
-        color: theme.palette.text.secondary,
+        color: LEGEND_TEXT,
         '&:hover': {
             color: theme.palette.text.primary,
         },
@@ -69,7 +82,7 @@ export default theme => {
             display: 'grid',
             overflow: 'hidden',
             minHeight: PANEL_MIN_HEIGHT,
-            backgroundColor: COLOURS.LIGHT_GREY,
+            backgroundColor: PANEL_BG,
             /*
             The OS ID panel carries the purple fill and the row carries the
             outer border, so the legend contributes only the divider between
@@ -139,7 +152,7 @@ export default theme => {
         }),
         infoButton: Object.freeze({
             padding: 0,
-            color: theme.palette.text.secondary,
+            color: LEGEND_TEXT,
             '& svg': {
                 fontSize: CHEVRON_SIZE,
             },
@@ -187,7 +200,7 @@ export default theme => {
             margin: 0,
             fontSize: TEXT_SIZE,
             lineHeight: 1.5,
-            color: theme.palette.text.secondary,
+            color: LEGEND_TEXT,
         }),
         learnMoreLink: Object.freeze({
             whiteSpace: 'nowrap',
