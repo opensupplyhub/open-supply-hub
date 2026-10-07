@@ -1,3 +1,5 @@
+import COLOURS from '../../../util/COLOURS';
+
 export default theme =>
     Object.freeze({
         container: Object.freeze({
@@ -14,6 +16,12 @@ export default theme =>
             display: 'grid',
             gridTemplateColumns: '1fr',
             marginBottom: '16px',
+            /*
+            The row owns the outer border so the two panels inside it share one
+            colour. Each contributes only its fill, and the legend adds the
+            divider between them.
+            */
+            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
             [theme.breakpoints.up('md')]: {
                 gridTemplateColumns: '2fr 1fr',
             },

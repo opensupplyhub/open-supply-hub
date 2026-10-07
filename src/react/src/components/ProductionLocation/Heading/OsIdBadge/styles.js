@@ -1,8 +1,6 @@
 import COLOURS from '../../../../util/COLOURS';
-import { getTypographyStyles } from '../../../../util/typographyStyles';
 
 export default theme => {
-    const typography = getTypographyStyles(theme);
     const spacing = theme.spacing.unit ?? 8;
     return Object.freeze({
         /*
@@ -16,8 +14,7 @@ export default theme => {
             justifyContent: 'center',
             gap: `${spacing}px`,
             padding: '14px 20px',
-            border: `1px solid ${COLOURS.LIGHT_PURPLE_BORDER}`,
-            backgroundColor: 'rgba(128, 64, 191, 0.05)',
+            backgroundColor: COLOURS.LIGHT_LAVENDER,
             [theme.breakpoints.down(450)]: {
                 padding: '12px 14px',
             },
@@ -28,8 +25,7 @@ export default theme => {
             gap: spacing * 0.5,
         }),
         osIdLabel: Object.freeze({
-            fontWeight: 'bold',
-            ...typography.formLabelTight,
+            fontWeight: 600,
             fontSize: '1rem',
         }),
         osIdValue: {
@@ -70,7 +66,6 @@ export default theme => {
             [theme.breakpoints.down(450)]: {
                 flex: 1,
                 width: '100%',
-                borderRight: '0px',
             },
         },
         buttonText: Object.freeze({

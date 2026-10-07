@@ -1,65 +1,107 @@
 import COLOURS from '../../../../util/COLOURS';
 
 /*
-The data labels legend is explanatory chrome, not facility content, so it is
-deliberately typed well below the page's section headings and sits beside the
-OS ID rather than under it. See OSDEV-3239.
+The data labels legend is explanatory chrome, not facility content, so it sits
+beside the OS ID rather than under it and is typed well below the page's
+section headings. See OSDEV-3239.
+
+It deliberately does not build on getTypographyStyles: that scale starts at
+16px and exists for page content, so every step would have to be overridden
+here. The sizes the legend does use are named below instead, so there is still
+one place to change them.
 */
+const TITLE_SIZE = '11px';
+const TEXT_SIZE = '12px';
+const ICON_SIZE = 12;
+const CHEVRON_SIZE = 14;
 const PANEL_MIN_HEIGHT = 108;
+const SLIDE_PADDING = '12px 14px';
+const SLIDE_EASE = 'cubic-bezier(.4, 0, .2, 1)';
 
 export default theme => {
     const spacing = theme.spacing.unit ?? 8;
+    const panelBorder = `1px solid ${COLOURS.LIGHT_BORDER_GREY}`;
+
     const colouredIcon = colour =>
         Object.freeze({
             flexShrink: 0,
-            width: 12,
-            height: 12,
-            fontSize: 12,
+            width: ICON_SIZE,
+            height: ICON_SIZE,
+            fontSize: ICON_SIZE,
             color: colour,
         });
     const colouredLabel = colour =>
         Object.freeze({
-            fontSize: '12px',
+            fontSize: TEXT_SIZE,
             fontWeight: 700,
             color: colour,
         });
 
+    /*
+    Both controls in the panel are text buttons: no chrome of their own, and
+    they take their colour from the surrounding legend.
+    */
+    const textButton = Object.freeze({
+        display: 'flex',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        background: 'none',
+        border: 'none',
+        margin: 0,
+        padding: 0,
+        font: 'inherit',
+        textAlign: 'left',
+        cursor: 'pointer',
+        color: theme.palette.text.secondary,
+        '&:hover': {
+            color: theme.palette.text.primary,
+        },
+    });
+
     return Object.freeze({
+        /*
+        A single-cell grid with both slides stacked in it, so the panel is
+        always as tall as the taller slide. That keeps the height stable while
+        sliding (nothing below the row shifts) without ever clipping content,
+        which a fixed height plus absolute slides could not do.
+        */
         container: Object.freeze({
-            position: 'relative',
+            display: 'grid',
             overflow: 'hidden',
             minHeight: PANEL_MIN_HEIGHT,
             backgroundColor: COLOURS.LIGHT_GREY,
-            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
             /*
-            The OS ID panel sits above (mobile) or to the left (desktop) and
-            carries its own border, so drop the touching edge to avoid a
-            doubled divider line.
+            The OS ID panel carries the purple fill and the row carries the
+            outer border, so the legend contributes only the divider between
+            the two: above it when stacked, beside it from md up.
             */
-            borderTop: 0,
+            borderTop: panelBorder,
             [theme.breakpoints.up('md')]: {
-                borderTop: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
-                borderLeft: 0,
+                borderTop: 0,
+                borderLeft: panelBorder,
             },
         }),
         /*
-        Each slide is exactly the viewport's size and is moved by a percentage
-        of its own width. Nothing is ever wider than the viewport it sits in,
-        which keeps the translate off the scrollable-overflow path.
+        Each slide fills the shared cell and moves by a percentage of its own
+        width, so nothing is ever wider than the element clipping it.
+        Visibility is swapped only once the slide has finished moving, which
+        keeps the off-screen copy out of find-in-page and the accessibility
+        tree without cutting the animation short.
         */
         slide: Object.freeze({
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
+            gridArea: '1 / 1',
+            minWidth: 0,
             boxSizing: 'border-box',
-            padding: '12px 14px',
+            padding: SLIDE_PADDING,
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            overflowY: 'auto',
-            transition: 'transform .32s cubic-bezier(.4, 0, .2, 1)',
+            /*
+            `safe` so that content taller than the panel can never be pushed
+            above the top edge where it cannot be reached. Browsers without
+            `safe` fall back to flex-start, which is also fine.
+            */
+            justifyContent: 'safe center',
+            transition: `transform .32s ${SLIDE_EASE}, visibility 0s`,
             '@media (prefers-reduced-motion: reduce)': {
                 transition: 'none',
             },
@@ -73,14 +115,22 @@ export default theme => {
         slideOutRight: Object.freeze({
             transform: 'translateX(100%)',
         }),
+        /* Hidden only after the slide has moved out of view. */
+        slideHidden: Object.freeze({
+            visibility: 'hidden',
+            transitionDelay: '0s, .32s',
+            '@media (prefers-reduced-motion: reduce)': {
+                transitionDelay: '0s',
+            },
+        }),
         titleRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             gap: `${spacing * 0.5}px`,
-            marginBottom: spacing * 0.75,
+            marginBottom: spacing,
         }),
         sectionTitle: Object.freeze({
-            fontSize: '11px',
+            fontSize: TITLE_SIZE,
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '.05em',
@@ -91,7 +141,7 @@ export default theme => {
             padding: 0,
             color: theme.palette.text.secondary,
             '& svg': {
-                fontSize: 14,
+                fontSize: CHEVRON_SIZE,
             },
             '&:hover': {
                 color: theme.palette.text.primary,
@@ -101,67 +151,41 @@ export default theme => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'flex-start',
-            gap: '1px',
+            gap: `${spacing * 0.25}px`,
         }),
         item: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            gap: '7px',
-            background: 'none',
-            border: 'none',
-            margin: 0,
-            padding: '2px 0',
-            font: 'inherit',
-            fontSize: '12px',
+            ...textButton,
+            gap: `${spacing}px`,
+            padding: `${spacing * 0.25}px 0`,
+            fontSize: TEXT_SIZE,
             fontWeight: 500,
-            textAlign: 'left',
-            cursor: 'pointer',
-            color: theme.palette.text.secondary,
-            '&:hover': {
-                color: theme.palette.text.primary,
-            },
-        }),
-        itemLabel: Object.freeze({
-            color: 'inherit',
-        }),
-        chevron: Object.freeze({
-            flexShrink: 0,
-            fontSize: 14,
-            color: theme.palette.text.secondary,
         }),
         backButton: Object.freeze({
-            display: 'flex',
-            alignItems: 'center',
-            alignSelf: 'flex-start',
-            gap: '2px',
-            background: 'none',
-            border: 'none',
-            margin: `0 0 ${spacing * 0.75}px`,
-            padding: 0,
-            font: 'inherit',
-            fontSize: '11px',
+            ...textButton,
+            gap: `${spacing * 0.25}px`,
+            marginBottom: spacing * 0.5,
+            fontSize: TITLE_SIZE,
             fontWeight: 700,
             textTransform: 'uppercase',
             letterSpacing: '.04em',
-            cursor: 'pointer',
-            color: theme.palette.text.secondary,
-            '&:hover': {
-                color: theme.palette.text.primary,
-            },
         }),
-        backChevron: Object.freeze({
+        /*
+        No colour of its own, so it follows the hover state of the button it
+        sits in rather than staying grey while the label beside it darkens.
+        */
+        chevron: Object.freeze({
             flexShrink: 0,
-            fontSize: 14,
+            fontSize: CHEVRON_SIZE,
         }),
         detailTitle: Object.freeze({
             display: 'flex',
             alignItems: 'center',
-            gap: '7px',
+            gap: `${spacing}px`,
             marginBottom: spacing * 0.5,
         }),
         detailText: Object.freeze({
             margin: 0,
-            fontSize: '12px',
+            fontSize: TEXT_SIZE,
             lineHeight: 1.5,
             color: theme.palette.text.secondary,
         }),
@@ -173,6 +197,7 @@ export default theme => {
                 textDecoration: 'underline',
             },
         }),
+        /* Applied by key from DATA_SOURCES_ITEMS in constants.js. */
         iconClaimed: colouredIcon(COLOURS.DARK_GREEN),
         iconCrowdsourced: colouredIcon(COLOURS.ORANGE),
         iconPartner: colouredIcon(COLOURS.PURPLE),

@@ -16,6 +16,8 @@ import {
 } from './constants';
 import productionLocationDetailsDataSourcesInfoStyles from './styles';
 
+const DETAIL_PANEL_ID = 'data-labels-detail-panel';
+
 const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
     /*
     The detail slide keeps the last opened item mounted after the panel slides
@@ -59,7 +61,7 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
             <div
                 className={`${classes.slide} ${
                     isDetailOpen ? classes.slideOutLeft : classes.slideIn
-                }`}
+                } ${isDetailOpen ? classes.slideHidden : ''}`}
                 aria-hidden={isDetailOpen}
                 data-testid="data-labels-list"
             >
@@ -91,6 +93,10 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                             title={item.title}
                             onSelect={() => showDetail(item)}
                             tabIndex={isDetailOpen ? -1 : 0}
+                            controlsId={DETAIL_PANEL_ID}
+                            isExpanded={
+                                isDetailOpen && detailItem?.key === item.key
+                            }
                             buttonRef={node => {
                                 itemRefs.current[item.key] = node;
                             }}
@@ -99,10 +105,22 @@ const ProductionLocationDetailsDataSourcesInfo = ({ classes, className }) => {
                 </div>
             </div>
             <div
+                id={DETAIL_PANEL_ID}
                 className={`${classes.slide} ${
                     isDetailOpen ? classes.slideIn : classes.slideOutRight
-                }`}
+                } ${isDetailOpen ? '' : classes.slideHidden}`}
                 aria-hidden={!isDetailOpen}
+                /*
+                The panel's only heading lives on the list slide, which is
+                hidden while the detail shows, so name the detail after the
+                label it is describing.
+                */
+                role="group"
+                aria-label={
+                    detailItem
+                        ? `${detailItem.title} data label`
+                        : DATA_LABELS_TITLE
+                }
                 data-testid="data-labels-detail"
             >
                 <DataSourceDetail

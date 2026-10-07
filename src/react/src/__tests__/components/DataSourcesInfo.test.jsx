@@ -91,7 +91,9 @@ describe('ProductionLocation DataSourcesInfo', () => {
         renderDataSourcesInfo();
 
         fireEvent.click(screen.getByRole('button', { name: 'Crowdsourced' }));
-        fireEvent.click(screen.getByTestId('data-label-back'));
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Back to Data Labels' }),
+        );
 
         expect(screen.getByTestId('data-labels-list')).toHaveAttribute(
             'aria-hidden',
@@ -136,6 +138,36 @@ describe('ProductionLocation DataSourcesInfo', () => {
             'tabindex',
             '0',
         );
+    });
+
+    test('names the detail panel after the label it describes', () => {
+        renderDataSourcesInfo();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Claimed' }));
+
+        expect(
+            screen.getByRole('group', { name: 'Claimed data label' }),
+        ).toBeInTheDocument();
+    });
+
+    test('points each label at the detail panel it expands', () => {
+        renderDataSourcesInfo();
+
+        const claimed = screen.getByRole('button', { name: 'Claimed' });
+        const crowdsourced = screen.getByRole('button', {
+            name: 'Crowdsourced',
+        });
+        const panelId = screen
+            .getByTestId('data-labels-detail')
+            .getAttribute('id');
+
+        expect(claimed).toHaveAttribute('aria-controls', panelId);
+        expect(claimed).toHaveAttribute('aria-expanded', 'false');
+
+        fireEvent.click(claimed);
+
+        expect(claimed).toHaveAttribute('aria-expanded', 'true');
+        expect(crowdsourced).toHaveAttribute('aria-expanded', 'false');
     });
 
     test('renders info button for data sources tooltip', () => {

@@ -18,9 +18,15 @@ const DataSourceDetail = ({
             className={classes.backButton}
             onClick={onBack}
             tabIndex={tabIndex}
+            /*
+            The visible text is just the destination, which on its own does
+            not read as a way back. The accessible name still contains it, so
+            voice control that targets the visible label keeps working.
+            */
+            aria-label={`Back to ${DATA_LABELS_BACK_TEXT}`}
             data-testid="data-label-back"
         >
-            <ChevronLeft className={classes.backChevron} aria-hidden />
+            <ChevronLeft className={classes.chevron} aria-hidden />
             {DATA_LABELS_BACK_TEXT}
         </button>
         {item && (
