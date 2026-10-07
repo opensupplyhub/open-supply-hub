@@ -16,10 +16,10 @@ from api.models.source import Source
 from api.models.user import User
 
 RESOLVER_URI = (
-    'https://idr.credentials.responsiblebusiness.org/rba/G-FA-10017485'
+    'https://resolver.example.org/records/FAC-00000001'
 )
 OTHER_RESOLVER_URI = (
-    'https://idr.credentials.responsiblebusiness.org/rba/G-FA-10017486'
+    'https://resolver.example.org/records/FAC-00000002'
 )
 
 
@@ -28,8 +28,8 @@ class TestIdentityRecordRegistration(APITestCase):
     The registration endpoint from scope doc 3.2 (OSDEV-3580).
 
     The literal paths are asserted rather than reversed, because the paths
-    are the contract: Pyx and Unosquare are building their FR-05 call
-    against them and have had them since 24 September.
+    are the contract: the issuer and the registrant are building their
+    FR-05 call against them and cannot absorb a silent rename.
     """
 
     def setUp(self):
@@ -82,8 +82,8 @@ class TestIdentityRecordRegistration(APITestCase):
         self.body = {
             'resolver_uri': RESOLVER_URI,
             'record_type': 'untp:DigitalFacilityRecord',
-            'issuer': 'did:web:credentials.responsiblebusiness.org',
-            'registrant_reference': 'G-FA-10017485',
+            'issuer': 'did:web:issuer.example.org',
+            'registrant_reference': 'FAC-00000001',
         }
         self.client.force_login(self.user)
 
@@ -181,7 +181,7 @@ class TestIdentityRecordRegistration(APITestCase):
         # A real minted identifier with a valid checksum, deliberately not
         # created in this test database.
         url = (
-            '/api/v1/production-locations/AT2026278BXJ6AT/identity-records/'
+            '/api/v1/production-locations/XX2000002AAAAA6/identity-records/'
         )
 
         response = self._post(url=url)
@@ -195,7 +195,7 @@ class TestIdentityRecordRegistration(APITestCase):
         Section 2.7 promises, so refusing it here would break the link the
         reverse direction depends on.
         """
-        alias_os_id = 'TH2026278GC5XXJ'
+        alias_os_id = 'XX2000001AAAAA5'
         FacilityAlias.objects.create(
             os_id=alias_os_id,
             facility=self.facility,
@@ -228,8 +228,8 @@ class TestIdentityRecordRegistration(APITestCase):
         body = dict(
             self.body,
             resolver_uri=(
-                'https://documents.credentials.responsiblebusiness.org/'
-                'b157c46d-1e54-424d-8f96-14ab192c4d1f.json'
+                'https://documents.example.org/'
+                '00000000-0000-4000-8000-000000000001.json'
             ),
         )
 
@@ -277,7 +277,7 @@ class TestIdentityRecordRegistration(APITestCase):
     def test_status_for_unknown_registration_is_not_found(self):
         """An unknown or malformed handle is a miss, not a crash."""
         for handle in (
-            '1d4f7c2e-9b31-4a6d-8f10-2c5e7a9b0d44',
+            '00000000-0000-4000-8000-000000000002',
             'not-a-uuid',
         ):
             with self.subTest(moderation_id=handle):

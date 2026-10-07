@@ -5,12 +5,12 @@ from django.utils import timezone
 
 from api.models import IdentityRecordAssociation
 
-OS_ID = 'TH2026278GC5XXJ'
+OS_ID = 'XX2000001AAAAA5'
 RESOLVER_URI = (
-    'https://idr.credentials.responsiblebusiness.org/rba/G-FA-10017485'
+    'https://resolver.example.org/records/FAC-00000001'
 )
 OTHER_RESOLVER_URI = (
-    'https://idr.credentials.responsiblebusiness.org/rba/G-FA-10017486'
+    'https://resolver.example.org/records/FAC-00000002'
 )
 
 
@@ -27,8 +27,8 @@ class IdentityRecordAssociationTest(TestCase):
             'os_id': OS_ID,
             'resolver_uri': RESOLVER_URI,
             'record_type': 'untp:DigitalFacilityRecord',
-            'issuer': 'did:web:credentials.responsiblebusiness.org',
-            'registrant_reference': 'G-FA-10017485',
+            'issuer': 'did:web:issuer.example.org',
+            'registrant_reference': 'FAC-00000001',
         }
         fields.update(overrides)
         return IdentityRecordAssociation(**fields)
@@ -44,9 +44,9 @@ class IdentityRecordAssociationTest(TestCase):
         self.assertEqual(found.resolver_uri, RESOLVER_URI)
         self.assertEqual(found.record_type, 'untp:DigitalFacilityRecord')
         self.assertEqual(
-            found.issuer, 'did:web:credentials.responsiblebusiness.org'
+            found.issuer, 'did:web:issuer.example.org'
         )
-        self.assertEqual(found.registrant_reference, 'G-FA-10017485')
+        self.assertEqual(found.registrant_reference, 'FAC-00000001')
         self.assertIsNotNone(found.uuid)
 
     def test_same_os_id_and_resolver_twice_is_rejected(self):
@@ -82,9 +82,9 @@ class IdentityRecordAssociationTest(TestCase):
     def test_non_https_resolver_uri_is_rejected(self):
         """AC#3: the Resolver URI must be an absolute HTTPS URI."""
         for bad in (
-            'http://idr.credentials.responsiblebusiness.org/rba/G-FA-1',
-            '/rba/G-FA-10017485',
-            'idr.credentials.responsiblebusiness.org/rba/G-FA-10017485',
+            'http://resolver.example.org/records/FAC-00000001',
+            '/records/FAC-00000001',
+            'resolver.example.org/records/FAC-00000001',
             'ftp://example.org/record',
             'not a uri at all',
         ):

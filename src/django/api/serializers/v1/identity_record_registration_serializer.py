@@ -6,9 +6,9 @@ class IdentityRecordRegistrationSerializer(serializers.Serializer):
     """
     Request body for registering an external record against an OS ID.
 
-    Shape is fixed by Section 3.2 of the OS Hub technical scope doc, which
-    has been circulated since 24 September and which Pyx and Unosquare are
-    building their FR-05 call against. Do not change it without telling them.
+    Shape is fixed by Section 3.2 of the OS Hub technical scope doc. The
+    issuer and the registrant are building their FR-05 call against it, so
+    do not change it without telling them.
     """
 
     resolver_uri = serializers.CharField(
@@ -49,13 +49,13 @@ class IdentityRecordRegistrationSerializer(serializers.Serializer):
 
         Registering a Credential URL points at one specific version and
         silently breaks the always-current guarantee in Section 3.3, which
-        is the whole premise of the pilot. Section 3.5 records that RBA's
-        credential host differs from their resolver host, so the obvious
-        mistake is catchable. This is a guard against the common error, not
-        a general-purpose detector: a Credential URL on the resolver host
-        would still pass.
+        is the whole premise of the pilot. Credential URLs in this pilot
+        address a document directly, so a .json suffix catches the obvious
+        mistake. This is a guard against the common error, not a
+        general-purpose detector: a Credential URL served without that
+        suffix would still pass.
         """
-        if '/documents.credentials.' in value or value.endswith('.json'):
+        if value.endswith('.json'):
             raise serializers.ValidationError(
                 'This looks like a Credential URL rather than a Resolver '
                 'URI. Register the resolver link, which stays current as '
