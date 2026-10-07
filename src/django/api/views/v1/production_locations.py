@@ -1,6 +1,7 @@
 import logging
 import copy
 from typing import Tuple, List, Any, Optional, Dict
+from uuid import UUID
 
 from django.http import QueryDict
 from django.db import transaction
@@ -9,7 +10,10 @@ from rest_framework import status
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
+from rest_framework.decorators import action
 from waffle import switch_is_active
+
+from django.utils import timezone
 
 from api.views.v1.utils import (
     serialize_params,
@@ -36,8 +40,15 @@ from api.serializers.v1.ignore_warnings_query_param_serializer \
     import IgnoreWarningsQueryParamSerializer
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
+from api.models.facility.facility_alias import FacilityAlias
+from api.models.identity_record_association import (
+    IdentityRecordAssociation,
+)
 from api.models.partner_field import PartnerField
 from api.models.extended_field import ExtendedField
+from api.os_id import validate_os_id
+from api.serializers.v1.identity_record_registration_serializer \
+    import IdentityRecordRegistrationSerializer
 from api.throttles import (
     DataUploadThrottle,
     DuplicateThrottle
@@ -95,8 +106,19 @@ class ProductionLocations(ViewSet):
         '''
         Returns the list of permissions specific to the current action.
         '''
-        if (self.action == 'create'
-                or self.action == 'partial_update'):
+        authenticated_actions = (
+            'create',
+            'partial_update',
+            # Registering a record against an OS ID, and reading the state
+            # of a registration. Restricting this further to an approved
+            # registrant is a standing-policy question rather than a pilot
+            # one: §2.5 accepts RBA's assertion as submitted for the
+            # demonstration, and the general case goes to the leadership
+            # brief. Not built here.
+            'create_identity_record',
+            'retrieve_identity_record',
+        )
+        if self.action in authenticated_actions:
             return [IsRegisteredAndConfirmed]
         return []
 
@@ -249,6 +271,214 @@ class ProductionLocations(ViewSet):
                 'cleaned_data': result.moderation_event.cleaned_data,
             },
             status=result.status_code
+        )
+
+    @staticmethod
+    def __os_id_exists_here(os_id):
+        """
+        Whether this instance knows the identifier, following a merge.
+
+        A superseded OS ID keeps resolving to the surviving location
+        through FacilityAlias, so a registration against one is accepted
+        and stored as submitted. Resolution follows the alias on read,
+        which is the behaviour Section 2.7 promises.
+        """
+        if Facility.objects.filter(pk=os_id).exists():
+            return True
+        return FacilityAlias.objects.filter(pk=os_id).exists()
+
+    @staticmethod
+    def __identity_record_response(association):
+        """
+        The Section 3.2 envelope.
+
+        `moderation_id` is the association's own uuid. The pilot path
+        creates no ModerationEvent, because there is nothing to moderate:
+        the association is Open Supply Hub's own construction. The field
+        keeps its name so the envelope mirrors the existing
+        production-location submission API, as 3.2 intends.
+        """
+        return {
+            'moderation_id': str(association.uuid),
+            # Derived rather than hardcoded. Everything this endpoint
+            # creates is live on creation, but the model supports the
+            # pending row the general case will need, and a helper that
+            # reported APPROVED for one would be lying.
+            'moderation_status': (
+                'APPROVED' if association.is_live else 'PENDING'
+            ),
+            'created_at': association.created_at,
+            'live_from': association.live_from,
+        }
+
+    @action(
+        detail=True,
+        methods=['POST'],
+        url_path='identity-records',
+    )
+    def create_identity_record(self, request, pk=None):
+        """
+        Register an external record against an OS ID (FR-07, scope doc 3.2).
+
+        Open Supply Hub stores the association and nothing else (NFR-04).
+        Pilot-set registrations return live immediately with no
+        verification step, because the association is Open Supply Hub's own
+        construction rather than RBA's assertion (2.3, 2.5). The PENDING
+        path that issues a verification_url is the general case, gated on
+        OQ-01, and is deliberately not built here.
+
+        Note on 422. Section 3.2 lists it for "well formed but not
+        resolvable here", which Section 3.4 ties to identifiers issued only
+        on a private instance. This instance cannot tell that case apart
+        from an identifier that does not exist, by design, so the write
+        path returns 404 and the distinction is left to OSDEV-3586, which
+        owns the private-instance response. The two need to agree.
+        """
+        os_id = pk
+
+        if not validate_os_id(os_id, raise_on_invalid=False):
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    'errors': [{
+                        'field': 'os_id',
+                        'detail': f'{os_id} is not a valid OS ID.',
+                    }],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not self.__os_id_exists_here(os_id):
+            return Response(
+                {
+                    'detail': 'Identifier not found on this instance.',
+                    'errors': [{
+                        'field': 'os_id',
+                        'detail': (
+                            f'{os_id} is not a production location on this '
+                            'instance.'
+                        ),
+                    }],
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = IdentityRecordRegistrationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    'errors': [
+                        {'field': field, 'detail': ' '.join(map(str, msgs))}
+                        for field, msgs in serializer.errors.items()
+                    ],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = serializer.validated_data
+        resolver_uri = data['resolver_uri']
+
+        existing = IdentityRecordAssociation.objects.filter(os_id=os_id)
+
+        if existing.filter(
+            live_from__isnull=False
+        ).exclude(resolver_uri=resolver_uri).exists():
+            return Response(
+                {
+                    'detail': (
+                        'This identifier already has a live association '
+                        'with a different resolver URI.'
+                    ),
+                    'errors': [{
+                        'field': 'resolver_uri',
+                        'detail': (
+                            'Withdraw the existing association before '
+                            'registering a different resolver for this '
+                            'identifier.'
+                        ),
+                    }],
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # An exact repeat. Returning the existing association instead would
+        # make this idempotent, which the scope doc does not ask for and
+        # which is explicitly out of scope for the pilot, so it is a
+        # conflict rather than a quiet success. Catching it here keeps the
+        # unique constraint from surfacing as a 500.
+        if existing.filter(resolver_uri=resolver_uri).exists():
+            return Response(
+                {
+                    'detail': (
+                        'This resolver URI is already registered against '
+                        'this identifier.'
+                    ),
+                    'errors': [{
+                        'field': 'resolver_uri',
+                        'detail': 'No change was made.',
+                    }],
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        association = IdentityRecordAssociation.objects.create(
+            os_id=os_id,
+            resolver_uri=resolver_uri,
+            record_type=data['record_type'],
+            issuer=data['issuer'],
+            registrant_reference=data.get('registrant_reference', ''),
+            live_from=timezone.now(),
+        )
+
+        return Response(
+            self.__identity_record_response(association),
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        url_path='identity-records/(?P<moderation_id>[^/.]+)',
+    )
+    def retrieve_identity_record(
+        self, request, pk=None, moderation_id=None
+    ):
+        """
+        Current state of a registration, and once live, the time from
+        which it resolves (scope doc 3.2).
+        """
+        try:
+            parsed_id = UUID(str(moderation_id))
+        except ValueError:
+            # A non-UUID in the path is a miss, not a crash. Filtering on
+            # a UUIDField with a malformed value raises rather than
+            # returning empty.
+            parsed_id = None
+
+        association = None
+        if parsed_id is not None:
+            association = IdentityRecordAssociation.objects.filter(
+                os_id=pk, uuid=parsed_id
+            ).first()
+
+        if association is None:
+            return Response(
+                {
+                    'detail': 'Registration not found.',
+                    'errors': [{
+                        'field': 'moderation_id',
+                        'detail': (
+                            f'No registration {moderation_id} for {pk}.'
+                        ),
+                    }],
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            self.__identity_record_response(association),
+            status=status.HTTP_200_OK,
         )
 
     @transaction.atomic
