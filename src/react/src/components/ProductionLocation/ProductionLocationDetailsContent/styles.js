@@ -1,8 +1,29 @@
+import COLOURS from '../../../util/COLOURS';
+
 export default theme =>
     Object.freeze({
         container: Object.freeze({
             [theme.breakpoints.up('md')]: {
                 paddingLeft: '20px',
+            },
+        }),
+        /*
+        OS ID takes two thirds of the row and the data labels legend one third,
+        so the legend reads as a footnote to the ID instead of a page section
+        of its own (OSDEV-3239). Stacks below md.
+        */
+        identityRow: Object.freeze({
+            display: 'grid',
+            gridTemplateColumns: '1fr',
+            marginBottom: '16px',
+            /*
+            The row owns the outer border so the two panels inside it share one
+            colour. Each contributes only its fill, and the legend adds the
+            divider between them.
+            */
+            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
+            [theme.breakpoints.up('md')]: {
+                gridTemplateColumns: '2fr 1fr',
             },
         }),
         containerItem: Object.freeze({
