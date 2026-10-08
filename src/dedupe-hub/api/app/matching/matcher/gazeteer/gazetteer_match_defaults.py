@@ -7,10 +7,20 @@ class GazetteerMatchDefaults:
     (`evaluate.py` prints both numbers) for the procedure.
 
     The previous values (0.8 / 0.5) were tuned to the 112-pair OAR-era model.
-    Carrying them onto the retrained classifier would push the share of
-    candidate pairs scoring below GAZETTEER_THRESHOLD from 0.3% to 16.5% --
-    pairs that Gazetteer.match() then stops returning at all, so they become
-    silently created duplicate facilities rather than moderation-queue items.
+    Measured end-to-end against a real indexed corpus (49,470 BD facilities,
+    600 items) the retrained model improves every band even with the old
+    thresholds, so recalibration is an improvement rather than a guard against
+    breakage:
+
+      prod @ 0.8/0.5        auto 54.0%  queue 18.8%  new facility 27.2%
+      retrained @ 0.356/0.007   auto 83.0%  queue  3.5%  new facility 13.5%
+      retrained @ 0.8/0.5   auto 69.2%  queue 11.2%  new facility 19.7%
+
+    The risk to watch is over-matching, not under-matching: auto-match rises
+    from 54.0% to 83.0% of items, and an auto-match is unreviewed. 0.356 holds
+    production's pair-level precision (0.9929 on clean labels), but over a
+    larger auto-matched population. A more conservative AUTOMATIC_THRESHOLD is
+    worth modelling if the shadow run shows false auto-matches rising.
 
     Derived on the held-out half of the 40k labeled-pair sample (2026-10-07) by
     matching the production operating point rather than the production number:

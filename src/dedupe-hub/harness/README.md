@@ -122,15 +122,34 @@ canonical corpus is excluded here and dominates both numbers in production.
 ## Thresholds
 
 `AUTOMATIC_THRESHOLD = 0.8` and `GAZETTEER_THRESHOLD = 0.5` are tuned to the
-*current* model's score distribution. A retrained classifier scores on a
-different scale, so **the numbers must move or the deploy silently breaks**:
+*current* model's score distribution, so they have to be re-derived whenever
+`training.json` changes.
 
-> Leaving 0.8 / 0.5 in place sends the share of candidate pairs falling below
-> `GAZETTEER_THRESHOLD` from **0.3% to 16.5%** (clean labels; 0.6% → 47.7% on
-> noisy). Those are candidates `Gazetteer.match()` would stop returning at all —
-> so they do not become queue items, they become **silently created duplicate
-> facilities**. The moderation queue would *shrink*, which looks like a win in a
-> dashboard and is the opposite of one.
+An earlier draft of this file claimed that leaving them unchanged would cause
+silently created duplicate facilities, on the grounds that 16.5% of candidate
+pairs fall below `GAZETTEER_THRESHOLD` under the retrained model.
+**`measure_fanout.py` refuted that** and the claim has been withdrawn. That
+statistic was computed over the *incumbent's* candidate set; retraining also
+changes the learned blocking predicates, so the retrained model retrieves
+candidates for more items than prod does (86.5% vs 83.2%). Measured end-to-end
+at item level against a real indexed corpus, the new-facility rate *falls*
+under both threshold choices:
+
+| config | auto | queue | new facility |
+|---|---|---|---|
+| prod model @ 0.8/0.5 (today) | 54.0% | 18.8% | 27.2% |
+| retrained @ 0.356/0.007 (proposed) | 83.0% | 3.5% | 13.5% |
+| retrained @ 0.8/0.5 (unchanged) | 69.2% | 11.2% | 19.7% |
+
+Recalibration is a clear improvement, not a guard against a catastrophe.
+
+**The real risk runs the other way.** Auto-match goes from 54.0% to 83.0% of
+items. 0.356 was chosen to hold prod's pair-level precision (0.9929 on clean
+labels), so the *rate* of bad auto-matches should hold — but it now applies to
+a much larger auto-matched population, and an auto-match is unreviewed by
+construction. Whether we are auto-accepting too much is the main question for
+the shadow run, and a more conservative `AUTOMATIC_THRESHOLD` than 0.356 is
+worth modelling before deploy.
 
 `evaluate.py` re-derives both by matching the production *operating point*
 rather than the production number:
@@ -145,18 +164,14 @@ For the 2026-10-07 candidate that gives **AUTOMATIC_THRESHOLD ≈ 0.356** and
 of candidate pairs (−13.4 pp). On noisy labels — the conservative bound — the
 same method gives 0.590 / 0.007 and a 53.2% → 41.9% queue.
 
-Two caveats before anyone treats those as final:
+Caveats on the fan-out and band numbers: one country (BD, chosen as the dense
+apparel worst case), 49,470 facilities rather than the 2.5M production corpus,
+and 600 items. The *relative* comparison between operating points is the
+trustworthy part; absolute rates will move with corpus size and country.
 
-1. Every pair in the eval set was the incumbent gazetteer's *own* candidate, so
-   the "below threshold" band is conditional on candidacy and understates true
-   new-facility volume.
-2. A `GAZETTEER_THRESHOLD` near 0.007 is effectively "return everything above the
-   floor". In the eval that is harmless because the candidate set is fixed, but
-   live it widens how many candidates `match()` returns per item — unmeasurable
-   here. **This is the single most important thing for the shadow run to
-   settle**, and it is a strong argument for calibrating the retrained scores
-   (Platt/isotonic) so the thresholds keep a stable meaning across retrains
-   instead of being re-derived from scratch each time.
+Calibrating the retrained scores (Platt/isotonic) is still worth doing before
+this becomes a recurring procedure, so thresholds keep a stable meaning across
+retrains instead of being re-derived from scratch each time.
 
 ## Join discipline
 
