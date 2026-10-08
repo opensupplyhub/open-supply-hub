@@ -4,6 +4,24 @@ from api.helpers.geojson_polygon import (
 )
 
 
+def _is_usable_value(value):
+    """
+    Decide whether a feature property can serve as a zone's value.
+
+    Only scalars make sense as a displayed label: strings (not blank),
+    numbers, and booleans (a yes/no dataset such as "inside a
+    floodplain" is legitimate). A missing or null value, a blank
+    string, or a nested object or list counts as missing, so the
+    upload is refused rather than showing an empty value or a Python
+    repr on the page.
+    """
+    if value is None or isinstance(value, (dict, list)):
+        return False
+    if isinstance(value, str) and not value.strip():
+        return False
+    return True
+
+
 def parse_zone_features(raw, value_property):
     """
     Parse a zoned GeoJSON FeatureCollection into zone records.
@@ -42,13 +60,14 @@ def parse_zone_features(raw, value_property):
 
     missing = [
         index for index, (_, properties) in enumerate(features)
-        if properties.get(value_property) is None
+        if not _is_usable_value(properties.get(value_property))
     ]
     if missing:
         raise InvalidPolygonGeoJSON(
             f'{len(missing)} of {len(features)} feature(s) are missing '
-            f'the "{value_property}" property (first at position '
-            f'{missing[0]}). Every feature must carry it.'
+            f'the "{value_property}" property or have a blank or '
+            f'non-scalar value for it (first at position {missing[0]}). '
+            'Every feature must carry a text, number or true/false value.'
         )
 
     return [

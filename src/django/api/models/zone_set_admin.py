@@ -134,7 +134,8 @@ class ZoneSetAdmin(admin.ModelAdmin):
     @admin.display(description='Zones', ordering='_zone_count')
     def zone_count(self, obj):
         """Number of zones in the set (from the list annotation)."""
-        return getattr(obj, '_zone_count', None) or obj.zones.count()
+        count = getattr(obj, '_zone_count', None)
+        return obj.zones.count() if count is None else count
 
     @admin.display(description='Current zones')
     def zone_summary(self, obj):

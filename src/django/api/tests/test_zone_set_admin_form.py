@@ -262,6 +262,28 @@ class ZoneSetAdminSaveTest(TestCase):
             list(zone_set.zones.values_list('id', flat=True)), before
         )
 
+    def test_zone_count_uses_the_list_annotation(self):
+        """The list column reads the annotated count, including zero,
+        and only falls back to a query when no annotation is present."""
+        zone_set = self._save(
+            BASE_DATA,
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High'}),
+            )},
+        )
+        annotated = self.model_admin.get_queryset(self.request).get(
+            pk=zone_set.pk
+        )
+        self.assertEqual(self.model_admin.zone_count(annotated), 1)
+
+        zone_set.zones.all().delete()
+        annotated_empty = self.model_admin.get_queryset(self.request).get(
+            pk=zone_set.pk
+        )
+        with self.assertNumQueries(0):
+            self.assertEqual(self.model_admin.zone_count(annotated_empty), 0)
+        self.assertEqual(self.model_admin.zone_count(zone_set), 0)
+
     def test_zone_summary_describes_saved_zones(self):
         zone_set = self._save(
             BASE_DATA,

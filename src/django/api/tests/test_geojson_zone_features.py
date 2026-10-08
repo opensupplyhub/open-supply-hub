@@ -191,6 +191,32 @@ class ParseZoneFeaturesTest(unittest.TestCase):
         self.assertIn('"bws_label"', message)
         self.assertIn('position 1', message)
 
+    def test_blank_and_nested_values_count_as_missing(self):
+        """An empty string would show an empty value on the page and a
+        nested object would show as a Python repr, so both are refused
+        alongside genuinely missing values."""
+        raw = collection(
+            feature(LEFT, {'bws_label': 'High'}),
+            feature(RIGHT, {'bws_label': '   '}),
+            feature(FAR, {'bws_label': {'nested': 1}}),
+            feature(LEFT, {'bws_label': ['a', 'b']}),
+        )
+        with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
+            parse_zone_features(raw, 'bws_label')
+        message = str(ctx.exception)
+        self.assertIn('3 of 4 feature(s)', message)
+        self.assertIn('blank or non-scalar', message)
+        self.assertIn('position 1', message)
+
+    def test_boolean_values_are_usable_labels(self):
+        """A yes/no dataset (e.g. inside a floodplain) is legitimate."""
+        raw = collection(
+            feature(LEFT, {'flood': True}),
+            feature(RIGHT, {'flood': False}),
+        )
+        zones = parse_zone_features(raw, 'flood')
+        self.assertEqual([zone['label'] for zone in zones], ['True', 'False'])
+
     def test_requires_a_property_key(self):
         raw = collection(feature(LEFT, {'bws_label': 'High'}))
         with self.assertRaises(InvalidPolygonGeoJSON):
