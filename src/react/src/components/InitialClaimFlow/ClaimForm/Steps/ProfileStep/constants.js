@@ -39,6 +39,7 @@ export const AFFILIATIONS_OPTIONS = [
     { value: 'better_mills_program', label: 'Better Mills Program' },
     { value: 'better_work', label: 'Better Work (ILO)' },
     { value: 'canopy', label: 'Canopy' },
+    { value: 'cascale', label: 'Cascale' },
     {
         value: 'ethical_trading_initiative',
         label: 'Ethical Trading Initiative',
@@ -52,10 +53,6 @@ export const AFFILIATIONS_OPTIONS = [
     {
         value: 'social_and_labor_convergence_plan',
         label: 'Social and Labor Convergence Plan (SLCP)',
-    },
-    {
-        value: 'sustainable_apparel_coalition',
-        label: 'Sustainable Apparel Coalition',
     },
     {
         value: 'sweatfree_purchasing_consortium',
