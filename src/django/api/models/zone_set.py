@@ -100,18 +100,23 @@ class ZoneSet(models.Model):
 
     def resolve_zone(self, point):
         """
-        Return the zone of this set that contains the point, or None.
+        Return the zone of this set that covers the point, or None.
 
-        Containment is evaluated by PostGIS using the zones' spatial
-        index. When several zones contain the point, the one that came
-        first in the uploaded file wins (lowest `feature_index`) — see
-        the class docstring for why that rule and how to steer it.
+        Coverage is evaluated by PostGIS using the zones' spatial
+        index. `covers` rather than `contains` so a point exactly on a
+        zone's edge still resolves: raster-derived datasets have
+        grid-aligned edges at round coordinates, and a location
+        geocoded onto one of them is inside the dataset, not outside
+        it. When several zones cover the point (overlap, or a shared
+        edge), the one that came first in the uploaded file wins
+        (lowest `feature_index`) — see the class docstring for why
+        that rule and how to steer it.
 
         Args:
             point: A GEOS Point in WGS 84 (a facility's `location`).
         """
         return (
-            self.zones.filter(geom__contains=point)
+            self.zones.filter(geom__covers=point)
             .order_by('feature_index')
             .first()
         )

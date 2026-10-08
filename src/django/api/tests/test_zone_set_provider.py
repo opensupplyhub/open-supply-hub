@@ -163,6 +163,17 @@ class ZoneSetProviderTest(APITestCase):
 
         self.assertEqual(data['value'], {'raw_value': 'Extremely High'})
 
+    def test_location_on_a_shared_edge_resolves(self):
+        """The west and east bands meet at longitude 77.1. A point
+        exactly on that edge is inside the dataset, so it must get a
+        value (`covers`, not `contains`); the first feature wins."""
+        facility = self._make_facility(77.1, 28.6)
+
+        data = self.provider.fetch_data(facility)
+
+        self.assertIsNotNone(data)
+        self.assertEqual(data['value'], {'raw_value': 'Extremely High'})
+
     def test_no_contributor_means_no_field(self):
         """Mirrors the other system providers: a field nobody holds is
         not shown."""

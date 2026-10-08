@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Set
 from api.models.zone_set import ZoneSet
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
@@ -30,6 +30,18 @@ class SystemPartnerFieldRegistry:
         call (the table holds a handful of rows).
         """
         return [*self.__providers, *self.__zone_set_providers()]
+
+    @property
+    def hard_wired_field_names(self) -> Set[str]:
+        """
+        Names of the partner fields the hard-wired providers serve.
+
+        A zone set must not be linked to one of these: the registry
+        would then yield two providers for the same field name, and
+        the two surfaces that read them would show one or the other
+        depending on iteration order. The admin form checks this.
+        """
+        return {provider._get_field_name() for provider in self.__providers}
 
     def __register_providers(self) -> None:
         """Register all system partner field providers."""

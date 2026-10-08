@@ -6,7 +6,7 @@ from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
-from api.models import Zone, ZoneSet
+from api.models import PartnerField, Zone, ZoneSet
 from api.models.zone_set_admin import ZoneSetAdmin, ZoneSetForm
 
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
@@ -111,6 +111,86 @@ class ZoneSetFormTest(TestCase):
         )
         self.assertFalse(form.is_valid())
         self.assertIn('name', form.errors)
+
+    def _form_with_field(self, partner_field, instance=None):
+        return ZoneSetForm(
+            data={**BASE_DATA, 'partner_field': partner_field.pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High'}),
+            )},
+            instance=instance,
+        )
+
+    def test_inactive_partner_field_can_be_linked(self):
+        """The default manager hides inactive fields; the form must
+        not, or a set whose field was deactivated could never be
+        edited or retired, and a dataset could not be staged against
+        a field that is not switched on yet."""
+        inactive = PartnerField.objects.create(
+            name='staged_dataset', type=PartnerField.STRING,
+            label='Staged', active=False,
+        )
+
+        form = self._form_with_field(inactive)
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data['partner_field'], inactive)
+
+    def test_set_linked_to_deactivated_field_can_still_be_edited(self):
+        field = PartnerField.objects.create(
+            name='water_stress_field', type=PartnerField.STRING,
+            label='Water stress',
+        )
+        zone_set = ZoneSet.objects.create(
+            name='water_stress', description='x',
+            partner_field=field, value_property='bws_label',
+        )
+        field.active = False
+        field.save()
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, 'partner_field': field.pk, 'active': False},
+            instance=zone_set,
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_non_string_partner_field_is_rejected(self):
+        """The provider emits a plain string, so an object/int/float
+        field would serve a mis-shaped value."""
+        for field_type in (PartnerField.OBJECT, PartnerField.INT,
+                           PartnerField.FLOAT):
+            with self.subTest(field_type=field_type):
+                field = PartnerField.objects.create(
+                    name=f'{field_type}_field', type=field_type,
+                    label='Typed',
+                )
+                form = self._form_with_field(field)
+                self.assertFalse(form.is_valid())
+                self.assertIn('partner_field', form.errors)
+                self.assertIn(field_type, str(form.errors['partner_field']))
+
+    def test_partner_field_of_a_hard_wired_provider_is_rejected(self):
+        """Linking e.g. `mit_living_wage` would give the registry two
+        providers for one field name."""
+        for name in ('mit_living_wage', 'wage_indicator',
+                     'india_labour_line_helpline'):
+            with self.subTest(name=name):
+                # These fields are seeded by migrations, active or not.
+                field, _ = (
+                    PartnerField.objects.get_all_including_inactive()
+                    .get_or_create(
+                        name=name,
+                        defaults={'type': PartnerField.STRING,
+                                  'label': name},
+                    )
+                )
+                field.type = PartnerField.STRING
+                field.save()
+                form = self._form_with_field(field)
+                self.assertFalse(form.is_valid())
+                self.assertIn('built-in provider',
+                              str(form.errors['partner_field']))
 
 
 class ZoneSetAdminSaveTest(TestCase):
@@ -294,7 +374,10 @@ class ZoneSetAdminSaveTest(TestCase):
             )},
         )
 
-        summary = self.model_admin.zone_summary(zone_set)
+        # One count plus one distinct-labels query; the zones' full
+        # JSON is never loaded.
+        with self.assertNumQueries(2):
+            summary = self.model_admin.zone_summary(zone_set)
 
         self.assertIn('3 zone(s)', summary)
         self.assertIn('High, Low', summary)

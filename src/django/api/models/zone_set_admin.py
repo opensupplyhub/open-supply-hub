@@ -5,8 +5,10 @@ from django.template.defaultfilters import filesizeformat
 
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
 from api.helpers.geojson_zones import parse_zone_features
+from api.models.partner_field import PartnerField
 from api.models.polygon_admin import PolygonForm
 from api.models.zone_set import ZoneSet
+from api.partner_fields.registry import system_partner_field_registry
 
 
 class ZoneSetForm(forms.ModelForm):
@@ -48,9 +50,45 @@ class ZoneSetForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # The default manager hides inactive partner fields, which
+        # would make a set whose field was later deactivated impossible
+        # to edit or retire (the saved choice is "not valid"), and
+        # would stop a dataset being staged against a field that is
+        # not switched on yet.
+        self.fields['partner_field'].queryset = (
+            PartnerField.objects.get_all_including_inactive()
+        )
         # Filled by clean() when a file is uploaded; None means "keep
         # the existing zones".
         self.parsed_zones = None
+
+    def clean_partner_field(self):
+        """
+        Check the linked field can carry a zone value.
+
+        The provider emits a plain string (`raw_value`), so the field
+        must be string-typed: an object/int/float field would serve a
+        mis-shaped value to the API and the downloads. And it must not
+        be a field one of the hard-wired providers already serves, or
+        the registry would yield two providers for one name.
+        """
+        partner_field = self.cleaned_data.get('partner_field')
+        if partner_field is None:
+            return partner_field
+        if partner_field.type != PartnerField.STRING:
+            raise forms.ValidationError(
+                f'A zone set can only feed a "{PartnerField.STRING}" '
+                f'partner field; "{partner_field.name}" is '
+                f'"{partner_field.type}".'
+            )
+        if partner_field.name in (
+            system_partner_field_registry.hard_wired_field_names
+        ):
+            raise forms.ValidationError(
+                f'"{partner_field.name}" is served by a built-in '
+                'provider and cannot be fed by a zone set.'
+            )
+        return partner_field
 
     def clean(self):
         """
@@ -154,7 +192,14 @@ class ZoneSetAdmin(admin.ModelAdmin):
         count = zones.count()
         if count == 0:
             return '(no zones saved yet)'
-        labels = sorted({zone.label for zone in zones.only('value')})
+        # Distinct labels straight from the database: pulling every
+        # zone's full JSON (label plus all source properties) into
+        # Python just to dedupe it is slow on large uploads.
+        labels = sorted(
+            zones.order_by()
+            .values_list('value__label', flat=True)
+            .distinct()
+        )
         shown = ', '.join(labels[:10])
         if len(labels) > 10:
             shown += f', … ({len(labels)} distinct)'
