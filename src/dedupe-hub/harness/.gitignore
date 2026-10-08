@@ -1,0 +1,6 @@
+# Labeled pair CSVs, scored outputs and scratch images are facility data and
+# build artifacts. They are regenerated from the local anonymized dump (or a
+# prod snapshot, run internally) and never committed to this public repo.
+.data/
+__pycache__/
+*.pyc
