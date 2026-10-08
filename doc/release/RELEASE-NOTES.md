@@ -3,6 +3,23 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.32.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 30, 2026
+
+### Code/API Changes
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - `GET /api/facilities-downloads/` now opens a download session on page 1 and returns its `download_id` in the `next`/`previous` links. Pages after the first require that `download_id` and the same filters and `pageSize` (otherwise `400`); `pageSize` is clamped to 1–250. Non-embed downloads require a logged-in user (`401` otherwise), and `embed=1` is only honoured for exactly one contributor with an embedded map enabled, with results restricted to that contributor. Sessions are kept in the new `facility_downloads` memcached cache alias. The web client follows `next` links, so it needs no changes.
+
+### Bugfix
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - Closed facility download limit bypasses. The limit was checked only on page 1 and charged only on the last page, so requesting other pages directly (e.g. `page=2` from Postman) or never requesting the last page skipped the limit, and `embed=1` or anonymous requests skipped it entirely. The full result set is now checked and charged on page 1 under a row lock, and later pages can only be fetched within that paid session.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    
+
 ## Release 2.31.0
 
 ## Introduction

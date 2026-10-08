@@ -1,19 +1,29 @@
 import logging
+import uuid
 import stripe
 
 from django.conf import settings
-from rest_framework.exceptions import ValidationError
+from django.core.cache import caches
+from django.db import transaction
+from rest_framework.exceptions import NotAuthenticated, ValidationError
 from waffle import switch_is_active
 from datetime import datetime
 from django.utils.timezone import make_aware
 from urllib.parse import urlencode
 
+from api.models.contributor.contributor import Contributor
 from api.models.facility.facility_index import FacilityIndex
 from api.models.facility_download_limit import FacilityDownloadLimit
 from api.serializers.facility.facility_query_params_serializer import (
     FacilityQueryParamsSerializer)
 from api.exceptions import ServiceUnavailableException
-from api.constants import APIErrorMessages
+from api.constants import (
+    APIErrorMessages,
+    FacilitiesDownloadErrorMessages,
+    FacilitiesDownloadSettings,
+    FacilitiesQueryParams,
+    PaginationConfig,
+)
 
 from api.mail import (
     send_ddl_near_annual_limit_email,
@@ -63,6 +73,204 @@ class FacilitiesDownloadService:
         return FacilityIndex.objects.filter_by_query_params(
             request.query_params
         ).order_by('id')
+
+    @staticmethod
+    def parse_page_params(request):
+        """
+        Returns (page, page_size). page must be >= 1. page_size is clamped
+        to 1..PaginationConfig.MAX_PAGE_SIZE so a single request can't pull
+        an arbitrarily large result set.
+        """
+        params = request.query_params
+
+        try:
+            page = int(params.get('page') or 1)
+        except (TypeError, ValueError):
+            raise ValidationError(FacilitiesDownloadErrorMessages.INVALID_PAGE)
+        if page < 1:
+            raise ValidationError(FacilitiesDownloadErrorMessages.INVALID_PAGE)
+
+        try:
+            page_size = int(
+                params.get('pageSize') or PaginationConfig.MAX_PAGE_SIZE
+            )
+        except (TypeError, ValueError):
+            raise ValidationError(
+                FacilitiesDownloadErrorMessages.INVALID_PAGE_SIZE
+            )
+        page_size = max(1, min(page_size, PaginationConfig.MAX_PAGE_SIZE))
+
+        return page, page_size
+
+    @staticmethod
+    def resolve_embed_contributor_id(request):
+        """
+        Validates an embed-mode request and returns the embed contributor id.
+
+        Embed mode skips download limits, so it is only honoured when the
+        request targets exactly one contributor that has an embedded map
+        enabled. The caller must also restrict the queryset to that
+        contributor (see restrict_to_contributor) so embed downloads can
+        only return what that contributor's public embedded map shows.
+        """
+        params = request.query_params
+        contributors = params.getlist(FacilitiesQueryParams.CONTRIBUTORS)
+
+        if len(contributors) != 1:
+            raise ValidationError(
+                FacilitiesDownloadErrorMessages.EMBED_SINGLE_CONTRIBUTOR
+            )
+
+        try:
+            contributor_id = int(contributors[0])
+        except (TypeError, ValueError):
+            raise ValidationError(
+                FacilitiesDownloadErrorMessages.EMBED_SINGLE_CONTRIBUTOR
+            )
+
+        # The embed serializer also reads a singular `contributor` param.
+        # It must not point to a different contributor than the filter.
+        singular = params.get('contributor')
+        if singular is not None and str(singular) != str(contributor_id):
+            raise ValidationError(
+                FacilitiesDownloadErrorMessages.EMBED_SINGLE_CONTRIBUTOR
+            )
+
+        is_embed_enabled = Contributor.objects.filter(
+            id=contributor_id,
+            embed_level__isnull=False,
+        ).exists()
+        if not is_embed_enabled:
+            raise ValidationError(
+                FacilitiesDownloadErrorMessages.EMBED_NOT_ENABLED
+            )
+
+        return contributor_id
+
+    @staticmethod
+    def restrict_to_contributor(base_qs, contributor_id):
+        return base_qs.filter(contributors_id__contains=[contributor_id])
+
+    @staticmethod
+    def ensure_authenticated(request):
+        if not request.user or request.user.is_anonymous:
+            raise NotAuthenticated(
+                FacilitiesDownloadErrorMessages.LOGIN_REQUIRED
+            )
+
+    # Download sessions
+    #
+    # Page 1 opens (and, if needed, charges) a download session stored in a
+    # cache shared by all Django processes. Every later page must carry the
+    # session's download_id and the exact same query, so the limit check
+    # and the charge can't be skipped by requesting pages out of order.
+
+    @staticmethod
+    def _session_cache():
+        return caches[FacilitiesDownloadSettings.SESSION_CACHE_ALIAS]
+
+    @staticmethod
+    def _session_key(download_id):
+        return f'session:{download_id}'
+
+    @staticmethod
+    def create_download_session(request, query_hash, count, charged):
+        download_id = uuid.uuid4().hex
+        session = {
+            'user_id': getattr(request.user, 'id', None),
+            'query_hash': query_hash,
+            'count': count,
+            'charged': charged,
+        }
+
+        try:
+            # add() returns False when memcached can't store the key; a
+            # fresh uuid never collides, so False means the cache is down.
+            stored = FacilitiesDownloadService._session_cache().add(
+                FacilitiesDownloadService._session_key(download_id),
+                session,
+                FacilitiesDownloadSettings.SESSION_TTL_SECONDS,
+            )
+        except Exception:
+            logger.exception('Unable to store facility download session')
+            stored = False
+
+        if not stored:
+            raise ServiceUnavailableException(
+                FacilitiesDownloadErrorMessages.SESSION_UNAVAILABLE
+            )
+
+        return download_id, session
+
+    @staticmethod
+    def delete_download_session(download_id):
+        try:
+            FacilitiesDownloadService._session_cache().delete(
+                FacilitiesDownloadService._session_key(download_id)
+            )
+        except Exception:
+            logger.exception('Unable to delete facility download session')
+
+    @staticmethod
+    def get_valid_download_session(request, download_id, query_hash):
+        try:
+            download_id = uuid.UUID(str(download_id)).hex
+        except (TypeError, ValueError):
+            raise ValidationError(
+                FacilitiesDownloadErrorMessages.SESSION_INVALID
+            )
+
+        key = FacilitiesDownloadService._session_key(download_id)
+        cache = FacilitiesDownloadService._session_cache()
+
+        try:
+            session = cache.get(key)
+        except Exception:
+            logger.exception('Unable to read facility download session')
+            raise ServiceUnavailableException(
+                FacilitiesDownloadErrorMessages.SESSION_UNAVAILABLE
+            )
+
+        if (
+            not session
+            or session.get('user_id') != getattr(request.user, 'id', None)
+            or session.get('query_hash') != query_hash
+        ):
+            raise ValidationError(
+                FacilitiesDownloadErrorMessages.SESSION_INVALID
+            )
+
+        try:
+            # Sliding expiry so long paid downloads don't expire mid-way.
+            cache.touch(key, FacilitiesDownloadSettings.SESSION_TTL_SECONDS)
+        except Exception:
+            logger.exception('Unable to refresh facility download session')
+
+        return download_id, session
+
+    @staticmethod
+    def charge_download(limit: FacilityDownloadLimit, count: int):
+        """
+        Re-checks the limit and charges `count` records in one transaction,
+        holding a row lock so concurrent downloads can't both pass the
+        check against the same balance.
+
+        Returns (locked_limit, prev_free, prev_paid).
+        """
+        with transaction.atomic():
+            locked = FacilityDownloadLimit.objects \
+                .select_for_update() \
+                .get(pk=limit.pk)
+            prev_free = locked.free_download_records
+            prev_paid = locked.paid_download_records
+
+            FacilitiesDownloadService.enforce_limits(count, locked)
+            FacilitiesDownloadService.register_download_if_needed(
+                locked,
+                count,
+            )
+
+        return locked, prev_free, prev_paid
 
     @staticmethod
     def get_download_limit(request):
@@ -250,13 +458,18 @@ class FacilitiesDownloadService:
         request,
         page: int,
         page_size: int,
-        is_last_page: bool
+        is_last_page: bool,
+        download_id: str = None,
     ):
 
         def make_link(target_page):
             query_dict = dict(request.query_params.lists())
             query_dict['page'] = [str(target_page)]
             query_dict['pageSize'] = [str(page_size)]
+            if download_id:
+                query_dict[FacilitiesDownloadSettings.DOWNLOAD_ID_PARAM] = [
+                    download_id
+                ]
 
             return request.build_absolute_uri(
                 '?' + urlencode(query_dict, doseq=True)
