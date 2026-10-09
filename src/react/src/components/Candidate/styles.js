@@ -129,10 +129,19 @@ export const candidateValidationPanelStyles = theme => {
             minWidth: 0,
         }),
         title: Object.freeze({
+            margin: 0,
             fontSize: '1rem',
             fontWeight: 600,
             lineHeight: 1.3,
             color: theme.palette.text.primary,
+            fontFamily: theme.typography.fontFamily,
+            '&:focus': {
+                outline: 'none',
+            },
+            '&:focus-visible': {
+                outline: `2px solid ${COLOURS.NAVY_BLUE}`,
+                outlineOffset: 2,
+            },
         }),
         intro: Object.freeze({
             ...typography.bodyText,

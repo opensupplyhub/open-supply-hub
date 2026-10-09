@@ -173,18 +173,34 @@ export const normalizeCandidateFeatureProperties = properties => {
 /**
  * Legacy /api/facilities/{os_id}/ Feature -> normalized candidate, or null
  * when the feature is not a candidate.
+ *
+ * Shared contract (FacilityCandidateDetailsSerializer, OSDEV-3249):
+ * `properties.candidate = { source, external_id, confidence, polygon,
+ * suggested_matches, created_at, validation: { state, tally, your_vote,
+ * voting_open } }`. A payload that spreads the validation keys flat onto
+ * `candidate` (the pre-contract shape) is accepted too, so either shape
+ * renders.
  */
 export const getCandidateFromFacilityPayload = feature => {
     if (!get(feature, 'properties.is_candidate')) return null;
     const candidate = get(feature, 'properties.candidate', {}) || {};
     const osId = get(feature, 'properties.os_id') || feature.id;
     const coordinates = get(feature, 'geometry.coordinates');
+    const validation = candidate.validation || {
+        state: candidate.state,
+        tally: candidate.tally,
+        your_vote: candidate.your_vote,
+        voting_open: candidate.voting_open,
+    };
     return normalizeCandidateDetail({
         os_id: osId,
         source: candidate.source,
         confidence: candidate.confidence,
         external_id: candidate.external_id,
-        created_at: candidate.created_at,
+        created_at:
+            candidate.created_at ||
+            get(feature, 'properties.created_from.created_at') ||
+            null,
         coordinates:
             Array.isArray(coordinates) && coordinates.length >= 2
                 ? { lat: coordinates[1], lng: coordinates[0] }
@@ -195,7 +211,7 @@ export const getCandidateFromFacilityPayload = feature => {
                 get(candidate, 'country.name') ||
                 null,
         },
-        validation: candidate.validation,
+        validation,
         suggested_matches: candidate.suggested_matches,
     });
 };

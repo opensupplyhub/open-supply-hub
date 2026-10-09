@@ -5,6 +5,7 @@ import { screen, fireEvent, waitFor, act } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import CandidateValidationPanel from '../../components/Candidate/CandidateValidationPanel';
 import apiRequest from '../../util/apiRequest';
+import { CANDIDATE_SLC_ENRICHMENT_ENABLED } from '../../util/candidateCopy';
 
 jest.mock('../../util/apiRequest', () => ({
     __esModule: true,
@@ -16,6 +17,7 @@ jest.mock('../../util/apiRequest', () => ({
 
 const OS_ID = 'US2026ABCDEF1234';
 const VOTES_URL = `/api/v1/production-locations/${OS_ID}/candidate-votes/`;
+const DETAIL_URL = `/api/v1/production-locations/${OS_ID}/`;
 
 const makeCandidate = (overrides = {}) => ({
     osId: OS_ID,
@@ -39,6 +41,15 @@ const makeCandidate = (overrides = {}) => ({
 
 const loggedIn = { auth: { user: { user: { isAnon: false, id: 7 } } } };
 const anonymous = { auth: { user: { user: { isAnon: true, id: null } } } };
+// Session check not finished: isAnon is not yet a boolean.
+const sessionUnknown = { auth: { user: { user: { isAnon: undefined } } } };
+// Session check in flight (auth.session.fetching) with the default user.
+const sessionChecking = {
+    auth: {
+        user: { user: { isAnon: true, id: null } },
+        session: { fetching: true },
+    },
+};
 
 const renderPanel = (candidate, preloadedState = loggedIn, props = {}) =>
     renderWithProviders(
@@ -214,8 +225,58 @@ describe('CandidateValidationPanel', () => {
         expect(notFacilityButton()).not.toBeDisabled();
     });
 
-    it('disables voting with "Voting closed" when the server answers 409', async () => {
+    it('refetches the detail on 409 and applies the closed state and tally', async () => {
         rejectPost(409);
+        apiRequest.get.mockResolvedValue({
+            data: {
+                os_id: OS_ID,
+                is_candidate: true,
+                validation: {
+                    state: 'confirmed',
+                    tally: { confirmed: 5, not_a_facility: 0 },
+                    your_vote: null,
+                    voting_open: false,
+                },
+            },
+        });
+        const onValidationChange = jest.fn();
+        renderPanel(
+            makeCandidate({
+                validation: { tally: { confirmed: 4, not_a_facility: 0 } },
+            }),
+            loggedIn,
+            { onValidationChange },
+        );
+
+        fireEvent.click(confirmedButton());
+
+        await waitFor(() =>
+            expect(screen.getByTestId('candidate-vote-status')).toHaveTextContent(
+                'Voting closed',
+            ),
+        );
+        expect(apiRequest.get).toHaveBeenCalledWith(DETAIL_URL);
+        expect(screen.getByTestId('candidate-state-chip')).toHaveTextContent(
+            'Confirmed',
+        );
+        expect(screen.getByTestId('candidate-tally')).toHaveTextContent(
+            '5 say facility · 0 say not',
+        );
+        expect(confirmedButton()).toBeDisabled();
+        expect(notFacilityButton()).toBeDisabled();
+        expect(confirmedButton()).toHaveAttribute('data-selected', 'false');
+        expect(onValidationChange).toHaveBeenCalledWith(
+            expect.objectContaining({
+                state: 'confirmed',
+                votingOpen: false,
+                tally: { confirmed: 5, not_a_facility: 0 },
+            }),
+        );
+    });
+
+    it('keeps the last known block closed when the 409 refetch fails', async () => {
+        rejectPost(409);
+        apiRequest.get.mockRejectedValue({ response: { status: 500 } });
         renderPanel(
             makeCandidate({
                 validation: { tally: { confirmed: 4, not_a_facility: 0 } },
@@ -235,6 +296,65 @@ describe('CandidateValidationPanel', () => {
         expect(screen.getByTestId('candidate-tally')).toHaveTextContent(
             '4 say facility · 0 say not',
         );
+        expect(screen.getByTestId('candidate-state-chip')).toHaveTextContent(
+            'Unverified',
+        );
+    });
+
+    it('disables voting with "Checking your session…" until the session is known', () => {
+        renderPanel(makeCandidate(), sessionUnknown);
+
+        expect(confirmedButton()).toBeDisabled();
+        expect(notFacilityButton()).toBeDisabled();
+        expect(screen.getByTestId('candidate-vote-status')).toHaveTextContent(
+            'Checking your session',
+        );
+        fireEvent.click(notFacilityButton());
+        expect(apiRequest.post).not.toHaveBeenCalled();
+        expect(
+            screen.queryByTestId('candidate-login-dialog'),
+        ).not.toBeInTheDocument();
+    });
+
+    it('treats an in-flight session check the same way', () => {
+        renderPanel(makeCandidate(), sessionChecking);
+
+        expect(confirmedButton()).toBeDisabled();
+        expect(screen.getByTestId('candidate-vote-status')).toHaveTextContent(
+            'Checking your session',
+        );
+        expect(
+            screen.queryByTestId('candidate-login-dialog'),
+        ).not.toBeInTheDocument();
+    });
+
+    it('announces status changes through a polite live region', () => {
+        renderPanel(makeCandidate());
+
+        const region = screen.getByTestId('candidate-vote-status-region');
+        expect(region).toHaveAttribute('aria-live', 'polite');
+        expect(region).toContainElement(
+            screen.getByTestId('candidate-vote-status'),
+        );
+    });
+
+    it('moves focus to the heading when opened as an overlay', () => {
+        renderPanel(makeCandidate(), loggedIn, {
+            variant: 'overlay',
+            onClose: jest.fn(),
+        });
+
+        expect(
+            screen.getByRole('heading', { name: 'Is there a facility here?' }),
+        ).toHaveFocus();
+    });
+
+    it('does not steal focus when rendered inline', () => {
+        renderPanel(makeCandidate(), loggedIn, { variant: 'inline' });
+
+        expect(
+            screen.getByRole('heading', { name: 'Is there a facility here?' }),
+        ).not.toHaveFocus();
     });
 
     it('renders confirmed candidates as closed without a request', () => {
@@ -291,7 +411,7 @@ describe('CandidateValidationPanel', () => {
         expect(confirmedButton()).not.toBeDisabled();
     });
 
-    it('lists suggested matches with links and the SLC enrichment link', () => {
+    it('lists suggested matches with links', () => {
         renderPanel(
             makeCandidate({
                 suggestedMatches: [
@@ -309,9 +429,32 @@ describe('CandidateValidationPanel', () => {
         expect(link).toHaveTextContent('Nearby Farm');
         expect(link).toHaveAttribute('href', '/facilities/US2020XYZ');
         expect(screen.getByText('1 Farm Rd · 240 m')).toBeInTheDocument();
+    });
+
+    it('hides "I know this facility" while SLC enrichment is disabled', () => {
+        expect(CANDIDATE_SLC_ENRICHMENT_ENABLED).toBe(false);
+        renderPanel(makeCandidate());
+
+        expect(
+            screen.queryByTestId('candidate-know-this-facility'),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByText('I know this facility'),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.queryByText(/Add a name and address/),
+        ).not.toBeInTheDocument();
+    });
+
+    it('links "I know this facility" into the SLC update flow when enabled', () => {
+        renderPanel(makeCandidate(), loggedIn, { slcEnrichmentEnabled: true });
+
         expect(
             screen.getByTestId('candidate-know-this-facility'),
         ).toHaveAttribute('href', `/contribute/single-location/${OS_ID}/info/`);
+        expect(
+            screen.getByText(/Add a name and address/),
+        ).toBeInTheDocument();
     });
 
     it('fetches the detail for a layer seed and applies your_vote', async () => {

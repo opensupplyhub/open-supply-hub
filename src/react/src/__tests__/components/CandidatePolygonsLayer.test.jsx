@@ -40,25 +40,49 @@ jest.mock('react-leaflet', () => ({
     },
 }));
 
-const makeBounds = () => ({
-    getWest: () => -79.2,
-    getSouth: () => 35.1,
-    getEast: () => -79.1,
-    getNorth: () => 35.2,
+const makeBounds = ([west, south, east, north] = [-79.2, 35.1, -79.1, 35.2]) => ({
+    getWest: () => west,
+    getSouth: () => south,
+    getEast: () => east,
+    getNorth: () => north,
 });
 
 const makeMap = (zoom = 15) => {
     const handlers = {};
+    let bounds = makeBounds();
     return {
         getZoom: () => zoom,
-        getBounds: makeBounds,
+        getBounds: () => bounds,
         on: jest.fn((event, handler) => {
             handlers[event] = handler;
         }),
         off: jest.fn(),
         trigger: event => handlers[event] && handlers[event](),
+        // Test helper: pan the viewport to a new bbox.
+        panTo: box => {
+            bounds = makeBounds(box);
+        },
     };
 };
+
+const OTHER_BOX = [-79.4, 35.3, -79.3, 35.4];
+const OTHER_URL =
+    '/api/v1/production-locations/candidates/?bbox=-79.4,35.3,-79.3,35.4&limit=200';
+
+const moveend = map =>
+    act(() => {
+        map.trigger('moveend');
+        jest.advanceTimersByTime(350);
+    });
+
+// Drains the fetch promise chain (then/catch) under act.
+const flushPromises = () =>
+    act(async () => {
+        for (let i = 0; i < 5; i += 1) {
+            // eslint-disable-next-line no-await-in-loop
+            await Promise.resolve();
+        }
+    });
 
 const feature = (osId, state) => ({
     type: 'Feature',
@@ -151,12 +175,13 @@ describe('CandidatePolygonsLayer', () => {
     });
 
     it('debounces moveend and aborts the stale request', async () => {
-        apiRequest.get.mockResolvedValue({ data: collection([]) });
+        apiRequest.get.mockReturnValue(new Promise(() => {}));
         const map = makeMap(15);
         render(<CandidatePolygonsLayer leaflet={{ map }} />);
         expect(apiRequest.get).toHaveBeenCalledTimes(1);
         const firstSignal = apiRequest.get.mock.calls[0][1].signal;
 
+        map.panTo(OTHER_BOX);
         act(() => {
             map.trigger('moveend');
             map.trigger('moveend');
@@ -169,8 +194,119 @@ describe('CandidatePolygonsLayer', () => {
         });
 
         expect(apiRequest.get).toHaveBeenCalledTimes(2);
+        expect(apiRequest.get.mock.calls[1][0]).toBe(OTHER_URL);
         expect(firstSignal.aborted).toBe(true);
         expect(apiRequest.get.mock.calls[1][1].signal.aborted).toBe(false);
+    });
+
+    it('skips a moveend that resolves to the bbox already loaded', async () => {
+        apiRequest.get.mockResolvedValue({
+            data: collection([feature('US1', 'unverified')]),
+        });
+        const map = makeMap(15);
+        render(<CandidatePolygonsLayer leaflet={{ map }} />);
+        await waitFor(() =>
+            expect(screen.getByTestId('candidate-geojson')).toHaveAttribute(
+                'data-count',
+                '1',
+            ),
+        );
+        expect(apiRequest.get).toHaveBeenCalledTimes(1);
+
+        // Same viewport (e.g. a zero-distance drag or a resize): no request.
+        moveend(map);
+        moveend(map);
+        expect(apiRequest.get).toHaveBeenCalledTimes(1);
+        expect(screen.getByTestId('candidate-geojson')).toHaveAttribute(
+            'data-count',
+            '1',
+        );
+
+        // A different viewport fetches again.
+        map.panTo(OTHER_BOX);
+        moveend(map);
+        await flushPromises();
+        expect(apiRequest.get).toHaveBeenCalledTimes(2);
+        expect(apiRequest.get.mock.calls[1][0]).toBe(OTHER_URL);
+    });
+
+    it('refetches the same bbox when refreshKey changes', async () => {
+        apiRequest.get.mockResolvedValue({ data: collection([]) });
+        const map = makeMap(15);
+        const { rerender } = render(
+            <CandidatePolygonsLayer leaflet={{ map }} refreshKey={0} />,
+        );
+        await flushPromises();
+        expect(apiRequest.get).toHaveBeenCalledTimes(1);
+
+        rerender(<CandidatePolygonsLayer leaflet={{ map }} refreshKey={1} />);
+        await flushPromises();
+
+        expect(apiRequest.get).toHaveBeenCalledTimes(2);
+        expect(apiRequest.get.mock.calls[1][0]).toBe(EXPECTED_URL);
+    });
+
+    it('clears stale footprints when the fetch for a new bbox fails', async () => {
+        const consoleError = jest
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+        apiRequest.get.mockResolvedValueOnce({
+            data: collection([
+                feature('US1', 'unverified'),
+                feature('US2', 'disputed'),
+            ]),
+        });
+        const map = makeMap(15);
+        const { container } = render(
+            <CandidatePolygonsLayer leaflet={{ map }} />,
+        );
+        await waitFor(() =>
+            expect(screen.getByTestId('candidate-geojson')).toHaveAttribute(
+                'data-count',
+                '2',
+            ),
+        );
+
+        apiRequest.get.mockRejectedValueOnce({ response: { status: 429 } });
+        map.panTo(OTHER_BOX);
+        moveend(map);
+        await flushPromises();
+
+        expect(apiRequest.get).toHaveBeenCalledTimes(2);
+        await waitFor(() => expect(container).toBeEmptyDOMElement());
+        expect(consoleError).toHaveBeenCalled();
+        consoleError.mockRestore();
+    });
+
+    it('keeps the footprints on screen when a refetch of the same bbox fails', async () => {
+        const consoleError = jest
+            .spyOn(console, 'error')
+            .mockImplementation(() => {});
+        apiRequest.get.mockResolvedValueOnce({
+            data: collection([feature('US1', 'unverified')]),
+        });
+        const map = makeMap(15);
+        const { rerender } = render(
+            <CandidatePolygonsLayer leaflet={{ map }} refreshKey={0} />,
+        );
+        await waitFor(() =>
+            expect(screen.getByTestId('candidate-geojson')).toHaveAttribute(
+                'data-count',
+                '1',
+            ),
+        );
+
+        apiRequest.get.mockRejectedValueOnce({ response: { status: 429 } });
+        rerender(<CandidatePolygonsLayer leaflet={{ map }} refreshKey={1} />);
+        await flushPromises();
+
+        expect(apiRequest.get).toHaveBeenCalledTimes(2);
+        expect(screen.getByTestId('candidate-geojson')).toHaveAttribute(
+            'data-count',
+            '1',
+        );
+        expect(consoleError).toHaveBeenCalled();
+        consoleError.mockRestore();
     });
 
     it('calls onCandidateClick with the feature properties', async () => {

@@ -21,6 +21,17 @@ export const CANDIDATE_VOTES = Object.freeze({
     NOT_A_FACILITY: 'not_a_facility',
 });
 
+/**
+ * "I know this facility" links a candidate into the SLC update flow, but
+ * Phase 1 has no promotion path: the v1 PATCH answers 404 for a candidate,
+ * so the link is a dead end. Hidden until the candidate -> facility
+ * promotion follow-up ships (OSDEV-2566 epic; see
+ * doc/prototypes/earth-genome/option3-implementation-plan.md, "graduates via
+ * SLC enrichment"). The code path stays wired so flipping this is the only
+ * change needed.
+ */
+export const CANDIDATE_SLC_ENRICHMENT_ENABLED = false;
+
 export const CANDIDATE_COPY = Object.freeze({
     // Badge shown wherever a candidate is rendered (panel, detail page).
     badge: 'Satellite-detected candidate',
@@ -45,6 +56,7 @@ export const CANDIDATE_COPY = Object.freeze({
         'The community agreed this is not a facility, so the record ' +
         'has been removed.',
     saveError: 'Your vote could not be saved. Please try again.',
+    sessionPending: 'Checking your session…',
     noVotesYet: 'No votes yet',
     loginTitle: 'Log in to vote',
     loginBody:

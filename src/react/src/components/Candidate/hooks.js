@@ -77,9 +77,11 @@ export const useCandidateDetail = seed => {
  * Casting and changing a vote on one candidate.
  *
  * Optimistic update: the tally and your_vote move immediately, then are
- * replaced by the server body. 409 closes voting (confirmed), 410 marks the
+ * replaced by the server body. 409 closes voting (confirmed) and refetches
+ * the detail so the state chip and tally reflect the server, 410 marks the
  * candidate retired, 401/403 opens the login prompt, anything else reverts
- * and shows a retry message. Anonymous users never send a request.
+ * and shows a retry message. Anonymous users never send a request; while
+ * the session is still unknown (`isAnon` undefined) a click is a no-op.
  */
 export const useCandidateVote = ({
     osId,
@@ -109,8 +111,43 @@ export const useCandidateVote = ({
         [onValidationChange],
     );
 
+    /**
+     * A 409 body carries no state, so the closed validation is read back
+     * from the v1 detail. If that read fails, the last known block is kept
+     * with voting marked closed.
+     */
+    const closeVoting = useCallback(
+        fallback => {
+            const closed = normalizeValidation({
+                ...fallback,
+                your_vote: fallback.yourVote,
+                voting_open: false,
+            });
+            return apiRequest
+                .get(makeCandidateDetailURL(osId))
+                .then(({ data }) =>
+                    normalizeValidation({
+                        ...closed,
+                        your_vote: closed.yourVote,
+                        voting_open: false,
+                        ...((data && data.validation) || {}),
+                    }),
+                )
+                .catch(() => closed)
+                .then(next => {
+                    commit(next);
+                    setStatus(VOTE_STATUS.CLOSED);
+                    return null;
+                });
+        },
+        [commit, osId],
+    );
+
     const castVote = useCallback(
         vote => {
+            if (typeof isAnon !== 'boolean') {
+                return Promise.resolve(null);
+            }
             if (isAnon) {
                 setLoginPromptOpen(true);
                 return Promise.resolve(null);
@@ -149,14 +186,9 @@ export const useCandidateVote = ({
                 .catch(err => {
                     const kind = getVoteErrorKind(err);
                     if (kind === 'closed') {
-                        const closed = normalizeValidation({
-                            ...previous,
-                            your_vote: previous.yourVote,
-                            voting_open: false,
-                        });
-                        commit(closed);
-                        setStatus(VOTE_STATUS.CLOSED);
-                    } else if (kind === 'retired') {
+                        return closeVoting(previous);
+                    }
+                    if (kind === 'retired') {
                         commit({ ...previous, votingOpen: false });
                         setStatus(VOTE_STATUS.RETIRED);
                     } else if (kind === 'unauthenticated') {
@@ -170,7 +202,7 @@ export const useCandidateVote = ({
                     return null;
                 });
         },
-        [commit, isAnon, osId, status],
+        [closeVoting, commit, isAnon, osId, status],
     );
 
     const closeLoginPrompt = useCallback(() => setLoginPromptOpen(false), []);
