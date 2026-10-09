@@ -6,12 +6,36 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+SWITCH_NAME = 'enable_zone_sets'
+
+
+def create_switch(apps, schema_editor):
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.get_or_create(
+        name=SWITCH_NAME,
+        defaults={'active': False},
+    )
+
+
+def delete_switch(apps, schema_editor):
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.filter(name=SWITCH_NAME).delete()
+
+
 class Migration(migrations.Migration):
     """
     Add the zone ingestor models (OSDEV-3551): ZoneSet, a zoned
     geospatial dataset linked to one Spotlight partner field, and Zone,
     one polygon of that set carrying a value. The MultiPolygonField
     gets PostGIS's default GiST spatial index.
+
+    Also adds the `enable_zone_sets` switch, created inactive, that
+    gates the zone set providers in the partner field registry. The
+    registry runs on every location page render and `migrate` happens
+    in post-deploy, after the new image is live, so without the switch
+    there is a window where the registry queries a table that does not
+    exist yet. It doubles as the kill switch for every zone-set-backed
+    field; the tables themselves are harmless while it is off.
     """
 
     dependencies = [
@@ -134,4 +158,5 @@ class Migration(migrations.Migration):
                 name='zone_unique_feature_index_per_set',
             ),
         ),
+        migrations.RunPython(create_switch, delete_switch),
     ]

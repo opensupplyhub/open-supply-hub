@@ -22,6 +22,11 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
     everything", as the India Labour Line provider puts it.
     """
 
+    # "Outside every zone" is the normal case for a dataset that covers
+    # only part of the globe, so a miss is not worth a warning per
+    # location per zone set on the details endpoint.
+    log_missing_raw_data = False
+
     def __init__(self, zone_set: ZoneSet):
         self.zone_set = zone_set
 
@@ -62,6 +67,12 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
         uploaded_at = raw_data.created_at.isoformat()
         return {
             'id': None,
+            # `raw_value` (singular) is what keeps this field out of
+            # the facility downloads: `fetch_only_raw_values` on the
+            # base class returns None unless the value carries a
+            # `raw_values` dict. That is deliberate for now (downloads
+            # are a separate ticket), so a zone-set field missing from
+            # a download is this line, not the download serializer.
             'value': {'raw_value': raw_data.label},
             'created_at': uploaded_at,
             'updated_at': uploaded_at,

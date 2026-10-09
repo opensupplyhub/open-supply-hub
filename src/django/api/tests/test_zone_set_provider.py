@@ -3,9 +3,12 @@ import unittest.mock
 
 from django.contrib.gis.geos import Point
 from django.core.cache import cache
+from django.db import connection
 from django.db.models import ProtectedError
+from django.test.utils import CaptureQueriesContext
 from rest_framework import status
 from rest_framework.test import APITestCase
+from waffle.testutils import override_switch
 
 from api.models import (
     Contributor,
@@ -19,7 +22,10 @@ from api.models import (
 )
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
-from api.partner_fields.registry import system_partner_field_registry
+from api.partner_fields.registry import (
+    ZONE_SETS_SWITCH,
+    system_partner_field_registry,
+)
 from api.partner_fields.zone_set_provider import ZoneSetProvider
 from api.serializers import FacilityIndexDetailsSerializer
 from api.helpers.geojson_zones import parse_zone_features
@@ -49,6 +55,7 @@ def zone_records(*features, value_property='bws_label'):
     return parse_zone_features(raw, value_property)
 
 
+@override_switch(ZONE_SETS_SWITCH, active=True)
 class ZoneSetProviderTest(APITestCase):
     """Tests for serving a zone set as a Spotlight partner field, on
     the provider itself, the registry, and both public surfaces."""
@@ -181,6 +188,33 @@ class ZoneSetProviderTest(APITestCase):
         facility = self._make_facility(77.3, 28.6)
         self.assertIsNone(self.provider.fetch_data(facility))
 
+    def test_location_outside_every_zone_does_not_warn(self):
+        """Outside every zone is the normal case for a regional
+        dataset, so it must not log a warning per location."""
+        facility = self._make_facility(80.0, 20.0)
+        with self.assertNoLogs('api.partner_fields.base_provider', 'WARNING'):
+            self.assertIsNone(self.provider.fetch_data(facility))
+
+    def test_fetch_data_looks_up_the_contributor_once_per_instance(self):
+        """One zone lookup per location after the first call; the
+        partner field and contributor queries are memoized on the
+        instance so a second dataset cannot quietly triple the cost
+        of serializing many locations with one provider list."""
+        first = self._make_facility(77.3, 28.6)
+        second = self._make_facility(76.85, 28.45)
+
+        # Zone lookup + partner field + contributor.
+        with self.assertNumQueries(3):
+            self.assertEqual(
+                self.provider.fetch_data(first)['value']['raw_value'], 'Low'
+            )
+        # Zone lookup only.
+        with self.assertNumQueries(1):
+            self.assertEqual(
+                self.provider.fetch_data(second)['value']['raw_value'],
+                'Extremely High',
+            )
+
     def test_linked_partner_field_cannot_be_deleted(self):
         with self.assertRaises(ProtectedError):
             self.partner_field.delete()
@@ -217,6 +251,46 @@ class ZoneSetProviderTest(APITestCase):
         self.zone_set.partner_field = None
         self.zone_set.save()
         self.assertEqual(self._registered_zone_set_fields(), [])
+
+    def test_switch_off_hides_zone_sets_and_skips_their_query(self):
+        """With `enable_zone_sets` off the registry must not touch
+        `api_zoneset` at all: the switch exists so a freshly deployed
+        image can render location pages before `migrate` has created
+        the table in post-deploy."""
+        with override_switch(ZONE_SETS_SWITCH, active=False):
+            with CaptureQueriesContext(connection) as queries:
+                names = [
+                    provider._get_field_name()
+                    for provider in system_partner_field_registry.providers
+                ]
+
+        self.assertNotIn('aqueduct_water_stress', names)
+        self.assertIn('mit_living_wage', names)
+        self.assertFalse(
+            [q['sql'] for q in queries if 'api_zoneset' in q['sql']],
+            'registry queried api_zoneset while the switch was off',
+        )
+
+    def test_registry_hands_out_fresh_instances_per_access(self):
+        """The contributor memo lives on the provider instance, so the
+        registry must not reuse instances across accesses or an admin
+        change would be invisible until restart."""
+        facility = self._make_facility(77.3, 28.6)
+        before = [
+            provider for provider in system_partner_field_registry.providers
+            if isinstance(provider, ZoneSetProvider)
+        ][0]
+        self.assertIsNotNone(before.fetch_data(facility))
+
+        self.contributor.partner_fields.clear()
+        after = [
+            provider for provider in system_partner_field_registry.providers
+            if isinstance(provider, ZoneSetProvider)
+        ][0]
+
+        self.assertIsNot(before, after)
+        self.assertIsNotNone(before.fetch_data(facility))
+        self.assertIsNone(after.fetch_data(facility))
 
     # --- details endpoint serializer (location page) --------------
 

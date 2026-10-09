@@ -27,7 +27,7 @@ def parse_zone_features(raw, value_property):
     Parse a zoned GeoJSON FeatureCollection into zone records.
 
     Each feature becomes one zone: its geometry (kept separate, not
-    dissolved with its neighbours) plus the value read from the chosen
+    dissolved with its neighbors) plus the value read from the chosen
     feature property. The whole file is validated before anything is
     returned, so a caller that saves the result never saves a partial
     set.
