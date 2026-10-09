@@ -69,7 +69,7 @@ jobs:
 
           cd ./src/anon-tools
           docker build -t restore -f Dockerfile.restore .
-          docker run --network host --shm-size=2gb --rm \
+          docker run --name osh-anon-restore --network host --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID \
               -e AWS_SECRET_ACCESS_KEY \
               -e AWS_DEFAULT_REGION \
@@ -78,6 +78,17 @@ jobs:
               -e DATABASE_USERNAME="$DB_USER" \
               -e DATABASE_PASSWORD="$DB_PASS" \
               restore
+      - name: Close the database tunnel
+        # Also runs when the workflow is cancelled or a step fails, so the
+        # container stops and the SSM session is terminated in AWS.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          docker rm -f osh-anon-restore >/dev/null 2>&1 || true
+          bash "$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh" stop 5433
 
   post_deploy:
     needs: apply-anonymized-db
@@ -145,6 +156,15 @@ jobs:
           CLEAR_OPENSEARCH_TARGET: both
         run: |
           bash ./deployment/clear_opensearch/clear_opensearch.sh
+      - name: Close the OpenSearch tunnel
+        # Also runs when the workflow is cancelled or a step fails.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+        run: |
+          bash "$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh" stop 9443
 
   start_logstash:
     needs: clear_opensearch

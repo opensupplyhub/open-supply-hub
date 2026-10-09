@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-aws s3 cp s3://oshub-dumps-anonymized/osh_prod_large_anon.dump /dumps/osh_prod_large.dump
+aws s3 cp --only-show-errors s3://oshub-dumps-anonymized/osh_prod_large_anon.dump /dumps/osh_prod_large.dump
 
 # OSDEV-3531: the database is reached through an SSM port forward that the
 # workflow opens on the runner before starting this container (run with
@@ -29,7 +29,7 @@ done
 (
   while true; do
     sleep 240
-    psql -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -w \
+    PGCONNECT_TIMEOUT=10 psql -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -w \
       -c 'SELECT 1' >/dev/null 2>&1 || true
   done
 ) &
@@ -46,4 +46,20 @@ END \$\$;"
 
 echo "Dropping tables"
 psql -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 -c "$SQL_SCRIPT"
-pg_restore --verbose --clean --if-exists --no-acl --no-owner -d $DATABASE_NAME -U $DATABASE_USERNAME -h localhost -p 5433 < /dumps/osh_prod_large.dump
+# Restore in parallel: -j loads tables and builds indexes over several
+# connections at once (all through the same SSM session). It needs the dump
+# file as an argument, not on stdin. More memory for index and constraint
+# builds, and no synchronous commit (a failed restore is simply re-run),
+# apply only to the restore's own connections. Size both to the target RDS
+# instance: jobs <= its vCPUs, jobs x memory well below its RAM (defaults
+# sized for 16 vCPU / 64 GB: 8 x 1GB = 8 GB at most).
+RESTORE_JOBS="${RESTORE_JOBS:-8}"
+RESTORE_MAINTENANCE_WORK_MEM="${RESTORE_MAINTENANCE_WORK_MEM:-1GB}"
+echo "[info] Restoring with $RESTORE_JOBS parallel jobs (maintenance_work_mem=$RESTORE_MAINTENANCE_WORK_MEM)"
+PGOPTIONS="-c maintenance_work_mem=$RESTORE_MAINTENANCE_WORK_MEM -c synchronous_commit=off" \
+  pg_restore --verbose --clean --if-exists --no-acl --no-owner -j "$RESTORE_JOBS" \
+  -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -h localhost -p 5433 \
+  /dumps/osh_prod_large.dump
+RESTORE_CODE=$?
+echo "[info] pg_restore finished with exit code $RESTORE_CODE"
+exit $RESTORE_CODE

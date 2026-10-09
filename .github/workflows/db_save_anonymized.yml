@@ -81,7 +81,7 @@ jobs:
 
           cd ./src/anon-tools
           docker build -t dump_image -f Dockerfile.dump .
-          docker run --network host --shm-size=2gb --rm \
+          docker run --name osh-anon-dump --network host --shm-size=2gb --rm \
               -e AWS_ACCESS_KEY_ID_PROD \
               -e AWS_SECRET_ACCESS_KEY_PROD \
               -e AWS_DEFAULT_REGION_PROD \
@@ -93,3 +93,22 @@ jobs:
               -e DATABASE_USERNAME="$DB_USER" \
               -e DATABASE_PASSWORD="$DB_PASS" \
               dump_image
+      - name: Close the database tunnel
+        # Also runs when the workflow is cancelled or a step fails, so the
+        # container stops and the SSM session is terminated in AWS.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID_PROD: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY_PROD: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_ACCESS_KEY_ID_TEST: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY_TEST: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          docker rm -f osh-anon-dump >/dev/null 2>&1 || true
+          # The session lives in the account of the source environment.
+          if [ "${{ github.event.inputs['deploy-env'] }}" = "Development" ]; then
+            export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID_TEST" AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY_TEST"
+          else
+            export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID_PROD" AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY_PROD"
+          fi
+          bash "$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh" stop 5433
