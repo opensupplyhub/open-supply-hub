@@ -293,3 +293,82 @@ def parse_polygon_geojson(raw):
     _check_bounds(result)
 
     return result
+
+
+def parse_feature_collection_polygons(raw):
+    """
+    Turn a GeoJSON FeatureCollection into one MultiPolygon per feature,
+    keeping each feature's properties.
+
+    This is the per-feature counterpart of `parse_polygon_geojson`.
+    That function dissolves every feature into a single boundary,
+    which is right for "one named area" uploads but wrong for zoned
+    datasets (water-stress basins, landslide-susceptibility bands)
+    where each feature is its own zone carrying its own value. Here
+    the features stay separate: each one becomes its own
+    MultiPolygon, validated with the same rules (WGS 84 only, valid
+    geometry, longitude/latitude bounds), paired with its
+    `properties` dict.
+
+    Args:
+        raw: The GeoJSON FeatureCollection, as a string.
+
+    Returns:
+        A list of `(MultiPolygon, properties)` tuples in the order the
+        features appear in the file. `properties` is always a dict
+        (an absent or null `properties` member becomes `{}`).
+
+    Raises:
+        InvalidPolygonGeoJSON: If the input is not a FeatureCollection,
+            has no features, has a feature without geometry, or any
+            feature fails the shared geometry checks. Messages name
+            the offending feature by its position in the file.
+    """
+    try:
+        data = json.loads(raw)
+    except (TypeError, ValueError) as exc:
+        raise InvalidPolygonGeoJSON(f'Not valid JSON: {exc}') from exc
+
+    if not isinstance(data, dict) or data.get('type') != 'FeatureCollection':
+        found = (
+            data.get('type') if isinstance(data, dict) else 'non-object JSON'
+        )
+        raise InvalidPolygonGeoJSON(
+            'Expected a GeoJSON FeatureCollection (one feature per '
+            f'zone), got {found}.'
+        )
+
+    _check_crs(data)
+
+    features = data.get('features')
+    if not isinstance(features, list) or not features:
+        raise InvalidPolygonGeoJSON('FeatureCollection has no features.')
+
+    missing_geometry = [
+        index for index, feature in enumerate(features)
+        if not isinstance(feature, dict) or feature.get('geometry') is None
+    ]
+    if missing_geometry:
+        raise InvalidPolygonGeoJSON(
+            f'{len(missing_geometry)} feature(s) have no geometry '
+            f'(first at position {missing_geometry[0]}). Every feature '
+            'must carry a Polygon or MultiPolygon.'
+        )
+
+    results = []
+    for index, feature in enumerate(features):
+        try:
+            _check_crs(feature)
+            polygons = _parse_polygons([feature['geometry']])
+            geom = _combine_polygons(polygons)
+            _check_bounds(geom)
+        except InvalidPolygonGeoJSON as exc:
+            raise InvalidPolygonGeoJSON(
+                f'Feature at position {index}: {exc}'
+            ) from exc
+        properties = feature.get('properties')
+        if not isinstance(properties, dict):
+            properties = {}
+        results.append((geom, properties))
+
+    return results

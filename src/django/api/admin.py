@@ -14,6 +14,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from api.models.polygon import Polygon
 from api.models.polygon_admin import PolygonAdmin
+from api.models.zone_set import Zone, ZoneSet
+from api.models.zone_set_admin import ZoneAdmin, ZoneSetAdmin
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
@@ -420,4 +422,6 @@ admin_site.register(
 )
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
 admin_site.register(Polygon, PolygonAdmin)
+admin_site.register(ZoneSet, ZoneSetAdmin)
+admin_site.register(Zone, ZoneAdmin)
 admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)

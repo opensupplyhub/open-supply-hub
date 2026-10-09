@@ -421,7 +421,16 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         system_fields = []
         partner_field_names = {field.name for field in partner_fields}
 
-        for provider in system_partner_field_registry.providers:
+        # The registry builds a provider per active zone set with one
+        # query on each access. Paths that serialize many facilities
+        # with one shared context (e.g. potential-match results) reuse
+        # the list; a new request still sees admin changes.
+        providers = self.context.get('system_partner_field_providers')
+        if providers is None:
+            providers = system_partner_field_registry.providers
+            self.context['system_partner_field_providers'] = providers
+
+        for provider in providers:
             field_name = provider._get_field_name()
 
             if field_name not in partner_field_names:
