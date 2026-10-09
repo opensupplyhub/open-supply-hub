@@ -6,7 +6,7 @@ from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db.models.signals import post_delete
 from django.test import override_settings
 from django.urls import reverse
-from opensearchpy.exceptions import NotFoundError
+from opensearchpy.exceptions import ConnectionError, NotFoundError
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -31,6 +31,7 @@ from api.services.candidate_retirement import (
     tombstone_payload,
 )
 from api.signals import location_post_delete_handler_for_opensearch
+from api.views.v1.index_names import OpenSearchIndexNames
 
 CANDIDATE_POLYGON_WKT = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'
 V1_OPEN_SEARCH_SERVICE = 'api.views.v1.production_locations.OpenSearchService'
@@ -470,8 +471,8 @@ class CandidateRetirementTest(APITestCase):
 
     # --- OpenSearch post_delete signal -----------------------------------
 
-    def test_retire_survives_missing_opensearch_document(self):
-        """The signal must not abort retirement of a never-indexed doc."""
+    def test_retire_skips_opensearch_delete_for_candidate(self):
+        """A candidate is never indexed, so the signal issues no delete."""
         post_delete.connect(
             location_post_delete_handler_for_opensearch, Facility
         )
@@ -479,19 +480,55 @@ class CandidateRetirementTest(APITestCase):
 
         with patch('api.signals.OpenSearchServiceConnection') as conn, \
                 patch('api.signals.signal_error_notifier') as notifier:
-            conn.return_value.client.delete.side_effect = NotFoundError(
-                404, 'not_found', {}
-            )
-
             tombstone = self._retire()
 
-            conn.return_value.client.delete.assert_called_once()
+            conn.assert_not_called()
+            conn.return_value.client.delete.assert_not_called()
             notifier.assert_not_called()
 
         self.assertEqual(os_id, tombstone.os_id)
         self.assertFalse(
             Facility.including_candidates.filter(id=os_id).exists()
         )
+
+    def test_retire_survives_opensearch_outage(self):
+        """An unreachable cluster must not 500 and roll a retirement back."""
+        post_delete.connect(
+            location_post_delete_handler_for_opensearch, Facility
+        )
+        os_id = self.candidate.id
+
+        with patch('api.signals.OpenSearchServiceConnection') as conn:
+            conn.return_value.client.delete.side_effect = ConnectionError(
+                'N/A', 'connection refused', None
+            )
+
+            tombstone = self._retire()
+
+        self.assertEqual(os_id, tombstone.os_id)
+        self.assertTrue(FacilityAlias.objects.filter(os_id=os_id).exists())
+        self.assertFalse(
+            Facility.including_candidates.filter(id=os_id).exists()
+        )
+
+    def test_confirmed_facility_delete_still_calls_opensearch(self):
+        post_delete.connect(
+            location_post_delete_handler_for_opensearch, Facility
+        )
+
+        with patch('api.signals.OpenSearchServiceConnection') as conn, \
+                patch('api.signals.signal_error_notifier') as notifier:
+            conn.return_value.client.delete.return_value = {
+                'result': 'deleted', 'id': self.facility.id,
+            }
+
+            location_post_delete_handler_for_opensearch(self.facility)
+
+            conn.return_value.client.delete.assert_called_once_with(
+                index=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+                id=self.facility.id,
+            )
+            notifier.assert_not_called()
 
     def test_missing_opensearch_document_still_reported_for_facilities(self):
         post_delete.connect(
