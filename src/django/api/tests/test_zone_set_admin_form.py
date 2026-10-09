@@ -5,9 +5,12 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.urls import reverse
+from waffle.testutils import override_switch
 
-from api.models import PartnerField, Zone, ZoneSet
+from api.models import PartnerField, User, Zone, ZoneSet
 from api.models.zone_set_admin import ZoneSetAdmin, ZoneSetForm
+from api.partner_fields.registry import ZONE_SETS_SWITCH
 
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
@@ -384,3 +387,47 @@ class ZoneSetAdminSaveTest(TestCase):
         self.assertEqual(
             self.model_admin.zone_summary(ZoneSet()), '(no zones saved yet)'
         )
+
+
+class ZoneSetAdminSwitchNoticeTest(TestCase):
+    """
+    The zone set screens say when `enable_zone_sets` is off, because
+    an uploaded, linked, active set then serves nothing on any
+    location page and the switch is on a different admin screen.
+    """
+
+    NOTICE = 'switch is off, so no zone set serves values'
+
+    def setUp(self):
+        superuser = User.objects.create_superuser(
+            email='super@example.com', password='example123'
+        )
+        self.client.force_login(superuser)
+        self.zone_set = ZoneSet.objects.create(
+            name='water_stress', description='d', value_property='v'
+        )
+
+    def test_list_and_change_pages_warn_while_switch_is_off(self):
+        with override_switch(ZONE_SETS_SWITCH, active=False):
+            for url in (
+                reverse('admin:api_zoneset_changelist'),
+                reverse('admin:api_zoneset_add'),
+                reverse(
+                    'admin:api_zoneset_change', args=[self.zone_set.pk]
+                ),
+            ):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200, url)
+                self.assertContains(response, self.NOTICE, msg_prefix=url)
+                self.assertContains(
+                    response, reverse('admin:waffle_switch_changelist'),
+                    msg_prefix=url,
+                )
+
+    def test_no_warning_while_switch_is_on(self):
+        with override_switch(ZONE_SETS_SWITCH, active=True):
+            response = self.client.get(
+                reverse('admin:api_zoneset_changelist')
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, self.NOTICE)

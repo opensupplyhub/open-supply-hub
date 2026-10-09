@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0245_add_claim_quality_check_switch'),
+        ('api', '0246_add_cascale_affiliation'),
     ]
 
     operations = [

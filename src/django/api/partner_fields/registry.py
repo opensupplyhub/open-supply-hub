@@ -11,7 +11,7 @@ from api.partner_fields.india_labour_line_provider import (
 from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
 from api.partner_fields.zone_set_provider import ZoneSetProvider
 
-# Gates the zone set providers. Created inactive by migration 0246 so
+# Gates the zone set providers. Created inactive by migration 0247 so
 # the registry never queries `api_zoneset` on an image that is live
 # before `migrate` has run in post-deploy, and so every zone-set-backed
 # field can be pulled from both Spotlight surfaces at once without a

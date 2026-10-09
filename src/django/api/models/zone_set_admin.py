@@ -1,14 +1,20 @@
 from django import forms
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.db.models import Count
 from django.template.defaultfilters import filesizeformat
+from django.urls import reverse
+from django.utils.html import format_html
+from waffle import switch_is_active
 
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
 from api.helpers.geojson_zones import parse_zone_features
 from api.models.partner_field import PartnerField
 from api.models.polygon_admin import PolygonForm
 from api.models.zone_set import ZoneSet
-from api.partner_fields.registry import system_partner_field_registry
+from api.partner_fields.registry import (
+    ZONE_SETS_SWITCH,
+    system_partner_field_registry,
+)
 
 
 class ZoneSetForm(forms.ModelForm):
@@ -162,6 +168,42 @@ class ZoneSetAdmin(admin.ModelAdmin):
         'geojson_file', 'zone_summary', 'active', 'uuid', 'created_at',
         'updated_at',
     )
+
+    def changelist_view(self, request, extra_context=None):
+        self._warn_if_zone_sets_switched_off(request)
+        return super().changelist_view(request, extra_context)
+
+    def changeform_view(
+        self, request, object_id=None, form_url='', extra_context=None
+    ):
+        self._warn_if_zone_sets_switched_off(request)
+        return super().changeform_view(
+            request, object_id, form_url, extra_context
+        )
+
+    def _warn_if_zone_sets_switched_off(self, request):
+        """
+        Tell staff, on the zone set screens, when zone sets are off.
+
+        With `enable_zone_sets` inactive a set can be uploaded, linked
+        and marked active and still show nothing on any location page,
+        with no hint why: the switch lives on a different admin screen.
+        Only on GET, so a save that redirects to the list does not
+        queue the same warning twice.
+
+        Args:
+            request: The admin request to attach the warning to.
+        """
+        if request.method != 'GET' or switch_is_active(ZONE_SETS_SWITCH):
+            return
+        messages.warning(request, format_html(
+            'The <a href="{}">{}</a> switch is off, so no zone set '
+            'serves values on location pages, whatever its "active" '
+            'flag says. Turn the switch on when the datasets are ready '
+            'to go live.',
+            reverse('admin:waffle_switch_changelist'),
+            ZONE_SETS_SWITCH,
+        ))
 
     def get_queryset(self, request):
         """Annotate the zone count so the list view needs one query."""
