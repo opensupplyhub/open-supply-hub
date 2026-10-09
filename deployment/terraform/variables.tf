@@ -801,6 +801,13 @@ variable "instance_source" {
   default = "os_hub"
 }
 
+# The account whose claim review notes are flagged is_automated on the
+# claims API (reminder emails, LLM review notes) — see
+# CLAIMS_AUTOMATION_ACCOUNT_EMAIL in src/django/oar/settings.py.
+variable "claims_automation_account_email" {
+  default = "data@opensupplyhub.org"
+}
+
 variable "opensearch_instance_type" {
   type    = string
   default = "t3.small.search"
