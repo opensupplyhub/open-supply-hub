@@ -113,12 +113,16 @@ class Affiliations:
     BETTER_MILLS_PROGRAM = 'Better Mills Program'
     BETTER_WORK = 'Better Work (ILO)'
     CANOPY = 'Canopy'
+    CASCALE = 'Cascale'
     ETHICAL_TRADING_INITIATIVE = 'Ethical Trading Initiative'
     EUROPEAN_OUTDOOR_GROUP = 'European Outdoor Group'
     FAIR_LABOR_ASSOCIATION = 'Fair Labor Association'
     FAIR_WEAR_FOUNDATION = 'Fair Wear Foundation'
     SEDEX = 'SEDEX'
     SOCIAL_LABOR_CONVERGENCE_PLAN = 'Social and Labor Convergence Plan (SLCP)'
+    # Superseded by CASCALE (the organization rebranded). Retained so the
+    # claims already storing this string stay valid; it is no longer
+    # offered in the claim form. See OSDEV-2219.
     SUSTAINABLE_APPAREL_COALITION = 'Sustainable Apparel Coalition'
     SWEATFREE_PURCHASING_CONSORTIUM = 'Sweatfree Purchasing Consortium'
     HERHEATH = 'HERhealth'
