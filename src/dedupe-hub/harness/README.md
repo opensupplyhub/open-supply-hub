@@ -46,8 +46,8 @@ the join key everywhere — **never** a row-order index (see "Join discipline").
 
 Extraction SQL against `FacilityMatch` is not yet in-repo; the 2026-08 sample
 (`pairs_geo.csv`, 40k stratified pairs) plus the DB-verified `pick_one_flags.csv`
-live in Danielle's scratch copy. Porting the extraction to a management command
-is the natural next piece of this harness.
+are held locally by whoever ran the evaluation. Porting the extraction to a
+management command is the natural next piece of this harness.
 
 **Pair CSVs are never committed.** They are facility data; `.data/` is
 gitignored. Regenerate them from the local anonymized dump (or a prod snapshot,
