@@ -16,6 +16,14 @@ from .utils import _get_parent_company
 
 class ApprovedFacilityClaimSerializer(ModelSerializer):
     facility = SerializerMethodField()
+    # The name and address the production location itself holds, read
+    # from the same row the claimed-details PUT compares against when it
+    # decides whether an echoed value asserts anything. The claimed-
+    # details form pre-fills a claim that asserts no name or address
+    # with these, rather than with the indexed `facility.properties`,
+    # which could lag behind the location.
+    location_name = SerializerMethodField()
+    location_address = SerializerMethodField()
     countries = SerializerMethodField()
     contributors = SerializerMethodField()
     facility_types = SerializerMethodField()
@@ -50,12 +58,19 @@ class ApprovedFacilityClaimSerializer(ModelSerializer):
                   'affiliation_choices', 'certification_choices',
                   'facility_affiliations', 'facility_certifications',
                   'facility_product_types', 'facility_production_types',
-                  'production_type_choices', 'sector')
+                  'production_type_choices', 'sector',
+                  'location_name', 'location_address')
 
     def get_facility(self, claim):
         facility_index = FacilityIndex.objects.get(id=claim.facility.id)
         return FacilityIndexDetailsSerializer(
             facility_index, context=self.context).data
+
+    def get_location_name(self, claim):
+        return claim.facility.name
+
+    def get_location_address(self, claim):
+        return claim.facility.address
 
     def get_countries(self, _):
         return COUNTRY_CHOICES

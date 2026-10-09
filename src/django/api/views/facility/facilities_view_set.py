@@ -8,6 +8,7 @@ from api.facility_actions.processing_facility_executor import (
 from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.services.candidate_retirement import tombstone_payload
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -95,9 +96,17 @@ from api.serializers import (
 )
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
-from api.throttles import DataUploadThrottle
+from api.throttles import DataUploadThrottle, DuplicateThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
+)
+from api.services.claim_quality_check_service import (
+    SOURCE_CLAIM_FORM,
+    check_claim_quality,
+    record_claim_quality_outcome,
+)
+from api.serializers.facility.claim_quality_check_serializer import (
+    ClaimQualityCheckSerializer,
 )
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
@@ -162,7 +171,14 @@ class FacilitiesViewSet(ListModelMixin,
 
     def get_throttles(self):
         if self.request.method == 'POST':
-            return [DataUploadThrottle()]
+            throttles = [DataUploadThrottle()]
+            if self.action == 'claim_quality_check':
+                # The advisory check is retried with a byte-identical
+                # body (a double-click, a re-run after a failed request),
+                # which DuplicateThrottle collapses so each only reaches
+                # the model once; the SLC check it mirrors does the same.
+                throttles.append(DuplicateThrottle())
+            return throttles
 
         return super().get_throttles()
 
@@ -1557,11 +1573,18 @@ class FacilitiesViewSet(ListModelMixin,
             return Response(response_data)
         except FacilityIndex.DoesNotExist as exc:
             # If the facility is not found but an alias is available,
-            # redirect to the alias
-            aliases = FacilityAlias.objects.filter(os_id=pk)
-            if len(aliases) == 0:
+            # redirect to the alias. A NOT_A_FACILITY tombstone has no
+            # target facility: the OS ID was retired, so answer 410 Gone
+            # instead of redirecting (OSDEV-3246).
+            alias = FacilityAlias.objects.filter(os_id=pk).first()
+            if alias is None:
                 raise NotFound() from exc
-            os_id = aliases.first().facility.id
+            if alias.facility_id is None:
+                return Response(
+                    tombstone_payload(alias),
+                    status=status.HTTP_410_GONE,
+                )
+            os_id = alias.facility_id
 
             redirect_url = f'/api/facilities/{os_id}/'
             query_string = request.META.get('QUERY_STRING', '')
@@ -2445,6 +2468,17 @@ class FacilitiesViewSet(ListModelMixin,
             for file in files:
                 self.__handle_file_upload(file, facility_claim)
 
+            # Logs what the claim form submitted for the quality check
+            # (OSDEV-3489) and leaves the moderator a note of any
+            # warnings the claimant continued past. No-op while the
+            # name/address fields are not editable.
+            record_claim_quality_outcome(
+                facility_claim,
+                request.user,
+                validated_data.get('dismissed_warnings') or [],
+                SOURCE_CLAIM_FORM,
+            )
+
             send_claim_facility_confirmation_email(request, facility_claim)
             Facility.update_facility_updated_at_field(facility.id)
 
@@ -2467,6 +2501,50 @@ class FacilitiesViewSet(ListModelMixin,
             raise NotFound(detail='Facility not found.') from exc
         except Contributor.DoesNotExist as exc:
             raise NotFound(detail='Contributor not found.') from exc
+
+    @swagger_auto_schema(auto_schema=None, methods=['POST'])
+    @action(detail=True, methods=['POST'],
+            url_path='claim/quality-check',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def claim_quality_check(self, request, pk=None):
+        """
+        Advisory LLM data-quality check of the name and address a
+        claimant is about to assert for this location (OSDEV-3489),
+        called by the claim form on leaving the Business step and by
+        the claimed-details form before saving. Returns
+        {"warnings": [{type, title, message}]}, empty when nothing is
+        flagged, the check is switched off, the values are the ones
+        the location already lists, or the model call failed (the
+        check fails open). Never writes anything: a claimant who
+        continues past the warnings reports them as
+        `dismissed_warnings` on the write that follows.
+
+        Rate limited by DataUploadThrottle like every POST on this
+        viewset, which is what bounds per-user model calls, and by
+        DuplicateThrottle, which turns an identical repeat within its
+        window into a 429 instead of another model call; see
+        doc/ops/monitoring.md.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+
+        try:
+            facility = Facility.objects.get(pk=pk)
+            contributor = request.user.contributor
+        except Facility.DoesNotExist as exc:
+            raise NotFound(detail='Facility not found.') from exc
+        except Contributor.DoesNotExist as exc:
+            raise NotFound(detail='Contributor not found.') from exc
+
+        serializer = ClaimQualityCheckSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        warnings = check_claim_quality(
+            facility,
+            serializer.validated_data['facility_name_english'],
+            serializer.validated_data['facility_address'],
+            contributor.id,
+        )
+        return Response({'warnings': warnings})
 
     def __handle_file_upload(self, file, facility_claim):
         # Storage and naming are shared with the pending-claim edit

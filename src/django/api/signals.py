@@ -38,6 +38,20 @@ def signal_error_notifier(error_log_message, response):
 
 @receiver(post_delete, sender=Facility)
 def location_post_delete_handler_for_opensearch(instance, **kwargs):
+    if instance.is_candidate:
+        # Candidates are kept out of the OpenSearch production-locations
+        # index (OSDEV-3243), so there is no document to delete. Skip the
+        # network call entirely: retiring a
+        # candidate (OSDEV-3246) runs inside the deleting transaction, and
+        # an OpenSearch outage must not turn into a 500 that rolls the
+        # retirement back.
+        log.info(
+            '[Location Deletion] Candidate %s is not indexed; skipping '
+            'OpenSearch delete.',
+            instance.id,
+        )
+        return
+
     opensearch = OpenSearchServiceConnection()
     try:
         response = opensearch.client.delete(
@@ -49,6 +63,16 @@ def location_post_delete_handler_for_opensearch(instance, **kwargs):
             '[Location Deletion] Lost connection to OpenSearch cluster.'
         )
         raise
+    except NotFoundError:
+        # opensearch-py raises on a 404 rather than returning
+        # result='not_found'; it is the same inconsistency reported
+        # below and must not abort the deleting transaction.
+        signal_error_notifier(
+            '[Location Deletion] Facility not found in OpenSearch, '
+            'indicating data inconsistency.',
+            {'result': 'not_found', 'id': instance.id},
+        )
+        return
 
     if response and response.get('result') == 'not_found':
         error_log_message = (
