@@ -1,10 +1,11 @@
 import json
 from unittest.mock import Mock
 
+from django.conf import settings
 from django.contrib.admin.sites import AdminSite
 from django.contrib.gis.geos import Point
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from waffle.testutils import override_switch
 
@@ -389,6 +390,15 @@ class ZoneSetAdminSaveTest(TestCase):
         )
 
 
+# The admin templates call `{% static %}`, and the project's manifest
+# storage then wants a `staticfiles.json` that only `collectstatic`
+# writes. CI never runs it, so render against the plain storage.
+@override_settings(STORAGES={
+    **settings.STORAGES,
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+})
 class ZoneSetAdminSwitchNoticeTest(TestCase):
     """
     The zone set screens say when `enable_zone_sets` is off, because
