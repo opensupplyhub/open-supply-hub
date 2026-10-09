@@ -121,14 +121,17 @@ def main():
         if len(matches) == 0:
             continue
         matched_items += 1
-        scores = [float(s) for (_, _), s in matches]
+        scored = [(float(s), str(cid)) for (_, cid), s in matches]
+        scores = [s for s, _ in scored]
         mid = str(matches[0][0][0])
         row = {"item_id": mid}
         for t in thresholds:
             n = sum(1 for s in scores if s >= t)
             counts[t].append(n)
             row[f"n@{t}"] = n
-        row["top"] = max(scores)
+        best_score, best_id = max(scored)
+        row["top"] = best_score
+        row["top_fac_id"] = best_id      # so decisions can be eyeballed, not just counted
         per_item.append(row)
     t_match = time.time() - t2
 
@@ -150,7 +153,7 @@ def main():
               f"{nonzero / len(c):12.1%}")
 
     with open(args.out, "w", newline="") as f:
-        cols = ["item_id"] + [f"n@{t}" for t in thresholds] + ["top"]
+        cols = ["item_id"] + [f"n@{t}" for t in thresholds] + ["top", "top_fac_id"]
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader()
         for row in per_item:
