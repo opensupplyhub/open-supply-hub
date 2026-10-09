@@ -21,6 +21,8 @@ from api.views.v1.production_locations \
      import ProductionLocations
 from api.views.v1.moderation_events \
      import ModerationEvents
+from api.views.v1.identity_resolver \
+     import IdentityResolverView, ResolverDescriptionView
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -151,6 +153,23 @@ schema_view = get_schema_view(
     patterns=[path("", include(public_apis + api_v1))],
 )
 
+# Scope doc 3.1. These are root-level on purpose: the identifier path is a
+# published contract that outlives any internal API versioning, so it is not
+# mounted under api/ or api/v1/. Kept out of the Swagger schema for now; the
+# resolver is documented by its own /.well-known/resolver description.
+resolver_apis = [
+    path(
+        'osid/<str:os_id>',
+        IdentityResolverView.as_view(),
+        name='identity-resolver',
+    ),
+    path(
+        '.well-known/resolver',
+        ResolverDescriptionView.as_view(),
+        name='resolver-description',
+    ),
+]
+
 info_apis = [
     path('api/info/contributors/', views.active_contributors_count,
          name='active_contributors_count'),
@@ -213,4 +232,6 @@ internal_apis = [
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
-urlpatterns = public_apis + api_v1 + internal_apis + info_apis
+urlpatterns = (
+    public_apis + api_v1 + internal_apis + info_apis + resolver_apis
+)
