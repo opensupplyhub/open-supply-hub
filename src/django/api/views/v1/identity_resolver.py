@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from waffle import switch_is_active
 
 from api.os_id import validate_os_id
+from api.services.os_id_presence import os_id_exists_here
 
 LINKSET_MEDIA_TYPE = 'application/linkset+json'
 
@@ -20,6 +21,18 @@ LINKSET_MEDIA_TYPE = 'application/linkset+json'
 RESOLVER_PATH_PREFIX = 'osid'
 
 PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
+
+# Scope doc 3.4. Worded to say only what this instance can answer for.
+#
+# It must not say the identifier is invalid, because it may be perfectly
+# valid on another instance, and it must not hint that it exists elsewhere,
+# because that would leak the existence of private-instance identifiers one
+# probe at a time (NFR-08, AC-09). The same wording is returned whether the
+# identifier was never issued anywhere or was issued only on a private
+# instance, so the two cases are not distinguishable from outside.
+NOT_RESOLVABLE_HERE = (
+    'This identifier is not resolvable here.'
+)
 
 
 class LinksetRenderer(JSONRenderer):
@@ -128,6 +141,18 @@ class IdentityResolverView(APIView):
                     )
                 },
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Scope doc 3.4. An identifier issued only on a private instance is
+        # indistinguishable from a public one without this lookup, so the
+        # answer has to be careful about what it implies: not resolvable
+        # here, which is true, rather than invalid or nonexistent, which we
+        # cannot know and which would be false for the private-instance case
+        # (NFR-08, AC-09).
+        if not os_id_exists_here(os_id):
+            return Response(
+                {'detail': NOT_RESOLVABLE_HERE},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         if _wants_linkset(request):

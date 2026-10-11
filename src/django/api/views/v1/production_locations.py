@@ -20,6 +20,7 @@ from api.views.v1.utils import (
     handle_errors_decorator,
 )
 from api.services.opensearch.search import OpenSearchService
+from api.services.os_id_presence import os_id_exists_here
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -40,7 +41,6 @@ from api.serializers.v1.ignore_warnings_query_param_serializer \
     import IgnoreWarningsQueryParamSerializer
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
-from api.models.facility.facility_alias import FacilityAlias
 from api.models.identity_record_association import (
     IdentityRecordAssociation,
 )
@@ -278,14 +278,10 @@ class ProductionLocations(ViewSet):
         """
         Whether this instance knows the identifier, following a merge.
 
-        A superseded OS ID keeps resolving to the surviving location
-        through FacilityAlias, so a registration against one is accepted
-        and stored as submitted. Resolution follows the alias on read,
-        which is the behaviour Section 2.7 promises.
+        Delegates to the shared check so the write side here and the
+        resolver's read side cannot drift on what "here" means (3.2, 3.4).
         """
-        if Facility.objects.filter(pk=os_id).exists():
-            return True
-        return FacilityAlias.objects.filter(pk=os_id).exists()
+        return os_id_exists_here(os_id)
 
     @staticmethod
     def __identity_record_response(association):
