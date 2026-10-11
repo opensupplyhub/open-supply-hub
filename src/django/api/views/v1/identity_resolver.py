@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.conf import settings
 from rest_framework import exceptions, status
 from rest_framework.negotiation import DefaultContentNegotiation
@@ -69,6 +69,20 @@ class ResolverContentNegotiation(DefaultContentNegotiation):
             return renderers[0], renderers[0].media_type
 
 
+def _error(detail, status_code):
+    """
+    An error body that stays JSON whatever the caller asked for.
+
+    A DRF Response is rendered by whichever renderer negotiation picked, so
+    a browser sending `Accept: text/html` would receive the detail dict
+    rendered as HTML, which is a Python repr rather than anything a client
+    can read. The body here is machine-readable either way, so it is
+    returned directly instead. A branded error page for browsers is the
+    frontend's concern (OSDEV-3584).
+    """
+    return JsonResponse({'detail': detail}, status=status_code)
+
+
 def _site_root(request):
     """
     Absolute origin for this instance, matching the convention in
@@ -134,13 +148,9 @@ class IdentityResolverView(APIView):
         # AC#3. Checked before anything touches the database, so a malformed
         # identifier costs a string comparison rather than a query.
         if not validate_os_id(os_id, raise_on_invalid=False):
-            return Response(
-                {
-                    'detail': (
-                        'The identifier is not a well-formed OS ID.'
-                    )
-                },
-                status=status.HTTP_400_BAD_REQUEST,
+            return _error(
+                'The identifier is not a well-formed OS ID.',
+                status.HTTP_400_BAD_REQUEST,
             )
 
         # Scope doc 3.4. An identifier issued only on a private instance is
@@ -150,9 +160,8 @@ class IdentityResolverView(APIView):
         # cannot know and which would be false for the private-instance case
         # (NFR-08, AC-09).
         if not os_id_exists_here(os_id):
-            return Response(
-                {'detail': NOT_RESOLVABLE_HERE},
-                status=status.HTTP_404_NOT_FOUND,
+            return _error(
+                NOT_RESOLVABLE_HERE, status.HTTP_404_NOT_FOUND
             )
 
         if _wants_linkset(request):

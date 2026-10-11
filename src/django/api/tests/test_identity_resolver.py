@@ -215,7 +215,7 @@ class PrivateInstanceIdentifierTest(APITestCase):
                     response.status_code, status.HTTP_404_NOT_FOUND
                 )
                 self.assertEqual(
-                    response.data['detail'],
+                    json.loads(response.content)['detail'],
                     'This identifier is not resolvable here.',
                 )
 
@@ -230,7 +230,7 @@ class PrivateInstanceIdentifierTest(APITestCase):
             '/osid/{}'.format(ELSEWHERE_OS_ID), HTTP_ACCEPT=LINKSET
         )
 
-        body = json.dumps(response.data).lower()
+        body = response.content.decode().lower()
 
         for leak in (
             'private',
@@ -256,7 +256,7 @@ class PrivateInstanceIdentifierTest(APITestCase):
         )
 
         self.assertEqual(first.status_code, second.status_code)
-        self.assertEqual(first.data, second.data)
+        self.assertEqual(first.content, second.content)
 
     def test_no_linkset_is_emitted_for_an_identifier_not_here(self):
         """
@@ -267,4 +267,4 @@ class PrivateInstanceIdentifierTest(APITestCase):
             '/osid/{}'.format(ELSEWHERE_OS_ID), HTTP_ACCEPT=LINKSET
         )
 
-        self.assertNotIn('linkset', json.dumps(response.data))
+        self.assertNotIn('linkset', response.content.decode())
