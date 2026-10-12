@@ -44,6 +44,10 @@ anonymized_database_dump_enabled = true
 # (codebuild_github_runner_connection_secret_name) after one-time OAuth setup.
 codebuild_github_runner_enabled = true
 
+# One-off Fargate task that restores the anonymized dump into this
+# environment's database (deployment/terraform/database_restore.tf).
+database_restore_enabled = true
+
 app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"

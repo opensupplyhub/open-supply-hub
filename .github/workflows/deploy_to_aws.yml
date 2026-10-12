@@ -385,6 +385,9 @@ jobs:
           if [ "$ENV_SLUG" = "test" ]; then
             candidates+=("anonymized-database-dump|-anonymized-database-dump")
           fi
+          if [ "$ENV_SLUG" = "test" ] || [ "$ENV_SLUG" = "preprod" ]; then
+            candidates+=("database-restore|-database-restore")
+          fi
 
           wave1=()
           wave2=()
@@ -488,9 +491,9 @@ jobs:
 
   restore_database:
     needs: stop_logstash
-    # Ephemeral GitHub Actions runner on AWS CodeBuild (Test account); the
-    # project is managed by deployment/terraform/codebuild_github_runner.
-    runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    # Only starts and watches the restore task (database_restore.tf), so a
+    # GitHub-hosted runner is enough.
+    runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if:  ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
@@ -507,42 +510,20 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
-          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
-          ENVIRONMENT: ${{ vars.ENV_NAME }}
         run: |
-          SECRET_JSON=$(aws secretsmanager get-secret-value \
-            --secret-id "oshub/${ENV_SLUG}/rds-master" \
-            --query SecretString --output text)
-          DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
-          DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
-
-          # Forward localhost:5433 to the database through the bastion (SSM).
-          TUNNEL="$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh"
-          bash "$TUNNEL" start database.service.osh.internal 5432 5433
-          trap 'bash "$TUNNEL" stop 5433' EXIT
-
-          cd ./src/anon-tools
-          docker build -t restore -f Dockerfile.restore .
-          docker run --name osh-anon-restore --network host --shm-size=2gb --rm \
-              -e AWS_ACCESS_KEY_ID \
-              -e AWS_SECRET_ACCESS_KEY \
-              -e AWS_DEFAULT_REGION \
-              -e ENVIRONMENT=${{ vars.ENV_NAME }} \
-              -e DATABASE_NAME=opensupplyhub \
-              -e DATABASE_USERNAME="$DB_USER" \
-              -e DATABASE_PASSWORD="$DB_PASS" \
-              restore
-      - name: Close the database tunnel
+          # Runs as a Fargate task inside the environment's VPC, next to RDS
+          # (deployment/terraform/database_restore.tf), and streams its log here.
+          bash ./deployment/run_restore_task start "${{ vars.ENV_NAME }}"
+      - name: Stop the restore task
         # Also runs when the workflow is cancelled or a step fails, so the
-        # container stops and the SSM session is terminated in AWS.
+        # Fargate task doesn't keep restoring on its own.
         if: always()
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
         run: |
-          docker rm -f osh-anon-restore >/dev/null 2>&1 || true
-          bash "$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh" stop 5433
+          bash ./deployment/run_restore_task stop
       - name: Reset database for ${{ vars.ENV_NAME }}
         if: ${{ vars.ENV_NAME == 'Development' && inputs.restore-db == true}}
         run: |

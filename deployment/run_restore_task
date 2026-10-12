@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+#
+# OSDEV-3588: run the database restore as a one-off Fargate task inside the
+# target environment's VPC (task definition in
+# deployment/terraform/database_restore.tf), stream its log into the job
+# output and exit with the task's exit code.
+#
+# Usage:
+#   run_restore_task start <Environment>   e.g. Test, Preprod
+#   run_restore_task stop                  stop the task started by `start`
+#                                          (for an `if: always()` step, so a
+#                                          cancelled workflow stops it too)
+#
+# Environment: AWS credentials for the environment's account,
+# AWS_DEFAULT_REGION (eu-west-1).
+
+set -euo pipefail
+
+STATE_FILE="${RUNNER_TEMP:-/tmp}/restore-task"
+POLL_SECONDS=20
+
+log() { echo "[restore] $*" >&2; }
+
+start_task() {
+  local env_name="$1"
+  local cluster="ecsOpenSupplyHub${env_name}Cluster"
+  local family="OpenSupplyHub${env_name}DatabaseRestore"
+  local log_group="logOpenSupplyHub${env_name}DatabaseRestore"
+
+  local vpc_id subnets security_group
+  vpc_id="$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=vpcOpenSupplyHub${env_name}" \
+    --query 'Vpcs[0].VpcId' --output text)"
+  subnets="$(aws ec2 describe-subnets \
+    --filters "Name=vpc-id,Values=${vpc_id}" "Name=tag:Name,Values=PrivateSubnet" \
+    --query 'Subnets[].SubnetId' --output text | tr '\t' ',')"
+  security_group="$(aws ec2 describe-security-groups \
+    --filters "Name=vpc-id,Values=${vpc_id}" "Name=tag:Name,Values=sgDatabaseRestore" \
+    --query 'SecurityGroups[0].GroupId' --output text)"
+
+  if [ -z "$subnets" ] || [ "$security_group" = "None" ]; then
+    log "Missing private subnets or sgDatabaseRestore in ${vpc_id}; is database_restore_enabled set for ${env_name}?"
+    exit 1
+  fi
+
+  log "Starting ${family} in ${cluster}"
+  local task_arn
+  task_arn="$(aws ecs run-task \
+    --cluster "$cluster" \
+    --task-definition "$family" \
+    --launch-type FARGATE \
+    --network-configuration "awsvpcConfiguration={subnets=[${subnets}],securityGroups=[${security_group}],assignPublicIp=DISABLED}" \
+    --started-by "github-${GITHUB_RUN_ID:-manual}" \
+    --query 'tasks[0].taskArn' --output text)"
+  if [ -z "$task_arn" ] || [ "$task_arn" = "None" ]; then
+    log "run-task did not start a task"
+    exit 1
+  fi
+  printf '%s %s\n' "$cluster" "$task_arn" >"$STATE_FILE"
+
+  local task_id="${task_arn##*/}"
+  local log_stream="restore/database-restore/${task_id}"
+  log "Task: https://${AWS_DEFAULT_REGION:-eu-west-1}.console.aws.amazon.com/ecs/v2/clusters/${cluster}/tasks/${task_id}"
+
+  # Poll the task and print new log lines as they arrive.
+  local token="" status="" events next
+  while true; do
+    status="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task_arn" \
+      --query 'tasks[0].lastStatus' --output text || echo UNKNOWN)"
+
+    if events="$(aws logs get-log-events --log-group-name "$log_group" --log-stream-name "$log_stream" \
+        --start-from-head ${token:+--next-token "$token"} --output json 2>/dev/null)"; then
+      jq -r '.events[].message' <<<"$events"
+      next="$(jq -r '.nextForwardToken' <<<"$events")"
+      [ -n "$next" ] && [ "$next" != "null" ] && token="$next"
+    fi
+
+    [ "$status" = "STOPPED" ] && break
+    sleep "$POLL_SECONDS"
+  done
+
+  # One last read: the final lines can land after the task stops.
+  sleep 5
+  if events="$(aws logs get-log-events --log-group-name "$log_group" --log-stream-name "$log_stream" \
+      --start-from-head ${token:+--next-token "$token"} --output json 2>/dev/null)"; then
+    jq -r '.events[].message' <<<"$events"
+  fi
+
+  local exit_code reason
+  exit_code="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task_arn" \
+    --query 'tasks[0].containers[0].exitCode' --output text)"
+  reason="$(aws ecs describe-tasks --cluster "$cluster" --tasks "$task_arn" \
+    --query 'tasks[0].stoppedReason' --output text)"
+  rm -f "$STATE_FILE"
+
+  log "Task stopped: ${reason} (exit code ${exit_code})"
+  if [ "$exit_code" != "0" ]; then
+    exit 1
+  fi
+}
+
+stop_task() {
+  if [ ! -f "$STATE_FILE" ]; then
+    return
+  fi
+  local cluster task_arn
+  read -r cluster task_arn <"$STATE_FILE"
+  log "Stopping ${task_arn}"
+  aws ecs stop-task --cluster "$cluster" --task "$task_arn" \
+    --reason "GitHub workflow cancelled or failed" >/dev/null 2>&1 || true
+  rm -f "$STATE_FILE"
+}
+
+case "${1:-}" in
+  start)
+    [ $# -eq 2 ] || { log "Usage: $0 start <Environment>"; exit 2; }
+    start_task "$2"
+    ;;
+  stop) stop_task ;;
+  *)
+    log "Usage: $0 {start <Environment>|stop}"
+    exit 2
+    ;;
+esac
