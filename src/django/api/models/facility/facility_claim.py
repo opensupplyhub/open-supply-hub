@@ -74,6 +74,7 @@ class FacilityClaim(models.Model):
             Affiliations.BETTER_MILLS_PROGRAM,
             Affiliations.BETTER_WORK,
             Affiliations.CANOPY,
+            Affiliations.CASCALE,
             Affiliations.ETHICAL_TRADING_INITIATIVE,
             Affiliations.FAIR_LABOR_ASSOCIATION,
             Affiliations.FAIR_WEAR_FOUNDATION,
@@ -82,6 +83,9 @@ class FacilityClaim(models.Model):
             Affiliations.HERRESPECT,
             Affiliations.SEDEX,
             Affiliations.SOCIAL_LABOR_CONVERGENCE_PLAN,
+            # Superseded by CASCALE. Kept a valid choice so the claims that
+            # already store it keep validating; the claim form no longer
+            # offers it. See OSDEV-2219.
             Affiliations.SUSTAINABLE_APPAREL_COALITION,
             Affiliations.SWEATFREE_PURCHASING_CONSORTIUM,
             Affiliations.ZDHC,
