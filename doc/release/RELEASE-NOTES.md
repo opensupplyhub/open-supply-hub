@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.32.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 30, 2026
+
+### Architecture/Environment changes
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - The anonymized database restore (`DB - Apply Anonymized DB` and the `restore_database` job of `Deploy to AWS`) now runs as a one-off Fargate task inside the target environment's VPC instead of through the bastion's SSM port forward, which was too slow for the multi-GB dump. New `deployment/terraform/database_restore.tf` (enabled for Test and Preprod with `database_restore_enabled`) adds the task definition, its ECR repository (`database-restore` image, built for Test and Preprod), log group, task role and security group. The restore jobs run on `ubuntu-latest` and stream the task log through `deployment/run_restore_task`. `do_restore.sh` connects to RDS directly and restores with `pg_restore -j 8`.
+
+### Bugfix
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - Cancelling or failing a DB or `clear_opensearch` workflow no longer leaves the SSM session active or the container or restore task running: `if: always()` steps now clean up, and `ssm_tunnel.sh stop` terminates the session in AWS. The S3 copies in the anon-tools scripts no longer print transfer progress, and the Session Manager plugin download enforces HTTPS.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.31.0
 
 ## Introduction
