@@ -11,10 +11,6 @@
 # src/anon-tools/Dockerfile.restore (docker-bake.hcl target
 # "database-restore").
 #
-# Preprod runs in the production account and reads the dump from the bucket
-# in the test account: that bucket's policy must allow this environment's
-# task role (output database_restore_task_role_arn) s3:GetObject on the key.
-#
 
 module "ecr_repository_database_restore" {
   count  = var.database_restore_enabled ? 1 : 0
@@ -154,9 +150,4 @@ resource "aws_ecs_task_definition" "database_restore" {
       }
     }
   ])
-}
-
-output "database_restore_task_role_arn" {
-  value       = var.database_restore_enabled ? aws_iam_role.database_restore_task[0].arn : ""
-  description = "Role the database restore task reads the dump with; grant it s3:GetObject in the dump bucket's policy when the bucket is in another account."
 }
