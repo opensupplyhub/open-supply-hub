@@ -39,6 +39,10 @@ const initialState = Object.freeze({
         businessLinkedinProfile: '',
         businessWebsite: '',
         companyAddressVerificationDocuments: [],
+        // The data-quality warnings the claimant continued past on this
+        // step, with the name and address they were shown for, so a
+        // later edit of either value re-runs the check (OSDEV-3489).
+        qualityWarningsDismissed: null,
 
         // Profile step - Production Location Overview.
         localLanguageName: '',

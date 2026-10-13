@@ -12,10 +12,16 @@ import DialogActions from '@material-ui/core/DialogActions';
 
 import withScrollReset from '../../../HOCs/withScrollReset';
 import StyledSelect from '../../../../Filters/StyledSelect';
-import { getSelectStyles } from '../../../../../util/util';
-import { mapRoute } from '../../../../../util/constants';
+import {
+    convertFeatureFlagsObjectToListOfActiveFlags,
+    getSelectStyles,
+} from '../../../../../util/util';
+import {
+    mapRoute,
+    RELAXED_CLAIM_ELIGIBILITY,
+} from '../../../../../util/constants';
 import eligibilityStepStyles from './styles';
-import RELATIONSHIP_OPTIONS from './constants';
+import RELATIONSHIP_OPTIONS, { RELAXED_WORKER_LABEL } from './constants';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import findSelectedOption from '../utils';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
@@ -30,14 +36,51 @@ const EligibilityStep = ({
     userEmail,
     organizationName,
     handleBlur,
+    isRelaxedEligibility,
 }) => {
     const history = useHistory();
     const [ineligibleDialogOpen, setIneligibleDialogOpen] = useState(false);
 
-    const selectedRelationship = findSelectedOption(
-        RELATIONSHIP_OPTIONS,
+    // Accept either the canonical label or the relaxed one (a pending
+    // claim saved while the switch was on), then show the current label
+    // for that value.
+    const storedOption = findSelectedOption(
+        [
+            ...RELATIONSHIP_OPTIONS,
+            { value: 'worker', label: RELAXED_WORKER_LABEL },
+        ],
         formData.claimantLocationRelationship,
     );
+
+    // Relaxed policy (relaxed_claim_eligibility switch): employees are
+    // directly eligible, so the worker option drops its
+    // supervisor-verification caveat and the manager option goes away —
+    // managers are employees, so under the relaxed policy the two
+    // options were the same answer twice. A pending claim saved with
+    // "manager" while the switch was off keeps its option (the stored
+    // answer stays valid and visible; only new picks are constrained).
+    // The stored claimant_location_relationship is whichever label the
+    // claimant saw and picked; findSelectedOption above accepts both
+    // generations of the worker label, so stored values round-trip
+    // whichever way the switch is set when the claim is reopened.
+    const relationshipOptions = RELATIONSHIP_OPTIONS.filter(
+        option =>
+            !(
+                isRelaxedEligibility &&
+                option.value === 'manager' &&
+                storedOption?.value !== 'manager'
+            ),
+    ).map(option =>
+        option.value === 'worker' && isRelaxedEligibility
+            ? { ...option, label: RELAXED_WORKER_LABEL }
+            : option,
+    );
+
+    const selectedRelationship = storedOption
+        ? relationshipOptions.find(
+              option => option.value === storedOption.value,
+          ) || null
+        : null;
 
     // This checks if the relationship field has been touched and either has validation errors
     // or no value selected
@@ -92,7 +135,7 @@ const EligibilityStep = ({
                     name="claimantLocationRelationship"
                     aria-label="Select your relationship to this production location"
                     label={null}
-                    options={RELATIONSHIP_OPTIONS}
+                    options={relationshipOptions}
                     onBlur={() => handleBlur('claimantLocationRelationship')}
                     value={selectedRelationship}
                     onChange={valueObject => {
@@ -103,6 +146,12 @@ const EligibilityStep = ({
                         ) {
                             setIneligibleDialogOpen(true);
                         } else {
+                            // Store the label the claimant actually saw
+                            // and chose: the stored string is claimant
+                            // data (claim history, admin, exports), so
+                            // it must never assert the supervisor-
+                            // verification caveat to someone who picked
+                            // the relaxed employee option.
                             handleChange(
                                 'claimantLocationRelationship',
                                 valueObject.label,
@@ -186,9 +235,13 @@ const mapStateToProps = ({
     auth: {
         user: { user },
     },
+    featureFlags: { flags },
 }) => ({
     userEmail: user?.email,
     organizationName: user?.name,
+    isRelaxedEligibility: convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    ).includes(RELAXED_CLAIM_ELIGIBILITY),
 });
 
 export default connect(mapStateToProps)(

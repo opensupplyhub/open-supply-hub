@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
+import logging
 import os
 import requests
 import sys
@@ -62,6 +63,20 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 
 # Set environment instance source
 INSTANCE_SOURCE = os.getenv('INSTANCE_SOURCE', 'os_hub')
+
+# The account the claims automation pipeline acts as. Review notes it
+# authors (LLM review notes, reminder emails) are flagged is_automated
+# on the claim payloads so the claims dashboard can distinguish a
+# moderator's ask from an automated nudge (OSDEV-3357).
+#
+# Fail-closed by design: empty means NO note is ever flagged automated,
+# so an environment must explicitly name the account. Deployed
+# environments receive the value via the task/job definitions
+# (deployment/terraform, claims_automation_account_email); local dev
+# sets it in docker-compose.yml.
+CLAIMS_AUTOMATION_ACCOUNT_EMAIL = os.getenv(
+    'CLAIMS_AUTOMATION_ACCOUNT_EMAIL', ''
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
@@ -742,16 +757,34 @@ DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')
 # Email anonymization secret for the sync_databases management command.
 EMAIL_ANONYMIZATION_SECRET = os.getenv('EMAIL_ANONYMIZATION_SECRET', '')
 
+
+def _env_int(name, default=None):
+    """Read an integer environment variable, tolerating bad values.
+
+    Unset or blank returns ``default``. A non-numeric value also returns
+    ``default`` but logs a warning naming the variable, so a typo in an
+    env var degrades to the safe default instead of raising at import
+    time and taking the service down at boot.
+    """
+    raw = (os.getenv(name) or '').strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        logging.getLogger(__name__).warning(
+            'Environment variable %s=%r is not an integer; using %r.',
+            name, raw, default,
+        )
+        return default
+
+
 # Earth Genome pilot guardrail (OSDEV-3248). The id of the Contributor that
 # the candidate ingest pipeline writes under. Only a Facility created from a
 # list item whose Source belongs to this contributor may be a candidate
 # (is_candidate=True) or carry an empty name or address; every other ORM
-# creation path is rejected in Facility.save(). Unset or blank means None:
-# nobody may create such rows. See api/services/candidate_guard.py.
-_earth_genome_contributor_id = os.getenv(
-    'EARTH_GENOME_CONTRIBUTOR_ID', ''
-).strip()
-EARTH_GENOME_CONTRIBUTOR_ID = (
-    int(_earth_genome_contributor_id)
-    if _earth_genome_contributor_id else None
-)
+# creation path is rejected in Facility.save(). Unset, blank or
+# non-numeric means None: nobody may create such rows. Contributor ids
+# differ per environment (OS Hub and RBA each need their own value). See
+# api/services/candidate_guard.py.
+EARTH_GENOME_CONTRIBUTOR_ID = _env_int('EARTH_GENOME_CONTRIBUTOR_ID')

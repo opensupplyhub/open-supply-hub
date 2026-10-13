@@ -1,21 +1,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Link } from 'react-router-dom';
 
 import COLOURS from '../../util/COLOURS';
 
 import { resetAllFilters } from '../../actions/filters';
 
 import { recordSearchTabResetButtonClick } from '../../actions/ui';
-import { mapRoute } from '../../util/constants';
+import { externalOSHubLink } from '../../util/constants';
 
-const Logo = ({ resetFilters }) => (
-    <Link
-        to={mapRoute}
-        href={mapRoute}
-        onClick={resetFilters}
-        className="header__home"
-    >
+const Logo = () => (
+    <a href={externalOSHubLink} className="header__home">
         <span className="visually-hidden">OS Hub</span>
         <div className="header__logo">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 972.96 364.15">
@@ -84,7 +78,7 @@ const Logo = ({ resetFilters }) => (
                 </g>
             </svg>
         </div>
-    </Link>
+    </a>
 );
 
 function mapDispatchToProps(dispatch) {
