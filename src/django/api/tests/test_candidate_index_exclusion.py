@@ -21,7 +21,7 @@ class CandidateIndexExclusionTest(TestCase):
     api_facilityindex never contains candidate facilities (OSDEV-3243).
 
     The index is written only by the index_facilities_by / index_facilities
-    SQL procedures (0246), which the api_facility triggers call on every
+    SQL procedures (0248), which the api_facility triggers call on every
     INSERT, UPDATE and DELETE. The test database runs the migrations, so
     these tests exercise the real triggers, not a Python re-implementation.
     """
@@ -187,7 +187,7 @@ class CandidateIndexExclusionTest(TestCase):
     def test_targeted_reindex_removes_a_stale_candidate_row(self):
         """
         A candidate row that somehow reached the index (e.g. written before
-        0246) is cleaned up the next time its id is re-indexed, the same
+        0248) is cleaned up the next time its id is re-indexed, the same
         way a deleted facility's row is.
         """
         candidate = self._create_candidate()
