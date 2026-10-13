@@ -3,6 +3,45 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.32.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Database changes
+
+#### Migrations
+* `0248_identity_record_association.py` - Adds the `IdentityRecordAssociation` model and its history table, storing the link between an OS ID and the Resolver URI of a record published about that location by an external issuer. Holds `resolver_uri`, `record_type`, `issuer`, an optional `registrant_reference`, moderation status and `live_from`. No credential content is stored. See [OSDEV-3579](https://opensupplyhub.atlassian.net/browse/OSDEV-3579).
+
+#### Schema changes
+* [OSDEV-3579](https://opensupplyhub.atlassian.net/browse/OSDEV-3579) - New `api_identityrecordassociation` table. A partial unique constraint allows only one live association per OS ID, so an identifier cannot resolve to two different resolvers at once, while withdrawn associations are retained for history.
+
+### Code/API changes
+* [OSDEV-3580](https://opensupplyhub.atlassian.net/browse/OSDEV-3580) - Adds `POST /api/v1/production-locations/{os_id}/identity-records/` for an issuer to register a Resolver URI against an OS ID, and `GET .../identity-records/{moderation_id}/` for the resulting status. Registering a Credential URL instead of a Resolver URI is rejected, since a credential link points at one version and would break the always-current guarantee. An exact repeat of a registration returns the existing record with `200` rather than `409`, so retrying after a lost response is safe; `409` now means only that the identifier already has a live association with a different resolver.
+* [OSDEV-3581](https://opensupplyhub.atlassian.net/browse/OSDEV-3581) - Adds the public resolver at `/osid/{os_id}` with content negotiation: `application/linkset+json` returns a link-set, `text/html` redirects a browser to the relevant page. Unsupported Accept values fall back rather than returning `406`. Error bodies are JSON whatever the caller asked for.
+* [OSDEV-3582](https://opensupplyhub.atlassian.net/browse/OSDEV-3582) - Completes link-set generation and publishes the Open Supply Hub link type vocabulary at `/api/v1/voc/`, defining `productionLocation` and `registeredRecord`. UNTP defines `linkType` as a plain string and enumerates no values, so each resolver declares its own terms at a resolvable namespace. The resolver description at `/.well-known/resolver` points at it.
+* [OSDEV-3583](https://opensupplyhub.atlassian.net/browse/OSDEV-3583) - Adds retrieval of a registered record from the issuer's resolver, following the redirect to the record and unwrapping an `EnvelopedVerifiableCredential` JWT. Retrieval is bounded by a 5 second timeout and fails closed, so an unreachable or malformed record leaves the page showing nothing rather than erroring. Signatures are decoded but not verified; nothing is presented as verified.
+* [OSDEV-3586](https://opensupplyhub.atlassian.net/browse/OSDEV-3586) - An OS ID that this instance cannot resolve returns a `404` that does not assert the identifier is invalid, and is identical whether it exists on another instance or nowhere.
+* [OSDEV-3587](https://opensupplyhub.atlassian.net/browse/OSDEV-3587) - Applies the default API throttle to the public resolver endpoints.
+
+### Architecture/Environment changes
+* [OSDEV-3607](https://opensupplyhub.atlassian.net/browse/OSDEV-3607) - Adds CloudFront ordered cache behaviours routing `/osid/*` and `/.well-known/*` to the application load balancer rather than the S3 origin, with caching disabled. Without this the edge rewrites the extensionless resolver paths to `/index.html` and the resolver is unreachable in a deployed environment.
+* [OSDEV-3587](https://opensupplyhub.atlassian.net/browse/OSDEV-3587) - Adds CloudWatch metric filters and alarms for resolver server errors and for throttled resolver requests, with the throttling threshold configurable.
+
+### What's new
+* [OSDEV-3584](https://opensupplyhub.atlassian.net/browse/OSDEV-3584) - Adds the identity record page at `/production-locations/{os_id}/identity-record`, showing a record registered against the location by an external issuer, with the issuer, record type and the fields carried in the record. The resolver sends a browser here when a live record exists and to the ordinary location page otherwise.
+* [OSDEV-3585](https://opensupplyhub.atlassian.net/browse/OSDEV-3585) - Adds an entry point to the identity record page from the production location page, shown only when a live record exists.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
+---
+
+
 ## Release 2.31.0
 
 ## Introduction
