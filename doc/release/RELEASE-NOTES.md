@@ -14,10 +14,27 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - Cancelling or failing a DB or `clear_opensearch` workflow no longer leaves the SSM session active or the container or restore task running: `if: always()` steps now clean up, and `ssm_tunnel.sh stop` terminates the session in AWS. The S3 copies in the anon-tools scripts no longer print transfer progress, and the Session Manager plugin download enforces HTTPS.
+* [OSDEV-3603](https://opensupplyhub.atlassian.net/browse/OSDEV-3603) - Added `scripts/set_logstash_last_run.sh` and the `doc/ops/logstash_last_run_runbook.md` runbook as a workaround for the Logstash `production_locations` pipeline staying at `sql_last_value` `1970-01-01` on AWS, which makes every run re-read all facilities. The script stops the Logstash ECS service, rewrites `production_locations_jdbc_last_run` on the Logstash EFS through the bastion (SSM Run Command, keeping a `.bak` copy) and starts Logstash again. The runbook covers querying the `production-locations` OpenSearch index through the SSM tunnel and bumping `api_facility.updated_at` so facilities missing from the index are re-indexed. No deployed code or infrastructure changes.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+
+
+## Release 2.31.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 13, 2026
+
+### Bugfix
+* [Hotfix][OSDEV-3606](https://opensupplyhub.atlassian.net/browse/OSDEV-3606) - Fixed `GET /api/contributors/` raising `pylibmc.TooBig` in production: the list of all active contributors outgrew memcached's 1 MB per-item limit, so the `cache_page` write failed on every request and the endpoint was never cached. The endpoint was converted from a function-based `api_view` to an `AllContributors(APIView)` class using the `cache_view_response` decorator, which compresses the response before caching and serves it uncached (fail-open) when it is still too large or the cache errors. The URL, URL name, response format and throttling are unchanged. Same fix as [OSDEV-3062](https://opensupplyhub.atlassian.net/browse/OSDEV-3062) and [OSDEV-3030](https://opensupplyhub.atlassian.net/browse/OSDEV-3030).
+* [Hotfix][OSDEV-3606](https://opensupplyhub.atlassian.net/browse/OSDEV-3606) - Lowered the default `VIEW_RESPONSE_CACHE_MAX_BYTES` from 4 MB to 900 KB to match the 1 MB `max_item_size` configured for ElastiCache (`ec_memcached_max_item_size`). The previous default assumed a ~5 MB limit, so compressed responses between 1 MB and 4 MB were rejected by memcached and silently left uncached on every endpoint using `cache_view_response`.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* No Terraform, migration or environment variable changes are required.
 
 
 ## Release 2.31.0
