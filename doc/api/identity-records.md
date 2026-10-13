@@ -97,11 +97,19 @@ specific to retry.
 live association with a *different* resolver URI" and says nothing about
 resubmitting the same pair. The implementation treats both as a conflict.
 Idempotency on repeat submission is listed as out of scope on OSDEV-3580,
-so this is deliberate rather than accidental, but it has a consequence worth
-agreeing before integration: if an issuer calls this on every publish, a
-member publishing a second version of a record will produce an identical
-registration and receive a 409 on an otherwise normal action. Either the
-issuer calls only on first publish, or this becomes idempotent. Open.
+so this is deliberate rather than accidental.
+
+This is the current position and is not expected to change. It has one
+consequence worth knowing: an association records the issuer's resolver
+address, which is the same for every version of a record, so a reissued
+record needs no call at all. An issuer that registers once per location
+never meets this. An issuer that calls on every publish will meet it on a
+member's second version, and receive a 409 on an otherwise ordinary action.
+
+If that happens, making an exact repeat return the existing association
+rather than a conflict is a small change: the case is already detected
+separately in `create_identity_record`. Raise it rather than working around
+it.
 
 **`422` is not implemented.** §3.2 lists it for "well formed but not
 resolvable here", which §3.4 ties to identifiers issued only on a private
