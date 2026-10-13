@@ -547,11 +547,11 @@ class CandidateLifecycleE2ETest(APITestCase):
             FacilityCandidateVote.objects.filter(facility_id=b.id).exists()
         )
         self.assertFalse(FacilityCandidateRetirementRequest.objects.exists())
-        # The OpenSearch delete was attempted, the 404 tolerated, and no
-        # inconsistency was reported for the never-indexed candidate.
+        # Candidates are never in the OpenSearch index, so the post_delete
+        # signal skips the delete call entirely (OSDEV-3246 review fix) and
+        # reports no inconsistency.
         delete = self.opensearch_connection.return_value.client.delete
-        delete.assert_called_once()
-        self.assertEqual(b.id, delete.call_args.kwargs['id'])
+        delete.assert_not_called()
         self.error_notifier.assert_not_called()
 
         self.assertEqual({a.id, c.id}, set(self._bbox_features()))
