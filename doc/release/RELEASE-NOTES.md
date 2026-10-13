@@ -10,6 +10,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Release date: October 30, 2026
 
 ### Architecture/Environment changes
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - The anonymized database restore (`DB - Apply Anonymized DB` and the `restore_database` job of `Deploy to AWS`) now runs as a one-off Fargate task inside the target environment's VPC instead of through the bastion's SSM port forward, which was too slow for the multi-GB dump. New `deployment/terraform/database_restore.tf` (enabled for Test and Preprod with `database_restore_enabled`) adds the task definition, its ECR repository (`database-restore` image, built for Test and Preprod), log group, task role and security group. The restore jobs run on `ubuntu-latest` and stream the task log through `deployment/run_restore_task`. `do_restore.sh` connects to RDS directly and restores with `pg_restore -j 8`.
+
+### Bugfix
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - Cancelling or failing a DB or `clear_opensearch` workflow no longer leaves the SSM session active or the container or restore task running: `if: always()` steps now clean up, and `ssm_tunnel.sh stop` terminates the session in AWS. The S3 copies in the anon-tools scripts no longer print transfer progress, and the Session Manager plugin download enforces HTTPS.
 * [OSDEV-3603](https://opensupplyhub.atlassian.net/browse/OSDEV-3603) - Added `scripts/set_logstash_last_run.sh` and the `doc/ops/logstash_last_run_runbook.md` runbook as a workaround for the Logstash `production_locations` pipeline staying at `sql_last_value` `1970-01-01` on AWS, which makes every run re-read all facilities. The script stops the Logstash ECS service, rewrites `production_locations_jdbc_last_run` on the Logstash EFS through the bastion (SSM Run Command, keeping a `.bak` copy) and starts Logstash again. The runbook covers querying the `production-locations` OpenSearch index through the SSM tunnel and bumping `api_facility.updated_at` so facilities missing from the index are re-indexed. No deployed code or infrastructure changes.
 
 ### Release instructions
