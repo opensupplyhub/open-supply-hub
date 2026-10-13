@@ -271,11 +271,38 @@ outside (§3.4, NFR-08, AC-09).
 
 Error bodies are always JSON, whatever the caller asked for.
 
-### Known gap
+### Link relation types
 
-The link-set currently carries only the Open Supply Hub entry. The entry for
-the registered external record needs its link relation type name, which §3.1
-still holds as a placeholder. See OSDEV-3582.
+Link-set keys are link relation types drawn from a vocabulary Open Supply
+Hub publishes itself.
+
+There is no central registry to take them from. The UNTP 0.7.0 context
+defines `linkType` as a plain string and enumerates no values, and the
+reference resolver implementation documents the convention: an
+implementation ships defaults based on GS1 standards and otherwise declares
+its own vocabulary at a resolvable namespace. Two terms are published:
+
+| Term | Meaning |
+| --- | --- |
+| `productionLocation` | The Open Supply Hub page for this location. Always present. |
+| `registeredRecord` | A record registered against this identifier by its issuer. Present only when one is live. |
+
+The entry for a registered record carries the issuer's **Resolver URI**,
+never a link to one version, and there is never more than one. Which
+version is current stays the issuer's decision, which is what keeps the
+always-current guarantee true without re-registration.
+
+Links are served both in the body and in an HTTP `Link` header.
+
+```
+GET /api/v1/voc/
+GET /api/v1/voc/?show=linktypes
+```
+
+Public. The machine-readable description of those terms, which is what the
+keys in a link-set dereference to. The resolver description document names
+this namespace in `namespaceURI` and `profileUrl`, so a client can find it
+without being told out of band.
 
 ---
 
