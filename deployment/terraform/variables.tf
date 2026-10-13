@@ -1394,6 +1394,12 @@ variable "bedrock_cost_budget_monthly_limit_usd" {
   default     = "25"
 }
 
+variable "resolver_throttled_alarm_threshold" {
+  type        = number
+  description = "Number of throttled identity-resolver requests in an hour above which the alarm pages Slack. Deliberately not zero: occasional throttling is the limiter working, and one caller behind a corporate address can reach the burst rate legitimately. Sustained throttling is the signal, meaning either abuse or a real integrator who needs a higher allowance and is being refused."
+  default     = 100
+}
+
 variable "lambda_errors_alarm_threshold" {
   type        = number
   description = "Sum of AWS/Lambda Errors over 5 minutes, across all functions in the environment's region, above which the alarm pages Slack. Defaults to 0 so any single Lambda error is surfaced; raise it per environment only if a known-noisy function makes that impractical."
