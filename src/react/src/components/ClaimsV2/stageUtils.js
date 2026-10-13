@@ -96,16 +96,30 @@ const latestOf = notes =>
  */
 export const deriveClaimStage = (notes, { now = new Date() } = {}) => {
     const safeNotes = Array.isArray(notes) ? notes : [];
+    // Automated messages (the pipeline's reminder emails are stored as
+    // CLAIMANT_MESSAGE notes by the bot account) are nudges, not new
+    // asks — they must not reset the reply window, or every claim
+    // would flip from overdue back to awaiting on reminder day
+    // (OSDEV-3357). A payload without the is_automated flag counts the
+    // note, preserving prior behavior against older API responses.
     const messages = safeNotes.filter(
-        n => n?.note_type === NOTE_TYPES.CLAIMANT_MESSAGE,
+        n => n?.note_type === NOTE_TYPES.CLAIMANT_MESSAGE && !n.is_automated,
     );
 
     if (messages.length === 0) {
+        // The timeline may still show automated outbound messages (the
+        // pipeline's reminders) — the reason must not claim it's empty
+        // when the Activity tab right below shows an emailed note.
+        const hasAutomatedMessages = safeNotes.some(
+            n => n?.note_type === NOTE_TYPES.CLAIMANT_MESSAGE && n.is_automated,
+        );
         return {
             stage: CLAIM_STAGES.NEW,
-            reason:
-                'No moderator message yet — derived from an empty ' +
-                'outbound timeline.',
+            reason: hasAutomatedMessages
+                ? 'No moderator message yet — automated messages do not ' +
+                  'start the reply window.'
+                : 'No moderator message yet — derived from an empty ' +
+                  'outbound timeline.',
             lastMessagedAt: null,
             waitingBusinessDays: 0,
         };

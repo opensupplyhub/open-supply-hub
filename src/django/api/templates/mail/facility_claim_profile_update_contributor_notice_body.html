@@ -25,6 +25,13 @@
                 Facility URL: {{ facility_url }}
             </li>
         </ul>
+        {% if name_or_address_changed %}
+        <p>
+            The claimant has updated the facility's name or address. The
+            production location page now displays the name and address
+            listed below.
+        </p>
+        {% endif %}
         {% if changes %}
         <p>The following details have been changed:</p>
         <ul>

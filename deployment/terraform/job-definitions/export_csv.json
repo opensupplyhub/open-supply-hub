@@ -16,6 +16,7 @@
       { "name": "DJANGO_ENV", "value": "${environment}" },
       { "name": "EXTERNAL_DOMAIN", "value": "${external_domain}" },
       { "name": "GOOGLE_DRIVE_SHARED_DIRECTORY_ID", "value": "${google_drive_shared_directory_id}" },
+      { "name": "CLAIMS_AUTOMATION_ACCOUNT_EMAIL", "value": "${claims_automation_account_email}" },
       { "name": "INSTANCE_SOURCE", "value": "${instance_source}" }
   ],
   "secrets": [
