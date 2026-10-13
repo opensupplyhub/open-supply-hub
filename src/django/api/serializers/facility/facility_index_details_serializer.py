@@ -40,6 +40,7 @@ from .utils import (
 )
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
 from api.helpers.data_center import is_data_center
+from api.services.identity_record_retrieval import has_live_record
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -57,6 +58,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     is_claimed = SerializerMethodField()
     partner_fields = SerializerMethodField()
     is_data_center = SerializerMethodField()
+    has_identity_record = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -84,6 +86,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'is_claimed',
             'partner_fields',
             'is_data_center',
+            'has_identity_record',
         )
         geo_field = 'location'
 
@@ -528,3 +531,16 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     def get_is_data_center(self, facility):
         return is_data_center(facility=facility.id)
+
+    def get_has_identity_record(self, facility):
+        """
+        Whether an externally issued record is registered against this
+        location (OSDEV-3585, FR-12).
+
+        A boolean rather than the record itself, on purpose. Reading the
+        record means a live call out to the issuer on every view, which is
+        right for the page dedicated to it and wrong for a facility profile
+        that is loaded far more often and does not display it. This answers
+        the only question the profile needs: whether to offer the link.
+        """
+        return has_live_record(facility.id)

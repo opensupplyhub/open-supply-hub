@@ -31,6 +31,7 @@ import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
+import IdentityRecord from './components/IdentityRecord/IdentityRecord';
 import ProductionLocationDetailsContainer from './components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
@@ -57,6 +58,7 @@ import {
     listsRoute,
     facilityListItemsRoute,
     facilitiesRoute,
+    identityRecordRoute,
     productionLocationDetailsRoute,
     dashboardRoute,
     claimFacilityRoute,
@@ -159,6 +161,16 @@ class Routes extends Component {
                                     exact
                                     path={claimDetailsRoute}
                                     component={ClaimForm}
+                                />
+                                {/*
+                                  * Before facilitiesRoute on purpose.
+                                  * That route is not exact, so it would
+                                  * otherwise swallow this path.
+                                  */}
+                                <Route
+                                    exact
+                                    path={identityRecordRoute}
+                                    component={IdentityRecord}
                                 />
                                 <Route
                                     path={facilitiesRoute}

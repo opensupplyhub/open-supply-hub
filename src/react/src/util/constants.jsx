@@ -353,6 +353,9 @@ export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
 export const facilityDetailsRoute = '/facilities/:osID';
+// Scope doc 2.6: the registered record gets its own page rather than
+// being merged into the facility profile, so it is a sibling route.
+export const identityRecordRoute = '/facilities/:osID/identity-record';
 export const productionLocationsRoute = '/production-locations';
 export const productionLocationDetailsRoute = '/production-locations/:osID';
 export const claimFacilityRoute = '/facilities/:osID/claim';

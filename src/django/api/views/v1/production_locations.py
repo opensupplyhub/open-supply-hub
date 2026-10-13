@@ -21,6 +21,9 @@ from api.views.v1.utils import (
 )
 from api.services.opensearch.search import OpenSearchService
 from api.services.os_id_presence import os_id_exists_here
+from api.services.identity_record_retrieval import (
+    retrieve_identity_record,
+)
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -478,6 +481,67 @@ class ProductionLocations(ViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(
+        detail=True,
+        methods=['GET'],
+        url_path='identity-record',
+    )
+    def identity_record_content(self, request, pk=None):
+        """
+        The registered record itself, fetched live and decoded (FR-13).
+
+        Reachable by the web client like the rest of the v1 API, which is
+        what the identity-record page uses. Deliberately not opened wider:
+        the resolver's link-set points third parties at the page and at
+        RBA's own resolver, not at this endpoint, so nothing outside needs
+        it.
+
+        Distinct from retrieve_identity_record above, which reports the
+        state of one registration. This returns the content of whichever
+        record is currently live for the identifier, and nothing about it
+        is stored (NFR-04).
+
+        A retrieval failure is a 200 carrying a typed reason rather than an
+        error status. The page has to render something either way, and the
+        request to Open Supply Hub did not fail: the issuer's did. Giving
+        the page the reason lets it say which, instead of showing a generic
+        error for a record that exists and is merely unreachable.
+        """
+        outcome = retrieve_identity_record(pk)
+
+        if not outcome.ok:
+            return Response(
+                {
+                    'os_id': pk,
+                    'available': False,
+                    'reason': outcome.failure.reason.value,
+                    'detail': outcome.failure.detail,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        record = outcome.record
+
+        return Response(
+            {
+                'os_id': record.os_id,
+                'available': True,
+                'resolver_uri': record.resolver_uri,
+                'document_uri': record.document_uri,
+                'record_type': record.record_type,
+                'issuer': record.issuer,
+                'registrant_reference': record.registrant_reference,
+                'retrieved_at': record.retrieved_at,
+                'integrity': record.integrity,
+                # The decoded credential, passed through unmapped. The page
+                # decides what to show; see the note in the retrieval
+                # service on why this layer does not flatten it.
+                'credential': record.content,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @transaction.atomic
     def partial_update(self, request, pk=None):
         if switch_is_active('disable_list_uploading'):
             raise ServiceUnavailableException(
