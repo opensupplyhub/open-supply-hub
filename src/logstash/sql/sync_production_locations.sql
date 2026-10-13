@@ -735,5 +735,10 @@ FROM
 WHERE
   af.updated_at > :sql_last_value
   AND af.updated_at < CURRENT_TIMESTAMP
+  -- OSDEV-3243: candidate facilities (Earth Genome detections) are never
+  -- indexed into the production-locations index. A candidate that graduates
+  -- (is_candidate flips to false) gets a new updated_at and is picked up on
+  -- the next sync like any other change.
+  AND NOT af.is_candidate
 ORDER BY
   af.updated_at ASC
