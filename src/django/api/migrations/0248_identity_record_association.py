@@ -15,7 +15,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0245_add_claim_quality_check_switch'),
+        ('api', '0247_add_zone_set_and_zone'),
     ]
 
     operations = [
