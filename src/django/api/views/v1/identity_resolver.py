@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from waffle import switch_is_active
 
+from api.models import IdentityRecordAssociation
 from api.os_id import validate_os_id
 from api.services.os_id_presence import os_id_exists_here
 
@@ -96,7 +97,7 @@ def _site_root(request):
 
 def _production_location_url(request, os_id):
     """
-    The human-facing page for an OS ID.
+    The ordinary page for an OS ID.
 
     Built from the identifier rather than from a Facility instance on
     purpose: FR-14 requires an OS ID with no registered record to resolve to
@@ -108,6 +109,33 @@ def _production_location_url(request, os_id):
         else 'facilities'
     )
     return '{}/{}/{}'.format(_site_root(request), route_prefix, os_id)
+
+
+def _identity_record_url(request, os_id):
+    """The page showing the registered record (scope doc 2.6)."""
+    return '{}/identity-record'.format(
+        _production_location_url(request, os_id)
+    )
+
+
+def has_live_record(os_id):
+    return IdentityRecordAssociation.objects.filter(
+        os_id=os_id, live_from__isnull=False
+    ).exists()
+
+
+def _destination(request, os_id):
+    """
+    Where a browser holding this identifier should land.
+
+    Scope doc 3.1: an identifier with a registered record goes to the page
+    showing that record, and one without goes to the ordinary location page.
+    The second is FR-14 and is a normal answer rather than an error, which
+    is why this is a branch and not a guard.
+    """
+    if has_live_record(os_id):
+        return _identity_record_url(request, os_id)
+    return _production_location_url(request, os_id)
 
 
 def _wants_linkset(request):
@@ -171,9 +199,7 @@ class IdentityResolverView(APIView):
                 content_type=LINKSET_MEDIA_TYPE,
             )
 
-        return HttpResponseRedirect(
-            _production_location_url(request, os_id)
-        )
+        return HttpResponseRedirect(_destination(request, os_id))
 
     def _linkset(self, request, os_id):
         """
@@ -196,9 +222,7 @@ class IdentityResolverView(APIView):
                     'anchor': anchor,
                     'item': [
                         {
-                            'href': _production_location_url(
-                                request, os_id
-                            ),
+                            'href': _destination(request, os_id),
                             'type': 'text/html',
                             'title': 'Open Supply Hub production location',
                         }

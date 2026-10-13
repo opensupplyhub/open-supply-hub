@@ -2,6 +2,7 @@ import json
 
 from django.contrib.gis.geos import Point
 from django.core.cache import caches
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -10,6 +11,9 @@ from api.models.facility.facility import Facility
 from api.models.facility.facility_alias import FacilityAlias
 from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
+from api.models.identity_record_association import (
+    IdentityRecordAssociation,
+)
 from api.models.source import Source
 from api.models.user import User
 
@@ -148,6 +152,60 @@ class IdentityResolverTest(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+
+    def _register(self, os_id=None):
+        return IdentityRecordAssociation.objects.create(
+            os_id=os_id or OS_ID,
+            resolver_uri='https://resolver.example.org/records/FAC-00000001',
+            record_type='untp:DigitalFacilityRecord',
+            issuer='did:web:issuer.example.org',
+            live_from=timezone.now(),
+        )
+
+    def test_registered_identifier_goes_to_the_record_page(self):
+        """
+        Scope doc 3.1 and 2.6: an identifier that has a record resolves to
+        the page showing that record, not to the ordinary location page.
+        Sending a holder of a registered identifier to the plain profile
+        would drop the thing they followed the identifier for.
+        """
+        self._register()
+
+        response = self.client.get(self.url, HTTP_ACCEPT='text/html')
+
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertTrue(
+            response['Location'].endswith(
+                '/{}/identity-record'.format(OS_ID)
+            )
+        )
+
+    def test_linkset_entry_points_at_the_record_page_too(self):
+        """The machine path and the browser path agree on the target."""
+        self._register()
+
+        response = self.client.get(self.url, HTTP_ACCEPT=LINKSET)
+        entry = json.loads(response.content)['linkset'][0]
+
+        self.assertTrue(
+            entry['item'][0]['href'].endswith(
+                '/{}/identity-record'.format(OS_ID)
+            )
+        )
+
+    def test_a_pending_registration_does_not_redirect_to_the_record(self):
+        """
+        An association with no live_from is not resolving yet, so it must
+        not divert the visitor to a page with nothing on it.
+        """
+        self._register().__class__.objects.filter(os_id=OS_ID).update(
+            live_from=None
+        )
+
+        response = self.client.get(self.url, HTTP_ACCEPT='text/html')
+
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertTrue(response['Location'].endswith('/{}'.format(OS_ID)))
 
     def test_bare_request_redirects_rather_than_returning_json(self):
         """
