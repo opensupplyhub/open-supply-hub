@@ -13,7 +13,7 @@ from api.models import (
     Source,
     User,
 )
-from api.reports import run_report
+from api.reports import get_report_names, run_report
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db import connection
 from django.test import TestCase, override_settings
@@ -104,6 +104,21 @@ class ReportsExcludeCandidatesTest(TestCase):
             status=FacilityClaimStatuses.APPROVED,
             status_change_date=CONFIRMED_AT,
         )
+        # The Earth Genome contributor exists in both halves of every
+        # comparison: reports that simply list contributors (e.g.
+        # countributors.sql) must show it, so only the candidate bundle
+        # may differ between the baseline and the with-candidate run.
+        eg_user = User.objects.create(email='earth-genome@example.com')
+        self.eg_contributor = Contributor.objects.create(
+            admin=eg_user,
+            name='Earth Genome',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.eg_contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
 
     # --- fixtures --------------------------------------------------------
 
@@ -163,27 +178,16 @@ class ReportsExcludeCandidatesTest(TestCase):
         return facility
 
     def _create_candidate(self):
-        """Mirror the Earth Genome ingest shape (design decision D2): an
-        "Earth Genome" contributor, a synthetic SINGLE source per detection,
+        """Mirror the Earth Genome ingest shape (design decision D2) under
+        the Earth Genome contributor: a synthetic SINGLE source per detection,
         a MATCHED list item with empty name/address, an AUTOMATIC match and
         an api_facility row with is_candidate = true."""
-        user = User.objects.create(email='earth-genome@example.com')
-        contributor = Contributor.objects.create(
-            admin=user,
-            name='Earth Genome',
-            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
-        )
-        guard_settings = override_settings(
-            EARTH_GENOME_CONTRIBUTOR_ID=contributor.id
-        )
-        guard_settings.enable()
-        self.addCleanup(guard_settings.disable)
         source = Source.objects.create(
             source_type=Source.SINGLE,
             is_active=True,
             is_public=True,
             create=True,
-            contributor=contributor,
+            contributor=self.eg_contributor,
         )
         return self._create_facility_bundle(
             item_source=source,
@@ -221,6 +225,26 @@ class ReportsExcludeCandidatesTest(TestCase):
         self.assertEqual(self._candidate_count(), 1)
 
         for name in FIXED_REPORTS:
+            with self.subTest(report=name):
+                self.assertEqual(self._run(name), baseline[name])
+
+    def test_every_report_is_unchanged_by_candidate_rows(self):
+        """Not only the fixed reports: every report the admin page offers
+        (``get_report_names``, SQL and custom) must produce the same output
+        with and without candidate rows. This pins the claim that the
+        reports without an explicit predicate never reach candidate-linked
+        data, instead of leaving it as a comment."""
+        names = get_report_names()
+        self.assertTrue(set(FIXED_REPORTS) <= {
+            name.replace('-', '_') for name in names
+        })
+        baseline = {name: self._run(name) for name in names}
+        self.assertEqual(self._candidate_count(), 0)
+
+        self._create_candidate()
+        self.assertEqual(self._candidate_count(), 1)
+
+        for name in names:
             with self.subTest(report=name):
                 self.assertEqual(self._run(name), baseline[name])
 
