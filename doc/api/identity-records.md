@@ -60,6 +60,15 @@ Content-Type: application/json
 202 Accepted
 ```
 
+A repeat of a registration that already exists returns `200` with the
+existing registration rather than creating a second one. Retry safety is
+the reason: if a registration commits but the response is lost in transit,
+the issuer's only sensible move is to retry, and a conflict on that retry
+would be indistinguishable from someone else having registered a different
+resolver. `200` rather than `202` because nothing was created; a caller
+that cares can tell the two apart, and one that does not can treat both as
+success.
+
 ```json
 {
   "moderation_id": "00000000-0000-4000-8000-000000000002",
@@ -86,30 +95,12 @@ keeps its name so the envelope matches the established one.
 | `400` | Malformed body, or `resolver_uri` is not an absolute HTTPS URI, or it looks like a Credential URL rather than a Resolver URI |
 | `401` | Token missing or invalid |
 | `404` | Identifier not found on this instance |
-| `409` | This identifier already has a live association, and the submitted Resolver URI either differs from it or repeats it exactly |
+| `409` | This identifier already has a live association with a **different** Resolver URI |
 
 Every failure leaves the member's record itself issued and gives something
 specific to retry.
 
-#### Two differences from §3.2 worth knowing about
-
-**An exact repeat returns `409`.** §3.2 defines 409 only as "already has a
-live association with a *different* resolver URI" and says nothing about
-resubmitting the same pair. The implementation treats both as a conflict.
-Idempotency on repeat submission is listed as out of scope on OSDEV-3580,
-so this is deliberate rather than accidental.
-
-This is the current position and is not expected to change. It has one
-consequence worth knowing: an association records the issuer's resolver
-address, which is the same for every version of a record, so a reissued
-record needs no call at all. An issuer that registers once per location
-never meets this. An issuer that calls on every publish will meet it on a
-member's second version, and receive a 409 on an otherwise ordinary action.
-
-If that happens, making an exact repeat return the existing association
-rather than a conflict is a small change: the case is already detected
-separately in `create_identity_record`. Raise it rather than working around
-it.
+#### One difference from §3.2 worth knowing about
 
 **`422` is not implemented.** §3.2 lists it for "well formed but not
 resolvable here", which §3.4 ties to identifiers issued only on a private

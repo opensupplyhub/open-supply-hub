@@ -141,23 +141,65 @@ class TestIdentityRecordRegistration(APITestCase):
         )
         self.assertFalse(IdentityRecordAssociation.objects.exists())
 
-    def test_exact_repeat_is_a_conflict_not_a_server_error(self):
+    def test_an_exact_repeat_is_idempotent(self):
         """
-        The unique constraint must not surface as a 500. Idempotency is out
-        of scope for the pilot, so an exact repeat is a conflict rather
-        than a quiet success.
+        Scope doc 3.2: registering the same pair twice returns the existing
+        registration rather than an error.
+
+        Retry safety is the point. If a registration commits but the
+        response is lost, the issuer retries, and a conflict on that retry
+        would be indistinguishable from someone else having registered a
+        different resolver. The caller could not tell whether its write
+        landed.
         """
-        self._post()
+        first = self._post()
+        self.assertEqual(first.status_code, status.HTTP_202_ACCEPTED)
 
-        response = self._post()
+        repeat = self._post()
 
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(repeat.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            repeat.data['moderation_id'], first.data['moderation_id']
+        )
         self.assertEqual(
             IdentityRecordAssociation.objects.filter(
                 os_id=self.os_id
             ).count(),
             1,
         )
+
+    def test_a_repeat_does_not_move_the_live_from_time(self):
+        """
+        The registration is unchanged, not refreshed. Moving live_from
+        would make a retry look like a newer registration than it is.
+        """
+        first = self._post()
+        original = IdentityRecordAssociation.objects.get(
+            os_id=self.os_id
+        ).live_from
+
+        self._post()
+
+        self.assertEqual(
+            IdentityRecordAssociation.objects.get(
+                os_id=self.os_id
+            ).live_from,
+            original,
+        )
+        self.assertEqual(first.data['live_from'], original)
+
+    def test_a_different_resolver_is_still_a_conflict(self):
+        """
+        Idempotency covers a repeated instruction, not a contradictory one.
+        A second resolver for the same identifier is a real disagreement.
+        """
+        self._post()
+
+        response = self._post(
+            dict(self.body, resolver_uri=OTHER_RESOLVER_URI)
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_malformed_os_id_is_rejected(self):
         """A bad checksum is a 400, and never reaches the database."""

@@ -401,24 +401,25 @@ class ProductionLocations(ViewSet):
                 status=status.HTTP_409_CONFLICT,
             )
 
-        # An exact repeat. Returning the existing association instead would
-        # make this idempotent, which the scope doc does not ask for and
-        # which is explicitly out of scope for the pilot, so it is a
-        # conflict rather than a quiet success. Catching it here keeps the
-        # unique constraint from surfacing as a 500.
-        if existing.filter(resolver_uri=resolver_uri).exists():
+        # An exact repeat is idempotent: the existing registration is
+        # returned and nothing new is created (scope doc 3.2).
+        #
+        # Retry safety is the reason, not tidiness. If a registration
+        # commits but the response is lost in transit, the issuer's only
+        # sensible move is to retry, and a 409 on that retry is
+        # indistinguishable from a genuine conflict with someone else's
+        # registration. The caller would have no way to tell whether its
+        # write landed. A repeat is also not a conflict in any meaningful
+        # sense: the state it asks for is already the state.
+        #
+        # 200 rather than 202, because nothing was accepted for creation.
+        # A caller that cares can tell the two apart; one that does not can
+        # treat both as success.
+        repeat = existing.filter(resolver_uri=resolver_uri).first()
+        if repeat is not None:
             return Response(
-                {
-                    'detail': (
-                        'This resolver URI is already registered against '
-                        'this identifier.'
-                    ),
-                    'errors': [{
-                        'field': 'resolver_uri',
-                        'detail': 'No change was made.',
-                    }],
-                },
-                status=status.HTTP_409_CONFLICT,
+                self.__identity_record_response(repeat),
+                status=status.HTTP_200_OK,
             )
 
         association = IdentityRecordAssociation.objects.create(
