@@ -8,6 +8,8 @@ from api.models.facility.facility import Facility
 
 logger = logging.getLogger(__name__)
 
+_UNSET = object()
+
 
 class SystemPartnerFieldProvider(ABC):
     """
@@ -16,6 +18,14 @@ class SystemPartnerFieldProvider(ABC):
     Each provider knows how to fetch and format data for a specific
     system partner field type (e.g., wage_indicator, etc.).
     """
+
+    # Whether `fetch_data` logs a warning when a location has no raw
+    # data. The hard-wired providers keep this on: their datasets are
+    # expected to cover every location they are asked about, so a miss
+    # is worth a line. A provider whose normal case is "no value here"
+    # (a zone set covers only part of the globe) turns it off, or the
+    # details endpoint would log one warning per location per dataset.
+    log_missing_raw_data = True
 
     def fetch_data(
         self,
@@ -29,10 +39,11 @@ class SystemPartnerFieldProvider(ABC):
         field_name = self._get_field_name()
 
         if raw_data is None:
-            logger.warning(
-                f"No raw data found for '{field_name}' partner field. "
-                f"Production location '{production_location.id}' ID"
-            )
+            if self.log_missing_raw_data:
+                logger.warning(
+                    f"No raw data found for '{field_name}' partner field. "
+                    f"Production location '{production_location.id}' ID"
+                )
             return None
 
         contributor_info = self.__get_contributor_info()
@@ -55,9 +66,9 @@ class SystemPartnerFieldProvider(ABC):
     ) -> Optional[Dict[str, Any]]:
         """
         Download-only fast path. Returns just the `raw_values` dict
-        produced by `_format_data`, skipping the per-call
-        `PartnerField` + `Contributor` lookups that `fetch_data` does
-        for the details endpoint.
+        produced by `_format_data`, skipping the `PartnerField` +
+        `Contributor` lookup that `fetch_data` does for the details
+        endpoint.
 
         Returns `None` if no raw data is available or the formatted
         payload has no `raw_values` dict.
@@ -103,6 +114,26 @@ class SystemPartnerFieldProvider(ABC):
         pass
 
     def __get_contributor_info(self) -> Optional[Dict[str, Any]]:
+        """
+        Contributor information for this provider's partner field,
+        looked up once per instance.
+
+        The partner field and its contributor do not change between the
+        locations one request serializes, so the two queries behind
+        them run on the first `fetch_data` call and are reused after
+        that (including a `None` result, so a field nobody holds is
+        not re-checked per location). The registry hands out fresh
+        provider instances on each access, which keeps this cache
+        request-scoped: an admin change shows up on the next request.
+        Subclasses need not call `super().__init__()` for this to work.
+        """
+        cached = getattr(self, '_contributor_info', _UNSET)
+        if cached is _UNSET:
+            cached = self.__load_contributor_info()
+            self._contributor_info = cached
+        return cached
+
+    def __load_contributor_info(self) -> Optional[Dict[str, Any]]:
         """
         Fetch contributor information from database.
         Returns None if contributor not found or contributor_id is None.
