@@ -100,7 +100,8 @@ class IdentityRecordAssociationTest(TestCase):
         """
         Pilot-set registrations are live on creation; the pending path that
         leaves live_from null is the general case and is out of scope for
-        November, but the model supports it so it needs no later migration.
+        the UNTP MVP, but the model supports it so it needs no later
+        migration.
         """
         pending = self._make()
         self.assertFalse(pending.is_live)

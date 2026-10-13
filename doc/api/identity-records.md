@@ -12,7 +12,7 @@ specification at
 [opensupplyhub.github.io/open-supply-hub-api-docs](https://opensupplyhub.github.io/open-supply-hub-api-docs).
 
 Section references below are to the OS Hub technical scope document for the
-RBA conference demo.
+UNTP MVP.
 
 ---
 
