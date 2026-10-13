@@ -12,6 +12,11 @@ detail, downloads, tiles, sectors, parent companies) are NOT tested here:
 they are covered by OSDEV-3243 (index trigger) and OSDEV-3378 (index
 surfaces). Note that with the trigger as it stands today a candidate does
 get an index row, so those surfaces still show it until that work lands.
+
+Contributor-facing surfaces that reach ``Facility`` through an FK join
+(``/api/contributors/``, ``/api/contributors/active_count/`` and
+``/api/sectors/?embed=1&contributor=``) never apply ``Facility.objects``
+and are tested here with an ingest-shaped candidate bundle.
 """
 import json
 from datetime import timedelta
@@ -534,3 +539,163 @@ class LookupHelpersCandidateAuditTest(CandidateFixtureMixin, TestCase):
             )
 
         me_creator.perform_event_creation.assert_not_called()
+
+
+class ContributorSurfacesCandidateAuditTest(APITestCase):
+    """FK-join surfaces behind the contributor pages.
+
+    Reproduces what the reviewer saw live: the ingest writes a bundle
+    shaped like a contributor's API upload (SINGLE ``Source`` with
+    ``is_active``/``is_public``/``create`` all True, a MATCHED item, an
+    AUTOMATIC match and an ``is_candidate`` facility) under the Earth
+    Genome contributor. ``Source -> FacilityListItem -> Facility`` joins
+    never apply ``Facility.objects``, so without an explicit
+    ``is_candidate`` test "Earth Genome" was listed in
+    ``GET /api/contributors/``, counted by
+    ``GET /api/contributors/active_count/`` and its item's sector shown
+    by ``GET /api/sectors/?embed=1&contributor=<id>``, all with zero
+    visible facilities.
+    """
+
+    def setUp(self):
+        self.eg_user = User.objects.create(email='eg@example.com')
+        self.eg_contributor = Contributor.objects.create(
+            admin=self.eg_user,
+            name='Earth Genome',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.eg_contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
+
+        self.eg_source = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            create=True,
+            contributor=self.eg_contributor,
+        )
+        self.eg_item = FacilityListItem.objects.create(
+            name='',
+            address='',
+            country_code='US',
+            sector=['Mining'],
+            row_index=0,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.MATCHED,
+            source=self.eg_source,
+        )
+        self.candidate = Facility.including_candidates.create(
+            name='',
+            address='',
+            country_code='US',
+            location=Point(0, 0),
+            created_from=self.eg_item,
+            is_candidate=True,
+            polygon=GEOSGeometry(CANDIDATE_POLYGON_WKT, srid=4326),
+            confidence=0.87,
+            external_id='eg-facility-0001',
+            source='earth_genome',
+        )
+        self.eg_item.facility = self.candidate
+        self.eg_item.save()
+        FacilityMatch.objects.create(
+            status=FacilityMatch.AUTOMATIC,
+            facility=self.candidate,
+            facility_list_item=self.eg_item,
+            confidence=0.87,
+            results={},
+        )
+
+        # An ordinary contributor with one confirmed facility, to show the
+        # same surfaces still list a contributor who has visible data.
+        self.other_user = User.objects.create(email='other@example.com')
+        self.other_contributor = Contributor.objects.create(
+            admin=self.other_user,
+            name='Confirmed contributor',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        other_list = FacilityList.objects.create(
+            header='header', file_name='one', name='First List'
+        )
+        self.other_source = Source.objects.create(
+            facility_list=other_list,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=self.other_contributor,
+        )
+        self.other_item = FacilityListItem.objects.create(
+            name='Item',
+            address='Address',
+            country_code='US',
+            sector=['Apparel'],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.other_source,
+        )
+        self.confirmed = Facility.objects.create(
+            name='Confirmed',
+            address='Address',
+            country_code='US',
+            location=Point(0, 0),
+            created_from=self.other_item,
+        )
+        self.other_item.facility = self.confirmed
+        self.other_item.save()
+        FacilityMatch.objects.create(
+            status=FacilityMatch.CONFIRMED,
+            facility=self.confirmed,
+            facility_list_item=self.other_item,
+            confidence=1.0,
+            results={},
+        )
+
+    def listed_contributor_ids(self):
+        response = self.client.get('/api/contributors/')
+        self.assertEqual(response.status_code, 200)
+        return [row[0] for row in response.json()]
+
+    def active_count(self):
+        response = self.client.get('/api/contributors/active_count/')
+        self.assertEqual(response.status_code, 200)
+        return response.json()['count']
+
+    def embedded_sectors(self, contributor):
+        response = self.client.get(
+            '/api/sectors/', {'embed': '1', 'contributor': contributor.id}
+        )
+        self.assertEqual(response.status_code, 200)
+        return response.json()
+
+    def test_contributors_list_hides_a_candidate_only_contributor(self):
+        listed = self.listed_contributor_ids()
+
+        self.assertIn(self.other_contributor.id, listed)
+        self.assertNotIn(self.eg_contributor.id, listed)
+
+    def test_active_count_ignores_a_candidate_only_contributor(self):
+        self.assertEqual(self.active_count(), 1)
+
+    def test_sectors_embed_hides_the_candidate_items_sector(self):
+        self.assertEqual(self.embedded_sectors(self.eg_contributor), [])
+        self.assertEqual(
+            self.embedded_sectors(self.other_contributor), ['Apparel']
+        )
+
+    def test_contributor_surfaces_appear_once_the_candidate_is_confirmed(
+        self,
+    ):
+        """Only the candidate flag hides the contributor: the moment the
+        row is confirmed the same bundle counts like any other."""
+        self.candidate.is_candidate = False
+        self.candidate.name = 'Now confirmed'
+        self.candidate.address = 'Somewhere'
+        self.candidate.save()
+
+        self.assertIn(self.eg_contributor.id, self.listed_contributor_ids())
+        self.assertEqual(self.active_count(), 2)
+        self.assertEqual(self.embedded_sectors(self.eg_contributor), ['Mining'])
