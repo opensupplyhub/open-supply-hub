@@ -23,6 +23,8 @@ from api.views.v1.moderation_events \
      import ModerationEvents
 from api.views.v1.identity_resolver \
      import IdentityResolverView, ResolverDescriptionView
+from api.views.v1.link_type_vocabulary \
+     import LinkTypeVocabularyView
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -167,6 +169,13 @@ resolver_apis = [
         '.well-known/resolver',
         ResolverDescriptionView.as_view(),
         name='resolver-description',
+    ),
+    # Our link type vocabulary. Lives under api/ because it is an API
+    # resource, and that prefix is already routed at the edge.
+    path(
+        'api/v1/voc/',
+        LinkTypeVocabularyView.as_view(),
+        name='link-type-vocabulary',
     ),
 ]
 

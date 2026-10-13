@@ -12,8 +12,15 @@ from rest_framework.views import APIView
 from waffle import switch_is_active
 
 from api.os_id import validate_os_id
-from api.services.identity_record_retrieval import has_live_record
+from api.services.identity_record_retrieval import (
+    get_live_association,
+    has_live_record,
+)
 from api.services.os_id_presence import os_id_exists_here
+from api.views.v1.link_type_vocabulary import (
+    link_type_uri,
+    vocabulary_namespace,
+)
 
 LINKSET_MEDIA_TYPE = 'application/linkset+json'
 
@@ -84,7 +91,7 @@ def _error(detail, status_code):
     return JsonResponse({'detail': detail}, status=status_code)
 
 
-def _site_root(request):
+def site_root(request):
     """
     Absolute origin for this instance, matching the convention in
     api/mail.py so resolver links and emailed links cannot disagree.
@@ -108,7 +115,7 @@ def _production_location_url(request, os_id):
         if switch_is_active(PRODUCTION_LOCATION_PAGE_SWITCH)
         else 'facilities'
     )
-    return '{}/{}/{}'.format(_site_root(request), route_prefix, os_id)
+    return '{}/{}/{}'.format(site_root(request), route_prefix, os_id)
 
 
 def _identity_record_url(request, os_id):
@@ -187,43 +194,81 @@ class IdentityResolverView(APIView):
             )
 
         if _wants_linkset(request):
-            return Response(
-                self._linkset(request, os_id),
+            linkset = self._linkset(request, os_id)
+            response = Response(
+                linkset,
                 status=status.HTTP_200_OK,
                 content_type=LINKSET_MEDIA_TYPE,
             )
+            response['Link'] = self._link_header(linkset)
+            return response
 
         return HttpResponseRedirect(_destination(request, os_id))
 
     def _linkset(self, request, os_id):
         """
-        The link-set envelope.
+        The RFC 9264 link-set for an identifier (scope doc 3.1).
 
-        Only the Open Supply Hub entry is emitted here. The registered
-        external record entry, and the relation type names that carry it, are
-        OSDEV-3582: per scope doc 2.1 the link-set is produced by the
-        issuer's open-source implementation behind this API, so the relation
-        names come from the UNTP registry rather than being coined by us.
-        Emitting a placeholder name now would put a guess on a public
-        contract.
+        Keys are link relation types drawn from our own published
+        vocabulary. There is no central registry to take them from: UNTP
+        defines `linkType` as a plain string and enumerates no values, and
+        the convention among resolvers is that each publishes its own terms
+        at a resolvable namespace. RBA does this under `.../api/v4/voc/`;
+        ours are at the namespace named in the resolver description, and
+        every key below dereferences to a definition.
+
+        Exactly one entry for the registered record, carrying the issuer's
+        resolver address rather than a link to one version. Which version is
+        current stays the issuer's decision (3.5), which is what keeps the
+        always-current guarantee in 3.3 true without re-registration.
         """
-        anchor = '{}/{}/{}'.format(
-            _site_root(request), RESOLVER_PATH_PREFIX, os_id
-        )
-        return {
-            'linkset': [
+        root = site_root(request)
+        anchor = '{}/{}/{}'.format(root, RESOLVER_PATH_PREFIX, os_id)
+
+        entries = {
+            link_type_uri(root, 'productionLocation'): [
                 {
-                    'anchor': anchor,
-                    'item': [
-                        {
-                            'href': _destination(request, os_id),
-                            'type': 'text/html',
-                            'title': 'Open Supply Hub production location',
-                        }
-                    ],
+                    'href': _destination(request, os_id),
+                    'type': 'text/html',
+                    'title': 'Open Supply Hub production location',
                 }
             ]
         }
+
+        association = get_live_association(os_id)
+        if association is not None:
+            entries[link_type_uri(root, 'registeredRecord')] = [
+                {
+                    'href': association.resolver_uri,
+                    'type': 'application/json',
+                    'title': 'Registered record (current version)',
+                }
+            ]
+
+        return {'linkset': [dict(anchor=anchor, **entries)]}
+
+    @staticmethod
+    def _link_header(linkset):
+        """
+        The same links as an HTTP `Link` header (RFC 8288).
+
+        Scope doc 3.5 records that the issuer's resolver serves the link-set
+        both ways and commits us to matching, so a client that reads headers
+        rather than bodies sees the same thing.
+        """
+        entry = linkset['linkset'][0]
+        parts = []
+        for relation, links in entry.items():
+            if relation == 'anchor':
+                continue
+            for link in links:
+                parts.append(
+                    '<{}>; rel="{}"; type="{}"; anchor="{}"'.format(
+                        link['href'], relation, link['type'],
+                        entry['anchor'],
+                    )
+                )
+        return ', '.join(parts)
 
 
 class ResolverDescriptionView(APIView):
@@ -244,12 +289,22 @@ class ResolverDescriptionView(APIView):
     content_negotiation_class = ResolverContentNegotiation
 
     def get(self, request):
-        root = _site_root(request)
+        root = site_root(request)
         return Response(
             {
                 'name': 'Open Supply Hub identity resolver',
                 'resolverRoot': '{}/{}/'.format(
                     root, RESOLVER_PATH_PREFIX
+                ),
+                # The namespace a client dereferences to find out what
+                # our link relation types mean, and the profile URL giving
+                # the same thing in the shape the reference resolver
+                # implementation documents.
+                # Publishing these is the obligation that comes with
+                # minting our own vocabulary rather than using a registry.
+                'namespaceURI': vocabulary_namespace(root),
+                'profileUrl': '{}?show=linktypes'.format(
+                    vocabulary_namespace(root)
                 ),
                 'supportedLinkType': [LINKSET_MEDIA_TYPE],
                 'identifier': [

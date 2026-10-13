@@ -104,8 +104,14 @@ class IdentityResolverTest(APITestCase):
         entry = body['linkset'][0]
 
         self.assertTrue(entry['anchor'].endswith('/osid/{}'.format(OS_ID)))
-        self.assertTrue(entry['item'][0]['href'].endswith(OS_ID))
-        self.assertEqual(entry['item'][0]['type'], 'text/html')
+
+        location = next(
+            v for k, v in entry.items()
+            if k.endswith('productionLocation')
+        )
+
+        self.assertTrue(location[0]['href'].endswith(OS_ID))
+        self.assertEqual(location[0]['type'], 'text/html')
 
     def test_malformed_os_id_is_rejected(self):
         """
@@ -187,8 +193,13 @@ class IdentityResolverTest(APITestCase):
         response = self.client.get(self.url, HTTP_ACCEPT=LINKSET)
         entry = json.loads(response.content)['linkset'][0]
 
+        location = next(
+            v for k, v in entry.items()
+            if k.endswith('productionLocation')
+        )
+
         self.assertTrue(
-            entry['item'][0]['href'].endswith(
+            location[0]['href'].endswith(
                 '/{}/identity-record'.format(OS_ID)
             )
         )
