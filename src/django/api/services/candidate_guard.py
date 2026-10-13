@@ -13,9 +13,22 @@ API validators stops an arbitrary ``Facility.objects.create()`` from
 writing a nameless row. ``Facility.save()`` calls
 :func:`assert_may_create_candidate` on every insert to close that gap at
 the model boundary, where every ORM write path converges.
+
+The only sanctioned bypass is :func:`suspended`, a context manager for
+code that replays rows which were already validated by this guard on
+another instance (the RBA ``sync_databases`` command). It is scoped to
+the current thread or asyncio task through a ``contextvars.ContextVar``,
+so a bypass in one request or job never leaks into another.
 """
+import contextvars
+from contextlib import contextmanager
+
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+
+_suspended = contextvars.ContextVar(
+    'candidate_guard_suspended', default=False
+)
 
 
 class CandidateCreationNotAllowed(PermissionDenied):
@@ -42,6 +55,28 @@ def is_earth_genome_contributor(contributor) -> bool:
     return contributor_id == designated
 
 
+def is_suspended() -> bool:
+    """True while the current thread or task is inside :func:`suspended`."""
+    return _suspended.get()
+
+
+@contextmanager
+def suspended():
+    """Disable the guard for the current thread or task until exit.
+
+    Use this only to replay rows that the guard has already accepted on
+    the instance they came from (the database sync copies OS Hub rows
+    into RBA verbatim and must not re-judge them against RBA's own
+    ``EARTH_GENOME_CONTRIBUTOR_ID``). Nested use is safe; the previous
+    state is restored on exit even when the body raises.
+    """
+    token = _suspended.set(True)
+    try:
+        yield
+    finally:
+        _suspended.reset(token)
+
+
 def _creating_contributor_id(facility):
     """The id of the contributor behind ``facility.created_from``, or None.
 
@@ -64,8 +99,11 @@ def assert_may_create_candidate(facility) -> None:
     from a list item owned by the Earth Genome contributor.
 
     Call this only for rows that are candidates or lack a name or address;
-    normal named facilities are never subject to the check.
+    normal named facilities are never subject to the check. Returns
+    without checking while :func:`suspended` is active.
     """
+    if is_suspended():
+        return
     contributor_id = _creating_contributor_id(facility)
     if is_earth_genome_contributor(contributor_id):
         return

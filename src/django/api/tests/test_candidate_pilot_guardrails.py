@@ -1,4 +1,6 @@
 import json
+import os
+import threading
 from unittest.mock import Mock, patch
 
 from api.models import (
@@ -16,6 +18,8 @@ from api.services.candidate_guard import (
     CandidateCreationNotAllowed,
     assert_may_create_candidate,
     is_earth_genome_contributor,
+    is_suspended,
+    suspended,
 )
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -24,8 +28,9 @@ from contricleaner.tests.sector_cache_mock import SectorCacheMock
 
 from django.contrib.gis.geos import Point
 from django.core.exceptions import PermissionDenied
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
+from oar.settings import _env_int
 
 BLANK_NAME_ERROR = 'name cannot consist solely of punctuation or whitespace.'
 
@@ -170,6 +175,112 @@ class CandidateGuardHelperTest(CandidateGuardFixtureMixin, TestCase):
         self.assertTrue(
             issubclass(CandidateCreationNotAllowed, PermissionDenied)
         )
+
+
+class CandidateGuardSuspendedTest(CandidateGuardFixtureMixin, TestCase):
+    """``candidate_guard.suspended()`` is the one sanctioned bypass, used
+    by ``sync_databases`` to replay rows the source instance already
+    validated. The setting is unset here, as it is on RBA, so nothing but
+    the suspension could let these inserts through."""
+
+    def setUp(self):
+        super().setUp()
+        unset = override_settings(EARTH_GENOME_CONTRIBUTOR_ID=None)
+        unset.enable()
+        self.addCleanup(unset.disable)
+
+    def _blank_name_kwargs(self):
+        return self._facility_kwargs(self.other_source, name='')
+
+    def test_blank_name_non_candidate_insert_succeeds_while_suspended(self):
+        with suspended():
+            facility = Facility.objects.create(**self._blank_name_kwargs())
+
+        self.assertEqual(facility.name, '')
+        self.assertFalse(facility.is_candidate)
+        self.assertTrue(Facility.objects.filter(pk=facility.pk).exists())
+
+    def test_candidate_insert_succeeds_while_suspended(self):
+        with suspended():
+            candidate = Facility.objects.create(
+                **self._candidate_kwargs(self.other_source)
+            )
+
+        self.assertTrue(
+            Facility.including_candidates.filter(pk=candidate.pk).exists()
+        )
+
+    def test_same_insert_still_raises_outside_the_suspension(self):
+        with self.assertRaises(CandidateCreationNotAllowed):
+            Facility.objects.create(**self._blank_name_kwargs())
+
+        self.assertEqual(Facility.including_candidates.count(), 0)
+
+    def test_guard_is_restored_after_the_block_and_after_an_error(self):
+        self.assertFalse(is_suspended())
+        with suspended():
+            self.assertTrue(is_suspended())
+            with suspended():
+                self.assertTrue(is_suspended())
+            self.assertTrue(is_suspended())
+        self.assertFalse(is_suspended())
+
+        with self.assertRaises(RuntimeError):
+            with suspended():
+                raise RuntimeError('boom')
+        self.assertFalse(is_suspended())
+
+        with self.assertRaises(CandidateCreationNotAllowed):
+            Facility.objects.create(**self._blank_name_kwargs())
+
+    def test_suspension_does_not_leak_into_another_thread(self):
+        seen = {}
+
+        def probe():
+            seen['suspended'] = is_suspended()
+
+        with suspended():
+            worker = threading.Thread(target=probe)
+            worker.start()
+            worker.join()
+
+        self.assertFalse(seen['suspended'])
+
+
+class EnvIntSettingHelperTest(SimpleTestCase):
+    """``oar.settings._env_int`` must never raise at import time: a bad
+    EARTH_GENOME_CONTRIBUTOR_ID degrades to the default (nobody may
+    create candidates) instead of taking the service down at boot."""
+
+    databases = []
+    VAR = 'OSDEV_3248_TEST_INT'
+
+    def test_unset_returns_the_default(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop(self.VAR, None)
+            self.assertIsNone(_env_int(self.VAR))
+            self.assertEqual(_env_int(self.VAR, 7), 7)
+
+    def test_blank_or_whitespace_returns_the_default(self):
+        for raw in ('', '   ', '\t'):
+            with patch.dict(os.environ, {self.VAR: raw}):
+                self.assertIsNone(_env_int(self.VAR), repr(raw))
+
+    def test_numeric_value_is_parsed_and_stripped(self):
+        with patch.dict(os.environ, {self.VAR: ' 42 '}):
+            self.assertEqual(_env_int(self.VAR), 42)
+        with patch.dict(os.environ, {self.VAR: '-3'}):
+            self.assertEqual(_env_int(self.VAR), -3)
+
+    def test_non_numeric_value_logs_and_returns_the_default(self):
+        with patch.dict(os.environ, {self.VAR: 'abc'}):
+            with self.assertLogs('oar.settings', level='WARNING') as logs:
+                self.assertIsNone(_env_int(self.VAR))
+                self.assertEqual(_env_int(self.VAR, 9), 9)
+
+        self.assertEqual(len(logs.records), 2)
+        self.assertIn(self.VAR, logs.records[0].getMessage())
+        self.assertIn("'abc'", logs.records[0].getMessage())
 
 
 class CandidateGuardModelBoundaryTest(CandidateGuardFixtureMixin, TestCase):

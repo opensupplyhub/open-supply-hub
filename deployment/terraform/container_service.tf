@@ -252,6 +252,7 @@ data "template_file" "app_cli" {
     opensearch_ssl_cert_verification              = var.opensearch_ssl_cert_verification
     instance_source                               = var.instance_source
     claims_automation_account_email               = var.claims_automation_account_email
+    earth_genome_contributor_id                   = var.earth_genome_contributor_id
     rds_master_secret_arn                         = local.rds_master_secret_arn
     django_secret_key_arn                         = local.django_secret_key_arn
     default_from_email_arn                        = local.default_from_email_arn
