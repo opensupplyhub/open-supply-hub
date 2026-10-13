@@ -23,11 +23,11 @@ merges to `main` through its own draft PR, in this order (from
 | Step | Ticket | PR | Why this position |
 |---|---|---|---|
 | 1 | OSDEV-3380 default manager | #1308 | parent of the stack; `Facility.objects` hides candidates |
-| 2 | OSDEV-3243 out-of-ORM exclusion | #1326 | migration `0246_exclude_candidates_from_facility_index`, logstash `NOT af.is_candidate`, dedupe-hub exclusion |
-| 3 | OSDEV-3246 tombstone | #1327 | its migration was authored as `0246`; **renumber to `0247_facility_alias_tombstone` depending on `0246_exclude_candidates_from_facility_index`** before merging (the integration branch already carries this renumber) |
+| 2 | OSDEV-3243 out-of-ORM exclusion | #1326 | migration `0248_exclude_candidates_from_facility_index` (on main's `0247_add_zone_set_and_zone`), logstash `NOT af.is_candidate`, dedupe-hub exclusion |
+| 3 | OSDEV-3246 tombstone | #1327 | migration `0249_facility_alias_tombstone` depends on `0248_exclude_candidates_from_facility_index`, so #1326 merges first (the branch already carries #1326) |
 | 4 | OSDEV-3379 admin, OSDEV-3377 reports, OSDEV-3248 guard, OSDEV-3378 index surfaces, OSDEV-3376 audit | #1322, #1323, #1324, #1325, #1328 | any order; independent of each other |
 | 5 | OSDEV-3244 ingest | #1329 | needs 3248 (guard setting) and 3246 (`is_retired_detection`) |
-| 6 | OSDEV-3245 votes | #1330 | migration `0248_facility_candidate_vote` depends on `0247` |
+| 6 | OSDEV-3245 votes | #1330 | migration `0250_facility_candidate_vote` depends on `0249` (renumbered on the integration branch, 2026-10-13) |
 | 7 | OSDEV-3249 candidate detail API | #1331 | needs 3245 |
 | 8 | OSDEV-3247 React panel | #1332 | needs 3249 |
 | 9 | OSDEV-3250 QA (this) | — | tests + this runbook |
@@ -36,16 +36,15 @@ merges to `main` through its own draft PR, in this order (from
   one leaf (`python manage.py makemigrations --check --dry-run api` reports
   only the pre-existing drift, nothing for `api_facility*` models).
 - [ ] `doc/release/RELEASE-NOTES.md` on `main` carries the bullets of every
-  PR above. Known gap: the integration branch dropped the release-notes
-  bullets of OSDEV-3243, 3244, 3246, 3248 and 3377 (and the `0246` / `0247`
-  migration entries) while resolving merge conflicts. The per-PR merges
-  restore them; do not merge the integration branch wholesale.
+  PR above, in the 2.32.0 section (2.31.0 shipped on 2026-10-09). The
+  integration branch's notes were rebuilt as the union of every bullet on
+  2026-10-13; still, merge the individual PRs, not the integration branch.
 
 ## 1. Prerequisites (10 min)
 
 - [ ] Deploy the release; `migrate` ran in `post_deployment` and applied
-  `0246_exclude_candidates_from_facility_index`,
-  `0247_facility_alias_tombstone`, `0248_facility_candidate_vote`:
+  `0248_exclude_candidates_from_facility_index`,
+  `0249_facility_alias_tombstone`, `0250_facility_candidate_vote`:
 
   ```sql
   SELECT name FROM django_migrations
@@ -134,7 +133,7 @@ as "geometry must be a Polygon").
     JOIN api_source s ON s.id = fli.source_id
    WHERE f.is_candidate AND fli.status = 'MATCHED' AND s.source_type = 'SINGLE'
      AND s.contributor_id = <EARTH_GENOME_CONTRIBUTOR_ID>;
-  -- never in the search index (0246 trigger)
+  -- never in the search index (0248 trigger)
   SELECT count(*) FROM api_facilityindex i
     JOIN api_facility f ON f.id = i.id WHERE f.is_candidate;   -- 0
   ```
@@ -268,9 +267,9 @@ Reverse order of application; each is reversible, with these caveats:
 
 | Migration | `migrate api <previous>` | Effect of reversing |
 |---|---|---|
-| `0248_facility_candidate_vote` | `0247_facility_alias_tombstone` | drops `api_facilitycandidatevote` and `api_facilitycandidateretirementrequest`; **all votes and open requests are lost** (tombstones keep final tallies of already-retired candidates) |
-| `0247_facility_alias_tombstone` | `0246_exclude_candidates_from_facility_index` | restores `facility_id NOT NULL` on `api_facilityalias`: **fails if any NOT_A_FACILITY tombstone exists** — delete the tombstone rows first (`DELETE FROM api_facilityalias WHERE reason = 'NOT_A_FACILITY'`), which also re-enables re-ingest of those detections |
-| `0246_exclude_candidates_from_facility_index` | `0245_add_claim_quality_check_switch` | restores the previous `index_facilities_by` / `index_facilities` procedures; existing candidates get `api_facilityindex` rows on their next update. Only safe together with the Django guard (`FacilityIndex.objects.without_candidates()`, OSDEV-3378) still deployed |
+| `0250_facility_candidate_vote` | `0249_facility_alias_tombstone` | drops `api_facilitycandidatevote` and `api_facilitycandidateretirementrequest`; **all votes and open requests are lost** (tombstones keep final tallies of already-retired candidates) |
+| `0249_facility_alias_tombstone` | `0248_exclude_candidates_from_facility_index` | restores `facility_id NOT NULL` and narrows `reason` to `varchar(6)` on `api_facilityalias` **and** `api_historicalfacilityalias`: **fails if any NOT_A_FACILITY row exists in either table** — delete them first (`DELETE FROM api_historicalfacilityalias WHERE reason = 'NOT_A_FACILITY'; DELETE FROM api_facilityalias WHERE reason = 'NOT_A_FACILITY';`), which also re-enables re-ingest of those detections |
+| `0248_exclude_candidates_from_facility_index` | `0247_add_zone_set_and_zone` | restores the previous `index_facilities_by` / `index_facilities` procedures and immediately re-indexes every existing candidate into `api_facilityindex` (the revert SQL calls `index_facilities_by` on all candidate ids). Only safe together with the Django guard (`FacilityIndex.objects.without_candidates()`, OSDEV-3378) still deployed |
 
 Code rollback to a build without the default-manager exclusion (pre
 OSDEV-3380) would expose candidates as nameless facilities. Remove them

@@ -9,7 +9,7 @@ search. Candidates are reachable only by direct OS ID lookup and the
 candidates bbox endpoint (pinned in test_candidate_detail_responses).
 
 The fixture forces one candidate into ``api_facilityindex`` on purpose:
-the index trigger (0246) keeps candidates out, but the Django-side guard
+the index trigger (0248) keeps candidates out, but the Django-side guard
 (``FacilityIndex.objects.without_candidates()``, OSDEV-3378) must hold
 for rows indexed before that change shipped too.
 """
