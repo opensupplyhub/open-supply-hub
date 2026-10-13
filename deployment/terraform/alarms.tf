@@ -213,3 +213,88 @@ resource "aws_budgets_budget" "bedrock" {
     subscriber_sns_topic_arns = [aws_sns_topic.global.arn]
   }
 }
+
+# ---------------------------------------------------------------------------
+# Identity resolver (OSDEV-3587)
+#
+# The resolver is public and unauthenticated, so it is the one endpoint in
+# this project a stranger can drive without an account. Django-level
+# throttling is the only limiter: waf.tf carries IP allow and deny lists but
+# no rate-based statements. That is the same position as every other public
+# endpoint here, so it is not new exposure, but it is worth stating rather
+# than assuming.
+#
+# Nothing alarms on 404 or 400 from /osid/. Both are ordinary answers: a 404
+# means the identifier is not resolvable on this instance, which is the
+# documented response for an identifier issued elsewhere, and a 400 means
+# somebody pasted a typo. Alarming on either would page on correct behaviour.
+# ---------------------------------------------------------------------------
+
+resource "aws_cloudwatch_log_metric_filter" "resolver_server_errors" {
+  name           = "filter${local.short}ResolverServerErrors"
+  log_group_name = aws_cloudwatch_log_group.app.name
+  pattern        = "\"Internal Server Error: /osid/\""
+
+  metric_transformation {
+    name          = "ResolverServerErrors"
+    namespace     = local.short
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+# Any single occurrence alarms. A 500 from the resolver should be
+# impossible: a malformed identifier is rejected before any lookup, an
+# unknown one returns 404, and an unreachable issuer is handled by the
+# retrieval service rather than raised. So one error means something is
+# wrong that we have not modelled, and this endpoint is the public face of
+# the pilot.
+resource "aws_cloudwatch_metric_alarm" "resolver_server_errors" {
+  alarm_name          = "alarm${local.short}ResolverServerErrors"
+  alarm_description   = "The identity resolver is returning server errors"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = aws_cloudwatch_log_metric_filter.resolver_server_errors.metric_transformation[0].name
+  namespace           = aws_cloudwatch_log_metric_filter.resolver_server_errors.metric_transformation[0].namespace
+  period              = "3600"
+  statistic           = "Sum"
+  threshold           = "0"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.global.arn]
+  ok_actions    = [aws_sns_topic.global.arn]
+}
+
+resource "aws_cloudwatch_log_metric_filter" "resolver_throttled" {
+  name           = "filter${local.short}ResolverThrottled"
+  log_group_name = aws_cloudwatch_log_group.app.name
+  pattern        = "\"Too Many Requests: /osid/\""
+
+  metric_transformation {
+    name          = "ResolverThrottled"
+    namespace     = local.short
+    value         = "1"
+    default_value = "0"
+  }
+}
+
+# Deliberately not zero. Occasional throttling is the limiter working, and
+# one caller behind a corporate address can reach the burst rate
+# legitimately. Sustained throttling is the signal: either somebody is
+# hammering the endpoint, or a real integrator needs a higher allowance and
+# is currently being refused. Both are worth a look, neither is an outage.
+resource "aws_cloudwatch_metric_alarm" "resolver_throttled" {
+  alarm_name          = "alarm${local.short}ResolverThrottled"
+  alarm_description   = "The identity resolver is throttling sustained traffic from one or more callers"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = aws_cloudwatch_log_metric_filter.resolver_throttled.metric_transformation[0].name
+  namespace           = aws_cloudwatch_log_metric_filter.resolver_throttled.metric_transformation[0].namespace
+  period              = "3600"
+  statistic           = "Sum"
+  threshold           = var.resolver_throttled_alarm_threshold
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.global.arn]
+  ok_actions    = [aws_sns_topic.global.arn]
+}
