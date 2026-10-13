@@ -1,10 +1,12 @@
 import json
 import logging
 
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.urls import path
 from django.contrib import admin, messages
 from django.contrib.admin import AdminSite
+from django.contrib.admin.utils import unquote
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
@@ -14,6 +16,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from api.models.polygon import Polygon
 from api.models.polygon_admin import PolygonAdmin
+from api.models.zone_set import Zone, ZoneSet
+from api.models.zone_set_admin import ZoneAdmin, ZoneSetAdmin
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
@@ -137,9 +141,12 @@ class FacilityHistoryAdmin(GISModelAdmin, SimpleHistoryAdmin):
       SimpleHistoryAdmin's history view can resolve a candidate.
     * Candidates are view-only: ``has_change_permission`` and
       ``has_delete_permission`` are False for a candidate, so its change
-      view renders read-only, a POST to it is refused, and the history
-      revert form is disabled. Candidate lifecycle (promotion, rejection)
-      belongs to the moderation flow (OSDEV-3249), not the admin.
+      view renders read-only and a POST to it (or to the delete view, or
+      the bulk ``delete_selected`` action) is refused. SimpleHistoryAdmin's
+      revert form only hides its Revert button on that permission and
+      would still save a POST, so ``history_form_view`` below refuses it.
+      Candidate lifecycle (promotion, rejection) belongs to the
+      moderation flow (OSDEV-3249), not the admin.
     * ``is_candidate``, ``source`` and ``external_id`` are read-only on
       every facility, so staff cannot flip a row's candidate state or
       enter a ``(source, external_id)`` clash the form cannot validate
@@ -178,6 +185,20 @@ class FacilityHistoryAdmin(GISModelAdmin, SimpleHistoryAdmin):
         if obj is not None and obj.is_candidate:
             return False
         return super().has_delete_permission(request, obj)
+
+    def history_form_view(self, request, object_id, version_id,
+                          extra_context=None):
+        # SimpleHistoryAdmin gates this view on view-or-change permission
+        # and then saves a POST without checking change permission again.
+        if request.method == 'POST':
+            obj = self.get_object(request, unquote(object_id))
+            if obj is not None and not self.has_change_permission(
+                request, obj
+            ):
+                raise PermissionDenied
+        return super().history_form_view(
+            request, object_id, version_id, extra_context
+        )
 
     gis_widget_kwargs = {
         'attrs': {
@@ -515,4 +536,6 @@ admin_site.register(
 )
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
 admin_site.register(Polygon, PolygonAdmin)
+admin_site.register(ZoneSet, ZoneSetAdmin)
+admin_site.register(Zone, ZoneAdmin)
 admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import Typography from '@material-ui/core/Typography';
+import { connect } from 'react-redux';
 import { toast } from 'react-toastify';
 
 import { MESSAGE_TEMPLATES, composeMessage } from './templates';
 import { getSuggestedDraft } from './automatedReviewUtils';
+import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../util/util';
+import { RELAXED_CLAIM_ELIGIBILITY } from '../../util/constants';
 import styles from './styles';
 
 /*
@@ -17,12 +20,13 @@ import styles from './styles';
  * a click never destroys manual work.
  */
 
-export default function MessageComposer({
+function MessageComposer({
     detail,
     review,
     messageClaimant,
     acting,
     onSent,
+    isRelaxedEligibility,
 }) {
     const [message, setMessage] = useState('');
     const [selectedTemplates, setSelectedTemplates] = useState([]);
@@ -30,6 +34,9 @@ export default function MessageComposer({
 
     const suggestedDraft = getSuggestedDraft(review);
     const templateContext = {
+        // Swaps the manager/owner wording in the person/relationship
+        // templates when the relaxed_claim_eligibility switch is on.
+        relaxedEligibility: isRelaxedEligibility,
         facilityName: detail.facility?.properties?.name || 'your facility',
         jobTitle: detail.job_title || 'your stated title',
         emailDomain: (detail.email || '').split('@')[1] || 'your email domain',
@@ -149,3 +156,11 @@ export default function MessageComposer({
         </section>
     );
 }
+
+const mapStateToProps = ({ featureFlags: { flags } }) => ({
+    isRelaxedEligibility: convertFeatureFlagsObjectToListOfActiveFlags(
+        flags,
+    ).includes(RELAXED_CLAIM_ELIGIBILITY),
+});
+
+export default connect(mapStateToProps)(MessageComposer);

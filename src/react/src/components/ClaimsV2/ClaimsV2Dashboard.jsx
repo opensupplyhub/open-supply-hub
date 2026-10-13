@@ -10,7 +10,7 @@ import {
 } from './automatedReviewUtils';
 import ClaimantDetailsPanel from './ClaimantDetailsPanel';
 import DecisionPanel from './DecisionPanel';
-import EvidencePanel from './EvidencePanel';
+import EvidencePanel, { buildUrlEvidence } from './EvidencePanel';
 import InternalNoteBox from './InternalNoteBox';
 import MessageComposer from './MessageComposer';
 import VerificationPanel from './VerificationPanel';
@@ -27,6 +27,7 @@ import {
 import QueueRail from './QueueRail';
 import { formatDate } from '../../util/util';
 import styles from './styles';
+import { claimantOrganization } from './verificationUtils';
 
 /*
  * Claims moderation dashboard v2 — scaffolding shell (OSDEV-3355).
@@ -119,7 +120,8 @@ function ClaimWorkspace({ claimID, onDecided }) {
                 <strong>{detail.email}</strong>
             </p>
             <p style={styles.workspaceSub}>
-                Organization: <strong>{detail.company_name || '—'}</strong>
+                Organization:{' '}
+                <strong>{claimantOrganization(detail) || '—'}</strong>
                 {detail.facility?.properties?.country_name
                     ? ` · ${detail.facility.properties.country_name}`
                     : ''}
@@ -199,6 +201,7 @@ function ClaimWorkspace({ claimID, onDecided }) {
             <div style={styles.workbench} key={detail.id} ref={workbenchRef}>
                 <EvidencePanel
                     attachments={detail.attachments}
+                    urlEvidence={buildUrlEvidence(detail)}
                     review={review}
                     claimID={detail.id}
                     requestedDoc={requestedDoc}
@@ -283,9 +286,26 @@ const isTypingTarget = target =>
         target.tagName === 'SELECT' ||
         target.isContentEditable);
 
+/*
+ * Deep link (OSDEV-3357): /dashboard/claims-v2?claim=123 preselects
+ * that claim — the hop from a Claims Tracker Jira ticket, and the
+ * format the eventual old-route redirect maps ids onto.
+ */
+export const claimIDFromLocation = () => {
+    const raw = new URLSearchParams(window.location.search).get('claim');
+    return raw && /^\d+$/.test(raw) ? Number(raw) : null;
+};
+
 export default function ClaimsV2Dashboard() {
-    const { claims, fetching, error, refetchClaims } = useClaimsList();
-    const [selectedClaimID, setSelectedClaimID] = useState(null);
+    const {
+        claims,
+        fetching,
+        loaded,
+        initialLoading,
+        error,
+        refetchClaims,
+    } = useClaimsList();
+    const [selectedClaimID, setSelectedClaimID] = useState(claimIDFromLocation);
     const [query, setQuery] = useState('');
     const [region, setRegion] = useState(ALL_REGIONS);
     const [sort, setSort] = useState(SORT_ORDERS.OLDEST);
@@ -328,14 +348,44 @@ export default function ClaimsV2Dashboard() {
      * Auto-select the first visible claim on load, and move the
      * selection back into view when a filter change hides it —
      * the workspace should never show a claim absent from the rail.
+     * Inert until the first load completes AND no fetch is in flight:
+     * `fetching` alone is not enough — it is still false during the
+     * first commit (the fetch effect hasn't run yet), and this effect
+     * would clobber a ?claim deep-link selection with an empty list.
      */
     useEffect(() => {
+        if (fetching || !loaded) {
+            return;
+        }
         if (visibleIds.length === 0) {
             setSelectedClaimID(null);
         } else if (!visibleIds.includes(selectedClaimID)) {
             setSelectedClaimID(visibleIds[0]);
         }
-    }, [visibleIds, selectedClaimID]);
+    }, [fetching, loaded, visibleIds, selectedClaimID]);
+
+    /*
+     * Mirror the selection into ?claim= so the browser URL is always a
+     * shareable deep link to the claim on screen. replaceState keeps
+     * history clean (J/K walks don't pile up back-button entries), and
+     * only the claim parameter is touched — any other query parameters
+     * and the hash survive the rewrite.
+     */
+    useEffect(() => {
+        const { pathname, search, hash } = window.location;
+        const params = new URLSearchParams(search);
+        if (selectedClaimID) {
+            params.set('claim', selectedClaimID);
+        } else {
+            params.delete('claim');
+        }
+        const queryString = params.toString();
+        window.history.replaceState(
+            null,
+            '',
+            `${pathname}${queryString ? `?${queryString}` : ''}${hash}`,
+        );
+    }, [selectedClaimID]);
 
     /*
      * Global keys (spec §4): J/K and ↓/↑ walk the rail in on-screen
@@ -380,10 +430,16 @@ export default function ClaimsV2Dashboard() {
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [visibleIds]);
 
-    if (fetching) {
+    // Full-page spinner only before the first response; a refresh after
+    // an action keeps the (stale) queue on screen instead of blanking
+    // the whole workspace (OSDEV-3357).
+    // The !error gate matters: a failed FIRST load leaves `loaded`
+    // false forever, so without it the spinner would never yield to
+    // the error/Retry branch below (CodeRabbit finding on #1301).
+    if (initialLoading && !error) {
         return <CircularProgress size={50} />;
     }
-    if (error) {
+    if (error && claims.length === 0) {
         return (
             <div>
                 <Typography variant="body1">{error}</Typography>
@@ -395,43 +451,60 @@ export default function ClaimsV2Dashboard() {
     }
 
     return (
-        <div style={styles.shell}>
-            <QueueRail
-                groups={groups}
-                visibleCount={visibleIds.length}
-                selectedClaimID={selectedClaimID}
-                onSelect={setSelectedClaimID}
-                query={query}
-                onQueryChange={setQuery}
-                region={region}
-                onRegionChange={setRegion}
-                regions={regions}
-                sort={sort}
-                onToggleSort={() =>
-                    setSort(current =>
-                        current === SORT_ORDERS.OLDEST
-                            ? SORT_ORDERS.NEWEST
-                            : SORT_ORDERS.OLDEST,
-                    )
-                }
-                searchInputRef={searchInputRef}
-                railCollapsed={railCollapsed}
-                onToggleRail={() => setRailCollapsed(current => !current)}
-                collapsed={collapsedStages}
-                onToggleSection={stage =>
-                    setCollapsedStages(prev => ({
-                        ...prev,
-                        [stage]: !prev[stage],
-                    }))
-                }
-                now={nowTick}
-            />
-            <main style={styles.workspace}>
-                <ClaimWorkspace
-                    claimID={selectedClaimID}
-                    onDecided={refetchClaims}
+        <>
+            {/* A refresh failure must be visible, not silent — but with
+                a list already loaded it stays inline instead of
+                replacing the workspace. */}
+            {error && (
+                <Typography
+                    variant="body1"
+                    style={styles.evidenceHint}
+                    role="alert"
+                >
+                    {error}{' '}
+                    <button type="button" onClick={refetchClaims}>
+                        Retry
+                    </button>
+                </Typography>
+            )}
+            <div style={styles.shell}>
+                <QueueRail
+                    groups={groups}
+                    visibleCount={visibleIds.length}
+                    selectedClaimID={selectedClaimID}
+                    onSelect={setSelectedClaimID}
+                    query={query}
+                    onQueryChange={setQuery}
+                    region={region}
+                    onRegionChange={setRegion}
+                    regions={regions}
+                    sort={sort}
+                    onToggleSort={() =>
+                        setSort(current =>
+                            current === SORT_ORDERS.OLDEST
+                                ? SORT_ORDERS.NEWEST
+                                : SORT_ORDERS.OLDEST,
+                        )
+                    }
+                    searchInputRef={searchInputRef}
+                    railCollapsed={railCollapsed}
+                    onToggleRail={() => setRailCollapsed(current => !current)}
+                    collapsed={collapsedStages}
+                    onToggleSection={stage =>
+                        setCollapsedStages(prev => ({
+                            ...prev,
+                            [stage]: !prev[stage],
+                        }))
+                    }
+                    now={nowTick}
                 />
-            </main>
-        </div>
+                <main style={styles.workspace}>
+                    <ClaimWorkspace
+                        claimID={selectedClaimID}
+                        onDecided={refetchClaims}
+                    />
+                </main>
+            </div>
+        </>
     );
 }
