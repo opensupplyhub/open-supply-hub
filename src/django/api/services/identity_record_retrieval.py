@@ -284,6 +284,19 @@ def is_encrypted(document):
     return isinstance(document, dict) and 'cipherText' in document
 
 
+def has_live_record(os_id):
+    """
+    Whether any record is currently resolving for this identifier.
+
+    Cheap on purpose: an indexed existence check and no outbound call. The
+    facility profile uses this to decide whether to offer a link to the
+    record, and that page is loaded far more often than the record is read.
+    """
+    return IdentityRecordAssociation.objects.filter(
+        os_id=os_id, live_from__isnull=False
+    ).exists()
+
+
 def get_live_association(os_id):
     """
     The association currently resolving for an OS ID.

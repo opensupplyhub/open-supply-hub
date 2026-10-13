@@ -11,8 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from waffle import switch_is_active
 
-from api.models import IdentityRecordAssociation
 from api.os_id import validate_os_id
+from api.services.identity_record_retrieval import has_live_record
 from api.services.os_id_presence import os_id_exists_here
 
 LINKSET_MEDIA_TYPE = 'application/linkset+json'
@@ -116,12 +116,6 @@ def _identity_record_url(request, os_id):
     return '{}/identity-record'.format(
         _production_location_url(request, os_id)
     )
-
-
-def has_live_record(os_id):
-    return IdentityRecordAssociation.objects.filter(
-        os_id=os_id, live_from__isnull=False
-    ).exists()
 
 
 def _destination(request, os_id):
