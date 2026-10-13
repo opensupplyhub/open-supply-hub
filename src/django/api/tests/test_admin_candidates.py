@@ -228,6 +228,59 @@ class FacilityAdminCandidateTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.candidate.id)
 
+    def test_candidate_history_form_view_is_read_only(self):
+        version_id = self.candidate.history.first().history_id
+
+        response = self.client.get(
+            self._admin_url('simple_history', self.candidate.id, version_id)
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['revert_disabled'])
+        self.assertFalse(response.context['has_change_permission'])
+        self.assertNotContains(response, 'name="_save"')
+        self.assertContains(response, 'eg-facility-0001')
+
+    def test_candidate_history_form_view_rejects_post(self):
+        # SimpleHistoryAdmin.history_form_view only hides the Revert
+        # button without change permission; a direct POST would still
+        # save, so the admin refuses it outright.
+        version_id = self.candidate.history.first().history_id
+
+        response = self.client.post(
+            self._admin_url('simple_history', self.candidate.id, version_id),
+            {'name': 'Renamed', 'address': 'A', 'country_code': 'US'},
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.candidate.refresh_from_db()
+        self.assertEqual(self.candidate.name, '')
+        self.assertEqual(self.candidate.address, '')
+
+    def test_bulk_delete_action_refuses_candidate(self):
+        # The action runs on the filtered changelist queryset, so the
+        # candidate is only selectable with the "Candidates only" filter
+        # in the query string; even then delete_selected refuses it.
+        response = self.client.post(
+            '{}?{}={}'.format(
+                self._admin_url('changelist'),
+                FacilityCandidateFilter.parameter_name,
+                FacilityCandidateFilter.CANDIDATES,
+            ),
+            {
+                'action': 'delete_selected',
+                'post': 'yes',
+                '_selected_action': [self.candidate.id],
+            },
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(
+            Facility.including_candidates.filter(
+                pk=self.candidate.id
+            ).exists()
+        )
+
     def test_confirmed_facility_stays_editable(self):
         response = self.client.get(
             self._admin_url('change', self.facility.id)
