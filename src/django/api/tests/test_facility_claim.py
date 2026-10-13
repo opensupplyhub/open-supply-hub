@@ -477,3 +477,38 @@ class FacilityClaimTest(APITestCase):
             claim.point_of_contact_publicly_visible,
             True,
         )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_create_claim_accepts_cascale_affiliation(self):
+        """Cascale is selectable, and the name it replaced still validates."""
+        self.client.post(
+            "/user-login/",
+            {"email": self.email, "password": self.password},
+            format="json",
+        )
+
+        claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        claim_data = {
+            "your_name": "John Doe",
+            "your_title": "Manager",
+            "your_business_website": "https://example.com",
+            "business_website": "https://facility.com",
+            "business_linkedin_profile": "https://linkedin.com/company/f",
+            # Cascale is the current name; 'Sustainable Apparel Coalition' is
+            # the superseded one that existing claims still store, so both
+            # must remain acceptable. See OSDEV-2219.
+            "facility_affiliations": [
+                "Cascale",
+                "Sustainable Apparel Coalition",
+            ],
+        }
+
+        response = self.client.post(claim_url, claim_data)
+        self.assertEqual(200, response.status_code)
+
+        claim = FacilityClaim.objects.filter(facility=self.facility).first()
+        self.assertIsNotNone(claim)
+        self.assertEqual(
+            claim.facility_affiliations,
+            ["Cascale", "Sustainable Apparel Coalition"],
+        )
