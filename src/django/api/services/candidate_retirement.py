@@ -18,6 +18,7 @@ from django.utils import timezone
 
 from api.constants import ProcessingAction
 from api.models.extended_field import ExtendedField
+from api.models.facility.facility import Facility
 from api.models.facility.facility_alias import FacilityAlias
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_match import FacilityMatch
@@ -66,6 +67,14 @@ def tombstone_payload(alias):
     }
 
 
+def _not_a_candidate_message(os_id):
+    return (
+        f'{os_id} is not a candidate and cannot be retired as '
+        'NOT_A_FACILITY. Confirmed facilities are removed through '
+        'merge or superuser deletion.'
+    )
+
+
 def _build_tally(tally, retired_by):
     stored = dict(tally or {})
     stored.setdefault('confirmed', 0)
@@ -103,7 +112,11 @@ def retire_candidate(facility, tally, retired_by=None):
 
     Raises ``NotACandidateError`` before touching anything if
     ``facility.is_candidate`` is False: confirmed facilities leave through
-    merge or superuser delete, never through here.
+    merge or superuser delete, never through here. The row is then locked
+    (``SELECT ... FOR UPDATE``) and re-read for the rest of the transaction,
+    so a candidate confirmed concurrently also raises ``NotACandidateError``
+    and one already deleted raises ``Facility.DoesNotExist``; callers that
+    hold their own lock on the row simply re-acquire it.
 
     Deletion order is dictated by the PROTECT graph around a candidate's
     synthetic Source -> FacilityListItem -> FacilityMatch records:
@@ -129,11 +142,25 @@ def retire_candidate(facility, tally, retired_by=None):
        shared ingest-batch Source intact.
     """
     if not facility.is_candidate:
-        raise NotACandidateError(
-            f'{facility.id} is not a candidate and cannot be retired as '
-            'NOT_A_FACILITY. Confirmed facilities are removed through '
-            'merge or superuser deletion.'
+        raise NotACandidateError(_not_a_candidate_message(facility.id))
+
+    # Lock the row for the rest of the transaction and decide on what is
+    # in the database, not on the caller's possibly stale instance: a
+    # concurrent vote, approval or earlier retirement may have confirmed
+    # or already deleted it between the caller's read and this point.
+    locked = (
+        Facility.including_candidates.select_for_update()
+        .filter(pk=facility.pk)
+        .first()
+    )
+    if locked is None:
+        raise Facility.DoesNotExist(
+            f'{facility.id} no longer exists; it may already have been '
+            'retired.'
         )
+    if not locked.is_candidate:
+        raise NotACandidateError(_not_a_candidate_message(locked.id))
+    facility = locked
 
     os_id = facility.id
     created_from = facility.created_from

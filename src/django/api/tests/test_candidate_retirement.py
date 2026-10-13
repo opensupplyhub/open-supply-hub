@@ -293,6 +293,39 @@ class CandidateRetirementTest(APITestCase):
         )
         self.assertFalse(FacilityAlias.objects.exists())
 
+    def test_retire_refuses_a_candidate_confirmed_concurrently(self):
+        """The decision is taken on the locked database row, not on the
+        caller's instance: a candidate confirmed after the caller read it
+        is refused even though the stale instance still says candidate."""
+        Facility.including_candidates.filter(pk=self.candidate.pk).update(
+            is_candidate=False, name='Confirmed meanwhile', address='Addr'
+        )
+        self.assertTrue(self.candidate.is_candidate)  # stale instance
+
+        with self.assertRaises(NotACandidateError):
+            self._retire()
+
+        self.assertFalse(FacilityAlias.objects.exists())
+        self.assertTrue(
+            Facility.objects.filter(pk=self.candidate.pk).exists()
+        )
+
+    def test_retire_raises_when_the_row_is_already_gone(self):
+        """A second retirement of the same (stale) instance, as two
+        moderators approving at once would attempt, raises DoesNotExist
+        and leaves the single tombstone in place."""
+        self._retire()
+
+        with self.assertRaises(Facility.DoesNotExist):
+            self._retire()
+
+        self.assertEqual(
+            FacilityAlias.objects.filter(
+                reason=FacilityAlias.NOT_A_FACILITY
+            ).count(),
+            1,
+        )
+
     # --- AC 2: ingest can detect a retired detection -------------------
 
     def test_is_retired_detection(self):
