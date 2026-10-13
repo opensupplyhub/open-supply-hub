@@ -13,6 +13,7 @@ from api.constants import JS_MAX_SAFE_INTEGER
 from api.helpers.claim_attachments import validate_attachment_files
 from api.helpers.helpers import validate_workers_count
 from api.serializers.facility.utils import add_http_prefix_to_url
+from api.services.claim_quality_warnings import DismissedWarningsField
 
 
 def validate_workers(value):
@@ -312,6 +313,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
         max_length=200
     )
+    # The data-quality warnings the claimant chose to continue past on
+    # the Business step (OSDEV-3489); recorded as an INTERNAL review
+    # note for the moderator. Posted as a JSON string, since the claim
+    # form submits multipart form data.
+    dismissed_warnings = DismissedWarningsField(required=False)
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)

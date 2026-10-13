@@ -38,6 +38,7 @@ services:
       - CACHE_PORT=11211
       - INSTANCE_SOURCE=os_hub
       - DJANGO_ENV=Local
+      - CLAIMS_AUTOMATION_ACCOUNT_EMAIL=data@opensupplyhub.org
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
       - OAR_CLIENT_KEY=

@@ -44,6 +44,7 @@ const BusinessStep = ({
     productionLocationData,
     updateFieldWithoutTouch,
     isNameAddressEditable,
+    fieldsDisabled,
 }) => {
     const [prevVerificationMethod, setPrevVerificationMethod] = useState(
         formData.locationAddressVerificationMethod || '',
@@ -112,12 +113,15 @@ const BusinessStep = ({
         ? formData.facilityAddress ?? ''
         : locationAddress;
 
+    // The editable fields are locked while the claim form's quality check
+    // of their values is in flight, so what the check answers is what the
+    // claimant then continues with.
     // The aria-label lives inside InputProps.inputProps because the lint
     // rule react/jsx-no-duplicate-props treats `inputProps` and `InputProps`
     // on the same element as duplicates.
     const getCompanyFieldInputProps = ariaLabel => ({
         ...(isNameAddressEditable
-            ? {}
+            ? { disabled: fieldsDisabled }
             : { className: classes.disabledField, disabled: true }),
         inputProps: { 'aria-label': ariaLabel },
         classes: {
@@ -381,6 +385,7 @@ BusinessStep.defaultProps = {
     touched: {},
     productionLocationData: {},
     isNameAddressEditable: false,
+    fieldsDisabled: false,
 };
 
 BusinessStep.propTypes = {
@@ -393,6 +398,7 @@ BusinessStep.propTypes = {
     touched: object,
     productionLocationData: object,
     isNameAddressEditable: bool,
+    fieldsDisabled: bool,
 };
 
 const mapStateToProps = ({

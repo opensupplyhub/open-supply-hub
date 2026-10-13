@@ -1,5 +1,6 @@
 from rest_framework.serializers import SerializerMethodField
 
+from .facility_claim_review_note_serializer import note_is_automated
 from .facility_claim_serializer import FacilityClaimSerializer
 
 
@@ -23,7 +24,16 @@ class FacilityClaimDashboardSerializer(FacilityClaimSerializer):
         fields = FacilityClaimSerializer.Meta.fields + ('notes_meta',)
 
     def get_notes_meta(self, claim):
+        # is_automated must match the detail payload's notes exactly
+        # (shared note_is_automated helper): the queue rail derives
+        # stages from this payload and the workspace from the other.
+        # Callers must select_related('author') on the prefetch or this
+        # is an N+1 per note.
         return [
-            {'note_type': note.note_type, 'created_at': note.created_at}
+            {
+                'note_type': note.note_type,
+                'created_at': note.created_at,
+                'is_automated': note_is_automated(note),
+            }
             for note in claim.facilityclaimreviewnote_set.all()
         ]

@@ -7,87 +7,26 @@ ENV_TAG="${ENVIRONMENT:-Production}"
 
 echo "[info] Selected ENVIRONMENT: $ENV_TAG"
 
-# Choose AWS credentials for bastion lookup based on environment.
-# Only Development uses TEST creds; Rba and Production use PROD creds.
-if [ "$ENV_TAG" = "Development" ]; then
-  AWS_ID="$AWS_ACCESS_KEY_ID_TEST"
-  AWS_SECRET="$AWS_SECRET_ACCESS_KEY_TEST"
-  AWS_REGION="$AWS_DEFAULT_REGION_TEST"
-  echo "[info] Using TEST AWS credentials for bastion lookup"
-else
-  AWS_ID="$AWS_ACCESS_KEY_ID_PROD"
-  AWS_SECRET="$AWS_SECRET_ACCESS_KEY_PROD"
-  AWS_REGION="$AWS_DEFAULT_REGION_PROD"
-  echo "[info] Using PROD AWS credentials for bastion lookup"
-fi
-
-echo "[info] AWS region: $AWS_REGION"
-
-# Resolve bastion:
-# - Prefer explicit instance ID if provided
-# - Otherwise fall back to Environment tag lookup
-if [ -n "${BASTION_INSTANCE_ID:-}" ]; then
-  echo "[info] Resolving bastion by instance ID: $BASTION_INSTANCE_ID"
-  bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
-             AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
-             AWS_DEFAULT_REGION="$AWS_REGION" \
-             aws ec2 describe-instances \
-               --instance-ids "$BASTION_INSTANCE_ID" \
-               --query 'Reservations[0].Instances[0].PublicDnsName' \
-               --output text || true)"
-else
-  bastion="$(AWS_ACCESS_KEY_ID="$AWS_ID" \
-             AWS_SECRET_ACCESS_KEY="$AWS_SECRET" \
-             AWS_DEFAULT_REGION="$AWS_REGION" \
-             aws ec2 describe-instances --filters "Name=tag:Environment,Values=$ENV_TAG" --query 'Reservations[0].Instances[0].PublicDnsName' --output text || true)"
-fi
-
-if [ -z "${bastion}" ] || [ "${bastion}" = "None" ]; then
-  echo "[error] Could not resolve bastion host for Environment=$ENV_TAG (region=$AWS_REGION)." >&2
-  echo "[hint] Ensure correct AWS credentials/region and that the bastion is tagged Environment=$ENV_TAG."
-  exit 1
-fi
-
-echo "[info] Bastion DNS: $bastion"
-ssh-keyscan "$bastion" > ~/.ssh/known_hosts
-
+# OSDEV-3531: the database is reached through an SSM port forward that the
+# workflow opens on the runner before starting this container (run with
+# --network host), so localhost:5433 is already forwarded to
+# database.service.osh.internal:5432 through the bastion.
 echo "localhost:5433:$DATABASE_NAME:$DATABASE_USERNAME:$DATABASE_PASSWORD" > ~/.pgpass
 chmod 600 ~/.pgpass
 
-# Ensure key perms inside container.
-chmod 600 /keys/key || true
-
-# Safe fingerprint & key size.
-KEY_BYTES=$(wc -c < /keys/key || echo 0)
-echo "[info] SSH key bytes: $KEY_BYTES"
-if FP=$(ssh-keygen -y -f /keys/key 2>/dev/null | ssh-keygen -lf - 2>/dev/null | awk '{print $2}'); then
-  echo "[info] Using SSH key fingerprint: $FP"
-else
-  echo "[warn] Could not compute SSH key fingerprint from /keys/key"
-  echo "[hint] If passphrase-protected or malformed (e.g., CRLF), SSH will fail."
-fi
-
-# Try SSH port-forward with common usernames (POSIX loop).
-SSH_OK=0
-SSH_USER=""
-for USER in ec2-user ubuntu; do
-  echo "[info] Attempting SSH port-forward as user: $USER"
-  if ssh -f -i /keys/key -o IdentitiesOnly=yes -o StrictHostKeyChecking=no \
-       -L 5433:database.service.osh.internal:5432 -N "${USER}@${bastion}" 2>/dev/null; then
-    SSH_OK=1
-    SSH_USER="$USER"
-    echo "[info] SSH port-forward started with user: $SSH_USER"
-    break
-  fi
-  echo "[warn] SSH as $USER failed; trying next user if available..."
-  sleep 1
-done
-
-if [ "$SSH_OK" -ne 1 ]; then
-  echo "[error] Failed to start SSH port-forward to database via bastion with users: ec2-user ubuntu" >&2
-  echo "[hint] Check that /keys/key matches bastion authorized_keys and the username is correct."
-  exit 1
-fi
+# Session Manager closes sessions that carry no data for longer than the
+# account's idle timeout (20 minutes by default). Long pg_dump phases can be
+# silent on the wire, so send a trivial query through the tunnel every few
+# minutes to keep the session alive.
+(
+  while true; do
+    sleep 240
+    psql -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -w \
+      -c 'SELECT 1' >/dev/null 2>&1 || true
+  done
+) &
+HEARTBEAT_PID=$!
+trap 'kill "$HEARTBEAT_PID" 2>/dev/null || true' EXIT
 
 # Wait for the local tunnel to become ready.
 max_tries=20
@@ -119,6 +58,9 @@ case "$ENV_TAG" in
 DUMP_PATH="/dumps/${DUMP_BASE}.dump"
 pg_dump --clean --no-owner --no-privileges -Fc -h localhost -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -p 5433 -f "$DUMP_PATH" -w --verbose
 ls -la /dumps || true
+
+# The remote database is no longer needed; stop the tunnel heartbeat.
+kill "$HEARTBEAT_PID" 2>/dev/null || true
 
 DUMP_BYTES=$(wc -c < "$DUMP_PATH" || echo 0)
 echo "[info] Raw dump size (bytes): $DUMP_BYTES"
