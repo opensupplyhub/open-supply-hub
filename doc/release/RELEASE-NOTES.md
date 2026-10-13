@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: *Provide release date*
+* Release date: October 13, 2026
 
 ### Bugfix
 * [Hotfix][OSDEV-3606](https://opensupplyhub.atlassian.net/browse/OSDEV-3606) - Fixed `GET /api/contributors/` raising `pylibmc.TooBig` in production: the list of all active contributors outgrew memcached's 1 MB per-item limit, so the `cache_page` write failed on every request and the endpoint was never cached. The endpoint was converted from a function-based `api_view` to an `AllContributors(APIView)` class using the `cache_view_response` decorator, which compresses the response before caching and serves it uncached (fail-open) when it is still too large or the cache errors. The URL, URL name, response format and throttling are unchanged. Same fix as [OSDEV-3062](https://opensupplyhub.atlassian.net/browse/OSDEV-3062) and [OSDEV-3030](https://opensupplyhub.atlassian.net/browse/OSDEV-3030).
