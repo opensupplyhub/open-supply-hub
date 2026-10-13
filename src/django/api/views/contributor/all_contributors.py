@@ -3,11 +3,17 @@ from rest_framework.views import APIView
 
 from ...view_response_cache import cache_view_response
 from .active_contributors import active_contributors
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+from django.conf import settings
 
 
 class AllContributors(APIView):
     throttle_classes = []
 
+    @method_decorator(
+        cache_control(max_age=settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS)
+    )
     @cache_view_response('all_contributors')
     def get(self, request):
         """

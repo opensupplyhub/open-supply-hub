@@ -16,7 +16,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-    * `reindex_database`
 * No Terraform, migration or environment variable changes are required.
 
 
