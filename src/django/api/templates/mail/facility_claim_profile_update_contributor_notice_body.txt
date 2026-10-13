@@ -9,6 +9,10 @@ The facility is:
   - Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
   - Facility URL: {{ facility_url }}
 
+{% if name_or_address_changed %}
+The claimant has updated the facility's name or address. The production
+location page now displays the name and address listed below.
+{% endif %}
 {% if changes %}
 The following details have been changed:
 

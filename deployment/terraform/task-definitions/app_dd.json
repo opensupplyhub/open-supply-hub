@@ -27,6 +27,7 @@
         { "name": "DEDUPE_HUB_LIVE", "value": "${dedupe_hub_live}" },
         { "name": "DEDUPE_HUB_NAME", "value": "${dedupe_hub_name}" },
         { "name": "DEDUPE_HUB_VERSION", "value": "${dedupe_hub_version}" },
+        { "name": "CLAIMS_AUTOMATION_ACCOUNT_EMAIL", "value": "${claims_automation_account_email}" },
         { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
         { "name": "ROLLBAR_SERVER_SIDE_ACCESS_TOKEN", "value": "${rollbar_server_side_access_token}" }
     ],

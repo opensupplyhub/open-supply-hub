@@ -12,6 +12,7 @@ import {
     makeClaimTrackerTicketSearchURL,
     makeClaimTrackerBoardURL,
 } from '../../components/ClaimsV2/jiraUtils';
+import { claimIDFromLocation } from '../../components/ClaimsV2/ClaimsV2Dashboard';
 
 const NOW = new Date('2026-09-01T12:00:00Z'); // a Tuesday
 
@@ -167,6 +168,126 @@ describe('claim tracker Jira links', () => {
         // parseInt would truncate this to 12 and search the wrong ticket.
         expect(makeClaimTrackerTicketSearchURL('12abc')).toBe(
             makeClaimTrackerBoardURL(),
+        );
+    });
+});
+
+describe('relaxed eligibility template wording', () => {
+    const context = {
+        facilityName: 'Karavela SIA',
+        jobTitle: 'Operator',
+        emailDomain: 'karavela.lv',
+    };
+
+    it('person/relationship templates keep manager wording by default', () => {
+        const message = composeMessage(['person', 'relationship'], context);
+        expect(message).toContain('senior manager or owner');
+        expect(message).toContain('owner or senior management');
+        expect(message).not.toContain('employee of the production location');
+    });
+
+    it('person/relationship templates swap to employee wording when relaxed', () => {
+        const message = composeMessage(['person', 'relationship'], {
+            ...context,
+            relaxedEligibility: true,
+        });
+        expect(message).not.toContain('senior manager or owner');
+        expect(message).not.toContain('owner or senior management');
+        const employeeMentions = message.split(
+            'an authorized employee of the production location or its parent company',
+        );
+        expect(employeeMentions.length - 1).toBe(2);
+    });
+});
+
+describe('siteOrigin and environment-aware template links', () => {
+    it('the address-update action link uses the current origin', () => {
+        const message = composeMessage(['addressUpdate'], {
+            facilityAddress: 'Atlantijas iela 15, Riga',
+            osID: 'LV2023146T90PXR',
+        });
+        expect(message).toContain(
+            `${window.location.origin}/contribute/single-location/LV2023146T90PXR/info/`,
+        );
+        expect(message).not.toContain(
+            'https://opensupplyhub.org/contribute',
+        );
+    });
+});
+
+describe('claimIDFromLocation', () => {
+    const setSearch = search => {
+        window.history.replaceState(null, '', `/dashboard/claims-v2${search}`);
+    };
+
+    it('reads a numeric ?claim param', () => {
+        setSearch('?claim=5881');
+        expect(claimIDFromLocation()).toBe(5881);
+    });
+
+    it('rejects non-numeric and missing values', () => {
+        setSearch('?claim=drop-tables');
+        expect(claimIDFromLocation()).toBeNull();
+        setSearch('');
+        expect(claimIDFromLocation()).toBeNull();
+    });
+});
+
+describe('automated reminder messages', () => {
+    it('a bot reminder does not reset the reply window', () => {
+        // Moderator asked long ago (overdue); the pipeline's reminder
+        // is stored as an is_automated CLAIMANT_MESSAGE and must not
+        // flip the claim back to awaiting.
+        const result = deriveClaimStage(
+            [
+                note('CLAIMANT_MESSAGE', '2026-08-07T09:00:00Z'),
+                {
+                    ...note('CLAIMANT_MESSAGE', '2026-08-31T09:00:00Z'),
+                    is_automated: true,
+                },
+            ],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.OVERDUE);
+        expect(result.lastMessagedAt).toBe('2026-08-07T09:00:00Z');
+    });
+
+    it('claims messaged only by the bot count as never messaged', () => {
+        const result = deriveClaimStage(
+            [
+                {
+                    ...note('CLAIMANT_MESSAGE', '2026-08-31T09:00:00Z'),
+                    is_automated: true,
+                },
+            ],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.NEW);
+    });
+
+    it('payloads without the flag keep prior behavior', () => {
+        const result = deriveClaimStage(
+            [note('CLAIMANT_MESSAGE', '2026-08-25T09:00:00Z')],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.AWAITING);
+    });
+});
+
+describe('stage reason with automated-only outbound', () => {
+    it('does not claim the timeline is empty when a bot reminder exists', () => {
+        const result = deriveClaimStage(
+            [
+                {
+                    ...note('CLAIMANT_MESSAGE', '2026-08-25T09:00:00Z'),
+                    is_automated: true,
+                },
+            ],
+            { now: NOW },
+        );
+        expect(result.stage).toBe(CLAIM_STAGES.NEW);
+        expect(result.reason).toContain(
+            'automated messages do not start the reply window',
         );
     });
 });

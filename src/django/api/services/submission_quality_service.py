@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Optional
+from typing import Optional, Type
 
 import boto3
 from botocore.config import Config
@@ -29,6 +29,8 @@ BEDROCK_AWS_PROFILE = os.getenv('BEDROCK_AWS_PROFILE') or None
 # must also be granted in the bedrock_invoke_submission_quality_model IAM
 # policy (deployment/terraform/iam.tf) or the call will be denied - and
 # since this check fails open, that denial is invisible to contributors.
+# Shared by every LLMQualityService subclass (the SLC submission check
+# and the claim name/address check), so the IAM grant covers both.
 SUBMISSION_QUALITY_MODEL_ID = os.getenv(
     'BEDROCK_SUBMISSION_QUALITY_MODEL_ID',
     'eu.anthropic.claude-haiku-4-5-20251001-v1:0',
@@ -107,13 +109,15 @@ class SubmissionQualityVerdicts(BaseModel):
     )
 
 
-class SubmissionQualityService:
+class LLMQualityService:
     '''
-    Evaluates all AI-judgable SLC submission quality checks (name quality,
-    address quality/specificity, address-country match, multiple locations
-    bundled into one submission) in a single LLM call, so adding another
-    AI-judgable check later only means adding a field to
-    SubmissionQualityVerdicts.
+    Base for the LLM-backed, advisory data-quality checks: one Bedrock
+    call per evaluation, structured output validated against a pydantic
+    schema, and fail-open error handling. A subclass sets the output
+    schema, the default instructions and the env var that overrides
+    them, plus a short label that tags every log line so the checks can
+    be told apart in CloudWatch, and wraps `_run` in an `evaluate`
+    method that builds the prompt from its own inputs.
 
     The call goes through pydantic-ai, which is model- and
     vendor-independent: the output schema, instructions, and everything
@@ -131,6 +135,16 @@ class SubmissionQualityService:
     submission.
     '''
 
+    output_type: Type[BaseModel] = None
+    default_instructions: str = ''
+    instructions_env_var: str = ''
+    # Appended as `check=<label>` to the log lines shared by every
+    # subclass. The message text itself is kept identical across
+    # subclasses because the CloudWatch metric filter in
+    # deployment/terraform/alarms.tf matches on it; the label is what
+    # distinguishes the checks in Logs Insights.
+    check_label: str = ''
+
     def __init__(self):
         # No client or agent is built here: the contribution pipeline
         # constructs this service for every contribution request -
@@ -143,7 +157,7 @@ class SubmissionQualityService:
         # Built lazily on first use rather than in __init__, so that a
         # construction error (e.g. a misconfigured BEDROCK_AWS_PROFILE
         # raising ProfileNotFound when the client resolves the profile)
-        # lands in evaluate()'s fail-open handler instead of escaping
+        # lands in _run()'s fail-open handler instead of escaping
         # while the contribution pipeline is being assembled and
         # aborting the submission - and so requests that never invoke
         # the check skip the boto3 session/client construction entirely.
@@ -167,37 +181,33 @@ class SubmissionQualityService:
                     SUBMISSION_QUALITY_MODEL_ID,
                     provider=BedrockProvider(bedrock_client=bedrock_client),
                 ),
-                output_type=SubmissionQualityVerdicts,
+                output_type=self.output_type,
                 # `or` rather than a getenv default: .env.sample ships
                 # the var set-but-empty, which must mean "use the
                 # default" too.
                 instructions=(
-                    os.getenv(_INSTRUCTIONS_ENV_VAR) or _DEFAULT_INSTRUCTIONS
+                    os.getenv(self.instructions_env_var)
+                    or self.default_instructions
                 ),
                 # No re-prompting on output that fails schema validation
                 # - a retry is a second synchronous model call in the
                 # request path. An invalid output raises instead, and
-                # evaluate() fails open.
+                # _run() fails open.
                 retries=0,
             )
         return self._agent
 
-    def evaluate(
-        self, name: str, address: str, country_name: str
-    ) -> Optional[SubmissionQualityVerdicts]:
+    def _run(self, prompt: str) -> Optional[BaseModel]:
         try:
-            result = self._get_agent().run_sync(
-                'Evaluate this production location submission.\n'
-                f'Name: {name}\n'
-                f'Address: {address}\n'
-                f'Country: {country_name}'
-            )
+            result = self._get_agent().run_sync(prompt)
         except Exception:
             # This exact message is matched by the CloudWatch metric
             # filter in deployment/terraform/alarms.tf that alerts on
             # fail-open outages; change them together.
             logger.exception(
-                'Submission quality check failed; skipping (fail open).'
+                'Submission quality check failed; skipping (fail open). '
+                'check=%s',
+                self.check_label,
             )
             return None
 
@@ -206,15 +216,43 @@ class SubmissionQualityService:
         try:
             usage = result.usage
             logger.info(
-                'Submission quality check tokens: input=%s output=%s',
+                'Submission quality check tokens: input=%s output=%s '
+                'check=%s',
                 usage.input_tokens,
                 usage.output_tokens,
+                self.check_label,
             )
         except Exception:
             logger.warning(
                 'Submission quality check succeeded but token usage '
-                'could not be read.',
+                'could not be read. check=%s',
+                self.check_label,
                 exc_info=True,
             )
 
         return result.output
+
+
+class SubmissionQualityService(LLMQualityService):
+    '''
+    Evaluates all AI-judgable SLC submission quality checks (name quality,
+    address quality/specificity, address-country match, multiple locations
+    bundled into one submission) in a single LLM call, so adding another
+    AI-judgable check later only means adding a field to
+    SubmissionQualityVerdicts.
+    '''
+
+    output_type = SubmissionQualityVerdicts
+    default_instructions = _DEFAULT_INSTRUCTIONS
+    instructions_env_var = _INSTRUCTIONS_ENV_VAR
+    check_label = 'slc'
+
+    def evaluate(
+        self, name: str, address: str, country_name: str
+    ) -> Optional[SubmissionQualityVerdicts]:
+        return self._run(
+            'Evaluate this production location submission.\n'
+            f'Name: {name}\n'
+            f'Address: {address}\n'
+            f'Country: {country_name}'
+        )
