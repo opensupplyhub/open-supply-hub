@@ -90,7 +90,7 @@ public_apis = [
     ),
     path('api/contributors/active_count/', views.active_contributors_count,
          name='active_contributors_count'),
-    path('api/contributors/', views.all_contributors,
+    path('api/contributors/', views.AllContributors.as_view(),
          name='all_contributors'),
     path('api/contributor-embed-configs/<int:pk>/',
          views.contributor_embed_config, name='contributor-embed-config'),

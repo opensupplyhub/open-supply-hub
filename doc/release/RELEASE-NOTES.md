@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: TBD
+* Release date: October 30, 2026
 
 ### Database changes
 
@@ -16,19 +16,43 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 #### Schema changes
 
-### Code/API changes
-* [OSDEV-3243](https://opensupplyhub.atlassian.net/browse/OSDEV-3243) - Candidate facilities (Earth Genome satellite detections, `is_candidate = true`) are excluded from the pipelines that read `api_facility` outside the Django ORM. `api_facilityindex` no longer contains candidate rows (migration 0248), which keeps them out of every surface served from that table — the facility search and map (`/api/facilities/`), the CSV/XLSX downloads service, the vector tiles, the facilities-within-polygon lookup and the processing-type typeahead counts — without each reader needing its own filter. The per-table `perform_*_indexing` procedures and the `backfill_facility_index` command only update existing index rows, so they remain no-ops for candidates. A candidate that graduates to a confirmed facility is indexed by the same trigger on the update that flips the flag. No API contract changes.
-
 ### Architecture/Environment changes
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - The anonymized database restore (`DB - Apply Anonymized DB` and the `restore_database` job of `Deploy to AWS`) now runs as a one-off Fargate task inside the target environment's VPC instead of through the bastion's SSM port forward, which was too slow for the multi-GB dump. New `deployment/terraform/database_restore.tf` (enabled for Test and Preprod with `database_restore_enabled`) adds the task definition, its ECR repository (`database-restore` image, built for Test and Preprod), log group, task role and security group. The restore jobs run on `ubuntu-latest` and stream the task log through `deployment/run_restore_task`. `do_restore.sh` connects to RDS directly and restores with `pg_restore -j 8`.
 * [OSDEV-3243](https://opensupplyhub.atlassian.net/browse/OSDEV-3243) - Logstash: `src/logstash/sql/sync_production_locations.sql` adds `AND NOT af.is_candidate` to its driving `WHERE` clause, so candidate facilities never produce a document in the `production-locations` OpenSearch index (`/api/v1/production-locations/`); `sync_moderation_events.sql` does not read `api_facility` and is unchanged. Candidates have no OpenSearch document, so the `post_delete` signal that removes a location's document will log a `not_found` data-inconsistency error when a candidate is hard-deleted; the retirement flow (OSDEV-3246) should skip that call for candidates. Dedupe-hub: the SQLAlchemy `Facility` model gains the five candidate columns (`is_candidate`, `polygon`, `confidence`, `external_id`, `source`) with the Django model's types and defaults, so facilities dedupe-hub creates for unmatched list items are written explicitly as non-candidates, and every match-target query excludes `is_candidate = true` rows: the gazetteer's canonical set and its incremental facility/match index (`gazetteer_data_fetcher.get_canonical_items`, `GazetteerCache`), the post-match `facility_exists` guard that drops stale Dedupe results, and the exact matcher's list-item lookup (joined to `api_facility`, so a candidate's empty-name synthetic list item cannot exact-match an upload with an empty name and address). Matching is one-directional: a candidate is never proposed as a match for a contributor upload and dedupe-hub never creates a `FacilityMatch` to a candidate. No new environment variables; both the logstash image and the dedupe-hub image must be redeployed with this release for the exclusions to take effect.
 
 ### Bugfix
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - Cancelling or failing a DB or `clear_opensearch` workflow no longer leaves the SSM session active or the container or restore task running: `if: always()` steps now clean up, and `ssm_tunnel.sh stop` terminates the session in AWS. The S3 copies in the anon-tools scripts no longer print transfer progress, and the Session Manager plugin download enforces HTTPS.
+* [OSDEV-3603](https://opensupplyhub.atlassian.net/browse/OSDEV-3603) - Added `scripts/set_logstash_last_run.sh` and the `doc/ops/logstash_last_run_runbook.md` runbook as a workaround for the Logstash `production_locations` pipeline staying at `sql_last_value` `1970-01-01` on AWS, which makes every run re-read all facilities. The script stops the Logstash ECS service, rewrites `production_locations_jdbc_last_run` on the Logstash EFS through the bastion (SSM Run Command, keeping a `.bak` copy) and starts Logstash again. The runbook covers querying the `production-locations` OpenSearch index through the SSM tunnel and bumping `api_facility.updated_at` so facilities missing from the index are re-indexed. No deployed code or infrastructure changes.
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - Closed facility download limit bypasses. The limit was checked only on page 1 and charged only on the last page, so requesting other pages directly (e.g. `page=2` from Postman) or never requesting the last page skipped the limit, and `embed=1` or anonymous requests skipped it entirely. The full result set is now checked and charged on page 1 under a row lock, and later pages can only be fetched within that paid session.
+
+### Code/API Changes
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - `GET /api/facilities-downloads/` now opens a download session on page 1 and returns its `download_id` in the `next`/`previous` links. Pages after the first require that `download_id` and the same filters and `pageSize` (otherwise `400`); `pageSize` is clamped to 1–250. Non-embed downloads require a logged-in user (`401` otherwise), and `embed=1` is only honoured for exactly one contributor with an embedded map enabled, with results restricted to that contributor. Sessions are kept in the new `facility_downloads` memcached cache alias. The web client follows `next` links, so it needs no changes. Retrying page 1 for the same query within 30 minutes of the charge (e.g. after an aborted download) reuses the live session instead of charging again, as long as the result count is unchanged.
+* [OSDEV-3243](https://opensupplyhub.atlassian.net/browse/OSDEV-3243) - Candidate facilities (Earth Genome satellite detections, `is_candidate = true`) are excluded from the pipelines that read `api_facility` outside the Django ORM. `api_facilityindex` no longer contains candidate rows (migration 0248), which keeps them out of every surface served from that table — the facility search and map (`/api/facilities/`), the CSV/XLSX downloads service, the vector tiles, the facilities-within-polygon lookup and the processing-type typeahead counts — without each reader needing its own filter. The per-table `perform_*_indexing` procedures and the `backfill_facility_index` command only update existing index rows, so they remain no-ops for candidates. A candidate that graduates to a confirmed facility is indexed by the same trigger on the update that flips the flag. No API contract changes.
 
 ### What's new
+* [OSDEV-3425](https://opensupplyhub.atlassian.net/browse/OSDEV-3425) - Rename navbar label from `Explore` to `Map`, so users are able to intuitively navigate between the new home page and the info site.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+* After the deployment, update the infosite in Craft to match the navbar labels with the product.
+
+
+## Release 2.31.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 13, 2026
+
+### Bugfix
+* [Hotfix][OSDEV-3606](https://opensupplyhub.atlassian.net/browse/OSDEV-3606) - Fixed `GET /api/contributors/` raising `pylibmc.TooBig` in production: the list of all active contributors outgrew memcached's 1 MB per-item limit, so the `cache_page` write failed on every request and the endpoint was never cached. The endpoint was converted from a function-based `api_view` to an `AllContributors(APIView)` class using the `cache_view_response` decorator, which compresses the response before caching and serves it uncached (fail-open) when it is still too large or the cache errors. The URL, URL name, response format and throttling are unchanged. Same fix as [OSDEV-3062](https://opensupplyhub.atlassian.net/browse/OSDEV-3062) and [OSDEV-3030](https://opensupplyhub.atlassian.net/browse/OSDEV-3030).
+* [Hotfix][OSDEV-3606](https://opensupplyhub.atlassian.net/browse/OSDEV-3606) - Lowered the default `VIEW_RESPONSE_CACHE_MAX_BYTES` from 4 MB to 900 KB to match the 1 MB `max_item_size` configured for ElastiCache (`ec_memcached_max_item_size`). The previous default assumed a ~5 MB limit, so compressed responses between 1 MB and 4 MB were rejected by memcached and silently left uncached on every endpoint using `cache_view_response`.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* No Terraform, migration or environment variable changes are required.
+
 
 ## Release 2.31.0
 

@@ -26,8 +26,12 @@ from waffle.testutils import override_flag, override_switch
 from django.contrib.gis.geos import Point
 from django.urls import reverse
 from django.utils import timezone
+from api.tests.download_session_cache import (
+    isolated_download_session_cache,
+)
 
 
+@isolated_download_session_cache()
 class FacilityDownloadTest(FacilityAPITestCaseBase):
     fixtures = ["sectors"]
 
@@ -44,7 +48,22 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.embed_config = EmbedConfig.objects.create()
 
         self.contributor.embed_config = self.embed_config
+        # Embed mode downloads are only honoured for contributors with an
+        # embedded map enabled.
+        self.contributor.embed_level = 1
         self.contributor.save()
+
+        # Non-embed downloads require a logged-in user. Use a user without
+        # a contributor so downloads aren't treated as own-data downloads.
+        # Tests that need a specific user log in again explicitly.
+        self.downloader_email = "downloader@example.com"
+        self.downloader = User.objects.create(email=self.downloader_email)
+        self.downloader.set_password(self.user_password)
+        self.downloader.save()
+        self.client.login(
+            email=self.downloader_email,
+            password=self.user_password
+        )
         self.embed_one = EmbedField.objects.create(
             embed_config=self.embed_config,
             order=0,

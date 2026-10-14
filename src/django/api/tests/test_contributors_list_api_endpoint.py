@@ -6,7 +6,20 @@ from api.models import (
     User,
 )
 
-from django.test import TestCase
+from unittest.mock import patch
+
+from api.tests.test_view_response_cache import (
+    BrokenCache,
+    FakeCache,
+    patched_caches,
+)
+from api.views.contributor.active_contributors import active_contributors
+
+from django.test import TestCase, override_settings
+
+ACTIVE_CONTRIBUTORS_PATH = (
+    "api.views.contributor.all_contributors.active_contributors"
+)
 
 
 class ContributorsListAPIEndpointTest(TestCase):
@@ -271,3 +284,40 @@ class ContributorsListAPIEndpointTest(TestCase):
             2,
             len(contributor_names),
         )
+
+    def test_repeat_request_is_served_from_cache(self):
+        with patched_caches(FakeCache()), patch(
+            ACTIVE_CONTRIBUTORS_PATH, wraps=active_contributors
+        ) as mock_active_contributors:
+            first = self.client.get("/api/contributors/")
+            second = self.client.get("/api/contributors/")
+
+        self.assertEqual(200, first.status_code)
+        self.assertEqual(200, second.status_code)
+        self.assertEqual(first.json(), second.json())
+        self.assertEqual(1, mock_active_contributors.call_count)
+
+    @override_settings(VIEW_RESPONSE_CACHE_MAX_BYTES=10)
+    def test_oversized_payload_is_served_uncached(self):
+        fake_cache = FakeCache()
+        with patched_caches(fake_cache), patch(
+            ACTIVE_CONTRIBUTORS_PATH, wraps=active_contributors
+        ) as mock_active_contributors:
+            first = self.client.get("/api/contributors/")
+            second = self.client.get("/api/contributors/")
+
+        self.assertEqual(200, first.status_code)
+        self.assertEqual(200, second.status_code)
+        self.assertEqual(first.json(), second.json())
+        self.assertEqual(2, len(first.json()))
+        self.assertEqual({}, fake_cache.data)
+        self.assertEqual(2, mock_active_contributors.call_count)
+
+    def test_cache_errors_fail_open(self):
+        with patched_caches(BrokenCache()):
+            response = self.client.get("/api/contributors/")
+
+        self.assertEqual(200, response.status_code)
+        contributor_names = list(zip(*response.json()))[1]
+        self.assertIn(self.contrib_one_name, contributor_names)
+        self.assertIn(self.contrib_six_name, contributor_names)

@@ -28,6 +28,11 @@ rds_multi_az = false
 rds_storage_encrypted = true
 rds_skip_final_snapshot = true
 rds_deletion_protection = false
+
+# One-off Fargate task that restores the anonymized dump into this
+# environment's database (deployment/terraform/database_restore.tf).
+database_restore_enabled = true
+
 # ~80% of capped max_connections for db.m6in.4xlarge (5000)
 rds_database_connections_alarm_threshold = "4000"
 # ~5% of 64 GiB RAM; ~10% of 256 GB storage
