@@ -13,7 +13,10 @@
 #       session keeps running in the background until `stop` is called or
 #       the job ends.
 #   ssm_tunnel.sh stop <local_port>
-#       Close the port forward started for <local_port>.
+#       Close the port forward started for <local_port>: terminate the SSM
+#       session in AWS and kill the local CLI/plugin processes. Safe to call
+#       more than once, and from a later step (e.g. an `if: always()` cleanup
+#       step that also runs when the workflow is cancelled).
 #
 # Environment:
 #   AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY / AWS_DEFAULT_REGION
@@ -85,6 +88,7 @@ start_tunnel() {
   local remote_host="$1" remote_port="$2" local_port="$3"
   local pid_file="${STATE_DIR}/ssm-tunnel-${local_port}.pid"
   local log_file="${STATE_DIR}/ssm-tunnel-${local_port}.log"
+  local session_file="${STATE_DIR}/ssm-tunnel-${local_port}.session"
 
   ensure_plugin
 
@@ -98,7 +102,7 @@ start_tunnel() {
     --target "$target" \
     --document-name AWS-StartPortForwardingSessionToRemoteHost \
     --parameters "{\"host\":[\"${remote_host}\"],\"portNumber\":[\"${remote_port}\"],\"localPortNumber\":[\"${local_port}\"]}" \
-    >"$log_file" 2>&1 &
+    </dev/null >"$log_file" 2>&1 &
   echo $! >"$pid_file"
 
   local waited=0
@@ -117,20 +121,40 @@ start_tunnel() {
     sleep 2
     waited=$((waited + 2))
   done
-  log "Port forward ready on localhost:${local_port}"
+
+  # Remember the session ID so `stop` can terminate it in AWS even if the
+  # local processes are already gone.
+  awk '/SessionId:/ { sub(/\.$/, "", $NF); print $NF; exit }' "$log_file" >"$session_file"
+  log "Port forward ready on localhost:${local_port} (session $(cat "$session_file"))"
 }
 
 stop_tunnel() {
   local local_port="$1"
   local pid_file="${STATE_DIR}/ssm-tunnel-${local_port}.pid"
+  local session_file="${STATE_DIR}/ssm-tunnel-${local_port}.session"
 
-  if [ ! -f "$pid_file" ]; then
+  if [ ! -f "$pid_file" ] && [ ! -f "$session_file" ]; then
     return
   fi
-  local pid
-  pid="$(cat "$pid_file")"
-  kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
-  rm -f "$pid_file"
+
+  # Terminate the session in AWS first: killing the local plugin alone can
+  # leave the session listed as active until it times out.
+  if [ -s "$session_file" ]; then
+    aws ssm terminate-session --session-id "$(cat "$session_file")" >/dev/null 2>&1 || true
+  fi
+
+  if [ -f "$pid_file" ]; then
+    local pid
+    pid="$(cat "$pid_file")"
+    kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true
+    for _ in 1 2 3 4 5; do
+      kill -0 "$pid" 2>/dev/null || break
+      sleep 1
+    done
+    kill -KILL -- "-${pid}" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
+  fi
+
+  rm -f "$pid_file" "$session_file"
   log "Port forward on localhost:${local_port} closed"
 }
 

@@ -367,9 +367,11 @@ MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS = int(
     os.getenv('MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS', 60 * 10)
 )
 # Compressed payloads over this size are not cached, leaving headroom
-# below memcached's ~5 MB per-item limit for key and protocol overhead.
+# below memcached's 1 MB per-item limit (`max_item_size`, set by
+# `ec_memcached_max_item_size` in deployment/terraform) for the key and
+# item overhead. Keep this below that limit if the limit changes.
 VIEW_RESPONSE_CACHE_MAX_BYTES = int(
-    os.getenv('VIEW_RESPONSE_CACHE_MAX_BYTES', 4 * 1024 * 1024)
+    os.getenv('VIEW_RESPONSE_CACHE_MAX_BYTES', 900 * 1024)
 )
 CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
@@ -387,7 +389,14 @@ CACHES = {
         'BACKEND': CACHE_BACKEND,
         'LOCATION': MEMCACHED_LOCATION,
         'KEY_PREFIX': 'view',
-    }
+    },
+    'facility_downloads': {
+        # Facility download sessions must be visible to every Django
+        # process, so they can't live in the per-process default cache.
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'facility_downloads',
+    },
 }
 
 # Logging
