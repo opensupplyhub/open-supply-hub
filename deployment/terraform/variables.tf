@@ -928,6 +928,48 @@ variable "anonymized_database_password" {
   sensitive = true
 }
 
+variable "database_restore_enabled" {
+  description = "Create the one-off Fargate task that restores the anonymized dump into this environment's database (database_restore.tf)"
+  type        = bool
+  default     = false
+}
+
+variable "database_restore_dump_s3_bucket" {
+  description = "Bucket holding the anonymized dump the restore task loads"
+  type        = string
+  default     = "oshub-dumps-anonymized"
+}
+
+variable "database_restore_dump_s3_key" {
+  description = "Key of the anonymized dump the restore task loads"
+  type        = string
+  default     = "osh_prod_large_anon.dump"
+}
+
+variable "database_restore_fargate_cpu" {
+  description = "CPU units for the database restore task (4096 = 4 vCPU)"
+  type        = number
+  default     = 4096
+}
+
+variable "database_restore_fargate_memory" {
+  description = "Memory (MiB) for the database restore task"
+  type        = number
+  default     = 16384
+}
+
+variable "database_restore_ephemeral_storage_gib" {
+  description = "Task storage (GiB) for the downloaded dump; Fargate allows 21-200"
+  type        = number
+  default     = 100
+}
+
+variable "database_restore_jobs" {
+  description = "pg_restore parallel jobs; keep at or below the target RDS instance's vCPUs"
+  type        = number
+  default     = 8
+}
+
 variable "codebuild_github_runner_enabled" {
   description = "Toggle to enable the CodeBuild project acting as an ephemeral GitHub Actions runner"
   type        = bool
