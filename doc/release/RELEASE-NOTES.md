@@ -20,9 +20,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Code/API Changes
 * [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - `GET /api/facilities-downloads/` now opens a download session on page 1 and returns its `download_id` in the `next`/`previous` links. Pages after the first require that `download_id` and the same filters and `pageSize` (otherwise `400`); `pageSize` is clamped to 1–250. Non-embed downloads require a logged-in user (`401` otherwise), and `embed=1` is only honoured for exactly one contributor with an embedded map enabled, with results restricted to that contributor. Sessions are kept in the new `facility_downloads` memcached cache alias. The web client follows `next` links, so it needs no changes. Retrying page 1 for the same query within 30 minutes of the charge (e.g. after an aborted download) reuses the live session instead of charging again, as long as the result count is unchanged.
 
+### What's new
+* [OSDEV-3425](https://opensupplyhub.atlassian.net/browse/OSDEV-3425) - Rename navbar label from `Explore` to `Map`, so users are able to intuitively navigate between the new home page and the info site.
+
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+* After the deployment, update the infosite in Craft to match the navbar labels with the product.
 
 
 ## Release 2.31.1
