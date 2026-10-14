@@ -90,11 +90,41 @@ class FacilitiesDownloadViewSet(
     @staticmethod
     def __charge(request, limit, count, download_id):
         try:
-            locked_limit, prev_free, prev_paid = \
+            locked_limit, charged_free, charged_paid, prev_free, prev_paid = \
                 FacilitiesDownloadService.charge_download(limit, count)
         except Exception:
-            # Nothing was charged, so the session must not be usable.
+            # Nothing was charged. The session is still inactive, so
+            # deleting it is only cleanup.
             FacilitiesDownloadService.delete_download_session(download_id)
+            raise
+
+        try:
+            # Only activate after the charge has committed, so the session
+            # can never be used without a debit.
+            FacilitiesDownloadService.activate_download_session(download_id)
+        except Exception:
+            # The user can't fetch the rest of the download, so give the
+            # charge back before failing the request. A failed write may
+            # still have landed, so only refund once the session is known
+            # to be deleted; otherwise keep the charge.
+            if FacilitiesDownloadService.delete_download_session(download_id):
+                try:
+                    FacilitiesDownloadService.refund_download(
+                        locked_limit,
+                        charged_free,
+                        charged_paid,
+                    )
+                except Exception:
+                    logger.exception(
+                        'Unable to refund facility download charge for '
+                        f'User ID: {request.user.id}'
+                    )
+            else:
+                logger.error(
+                    'Facility download charged but its session could not be '
+                    f'activated or deleted; not refunding User ID: '
+                    f'{request.user.id}'
+                )
             raise
 
         if not count:
@@ -150,9 +180,19 @@ class FacilitiesDownloadViewSet(
                 request,
                 is_same_contributor
             )
-            # Fail fast before doing the heavy work. The check is repeated
-            # under a row lock when the download is charged.
-            FacilitiesDownloadService.enforce_limits(count, limit)
+            # A retry of a download this user already started (e.g. after
+            # an aborted download) reuses its live session instead of
+            # charging the full count again.
+            reusable = FacilitiesDownloadService.\
+                find_reusable_download_session(request, query_hash, count)
+            if reusable:
+                download_id, _ = reusable
+                is_new_download = False
+                limit = None
+            else:
+                # Fail fast before doing the heavy work. The check is
+                # repeated under a row lock when the download is charged.
+                FacilitiesDownloadService.enforce_limits(count, limit)
         else:
             raise ValidationError(
                 FacilitiesDownloadErrorMessages.SESSION_REQUIRED
@@ -183,10 +223,15 @@ class FacilitiesDownloadViewSet(
                 request,
                 query_hash,
                 count,
-                charged=limit is not None
+                active=limit is None
             )
             if limit is not None:
                 self.__charge(request, limit, count, download_id)
+            # Only index the session once it is active.
+            FacilitiesDownloadService.index_download_session(
+                download_id,
+                query_hash
+            )
 
         next_link, prev_link = FacilitiesDownloadService.\
             build_page_links(

@@ -10,11 +10,15 @@ from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
 from api.constants import FacilitiesDownloadErrorMessages, FeatureGroups
+from api.exceptions import ServiceUnavailableException
 from api.models.contributor.contributor import Contributor
 from api.models.facility_download_limit import FacilityDownloadLimit
 from api.models.user import User
 from api.services.facilities_download_service import (
     FacilitiesDownloadService,
+)
+from api.tests.download_session_cache import (
+    isolated_download_session_cache,
 )
 
 
@@ -27,6 +31,7 @@ SESSION_ADD_PATH = (
 )
 
 
+@isolated_download_session_cache()
 class FacilitiesDownloadLimitBypassTest(APITestCase):
     """
     Covers OSDEV-2139: the download limit must be enforced and charged by
@@ -278,6 +283,126 @@ class FacilitiesDownloadLimitBypassTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         mock_delete.assert_called_once()
 
+    def capture_download_ids(self):
+        """
+        Records the id of every session page 1 creates, so tests can try
+        to use a session even when the response had no `next` link.
+        """
+        download_ids = []
+        original = FacilitiesDownloadService.create_download_session
+
+        def create_and_record(*args, **kwargs):
+            download_id, session = original(*args, **kwargs)
+            download_ids.append(download_id)
+            return download_id, session
+
+        patcher = patch.object(
+            FacilitiesDownloadService,
+            'create_download_session',
+            side_effect=create_and_record,
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return download_ids
+
+    def assert_session_unusable(self, download_id):
+        response = self.get({
+            'pageSize': 5,
+            'page': 2,
+            'download_id': download_id,
+        })
+        self.assert_error(
+            response,
+            status.HTTP_400_BAD_REQUEST,
+            FacilitiesDownloadErrorMessages.SESSION_INVALID,
+        )
+
+    def test_session_unusable_when_charge_and_cleanup_both_fail(self):
+        download_ids = self.capture_download_ids()
+
+        with patch.object(
+            FacilitiesDownloadService,
+            'charge_download',
+            side_effect=ValidationError('limit reached'),
+        ), patch.object(
+            FacilitiesDownloadService,
+            'delete_download_session',
+            return_value=False,
+        ):
+            response = self.get({'pageSize': 5})
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(len(download_ids), 1)
+        # The session was left in the cache, but it was never activated.
+        self.assert_session_unusable(download_ids[0])
+        self.assertEqual(self.remaining_records(), 5000)
+
+    def test_activation_failure_refunds_charge(self):
+        self.limit.free_download_records = 5
+        self.limit.paid_download_records = 20
+        self.limit.save()
+        download_ids = self.capture_download_ids()
+
+        with patch.object(
+            FacilitiesDownloadService,
+            'activate_download_session',
+            side_effect=ServiceUnavailableException(),
+        ):
+            response = self.get({'pageSize': 5})
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+        # The exact free/paid split is given back.
+        self.limit.refresh_from_db()
+        self.assertEqual(self.limit.free_download_records, 5)
+        self.assertEqual(self.limit.paid_download_records, 20)
+        self.assert_session_unusable(download_ids[0])
+
+    def test_activation_failure_keeps_charge_if_cleanup_fails(self):
+        download_ids = self.capture_download_ids()
+
+        with patch.object(
+            FacilitiesDownloadService,
+            'activate_download_session',
+            side_effect=ServiceUnavailableException(),
+        ), patch.object(
+            FacilitiesDownloadService,
+            'delete_download_session',
+            return_value=False,
+        ):
+            response = self.get({'pageSize': 5})
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+        # Whether the activation landed is unknown, so the charge stays.
+        self.assertEqual(self.remaining_records(), 5000 - self.total_count)
+        self.assert_session_unusable(download_ids[0])
+
+    def test_refund_restores_free_and_paid_split(self):
+        self.limit.free_download_records = 5
+        self.limit.paid_download_records = 20
+        self.limit.save()
+
+        locked, charged_free, charged_paid, _, _ = \
+            FacilitiesDownloadService.charge_download(self.limit, 18)
+
+        self.assertEqual((charged_free, charged_paid), (5, 13))
+        self.assertEqual(self.remaining_records(), 7)
+
+        FacilitiesDownloadService.refund_download(
+            locked,
+            charged_free,
+            charged_paid,
+        )
+
+        self.limit.refresh_from_db()
+        self.assertEqual(self.limit.free_download_records, 5)
+        self.assertEqual(self.limit.paid_download_records, 20)
+
     def test_email_failure_does_not_fail_charged_download(self):
         self.mock_send_email.side_effect = Exception('Stripe is down')
 
@@ -285,6 +410,144 @@ class FacilitiesDownloadLimitBypassTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(self.remaining_records(), 5000 - self.total_count)
+
+    # Retries reuse the live session
+
+    def test_retry_reuses_live_session_without_charging_again(self):
+        first = self.get({'pageSize': 5})
+        # The download was aborted; the user clicks Download again.
+        retry = self.get({'pageSize': 5})
+
+        self.assertEqual(retry.status_code, status.HTTP_200_OK)
+        self.assertEqual(retry.data['count'], self.total_count)
+        self.assertEqual(
+            self.download_id_from(retry.data['next']),
+            self.download_id_from(first.data['next']),
+        )
+        self.assertEqual(self.remaining_records(), 5000 - self.total_count)
+        self.mock_send_email.assert_called_once()
+
+        page_2 = self.client.get(retry.data['next'])
+        self.assertEqual(page_2.status_code, status.HTTP_200_OK)
+
+    def test_retry_skips_limit_check_for_paid_session(self):
+        self.get({'pageSize': 5})
+        self.limit.free_download_records = 0
+        self.limit.save()
+
+        retry = self.get({'pageSize': 5})
+
+        self.assertEqual(retry.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.remaining_records(), 0)
+
+    def test_retry_after_reuse_window_charges_again(self):
+        first = self.get({'pageSize': 5})
+        first_id = self.download_id_from(first.data['next'])
+        query_hash = FacilitiesDownloadService._session_cache().get(
+            FacilitiesDownloadService._session_key(first_id)
+        )['query_hash']
+        # The reuse index expires on its own TTL.
+        FacilitiesDownloadService._session_cache().delete(
+            FacilitiesDownloadService._index_key(query_hash)
+        )
+
+        retry = self.get({'pageSize': 5})
+
+        self.assertNotEqual(
+            self.download_id_from(retry.data['next']),
+            first_id,
+        )
+        self.assertEqual(
+            self.remaining_records(),
+            5000 - 2 * self.total_count
+        )
+
+    def test_retry_with_changed_result_count_charges_again(self):
+        first = self.get({'pageSize': 5})
+        first_id = self.download_id_from(first.data['next'])
+        # Simulate facilities added since the first download.
+        cache = FacilitiesDownloadService._session_cache()
+        key = FacilitiesDownloadService._session_key(first_id)
+        session = cache.get(key)
+        session['count'] = self.total_count - 1
+        cache.set(key, session)
+
+        retry = self.get({'pageSize': 5})
+
+        self.assertNotEqual(
+            self.download_id_from(retry.data['next']),
+            first_id,
+        )
+        self.assertEqual(
+            self.remaining_records(),
+            5000 - 2 * self.total_count
+        )
+
+    def test_retry_with_different_query_or_page_size_charges_again(self):
+        self.get({'pageSize': 5})
+        self.get({'pageSize': 10})
+        self.get({'pageSize': 5, 'countries': ['US']})
+
+        us_count = self.get(
+            {'pageSize': 5, 'countries': ['US']}
+        ).data['count']
+        self.assertEqual(
+            self.remaining_records(),
+            5000 - 2 * self.total_count - us_count
+        )
+
+    def test_other_user_does_not_reuse_session(self):
+        self.get({'pageSize': 5})
+
+        other_user = self.create_user('other@example.com')
+        other_limit = FacilityDownloadLimit.objects.create(
+            user=other_user,
+            free_download_records=5000,
+            paid_download_records=0,
+        )
+        self.client.logout()
+        self.client.login(email=other_user.email, password=self.password)
+
+        self.get({'pageSize': 5})
+
+        other_limit.refresh_from_db()
+        self.assertEqual(
+            other_limit.free_download_records,
+            5000 - self.total_count
+        )
+
+    def test_failed_charge_is_not_reused(self):
+        with patch.object(
+            FacilitiesDownloadService,
+            'charge_download',
+            side_effect=ValidationError('limit reached'),
+        ), patch.object(
+            FacilitiesDownloadService,
+            'delete_download_session',
+            return_value=False,
+        ):
+            self.get({'pageSize': 5})
+
+        retry = self.get({'pageSize': 5})
+
+        self.assertEqual(retry.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.remaining_records(), 5000 - self.total_count)
+
+    def test_unavailable_reuse_lookup_starts_new_download(self):
+        self.get({'pageSize': 5})
+
+        with patch.object(
+            FacilitiesDownloadService,
+            '_load_usable_session',
+            side_effect=Exception('memcached timeout'),
+        ):
+            retry = self.get({'pageSize': 5})
+
+        self.assertEqual(retry.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            self.remaining_records(),
+            5000 - 2 * self.total_count
+        )
 
     # Authentication and exemptions
 

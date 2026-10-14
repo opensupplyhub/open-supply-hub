@@ -26,8 +26,12 @@ from waffle.testutils import override_flag, override_switch
 from django.contrib.gis.geos import Point
 from django.urls import reverse
 from django.utils import timezone
+from api.tests.download_session_cache import (
+    isolated_download_session_cache,
+)
 
 
+@isolated_download_session_cache()
 class FacilityDownloadTest(FacilityAPITestCaseBase):
     fixtures = ["sectors"]
 

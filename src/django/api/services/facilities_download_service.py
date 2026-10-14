@@ -164,6 +164,12 @@ class FacilitiesDownloadService:
     # cache shared by all Django processes. Every later page must carry the
     # session's download_id and the exact same query, so the limit check
     # and the charge can't be skipped by requesting pages out of order.
+    #
+    # A session is only usable once its separate activation key exists.
+    # Charged downloads are created inactive and activated only after the
+    # charge transaction has committed, so a session is never usable
+    # without a committed charge, even if cleaning up a failed session
+    # also fails.
 
     @staticmethod
     def _session_cache():
@@ -174,25 +180,22 @@ class FacilitiesDownloadService:
         return f'session:{download_id}'
 
     @staticmethod
-    def create_download_session(request, query_hash, count, charged):
-        download_id = uuid.uuid4().hex
-        session = {
-            'user_id': getattr(request.user, 'id', None),
-            'query_hash': query_hash,
-            'count': count,
-            'charged': charged,
-        }
+    def _activation_key(download_id):
+        return f'session:{download_id}:active'
 
+    @staticmethod
+    def _add_or_raise(key, value, log_message):
         try:
-            # add() returns False when memcached can't store the key; a
-            # fresh uuid never collides, so False means the cache is down.
+            # add() returns False when memcached can't store the key. The
+            # keys embed a fresh uuid and never collide, so False means the
+            # cache is down. (set() returns None, so it can't be checked.)
             stored = FacilitiesDownloadService._session_cache().add(
-                FacilitiesDownloadService._session_key(download_id),
-                session,
+                key,
+                value,
                 FacilitiesDownloadSettings.SESSION_TTL_SECONDS,
             )
         except Exception:
-            logger.exception('Unable to store facility download session')
+            logger.exception(log_message)
             stored = False
 
         if not stored:
@@ -200,16 +203,102 @@ class FacilitiesDownloadService:
                 FacilitiesDownloadErrorMessages.SESSION_UNAVAILABLE
             )
 
+    @staticmethod
+    def create_download_session(request, query_hash, count, active):
+        """
+        Stores a new download session. Pass active=False for charged
+        downloads and activate it with activate_download_session once the
+        charge succeeds.
+        """
+        download_id = uuid.uuid4().hex
+        session = {
+            'user_id': getattr(request.user, 'id', None),
+            'query_hash': query_hash,
+            'count': count,
+        }
+
+        FacilitiesDownloadService._add_or_raise(
+            FacilitiesDownloadService._session_key(download_id),
+            session,
+            'Unable to store facility download session',
+        )
+
+        if active:
+            try:
+                FacilitiesDownloadService.activate_download_session(
+                    download_id
+                )
+            except Exception:
+                FacilitiesDownloadService.delete_download_session(
+                    download_id
+                )
+                raise
+
         return download_id, session
 
     @staticmethod
-    def delete_download_session(download_id):
+    def activate_download_session(download_id):
+        FacilitiesDownloadService._add_or_raise(
+            FacilitiesDownloadService._activation_key(download_id),
+            True,
+            'Unable to activate facility download session',
+        )
+
+    @staticmethod
+    def delete_download_session(download_id) -> bool:
+        """
+        Returns True when the session keys are known to be gone.
+        """
         try:
-            FacilitiesDownloadService._session_cache().delete(
-                FacilitiesDownloadService._session_key(download_id)
-            )
+            FacilitiesDownloadService._session_cache().delete_many([
+                FacilitiesDownloadService._session_key(download_id),
+                FacilitiesDownloadService._activation_key(download_id),
+            ])
         except Exception:
             logger.exception('Unable to delete facility download session')
+            return False
+        return True
+
+    @staticmethod
+    def _index_key(query_hash):
+        return f'index:{query_hash}'
+
+    @staticmethod
+    def _load_usable_session(request, download_id, query_hash):
+        """
+        Returns the session if it is active and belongs to this user and
+        query, otherwise None. Refreshes its sliding expiry when usable.
+        Raises if the cache can't be read.
+        """
+        session_key = FacilitiesDownloadService._session_key(download_id)
+        activation_key = FacilitiesDownloadService._activation_key(
+            download_id
+        )
+        cache = FacilitiesDownloadService._session_cache()
+
+        stored = cache.get_many([session_key, activation_key])
+
+        session = stored.get(session_key)
+        if (
+            not session
+            # memcached hands bools back as ints, so check truthiness.
+            or not stored.get(activation_key)
+            or session.get('user_id') != getattr(request.user, 'id', None)
+            or session.get('query_hash') != query_hash
+        ):
+            return None
+
+        try:
+            # Sliding expiry so long paid downloads don't expire mid-way.
+            for key in (session_key, activation_key):
+                cache.touch(
+                    key,
+                    FacilitiesDownloadSettings.SESSION_TTL_SECONDS
+                )
+        except Exception:
+            logger.exception('Unable to refresh facility download session')
+
+        return session
 
     @staticmethod
     def get_valid_download_session(request, download_id, query_hash):
@@ -220,31 +309,71 @@ class FacilitiesDownloadService:
                 FacilitiesDownloadErrorMessages.SESSION_INVALID
             )
 
-        key = FacilitiesDownloadService._session_key(download_id)
-        cache = FacilitiesDownloadService._session_cache()
-
         try:
-            session = cache.get(key)
+            session = FacilitiesDownloadService._load_usable_session(
+                request,
+                download_id,
+                query_hash,
+            )
         except Exception:
             logger.exception('Unable to read facility download session')
             raise ServiceUnavailableException(
                 FacilitiesDownloadErrorMessages.SESSION_UNAVAILABLE
             )
 
-        if (
-            not session
-            or session.get('user_id') != getattr(request.user, 'id', None)
-            or session.get('query_hash') != query_hash
-        ):
+        if session is None:
             raise ValidationError(
                 FacilitiesDownloadErrorMessages.SESSION_INVALID
             )
 
+        return download_id, session
+
+    @staticmethod
+    def index_download_session(download_id, query_hash):
+        """
+        Remembers the active session for this user and query so a page 1
+        retry can reuse it instead of charging again. The index is not
+        refreshed when the session is used, so reuse is only possible for
+        SESSION_TTL_SECONDS after the download was first charged.
+        """
         try:
-            # Sliding expiry so long paid downloads don't expire mid-way.
-            cache.touch(key, FacilitiesDownloadSettings.SESSION_TTL_SECONDS)
+            FacilitiesDownloadService._session_cache().set(
+                FacilitiesDownloadService._index_key(query_hash),
+                download_id,
+                FacilitiesDownloadSettings.SESSION_TTL_SECONDS,
+            )
         except Exception:
-            logger.exception('Unable to refresh facility download session')
+            # Without the index a retry is charged again, as before.
+            logger.exception('Unable to index facility download session')
+
+    @staticmethod
+    def find_reusable_download_session(request, query_hash, count):
+        """
+        Returns (download_id, session) for a live session the same user
+        opened for the same query and pageSize, or None. A session is only
+        reused while its count still matches the current result count, so
+        a retry never serves results that weren't paid for.
+        """
+        try:
+            download_id = FacilitiesDownloadService._session_cache().get(
+                FacilitiesDownloadService._index_key(query_hash)
+            )
+            if not download_id:
+                return None
+
+            session = FacilitiesDownloadService._load_usable_session(
+                request,
+                download_id,
+                query_hash,
+            )
+        except Exception:
+            # Fall back to a new download; creating its session fails
+            # closed if the cache is really down.
+            logger.exception('Unable to look up facility download session')
+            return None
+
+        if session is None or session.get('count') != count:
+            return None
 
         return download_id, session
 
@@ -255,7 +384,9 @@ class FacilitiesDownloadService:
         holding a row lock so concurrent downloads can't both pass the
         check against the same balance.
 
-        Returns (locked_limit, prev_free, prev_paid).
+        Returns (locked_limit, charged_free, charged_paid, prev_free,
+        prev_paid). The charged amounts let refund_download undo exactly
+        this charge.
         """
         with transaction.atomic():
             locked = FacilityDownloadLimit.objects \
@@ -270,7 +401,32 @@ class FacilitiesDownloadService:
                 count,
             )
 
-        return locked, prev_free, prev_paid
+        charged_free = prev_free - locked.free_download_records
+        charged_paid = prev_paid - locked.paid_download_records
+
+        return locked, charged_free, charged_paid, prev_free, prev_paid
+
+    @staticmethod
+    def refund_download(
+        limit: FacilityDownloadLimit,
+        charged_free: int,
+        charged_paid: int,
+    ):
+        """
+        Gives back a charge made by charge_download. Used when the charge
+        committed but the download session couldn't be activated, so the
+        user can't fetch the data they paid for.
+        """
+        with transaction.atomic():
+            locked = FacilityDownloadLimit.objects \
+                .select_for_update() \
+                .get(pk=limit.pk)
+            locked.free_download_records += max(charged_free, 0)
+            locked.paid_download_records += max(charged_paid, 0)
+            locked.save(update_fields=[
+                'free_download_records',
+                'paid_download_records',
+            ])
 
     @staticmethod
     def get_download_limit(request):

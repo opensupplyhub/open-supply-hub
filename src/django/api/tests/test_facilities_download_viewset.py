@@ -13,11 +13,15 @@ from api.models.facility_download_limit import FacilityDownloadLimit
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from django.utils import timezone
 from django.utils.timezone import make_aware, datetime
+from api.tests.download_session_cache import (
+    isolated_download_session_cache,
+)
 
 # Override constants different from production value for easier testing.
 FREE_FACILITIES_DOWNLOAD_LIMIT = 3
 
 
+@isolated_download_session_cache()
 class FacilitiesDownloadViewSetTest(APITestCase):
     fixtures = ["facilities_index"]
 
