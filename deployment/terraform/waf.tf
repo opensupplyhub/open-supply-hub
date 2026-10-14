@@ -44,19 +44,24 @@ locals {
       priority    = 1
       action_type = "block"
     }
+    # Allow terminates evaluation, so the whitelist runs after the
+    # rate-limit rules (priorities 10-21); otherwise whitelisted clients
+    # would never be counted or rate limited.
     "AllowWhitelistedIPv4" = {
       ip_set      = aws_wafv2_ip_set.ipv4_whitelist
-      priority    = 2
+      priority    = 30
       action_type = "allow"
     }
     "AllowWhitelistedIPv6" = {
       ip_set      = aws_wafv2_ip_set.ipv6_whitelist
-      priority    = 3
+      priority    = 31
       action_type = "allow"
     }
   }
 
   # OSDEV-2138: infrastructure-level rate limiting for the API.
+  # Rule order: denylist blocks (0-1) -> exempt labels (10-11) ->
+  # rate-based rules (20-21) -> whitelist allows (30-31) -> default action.
   # Requests from rate-limit-exempt IPs get this label (count action, so
   # evaluation continues) and the rate-based rules below skip them.
   rate_limit_exempt_label = "osh:rate-limit:exempt"
