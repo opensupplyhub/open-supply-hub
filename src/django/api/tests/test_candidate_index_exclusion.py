@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from api.models import (
     Contributor,
     Facility,
@@ -202,3 +204,87 @@ class CandidateIndexExclusionTest(TestCase):
         index_facilities_new([candidate.id])
 
         self.assertFalse(self._indexed(candidate))
+
+
+class CandidateDeleteSignalTest(TestCase):
+    """
+    Deleting a candidate must not call OpenSearch (OSDEV-3243).
+
+    Candidates never have a production-locations document, so the
+    post_delete handler that removes a facility's document has nothing to
+    delete; the client raises NotFoundError on a missing document, which
+    would abort the delete. The handler stays connected here on purpose,
+    unlike CandidateIndexExclusionTest.
+    """
+
+    def setUp(self):
+        user = User.objects.create(email='delete-signal@example.com')
+        contributor = Contributor.objects.create(
+            admin=user,
+            name='delete signal contributor',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        facility_list = FacilityList.objects.create(
+            header='header', file_name='one', name='Delete signal list'
+        )
+        source = Source.objects.create(
+            facility_list=facility_list,
+            source_type=Source.LIST,
+            is_active=True,
+            is_public=True,
+            contributor=contributor,
+        )
+        self.item = FacilityListItem.objects.create(
+            name='Item',
+            address='Address',
+            country_code='US',
+            sector=['Apparel'],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=source,
+        )
+
+    def _create(self, **kwargs):
+        defaults = {
+            'name': 'Name',
+            'address': 'Address',
+            'country_code': 'US',
+            'location': Point(0, 0),
+            'created_from': self.item,
+        }
+        defaults.update(kwargs)
+        return Facility.objects.create(**defaults)
+
+    def test_deleting_a_candidate_skips_opensearch(self):
+        candidate = self._create(
+            name='',
+            address='',
+            is_candidate=True,
+            polygon=GEOSGeometry(CANDIDATE_POLYGON_WKT, srid=4326),
+            source='earth_genome',
+            external_id='eg-facility-delete',
+        )
+        facility_id = candidate.id
+
+        with patch('api.signals.OpenSearchServiceConnection') as connection:
+            candidate.delete()
+
+        connection.assert_not_called()
+        self.assertFalse(Facility.objects.filter(id=facility_id).exists())
+
+    def test_deleting_a_confirmed_facility_still_calls_opensearch(self):
+        facility = self._create()
+        facility_id = facility.id
+
+        with patch('api.signals.OpenSearchServiceConnection') as connection:
+            connection.return_value.client.delete.return_value = {
+                'result': 'deleted'
+            }
+            facility.delete()
+
+        connection.return_value.client.delete.assert_called_once_with(
+            index='production-locations',
+            id=facility_id,
+        )
+        self.assertFalse(Facility.objects.filter(id=facility_id).exists())

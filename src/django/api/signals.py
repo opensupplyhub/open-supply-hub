@@ -38,6 +38,12 @@ def signal_error_notifier(error_log_message, response):
 
 @receiver(post_delete, sender=Facility)
 def location_post_delete_handler_for_opensearch(instance, **kwargs):
+    if instance.is_candidate:
+        # Candidates are never synced to the production-locations index
+        # (OSDEV-3243), so there is no document to delete. Asking
+        # OpenSearch anyway raises NotFoundError and aborts the delete.
+        return
+
     opensearch = OpenSearchServiceConnection()
     try:
         response = opensearch.client.delete(
