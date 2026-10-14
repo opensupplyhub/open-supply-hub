@@ -15,10 +15,18 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - Cancelling or failing a DB or `clear_opensearch` workflow no longer leaves the SSM session active or the container or restore task running: `if: always()` steps now clean up, and `ssm_tunnel.sh stop` terminates the session in AWS. The S3 copies in the anon-tools scripts no longer print transfer progress, and the Session Manager plugin download enforces HTTPS.
 * [OSDEV-3603](https://opensupplyhub.atlassian.net/browse/OSDEV-3603) - Added `scripts/set_logstash_last_run.sh` and the `doc/ops/logstash_last_run_runbook.md` runbook as a workaround for the Logstash `production_locations` pipeline staying at `sql_last_value` `1970-01-01` on AWS, which makes every run re-read all facilities. The script stops the Logstash ECS service, rewrites `production_locations_jdbc_last_run` on the Logstash EFS through the bastion (SSM Run Command, keeping a `.bak` copy) and starts Logstash again. The runbook covers querying the `production-locations` OpenSearch index through the SSM tunnel and bumping `api_facility.updated_at` so facilities missing from the index are re-indexed. No deployed code or infrastructure changes.
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - Closed facility download limit bypasses. The limit was checked only on page 1 and charged only on the last page, so requesting other pages directly (e.g. `page=2` from Postman) or never requesting the last page skipped the limit, and `embed=1` or anonymous requests skipped it entirely. The full result set is now checked and charged on page 1 under a row lock, and later pages can only be fetched within that paid session.
+
+### Code/API Changes
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - `GET /api/facilities-downloads/` now opens a download session on page 1 and returns its `download_id` in the `next`/`previous` links. Pages after the first require that `download_id` and the same filters and `pageSize` (otherwise `400`); `pageSize` is clamped to 1–250. Non-embed downloads require a logged-in user (`401` otherwise), and `embed=1` is only honoured for exactly one contributor with an embedded map enabled, with results restricted to that contributor. Sessions are kept in the new `facility_downloads` memcached cache alias. The web client follows `next` links, so it needs no changes. Retrying page 1 for the same query within 30 minutes of the charge (e.g. after an aborted download) reuses the live session instead of charging again, as long as the result count is unchanged.
+
+### What's new
+* [OSDEV-3425](https://opensupplyhub.atlassian.net/browse/OSDEV-3425) - Rename navbar label from `Explore` to `Map`, so users are able to intuitively navigate between the new home page and the info site.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
+* After the deployment, update the infosite in Craft to match the navbar labels with the product.
 
 
 ## Release 2.31.1

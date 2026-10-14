@@ -762,7 +762,7 @@ export const OS_HUB_BLOG_LINK = 'https://blog.opensupplyhub.org';
 export const NavbarItems = [
     {
         type: 'link',
-        label: 'Explore',
+        label: 'Map',
         href: '/',
         internal: true,
     },
