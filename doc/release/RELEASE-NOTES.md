@@ -7,24 +7,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: TBD
-
-### Database changes
-
-#### Migrations
-
-#### Schema changes
-
-### Code/API changes
-* [OSDEV-3380](https://opensupplyhub.atlassian.net/browse/OSDEV-3380) - `Facility.objects` now excludes candidate rows (`is_candidate=True`) by default; `Facility.including_candidates` is the explicit opt-in manager that returns every row. `Facility.objects` stays the model's `_default_manager`, so `get_object_or_404`, the Django admin changelist, `dumpdata` and DRF's auto-generated `ModelSerializer` FK fields all hide candidates without further changes. `_base_manager` is left as Django's plain `Manager` on purpose: forward FK access (`claim.facility`), reverse one-to-one access (`list_item.created_facility`), `refresh_from_db()` and the UPDATE issued by `save()` still reach a candidate, so nothing that already holds a candidate breaks. Filters that JOIN to `Facility` from another model (`FacilityClaim.objects.filter(facility__name=...)`) never apply the target model's manager and therefore still include candidates; code that must exclude them filters `facility__is_candidate=False` itself. Form-level validation (`validate_unique()`, ModelForm and admin FK fields) also runs through `_default_manager`, so it cannot see candidates; the database constraints still hold. OS ID generation in `Facility.save()` now checks collisions against `including_candidates`, since candidates hold OS IDs too. Every one of these traversal rules is pinned by `api/tests/test_facility_default_manager.py`. No schema change and no migration. Nothing creates candidates yet (ingest is OSDEV-3244); the remaining ORM audit, `FacilityIndex`/download surfaces and admin follow in OSDEV-3376, OSDEV-3378 and OSDEV-3379.
-
-### Architecture/Environment changes
-
-### Bugfix
-
-### What's new
-
-### Release instructions
 * Release date: October 30, 2026
 
 ### Architecture/Environment changes
@@ -37,6 +19,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Code/API Changes
 * [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - `GET /api/facilities-downloads/` now opens a download session on page 1 and returns its `download_id` in the `next`/`previous` links. Pages after the first require that `download_id` and the same filters and `pageSize` (otherwise `400`); `pageSize` is clamped to 1–250. Non-embed downloads require a logged-in user (`401` otherwise), and `embed=1` is only honoured for exactly one contributor with an embedded map enabled, with results restricted to that contributor. Sessions are kept in the new `facility_downloads` memcached cache alias. The web client follows `next` links, so it needs no changes. Retrying page 1 for the same query within 30 minutes of the charge (e.g. after an aborted download) reuses the live session instead of charging again, as long as the result count is unchanged.
+* [OSDEV-3380](https://opensupplyhub.atlassian.net/browse/OSDEV-3380) - `Facility.objects` now excludes candidate rows (`is_candidate=True`) by default; `Facility.including_candidates` is the explicit opt-in manager that returns every row. `Facility.objects` stays the model's `_default_manager`, so `get_object_or_404`, the Django admin changelist, `dumpdata` and DRF's auto-generated `ModelSerializer` FK fields all hide candidates without further changes. `_base_manager` is left as Django's plain `Manager` on purpose: forward FK access (`claim.facility`), reverse one-to-one access (`list_item.created_facility`), `refresh_from_db()` and the UPDATE issued by `save()` still reach a candidate, so nothing that already holds a candidate breaks. Filters that JOIN to `Facility` from another model (`FacilityClaim.objects.filter(facility__name=...)`) never apply the target model's manager and therefore still include candidates; code that must exclude them filters `facility__is_candidate=False` itself. Form-level validation (`validate_unique()`, ModelForm and admin FK fields) also runs through `_default_manager`, so it cannot see candidates; the database constraints still hold. OS ID generation in `Facility.save()` now checks collisions against `including_candidates`, since candidates hold OS IDs too. Every one of these traversal rules is pinned by `api/tests/test_facility_default_manager.py`. No schema change and no migration. Nothing creates candidates yet (ingest is OSDEV-3244); the remaining ORM audit, `FacilityIndex`/download surfaces and admin follow in OSDEV-3376, OSDEV-3378 and OSDEV-3379.
 
 ### What's new
 * [OSDEV-3425](https://opensupplyhub.atlassian.net/browse/OSDEV-3425) - Rename navbar label from `Explore` to `Map`, so users are able to intuitively navigate between the new home page and the info site.
