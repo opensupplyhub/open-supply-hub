@@ -7,25 +7,45 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ## Introduction
 * Product name: Open Supply Hub
-* Release date: TBD
+* Release date: October 30, 2026
 
-### Database changes
+### Architecture/Environment changes
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - The anonymized database restore (`DB - Apply Anonymized DB` and the `restore_database` job of `Deploy to AWS`) now runs as a one-off Fargate task inside the target environment's VPC instead of through the bastion's SSM port forward, which was too slow for the multi-GB dump. New `deployment/terraform/database_restore.tf` (enabled for Test and Preprod with `database_restore_enabled`) adds the task definition, its ECR repository (`database-restore` image, built for Test and Preprod), log group, task role and security group. The restore jobs run on `ubuntu-latest` and stream the task log through `deployment/run_restore_task`. `do_restore.sh` connects to RDS directly and restores with `pg_restore -j 8`.
 
-#### Migrations
+### Bugfix
+* [OSDEV-3588](https://opensupplyhub.atlassian.net/browse/OSDEV-3588) - Cancelling or failing a DB or `clear_opensearch` workflow no longer leaves the SSM session active or the container or restore task running: `if: always()` steps now clean up, and `ssm_tunnel.sh stop` terminates the session in AWS. The S3 copies in the anon-tools scripts no longer print transfer progress, and the Session Manager plugin download enforces HTTPS.
+* [OSDEV-3603](https://opensupplyhub.atlassian.net/browse/OSDEV-3603) - Added `scripts/set_logstash_last_run.sh` and the `doc/ops/logstash_last_run_runbook.md` runbook as a workaround for the Logstash `production_locations` pipeline staying at `sql_last_value` `1970-01-01` on AWS, which makes every run re-read all facilities. The script stops the Logstash ECS service, rewrites `production_locations_jdbc_last_run` on the Logstash EFS through the bastion (SSM Run Command, keeping a `.bak` copy) and starts Logstash again. The runbook covers querying the `production-locations` OpenSearch index through the SSM tunnel and bumping `api_facility.updated_at` so facilities missing from the index are re-indexed. No deployed code or infrastructure changes.
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - Closed facility download limit bypasses. The limit was checked only on page 1 and charged only on the last page, so requesting other pages directly (e.g. `page=2` from Postman) or never requesting the last page skipped the limit, and `embed=1` or anonymous requests skipped it entirely. The full result set is now checked and charged on page 1 under a row lock, and later pages can only be fetched within that paid session.
 
-#### Schema changes
-
-### Code/API changes
+### Code/API Changes
+* [OSDEV-2139](https://opensupplyhub.atlassian.net/browse/OSDEV-2139) - `GET /api/facilities-downloads/` now opens a download session on page 1 and returns its `download_id` in the `next`/`previous` links. Pages after the first require that `download_id` and the same filters and `pageSize` (otherwise `400`); `pageSize` is clamped to 1–250. Non-embed downloads require a logged-in user (`401` otherwise), and `embed=1` is only honoured for exactly one contributor with an embedded map enabled, with results restricted to that contributor. Sessions are kept in the new `facility_downloads` memcached cache alias. The web client follows `next` links, so it needs no changes. Retrying page 1 for the same query within 30 minutes of the charge (e.g. after an aborted download) reuses the live session instead of charging again, as long as the result count is unchanged.
 * [OSDEV-3380](https://opensupplyhub.atlassian.net/browse/OSDEV-3380) - `Facility.objects` now excludes candidate rows (`is_candidate=True`) by default; `Facility.including_candidates` is the explicit opt-in manager that returns every row. `Facility.objects` stays the model's `_default_manager`, so `get_object_or_404`, the Django admin changelist, `dumpdata` and DRF's auto-generated `ModelSerializer` FK fields all hide candidates without further changes. `_base_manager` is left as Django's plain `Manager` on purpose: forward FK access (`claim.facility`), reverse one-to-one access (`list_item.created_facility`), `refresh_from_db()` and the UPDATE issued by `save()` still reach a candidate, so nothing that already holds a candidate breaks. Filters that JOIN to `Facility` from another model (`FacilityClaim.objects.filter(facility__name=...)`) never apply the target model's manager and therefore still include candidates; code that must exclude them filters `facility__is_candidate=False` itself. Form-level validation (`validate_unique()`, ModelForm and admin FK fields) also runs through `_default_manager`, so it cannot see candidates; the database constraints still hold. OS ID generation in `Facility.save()` now checks collisions against `including_candidates`, since candidates hold OS IDs too. Every one of these traversal rules is pinned by `api/tests/test_facility_default_manager.py`. No schema change and no migration. Nothing creates candidates yet (ingest is OSDEV-3244); the remaining ORM audit, `FacilityIndex`/download surfaces and admin follow in OSDEV-3376, OSDEV-3378 and OSDEV-3379.
 * [OSDEV-3378](https://opensupplyhub.atlassian.net/browse/OSDEV-3378) - Candidate production locations (`is_candidate=True`) are now excluded from the surfaces that read `FacilityIndex` instead of `Facility`, which the OSDEV-3380 default manager cannot reach because `api_facilityindex` has no `is_candidate` column. `FacilityIndex.objects.without_candidates()` is a `NOT EXISTS` against the partial `api_facility_is_candidate_idx` index, and `FacilityIndexNewManager.filter_by_query_params()` now starts from it, so `GET /api/facilities-downloads/` (the brand/CSO CSV/XLSX download), `GET /api/facilities/` list and search, and the vector-tile hex grid all omit candidates even when a candidate row is present in the index; the `export_csv` management command uses the same filter. This is a Django-side guard that holds regardless of whether the index trigger has been taught to skip candidates (OSDEV-3243). `FacilityIndex.objects` itself is unchanged, so the details endpoint can still resolve a candidate for the labeled candidate view (OSDEV-3249). The one-way RBA database sync (`sync_databases`, run as the `DbSync` AWS Batch job on the RBA instance) already read `Facility` through `Facility.objects` and so skipped candidates; each `SYNC_MODELS` entry with a path to `Facility` now also declares a `candidate_lookup` (`is_candidate` / `facility__is_candidate`) applied through the new `api.candidate_exclusion.exclude_candidate_rows()` helper, so list items, matches, locations, claims, extended fields, activity reports and aliases that hang off a candidate are not transferred either. Without that, a child row of a candidate failed to insert on the target (the FK kept its source-database instance), counted as a sync error and blocked the post-sync `reassert_rba_promotions`. No schema change and no migration.
 
-### Architecture/Environment changes
-
-### Bugfix
-
 ### What's new
+* [OSDEV-3425](https://opensupplyhub.atlassian.net/browse/OSDEV-3425) - Rename navbar label from `Explore` to `Map`, so users are able to intuitively navigate between the new home page and the info site.
 
 ### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* After the deployment, update the infosite in Craft to match the navbar labels with the product.
+
+
+## Release 2.31.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: October 13, 2026
+
+### Bugfix
+* [Hotfix][OSDEV-3606](https://opensupplyhub.atlassian.net/browse/OSDEV-3606) - Fixed `GET /api/contributors/` raising `pylibmc.TooBig` in production: the list of all active contributors outgrew memcached's 1 MB per-item limit, so the `cache_page` write failed on every request and the endpoint was never cached. The endpoint was converted from a function-based `api_view` to an `AllContributors(APIView)` class using the `cache_view_response` decorator, which compresses the response before caching and serves it uncached (fail-open) when it is still too large or the cache errors. The URL, URL name, response format and throttling are unchanged. Same fix as [OSDEV-3062](https://opensupplyhub.atlassian.net/browse/OSDEV-3062) and [OSDEV-3030](https://opensupplyhub.atlassian.net/browse/OSDEV-3030).
+* [Hotfix][OSDEV-3606](https://opensupplyhub.atlassian.net/browse/OSDEV-3606) - Lowered the default `VIEW_RESPONSE_CACHE_MAX_BYTES` from 4 MB to 900 KB to match the 1 MB `max_item_size` configured for ElastiCache (`ec_memcached_max_item_size`). The previous default assumed a ~5 MB limit, so compressed responses between 1 MB and 4 MB were rejected by memcached and silently left uncached on every endpoint using `cache_view_response`.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* No Terraform, migration or environment variable changes are required.
+
 
 ## Release 2.31.0
 

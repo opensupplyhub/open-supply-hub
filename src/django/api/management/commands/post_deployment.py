@@ -11,7 +11,3 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
-        call_command(
-            'backfill_facility_index',
-            fields='facility_type,processing_type',
-        )
