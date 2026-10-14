@@ -1,10 +1,37 @@
 -- Extract moderator-adjudicated pairs for the matcher harness, stratified by
 -- country so no single country dominates the training draw.
 --
--- Why stratify. The 2026-08 sample was drawn without country control and came
--- out 43.8% Mexico / 0.1% Korea, while production upload volume is 6.6% Mexico
--- and 22.8% Korea. A model trained on that mix degrades Korea badly (auto-match
--- 96.0% -> 89.7%, 3.6x the moderator decisions, zero duplicate benefit).
+-- Why cap per country. The 2026-08 sample was drawn without country control and
+-- came out 43.8% Mexico / 0.1% Korea, while production upload volume is 6.6%
+-- Mexico and 22.8% Korea. Making that mix explicit rather than accidental is
+-- worth doing for any future extraction.
+--
+-- READ THIS BEFORE ASSUMING THE CAP FIXES ANYTHING. The hypothesis that Korea
+-- underperforms BECAUSE it is under-represented in training was tested and
+-- REFUTED. Rebalancing the training draw to a 4,000-per-country cap made every
+-- country worse, not better:
+--
+--                           auto     decisions   new facilities
+--   KOREA
+--     production            96.0%           29             0.8%
+--     retrain (MX-heavy)    89.7%          135             0.8%
+--     retrain (stratified)  52.7%          773             0.7%
+--   BANGLADESH
+--     production            50.8%          173            27.3%
+--     retrain (MX-heavy)    66.5%          129            20.2%
+--     retrain (stratified)  53.3%          317            17.8%
+--
+-- Stratification cost Bangladesh its entire auto-match gain and took Korea from
+-- bad to unusable. The model did not learn Korea; it learned to be uniformly
+-- less confident. The volume/training mismatch was a correlation, not a cause.
+--
+-- Separately, Korea's apparent regression at a fixed 0.8 threshold is itself a
+-- threshold artifact rather than a model deficit: at equal auto-match rate the
+-- two models agree on 98.6% of items and pick a different facility on zero.
+--
+-- So: cap the EXTRACTION to keep the mix deliberate, but do not rebalance the
+-- training DRAW by country expecting it to recover a weak country. The two are
+-- different decisions and only the first is safe.
 --
 -- The imbalance is not a sampling bug, it is structural: CONFIRMED/REJECTED
 -- rows exist only where a human was asked, and humans are asked only where the
