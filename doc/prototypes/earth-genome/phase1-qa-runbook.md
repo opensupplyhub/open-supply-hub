@@ -328,6 +328,15 @@ The `0237` candidate columns (release 2.30.0) stay; they are additive and
 unused without candidate rows. Unsetting `EARTH_GENOME_CONTRIBUTOR_ID`
 alone stops any further candidate creation without touching data.
 
+**Confirmed-to-candidate transitions are not supported.** Nothing in Phase 1
+sets `is_candidate` to true on an existing facility (ingest creates candidate
+rows only, the admin field is read-only, the API never writes it), and the
+logstash sync (`sync_production_locations.sql`, OSDEV-3243) has no deletion
+branch for that case. If such a transition is ever introduced, the change
+must also delete the facility's `production-locations` OpenSearch document,
+otherwise the stale document stays searchable. Retirement is unaffected: it
+hard-deletes the row and the `post_delete` signal removes the document.
+
 ## 9. Sign-off
 
 - [ ] Sections 1–7 all ticked, or each gap written up with the owner.
