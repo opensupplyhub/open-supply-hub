@@ -32,6 +32,10 @@ from .facility.facility_alias import (
   FacilityAlias,
   HistoricalFacilityAlias,
 )
+from .facility.facility_candidate_vote import FacilityCandidateVote
+from .facility.facility_candidate_retirement_request import (
+  FacilityCandidateRetirementRequest,
+)
 from .facility.facility_claim import (
   FacilityClaim,
   HistoricalFacilityClaim,

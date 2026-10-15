@@ -6,6 +6,8 @@ from django.http import QueryDict
 from django.db import transaction
 
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
@@ -20,6 +22,7 @@ from api.services.candidate_retirement import (
     get_tombstone,
     tombstone_payload,
 )
+from api.services import candidate_validation
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -40,6 +43,7 @@ from api.serializers.v1.ignore_warnings_query_param_serializer \
     import IgnoreWarningsQueryParamSerializer
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
+from api.models.facility.facility_candidate_vote import FacilityCandidateVote
 from api.models.partner_field import PartnerField
 from api.models.extended_field import ExtendedField
 from api.throttles import (
@@ -47,6 +51,7 @@ from api.throttles import (
     DuplicateThrottle
 )
 from api.constants import (
+    APIV1CandidateVoteErrorMessages,
     APIV1CommonErrorMessages,
     NON_FIELD_ERRORS_KEY,
     APIV1LocationContributionErrorMessages,
@@ -102,12 +107,27 @@ class ProductionLocations(ViewSet):
         if (self.action == 'create'
                 or self.action == 'partial_update'):
             return [IsRegisteredAndConfirmed]
+        if self.__is_vote_write():
+            # Ticket OSDEV-3245: any authenticated account may vote; the
+            # (facility, user) unique constraint is the anti-abuse control.
+            return [IsAuthenticated]
         return []
+
+    def __is_vote_write(self):
+        return (
+            self.action == 'candidate_votes'
+            and self.request.method == 'POST'
+        )
 
     def get_throttles(self):
         if (self.action == 'create'
                 or self.action == 'partial_update'):
             return [DataUploadThrottle(), DuplicateThrottle()]
+        if self.__is_vote_write():
+            # Same per-user write rate as the other v1 write actions. No
+            # DuplicateThrottle: a repeat vote is idempotent and changing
+            # a vote back within its window must not 429.
+            return [DataUploadThrottle()]
 
         # Call the parent method to use the default throttling setup in the
         # settings.py file.
@@ -204,6 +224,115 @@ class ProductionLocations(ViewSet):
         locations[0].update(partner_extended_fields)
 
         return Response(locations[0])
+
+    @action(
+        detail=True,
+        methods=['GET', 'POST'],
+        url_path='candidate-votes',
+    )
+    def candidate_votes(self, request, pk=None):
+        '''
+        Community existence votes on a candidate (OSDEV-3245).
+
+        GET (open): the live tally, the derived state and, when the
+        caller is authenticated, their own vote.
+        POST (authenticated) ``{"vote": "confirmed"|"not_a_facility"}``:
+        records or changes the caller's vote (201 created / 200 changed)
+        and returns the same body. 404 for an unknown OS ID or one that is
+        not a candidate, 410 for a retired OS ID, 409 once the candidate
+        is confirmed (voting closed). State derivation and the
+        consensus-no handling (auto-retire vs. moderation gate) live in
+        api/services/candidate_validation.py.
+        '''
+        facility = Facility.including_candidates.filter(pk=pk).first()
+        if facility is None:
+            tombstone = get_tombstone(pk)
+            if tombstone is not None:
+                return Response(
+                    data=tombstone_payload(tombstone),
+                    status=status.HTTP_410_GONE,
+                )
+            return Response(
+                data={'detail': APIV1CommonErrorMessages.LOCATION_NOT_FOUND},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if not facility.is_candidate:
+            return Response(
+                data={
+                    'detail': APIV1CandidateVoteErrorMessages.NOT_A_CANDIDATE
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if request.method == 'GET':
+            vote_tally = candidate_validation.tally(facility)
+            state = candidate_validation.derive_state(vote_tally)
+            return Response(
+                self.__vote_body(
+                    facility.id,
+                    request.user,
+                    vote_tally,
+                    candidate_validation.public_state(state),
+                )
+            )
+
+        vote = request.data.get('vote') if isinstance(
+            request.data, dict
+        ) else None
+        if vote not in FacilityCandidateVote.Vote.values:
+            return Response(
+                data={
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    'errors': [{
+                        'field': 'vote',
+                        'detail':
+                            APIV1CandidateVoteErrorMessages.INVALID_VOTE,
+                    }],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            outcome = candidate_validation.cast_vote(
+                facility, request.user, vote
+            )
+        except candidate_validation.VotingClosedError:
+            return Response(
+                data={
+                    'detail': APIV1CandidateVoteErrorMessages.VOTING_CLOSED
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        return Response(
+            self.__vote_body(
+                facility.id,
+                request.user,
+                outcome.tally,
+                outcome.reported_state,
+                your_vote=outcome.vote,
+            ),
+            status=(
+                status.HTTP_201_CREATED if outcome.created
+                else status.HTTP_200_OK
+            ),
+        )
+
+    @staticmethod
+    def __vote_body(os_id, user, vote_tally, state, your_vote=None):
+        if your_vote is None and user.is_authenticated:
+            your_vote = (
+                FacilityCandidateVote.objects
+                .filter(facility_id=os_id, user=user)
+                .values_list('vote', flat=True)
+                .first()
+            )
+        return {
+            'os_id': os_id,
+            'your_vote': your_vote,
+            'tally': vote_tally,
+            'state': state,
+        }
 
     @transaction.atomic
     def create(self, request):
