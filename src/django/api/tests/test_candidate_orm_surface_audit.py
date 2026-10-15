@@ -698,4 +698,6 @@ class ContributorSurfacesCandidateAuditTest(APITestCase):
 
         self.assertIn(self.eg_contributor.id, self.listed_contributor_ids())
         self.assertEqual(self.active_count(), 2)
-        self.assertEqual(self.embedded_sectors(self.eg_contributor), ['Mining'])
+        self.assertEqual(
+            self.embedded_sectors(self.eg_contributor), ['Mining']
+        )
