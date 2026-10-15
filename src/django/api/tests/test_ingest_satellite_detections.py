@@ -15,6 +15,7 @@ from api.models import (
     Source,
     User,
 )
+from api.models.sector import Sector
 from api.services.candidate_matches import suggested_matches
 from django.contrib.gis.geos import Point
 from django.core.management import call_command
@@ -65,6 +66,124 @@ def _feature(eg_id, lng, lat, confidence=0.9, geometry=True):
         'properties': {'confidence': confidence, 'id': eg_id},
         'geometry': _square(lng, lat) if geometry else None,
     }
+
+
+PROJECT_ID = 'a1671a55-2049-422c-a38c-d22fb753e9af'
+LAYER_ID = '4d6d1daf-130b-4a53-a3db-c122ce1e061b'
+DEEP_SEARCH_OK = 'f8c5ed5e-2856-4eae-a9bf-52b44cf996c6'
+DEEP_SEARCH_RUNNING = '0b1f9c1e-5f0e-4a4c-9d3b-2a3f4e5d6c7b'
+DEEP_SEARCH_OLDER = '9a8b7c6d-1234-4e5f-8a9b-0c1d2e3f4a5b'
+
+
+def _earth_index_feature(detection_id, lng, lat, confidence=0.99,
+                         deep_search_id=DEEP_SEARCH_OK):
+    """A ``deep_search_result`` feature the way the export endpoint
+    writes it (``properties.id`` is the detection id)."""
+    return {
+        'type': 'Feature',
+        'id': f'{deep_search_id}:{detection_id}',
+        'properties': {
+            'confidence': confidence,
+            'deepSearchId': deep_search_id,
+            'featureType': 'deep_search_result',
+            'id': detection_id,
+            'layerId': LAYER_ID,
+            'mgrs_id': '17SQV',
+            'projectId': PROJECT_ID,
+        },
+        'geometry': _square(lng, lat),
+    }
+
+
+def _aoi_feature():
+    return {
+        'type': 'Feature',
+        'properties': {
+            'featureType': 'aoi',
+            'projectId': PROJECT_ID,
+            'title': 'Poultry in NC',
+        },
+        'geometry': {
+            'type': 'MultiPolygon',
+            'coordinates': [_square(SITE_LNG, SITE_LAT, 1.0)['coordinates']],
+        },
+    }
+
+
+def _project_record(target_label=''):
+    return {
+        'id': PROJECT_ID,
+        'title': 'Poultry in NC',
+        'targetLabel': target_label,
+        'layers': [{'id': LAYER_ID, 'projectId': PROJECT_ID}],
+        'deep_searches': [
+            {
+                'id': DEEP_SEARCH_OK, 'layerId': LAYER_ID,
+                'status': 'success', 'createdAt': '2026-09-02T00:00:00Z',
+            },
+            {
+                'id': DEEP_SEARCH_RUNNING, 'layerId': LAYER_ID,
+                'status': 'running', 'createdAt': '2026-10-01T00:00:00Z',
+            },
+            {
+                'id': DEEP_SEARCH_OLDER, 'layerId': 'other-layer',
+                'status': 'success', 'createdAt': '2026-08-01T00:00:00Z',
+            },
+        ],
+    }
+
+
+class FakeResponse:
+    def __init__(self, status_code=200, body=None, text=''):
+        self.status_code = status_code
+        self._body = body
+        self.text = text if body is None else json.dumps(body)
+
+    def json(self):
+        if self._body is None:
+            raise ValueError('not json')
+        return self._body
+
+    def iter_content(self, chunk_size):
+        data = self.text.encode()
+        for start in range(0, len(data), chunk_size):
+            yield data[start:start + chunk_size]
+
+    def close(self):
+        pass
+
+
+class FakeEarthIndex:
+    """Stands in for ``requests.get`` in api.services.earth_index."""
+
+    def __init__(self, project=None, export=None, status=200):
+        self.project = project if project is not None else _project_record()
+        self.export = export if export is not None else {
+            'type': 'FeatureCollection',
+            'features': [
+                _earth_index_feature('14121408024753508', SITE_LNG,
+                                     SITE_LAT, 0.9999),
+                _earth_index_feature('14121384851571097', SITE_LNG + 0.2,
+                                     SITE_LAT, 0.9831),
+            ],
+        }
+        self.status = status
+        self.calls = []
+
+    def __call__(self, url, params=None, headers=None, timeout=None,
+                 stream=False):
+        self.calls.append(
+            {'url': url, 'params': params, 'headers': headers,
+             'stream': stream, 'timeout': timeout}
+        )
+        if self.status != 200:
+            return FakeResponse(
+                self.status,
+                {'Status': self.status, 'Detail': 'invalid api key'},
+            )
+        if url.endswith('/export'):
+            return FakeResponse(200, self.export)
+        return FakeResponse(200, self.project)
 
 
 class IngestSatelliteDetectionsTest(TestCase):
@@ -625,3 +744,212 @@ class IngestSatelliteDetectionsTest(TestCase):
         with self.assertRaises(CommandError) as ctx:
             self._run('--file', 's3://bucket-only')
         self.assertIn('expected s3://<bucket>/<key>', str(ctx.exception))
+
+    # --- Earth Index API input ------------------------------------------
+
+    def _run_from_earth_index(self, fake, *args, **settings_overrides):
+        overrides = {
+            'EARTH_INDEX_API_KEY': 'ak_test_key',
+            'EARTH_INDEX_API_URL': 'https://earth-index.test',
+            **settings_overrides,
+        }
+        with override_settings(**overrides), \
+                patch('api.services.earth_index.requests.get', fake):
+            return self._run(*args)
+
+    def test_project_mode_exports_finished_deep_searches(self):
+        fake = FakeEarthIndex()
+
+        out, err = self._run_from_earth_index(fake, '--project', PROJECT_ID)
+
+        # Discovery, then one export of the finished deep searches on
+        # the project (the running one is left out), newest last.
+        self.assertEqual(
+            ['https://earth-index.test/v1/projects/' + PROJECT_ID,
+             'https://earth-index.test/v1/projects/' + PROJECT_ID
+             + '/export'],
+            [call['url'] for call in fake.calls],
+        )
+        export = fake.calls[1]
+        self.assertEqual(
+            {
+                'format': 'geojson',
+                'include_deep_search_results': 'true',
+                'deep_search_ids': f'{DEEP_SEARCH_OLDER},{DEEP_SEARCH_OK}',
+            },
+            export['params'],
+        )
+        self.assertTrue(export['stream'])
+        for call in fake.calls:
+            self.assertEqual(
+                'Bearer ak_test_key', call['headers']['Authorization']
+            )
+            self.assertIsNotNone(call['timeout'])
+        self.assertIn(f'Exported {len(json.dumps(fake.export))} bytes', out)
+        self.assertIn(f'from Earth Index project {PROJECT_ID}', out)
+        self.assertIn('created=2', out)
+        self.assertEqual('', err)
+
+        candidates = self._candidates().order_by('external_id')
+        self.assertEqual(
+            ['14121384851571097', '14121408024753508'],
+            [facility.external_id for facility in candidates],
+        )
+        facility = candidates.get(external_id='14121408024753508')
+        self.assertAlmostEqual(0.9999, facility.confidence)
+        item = facility.created_from
+        self.assertEqual(DEEP_SEARCH_OK, item.raw_json['eg_model_version'])
+        self.assertEqual(
+            DEEP_SEARCH_OK, item.raw_json['properties']['deepSearchId']
+        )
+        self.assertEqual(LAYER_ID, item.raw_json['properties']['layerId'])
+        match = FacilityMatch.objects.get(facility=facility)
+        self.assertEqual(
+            DEEP_SEARCH_OK, match.results['eg_model_version']
+        )
+
+    def test_layer_option_limits_discovery_to_one_layer(self):
+        fake = FakeEarthIndex()
+
+        self._run_from_earth_index(
+            fake, '--project', PROJECT_ID, '--layer', LAYER_ID, '--dry-run'
+        )
+
+        self.assertEqual(
+            DEEP_SEARCH_OK, fake.calls[1]['params']['deep_search_ids']
+        )
+
+    def test_explicit_deep_search_skips_discovery_and_uses_setting(self):
+        fake = FakeEarthIndex()
+
+        out, _ = self._run_from_earth_index(
+            fake,
+            '--deep-search', DEEP_SEARCH_OK,
+            '--deep-search', DEEP_SEARCH_OLDER,
+            '--facility-type', 'poultry',
+            '--dry-run',
+            EARTH_INDEX_PROJECT_ID=PROJECT_ID,
+        )
+
+        # With the deep searches and the facility type given there is
+        # nothing to discover: the export is the only call.
+        self.assertEqual(1, len(fake.calls))
+        self.assertEqual(
+            f'{DEEP_SEARCH_OK},{DEEP_SEARCH_OLDER}',
+            fake.calls[0]['params']['deep_search_ids'],
+        )
+        self.assertIn('Dry run: ingesting 2 record(s)', out)
+        self.assertIn('created=2', out)
+        self.assertEqual(0, self._candidates().count())
+
+    def test_bare_project_flag_takes_the_project_from_settings(self):
+        fake = FakeEarthIndex()
+
+        out, _ = self._run_from_earth_index(
+            fake, '--project', '--dry-run', EARTH_INDEX_PROJECT_ID=PROJECT_ID
+        )
+
+        self.assertIn(f'/v1/projects/{PROJECT_ID}', fake.calls[0]['url'])
+        self.assertIn('created=2', out)
+
+    def test_project_target_label_is_the_default_facility_type(self):
+        Sector.objects.get_or_create(name='Animal Production')
+        fake = FakeEarthIndex(project=_project_record(target_label='poultry'))
+
+        self._run_from_earth_index(fake, '--project', PROJECT_ID)
+
+        item = self._candidates().first().created_from
+        self.assertEqual('poultry', item.raw_json['probable_facility_type'])
+        self.assertEqual(['Animal Production'], item.sector)
+
+    def test_facility_type_option_wins_over_target_label(self):
+        fake = FakeEarthIndex(project=_project_record(target_label='poultry'))
+
+        self._run_from_earth_index(
+            fake, '--project', PROJECT_ID, '--facility-type', 'aquaculture'
+        )
+
+        item = self._candidates().first().created_from
+        self.assertEqual(
+            'aquaculture', item.raw_json['probable_facility_type']
+        )
+
+    def test_facility_type_option_applies_to_file_input_too(self):
+        Sector.objects.get_or_create(name='Animal Production')
+
+        self._run(
+            '--file', self.geojson_path, '--facility-type', 'poultry'
+        )
+
+        sectors = {
+            tuple(facility.created_from.sector)
+            for facility in self._candidates()
+        }
+        self.assertEqual({('Animal Production',)}, sectors)
+
+    def test_non_detection_features_in_an_export_are_skipped(self):
+        fake = FakeEarthIndex()
+        fake.export['features'].insert(0, _aoi_feature())
+
+        out, err = self._run_from_earth_index(fake, '--project', PROJECT_ID)
+
+        self.assertIn('created=2', out)
+        self.assertIn('skipped_not_detection=1', out)
+        self.assertEqual('', err)
+        self.assertEqual(2, self._candidates().count())
+
+    def test_project_mode_requires_an_api_key(self):
+        fake = FakeEarthIndex()
+
+        with self.assertRaises(CommandError) as ctx:
+            self._run_from_earth_index(
+                fake, '--project', PROJECT_ID, EARTH_INDEX_API_KEY=None
+            )
+
+        self.assertIn('EARTH_INDEX_API_KEY is not set', str(ctx.exception))
+        self.assertEqual([], fake.calls)
+
+    def test_project_mode_requires_a_project(self):
+        fake = FakeEarthIndex()
+
+        with self.assertRaises(CommandError) as ctx:
+            self._run_from_earth_index(
+                fake, '--project', EARTH_INDEX_PROJECT_ID=None
+            )
+
+        self.assertIn('EARTH_INDEX_PROJECT_ID', str(ctx.exception))
+        self.assertEqual([], fake.calls)
+
+    def test_no_finished_deep_search_is_a_command_error(self):
+        project = _project_record()
+        project['deep_searches'] = [project['deep_searches'][1]]
+        fake = FakeEarthIndex(project=project)
+
+        with self.assertRaises(CommandError) as ctx:
+            self._run_from_earth_index(fake, '--project', PROJECT_ID)
+
+        self.assertIn('has no finished deep search', str(ctx.exception))
+        self.assertEqual(1, len(fake.calls))
+        self.assertEqual(0, self._candidates().count())
+
+    def test_earth_index_http_error_is_a_command_error(self):
+        fake = FakeEarthIndex(status=401)
+
+        with self.assertRaises(CommandError) as ctx:
+            self._run_from_earth_index(fake, '--project', PROJECT_ID)
+
+        message = str(ctx.exception)
+        self.assertIn('Earth Index answered 401', message)
+        self.assertIn('invalid api key', message)
+        self.assertNotIn('ak_test_key', message)
+        self.assertEqual(0, self._candidates().count())
+
+    def test_file_and_project_are_mutually_exclusive(self):
+        with self.assertRaises(CommandError) as ctx:
+            self._run('--file', self.json_path, '--project', PROJECT_ID)
+        self.assertIn('not both', str(ctx.exception))
+
+    def test_an_input_is_required(self):
+        with self.assertRaises(CommandError) as ctx:
+            self._run()
+        self.assertIn('Nothing to ingest', str(ctx.exception))

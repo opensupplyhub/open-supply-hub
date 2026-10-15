@@ -16,19 +16,28 @@ has a facility is updated in place (polygon, confidence, location,
 payload) and keeps its OS ID; a detection retired as NOT_A_FACILITY is
 never re-created (D5, ``api.services.candidate_retirement``).
 
-Two input formats are accepted:
+Detections come from one of two places:
 
-* the prototype JSON list (``nc_candidates.json``): records with
-  ``eg_id``, ``polygon`` (GeoJSON geometry), ``centroid_lat`` /
-  ``centroid_lng``, ``probable_facility_type``, ``confidence_score`` and
-  ``eg_model_version``;
-* a GeoJSON ``FeatureCollection`` as exported by Earth Genome: features
-  with a ``Polygon`` geometry (``null`` for a detection without a
-  footprint, which is skipped) and ``properties.id`` /
-  ``properties.confidence``.
+* the Earth Index API (``--project`` / ``--deep-search``): the finished
+  deep searches of an Earth Index project are exported as GeoJSON
+  straight from ``api.earthindex.ai`` (``api.services.earth_index``), so
+  nothing has to be downloaded or uploaded by hand;
+* a file (``--file``), local or ``s3://``, in one of two formats:
+
+  * a GeoJSON ``FeatureCollection`` as exported by Earth Index / Earth
+    Genome: features with a ``Polygon`` geometry (``null`` for a
+    detection without a footprint, which is skipped) and
+    ``properties.id`` / ``properties.confidence``;
+  * the prototype JSON list (``nc_candidates.json``): records with
+    ``eg_id``, ``polygon`` (GeoJSON geometry), ``centroid_lat`` /
+    ``centroid_lng``, ``probable_facility_type``, ``confidence_score``
+    and ``eg_model_version``.
 
 Usage::
 
+    python manage.py ingest_satellite_detections --project
+        [--deep-search ID ...] [--facility-type poultry]
+        [--source earth_genome] [--country-code US] [--limit N] [--dry-run]
     python manage.py ingest_satellite_detections --file detections.geojson
         [--source earth_genome] [--country-code US] [--limit N] [--dry-run]
 """
@@ -58,6 +67,7 @@ from api.services.candidate_matches import (
     suggested_matches_for_point,
 )
 from api.services.candidate_retirement import is_retired_detection
+from api.services.earth_index import EarthIndexClient, EarthIndexError
 from countries.lib.countries import COUNTRY_CHOICES
 
 DEFAULT_SOURCE = 'earth_genome'
@@ -73,6 +83,15 @@ FACILITY_TYPE_SECTORS = {
 }
 
 MATCH_TYPE = 'satellite_detection_candidate'
+
+# Earth Index exports can carry the project area and labelled points next
+# to the detections; only these feature types are detections.
+DETECTION_FEATURE_TYPES = {'deep_search_result'}
+# Returned by a parser for a well-formed feature that is not a detection
+# (``None`` keeps meaning "a detection without a footprint").
+NOT_A_DETECTION = object()
+# ``--project`` without a value: take the project id from settings.
+PROJECT_FROM_SETTINGS = object()
 
 VALID_COUNTRY_CODES = {code for code, _ in COUNTRY_CHOICES}
 
@@ -115,6 +134,7 @@ class Summary:
     updated: int = 0
     skipped_retired: int = 0
     skipped_no_geometry: int = 0
+    skipped_not_detection: int = 0
     repaired: int = 0
     errors: int = 0
     with_suggestions: int = 0
@@ -125,6 +145,7 @@ class Summary:
             f'created={self.created} updated={self.updated} '
             f'skipped_retired={self.skipped_retired} '
             f'skipped_no_geometry={self.skipped_no_geometry} '
+            f'skipped_not_detection={self.skipped_not_detection} '
             f'repaired={self.repaired} errors={self.errors} '
             f'with_suggestions={self.with_suggestions} '
             f'(suggestions={self.suggestions})'
@@ -256,10 +277,17 @@ def _from_prototype_record(record, position):
 
 
 def _from_feature(feature, position):
-    """GeoJSON Feature -> Detection (None when geometry is null)."""
+    """
+    GeoJSON Feature -> Detection. ``None`` when the geometry is null;
+    ``NOT_A_DETECTION`` for an Earth Index feature of another type (the
+    project area, labelled points).
+    """
     if not isinstance(feature, dict) or feature.get('type') != 'Feature':
         raise DetectionError(f'feature #{position}: not a GeoJSON Feature')
     properties = feature.get('properties') or {}
+    feature_type = properties.get('featureType')
+    if feature_type and feature_type not in DETECTION_FEATURE_TYPES:
+        return NOT_A_DETECTION
     external_id = _require_external_id(
         properties.get('id', feature.get('id')), position
     )
@@ -281,9 +309,12 @@ def _from_feature(feature, position):
             or properties.get('facility_type')
             or ''
         ),
+        # An Earth Index deep search is one trained model run, so its id
+        # is the closest thing to a model version the export carries.
         model_version=str(
             properties.get('eg_model_version')
             or properties.get('model_version')
+            or properties.get('deepSearchId')
             or ''
         ),
         properties=properties,
@@ -340,6 +371,87 @@ def materialize_input(file_option):
     return handle.name, cleanup
 
 
+def materialize_earth_index_export(options, stdout):
+    """
+    Export the finished deep searches of an Earth Index project to a
+    temporary GeoJSON file. Returns ``(path, cleanup, describe)`` where
+    ``describe`` names the input for the log line.
+
+    ``--project`` picks the project (``EARTH_INDEX_PROJECT_ID`` when
+    given without a value), ``--deep-search`` (repeatable) picks specific
+    deep searches instead of every finished one, ``--layer`` limits the
+    discovery to one layer.
+    """
+    project_id = options.get('project')
+    if project_id is PROJECT_FROM_SETTINGS or project_id is None:
+        project_id = getattr(settings, 'EARTH_INDEX_PROJECT_ID', None)
+    if not project_id:
+        raise CommandError(
+            'No Earth Index project: pass --project <id> or set '
+            'EARTH_INDEX_PROJECT_ID.'
+        )
+
+    try:
+        client = EarthIndexClient(
+            getattr(settings, 'EARTH_INDEX_API_KEY', None),
+            getattr(settings, 'EARTH_INDEX_API_URL', None),
+        )
+        deep_search_ids = [
+            value.strip() for value in (options.get('deep_search') or [])
+            if value and value.strip()
+        ]
+        target_label = ''
+        if not deep_search_ids or not options.get('facility_type'):
+            project = client.project(project_id)
+            target_label = str(project.get('targetLabel') or '').strip()
+            if not deep_search_ids:
+                deep_search_ids = client.finished_deep_search_ids(
+                    project, options.get('layer')
+                )
+        if not deep_search_ids:
+            raise CommandError(
+                f'Earth Index project {project_id} has no finished deep '
+                'search' + (
+                    f' on layer {options["layer"]}'
+                    if options.get('layer') else ''
+                ) + '. Run one in Earth Index first, or pass '
+                '--deep-search <id>.'
+            )
+        if target_label and not options.get('facility_type'):
+            options['facility_type'] = target_label
+
+        handle = tempfile.NamedTemporaryFile(
+            prefix='earth-index-', suffix='.geojson', delete=False
+        )
+        handle.close()
+        try:
+            size = client.download_deep_search_results(
+                project_id, deep_search_ids, handle.name
+            )
+        except EarthIndexError:
+            os.unlink(handle.name)
+            raise
+    except EarthIndexError as exc:
+        raise CommandError(str(exc)) from exc
+
+    stdout.write(
+        f'Exported {size} bytes from Earth Index project {project_id}, '
+        f'deep search(es): {", ".join(deep_search_ids)}'
+    )
+
+    def cleanup():
+        try:
+            os.unlink(handle.name)
+        except OSError:
+            pass
+
+    describe = (
+        f'Earth Index project {project_id} '
+        f'({len(deep_search_ids)} deep search(es))'
+    )
+    return handle.name, cleanup, describe
+
+
 def load_records(path):
     """
     Read ``path`` and return ``(records, parser)`` where ``parser`` turns
@@ -373,14 +485,58 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--file',
-            required=True,
+            '--project',
+            nargs='?',
+            const=PROJECT_FROM_SETTINGS,
+            default=None,
             help=(
-                'The detections: a GeoJSON FeatureCollection as exported '
-                'by Earth Genome, or the prototype JSON list '
-                '(nc_candidates.json format). A local path, or an '
-                's3://<bucket>/<key> URI (how the deployed CLI task '
-                'receives the file).'
+                'Pull the detections from the Earth Index API: the id of '
+                'the Earth Index project whose finished deep searches are '
+                'exported (requires EARTH_INDEX_API_KEY). Without a value '
+                'the project id comes from EARTH_INDEX_PROJECT_ID. '
+                'Mutually exclusive with --file.'
+            ),
+        )
+        parser.add_argument(
+            '--deep-search',
+            action='append',
+            default=None,
+            metavar='DEEP_SEARCH_ID',
+            help=(
+                'Export only this deep search of the project (repeatable). '
+                'Default: every deep search whose status is "success".'
+            ),
+        )
+        parser.add_argument(
+            '--layer',
+            default=None,
+            metavar='LAYER_ID',
+            help=(
+                'With --project and no --deep-search: only consider deep '
+                'searches on this Earth Index layer.'
+            ),
+        )
+        parser.add_argument(
+            '--file',
+            default=None,
+            help=(
+                'Read the detections from a file instead: a GeoJSON '
+                'FeatureCollection as exported by Earth Index / Earth '
+                'Genome, or the prototype JSON list (nc_candidates.json '
+                'format). A local path, or an s3://<bucket>/<key> URI '
+                '(how the deployed CLI task receives a file). Mutually '
+                'exclusive with --project.'
+            ),
+        )
+        parser.add_argument(
+            '--facility-type',
+            default='',
+            help=(
+                'Facility type recorded on detections that do not carry '
+                'one (Earth Index exports do not), e.g. "poultry"; it '
+                'picks the sector of the synthetic list item. Default: '
+                'the Earth Index project\'s target label when pulling '
+                'from the API, else none.'
             ),
         )
         parser.add_argument(
@@ -417,13 +573,32 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        path, cleanup = materialize_input(options['file'])
+        from_api = (
+            options.get('project') is not None
+            or options.get('deep_search') is not None
+        )
+        if from_api and options.get('file'):
+            raise CommandError(
+                'Pass either --file or --project/--deep-search, not both.'
+            )
+        if not from_api and not options.get('file'):
+            raise CommandError(
+                'Nothing to ingest: pass --project [<id>] to pull from the '
+                'Earth Index API, or --file <path|s3://...>.'
+            )
+        if from_api:
+            path, cleanup, describe = materialize_earth_index_export(
+                options, self.stdout
+            )
+        else:
+            path, cleanup = materialize_input(options['file'])
+            describe = path
         try:
-            self._handle(path, options)
+            self._handle(path, options, describe)
         finally:
             cleanup()
 
-    def _handle(self, path, options):
+    def _handle(self, path, options, describe=None):
         source = (options['source'] or '').strip()
         if not source:
             raise CommandError('--source must not be empty')
@@ -437,6 +612,7 @@ class Command(BaseCommand):
 
         dry_run = options['dry_run']
         verbose = dry_run or options['verbosity'] >= 2
+        default_facility_type = (options.get('facility_type') or '').strip()
         contributor = self._resolve_contributor()
 
         records, parse = load_records(path)
@@ -445,7 +621,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             f'{"Dry run: " if dry_run else ""}ingesting {len(records)} '
-            f'record(s) from {path} as source={source!r} '
+            f'record(s) from {describe or path} as source={source!r} '
             f'country_code={country_code!r} under contributor '
             f'{contributor.id} ({contributor.name})'
         )
@@ -465,6 +641,15 @@ class Command(BaseCommand):
                         f'SKIP (no geometry) record #{position}'
                     )
                 continue
+            if detection is NOT_A_DETECTION:
+                summary.skipped_not_detection += 1
+                if verbose:
+                    self.stdout.write(
+                        f'SKIP (not a detection) record #{position}'
+                    )
+                continue
+            if default_facility_type and not detection.facility_type:
+                detection.facility_type = default_facility_type
             if detection.warnings:
                 summary.repaired += 1
                 for warning in detection.warnings:
