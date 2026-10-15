@@ -1200,6 +1200,25 @@ variable "earth_genome_contributor_id" {
   description = "EARTH_GENOME_CONTRIBUTOR_ID: id of the api_contributor row the Earth Genome candidate ingest writes under. Only this contributor may create candidate (nameless) facilities (OSDEV-3248). Empty means nobody may; set per environment before the ingest runs."
 }
 
+variable "earth_index_api_url" {
+  type        = string
+  default     = "https://api.earthindex.ai"
+  description = "EARTH_INDEX_API_URL for the CLI task: base URL of the Earth Index API that `ingest_satellite_detections --project` exports deep-search results from (OSDEV-3244)."
+}
+
+variable "earth_index_api_key" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "EARTH_INDEX_API_KEY for the CLI task: an Earth Index API key (bearer token). Empty means the ingest can only read from a file (OSDEV-3244)."
+}
+
+variable "earth_index_project_id" {
+  type        = string
+  default     = ""
+  description = "EARTH_INDEX_PROJECT_ID for the CLI task: the Earth Index project `ingest_satellite_detections --project` uses when given no value (OSDEV-3244)."
+}
+
 # VPN EC2 variables
 
 variable "vpn_ec2_ami" {
