@@ -72,6 +72,8 @@ export const CANDIDATE_COPY = Object.freeze({
     provenanceConfidence: 'Confidence',
     provenanceExternalId: 'External ID',
     provenanceDetected: 'Detected',
+    viewCandidatePage: 'View candidate page',
+    tooltipHint: 'Click for details',
     // Design: section title used for the inline panel on the detail page.
     detailSectionTitle: 'Community validation',
     detailHiddenSectionsNote:

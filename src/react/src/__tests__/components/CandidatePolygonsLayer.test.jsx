@@ -157,10 +157,14 @@ describe('CandidatePolygonsLayer', () => {
         expect(layerHandlers[0].layer.setStyle).toHaveBeenCalledWith(
             expect.objectContaining({ dashArray: '6 4' }),
         );
-        expect(layerHandlers[1].layer.bindTooltip).toHaveBeenCalledWith(
-            'Disputed',
-            expect.any(Object),
+        const [tooltip, options] = layerHandlers[1].layer.bindTooltip.mock
+            .calls[0];
+        expect(tooltip.textContent).toContain('Disputed');
+        expect(tooltip.textContent).toContain(
+            layerHandlers[1].feature.properties.os_id,
         );
+        expect(tooltip.textContent).toContain('Click for details');
+        expect(options).toEqual(expect.objectContaining({ sticky: true }));
     });
 
     it('does not request when zoomed out below the minimum zoom', () => {

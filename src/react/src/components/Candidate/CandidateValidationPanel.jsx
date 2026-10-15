@@ -311,6 +311,17 @@ const CandidateValidationPanel = ({
                         {candidate.externalId}
                     </Typography>
                 )}
+                {isOverlay && (
+                    <Typography className={classes.metaRow}>
+                        <Link
+                            to={makeFacilityDetailLink(candidate.osId)}
+                            className={classes.knowLink}
+                            data-testid="candidate-page-link"
+                        >
+                            {CANDIDATE_COPY.viewCandidatePage}
+                        </Link>
+                    </Typography>
+                )}
             </div>
 
             <div className={classes.section}>

@@ -14,7 +14,10 @@ import {
     makeCandidatesBboxURL,
     shouldFetchCandidates,
 } from '../../util/candidates';
-import { CANDIDATE_STATE_LABELS } from '../../util/candidateCopy';
+import {
+    CANDIDATE_COPY,
+    CANDIDATE_STATE_LABELS,
+} from '../../util/candidateCopy';
 
 const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
 
@@ -43,6 +46,27 @@ export const buildCandidatesRequestURL = map => {
  * request fails (incl. 429) nothing new is drawn, and footprints from a
  * different viewport are cleared rather than left in place.
  */
+// A sticky hover tooltip cannot hold a clickable link (it follows the
+// cursor and closes on mouseout), so it identifies the footprint and points
+// at the click; the overlay panel carries the link to the candidate's page.
+// Built from DOM nodes rather than an HTML string so the OS ID is text.
+const makeTooltip = (label, osId) => {
+    const root = document.createElement('div');
+    root.className = 'candidate-tooltip';
+    const title = document.createElement('strong');
+    title.textContent = label;
+    root.appendChild(title);
+    if (osId) {
+        root.appendChild(document.createElement('br'));
+        root.appendChild(document.createTextNode(osId));
+    }
+    root.appendChild(document.createElement('br'));
+    const hint = document.createElement('em');
+    hint.textContent = CANDIDATE_COPY.tooltipHint;
+    root.appendChild(hint);
+    return root;
+};
+
 const CandidatePolygonsLayer = ({
     leaflet,
     onCandidateClick,
@@ -145,7 +169,10 @@ const CandidatePolygonsLayer = ({
         if (layer.setStyle) layer.setStyle(base);
         const label = CANDIDATE_STATE_LABELS[feature.properties.state];
         if (label && layer.bindTooltip) {
-            layer.bindTooltip(label, { sticky: true, direction: 'top' });
+            layer.bindTooltip(makeTooltip(label, feature.properties.os_id), {
+                sticky: true,
+                direction: 'top',
+            });
         }
         layer.on('mouseover', () => layer.setStyle && layer.setStyle(hover));
         layer.on('mouseout', () => layer.setStyle && layer.setStyle(base));

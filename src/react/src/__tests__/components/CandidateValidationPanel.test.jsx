@@ -338,6 +338,22 @@ describe('CandidateValidationPanel', () => {
         );
     });
 
+    it('links to the candidate page from the overlay only', () => {
+        renderPanel(makeCandidate(), loggedIn, { variant: 'overlay' });
+        expect(screen.getByTestId('candidate-page-link')).toHaveAttribute(
+            'href',
+            expect.stringContaining(OS_ID),
+        );
+        expect(screen.getByTestId('candidate-page-link')).toHaveTextContent(
+            'View candidate page',
+        );
+    });
+
+    it('does not link to itself when rendered inline', () => {
+        renderPanel(makeCandidate(), loggedIn, { variant: 'inline' });
+        expect(screen.queryByTestId('candidate-page-link')).toBeNull();
+    });
+
     it('moves focus to the heading when opened as an overlay', () => {
         renderPanel(makeCandidate(), loggedIn, {
             variant: 'overlay',
