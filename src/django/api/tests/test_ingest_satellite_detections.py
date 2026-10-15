@@ -1,7 +1,9 @@
 import json
 import os
+import shutil
 import tempfile
 from io import StringIO
+from unittest.mock import patch
 
 from api.models import (
     Contributor,
@@ -16,6 +18,7 @@ from api.models import (
 from api.services.candidate_matches import suggested_matches
 from django.contrib.gis.geos import Point
 from django.core.management import call_command
+from botocore.exceptions import ClientError
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 
@@ -531,3 +534,94 @@ class IngestSatelliteDetectionsTest(TestCase):
             self._run('--file', path)
         with self.assertRaises(CommandError):
             self._run('--file', os.path.join(self.tmpdir.name, 'nope.json'))
+
+    # --- review fixes: invalid rings are repaired, input can come from S3 -
+
+    @staticmethod
+    def _ring(*points):
+        return {'type': 'Polygon', 'coordinates': [[list(p) for p in points]]}
+
+    def test_self_touching_ring_is_repaired_with_a_warning(self):
+        # A zero-width spike makes the ring self-intersect (the shape of
+        # the AL674 polygon in the real export); make_valid drops the spike
+        # and leaves the same square.
+        x, y = SITE_LNG, SITE_LAT
+        spike = self._ring(
+            (x, y), (x + 0.002, y), (x + 0.002, y + 0.002),
+            (x + 0.001, y + 0.002), (x + 0.001, y + 0.001),
+            (x + 0.001, y + 0.002), (x, y + 0.002), (x, y),
+        )
+        record = _prototype_record('AL674', x + 0.001, y + 0.001)
+        record['polygon'] = spike
+        path = self._write('spike.json', [record])
+
+        out, err = self._run('--file', path)
+
+        self.assertIn('WARNING AL674: repaired invalid polygon', err)
+        self.assertIn('repaired=1 errors=0', out)
+        candidate = self._candidates().get(external_id='AL674')
+        self.assertTrue(candidate.polygon.valid)
+        self.assertAlmostEqual(0.002 * 0.002, candidate.polygon.area, places=9)
+
+    def test_figure_eight_ring_is_an_error_not_a_lossy_repair(self):
+        x, y = SITE_LNG, SITE_LAT
+        bowtie = self._ring(
+            (x, y), (x + 0.002, y + 0.002), (x + 0.002, y),
+            (x, y + 0.002), (x, y),
+        )
+        record = _prototype_record('BOW1', x + 0.001, y + 0.001)
+        record['polygon'] = bowtie
+        path = self._write('bowtie.json', [record])
+
+        with self.assertRaises(CommandError) as ctx:
+            self._run('--file', path)
+
+        self.assertIn('repaired=0 errors=1', str(ctx.exception))
+        self.assertEqual(0, self._candidates().count())
+
+    def test_file_can_be_an_s3_uri(self):
+        calls = []
+        json_path = self.json_path
+
+        class FakeS3:
+            def download_file(self, bucket, key, filename):
+                calls.append((bucket, key))
+                shutil.copyfile(json_path, filename)
+
+        with override_settings(AWS_S3_ENDPOINT_URL='http://minio:9000'), \
+                patch('boto3.client', return_value=FakeS3()) as client:
+            out, _ = self._run(
+                '--file', 's3://os-hub-dev/earth-genome/detections.json'
+            )
+
+        client.assert_called_once_with(
+            's3', endpoint_url='http://minio:9000'
+        )
+        self.assertEqual(
+            [('os-hub-dev', 'earth-genome/detections.json')], calls
+        )
+        self.assertIn('created=3', out)
+        self.assertEqual(3, self._candidates().count())
+
+    def test_s3_download_failure_is_a_command_error(self):
+        class FailingS3:
+            def download_file(self, bucket, key, filename):
+                raise ClientError(
+                    {'Error': {'Code': 'NoSuchKey', 'Message': 'missing'}},
+                    'GetObject',
+                )
+
+        with patch('boto3.client', return_value=FailingS3()):
+            with self.assertRaises(CommandError) as ctx:
+                self._run('--file', 's3://os-hub-dev/nope.json')
+
+        self.assertIn(
+            'Could not download s3://os-hub-dev/nope.json',
+            str(ctx.exception),
+        )
+        self.assertEqual(0, self._candidates().count())
+
+    def test_malformed_s3_uri_is_refused(self):
+        with self.assertRaises(CommandError) as ctx:
+            self._run('--file', 's3://bucket-only')
+        self.assertIn('expected s3://<bucket>/<key>', str(ctx.exception))

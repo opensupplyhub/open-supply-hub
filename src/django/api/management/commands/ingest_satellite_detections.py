@@ -34,9 +34,11 @@ Usage::
 """
 import json
 import os
+import tempfile
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib.gis.geos import GEOSGeometry, Point, Polygon
@@ -88,6 +90,7 @@ class Detection:
     facility_type: str
     model_version: str
     properties: Dict[str, Any] = field(default_factory=dict)
+    warnings: List[str] = field(default_factory=list)
 
     def payload(self, source):
         """The provenance stored in ``FacilityListItem.raw_json``."""
@@ -112,6 +115,7 @@ class Summary:
     updated: int = 0
     skipped_retired: int = 0
     skipped_no_geometry: int = 0
+    repaired: int = 0
     errors: int = 0
     with_suggestions: int = 0
     suggestions: int = 0
@@ -121,7 +125,7 @@ class Summary:
             f'created={self.created} updated={self.updated} '
             f'skipped_retired={self.skipped_retired} '
             f'skipped_no_geometry={self.skipped_no_geometry} '
-            f'errors={self.errors} '
+            f'repaired={self.repaired} errors={self.errors} '
             f'with_suggestions={self.with_suggestions} '
             f'(suggestions={self.suggestions})'
         )
@@ -130,8 +134,42 @@ class Summary:
 # --- input parsing ---------------------------------------------------------
 
 
-def _as_polygon(geometry, external_id):
-    """GeoJSON geometry dict (or None) -> Polygon with SRID 4326, or None."""
+def _polygons_in(geom):
+    """Every non-empty Polygon inside ``geom`` (any nesting of collections)."""
+    if geom.empty:
+        return []
+    if geom.geom_type == 'Polygon':
+        return [geom]
+    if geom.geom_type in ('MultiPolygon', 'GeometryCollection'):
+        return [p for part in geom for p in _polygons_in(part)]
+    return []
+
+
+def _single_polygon(geom):
+    """The one Polygon ``geom`` consists of, or None."""
+    parts = _polygons_in(geom)
+    if len(parts) != 1:
+        return None
+    polygon = parts[0]
+    polygon.srid = 4326
+    return polygon
+
+
+def _as_polygon(geometry, external_id, warnings):
+    """
+    GeoJSON geometry dict (or None) -> Polygon with SRID 4326, or None.
+
+    An invalid ring (the real Earth Genome export has at least one
+    self-intersecting polygon) is repaired with GEOS ``make_valid``, which
+    keeps every part of the input: a zero-width spike comes back as the
+    same polygon (plus linework, dropped), a figure-eight as two polygons.
+    A repair that yields exactly one polygon is reported through
+    ``warnings`` and counted in the summary, not treated as an error, so
+    a non-zero exit stays reserved for rows that cannot be ingested at
+    all. Anything else (two lobes, nothing left) is an error as before;
+    ``buffer(0)`` is deliberately not used because it silently drops a
+    lobe of a figure-eight.
+    """
     if geometry is None:
         return None
     try:
@@ -142,19 +180,27 @@ def _as_polygon(geometry, external_id):
         ) from exc
     if geom.empty:
         return None
-    if geom.geom_type == 'MultiPolygon' and len(geom) == 1:
-        geom = geom[0]
-        geom.srid = 4326
-    if geom.geom_type != 'Polygon':
+    polygon = _single_polygon(geom)
+    if polygon is None:
         raise DetectionError(
             f'{external_id}: geometry must be a Polygon, got '
             f'{geom.geom_type}'
         )
-    if not geom.valid:
+    if polygon.valid:
+        return polygon
+
+    reason = polygon.valid_reason
+    repaired = _single_polygon(polygon.make_valid())
+    if repaired is None or not repaired.valid:
         raise DetectionError(
-            f'{external_id}: invalid polygon ({geom.valid_reason})'
+            f'{external_id}: invalid polygon ({reason}) and make_valid '
+            'did not yield a single polygon'
         )
-    return geom
+    warnings.append(
+        f'{external_id}: repaired invalid polygon ({reason}) with '
+        'make_valid'
+    )
+    return repaired
 
 
 def _as_float(value, external_id, label):
@@ -179,7 +225,8 @@ def _from_prototype_record(record, position):
     if not isinstance(record, dict):
         raise DetectionError(f'record #{position}: not an object')
     external_id = _require_external_id(record.get('eg_id'), position)
-    polygon = _as_polygon(record.get('polygon'), external_id)
+    warnings: List[str] = []
+    polygon = _as_polygon(record.get('polygon'), external_id, warnings)
 
     lat = _as_float(record.get('centroid_lat'), external_id, 'centroid_lat')
     lng = _as_float(record.get('centroid_lng'), external_id, 'centroid_lng')
@@ -204,6 +251,7 @@ def _from_prototype_record(record, position):
         facility_type=str(record.get('probable_facility_type') or ''),
         model_version=str(record.get('eg_model_version') or ''),
         properties=properties,
+        warnings=warnings,
     )
 
 
@@ -215,7 +263,8 @@ def _from_feature(feature, position):
     external_id = _require_external_id(
         properties.get('id', feature.get('id')), position
     )
-    polygon = _as_polygon(feature.get('geometry'), external_id)
+    warnings: List[str] = []
+    polygon = _as_polygon(feature.get('geometry'), external_id, warnings)
     if polygon is None:
         return None
     centroid = polygon.centroid
@@ -238,7 +287,57 @@ def _from_feature(feature, position):
             or ''
         ),
         properties=properties,
+        warnings=warnings,
     )
+
+
+def materialize_input(file_option):
+    """
+    Resolve ``--file`` to a local path. Returns ``(path, cleanup)``.
+
+    ``s3://bucket/key`` is downloaded to a temporary file: the deployed
+    CLI task (``run_cli_task`` / app_cli.json) has no way to receive a
+    local file, so the export is uploaded to S3 first and referenced from
+    there. Locally the same URI form reaches MinIO through
+    ``AWS_S3_ENDPOINT_URL``. Any other value is a path on this machine.
+    """
+    if not file_option.startswith('s3://'):
+        path = os.path.abspath(file_option)
+        if not os.path.isfile(path):
+            raise CommandError(f'No such file: {path}')
+        return path, (lambda: None)
+
+    parsed = urlparse(file_option)
+    bucket, key = parsed.netloc, parsed.path.lstrip('/')
+    if not bucket or not key:
+        raise CommandError(
+            f'{file_option}: expected s3://<bucket>/<key>'
+        )
+    import boto3  # the storages backend already depends on it
+    from botocore.exceptions import BotoCoreError, ClientError
+
+    handle = tempfile.NamedTemporaryFile(
+        prefix='detections-', suffix=os.path.splitext(key)[1] or '.json',
+        delete=False,
+    )
+    handle.close()
+    client = boto3.client(
+        's3', endpoint_url=getattr(settings, 'AWS_S3_ENDPOINT_URL', None)
+    )
+    try:
+        client.download_file(bucket, key, handle.name)
+    except (BotoCoreError, ClientError) as exc:
+        os.unlink(handle.name)
+        raise CommandError(
+            f'Could not download {file_option}: {exc}'
+        ) from exc
+
+    def cleanup():
+        try:
+            os.unlink(handle.name)
+        except OSError:
+            pass
+    return handle.name, cleanup
 
 
 def load_records(path):
@@ -277,9 +376,11 @@ class Command(BaseCommand):
             '--file',
             required=True,
             help=(
-                'Path to the detections: a GeoJSON FeatureCollection as '
-                'exported by Earth Genome, or the prototype JSON list '
-                '(nc_candidates.json format).'
+                'The detections: a GeoJSON FeatureCollection as exported '
+                'by Earth Genome, or the prototype JSON list '
+                '(nc_candidates.json format). A local path, or an '
+                's3://<bucket>/<key> URI (how the deployed CLI task '
+                'receives the file).'
             ),
         )
         parser.add_argument(
@@ -316,10 +417,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        path = os.path.abspath(options['file'])
-        if not os.path.isfile(path):
-            raise CommandError(f'No such file: {path}')
+        path, cleanup = materialize_input(options['file'])
+        try:
+            self._handle(path, options)
+        finally:
+            cleanup()
 
+    def _handle(self, path, options):
         source = (options['source'] or '').strip()
         if not source:
             raise CommandError('--source must not be empty')
@@ -361,6 +465,10 @@ class Command(BaseCommand):
                         f'SKIP (no geometry) record #{position}'
                     )
                 continue
+            if detection.warnings:
+                summary.repaired += 1
+                for warning in detection.warnings:
+                    self.stderr.write(f'WARNING {warning}')
 
             try:
                 self._ingest(
