@@ -26,7 +26,9 @@ class CandidateRetirementRequests(ViewSet):
         Retires the candidate with the live tally through
         ``retire_candidate`` (hard delete + NOT_A_FACILITY tombstone) and
         answers 200 ``{os_id, state: "retired", tally}``. 404 when the
-        request is not (or no longer) open.
+        request is not (or no longer) open, 409 when the live tally no
+        longer reaches consensus-no (the request is closed in that case
+        and nothing is deleted).
 
     There is deliberately no reject action yet: a request dissolves on
     its own when later votes break the consensus, and whether moderators
@@ -64,9 +66,24 @@ class CandidateRetirementRequests(ViewSet):
                 detail=APIV1CandidateVoteErrorMessages.REQUEST_NOT_FOUND
             )
 
-        tombstone = candidate_validation.approve_retirement(
-            retirement_request, request.user
-        )
+        try:
+            tombstone = candidate_validation.approve_retirement(
+                retirement_request, request.user
+            )
+        except candidate_validation.RetirementRequestClosedError:
+            raise NotFound(
+                detail=APIV1CandidateVoteErrorMessages.REQUEST_NOT_FOUND
+            )
+        except candidate_validation.ConsensusBrokenError as exc:
+            return Response(
+                {
+                    'detail':
+                        APIV1CandidateVoteErrorMessages.CONSENSUS_BROKEN,
+                    'os_id': exc.os_id,
+                    'tally': exc.live_tally,
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
         return Response(
             {
                 'os_id': tombstone.os_id,

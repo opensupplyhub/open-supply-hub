@@ -343,6 +343,10 @@ class APIV1CandidateVoteErrorMessages:
     )
     INVALID_VOTE = "vote must be 'confirmed' or 'not_a_facility'."
     REQUEST_NOT_FOUND = 'Candidate retirement request not found.'
+    CONSENSUS_BROKEN = (
+        'The live tally no longer supports retirement; the request has '
+        'been closed and the candidate was not retired.'
+    )
 
 
 # If the error isn’t field-specific, the non_field_errors key will be used

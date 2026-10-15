@@ -142,6 +142,26 @@ class VoteOutcome:
         return public_state(self.state, retired=self.retired)
 
 
+class CandidateGoneError(Exception):
+    """The candidate row no longer exists (retired or deleted) by the time
+    the vote takes its row lock."""
+
+
+class RetirementRequestClosedError(Exception):
+    """The retirement request is no longer open: its candidate is gone or
+    the request row was dissolved before the moderator's lock."""
+
+
+class ConsensusBrokenError(Exception):
+    """The live tally no longer reaches consensus-no, so the request must
+    not be executed; it is closed instead."""
+
+    def __init__(self, os_id, live_tally):
+        super().__init__(os_id)
+        self.os_id = os_id
+        self.live_tally = live_tally
+
+
 class VotingClosedError(Exception):
     """Raised when a vote is cast on a confirmed candidate."""
 
@@ -164,11 +184,14 @@ def cast_vote(facility, user, vote):
       dissolves an open request, since there is no longer anything to
       retire.
     """
-    facility = (
-        Facility.including_candidates
-        .select_for_update()
-        .get(pk=facility.pk)
-    )
+    try:
+        facility = (
+            Facility.including_candidates
+            .select_for_update()
+            .get(pk=facility.pk)
+        )
+    except Facility.DoesNotExist:
+        raise CandidateGoneError(facility.pk)
 
     if voting_is_closed(derive_state(tally(facility))):
         raise VotingClosedError(facility.id)
@@ -213,13 +236,44 @@ def approve_retirement(request, moderator):
     live tally (not the snapshot, in case votes arrived since) and credit
     ``moderator`` as ``retired_by``. The request row CASCADEs away with
     the facility. Returns the tombstone.
+
+    Everything is re-checked under the candidate's row lock, because the
+    request the caller read may be stale by the time the lock is taken:
+
+    * the candidate is gone (a concurrent approval or auto-retire)
+      -> ``RetirementRequestClosedError``;
+    * the request row has been dissolved (a vote broke the consensus)
+      -> ``RetirementRequestClosedError``;
+    * the request row still exists but the live tally no longer reaches
+      consensus-no (votes changed without going through ``cast_vote``)
+      -> the request is closed and ``ConsensusBrokenError`` is raised.
+      A moderator must never hard-delete a candidate the community
+      currently disputes.
     """
     with transaction.atomic():
-        facility = (
-            Facility.including_candidates
-            .select_for_update()
-            .get(pk=request.facility_id)
-        )
-        return retire_candidate(
-            facility, tally(facility), retired_by=moderator
-        )
+        try:
+            facility = (
+                Facility.including_candidates
+                .select_for_update()
+                .get(pk=request.facility_id)
+            )
+        except Facility.DoesNotExist:
+            raise RetirementRequestClosedError(request.facility_id)
+
+        still_open = FacilityCandidateRetirementRequest.objects.filter(
+            pk=request.pk, facility=facility
+        ).exists()
+        if not still_open:
+            raise RetirementRequestClosedError(facility.id)
+
+        live_tally = tally(facility)
+        if derive_state(live_tally) == RETIRED:
+            return retire_candidate(
+                facility, live_tally, retired_by=moderator
+            )
+        # Close the stale request in its own transaction: raising inside
+        # the block above would roll the delete back with it.
+        FacilityCandidateRetirementRequest.objects.filter(
+            pk=request.pk
+        ).delete()
+    raise ConsensusBrokenError(facility.id, live_tally)

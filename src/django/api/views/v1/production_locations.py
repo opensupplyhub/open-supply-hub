@@ -7,7 +7,6 @@ from django.db import transaction
 
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
@@ -108,10 +107,25 @@ class ProductionLocations(ViewSet):
                 or self.action == 'partial_update'):
             return [IsRegisteredAndConfirmed]
         if self.__is_vote_write():
-            # Ticket OSDEV-3245: any authenticated account may vote; the
-            # (facility, user) unique constraint is the anti-abuse control.
-            return [IsAuthenticated]
+            # OSDEV-3245: the same bar as the other v1 write actions. A
+            # session alone is not enough: login() succeeds before the
+            # email confirmation check, so IsAuthenticated would let an
+            # unconfirmed throwaway account vote.
+            return [IsRegisteredAndConfirmed]
         return []
+
+    @staticmethod
+    def __candidate_gone_response(os_id):
+        tombstone = get_tombstone(os_id)
+        if tombstone is not None:
+            return Response(
+                data=tombstone_payload(tombstone),
+                status=status.HTTP_410_GONE,
+            )
+        return Response(
+            data={'detail': APIV1CommonErrorMessages.LOCATION_NOT_FOUND},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     def __is_vote_write(self):
         return (
@@ -246,16 +260,7 @@ class ProductionLocations(ViewSet):
         '''
         facility = Facility.including_candidates.filter(pk=pk).first()
         if facility is None:
-            tombstone = get_tombstone(pk)
-            if tombstone is not None:
-                return Response(
-                    data=tombstone_payload(tombstone),
-                    status=status.HTTP_410_GONE,
-                )
-            return Response(
-                data={'detail': APIV1CommonErrorMessages.LOCATION_NOT_FOUND},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            return self.__candidate_gone_response(pk)
         if not facility.is_candidate:
             return Response(
                 data={
@@ -296,6 +301,10 @@ class ProductionLocations(ViewSet):
             outcome = candidate_validation.cast_vote(
                 facility, request.user, vote
             )
+        except candidate_validation.CandidateGoneError:
+            # Retired (or deleted) between the lookup above and the row
+            # lock inside cast_vote: answer as if it had never been found.
+            return self.__candidate_gone_response(pk)
         except candidate_validation.VotingClosedError:
             return Response(
                 data={

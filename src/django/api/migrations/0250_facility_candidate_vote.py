@@ -24,6 +24,13 @@ class Migration(migrations.Migration):
     lock_timeout makes the migration fail fast instead; it is atomic, so
     a timeout rolls everything back and rerunning migrate is the whole
     recovery.
+
+    Django emits the foreign-key ADD CONSTRAINT statements (and the
+    unique index) as deferred SQL, after the last operation. A plain
+    SET / RESET pair around the operations would therefore end before the
+    statements that actually take the locks. SET LOCAL lasts until the
+    migration transaction ends, which is after the deferred SQL runs; the
+    mirror-image RunSQL at the end does the same when migrating backwards.
     """
 
     dependencies = [
@@ -33,8 +40,8 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            sql="SET lock_timeout = '5s';",
-            reverse_sql="SET lock_timeout = '5s';",
+            sql="SET LOCAL lock_timeout = '5s';",
+            reverse_sql=migrations.RunSQL.noop,
         ),
         migrations.CreateModel(
             name='FacilityCandidateVote',
@@ -149,7 +156,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunSQL(
-            sql='RESET lock_timeout;',
-            reverse_sql='RESET lock_timeout;',
+            sql=migrations.RunSQL.noop,
+            reverse_sql="SET LOCAL lock_timeout = '5s';",
         ),
     ]

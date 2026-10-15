@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from allauth.account.models import EmailAddress
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.db.models.signals import post_delete
 from django.test import SimpleTestCase, override_settings
@@ -16,7 +19,11 @@ from api.models import (
     Source,
     User,
 )
-from api.services.candidate_retirement import RETIRED_DETAIL
+from api.services import candidate_validation
+from api.services.candidate_retirement import (
+    RETIRED_DETAIL,
+    retire_candidate,
+)
 from api.services.candidate_validation import (
     CONFIRMED,
     DISPUTED,
@@ -590,3 +597,90 @@ class CandidateVotesApiTest(APITestCase):
             status.HTTP_410_GONE,
             self.client.get(self._votes_url(os_id)).status_code,
         )
+
+    # --- review fixes: confirmed email, lost races, approval re-check ---
+
+    def test_unconfirmed_email_post_is_403_and_writes_nothing(self):
+        EmailAddress.objects.create(
+            user=self.user,
+            email=self.user.email,
+            primary=True,
+            verified=False,
+        )
+
+        response = self._vote(self.user, YES)
+
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual(0, self._votes().count())
+        # Reading the tally stays open to everyone.
+        self.client.force_authenticate(user=self.user)
+        self.assertEqual(
+            status.HTTP_200_OK, self.client.get(self.url).status_code
+        )
+
+    def test_cast_vote_on_a_candidate_retired_meanwhile_raises_gone(self):
+        stale = Facility.including_candidates.get(pk=self.candidate.id)
+        retire_candidate(
+            self.candidate, {'confirmed': 0, 'not_a_facility': 3}
+        )
+
+        with self.assertRaises(candidate_validation.CandidateGoneError):
+            candidate_validation.cast_vote(stale, self.user, YES)
+
+    def test_view_answers_a_lost_race_as_gone_not_500(self):
+        # The lookup finds the candidate, then the row disappears before
+        # cast_vote takes its lock. No tombstone here, so 404.
+        with patch.object(
+            candidate_validation,
+            'cast_vote',
+            side_effect=candidate_validation.CandidateGoneError(
+                self.candidate.id
+            ),
+        ):
+            response = self._vote(self.user, YES)
+
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+        self.assertEqual(0, self._votes().count())
+
+    def test_approve_refuses_when_the_live_tally_is_disputed(self):
+        for voter in self.voters[:3]:
+            self._vote(voter, NO)
+        request = FacilityCandidateRetirementRequest.objects.get()
+        # Flip one vote behind cast_vote's back: the request row survives
+        # while the live tally (1 yes / 2 no) no longer reaches the 0.75
+        # retire margin.
+        FacilityCandidateVote.objects.filter(user=self.voters[0]).update(
+            vote=YES
+        )
+        self.client.force_authenticate(user=self.superuser)
+
+        response = self.client.post(
+            f'/api/v1/candidate-retirement-requests/{request.id}/approve/'
+        )
+
+        self.assertEqual(status.HTTP_409_CONFLICT, response.status_code)
+        self.assertEqual(
+            {'confirmed': 1, 'not_a_facility': 2}, response.data['tally']
+        )
+        self.assertTrue(
+            Facility.including_candidates.filter(
+                id=self.candidate.id
+            ).exists()
+        )
+        self.assertFalse(
+            FacilityAlias.objects.filter(os_id=self.candidate.id).exists()
+        )
+        self.assertFalse(FacilityCandidateRetirementRequest.objects.exists())
+
+    def test_approve_after_the_candidate_is_gone_is_closed(self):
+        for voter in self.voters[:3]:
+            self._vote(voter, NO)
+        request = FacilityCandidateRetirementRequest.objects.get()
+        retire_candidate(
+            self.candidate, {'confirmed': 0, 'not_a_facility': 3}
+        )
+
+        with self.assertRaises(
+            candidate_validation.RetirementRequestClosedError
+        ):
+            candidate_validation.approve_retirement(request, self.superuser)
