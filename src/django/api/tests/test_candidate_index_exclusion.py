@@ -224,6 +224,14 @@ class CandidateDeleteSignalTest(TestCase):
             name='delete signal contributor',
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
+        # The pilot guard (OSDEV-3248) only lets the designated contributor
+        # create candidates; point it at this fixture so the two branches
+        # stay green once both are merged.
+        guard_settings = override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=contributor.id
+        )
+        guard_settings.enable()
+        self.addCleanup(guard_settings.disable)
         facility_list = FacilityList.objects.create(
             header='header', file_name='one', name='Delete signal list'
         )
