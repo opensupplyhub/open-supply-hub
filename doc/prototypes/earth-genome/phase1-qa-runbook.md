@@ -91,14 +91,16 @@ Earth Genome delivery). The command accepts two shapes:
 |---|---|---|---|
 | `nc_candidates.json` | prototype JSON list (`eg_id`, `polygon`, `centroid_*`, `confidence_score`) | 3,911 NC detections | **recommended staging file**; supports point-only rows |
 | `al_candidates.json` | same | 2,839 AL detections | second state, same source |
-| `SouthernStatesCombined_rectpolys_MLP64-16poultry.geojson` | Earth Genome GeoJSON FeatureCollection (`properties.id`, `properties.confidence`) | 16,372 | the full delivery; **2 null geometries (skipped) and 1 invalid ring (`AL674`) → `errors=1` and a non-zero exit, expected**; the other 16,369 rows are written |
+| `SouthernStatesCombined_rectpolys_MLP64-16poultry.geojson` | Earth Genome GeoJSON FeatureCollection (`properties.id`, `properties.confidence`) | 16,372 | the full delivery; **2 null geometries (skipped) and 1 invalid ring (`AL674`), repaired with `make_valid` → `skipped_no_geometry=2 repaired=1 errors=0` and exit 0, expected**; all 16,370 rows with geometry are written |
 
 `osh_nc.geojson` / `nc_all.geojson` / `us_animal_production_sector.geojson`
 are exports of existing OS Hub facilities (Point features) used by the
 prototype map; they are **not** ingest inputs (a Point geometry is rejected
 as "geometry must be a Polygon").
 
-- [ ] Copy the file into the container / CLI task and dry-run first:
+- [ ] Dry-run first. Locally, copy the file into the container; on a deployed
+  environment the CLI task cannot receive a local file, so upload the export to
+  the environment's S3 bucket and pass `--file s3://<bucket>/<key>` instead:
 
   ```bash
   python manage.py ingest_satellite_detections --file /usr/local/src/nc_candidates.json --country-code US --dry-run --limit 50
@@ -110,14 +112,16 @@ as "geometry must be a Polygon").
 
 - [ ] Real run (deployed environments: the same `manage.py` command the way
   other one-off commands such as `backfill_facility_index` are run,
-  `deployment/run_cli_task <Env> "python manage.py ingest_satellite_detections --file ..."`):
+  `deployment/run_cli_task <Env> "python manage.py ingest_satellite_detections --file s3://<bucket>/<key> --country-code US"`):
 
   ```bash
   python manage.py ingest_satellite_detections --file /usr/local/src/nc_candidates.json --country-code US
   ```
 
   Record the summary line: `created=N updated=0 skipped_retired=0
-  skipped_no_geometry=K errors=0`.
+  skipped_no_geometry=K repaired=R errors=0`. A `WARNING <id>: repaired
+  invalid polygon ...` line on stderr per repaired ring is expected, not an
+  error.
 
 - [ ] Database shape (D1 / D2):
 
