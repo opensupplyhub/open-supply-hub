@@ -11,6 +11,7 @@ from django.db.models import EmailField
 from django.db import connections
 
 from api.reassert_rba_promotions import after_database_sync
+from api.services import candidate_guard
 
 from api.models.extended_field import ExtendedField
 from api.models.user import User
@@ -535,10 +536,17 @@ class DatabaseSynchronizer:
             record_data, foreign_keys, model_name
         )
 
-        # Create and save the record.
+        # Create and save the record. The candidate guard (OSDEV-3248) is
+        # suspended for the insert: the sync replays rows that were
+        # already validated on the source instance, and RBA's own
+        # EARTH_GENOME_CONTRIBUTOR_ID (unset, or a different contributor
+        # id) must not reject a candidate or nameless Facility the source
+        # accepted. Without this, one such row would error the Facility
+        # sync and block the post-sync promotion reassert.
         try:
             new_record = model_class(**record_data)
-            new_record.save()
+            with candidate_guard.suspended():
+                new_record.save()
         except Exception as e:
             logger.exception(f'Error inserting record in {model_name}: {e}.')
             raise
