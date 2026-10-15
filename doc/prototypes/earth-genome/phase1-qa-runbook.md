@@ -84,8 +84,26 @@ merges to `main` through its own draft PR, in this order (from
 
 ## 2. Ingest (10 min)
 
-Input files (not committed; they live in the Phase 1 prototype folder /
-Earth Genome delivery). The command accepts two shapes:
+**Preferred input: the Earth Index API.** With `EARTH_INDEX_API_KEY` and
+`EARTH_INDEX_PROJECT_ID` in `.env` (locally) or on the CLI task (deployed),
+`--project` exports every finished deep search of the project and ingests it:
+
+```bash
+python manage.py ingest_satellite_detections --project --country-code US --dry-run --limit 50
+python manage.py ingest_satellite_detections --project --country-code US
+```
+
+Expect `Exported <bytes> bytes from Earth Index project <id>, deep search(es):
+<ids>` first. The project needs at least one deep search with status
+`success`; `--deep-search <id>` picks specific ones and `--layer <id>` limits
+the discovery to one layer. Pass `--facility-type poultry` when the project's
+target label is empty so the synthetic list items get the `Animal Production`
+sector. Verified 2026-10-15 against the `aquaculture` project (6,743
+detections, one finished deep search): `--dry-run --limit 5` lists five
+`CREATE <detection id> -> (new OS ID) confidence=0.99999...` rows.
+
+**Fallback input: a file** (not committed; the Phase 1 files live in the
+prototype folder / Earth Genome delivery). The command accepts two shapes:
 
 | File | Shape | Rows | Use |
 |---|---|---|---|
@@ -98,7 +116,8 @@ are exports of existing OS Hub facilities (Point features) used by the
 prototype map; they are **not** ingest inputs (a Point geometry is rejected
 as "geometry must be a Polygon").
 
-- [ ] Dry-run first. Locally, copy the file into the container; on a deployed
+- [ ] Dry-run first (file path shown; replace `--file ...` with `--project`
+  for the API path). Locally, copy the file into the container; on a deployed
   environment the CLI task cannot receive a local file, so upload the export to
   the environment's S3 bucket and pass `--file s3://<bucket>/<key>` instead:
 
@@ -119,7 +138,7 @@ as "geometry must be a Polygon").
   ```
 
   Record the summary line: `created=N updated=0 skipped_retired=0
-  skipped_no_geometry=K repaired=R errors=0`. A `WARNING <id>: repaired
+  skipped_no_geometry=K skipped_not_detection=0 repaired=R errors=0`. A `WARNING <id>: repaired
   invalid polygon ...` line on stderr per repaired ring is expected, not an
   error.
 
