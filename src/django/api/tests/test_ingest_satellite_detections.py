@@ -703,11 +703,12 @@ class IngestSatelliteDetectionsTest(TestCase):
         json_path = self.json_path
 
         class FakeS3:
-            def download_file(self, bucket, key, filename):
-                calls.append((bucket, key))
+            def download_file(self, bucket, key, filename, ExtraArgs=None):
+                calls.append((bucket, key, ExtraArgs))
                 shutil.copyfile(json_path, filename)
 
-        with override_settings(AWS_S3_ENDPOINT_URL='http://minio:9000'), \
+        with override_settings(AWS_S3_ENDPOINT_URL='http://minio:9000',
+                               AWS_S3_EXPECTED_BUCKET_OWNER=None), \
                 patch('boto3.client', return_value=FakeS3()) as client:
             out, _ = self._run(
                 '--file', 's3://os-hub-dev/earth-genome/detections.json'
@@ -716,15 +717,32 @@ class IngestSatelliteDetectionsTest(TestCase):
         client.assert_called_once_with(
             's3', endpoint_url='http://minio:9000'
         )
+        # No owner configured (local MinIO): no ExpectedBucketOwner.
         self.assertEqual(
-            [('os-hub-dev', 'earth-genome/detections.json')], calls
+            [('os-hub-dev', 'earth-genome/detections.json', {})], calls
         )
+        self.assertIn('created=3', out)
+
+    def test_s3_download_verifies_the_bucket_owner_when_configured(self):
+        calls = []
+        json_path = self.json_path
+
+        class FakeS3:
+            def download_file(self, bucket, key, filename, ExtraArgs=None):
+                calls.append(ExtraArgs)
+                shutil.copyfile(json_path, filename)
+
+        with override_settings(AWS_S3_EXPECTED_BUCKET_OWNER='123456789012'), \
+                patch('boto3.client', return_value=FakeS3()):
+            out, _ = self._run('--file', 's3://os-hub-dev/detections.json')
+
+        self.assertEqual([{'ExpectedBucketOwner': '123456789012'}], calls)
         self.assertIn('created=3', out)
         self.assertEqual(3, self._candidates().count())
 
     def test_s3_download_failure_is_a_command_error(self):
         class FailingS3:
-            def download_file(self, bucket, key, filename):
+            def download_file(self, bucket, key, filename, ExtraArgs=None):
                 raise ClientError(
                     {'Error': {'Code': 'NoSuchKey', 'Message': 'missing'}},
                     'GetObject',
