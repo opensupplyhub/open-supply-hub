@@ -653,6 +653,13 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # Reference # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
 
 AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')
+# The AWS account id that owns the application buckets. When set, S3
+# downloads made by management commands pass it as ExpectedBucketOwner so
+# a bucket name taken over by another account is refused. Unset locally
+# (MinIO has no account id).
+AWS_S3_EXPECTED_BUCKET_OWNER = (
+    os.getenv('AWS_S3_EXPECTED_BUCKET_OWNER') or None
+)
 
 if DEBUG and AWS_S3_ENDPOINT_URL:
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')

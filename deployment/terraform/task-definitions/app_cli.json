@@ -35,7 +35,8 @@
         { "name": "EARTH_GENOME_CONTRIBUTOR_ID", "value": "${earth_genome_contributor_id}" },
         { "name": "EARTH_INDEX_API_URL", "value": "${earth_index_api_url}" },
         { "name": "EARTH_INDEX_API_KEY", "value": "${earth_index_api_key}" },
-        { "name": "EARTH_INDEX_PROJECT_ID", "value": "${earth_index_project_id}" }
+        { "name": "EARTH_INDEX_PROJECT_ID", "value": "${earth_index_project_id}" },
+        { "name": "AWS_S3_EXPECTED_BUCKET_OWNER", "value": "${aws_s3_expected_bucket_owner}" }
     ],
     "secrets": [
         { "name": "POSTGRES_USER", "valueFrom": "${rds_master_secret_arn}:username::" },
