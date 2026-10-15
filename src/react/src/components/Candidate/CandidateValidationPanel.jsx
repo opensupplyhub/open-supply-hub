@@ -84,13 +84,7 @@ VoteButton.propTypes = {
     testId: PropTypes.string.isRequired,
 };
 
-const statusLineContent = ({
-    classes,
-    status,
-    votingOpen,
-    state,
-    sessionPending,
-}) => {
+const statusLineContent = ({ classes, status, votingOpen, sessionPending }) => {
     if (status === VOTE_STATUS.RETIRED) {
         return {
             className: `${classes.statusText} ${classes.statusRetired}`,
@@ -103,7 +97,9 @@ const statusLineContent = ({
             text: CANDIDATE_COPY.saveError,
         };
     }
-    if (!votingOpen || state === CANDIDATE_STATES.CONFIRMED) {
+    // Only the server decides when voting is closed (a retired candidate,
+    // or a defensive 409); a confirmed candidate keeps accepting votes.
+    if (!votingOpen) {
         return {
             className: `${classes.statusText} ${classes.statusClosed}`,
             text: `${CANDIDATE_COPY.votingClosed}. ${CANDIDATE_COPY.votingClosedDetail}`,
@@ -123,12 +119,11 @@ const statusLineContent = ({
 
 // aria-live so screen readers announce "Voting closed" / save errors /
 // session checks as they change without moving focus.
-const StatusLine = ({ classes, status, votingOpen, state, sessionPending }) => {
+const StatusLine = ({ classes, status, votingOpen, sessionPending }) => {
     const { className, text } = statusLineContent({
         classes,
         status,
         votingOpen,
-        state,
         sessionPending,
     });
     return (
@@ -147,7 +142,6 @@ StatusLine.propTypes = {
     classes: PropTypes.object.isRequired,
     status: PropTypes.string.isRequired,
     votingOpen: PropTypes.bool.isRequired,
-    state: PropTypes.string.isRequired,
     sessionPending: PropTypes.bool.isRequired,
 };
 
@@ -376,7 +370,6 @@ const CandidateValidationPanel = ({
                     classes={classes}
                     status={status}
                     votingOpen={votingOpen}
-                    state={state}
                     sessionPending={sessionPending}
                 />
             </div>

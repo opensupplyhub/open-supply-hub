@@ -49,8 +49,7 @@ export const CANDIDATE_COPY = Object.freeze({
         'You can change your vote at any time while voting is open.',
     votingClosed: 'Voting closed',
     votingClosedDetail:
-        'This candidate has been confirmed as a facility. Use the ' +
-        'contribute options to add or correct its details.',
+        'Votes are no longer being accepted for this candidate.',
     retired: 'This candidate was retired',
     retiredDetail:
         'The community agreed this is not a facility, so the record ' +
@@ -91,7 +90,9 @@ export const CANDIDATE_STATE_DESCRIPTIONS = Object.freeze({
     [CANDIDATE_STATES.UNVERIFIED]: 'Not enough votes yet to decide.',
     [CANDIDATE_STATES.DISPUTED]:
         'People disagree about this one. Voting stays open.',
-    [CANDIDATE_STATES.CONFIRMED]: 'The community agrees this is a facility.',
+    [CANDIDATE_STATES.CONFIRMED]:
+        'The community agrees this is a facility. Voting stays open, so ' +
+        'later votes can still change this.',
     [CANDIDATE_STATES.RETIREMENT_PENDING]:
         'The community agrees this is not a facility. A moderator will ' +
         'review before it is removed.',

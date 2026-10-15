@@ -357,24 +357,43 @@ describe('CandidateValidationPanel', () => {
         ).not.toHaveFocus();
     });
 
-    it('renders confirmed candidates as closed without a request', () => {
+    it('keeps voting open on a confirmed candidate and still posts', async () => {
+        resolvePost(
+            {
+                os_id: OS_ID,
+                your_vote: 'not_a_facility',
+                tally: { confirmed: 5, not_a_facility: 1 },
+                state: 'confirmed',
+            },
+            201,
+        );
         renderPanel(
             makeCandidate({
                 validation: {
                     state: 'confirmed',
                     tally: { confirmed: 5, not_a_facility: 0 },
-                    votingOpen: false,
+                    votingOpen: true,
                 },
             }),
         );
 
-        expect(confirmedButton()).toBeDisabled();
-        expect(notFacilityButton()).toBeDisabled();
-        expect(screen.getByTestId('candidate-vote-status')).toHaveTextContent(
+        expect(confirmedButton()).not.toBeDisabled();
+        expect(notFacilityButton()).not.toBeDisabled();
+        expect(screen.getByTestId('candidate-vote-status')).not.toHaveTextContent(
             'Voting closed',
         );
+        expect(
+            screen.getByText(/later votes can still change this/),
+        ).toBeInTheDocument();
+
         fireEvent.click(notFacilityButton());
-        expect(apiRequest.post).not.toHaveBeenCalled();
+
+        await waitFor(() => expect(apiRequest.post).toHaveBeenCalled());
+        await waitFor(() =>
+            expect(screen.getByTestId('candidate-tally')).toHaveTextContent(
+                '5 say facility · 1 say not',
+            ),
+        );
     });
 
     it('explains a retired candidate when the server answers 410', async () => {
