@@ -1,9 +1,10 @@
 import React from 'react';
 import { MemoryRouter, Route } from 'react-router-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { createStore } from 'redux';
 import { Provider } from 'react-redux';
 
+import apiRequest from '../../util/apiRequest';
 import ProductionLocationDetailsMap from '../../components/ProductionLocation/ProductionLocationDetailsMap/ProductionLocationDetailsMap';
 
 jest.mock('leaflet', () => ({ icon: jest.fn(() => ({})) }));
@@ -12,7 +13,18 @@ jest.mock('leaflet/dist/leaflet.css', () => {});
 jest.mock('react-leaflet', () => ({
     Map: ({ children }) => <div data-testid="leaflet-map">{children}</div>,
     TileLayer: () => null,
-    Marker: () => null,
+    Marker: ({ position, title }) => (
+        <div
+            data-testid="map-marker"
+            data-position={JSON.stringify(position)}
+            data-title={title || ''}
+        />
+    ),
+}));
+
+jest.mock('../../util/apiRequest', () => ({
+    __esModule: true,
+    default: { get: jest.fn(), post: jest.fn() },
 }));
 
 jest.mock('react-leaflet-control', () => ({ children }) => <>{children}</>);
@@ -125,6 +137,50 @@ const renderMap = (facilityData = null) =>
     );
 
 describe('ProductionLocationDetailsMap', () => {
+    describe('suggested match marker (OSDEV-3247)', () => {
+        it('draws the chosen match as a second marker from its facility detail', async () => {
+            apiRequest.get.mockResolvedValue({
+                data: {
+                    geometry: { coordinates: [-87.003, 34.213] },
+                    properties: { name: 'Riverside Poultry Plant' },
+                },
+            });
+            render(
+                <Provider store={makeStore(makeFacility())}>
+                    <MemoryRouter initialEntries={['/production-locations/OS12345']}>
+                        <Route
+                            path="/production-locations/:osID"
+                            render={props => (
+                                <ProductionLocationDetailsMap
+                                    {...props}
+                                    highlightedMatchOsId="US2026MATCH0001"
+                                />
+                            )}
+                        />
+                    </MemoryRouter>
+                </Provider>,
+            );
+
+            await waitFor(() =>
+                expect(
+                    screen
+                        .getAllByTestId('map-marker')
+                        .map(el => el.getAttribute('data-title')),
+                ).toContain('Riverside Poultry Plant'),
+            );
+            const match = screen
+                .getAllByTestId('map-marker')
+                .find(el => el.getAttribute('data-title') === 'Riverside Poultry Plant');
+            expect(JSON.parse(match.getAttribute('data-position'))).toEqual([
+                34.213,
+                -87.003,
+            ]);
+            expect(apiRequest.get).toHaveBeenCalledWith(
+                expect.stringContaining('/api/facilities/US2026MATCH0001/'),
+            );
+        });
+    });
+
     describe('section header', () => {
         it('renders the "Geographic Information" section title', () => {
             renderMap(makeFacility());

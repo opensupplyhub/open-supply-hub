@@ -282,6 +282,21 @@ export const candidateValidationPanelStyles = theme => {
             fontSize: '0.75rem',
             color: theme.palette.text.secondary,
         }),
+        matchActions: Object.freeze({
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: spacing * 0.5,
+            marginTop: spacing * 0.5,
+        }),
+        matchButton: Object.freeze({
+            textTransform: 'none',
+            fontSize: '0.75rem',
+            padding: `${spacing * 0.25}px ${spacing}px`,
+            '&[aria-pressed="true"]': {
+                backgroundColor: COLOURS.NAVY_BLUE,
+                color: COLOURS.WHITE,
+            },
+        }),
         knowLink: Object.freeze({
             display: 'inline-flex',
             alignItems: 'center',

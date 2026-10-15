@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import get from 'lodash/get';
@@ -39,6 +39,8 @@ const ProductionLocationDetailsContent = ({
     const candidate = useMemo(() => getCandidateFromFacilityPayload(data), [
         data,
     ]);
+    // Suggested match the voter is comparing on the map (OSDEV-3247).
+    const [highlightedMatchOsId, setHighlightedMatchOsId] = useState(null);
 
     // Satellite-detected candidate (OSDEV-3247): no contributors, claims
     // or extended fields exist yet, so those sections are replaced by the
@@ -62,6 +64,8 @@ const ProductionLocationDetailsContent = ({
                         <CandidateValidationPanel
                             candidate={candidate}
                             variant={PANEL_VARIANTS.INLINE}
+                            highlightedMatchOsId={highlightedMatchOsId}
+                            onShowMatch={setHighlightedMatchOsId}
                         />
                     </Grid>
                     <Grid
@@ -70,7 +74,9 @@ const ProductionLocationDetailsContent = ({
                         lg={5}
                         className={classes.containerItemInner}
                     >
-                        <DetailsMap />
+                        <DetailsMap
+                            highlightedMatchOsId={highlightedMatchOsId}
+                        />
                     </Grid>
                 </Grid>
             </div>

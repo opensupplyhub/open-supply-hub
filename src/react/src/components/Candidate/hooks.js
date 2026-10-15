@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
 import apiRequest from '../../util/apiRequest';
+import { makeGetFacilityByOSIdURL } from '../../util/util';
 import {
     applyVoteToTally,
     getVoteErrorKind,
@@ -83,6 +84,47 @@ export const useCandidateDetail = seed => {
  * and shows a retry message. Anonymous users never send a request; while
  * the session is still unknown (`isAnon` undefined) a click is a no-op.
  */
+/**
+ * The map point of a confirmed facility (a suggested match) so the detail
+ * map can draw it next to the candidate's footprint. The legacy detail
+ * endpoint is used because it serves straight from the database; the v1
+ * detail needs the OpenSearch document, which may lag a fresh record.
+ * Resolves to null while loading, when osId is unset, or on any error.
+ */
+export const useFacilityPoint = osId => {
+    const [point, setPoint] = useState(null);
+    useEffect(() => {
+        if (!osId) {
+            setPoint(null);
+            return undefined;
+        }
+        let cancelled = false;
+        setPoint(null);
+        apiRequest
+            .get(makeGetFacilityByOSIdURL(osId))
+            .then(({ data }) => {
+                const coords =
+                    data && data.geometry && data.geometry.coordinates;
+                if (cancelled || !Array.isArray(coords) || coords.length < 2) {
+                    return;
+                }
+                setPoint({
+                    osId,
+                    lng: Number(coords[0]),
+                    lat: Number(coords[1]),
+                    name: (data.properties && data.properties.name) || osId,
+                });
+            })
+            .catch(() => {
+                if (!cancelled) setPoint(null);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [osId]);
+    return point;
+};
+
 export const useCandidateVote = ({
     osId,
     initialValidation,

@@ -73,6 +73,12 @@ export const CANDIDATE_COPY = Object.freeze({
     provenanceExternalId: 'External ID',
     provenanceDetected: 'Detected',
     viewCandidatePage: 'View candidate page',
+    showMatchOnMap: 'Show on map',
+    hideMatchFromMap: 'Hide from map',
+    sameFacility: 'Yes, same facility',
+    sameFacilityHint:
+        'Counts as a "this is a facility" vote. Linking the two records ' +
+        'is a moderator step.',
     tooltipHint: 'Click for details',
     // Design: section title used for the inline panel on the detail page.
     detailSectionTitle: 'Community validation',

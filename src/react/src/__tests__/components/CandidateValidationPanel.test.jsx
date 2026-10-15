@@ -472,6 +472,80 @@ describe('CandidateValidationPanel', () => {
         expect(screen.getByText('1 Farm Rd · 240 m')).toBeInTheDocument();
     });
 
+    it('lets a voter show a suggested match on the map and toggle it off', () => {
+        const onShowMatch = jest.fn();
+        renderPanel(
+            makeCandidate({
+                suggestedMatches: [
+                    {
+                        osId: 'US2026MATCH0001',
+                        name: 'Riverside Poultry Plant',
+                        address: '120 Mill Road',
+                        distanceM: 192,
+                    },
+                ],
+            }),
+            loggedIn,
+            { onShowMatch, highlightedMatchOsId: null },
+        );
+
+        const show = screen.getByTestId('candidate-match-show');
+        expect(show).toHaveTextContent('Show on map');
+        expect(show).toHaveAttribute('aria-pressed', 'false');
+        fireEvent.click(show);
+        expect(onShowMatch).toHaveBeenCalledWith('US2026MATCH0001');
+    });
+
+    it('renders a shown match as pressed and reports hide on click', () => {
+        const onShowMatch = jest.fn();
+        renderPanel(
+            makeCandidate({
+                suggestedMatches: [
+                    { osId: 'US2026MATCH0001', name: 'Riverside', distanceM: 192 },
+                ],
+            }),
+            loggedIn,
+            { onShowMatch, highlightedMatchOsId: 'US2026MATCH0001' },
+        );
+
+        const show = screen.getByTestId('candidate-match-show');
+        expect(show).toHaveTextContent('Hide from map');
+        expect(show).toHaveAttribute('aria-pressed', 'true');
+        fireEvent.click(show);
+        expect(onShowMatch).toHaveBeenCalledWith(null);
+    });
+
+    it('"Yes, same facility" casts a this-is-a-facility vote', async () => {
+        resolvePost(
+            {
+                os_id: OS_ID,
+                your_vote: 'confirmed',
+                tally: { confirmed: 1, not_a_facility: 0 },
+                state: 'unverified',
+            },
+            201,
+        );
+        renderPanel(
+            makeCandidate({
+                suggestedMatches: [
+                    { osId: 'US2026MATCH0001', name: 'Riverside', distanceM: 192 },
+                ],
+            }),
+        );
+
+        fireEvent.click(screen.getByTestId('candidate-match-same'));
+
+        await waitFor(() =>
+            expect(apiRequest.post).toHaveBeenCalledWith(
+                expect.stringContaining(OS_ID),
+                { vote: 'confirmed' },
+            ),
+        );
+        await waitFor(() =>
+            expect(confirmedButton()).toHaveAttribute('data-selected', 'true'),
+        );
+    });
+
     it('hides "I know this facility" while SLC enrichment is disabled', () => {
         expect(CANDIDATE_SLC_ENRICHMENT_ENABLED).toBe(false);
         renderPanel(makeCandidate());

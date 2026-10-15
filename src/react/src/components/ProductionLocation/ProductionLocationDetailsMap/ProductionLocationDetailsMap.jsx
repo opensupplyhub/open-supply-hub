@@ -24,6 +24,7 @@ import VectorTileFacilitiesLayer, {
 import VectorTileFacilityGridLayer from '../../VectorTileFacilityGridLayer';
 import VectorTileGridLegend from '../../VectorTileGridLegend';
 import CandidatePolygonsLayer from '../../Candidate/CandidatePolygonsLayer';
+import { useFacilityPoint } from '../../Candidate/hooks';
 import CandidateValidationPanel, {
     PANEL_VARIANTS,
 } from '../../Candidate/CandidateValidationPanel';
@@ -44,6 +45,7 @@ import {
 import {
     productionLocationDetailsRoute,
     SelectedMarkerColor,
+    SuggestedMatchMarkerColor,
 } from '../../../util/constants';
 import { normalizeCandidateFeatureProperties } from '../../../util/candidates';
 
@@ -70,6 +72,7 @@ const ProductionLocationDetailsMap = ({
     gridColorRamp,
     history: { push },
     match: { params: { osID } = {} } = {},
+    highlightedMatchOsId,
 }) => {
     const mapRef = useRef(null);
 
@@ -87,6 +90,19 @@ const ProductionLocationDetailsMap = ({
         closeDrawer,
     ] = useDrawerState(null);
     const [activeCandidate, setActiveCandidate] = useState(null);
+
+    // A suggested match the voter wants to compare with the footprint: the
+    // inline panel on the candidate page owns it through props, the overlay
+    // panel through local state. Drawn as a second marker.
+    const [overlayMatchOsId, setOverlayMatchOsId] = useState(null);
+    const shownMatchOsId = activeCandidate
+        ? overlayMatchOsId
+        : highlightedMatchOsId;
+    const matchPoint = useFacilityPoint(shownMatchOsId);
+    const matchMarkerIcon = useMemo(
+        () => createMarkerIcon(SuggestedMatchMarkerColor),
+        [],
+    );
     const [candidateRefreshKey, setCandidateRefreshKey] = useState(0);
     const isCandidatePage = !!get(
         singleFacilityData,
@@ -208,10 +224,10 @@ const ProductionLocationDetailsMap = ({
         setActiveCandidate(normalizeCandidateFeatureProperties(properties));
     }, []);
 
-    const handleCloseCandidate = useCallback(
-        () => setActiveCandidate(null),
-        [],
-    );
+    const handleCloseCandidate = useCallback(() => {
+        setActiveCandidate(null);
+        setOverlayMatchOsId(null);
+    }, []);
 
     // A recorded vote can change a candidate's state; redraw the layer so
     // its styling matches without a reload.
@@ -350,6 +366,15 @@ const ProductionLocationDetailsMap = ({
                                     interactive={false}
                                 />
                             )}
+                            {matchPoint && (
+                                <Marker
+                                    position={[matchPoint.lat, matchPoint.lng]}
+                                    icon={matchMarkerIcon}
+                                    zIndexOffset={900}
+                                    interactive={false}
+                                    title={matchPoint.name}
+                                />
+                            )}
                             {currentMapZoomLevel <=
                                 maxVectorTileFacilitiesGridZoom && (
                                 <VectorTileFacilityGridLayer
@@ -373,6 +398,8 @@ const ProductionLocationDetailsMap = ({
                                 onValidationChange={
                                     handleCandidateValidationChange
                                 }
+                                highlightedMatchOsId={overlayMatchOsId}
+                                onShowMatch={setOverlayMatchOsId}
                             />
                         )}
                     </div>
@@ -449,11 +476,14 @@ ProductionLocationDetailsMap.propTypes = {
     match: PropTypes.shape({
         params: PropTypes.shape({ osID: PropTypes.string }),
     }).isRequired,
+    // Suggested match chosen in the inline candidate panel (OS ID or null).
+    highlightedMatchOsId: PropTypes.string,
 };
 
 ProductionLocationDetailsMap.defaultProps = {
     singleFacilityData: null,
     gridColorRamp: [],
+    highlightedMatchOsId: null,
 };
 
 function mapStateToProps({

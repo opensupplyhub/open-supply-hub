@@ -145,7 +145,18 @@ StatusLine.propTypes = {
     sessionPending: PropTypes.bool.isRequired,
 };
 
-const SuggestedMatches = ({ classes, matches }) => (
+// Each nearby confirmed facility can be shown on the candidate's own map
+// (so the two can be compared without leaving the page) and, if it is the
+// same place, voted as "this is a facility". Which one it is cannot be
+// recorded yet; that is the follow-up ticket for a "same as" vote.
+const SuggestedMatches = ({
+    classes,
+    matches,
+    highlightedMatchOsId,
+    onShowMatch,
+    onSameFacility,
+    actionsDisabled,
+}) => (
     <div className={classes.section}>
         <Typography className={classes.matchesTitle} component="h4">
             {CANDIDATE_COPY.nearbyMatchesTitle}
@@ -156,22 +167,61 @@ const SuggestedMatches = ({ classes, matches }) => (
             </Typography>
         ) : (
             <ul className={classes.matchesList} data-testid="candidate-matches">
-                {matches.map(match => (
-                    <li key={match.osId} className={classes.matchItem}>
-                        <Link
-                            to={makeFacilityDetailLink(match.osId)}
-                            className={classes.matchName}
-                            data-testid="candidate-match-link"
-                        >
-                            {match.name || match.osId}
-                        </Link>
-                        <Typography className={classes.matchMeta}>
-                            {[match.address, formatDistance(match.distanceM)]
-                                .filter(Boolean)
-                                .join(' · ')}
-                        </Typography>
-                    </li>
-                ))}
+                {matches.map(match => {
+                    const shown = highlightedMatchOsId === match.osId;
+                    return (
+                        <li key={match.osId} className={classes.matchItem}>
+                            <Link
+                                to={makeFacilityDetailLink(match.osId)}
+                                className={classes.matchName}
+                                data-testid="candidate-match-link"
+                            >
+                                {match.name || match.osId}
+                            </Link>
+                            <Typography className={classes.matchMeta}>
+                                {[
+                                    match.address,
+                                    formatDistance(match.distanceM),
+                                ]
+                                    .filter(Boolean)
+                                    .join(' · ')}
+                            </Typography>
+                            <div className={classes.matchActions}>
+                                {onShowMatch && (
+                                    <Button
+                                        type="button"
+                                        size="small"
+                                        variant="outlined"
+                                        className={classes.matchButton}
+                                        aria-pressed={shown}
+                                        data-testid="candidate-match-show"
+                                        onClick={() =>
+                                            onShowMatch(
+                                                shown ? null : match.osId,
+                                            )
+                                        }
+                                    >
+                                        {shown
+                                            ? CANDIDATE_COPY.hideMatchFromMap
+                                            : CANDIDATE_COPY.showMatchOnMap}
+                                    </Button>
+                                )}
+                                <Button
+                                    type="button"
+                                    size="small"
+                                    variant="outlined"
+                                    className={classes.matchButton}
+                                    disabled={actionsDisabled}
+                                    title={CANDIDATE_COPY.sameFacilityHint}
+                                    data-testid="candidate-match-same"
+                                    onClick={() => onSameFacility(match)}
+                                >
+                                    {CANDIDATE_COPY.sameFacility}
+                                </Button>
+                            </div>
+                        </li>
+                    );
+                })}
             </ul>
         )}
     </div>
@@ -187,6 +237,15 @@ SuggestedMatches.propTypes = {
             distanceM: PropTypes.number,
         }),
     ).isRequired,
+    highlightedMatchOsId: PropTypes.string,
+    onShowMatch: PropTypes.func,
+    onSameFacility: PropTypes.func.isRequired,
+    actionsDisabled: PropTypes.bool.isRequired,
+};
+
+SuggestedMatches.defaultProps = {
+    highlightedMatchOsId: null,
+    onShowMatch: null,
 };
 
 /**
@@ -211,6 +270,8 @@ const CandidateValidationPanel = ({
     user,
     sessionFetching,
     slcEnrichmentEnabled,
+    highlightedMatchOsId,
+    onShowMatch,
 }) => {
     const [candidate, loadingDetail] = useCandidateDetail(seed);
     const sessionPending =
@@ -388,6 +449,10 @@ const CandidateValidationPanel = ({
             <SuggestedMatches
                 classes={classes}
                 matches={candidate.suggestedMatches || []}
+                highlightedMatchOsId={highlightedMatchOsId}
+                onShowMatch={onShowMatch}
+                onSameFacility={() => handleVote(CANDIDATE_VOTES.CONFIRMED)}
+                actionsDisabled={buttonsDisabled}
             />
 
             {slcEnrichmentEnabled && (
@@ -439,9 +504,15 @@ CandidateValidationPanel.propTypes = {
     sessionFetching: PropTypes.bool,
     // Test/override hook; the product value is CANDIDATE_SLC_ENRICHMENT_ENABLED.
     slcEnrichmentEnabled: PropTypes.bool,
+    // Suggested-match comparison: the parent owns which match is drawn on
+    // the map (null for none) and receives the toggle.
+    highlightedMatchOsId: PropTypes.string,
+    onShowMatch: PropTypes.func,
 };
 
 CandidateValidationPanel.defaultProps = {
+    highlightedMatchOsId: null,
+    onShowMatch: null,
     candidate: null,
     variant: PANEL_VARIANTS.INLINE,
     onClose: null,
