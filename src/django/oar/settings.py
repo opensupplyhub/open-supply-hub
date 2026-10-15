@@ -828,3 +828,15 @@ CANDIDATE_AUTO_RETIRE = (
 # api/services/candidate_matches.py; nothing is stored.
 CANDIDATE_SUGGESTION_RADIUS_M = _env_int('CANDIDATE_SUGGESTION_RADIUS_M', 500)
 CANDIDATE_SUGGESTION_LIMIT = _env_int('CANDIDATE_SUGGESTION_LIMIT', 5)
+
+# Earth Index API (OSDEV-3244): the service hosting Earth Genome's deep
+# searches. `ingest_satellite_detections --project` exports a project's
+# finished deep-search results straight from it (api/services/earth_index.py).
+# EARTH_INDEX_API_KEY: an Earth Index API key, sent as a bearer token.
+#   Unset means the command can only ingest from a file.
+# EARTH_INDEX_PROJECT_ID: the project `--project` uses when given no value.
+EARTH_INDEX_API_URL = (
+    os.getenv('EARTH_INDEX_API_URL') or 'https://api.earthindex.ai'
+).rstrip('/')
+EARTH_INDEX_API_KEY = os.getenv('EARTH_INDEX_API_KEY') or None
+EARTH_INDEX_PROJECT_ID = os.getenv('EARTH_INDEX_PROJECT_ID') or None
