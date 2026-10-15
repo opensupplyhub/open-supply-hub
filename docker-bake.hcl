@@ -65,3 +65,10 @@ target "anonymized-database-dump" {
   dockerfile = "Dockerfile"
   tags       = ["${ECR_REGISTRY}/${IMAGE_NAME}-anonymized-database-dump-${ENV_SLUG}:${GIT_COMMIT}"]
 }
+
+# Test and Preprod: one-off database restore task (database_restore.tf)
+target "database-restore" {
+  context    = "src/anon-tools"
+  dockerfile = "Dockerfile.restore"
+  tags       = ["${ECR_REGISTRY}/${IMAGE_NAME}-database-restore-${ENV_SLUG}:${GIT_COMMIT}"]
+}
