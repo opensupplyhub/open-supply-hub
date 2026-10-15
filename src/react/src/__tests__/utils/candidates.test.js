@@ -63,15 +63,19 @@ describe('candidates util', () => {
             });
         });
 
-        it('derives voting_open from state when the payload omits it', () => {
+        it('treats a payload that omits voting_open as open, confirmed included', () => {
             expect(
                 normalizeValidation({ state: 'confirmed', tally: {} })
                     .votingOpen,
-            ).toBe(false);
+            ).toBe(true);
             expect(
                 normalizeValidation({ state: 'disputed', tally: {} })
                     .votingOpen,
             ).toBe(true);
+            expect(
+                normalizeValidation({ state: 'confirmed', voting_open: false })
+                    .votingOpen,
+            ).toBe(false);
         });
 
         it('keeps an explicit voting_open and your_vote', () => {

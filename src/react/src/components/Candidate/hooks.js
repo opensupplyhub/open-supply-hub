@@ -174,10 +174,13 @@ export const useCandidateVote = ({
             return apiRequest
                 .post(makeCandidateVotesURL(osId), { vote })
                 .then(({ data }) => {
+                    // The vote body carries no voting_open; keep what the
+                    // detail payload said rather than re-deriving it.
                     const reconciled = normalizeValidation({
                         state: data.state,
                         tally: data.tally,
                         your_vote: data.your_vote,
+                        voting_open: current.votingOpen,
                     });
                     commit(reconciled);
                     setStatus(VOTE_STATUS.IDLE);

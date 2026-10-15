@@ -56,8 +56,11 @@ export const makeCandidateVotesURL = osId =>
 export const shouldFetchCandidates = zoom =>
     typeof zoom === 'number' && zoom >= CANDIDATE_LAYER_MIN_ZOOM;
 
-export const isVotingOpenForState = state =>
-    state !== CANDIDATE_STATES.CONFIRMED;
+// Voting never closes for a live candidate (a retired one answers 410 and
+// never reaches this code), so a payload that omits voting_open means open
+// whatever the state says. Only an explicit voting_open: false closes it.
+// eslint-disable-next-line no-unused-vars
+export const isVotingOpenForState = state => true;
 
 const emptyTally = () => ({
     [CANDIDATE_VOTES.CONFIRMED]: 0,

@@ -394,6 +394,12 @@ describe('CandidateValidationPanel', () => {
                 '5 say facility · 1 say not',
             ),
         );
+        // The vote body carries no voting_open: the buttons must stay live.
+        expect(confirmedButton()).not.toBeDisabled();
+        expect(notFacilityButton()).not.toBeDisabled();
+        expect(screen.getByTestId('candidate-vote-status')).not.toHaveTextContent(
+            'Voting closed',
+        );
     });
 
     it('explains a retired candidate when the server answers 410', async () => {
