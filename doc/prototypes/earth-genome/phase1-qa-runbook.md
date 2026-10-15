@@ -191,9 +191,11 @@ in the same area.
   **disputed** (1–2 at the threshold), the disputed label/outline shows on
   the detail page and in the bbox layer, voting stays open (D6).
 - [ ] Two more Confirm votes (3–2) → **confirmed**: panel shows the
-  confirmed copy and no vote buttons; `POST .../candidate-votes/` from any
-  account → **409**; the row stays `is_candidate = true` (confirmed is a
-  derived state) and remains off the confirmed surfaces of section 3.
+  confirmed chip ("later votes can still change this") and keeps the vote
+  buttons; one more Not a facility vote (3–3) → back to **disputed**, change
+  it to Confirm (4–2) → **confirmed** again. Voting never closes; the row
+  stays `is_candidate = true` (confirmed is a derived label) and remains off
+  the confirmed surfaces of section 3.
 
 ## 5. Retirement by consensus-no and moderator approval (10 min)
 

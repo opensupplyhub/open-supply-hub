@@ -473,16 +473,19 @@ class CandidateLifecycleE2ETest(APITestCase):
         self.assertEqual(
             {'confirmed': 3, 'not_a_facility': 2}, response.data['tally']
         )
-        self.assertFalse(
+        # Voting never closes: confirmed is a label that follows the tally.
+        self.assertTrue(
             self._v1_detail(a.id).data['validation']['voting_open']
         )
 
-        response = self._vote(self.eg_user, a.id, NO)
-        self.assertEqual(status.HTTP_409_CONFLICT, response.status_code)
-        response = self._vote(self.voters[0], a.id, YES)   # change of mind
-        self.assertEqual(status.HTTP_409_CONFLICT, response.status_code)
+        response = self._vote(self.eg_user, a.id, NO)   # 3-3: no consensus
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(DISPUTED, response.data['state'])
+        response = self._vote(self.eg_user, a.id, YES)  # change of mind, 4-2
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(CONFIRMED, response.data['state'])
         self.assertEqual(
-            5, FacilityCandidateVote.objects.filter(facility=a).count()
+            6, FacilityCandidateVote.objects.filter(facility=a).count()
         )
         # Confirmed is a derived state: the row stays a candidate, so it
         # remains off the confirmed surfaces and is never tombstoned.
@@ -580,7 +583,7 @@ class CandidateLifecycleE2ETest(APITestCase):
             CONFIRMED, self._v1_detail(a.id).data['validation']['state']
         )
         self.assertEqual(
-            5, FacilityCandidateVote.objects.filter(facility=a).count()
+            6, FacilityCandidateVote.objects.filter(facility=a).count()
         )
         self._assert_hidden_from_confirmed_surfaces([self.confirmed.id])
 
