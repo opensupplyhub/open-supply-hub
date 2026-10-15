@@ -21,7 +21,7 @@ chmod 600 ~/.pgpass
 (
   while true; do
     sleep 240
-    psql -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -w \
+    PGCONNECT_TIMEOUT=10 psql -h localhost -p 5433 -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -w \
       -c 'SELECT 1' >/dev/null 2>&1 || true
   done
 ) &
@@ -181,6 +181,6 @@ S3_KEY="s3://oshub-dumps-anonymized/${DUMP_BASE}_anon.dump"
 AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID_TEST \
 AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY_TEST \
 AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION_TEST \
-  aws s3 cp "$ANON_DUMP_PATH" "$S3_KEY"
+  aws s3 cp --only-show-errors "$ANON_DUMP_PATH" "$S3_KEY"
 
 echo "[info] Uploaded: $S3_KEY"

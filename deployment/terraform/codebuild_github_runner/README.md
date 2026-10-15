@@ -4,8 +4,13 @@ This module provisions an AWS CodeBuild project that acts as an **ephemeral
 GitHub Actions runner** for the long-running database jobs:
 
 - **DB - Save Anonymized DB** (`.github/workflows/db_save_anonymized.yml`)
-- **DB - Apply Anonymized DB** (`.github/workflows/db_apply_anonimized.yml`)
-- **Deploy to AWS** → `restore_database` job (`.github/workflows/deploy_to_aws.yml`)
+
+The restore jobs (**DB - Apply Anonymized DB** and **Deploy to AWS** →
+`restore_database`) no longer use this runner: they run the restore as a
+Fargate task inside the target environment's VPC
+(`deployment/terraform/database_restore.tf`, started by
+`deployment/run_restore_task`), which is much faster than sending the dump
+through the bastion's SSM port forward.
 
 ## How it works
 
@@ -22,8 +27,8 @@ Database access goes through the bastion of the target environment with AWS
 Systems Manager, not SSH (OSDEV-3531). Each job step opens a Session Manager
 port forward on the runner with `deployment/ssm/ssm_tunnel.sh`
 (`localhost:5433` -> `database.service.osh.internal:5432`) and runs the
-anon-tools container with `--network host`, so `src/anon-tools/do_dump.sh` /
-`do_restore.sh` connect to `localhost:5433`. The runner only provides compute,
+anon-tools container with `--network host`, so `src/anon-tools/do_dump.sh`
+connects to `localhost:5433`. The runner only provides compute,
 disk, and Docker.
 
 Because Session Manager is reached through the public AWS API, the runner does
@@ -71,15 +76,11 @@ repository: the org-level runner group setting **Allow public repositories**
 2. Run **DB - Save Anonymized DB** with `deploy-env: Development` (lowest
    risk) and confirm the anonymized dump lands in
    `s3://oshub-dumps-anonymized/`.
-3. Run **DB - Apply Anonymized DB** with `deploy-env: Test`.
-4. Run **Deploy to AWS** to Test with `restore-db: true` to exercise the
-   `restore_database` job.
 
 Note on compute sizing: `BUILD_GENERAL1_LARGE` is intentional. A production
 dump run measured ~14.25 GB of memory utilization (dominated by page cache
 during the local restore/anonymization), which rules out
-`BUILD_GENERAL1_MEDIUM` (8 GB RAM); the dump job is the sizing driver, the
-restore jobs are far lighter.
+`BUILD_GENERAL1_MEDIUM` (8 GB RAM).
 
 Note on concurrency: CodeBuild starts one ephemeral build per queued job, so
 two runs targeting the same environment would execute in parallel. Do not
@@ -89,5 +90,5 @@ trigger simultaneous dump/restore runs against the same environment.
 
 The CodeBuild project name (`codebuild_github_runner_project_name`, default
 `osh-github-actions-runner`) is referenced verbatim in the `runs-on` labels of
-the three workflows above. If you rename the project, update the workflows in
+the workflow above. If you rename the project, update the workflows in
 the same change.
