@@ -820,3 +820,11 @@ CANDIDATE_AUTO_RETIRE = (
     os.getenv('CANDIDATE_AUTO_RETIRE', 'False').strip().lower()
     in ('true', '1', 'yes')
 )
+
+# Candidate proximity suggestions (OSDEV-3244). Confirmed facilities within
+# CANDIDATE_SUGGESTION_RADIUS_M metres of a candidate's centroid are
+# suggested as possible existing records for it, nearest first, at most
+# CANDIDATE_SUGGESTION_LIMIT of them. Computed on read by
+# api/services/candidate_matches.py; nothing is stored.
+CANDIDATE_SUGGESTION_RADIUS_M = _env_int('CANDIDATE_SUGGESTION_RADIUS_M', 500)
+CANDIDATE_SUGGESTION_LIMIT = _env_int('CANDIDATE_SUGGESTION_LIMIT', 5)
