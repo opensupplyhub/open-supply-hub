@@ -1,73 +1,50 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
+import ChevronRight from '@material-ui/icons/ChevronRight';
 
 const DataSourceItem = ({
     classes,
     Icon,
     iconClassName,
-    labelClassName,
     title,
-    subsectionText,
-    showSubsectionInfo,
-    showLearnMore,
-    learnMoreUrl,
+    onSelect,
+    tabIndex,
+    controlsId,
+    isExpanded,
+    buttonRef,
 }) => (
-    <Grid item xs={12} md={4} className={classes.descriptionItem}>
-        <div className={classes.itemRow}>
-            <Icon className={iconClassName} aria-hidden />
-            <Typography
-                component="span"
-                className={labelClassName}
-                variant="body1"
-            >
-                {title}
-            </Typography>
-        </div>
-        {/* Hidden text with margin-left to align with subtitle */}
-        {showSubsectionInfo && (
-            <div className={classes.itemHiddenTextWrap}>
-                <Typography
-                    component="p"
-                    variant="body1"
-                    className={classes.subsectionText}
-                >
-                    {subsectionText}
-                    {showLearnMore && learnMoreUrl && (
-                        <>
-                            <br />
-                            <a
-                                href={learnMoreUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={classes.learnMoreLink}
-                            >
-                                Learn more →
-                            </a>
-                        </>
-                    )}
-                </Typography>
-            </div>
-        )}
-    </Grid>
+    <button
+        type="button"
+        ref={buttonRef}
+        className={classes.item}
+        onClick={onSelect}
+        tabIndex={tabIndex}
+        aria-controls={controlsId}
+        aria-expanded={isExpanded}
+        data-testid={`data-label-item-${title}`}
+    >
+        <Icon className={iconClassName} aria-hidden />
+        <span>{title}</span>
+        <ChevronRight className={classes.chevron} aria-hidden />
+    </button>
 );
 
 DataSourceItem.propTypes = {
     classes: PropTypes.object.isRequired,
-    Icon: PropTypes.func.isRequired,
+    Icon: PropTypes.oneOfType([PropTypes.func, PropTypes.object]).isRequired,
     iconClassName: PropTypes.string.isRequired,
-    labelClassName: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
-    subsectionText: PropTypes.string.isRequired,
-    showSubsectionInfo: PropTypes.bool.isRequired,
-    showLearnMore: PropTypes.bool,
-    learnMoreUrl: PropTypes.string,
+    onSelect: PropTypes.func.isRequired,
+    tabIndex: PropTypes.number,
+    controlsId: PropTypes.string.isRequired,
+    isExpanded: PropTypes.bool,
+    buttonRef: PropTypes.func,
 };
 
 DataSourceItem.defaultProps = {
-    showLearnMore: false,
-    learnMoreUrl: null,
+    tabIndex: 0,
+    isExpanded: false,
+    buttonRef: undefined,
 };
 
 export default DataSourceItem;

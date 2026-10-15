@@ -40,9 +40,7 @@ const ProductionLocationDetailsOsIdBadge = ({ classes, osId }) => (
         </div>
         {osId && (
             <div className={classes.osIdActions}>
-                <span
-                    className={`${classes.copyButtonWrap} ${classes.copyButtonWrapFirst}`}
-                >
+                <span className={classes.copyButtonWrap}>
                     <CopyToClipboard
                         text={osId}
                         onCopy={() => toast('Copied OS ID to clipboard')}
