@@ -355,8 +355,16 @@ def materialize_input(file_option):
     client = boto3.client(
         's3', endpoint_url=getattr(settings, 'AWS_S3_ENDPOINT_URL', None)
     )
+    # Refuse a bucket that another AWS account owns (a bucket name can be
+    # re-registered by anyone once released); local MinIO has no owner id.
+    extra_args = {}
+    owner = getattr(settings, 'AWS_S3_EXPECTED_BUCKET_OWNER', None)
+    if owner:
+        extra_args['ExpectedBucketOwner'] = owner
     try:
-        client.download_file(bucket, key, handle.name)
+        client.download_file(
+            bucket, key, handle.name, ExtraArgs=extra_args
+        )
     except (BotoCoreError, ClientError) as exc:
         os.unlink(handle.name)
         raise CommandError(
