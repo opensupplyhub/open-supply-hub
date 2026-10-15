@@ -67,8 +67,11 @@ def validation_block(facility, user, vote_tally=None):
     ``{"state", "tally", "your_vote", "voting_open"}`` for a candidate.
 
     ``state`` is the public state (``retirement_pending`` at consensus-no
-    under the moderation gate); ``voting_open`` is False only once the
-    candidate is confirmed, exactly when the vote endpoint answers 409.
+    under the moderation gate). ``voting_open`` is True for every live
+    candidate, confirmed ones included: voting never closes while the row
+    exists, and a retired OS ID answers 410 instead of carrying a block.
+    The field stays in the contract so clients keep one switch for the
+    vote buttons.
     """
     if vote_tally is None:
         vote_tally = candidate_validation.tally(facility)

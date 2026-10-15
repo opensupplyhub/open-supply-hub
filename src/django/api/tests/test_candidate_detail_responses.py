@@ -284,14 +284,14 @@ class CandidateDetailResponsesTest(APITestCase):
         self.assertEqual(expected_tally, validation['tally'])
         self.assertTrue(validation['voting_open'])
 
-    def test_v1_confirmed_candidate_closes_voting(self):
+    def test_v1_confirmed_candidate_keeps_voting_open(self):
         for voter in self.voters[:3]:
             cast_vote(self.candidate, voter, YES)
 
         response = self.client.get(self._v1_url(self.candidate.id))
 
         self.assertEqual('confirmed', response.data['validation']['state'])
-        self.assertFalse(response.data['validation']['voting_open'])
+        self.assertTrue(response.data['validation']['voting_open'])
 
     def test_v1_your_vote_for_authenticated_and_anonymous(self):
         cast_vote(self.candidate, self.user, YES)
