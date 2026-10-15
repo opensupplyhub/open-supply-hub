@@ -338,9 +338,6 @@ class APIV1CandidateVoteErrorMessages:
         'The location with the given id is not a candidate open to '
         'validation votes.'
     )
-    VOTING_CLOSED = (
-        'Voting is closed: the community has confirmed this location.'
-    )
     INVALID_VOTE = "vote must be 'confirmed' or 'not_a_facility'."
     REQUEST_NOT_FOUND = 'Candidate retirement request not found.'
     CONSENSUS_BROKEN = (

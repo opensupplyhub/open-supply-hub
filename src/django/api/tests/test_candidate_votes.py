@@ -405,23 +405,28 @@ class CandidateVotesApiTest(APITestCase):
         response = self._vote(self.voters[4], YES)
         self.assertEqual(CONFIRMED, response.data['state'])
 
-    # --- 409: confirmed closes voting -----------------------------------
+    # --- confirmed keeps voting open; the state follows the tally -------
 
-    def test_confirmed_closes_voting_with_409(self):
+    def test_confirmed_keeps_accepting_votes_and_can_move_back(self):
         for voter in self.voters[:3]:
             response = self._vote(voter, YES)
         self.assertEqual(CONFIRMED, response.data['state'])
 
+        # A new NO vote is stored: 3-1 is still above the confirm margin.
         response = self._vote(self.user, NO)
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        self.assertEqual(CONFIRMED, response.data['state'])
+        self.assertEqual(4, self._votes().count())
 
-        self.assertEqual(status.HTTP_409_CONFLICT, response.status_code)
-        self.assertEqual(3, self._votes().count())
-        # Changing an existing vote is closed too.
+        # A change of mind is stored too, and 2-2 is no longer consensus.
         response = self._vote(self.voters[0], NO)
-        self.assertEqual(status.HTTP_409_CONFLICT, response.status_code)
-        self.assertEqual(YES, self._votes().get(user=self.voters[0]).vote)
-        # GET still answers.
-        self.assertEqual(CONFIRMED, self.client.get(self.url).data['state'])
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(DISPUTED, response.data['state'])
+        self.assertEqual(
+            {'confirmed': 2, 'not_a_facility': 2}, response.data['tally']
+        )
+        self.assertEqual(NO, self._votes().get(user=self.voters[0]).vote)
+        self.assertEqual(DISPUTED, self.client.get(self.url).data['state'])
 
     # --- AC 3: consensus-no, gated (default) ----------------------------
 

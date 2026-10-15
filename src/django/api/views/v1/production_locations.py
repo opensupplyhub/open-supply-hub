@@ -253,8 +253,9 @@ class ProductionLocations(ViewSet):
         POST (authenticated) ``{"vote": "confirmed"|"not_a_facility"}``:
         records or changes the caller's vote (201 created / 200 changed)
         and returns the same body. 404 for an unknown OS ID or one that is
-        not a candidate, 410 for a retired OS ID, 409 once the candidate
-        is confirmed (voting closed). State derivation and the
+        not a candidate, 410 for a retired OS ID. Voting never closes
+        for a live candidate: a confirmed one keeps accepting votes and
+        the derived state follows the tally. State derivation and the
         consensus-no handling (auto-retire vs. moderation gate) live in
         api/services/candidate_validation.py.
         '''
@@ -305,13 +306,6 @@ class ProductionLocations(ViewSet):
             # Retired (or deleted) between the lookup above and the row
             # lock inside cast_vote: answer as if it had never been found.
             return self.__candidate_gone_response(pk)
-        except candidate_validation.VotingClosedError:
-            return Response(
-                data={
-                    'detail': APIV1CandidateVoteErrorMessages.VOTING_CLOSED
-                },
-                status=status.HTTP_409_CONFLICT,
-            )
 
         return Response(
             self.__vote_body(

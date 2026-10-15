@@ -9,14 +9,15 @@ live tally of ``FacilityCandidateVote`` rows each time it is needed.
     -----------  -----------------------------------  ----------------------
     unverified   total < CANDIDATE_VOTE_THRESHOLD     voting open
     disputed     threshold reached, no consensus      voting open, labeled
-    confirmed    confirmed share >= CONFIRM_MARGIN    voting closed (409)
+    confirmed    confirmed share >= CONFIRM_MARGIN    voting open, labeled
     retired      not_a_facility share >= RETIRE_MARGIN hard delete + tombstone
 
-"confirmed" is therefore "consensus-yes right now": the moment the tally
-reaches it, ``POST .../candidate-votes/`` answers 409 and the tally can
-no longer move, so the state is stable without a stored flag. Later
-concerns about a confirmed location use the normal flows (closure
-report etc.), exactly as D6 says.
+"confirmed" is therefore "consensus-yes right now". Voting never closes
+while the candidate row exists: every vote is stored and the state keeps
+following the live tally, so later votes can move a confirmed candidate
+back to disputed, or on to consensus-no and the retirement gate. The only
+thing that stops voting is retirement, which removes the row (the vote
+endpoint then answers 410). Nothing about the state is stored.
 
 "retired" is the only irreversible edge and is moderator-gated during the
 pilot: with ``CANDIDATE_AUTO_RETIRE`` off (default) a vote that reaches
@@ -113,8 +114,14 @@ def derive_state(
 
 
 def voting_is_closed(state):
-    """Existence voting closes once the candidate is confirmed (D6)."""
-    return state == CONFIRMED
+    """
+    Existence voting never closes for a live candidate: every vote is
+    stored and the derived state keeps following the tally, including
+    away from ``confirmed``. Kept as a function so the API's
+    ``voting_open`` field has one definition; retirement (the row is
+    gone) is the only end of voting and is reported as 410, not here.
+    """
+    return False
 
 
 def public_state(state, retired=False):
@@ -162,10 +169,6 @@ class ConsensusBrokenError(Exception):
         self.live_tally = live_tally
 
 
-class VotingClosedError(Exception):
-    """Raised when a vote is cast on a confirmed candidate."""
-
-
 @transaction.atomic
 def cast_vote(facility, user, vote):
     """
@@ -177,7 +180,8 @@ def cast_vote(facility, user, vote):
     * The candidate row is locked for the duration, so concurrent votes
       on the same candidate serialize and the retirement decision is
       made on a consistent tally.
-    * Raises ``VotingClosedError`` if the candidate is already confirmed.
+    * Never refuses a vote for state reasons: a confirmed candidate keeps
+      accepting votes and may move back to disputed.
     * At consensus-no: retires the candidate when
       ``CANDIDATE_AUTO_RETIRE`` is on, otherwise opens or refreshes the
       candidate's ``FacilityCandidateRetirementRequest``. Any other state
@@ -192,9 +196,6 @@ def cast_vote(facility, user, vote):
         )
     except Facility.DoesNotExist:
         raise CandidateGoneError(facility.pk)
-
-    if voting_is_closed(derive_state(tally(facility))):
-        raise VotingClosedError(facility.id)
 
     _, created = FacilityCandidateVote.objects.update_or_create(
         facility=facility,
