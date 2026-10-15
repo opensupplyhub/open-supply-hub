@@ -25,6 +25,7 @@ from api.services.candidate_retirement import (
     tombstone_payload,
 )
 from api.services import candidate_validation
+from api.services.candidate_switch import candidates_enabled
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -138,6 +139,13 @@ class ProductionLocations(ViewSet):
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    @staticmethod
+    def __pilot_disabled_response():
+        return Response(
+            data={'detail': APIV1CandidateVoteErrorMessages.PILOT_DISABLED},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
     def __is_vote_write(self):
         return (
             self.action == 'candidate_votes'
@@ -247,9 +255,11 @@ class ProductionLocations(ViewSet):
             # Candidates are never indexed (OSDEV-3243), so they always
             # miss OpenSearch; one primary-key lookup serves them from
             # the database instead (OSDEV-3249).
+            # While the pilot switch is off (OSDEV-3627) a candidate OS
+            # ID is simply not found, as before the pilot.
             candidate = Facility.including_candidates.filter(
                 pk=pk, is_candidate=True
-            ).first()
+            ).first() if candidates_enabled() else None
             if candidate is not None:
                 return self.__candidate_response(
                     candidate_production_location(candidate, request.user)
@@ -305,7 +315,10 @@ class ProductionLocations(ViewSet):
         out-of-range or oversized (more than 2 degrees on a side) bbox is
         400. Only ``is_candidate`` rows are ever returned, so the
         brand/CSO data contract (confirmed facilities only) is unaffected.
+        404 while the pilot switch is off (OSDEV-3627).
         '''
+        if not candidates_enabled():
+            return self.__pilot_disabled_response()
         params = CandidatesBboxQueryParamSerializer(data=request.query_params)
         if not params.is_valid():
             field, messages = next(iter(params.errors.items()))
@@ -385,8 +398,11 @@ class ProductionLocations(ViewSet):
         for a live candidate: a confirmed one keeps accepting votes and
         the derived state follows the tally. State derivation and the
         consensus-no handling (auto-retire vs. moderation gate) live in
-        api/services/candidate_validation.py.
+        api/services/candidate_validation.py. 404 while the pilot switch
+        is off (OSDEV-3627).
         '''
+        if not candidates_enabled():
+            return self.__pilot_disabled_response()
         facility = Facility.including_candidates.filter(pk=pk).first()
         if facility is None:
             return self.__candidate_gone_response(pk)

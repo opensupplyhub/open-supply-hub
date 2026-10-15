@@ -22,6 +22,7 @@ from django.core.management import call_command
 from botocore.exceptions import ClientError
 from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
+from waffle.testutils import override_switch
 
 # A detection site in North Carolina. Confirmed fixtures below are placed
 # relative to it: 0.002 degrees of latitude is roughly 220 metres, 0.05 is
@@ -186,6 +187,7 @@ class FakeEarthIndex:
         return FakeResponse(200, self.project)
 
 
+@override_switch('earth_genome_candidates', active=True)
 class IngestSatelliteDetectionsTest(TestCase):
     def setUp(self):
         self.tmpdir = tempfile.TemporaryDirectory()

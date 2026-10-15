@@ -32,11 +32,13 @@ from api.services.candidate_retirement import (
 )
 from api.signals import location_post_delete_handler_for_opensearch
 from api.views.v1.index_names import OpenSearchIndexNames
+from waffle.testutils import override_switch
 
 CANDIDATE_POLYGON_WKT = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'
 V1_OPEN_SEARCH_SERVICE = 'api.views.v1.production_locations.OpenSearchService'
 
 
+@override_switch('earth_genome_candidates', active=True)
 class CandidateRetirementTest(APITestCase):
     """
     OSDEV-3246: retire a candidate OS ID as NOT_A_FACILITY.

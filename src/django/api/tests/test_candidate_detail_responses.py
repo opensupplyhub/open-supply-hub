@@ -35,6 +35,7 @@ from api.services.candidate_validation import (
     cast_vote,
 )
 from api.signals import location_post_delete_handler_for_opensearch
+from waffle.testutils import override_switch
 
 OPEN_SEARCH_SERVICE = 'api.views.v1.production_locations.OpenSearchService'
 CANDIDATE_POLYGON_WKT = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'
@@ -54,6 +55,7 @@ PILOT_THRESHOLDS = dict(
 
 
 @override_settings(**PILOT_THRESHOLDS)
+@override_switch('earth_genome_candidates', active=True)
 class CandidateDetailResponsesTest(APITestCase):
     """
     OSDEV-3249: candidate-aware detail responses.
