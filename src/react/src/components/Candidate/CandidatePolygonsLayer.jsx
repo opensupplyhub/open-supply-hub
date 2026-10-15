@@ -37,6 +37,11 @@ export const buildCandidatesRequestURL = map => {
  * request, and renders polygons/points styled by validation state:
  * unverified dashed, disputed dotted purple, confirmed solid green,
  * retirement_pending as disputed plus a label. Interim visuals, OSDEV-3192.
+ *
+ * A moveend that resolves to the bbox already on screen is skipped (the
+ * data would be identical); a bump of `refreshKey` forces a refetch. When a
+ * request fails (incl. 429) nothing new is drawn, and footprints from a
+ * different viewport are cleared rather than left in place.
  */
 const CandidatePolygonsLayer = ({
     leaflet,
@@ -48,21 +53,35 @@ const CandidatePolygonsLayer = ({
     const [collection, setCollection] = useState(EMPTY);
     const [version, setVersion] = useState(0);
     const controllerRef = useRef(null);
+    // URL whose features are currently rendered (null when nothing is).
+    const loadedUrlRef = useRef(null);
     const clickRef = useRef(onCandidateClick);
     clickRef.current = onCandidateClick;
 
     useEffect(() => {
         if (!map) return undefined;
 
-        const load = () => {
+        const clear = () => {
+            loadedUrlRef.current = null;
+            setCollection(EMPTY);
+        };
+
+        const load = ({ force = false } = {}) => {
+            const url = buildCandidatesRequestURL(map);
+            if (!url) {
+                if (controllerRef.current) {
+                    controllerRef.current.abort();
+                    controllerRef.current = null;
+                }
+                clear();
+                return;
+            }
+            if (!force && url === loadedUrlRef.current) {
+                return;
+            }
             if (controllerRef.current) {
                 controllerRef.current.abort();
                 controllerRef.current = null;
-            }
-            const url = buildCandidatesRequestURL(map);
-            if (!url) {
-                setCollection(EMPTY);
-                return;
             }
             const controller = new AbortController();
             controllerRef.current = controller;
@@ -71,6 +90,7 @@ const CandidatePolygonsLayer = ({
                 .then(({ data }) => {
                     if (controller.signal.aborted) return;
                     controllerRef.current = null;
+                    loadedUrlRef.current = url;
                     setCollection(
                         data && Array.isArray(data.features) ? data : EMPTY,
                     );
@@ -81,13 +101,20 @@ const CandidatePolygonsLayer = ({
                         return;
                     }
                     controllerRef.current = null;
+                    // Keep what is on screen only if it is for this bbox.
+                    if (url !== loadedUrlRef.current) {
+                        clear();
+                    }
                     // eslint-disable-next-line no-console
                     console.error('Candidate layer fetch failed:', err);
                 });
         };
 
-        const debouncedLoad = debounce(load, CANDIDATE_LAYER_DEBOUNCE_MS);
-        load();
+        const debouncedLoad = debounce(
+            () => load(),
+            CANDIDATE_LAYER_DEBOUNCE_MS,
+        );
+        load({ force: true });
         map.on('moveend', debouncedLoad);
 
         return () => {

@@ -190,6 +190,116 @@ describe('candidates util', () => {
         });
     });
 
+    describe('getCandidateFromFacilityPayload backend contract', () => {
+        // Verbatim shape of the legacy GET /api/facilities/{os_id}/ Feature
+        // for a candidate, as built by FacilityCandidateDetailsSerializer in
+        // src/django/api/serializers/facility/
+        // facility_candidate_details_serializer.py (OSDEV-3249, shared
+        // contract: `properties.candidate` with `validation` nested and
+        // `created_at`). Only `extended_fields` is abbreviated.
+        const backendFeature = {
+            id: 'US2026ABCDEF1234',
+            type: 'Feature',
+            geometry: { type: 'Point', coordinates: [-79.1, 35.1] },
+            properties: {
+                name: '',
+                address: '',
+                country_code: 'US',
+                country_name: 'United States',
+                os_id: 'US2026ABCDEF1234',
+                is_candidate: true,
+                candidate: {
+                    source: 'Earth Genome',
+                    external_id: 'eg-42',
+                    confidence: 0.91,
+                    polygon: {
+                        type: 'Polygon',
+                        coordinates: [
+                            [
+                                [-79.11, 35.09],
+                                [-79.09, 35.09],
+                                [-79.09, 35.11],
+                                [-79.11, 35.11],
+                                [-79.11, 35.09],
+                            ],
+                        ],
+                    },
+                    suggested_matches: [
+                        {
+                            os_id: 'US2020XYZ',
+                            name: 'Nearby Farm',
+                            address: '1 Farm Rd',
+                            distance_m: 240.4,
+                        },
+                    ],
+                    created_at: '2026-09-01T00:00:00Z',
+                    validation: {
+                        state: 'disputed',
+                        tally: { confirmed: 2, not_a_facility: 1 },
+                        your_vote: 'confirmed',
+                        voting_open: true,
+                    },
+                },
+                other_names: [],
+                other_addresses: [],
+                contributors: [],
+                claim_info: null,
+                other_locations: [],
+                is_closed: null,
+                activity_reports: [],
+                contributor_fields: [],
+                new_os_id: null,
+                has_inexact_coordinates: false,
+                extended_fields: { name: [], address: [] },
+                created_from: {
+                    created_at: '2026-09-01T00:00:00Z',
+                    contributor: 'Earth Genome',
+                },
+                sector: [],
+                is_claimed: false,
+                partner_fields: {},
+                is_data_center: false,
+            },
+        };
+
+        it('reads the nested validation block and created_at', () => {
+            const candidate = getCandidateFromFacilityPayload(backendFeature);
+            expect(candidate.validation).toEqual({
+                state: 'disputed',
+                tally: { confirmed: 2, not_a_facility: 1 },
+                yourVote: 'confirmed',
+                votingOpen: true,
+            });
+            expect(candidate.createdAt).toBe('2026-09-01T00:00:00Z');
+            expect(candidate.osId).toBe('US2026ABCDEF1234');
+            expect(candidate.source).toBe('Earth Genome');
+            expect(candidate.confidence).toBe(0.91);
+            expect(candidate.externalId).toBe('eg-42');
+            expect(candidate.countryName).toBe('United States');
+            expect(candidate.suggestedMatches).toHaveLength(1);
+            expect(candidate.isDetailLoaded).toBe(true);
+        });
+
+        it('falls back to flat validation keys and created_from.created_at', () => {
+            const { validation, ...rest } = backendFeature.properties.candidate;
+            const flat = {
+                ...backendFeature,
+                properties: {
+                    ...backendFeature.properties,
+                    candidate: { ...rest, ...validation, created_at: undefined },
+                },
+            };
+            const candidate = getCandidateFromFacilityPayload(flat);
+            expect(candidate.validation).toEqual({
+                state: 'disputed',
+                tally: { confirmed: 2, not_a_facility: 1 },
+                yourVote: 'confirmed',
+                votingOpen: true,
+            });
+            expect(candidate.createdAt).toBe('2026-09-01T00:00:00Z');
+        });
+    });
+
     describe('applyVoteToTally', () => {
         it('adds a first vote', () => {
             expect(

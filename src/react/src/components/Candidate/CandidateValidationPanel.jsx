@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -18,6 +18,7 @@ import CandidateLoginDialog from './CandidateLoginDialog';
 import { useCandidateDetail, useCandidateVote, VOTE_STATUS } from './hooks';
 import {
     CANDIDATE_COPY,
+    CANDIDATE_SLC_ENRICHMENT_ENABLED,
     CANDIDATE_STATES,
     CANDIDATE_STATE_DESCRIPTIONS,
     CANDIDATE_VOTES,
@@ -83,45 +84,62 @@ VoteButton.propTypes = {
     testId: PropTypes.string.isRequired,
 };
 
-const StatusLine = ({ classes, status, votingOpen, state }) => {
+const statusLineContent = ({
+    classes,
+    status,
+    votingOpen,
+    state,
+    sessionPending,
+}) => {
     if (status === VOTE_STATUS.RETIRED) {
-        return (
-            <Typography
-                className={`${classes.statusText} ${classes.statusRetired}`}
-                data-testid="candidate-vote-status"
-            >
-                {CANDIDATE_COPY.retired}. {CANDIDATE_COPY.retiredDetail}
-            </Typography>
-        );
+        return {
+            className: `${classes.statusText} ${classes.statusRetired}`,
+            text: `${CANDIDATE_COPY.retired}. ${CANDIDATE_COPY.retiredDetail}`,
+        };
     }
     if (status === VOTE_STATUS.ERROR) {
-        return (
-            <Typography
-                className={`${classes.statusText} ${classes.statusError}`}
-                data-testid="candidate-vote-status"
-            >
-                {CANDIDATE_COPY.saveError}
-            </Typography>
-        );
+        return {
+            className: `${classes.statusText} ${classes.statusError}`,
+            text: CANDIDATE_COPY.saveError,
+        };
     }
     if (!votingOpen || state === CANDIDATE_STATES.CONFIRMED) {
-        return (
+        return {
+            className: `${classes.statusText} ${classes.statusClosed}`,
+            text: `${CANDIDATE_COPY.votingClosed}. ${CANDIDATE_COPY.votingClosedDetail}`,
+        };
+    }
+    if (sessionPending) {
+        return {
+            className: classes.statusText,
+            text: CANDIDATE_COPY.sessionPending,
+        };
+    }
+    return {
+        className: classes.statusText,
+        text: CANDIDATE_COPY.changeVoteHint,
+    };
+};
+
+// aria-live so screen readers announce "Voting closed" / save errors /
+// session checks as they change without moving focus.
+const StatusLine = ({ classes, status, votingOpen, state, sessionPending }) => {
+    const { className, text } = statusLineContent({
+        classes,
+        status,
+        votingOpen,
+        state,
+        sessionPending,
+    });
+    return (
+        <div aria-live="polite" data-testid="candidate-vote-status-region">
             <Typography
-                className={`${classes.statusText} ${classes.statusClosed}`}
+                className={className}
                 data-testid="candidate-vote-status"
             >
-                {CANDIDATE_COPY.votingClosed}.{' '}
-                {CANDIDATE_COPY.votingClosedDetail}
+                {text}
             </Typography>
-        );
-    }
-    return (
-        <Typography
-            className={classes.statusText}
-            data-testid="candidate-vote-status"
-        >
-            {CANDIDATE_COPY.changeVoteHint}
-        </Typography>
+        </div>
     );
 };
 
@@ -130,6 +148,7 @@ StatusLine.propTypes = {
     status: PropTypes.string.isRequired,
     votingOpen: PropTypes.bool.isRequired,
     state: PropTypes.string.isRequired,
+    sessionPending: PropTypes.bool.isRequired,
 };
 
 const SuggestedMatches = ({ classes, matches }) => (
@@ -183,6 +202,11 @@ SuggestedMatches.propTypes = {
  * the map layer (isDetailLoaded: false) triggers one detail fetch for
  * your_vote / voting_open / suggested matches; detail-page payloads arrive
  * complete.
+ *
+ * While the session check is still running (`user.isAnon` not yet a
+ * boolean, or `auth.session.fetching`) the vote buttons are disabled with
+ * a "Checking your session" line instead of guessing anonymous and opening
+ * the login dialog on a logged-in user.
  */
 const CandidateValidationPanel = ({
     classes,
@@ -191,9 +215,16 @@ const CandidateValidationPanel = ({
     onClose,
     onValidationChange,
     user,
+    sessionFetching,
+    slcEnrichmentEnabled,
 }) => {
     const [candidate, loadingDetail] = useCandidateDetail(seed);
-    const isAnon = !user || user.isAnon !== false;
+    const sessionPending =
+        !!sessionFetching || !user || typeof user.isAnon !== 'boolean';
+    const isAnon = sessionPending ? undefined : user.isAnon;
+    const headingRef = useRef(null);
+    const isOverlay = variant === PANEL_VARIANTS.OVERLAY;
+    const candidateOsId = candidate ? candidate.osId : null;
 
     const {
         validation,
@@ -210,6 +241,13 @@ const CandidateValidationPanel = ({
 
     const handleVote = useCallback(vote => castVote(vote), [castVote]);
 
+    // The overlay opens on a map click, so move keyboard focus into it.
+    useEffect(() => {
+        if (isOverlay && candidateOsId && headingRef.current) {
+            headingRef.current.focus();
+        }
+    }, [isOverlay, candidateOsId]);
+
     if (!candidate) return null;
 
     const { state, tally, yourVote, votingOpen } = validation;
@@ -217,12 +255,13 @@ const CandidateValidationPanel = ({
     const votes = totalVotes(tally);
     const buttonsDisabled =
         !votingOpen ||
+        sessionPending ||
         status === VOTE_STATUS.SAVING ||
         status === VOTE_STATUS.RETIRED;
 
     return (
         <Paper
-            elevation={variant === PANEL_VARIANTS.OVERLAY ? 4 : 0}
+            elevation={isOverlay ? 4 : 0}
             className={`${classes.root} ${classes[variant]}`}
             data-testid="candidate-validation-panel"
             data-os-id={candidate.osId}
@@ -232,9 +271,14 @@ const CandidateValidationPanel = ({
                     <div>
                         <CandidateBadge />
                     </div>
-                    <Typography component="h3" className={classes.title}>
+                    {/* Plain element: MUI 3 Typography does not forward refs. */}
+                    <h3
+                        className={classes.title}
+                        tabIndex={-1}
+                        ref={headingRef}
+                    >
                         {CANDIDATE_COPY.panelTitle}
-                    </Typography>
+                    </h3>
                     <Typography component="p" className={classes.intro}>
                         {CANDIDATE_COPY.panelIntro}
                     </Typography>
@@ -333,6 +377,7 @@ const CandidateValidationPanel = ({
                     status={status}
                     votingOpen={votingOpen}
                     state={state}
+                    sessionPending={sessionPending}
                 />
             </div>
 
@@ -341,21 +386,23 @@ const CandidateValidationPanel = ({
                 matches={candidate.suggestedMatches || []}
             />
 
-            <div className={`${classes.section} ${classes.sectionLast}`}>
-                <Link
-                    to={makeContributeProductionLocationUpdateURL(
-                        candidate.osId,
-                    )}
-                    className={classes.knowLink}
-                    data-testid="candidate-know-this-facility"
-                >
-                    <EditIcon fontSize="small" />
-                    {CANDIDATE_COPY.knowThisFacility}
-                </Link>
-                <Typography className={classes.knowHint}>
-                    {CANDIDATE_COPY.knowThisFacilityHint}
-                </Typography>
-            </div>
+            {slcEnrichmentEnabled && (
+                <div className={`${classes.section} ${classes.sectionLast}`}>
+                    <Link
+                        to={makeContributeProductionLocationUpdateURL(
+                            candidate.osId,
+                        )}
+                        className={classes.knowLink}
+                        data-testid="candidate-know-this-facility"
+                    >
+                        <EditIcon fontSize="small" />
+                        {CANDIDATE_COPY.knowThisFacility}
+                    </Link>
+                    <Typography className={classes.knowHint}>
+                        {CANDIDATE_COPY.knowThisFacilityHint}
+                    </Typography>
+                </div>
+            )}
 
             <CandidateLoginDialog
                 open={loginPromptOpen}
@@ -385,6 +432,9 @@ CandidateValidationPanel.propTypes = {
     onClose: PropTypes.func,
     onValidationChange: PropTypes.func,
     user: PropTypes.shape({ isAnon: PropTypes.bool }),
+    sessionFetching: PropTypes.bool,
+    // Test/override hook; the product value is CANDIDATE_SLC_ENRICHMENT_ENABLED.
+    slcEnrichmentEnabled: PropTypes.bool,
 };
 
 CandidateValidationPanel.defaultProps = {
@@ -393,10 +443,13 @@ CandidateValidationPanel.defaultProps = {
     onClose: null,
     onValidationChange: null,
     user: null,
+    sessionFetching: false,
+    slcEnrichmentEnabled: CANDIDATE_SLC_ENRICHMENT_ENABLED,
 };
 
 const mapStateToProps = ({ auth }) => ({
     user: auth && auth.user ? auth.user.user : null,
+    sessionFetching: !!(auth && auth.session && auth.session.fetching),
 });
 
 export default connect(mapStateToProps)(

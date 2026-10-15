@@ -50,20 +50,27 @@ jest.mock(
 
 const OS_ID = 'US2026ABCDEF1234';
 
+// Exact shape of the legacy GET /api/facilities/{os_id}/ Feature for a
+// candidate (FacilityCandidateDetailsSerializer, src/django/api/serializers/
+// facility/facility_candidate_details_serializer.py); `extended_fields`
+// abbreviated.
 const candidateFeature = {
     id: OS_ID,
     type: 'Feature',
     geometry: { type: 'Point', coordinates: [-79.1, 35.1] },
     properties: {
-        os_id: OS_ID,
         name: '',
         address: '',
+        country_code: 'US',
         country_name: 'United States',
+        os_id: OS_ID,
         is_candidate: true,
         candidate: {
             source: 'Earth Genome',
-            confidence: 0.91,
             external_id: 'eg-42',
+            confidence: 0.91,
+            polygon: null,
+            suggested_matches: [],
             created_at: '2026-09-01T00:00:00Z',
             validation: {
                 state: 'unverified',
@@ -71,8 +78,26 @@ const candidateFeature = {
                 your_vote: null,
                 voting_open: true,
             },
-            suggested_matches: [],
         },
+        other_names: [],
+        other_addresses: [],
+        contributors: [],
+        claim_info: null,
+        other_locations: [],
+        is_closed: null,
+        activity_reports: [],
+        contributor_fields: [],
+        new_os_id: null,
+        has_inexact_coordinates: false,
+        extended_fields: { name: [], address: [] },
+        created_from: {
+            created_at: '2026-09-01T00:00:00Z',
+            contributor: 'Earth Genome',
+        },
+        sector: [],
+        is_claimed: false,
+        partner_fields: {},
+        is_data_center: false,
     },
 };
 
