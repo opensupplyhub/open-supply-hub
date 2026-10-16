@@ -22,5 +22,12 @@ LEFT JOIN api_source s ON s.contributor_id = ac.id
 LEFT JOIN api_facilitylist l ON l.id = s.facility_list_id
 LEFT JOIN api_user u ON ac.admin_id = u.id
 WHERE s.create = TRUE
+AND NOT EXISTS (
+  SELECT 1
+  FROM api_facilitylistitem ci
+  JOIN api_facility cf ON cf.id = ci.facility_id
+  WHERE ci.source_id = s.id
+  AND cf.is_candidate = true
+)
 GROUP BY ac.id, ac.name, ac.contrib_type
 ORDER BY COALESCE(MAX(l.created_at), MAX(s.created_at)) DESC;
