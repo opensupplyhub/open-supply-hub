@@ -1,5 +1,7 @@
 from unittest.mock import patch
 
+from opensearchpy.exceptions import ConnectionError, NotFoundError
+
 from api.models import (
     Contributor,
     Facility,
@@ -208,13 +210,14 @@ class CandidateIndexExclusionTest(TestCase):
 
 class CandidateDeleteSignalTest(TestCase):
     """
-    Deleting a candidate must not call OpenSearch (OSDEV-3243).
+    Deleting a candidate must survive the OpenSearch delete (OSDEV-3243).
 
-    Candidates never have a production-locations document, so the
-    post_delete handler that removes a facility's document has nothing to
-    delete; the client raises NotFoundError on a missing document, which
-    would abort the delete. The handler stays connected here on purpose,
-    unlike CandidateIndexExclusionTest.
+    Candidates never have a production-locations document. The post_delete
+    handler still asks OpenSearch to delete it, so a document could never
+    be orphaned, but a 404 is the expected answer for a candidate and
+    must neither abort the delete nor be reported as an inconsistency;
+    an outage must not abort it either. The handler stays connected here
+    on purpose, unlike CandidateIndexExclusionTest.
     """
 
     def setUp(self):
@@ -264,22 +267,88 @@ class CandidateDeleteSignalTest(TestCase):
         defaults.update(kwargs)
         return Facility.objects.create(**defaults)
 
-    def test_deleting_a_candidate_skips_opensearch(self):
-        candidate = self._create(
+    def _candidate(self, external_id):
+        return self._create(
             name='',
             address='',
             is_candidate=True,
             polygon=GEOSGeometry(CANDIDATE_POLYGON_WKT, srid=4326),
             source='earth_genome',
-            external_id='eg-facility-delete',
+            external_id=external_id,
         )
+
+    def test_deleting_a_candidate_tolerates_a_missing_document(self):
+        candidate = self._candidate('eg-facility-delete')
+        facility_id = candidate.id
+
+        with patch('api.signals.OpenSearchServiceConnection') as connection, \
+                patch('api.signals.signal_error_notifier') as notifier:
+            connection.return_value.client.delete.side_effect = (
+                NotFoundError(404, 'not_found', {})
+            )
+            candidate.delete()
+
+        connection.return_value.client.delete.assert_called_once_with(
+            index='production-locations',
+            id=facility_id,
+        )
+        notifier.assert_not_called()
+        self.assertFalse(
+            Facility.including_candidates.filter(id=facility_id).exists()
+        )
+
+    def test_deleting_a_candidate_removes_a_stray_document(self):
+        candidate = self._candidate('eg-facility-stray')
+        facility_id = candidate.id
+
+        with patch('api.signals.OpenSearchServiceConnection') as connection, \
+                patch('api.signals.signal_error_notifier') as notifier:
+            connection.return_value.client.delete.return_value = {
+                'result': 'deleted'
+            }
+            candidate.delete()
+
+        connection.return_value.client.delete.assert_called_once_with(
+            index='production-locations',
+            id=facility_id,
+        )
+        notifier.assert_not_called()
+
+    def test_deleting_a_candidate_survives_an_opensearch_outage(self):
+        candidate = self._candidate('eg-facility-outage')
         facility_id = candidate.id
 
         with patch('api.signals.OpenSearchServiceConnection') as connection:
+            connection.return_value.client.delete.side_effect = (
+                ConnectionError('N/A', 'down', None)
+            )
             candidate.delete()
 
-        connection.assert_not_called()
-        self.assertFalse(Facility.objects.filter(id=facility_id).exists())
+        self.assertFalse(
+            Facility.including_candidates.filter(id=facility_id).exists()
+        )
+
+    def test_deleting_a_confirmed_facility_still_raises_on_outage(self):
+        facility = self._create()
+
+        with patch('api.signals.OpenSearchServiceConnection') as connection:
+            connection.return_value.client.delete.side_effect = (
+                ConnectionError('N/A', 'down', None)
+            )
+            with self.assertRaises(ConnectionError):
+                facility.delete()
+
+    def test_missing_document_is_still_reported_for_confirmed(self):
+        facility = self._create()
+
+        with patch('api.signals.OpenSearchServiceConnection') as connection, \
+                patch('api.signals.signal_error_notifier') as notifier:
+            connection.return_value.client.delete.side_effect = (
+                NotFoundError(404, 'not_found', {})
+            )
+            facility.delete()
+
+        notifier.assert_called_once()
 
     def test_deleting_a_confirmed_facility_still_calls_opensearch(self):
         facility = self._create()

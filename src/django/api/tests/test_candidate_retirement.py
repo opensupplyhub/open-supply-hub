@@ -504,8 +504,9 @@ class CandidateRetirementTest(APITestCase):
 
     # --- OpenSearch post_delete signal -----------------------------------
 
-    def test_retire_skips_opensearch_delete_for_candidate(self):
-        """A candidate is never indexed, so the signal issues no delete."""
+    def test_retire_tolerates_missing_opensearch_document(self):
+        """A candidate is never indexed: the delete is still attempted so
+        no document can be orphaned, and the 404 is not an inconsistency."""
         post_delete.connect(
             location_post_delete_handler_for_opensearch, Facility
         )
@@ -513,10 +514,15 @@ class CandidateRetirementTest(APITestCase):
 
         with patch('api.signals.OpenSearchServiceConnection') as conn, \
                 patch('api.signals.signal_error_notifier') as notifier:
+            conn.return_value.client.delete.side_effect = NotFoundError(
+                404, 'not_found', {}
+            )
             tombstone = self._retire()
 
-            conn.assert_not_called()
-            conn.return_value.client.delete.assert_not_called()
+            conn.return_value.client.delete.assert_called_once_with(
+                index=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
+                id=os_id,
+            )
             notifier.assert_not_called()
 
         self.assertEqual(os_id, tombstone.os_id)
