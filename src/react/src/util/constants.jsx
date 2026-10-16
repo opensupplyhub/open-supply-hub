@@ -748,6 +748,8 @@ export const GRID_COLOR_RAMP = Object.freeze([
 export const OARFont = "'Darker Grotesque',sans-serif";
 export const OARColor = '#8428FA';
 export const SelectedMarkerColor = '#FFCF3F';
+// Marker for a suggested nearby match shown next to a candidate footprint.
+export const SuggestedMatchMarkerColor = '#1E88E5';
 export const OARActionColor = '#FFCF3F';
 export const OARSecondaryColor = '#FFA6D0';
 
