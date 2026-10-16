@@ -645,6 +645,9 @@ SELECT
     WHERE
       afc2.facility_id = af.id
   ) AS claim_status_value,
+  -- NOT_A_FACILITY tombstones (OSDEV-3246) have facility_id NULL and so
+  -- never equal af.id; the reason filter makes that exclusion explicit:
+  -- a retired OS ID must not resolve to any production location.
   (
     SELECT
       ARRAY_AGG(afa.os_id)
@@ -652,6 +655,7 @@ SELECT
       api_facilityalias afa
     WHERE
       afa.facility_id = af.id
+      AND afa.reason <> 'NOT_A_FACILITY'
   ) AS historical_os_id_value,
   af.updated_at,
   (

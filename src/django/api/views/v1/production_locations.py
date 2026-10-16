@@ -16,6 +16,10 @@ from api.views.v1.utils import (
     handle_errors_decorator,
 )
 from api.services.opensearch.search import OpenSearchService
+from api.services.candidate_retirement import (
+    get_tombstone,
+    tombstone_payload,
+)
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -179,6 +183,16 @@ class ProductionLocations(ViewSet):
         locations = response.get("data", [])
 
         if len(locations) == 0:
+            # A retired OS ID (NOT_A_FACILITY tombstone, OSDEV-3246) is
+            # not in OpenSearch and is excluded from historical_os_id, so
+            # it always lands here. One primary-key lookup on the miss
+            # path tells 410 Gone apart from a plain 404.
+            tombstone = get_tombstone(pk)
+            if tombstone is not None:
+                return Response(
+                    data=tombstone_payload(tombstone),
+                    status=status.HTTP_410_GONE,
+                )
             return Response(
                 data={
                     "detail": "The location with the given id was not found.",
