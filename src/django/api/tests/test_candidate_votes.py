@@ -34,6 +34,7 @@ from api.services.candidate_validation import (
     public_state,
 )
 from api.signals import location_post_delete_handler_for_opensearch
+from waffle.testutils import override_switch
 
 CANDIDATE_POLYGON_WKT = 'POLYGON((0 0, 0 1, 1 1, 1 0, 0 0))'
 YES = FacilityCandidateVote.Vote.CONFIRMED.value
@@ -126,6 +127,7 @@ class DeriveStateTest(SimpleTestCase):
 
 
 @override_settings(**PILOT_THRESHOLDS)
+@override_switch('earth_genome_candidates', active=True)
 class CandidateVotesApiTest(APITestCase):
     """
     OSDEV-3245: ``/api/v1/production-locations/{os_id}/candidate-votes/``

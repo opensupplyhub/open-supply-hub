@@ -24,6 +24,7 @@ import VectorTileFacilitiesLayer, {
 import VectorTileFacilityGridLayer from '../../VectorTileFacilityGridLayer';
 import VectorTileGridLegend from '../../VectorTileGridLegend';
 import CandidatePolygonsLayer from '../../Candidate/CandidatePolygonsLayer';
+import FeatureFlag from '../../FeatureFlag';
 import { useFacilityPoint } from '../../Candidate/hooks';
 import CandidateValidationPanel, {
     PANEL_VARIANTS,
@@ -46,6 +47,7 @@ import {
     productionLocationDetailsRoute,
     SelectedMarkerColor,
     SuggestedMatchMarkerColor,
+    EARTH_GENOME_CANDIDATES,
 } from '../../../util/constants';
 import { normalizeCandidateFeatureProperties } from '../../../util/candidates';
 
@@ -384,11 +386,15 @@ const ProductionLocationDetailsMap = ({
                                     zoomLevel={currentMapZoomLevel}
                                 />
                             )}
-                            <CandidatePolygonsLayer
-                                onCandidateClick={handleCandidateClick}
-                                selectedOsId={isCandidatePage ? osID : null}
-                                refreshKey={candidateRefreshKey}
-                            />
+                            {/* OSDEV-3627: the pilot switch gates the
+                                footprint layer (and its bbox requests). */}
+                            <FeatureFlag flag={EARTH_GENOME_CANDIDATES}>
+                                <CandidatePolygonsLayer
+                                    onCandidateClick={handleCandidateClick}
+                                    selectedOsId={isCandidatePage ? osID : null}
+                                    refreshKey={candidateRefreshKey}
+                                />
+                            </FeatureFlag>
                         </ReactLeafletMap>
                         {activeCandidate && (
                             <CandidateValidationPanel
