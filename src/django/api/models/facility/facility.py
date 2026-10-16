@@ -5,7 +5,10 @@ from api.constants import (
     FacilityClaimStatuses,
     OriginSource
 )
-from api.models.facility.facility_manager import FacilityManager
+from api.models.facility.facility_manager import (
+    FacilityIncludingCandidatesManager,
+    FacilityManager,
+)
 from simple_history.models import HistoricalRecords
 
 from django.contrib.gis.db import models as gis_models
@@ -177,7 +180,13 @@ class Facility(models.Model):
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source']
     )
+    # `objects` must stay the first manager declared: Django's
+    # _default_manager is the first one, and it is what get_object_or_404,
+    # the admin and DRF FK validation use, so candidates are hidden from
+    # all of them unless a code path opts in via `including_candidates`.
+    # See FacilityManager for the full traversal semantics.
     objects = FacilityManager()
+    including_candidates = FacilityIncludingCandidatesManager()
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)
@@ -187,7 +196,9 @@ class Facility(models.Model):
             new_id = None
             while new_id is None:
                 new_id = make_os_id(self.country_code)
-                if Facility.objects.filter(id=new_id).exists():
+                # Candidates hold OS IDs too; a collision with one would
+                # otherwise slip past the default manager and fail on the PK.
+                if Facility.including_candidates.filter(id=new_id).exists():
                     new_id = None
             self.id = new_id
         super(Facility, self).save(*args, **kwargs)
