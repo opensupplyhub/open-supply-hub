@@ -764,3 +764,26 @@ DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')
 
 # Email anonymization secret for the sync_databases management command.
 EMAIL_ANONYMIZATION_SECRET = os.getenv('EMAIL_ANONYMIZATION_SECRET', '')
+
+# Earth Genome candidate validation (OSDEV-3245). States are derived from
+# the live vote tally (design decision D6) by
+# api/services/candidate_validation.py; these knobs are the thresholds.
+# Numeric values are pilot defaults pending Product sign-off.
+#
+# CANDIDATE_VOTE_THRESHOLD: minimum total votes before a candidate can
+#   leave 'unverified'.
+# CANDIDATE_CONFIRM_MARGIN / CANDIDATE_RETIRE_MARGIN: the share of the
+#   total a side needs for consensus (confirmed / retired). Asymmetric on
+#   purpose: retiring is irreversible, so it needs a higher bar.
+# CANDIDATE_AUTO_RETIRE: True retires a candidate (hard delete + tombstone)
+#   on the vote that reaches consensus-no; False (default, pilot safety)
+#   opens a FacilityCandidateRetirementRequest for a moderator instead.
+CANDIDATE_VOTE_THRESHOLD = int(os.getenv('CANDIDATE_VOTE_THRESHOLD', '3'))
+CANDIDATE_CONFIRM_MARGIN = float(
+    os.getenv('CANDIDATE_CONFIRM_MARGIN', '0.6')
+)
+CANDIDATE_RETIRE_MARGIN = float(os.getenv('CANDIDATE_RETIRE_MARGIN', '0.75'))
+CANDIDATE_AUTO_RETIRE = (
+    os.getenv('CANDIDATE_AUTO_RETIRE', 'False').strip().lower()
+    in ('true', '1', 'yes')
+)
