@@ -139,8 +139,9 @@ class CandidateLifecycleE2ETest(APITestCase):
             'count': 0, 'data': []
         }
         # The post_delete signal stays connected: a retired candidate has
-        # no OpenSearch document, and the handler must swallow the 404
-        # without reporting an inconsistency.
+        # no OpenSearch document, so the delete the handler still issues
+        # answers 404, which it must swallow without reporting an
+        # inconsistency.
         self.opensearch_connection = patch(
             SIGNALS_OPEN_SEARCH_CONNECTION
         ).start()
@@ -550,11 +551,14 @@ class CandidateLifecycleE2ETest(APITestCase):
             FacilityCandidateVote.objects.filter(facility_id=b.id).exists()
         )
         self.assertFalse(FacilityCandidateRetirementRequest.objects.exists())
-        # Candidates are never in the OpenSearch index, so the post_delete
-        # signal skips the delete call entirely (OSDEV-3246 review fix) and
-        # reports no inconsistency.
+        # Candidates are never in the OpenSearch index. The post_delete
+        # signal still asks OpenSearch to delete the document (so nothing
+        # can be orphaned), gets the 404 the fixture returns, and reports
+        # no inconsistency (OSDEV-3243 review follow-up).
         delete = self.opensearch_connection.return_value.client.delete
-        delete.assert_not_called()
+        delete.assert_called_once_with(
+            index='production-locations', id=b.id
+        )
         self.error_notifier.assert_not_called()
 
         self.assertEqual({a.id, c.id}, set(self._bbox_features()))
