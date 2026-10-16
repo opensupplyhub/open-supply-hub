@@ -328,6 +328,12 @@ The `0237` candidate columns (release 2.30.0) stay; they are additive and
 unused without candidate rows. Unsetting `EARTH_GENOME_CONTRIBUTOR_ID`
 alone stops any further candidate creation without touching data.
 
+**Graduation (candidate to confirmed) does not exist yet either.** When it
+is built, the flow that flips `is_candidate` to false must go through
+`Facility.save()` or set `updated_at = now()` explicitly: logstash picks up
+changes by `updated_at`, so a bare `QuerySet.update()` would leave the new
+facility in `api_facilityindex` (trigger) but never in OpenSearch.
+
 **Confirmed-to-candidate transitions are not supported.** Nothing in Phase 1
 sets `is_candidate` to true on an existing facility (ingest creates candidate
 rows only, the admin field is read-only, the API never writes it), and the
