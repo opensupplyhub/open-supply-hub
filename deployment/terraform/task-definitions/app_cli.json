@@ -31,7 +31,8 @@
         { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
         { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" },
         { "name": "CLAIMS_AUTOMATION_ACCOUNT_EMAIL", "value": "${claims_automation_account_email}" },
-        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" }
+        { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
+        { "name": "EARTH_GENOME_CONTRIBUTOR_ID", "value": "${earth_genome_contributor_id}" }
     ],
     "secrets": [
         { "name": "POSTGRES_USER", "valueFrom": "${rds_master_secret_arn}:username::" },
