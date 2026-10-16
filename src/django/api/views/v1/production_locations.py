@@ -10,6 +10,7 @@ from django.utils.cache import patch_cache_control
 
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
@@ -86,6 +87,26 @@ logger = logging.getLogger(__name__)
 class ProductionLocations(ViewSet):
     swagger_schema = None
 
+    # The actions that exist only for the Earth Genome candidate pilot
+    # and therefore answer 404 while the pilot switch is off
+    # (OSDEV-3627). ``retrieve`` is deliberately not listed: it serves
+    # confirmed production locations too, and gates its own candidate
+    # fallback.
+    CANDIDATE_ONLY_ACTIONS = frozenset({'candidates', 'candidate_votes'})
+
+    def initial(self, request, *args, **kwargs):
+        # Checked before super() runs authentication, permissions and
+        # throttling, so a disabled endpoint answers 404 for every caller
+        # rather than 401/403, and a POST to it never spends a
+        # DataUploadThrottle slot out of the caller's write quota (that
+        # scope is shared with create/partial_update).
+        if (self.action in self.CANDIDATE_ONLY_ACTIONS
+                and not candidates_enabled()):
+            raise NotFound(
+                detail=APIV1CandidateVoteErrorMessages.PILOT_DISABLED
+            )
+        super().initial(request, *args, **kwargs)
+
     @staticmethod
     def __init_opensearch() -> Tuple[OpenSearchService,
                                      OpenSearchQueryDirector]:
@@ -136,13 +157,6 @@ class ProductionLocations(ViewSet):
             )
         return Response(
             data={'detail': APIV1CommonErrorMessages.LOCATION_NOT_FOUND},
-            status=status.HTTP_404_NOT_FOUND,
-        )
-
-    @staticmethod
-    def __pilot_disabled_response():
-        return Response(
-            data={'detail': APIV1CandidateVoteErrorMessages.PILOT_DISABLED},
             status=status.HTTP_404_NOT_FOUND,
         )
 
@@ -315,10 +329,8 @@ class ProductionLocations(ViewSet):
         out-of-range or oversized (more than 2 degrees on a side) bbox is
         400. Only ``is_candidate`` rows are ever returned, so the
         brand/CSO data contract (confirmed facilities only) is unaffected.
-        404 while the pilot switch is off (OSDEV-3627).
+        404 while the pilot switch is off (OSDEV-3627, see ``initial``).
         '''
-        if not candidates_enabled():
-            return self.__pilot_disabled_response()
         params = CandidatesBboxQueryParamSerializer(data=request.query_params)
         if not params.is_valid():
             field, messages = next(iter(params.errors.items()))
@@ -399,10 +411,8 @@ class ProductionLocations(ViewSet):
         the derived state follows the tally. State derivation and the
         consensus-no handling (auto-retire vs. moderation gate) live in
         api/services/candidate_validation.py. 404 while the pilot switch
-        is off (OSDEV-3627).
+        is off (OSDEV-3627, see ``initial``).
         '''
-        if not candidates_enabled():
-            return self.__pilot_disabled_response()
         facility = Facility.including_candidates.filter(pk=pk).first()
         if facility is None:
             return self.__candidate_gone_response(pk)

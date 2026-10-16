@@ -24,6 +24,7 @@ from api.models.facility.facility_candidate_retirement_request import (
 from api.services.candidate_retirement import retire_candidate
 from api.services.candidate_switch import SWITCH_NAME, candidates_enabled
 from api.signals import location_post_delete_handler_for_opensearch
+from api.throttles import DataUploadThrottle
 from django.contrib.gis.geos import GEOSGeometry, Point
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -226,6 +227,67 @@ class CandidatePilotSwitchTest(APITestCase):
                 pk=self.candidate.id
             ).exists()
         )
+
+    @override_switch(SWITCH_NAME, active=False)
+    def test_disabled_routes_are_404_for_unauthorized_callers(self):
+        # The switch is checked before authentication and permissions, so
+        # a disabled route answers 404 for every caller instead of
+        # advertising that it exists with a 401 or a 403 (OSDEV-3627).
+        retirement_request = FacilityCandidateRetirementRequest.objects \
+            .create(
+                facility=self.candidate,
+                tally={'confirmed': 0, 'not_a_facility': 3},
+            )
+        approve_url = (
+            '/api/v1/candidate-retirement-requests/'
+            f'{retirement_request.id}/approve/'
+        )
+
+        anonymous_responses = (
+            self.client.post(
+                self._votes_url(self.candidate.id),
+                {'vote': 'confirmed'},
+                format='json',
+            ),
+            self.client.get('/api/v1/candidate-retirement-requests/'),
+            self.client.post(approve_url),
+        )
+        for response in anonymous_responses:
+            self.assertEqual(
+                status.HTTP_404_NOT_FOUND, response.status_code
+            )
+
+        # A signed-in non-moderator gets the same 404, not a 403.
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get('/api/v1/candidate-retirement-requests/')
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+
+    @override_switch(SWITCH_NAME, active=False)
+    def test_disabled_vote_write_does_not_spend_the_throttle(self):
+        # DataUploadThrottle's data_upload scope is shared with the
+        # location-contribution writes, so a client retrying votes
+        # against the disabled endpoint must not eat that quota
+        # (OSDEV-3627).
+        self.client.force_authenticate(user=self.user)
+
+        with unittest.mock.patch.object(
+            DataUploadThrottle, 'allow_request'
+        ) as allow_request:
+            response = self.client.post(
+                self._votes_url(self.candidate.id),
+                {'vote': 'confirmed'},
+                format='json',
+            )
+
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+        allow_request.assert_not_called()
+
+    @override_switch(SWITCH_NAME, active=False)
+    def test_non_candidate_v1_actions_are_unaffected(self):
+        # Only the candidate-only actions are gated: the switch must not
+        # take the rest of /api/v1/production-locations/ down with it.
+        response = self.client.get('/api/v1/production-locations/')
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
 
     @override_switch(SWITCH_NAME, active=False)
     def test_ingest_refuses_to_run_when_off(self):
