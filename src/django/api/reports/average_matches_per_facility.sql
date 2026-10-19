@@ -7,7 +7,7 @@ FROM (
     f.id,
     count(*) AS match_count
   FROM api_facilitymatch m
-  JOIN api_facility f ON m.facility_id = f.id
+  JOIN api_facility f ON m.facility_id = f.id AND f.is_candidate = false
   AND status NOT IN ('REJECTED', 'PENDING')
   AND to_char(m.created_at, 'YYYY-MM') != to_char(now(), 'YYYY-MM')
   GROUP BY to_char(m.created_at, 'YYYY-MM'), f.id

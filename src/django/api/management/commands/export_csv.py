@@ -125,7 +125,8 @@ def get_facilities(limit=50000, id=None):
         QuerySet: A Django QuerySet containing the filtered
             and ordered facilities.
     """
-    facility_objects = FacilityIndex.objects
+    # Candidate rows never belong in the export (OSDEV-3378).
+    facility_objects = FacilityIndex.objects.without_candidates()
 
     if id is not None:
         facility_objects = facility_objects.filter(id__gt=id)

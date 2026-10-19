@@ -14,6 +14,7 @@ SELECT
           (u.email LIKE '%openapparel.org%'
               OR u.email LIKE '%opensupplyhub.org%') AS is_public_list
       FROM api_facilitymatch m
+          JOIN api_facility f ON m.facility_id = f.id AND f.is_candidate = false
           JOIN api_facilitylistitem i on m.facility_list_item_id = i.id
           JOIN api_source s on i.source_id = s.id
           JOIN api_contributor c ON s.contributor_id = c.id
