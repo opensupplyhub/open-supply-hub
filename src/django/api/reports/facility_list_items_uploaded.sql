@@ -12,5 +12,11 @@ SELECT
          JOIN api_user u ON u.id = c.admin_id
  WHERE to_char(i.created_at, 'YYYY-MM') != to_char(now(), 'YYYY-MM')
  AND s.create = true
+ AND NOT EXISTS (
+   SELECT 1
+   FROM api_facility f
+   WHERE f.id = i.facility_id
+   AND f.is_candidate = true
+ )
  GROUP BY to_char(i.created_at, 'YYYY-MM'), is_public_list
  ORDER BY to_char(i.created_at, 'YYYY-MM'), is_public_list;
