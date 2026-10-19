@@ -6,6 +6,7 @@ WITH base_query AS (
     c.id,
     c.contrib_type
   FROM api_facilitymatch m
+    JOIN api_facility f ON m.facility_id = f.id AND f.is_candidate = false
     JOIN api_facilitylistitem i ON m.facility_list_item_id = i.id
     JOIN api_source s ON i.source_id = s.id
     JOIN api_contributor c ON s.contributor_id = c.id
