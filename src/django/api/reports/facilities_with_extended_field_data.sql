@@ -30,6 +30,8 @@ FROM (
         api_facility af
     JOIN
         api_facilityindex afi ON af.id=afi.id
+    WHERE
+        af.is_candidate = false
     GROUP BY
         TO_CHAR(af.created_at, 'YYYY-MM')
 ) AS query1
@@ -46,6 +48,13 @@ FULL OUTER JOIN (
         SUM(COUNT(DISTINCT CASE WHEN field_name = 'name' THEN facility_id END)) OVER (ORDER BY TO_CHAR(created_at, 'YYYY-MM') ROWS UNBOUNDED PRECEDING) AS name_claimed
     FROM
         api_extendedfield
+    WHERE
+        NOT EXISTS (
+            SELECT 1
+            FROM api_facility f
+            WHERE f.id = api_extendedfield.facility_id
+            AND f.is_candidate = true
+        )
     GROUP BY
         TO_CHAR(created_at, 'YYYY-MM')
 ) AS query2 ON query1.month = query2.month

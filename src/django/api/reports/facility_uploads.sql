@@ -33,6 +33,12 @@ ORDER BY to_char(l.created_at, 'YYYY-MM') desc) as query1
           JOIN api_user u ON u.id = c.admin_id
   WHERE to_char(i.created_at, 'YYYY-MM-DD') != to_char(now(), 'YYYY-MM-DD')
   AND s.create = true
+  AND NOT EXISTS (
+    SELECT 1
+    FROM api_facility f
+    WHERE f.id = i.facility_id
+    AND f.is_candidate = true
+  )
   GROUP BY to_char(i.created_at, 'YYYY-MM')
   ORDER BY to_char(i.created_at, 'YYYY-MM') DESC
   ) as query2 USING (month);
