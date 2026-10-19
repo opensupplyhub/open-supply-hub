@@ -15,6 +15,13 @@ FROM (
   AND NOT u.email LIKE '%openapparel.org%'
   AND NOT u.email LIKE '%opensupplyhub.org%'
   AND NOT u.email LIKE '%azavea.com%'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM api_facilitylistitem ci
+    JOIN api_facility cf ON cf.id = ci.facility_id
+    WHERE ci.source_id = s.id
+    AND cf.is_candidate = true
+  )
   ORDER BY to_char(s.created_at, 'YYYY-MM'), c.id
 ) q
 GROUP BY month, source_type
