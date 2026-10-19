@@ -13,6 +13,13 @@ FROM (
   AND NOT u.email LIKE '%openapparel.org%'
   AND NOT u.email LIKE '%opensupplyhub.org%'
   AND NOT u.email LIKE '%azavea.com%'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM api_facilitylistitem ci
+    JOIN api_facility cf ON cf.id = ci.facility_id
+    WHERE ci.source_id = s.id
+    AND cf.is_candidate = true
+  )
   GROUP BY c.id
 ) s
 JOIN api_contributor c ON c.id = s.id
