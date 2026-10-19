@@ -13,6 +13,13 @@ FROM (
   WHERE to_char(s.created_at, 'YYYY-MM') != to_char(now(), 'YYYY-MM')
   AND s.create = true
   AND (u.email LIKE '%openapparel.org%' OR u.email LIKE '%opensupplyhub.org%')
+  AND NOT EXISTS (
+    SELECT 1
+    FROM api_facilitylistitem ci
+    JOIN api_facility cf ON cf.id = ci.facility_id
+    WHERE ci.source_id = s.id
+    AND cf.is_candidate = true
+  )
   ORDER BY to_char(s.created_at, 'YYYY-MM'), c.id
 ) q
 GROUP BY month, source_type
