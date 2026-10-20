@@ -32,6 +32,9 @@ from api.services.candidate_retirement import (
 from api.services import candidate_validation
 from api.services.candidate_switch import candidates_enabled
 from api.services.os_id_presence import os_id_exists_here
+from api.services.identity_record_retrieval import (
+    retrieve_identity_record,
+)
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -68,6 +71,7 @@ from api.models.partner_field import PartnerField
 from api.models.extended_field import ExtendedField
 from api.identity_record_switches import (
     IDENTITY_RECORD_REGISTRATION_SWITCH,
+    IDENTITY_RESOLVER_SWITCH,
 )
 from api.os_id import validate_os_id
 from api.serializers.v1.identity_record_registration_serializer \
@@ -820,6 +824,60 @@ class ProductionLocations(ViewSet):
 
         return Response(
             self.__identity_record_response(association),
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        url_path='identity-record',
+    )
+    def identity_record_content(self, request, pk=None):
+        """
+        The registered record itself, fetched live and decoded, and
+        public because the visitor this page exists for holds one of our
+        identifiers and nothing else. A retrieval failure is a 200
+        carrying a typed reason rather than an error status, since the
+        request to Open Supply Hub did not fail and the page still has
+        to render.
+        """
+
+        # Gated with the resolver rather than with registration. This is the
+        # read side: it backs a page the public reaches by following an
+        # identifier, so it opens when that path opens.
+        if not switch_is_active(IDENTITY_RESOLVER_SWITCH):
+            raise Http404()
+        outcome = retrieve_identity_record(pk)
+
+        if not outcome.ok:
+            return Response(
+                {
+                    'os_id': pk,
+                    'available': False,
+                    'reason': outcome.failure.reason.value,
+                    'detail': outcome.failure.detail,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        record = outcome.record
+
+        return Response(
+            {
+                'os_id': record.os_id,
+                'available': True,
+                'resolver_uri': record.resolver_uri,
+                'document_uri': record.document_uri,
+                'record_type': record.record_type,
+                'issuer': record.issuer,
+                'registrant_reference': record.registrant_reference,
+                'retrieved_at': record.retrieved_at,
+                'integrity': record.integrity,
+                # The decoded credential, passed through unmapped. The page
+                # decides what to show; see the note in the retrieval
+                # service on why this layer does not flatten it.
+                'credential': record.content,
+            },
             status=status.HTTP_200_OK,
         )
 

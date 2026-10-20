@@ -31,6 +31,7 @@ import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
+import IdentityRecord from './components/IdentityRecord/IdentityRecord';
 import ProductionLocationDetailsContainer from './components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
@@ -57,6 +58,7 @@ import {
     listsRoute,
     facilityListItemsRoute,
     facilitiesRoute,
+    identityRecordRoute,
     productionLocationDetailsRoute,
     dashboardRoute,
     claimFacilityRoute,
@@ -73,6 +75,7 @@ import {
     productionLocationInfoRouteCreate,
     productionLocationInfoRouteUpdate,
     ENABLE_PRODUCTION_LOCATION_PAGE,
+    ENABLE_IDENTITY_RESOLVER,
 } from './util/constants';
 
 // Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
@@ -159,6 +162,23 @@ class Routes extends Component {
                                     exact
                                     path={claimDetailsRoute}
                                     component={ClaimForm}
+                                />
+                                {/*
+                                 * Before facilitiesRoute on purpose.
+                                 * That route is not exact, so it would
+                                 * otherwise swallow this path.
+                                 */}
+                                <Route
+                                    exact
+                                    path={identityRecordRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={ENABLE_IDENTITY_RESOLVER}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route component={IdentityRecord} />
+                                        </FeatureFlag>
+                                    )}
                                 />
                                 <Route
                                     path={facilitiesRoute}
