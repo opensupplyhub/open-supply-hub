@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { array, func, object } from 'prop-types';
+import { array, func, object, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -26,8 +26,7 @@ import {
 } from '../../../../../util/util';
 import {
     BETA_TOOLTIP_TEXT,
-    AFFILIATIONS_OPTIONS,
-    CERTIFICATIONS_OPTIONS,
+    CLAIM_PROFILE_OPTIONS_SUPPORT_EMAIL,
     PROCESSING_TYPES_TOOLTIP,
     PROCESSING_TYPES_TAXONOMY_TOOLTIP,
     PRODUCT_TYPES_TOOLTIP,
@@ -39,6 +38,7 @@ import {
     PRODUCT_TYPE_SELECT_PLACEHOLDER,
 } from './constants';
 import { profileStepStyles } from './styles';
+import useClaimProfileOptions from './useClaimProfileOptions';
 import { selectStyles } from '../../styles';
 import { profileStepSchema } from '../../validationSchemas';
 
@@ -48,6 +48,24 @@ const isValidPersistedBusinessWebsite = website => {
     }
 
     return profileStepSchema.fields.businessWebsite.isValidSync(website);
+};
+
+const MissingOptionHint = ({ subject, className }) => (
+    <Typography className={className}>
+        Don&apos;t see your {subject} in the list?{' '}
+        <a
+            href={`mailto:${CLAIM_PROFILE_OPTIONS_SUPPORT_EMAIL}`}
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Contact us
+        </a>
+    </Typography>
+);
+
+MissingOptionHint.propTypes = {
+    subject: string.isRequired,
+    className: string.isRequired,
 };
 
 const ProfileStep = ({
@@ -72,6 +90,11 @@ const ProfileStep = ({
     ] = useState(false);
 
     const [enabledTaxonomy, setEnabledTaxonomy] = useState(false);
+
+    const {
+        affiliations: affiliationOptions,
+        certifications: certificationOptions,
+    } = useClaimProfileOptions();
 
     // Only hide a prefilled website when it already passes client validation,
     // so invalid persisted values remain editable.
@@ -1114,7 +1137,7 @@ const ProfileStep = ({
                             name="affiliations"
                             aria-label="Affiliations"
                             isMulti
-                            options={AFFILIATIONS_OPTIONS}
+                            options={affiliationOptions}
                             value={formData.facilityAffiliations || []}
                             onChange={values =>
                                 handleChange('facilityAffiliations', values)
@@ -1129,6 +1152,10 @@ const ProfileStep = ({
                                 DropdownIndicator: null,
                                 IndicatorSeparator: null,
                             }}
+                        />
+                        <MissingOptionHint
+                            subject="affiliation"
+                            className={classes.missingOptionHint}
                         />
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}
@@ -1152,7 +1179,7 @@ const ProfileStep = ({
                             name="certifications"
                             aria-label="Certifications"
                             isMulti
-                            options={CERTIFICATIONS_OPTIONS}
+                            options={certificationOptions}
                             value={formData.facilityCertifications || []}
                             onChange={values =>
                                 handleChange('facilityCertifications', values)
@@ -1167,6 +1194,10 @@ const ProfileStep = ({
                                 DropdownIndicator: null,
                                 IndicatorSeparator: null,
                             }}
+                        />
+                        <MissingOptionHint
+                            subject="certification"
+                            className={classes.missingOptionHint}
                         />
                         <DialogTooltip
                             text={BETA_TOOLTIP_TEXT}

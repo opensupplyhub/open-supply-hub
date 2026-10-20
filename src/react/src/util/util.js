@@ -224,6 +224,8 @@ export const makeGetProcessingTypeSuggestionsURL = (
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
+export const makeGetClaimProfileOptionsURL = () =>
+    '/api/claim-profile-options/';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetFacilityByOSIdURL = (

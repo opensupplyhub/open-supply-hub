@@ -11,6 +11,10 @@ from .api.api_limit import (
   ApiLimit,
   HistoricalApiLimit,
 )
+from .claim_profile_option import (
+  ClaimAffiliation,
+  ClaimCertification,
+)
 from .contributor.contributor import (
   Contributor,
   HistoricalContributor

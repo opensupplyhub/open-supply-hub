@@ -12,6 +12,14 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
+from api.models.claim_profile_option import (
+    ClaimAffiliation,
+    ClaimCertification,
+)
+from api.models.claim_profile_option_admin import (
+    ClaimAffiliationAdmin,
+    ClaimCertificationAdmin,
+)
 from api.models.polygon import Polygon
 from api.models.polygon_admin import PolygonAdmin
 from api.models.zone_set import Zone, ZoneSet
@@ -404,6 +412,8 @@ admin_site.register(models.FacilityClaim, FacilityClaimAdmin)
 admin_site.register(models.FacilityClaimReviewNote,
                     FacilityClaimReviewNoteAdmin)
 admin_site.register(models.FacilityAlias, FacilityAliasAdmin)
+admin_site.register(ClaimAffiliation, ClaimAffiliationAdmin)
+admin_site.register(ClaimCertification, ClaimCertificationAdmin)
 admin_site.register(Flag, FlagAdmin)
 admin_site.register(Sample, SampleAdmin)
 admin_site.register(Switch, SwitchAdmin)
