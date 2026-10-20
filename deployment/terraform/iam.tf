@@ -398,8 +398,10 @@ data "aws_iam_policy_document" "bastion_ssm_ci_access" {
       values   = [var.environment]
     }
 
+    # BoolIfExists, not Bool: the key is usually absent from the request, and
+    # Bool treats a missing key as false, which denied every session.
     condition {
-      test     = "Bool"
+      test     = "BoolIfExists"
       variable = "ssm:SessionDocumentAccessCheck"
       values   = ["true"]
     }
@@ -485,8 +487,10 @@ data "aws_iam_policy_document" "bastion_ssm_user_access" {
       values   = [var.environment]
     }
 
+    # BoolIfExists, not Bool: the key is usually absent from the request, and
+    # Bool treats a missing key as false, which denied every session.
     condition {
-      test     = "Bool"
+      test     = "BoolIfExists"
       variable = "ssm:SessionDocumentAccessCheck"
       values   = ["true"]
     }

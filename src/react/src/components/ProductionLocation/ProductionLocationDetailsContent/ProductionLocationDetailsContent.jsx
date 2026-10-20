@@ -42,10 +42,14 @@ const ProductionLocationDetailsContent = ({
                 claimInfo={data?.properties?.claim_info}
                 isEmbed={!!embed}
             />
-            <div className={classes.identityRow}>
-                <OsIdBadge osId={osId} />
-                <DataSourcesInfo />
-            </div>
+            <Grid container className={classes.containerItem} spacing={16}>
+                <Grid item xs={12} lg={7} className={classes.identityRowItem}>
+                    <OsIdBadge osId={osId} />
+                </Grid>
+                <Grid item xs={12} lg={5} className={classes.identityRowItem}>
+                    <DataSourcesInfo />
+                </Grid>
+            </Grid>
             <ClosureStatus
                 data={data}
                 clearFacility={clearFacility}

@@ -1,39 +1,39 @@
 import COLOURS from '../../../../util/COLOURS';
+import commonStyles from '../../commonStyles';
 
 /*
 The data labels legend is explanatory chrome, not facility content, so it sits
-beside the OS ID rather than under it and is typed well below the page's
-section headings. See OSDEV-3239.
+beside the OS ID rather than under it and is typed below the page's section
+headings. See OSDEV-3239.
 
 It deliberately does not build on getTypographyStyles: that scale starts at
 16px and exists for page content, so every step would have to be overridden
 here. The sizes the legend does use are named below instead, so there is still
 one place to change them.
 */
-const TITLE_SIZE = '11px';
-const TEXT_SIZE = '12px';
-const ICON_SIZE = 12;
-const CHEVRON_SIZE = 14;
+const TITLE_SIZE = '12px';
+const TEXT_SIZE = '14px';
+const ICON_SIZE = 14;
+const CHEVRON_SIZE = 16;
 const PANEL_MIN_HEIGHT = 108;
 /*
-The prototype tiles a grey panel onto a white card. Our page background is
-already COLOURS.LIGHT_GREY, so reusing that grey here would make the panel
-vanish into the page. White separates it, and matches the other panels on the
-profile.
+The first pass typed the legend at 11/12px. That read as a footnote but was
+hard to read, so it is now 14px: one step below the 16px page content, with the
+colours below carrying the distinction that the smaller size used to carry on
+its own.
 */
-const PANEL_BG = COLOURS.WHITE;
+const LEGEND_TEXT = COLOURS.DARK_GREY;
 /*
-text.secondary is rgba(0, 0, 0, .54), which at 12px clears 4.5:1 on white only
-just. The legend should still read as secondary to the near-black title, so go
-one step darker rather than relying on that margin.
+Page content is near-black (text.primary, rgba(0, 0, 0, .87)). The legend's own
+heading steps away from that to a slate, so it does not read as another section
+heading while staying dark enough to head the panel. 10.1:1 on white.
 */
-const LEGEND_TEXT = COLOURS.MEDIUM_GREY;
+const LEGEND_TITLE = COLOURS.DARK_SLATE_GREY;
 const SLIDE_PADDING = '12px 14px';
 const SLIDE_EASE = 'cubic-bezier(.4, 0, .2, 1)';
 
 export default theme => {
     const spacing = theme.spacing.unit ?? 8;
-    const panelBorder = `1px solid ${COLOURS.LIGHT_BORDER_GREY}`;
 
     const colouredIcon = colour =>
         Object.freeze({
@@ -77,22 +77,18 @@ export default theme => {
         always as tall as the taller slide. That keeps the height stable while
         sliding (nothing below the row shifts) without ever clipping content,
         which a fixed height plus absolute slides could not do.
+
+        It takes the page's shared panel treatment so that it reads as a card
+        in the same column as the one beneath it. The prototype tiles a grey
+        panel onto a white card, but our page background is already
+        COLOURS.LIGHT_GREY, so a grey fill here would vanish into the page.
         */
         container: Object.freeze({
+            ...commonStyles(theme).container,
             display: 'grid',
             overflow: 'hidden',
             minHeight: PANEL_MIN_HEIGHT,
-            backgroundColor: PANEL_BG,
-            /*
-            The OS ID panel carries the purple fill and the row carries the
-            outer border, so the legend contributes only the divider between
-            the two: above it when stacked, beside it from md up.
-            */
-            borderTop: panelBorder,
-            [theme.breakpoints.up('md')]: {
-                borderTop: 0,
-                borderLeft: panelBorder,
-            },
+            boxSizing: 'border-box',
         }),
         /*
         Each slide fills the shared cell and moves by a percentage of its own
@@ -147,7 +143,7 @@ export default theme => {
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '.05em',
-            color: theme.palette.text.primary,
+            color: LEGEND_TITLE,
             margin: 0,
         }),
         infoButton: Object.freeze({
