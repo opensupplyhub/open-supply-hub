@@ -1,4 +1,5 @@
 import COLOURS from '../../../../util/COLOURS';
+import commonStyles from '../../commonStyles';
 
 export default theme => {
     const spacing = theme.spacing.unit ?? 8;
@@ -7,8 +8,13 @@ export default theme => {
         The OS ID shares a row with the data labels legend (OSDEV-3239), so the
         copy actions sit under the ID rather than beside it. That keeps the
         column tidy at any width and leaves the ID as the dominant element.
+
+        It is a card in its own right, in the same column as the panel below
+        it, so it takes the page's shared panel treatment and keeps only its
+        lavender fill to mark it as the identity of the location.
         */
         osIdRow: {
+            ...commonStyles(theme).container,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
