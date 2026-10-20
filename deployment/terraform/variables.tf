@@ -1121,6 +1121,63 @@ variable "waf_enabled" {
   default = false
 }
 
+variable "waf_rate_limit_enabled" {
+  type        = bool
+  default     = false
+  description = "Add the API rate-based rules to the WAF web ACL (requires waf_enabled)"
+}
+
+variable "waf_rate_limit_action" {
+  type        = string
+  default     = "count"
+  description = "Action of the API rate-based rules: count (only record matches) or block (respond with 429)"
+
+  validation {
+    condition     = contains(["count", "block"], var.waf_rate_limit_action)
+    error_message = "waf_rate_limit_action must be either \"count\" or \"block\"."
+  }
+}
+
+variable "waf_rate_limit_evaluation_window_sec" {
+  type        = number
+  default     = 300
+  description = "Time window, in seconds, over which the API rate-based rules count requests per IP"
+
+  validation {
+    condition     = contains([60, 120, 300, 600], var.waf_rate_limit_evaluation_window_sec)
+    error_message = "waf_rate_limit_evaluation_window_sec must be one of 60, 120, 300 or 600."
+  }
+}
+
+variable "waf_api_rate_limit_per_ip" {
+  type        = number
+  default     = 2000
+  description = "Maximum /api/ requests per IP within the evaluation window, for all requests"
+
+  validation {
+    condition     = var.waf_api_rate_limit_per_ip >= 10 && var.waf_api_rate_limit_per_ip <= 2000000000
+    error_message = "waf_api_rate_limit_per_ip must be between 10 and 2000000000."
+  }
+}
+
+variable "waf_api_anon_rate_limit_per_ip" {
+  type        = number
+  default     = 500
+  description = "Maximum /api/ requests per IP within the evaluation window, for requests without an API token"
+
+  validation {
+    condition     = var.waf_api_anon_rate_limit_per_ip >= 10 && var.waf_api_anon_rate_limit_per_ip <= 2000000000
+    error_message = "waf_api_anon_rate_limit_per_ip must be between 10 and 2000000000."
+  }
+}
+
+variable "waf_rate_limit_exempt_ips" {
+  type        = list(string)
+  default     = []
+  description = "CIDR blocks (IPv4 or IPv6) exempt from the API rate-based rules"
+  sensitive   = true
+}
+
 variable "enable_legacy_info_site_redirect" {
   type    = bool
   default = false
@@ -1525,6 +1582,12 @@ variable "ip_denylist_secret_name" {
 variable "ip_whitelist_secret_name" {
   type    = string
   default = ""
+}
+
+variable "waf_rate_limit_exempt_ips_secret_name" {
+  type        = string
+  default     = ""
+  description = "Secrets Manager secret holding a JSON list of CIDR blocks exempt from the API rate-based rules"
 }
 
 variable "anonymized_database_name_secret_name" {
