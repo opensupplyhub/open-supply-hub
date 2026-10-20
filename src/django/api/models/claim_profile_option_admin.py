@@ -1,4 +1,4 @@
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.utils.html import format_html
 from simple_history.admin import SimpleHistoryAdmin
 
@@ -14,20 +14,20 @@ class ClaimProfileOptionAdmin(SimpleHistoryAdmin):
     rewrites every claim that holds the old name.
     """
 
-    list_display = ('name', 'is_active', 'sort_order', 'claims_count',
-                    'updated_at')
+    list_display = ('name', 'is_active', 'sort_order', 'updated_at')
     list_editable = ('is_active', 'sort_order')
     list_filter = ('is_active',)
     search_fields = ('name',)
-    readonly_fields = ('claims_count', 'created_at', 'updated_at')
-    fields = ('name', 'is_active', 'sort_order', 'claims_count',
-              'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+    fields = ('name', 'is_active', 'sort_order', 'created_at', 'updated_at')
 
-    @admin.display(description='Claims using it')
-    def claims_count(self, obj):
-        """How many claims (any status) currently hold this option."""
-        if not obj or not obj.pk:
-            return 0
+    @staticmethod
+    def _claims_count(obj):
+        """
+        How many claims (any status) currently hold this option. The
+        array columns are not indexed, so this scans the claims table:
+        it runs only on an option's change page, never per list row.
+        """
         return FacilityClaim.objects.filter(
             **{f'{obj.claim_field}__contains': [obj.name]}
         ).count()
@@ -47,7 +47,7 @@ class ClaimProfileOptionAdmin(SimpleHistoryAdmin):
                 '{}<br><strong>Renaming updates {} existing claim(s) that '
                 'hold "{}".</strong>',
                 form.base_fields['name'].help_text,
-                self.claims_count(obj),
+                self._claims_count(obj),
                 obj.name,
             )
         return form

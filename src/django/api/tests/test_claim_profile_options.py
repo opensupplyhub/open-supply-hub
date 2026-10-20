@@ -1,5 +1,7 @@
+from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.db import IntegrityError, transaction
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
@@ -274,6 +276,15 @@ class ApprovedClaimChoicesTest(ClaimProfileOptionsTestBase):
         self.assertEqual(choices[-1], ('SEDEX', 'SEDEX'))
 
 
+# The admin pages render {% static %} tags. The project's manifest-based
+# static storage needs `collectstatic` to have run, which a plain test run
+# does not do, so serve static files without a manifest here.
+@override_settings(STORAGES={
+    **settings.STORAGES,
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+    },
+})
 class ClaimProfileOptionAdminTest(ClaimProfileOptionsTestBase):
     def setUp(self):
         super().setUp()
@@ -321,9 +332,16 @@ class ClaimProfileOptionAdminTest(ClaimProfileOptionsTestBase):
         )
 
     def test_changelist_loads(self):
-        self._make_claim(self.facility, certifications=['BCI'])
         response = self.client.get(
             reverse('admin:api_claimcertification_changelist')
         )
         self.assertEqual(200, response.status_code)
-        self.assertContains(response, 'Claims using it')
+        self.assertContains(response, 'Rainforest Alliance')
+
+    def test_change_page_warns_how_many_claims_a_rename_updates(self):
+        self._make_claim(self.facility, certifications=['BCI'])
+        option = ClaimCertification.objects.get(name='BCI')
+        response = self.client.get(
+            reverse('admin:api_claimcertification_change', args=[option.pk])
+        )
+        self.assertContains(response, 'Renaming updates 1 existing claim(s)')
