@@ -9,7 +9,7 @@ FROM (
     COUNT(*) AS match_count,
     contrib_type
   FROM api_facilitymatch m
-  JOIN api_facility f ON m.facility_id = f.id
+  JOIN api_facility f ON m.facility_id = f.id AND f.is_candidate = false
   JOIN api_facilitylistitem li ON m.facility_list_item_id = li.id
   JOIN api_source s ON li.source_id = s.id
   JOIN api_facilitylist l ON s.facility_list_id = l.id
