@@ -9,7 +9,12 @@ from ...facility_type_processing_type import (
     ALL_FACILITY_TYPE_CHOICES,
     ALL_PROCESSING_TYPE_CHOICES
 )
-from ...models import Contributor, FacilityClaim
+from ...models import (
+    ClaimAffiliation,
+    ClaimCertification,
+    Contributor,
+    FacilityClaim,
+)
 from .facility_index_details_serializer import FacilityIndexDetailsSerializer
 from .utils import _get_parent_company
 
@@ -88,11 +93,29 @@ class ApprovedFacilityClaimSerializer(ModelSerializer):
     def get_facility_parent_company(self, claim):
         return _get_parent_company(claim)
 
-    def get_affiliation_choices(self, _):
-        return FacilityClaim.AFFILIATION_CHOICES
+    @staticmethod
+    def _option_choices(option_model, current_values):
+        """
+        The active options, plus any value this claim already holds that
+        is no longer offered (deactivated, or otherwise not an option),
+        so editing the claim never silently drops it.
+        """
+        names = option_model.objects.active_names()
+        names += [
+            value for value in (current_values or [])
+            if value not in names
+        ]
+        return [(name, name) for name in names]
 
-    def get_certification_choices(self, _):
-        return FacilityClaim.CERTIFICATION_CHOICES
+    def get_affiliation_choices(self, claim):
+        return self._option_choices(
+            ClaimAffiliation, claim.facility_affiliations
+        )
+
+    def get_certification_choices(self, claim):
+        return self._option_choices(
+            ClaimCertification, claim.facility_certifications
+        )
 
     def get_production_type_choices(self, _):
         return ALL_PROCESSING_TYPE_CHOICES

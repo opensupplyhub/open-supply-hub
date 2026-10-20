@@ -7,7 +7,11 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
 from api.exceptions import BadRequestException
 
-from api.models import FacilityClaim
+from api.models import (
+    ClaimAffiliation,
+    ClaimCertification,
+    FacilityClaim,
+)
 from api.constants import FacilityClaimStatuses
 from api.constants import JS_MAX_SAFE_INTEGER
 from api.helpers.claim_attachments import validate_attachment_files
@@ -43,6 +47,21 @@ def validate_url_field(field_name, value):
 
 def validate_files(files):
     return validate_attachment_files(files)
+
+
+def validate_claim_profile_options(option_model, values):
+    """
+    Accept only names of currently active options of `option_model`
+    (`ClaimAffiliation` or `ClaimCertification`), so a new claim can
+    record only what the claim form offers. Repeats are dropped.
+    """
+    active_names = set(option_model.objects.active_names())
+    invalid = [value for value in values if value not in active_names]
+    if invalid:
+        raise serializers.ValidationError(
+            [f'"{value}" is not a valid choice.' for value in invalid]
+        )
+    return list(dict.fromkeys(values))
 
 
 def validate_non_future_date(value):
@@ -250,16 +269,14 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
         max_length=200
     )
+    # Validated against the active ClaimAffiliation / ClaimCertification
+    # options managed in the Django admin (see the validate_* methods).
     facility_affiliations = serializers.ListField(
-        child=serializers.ChoiceField(
-            choices=FacilityClaim.AFFILIATION_CHOICES,
-        ),
+        child=serializers.CharField(max_length=50),
         required=False
     )
     facility_certifications = serializers.ListField(
-        child=serializers.ChoiceField(
-            choices=FacilityClaim.CERTIFICATION_CHOICES,
-        ),
+        child=serializers.CharField(max_length=50),
         required=False
     )
     facility_female_workers_percentage = serializers.IntegerField(
@@ -327,6 +344,12 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
 
     def validate_business_linkedin_profile(self, value):
         return validate_url_field("business_linkedin_profile", value)
+
+    def validate_facility_affiliations(self, value):
+        return validate_claim_profile_options(ClaimAffiliation, value)
+
+    def validate_facility_certifications(self, value):
+        return validate_claim_profile_options(ClaimCertification, value)
 
     def validate_facility_name_english(self, value):
         return validate_claimed_name_or_address(

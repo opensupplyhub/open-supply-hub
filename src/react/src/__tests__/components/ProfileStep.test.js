@@ -1,7 +1,15 @@
 import React from 'react';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
+import apiRequest from '../../util/apiRequest';
 import ProfileStep from '../../components/InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep';
+
+// The affiliation and certification options come from the API (managed in
+// the Django admin); each test controls what it returns.
+jest.mock('../../util/apiRequest', () => ({
+    __esModule: true,
+    default: { get: jest.fn() },
+}));
 
 jest.mock('react-router-dom', () => {
     const actual = jest.requireActual('react-router-dom');
@@ -244,6 +252,12 @@ describe('ProfileStep component', () => {
             preloadedState: state,
         });
 
+    beforeEach(() => {
+        apiRequest.get.mockResolvedValue({
+            data: { affiliations: [], certifications: [] },
+        });
+    });
+
     afterEach(() => {
         jest.clearAllMocks();
     });
@@ -307,6 +321,60 @@ describe('ProfileStep component', () => {
                 'https://company.com (max 200 characters)',
             ),
         ).toBeInTheDocument();
+    });
+
+    test('offers the affiliation and certification options from the API', async () => {
+        apiRequest.get.mockResolvedValue({
+            data: {
+                affiliations: ['Cascale', 'ZDHC'],
+                certifications: ['BCI', 'LEED'],
+            },
+        });
+
+        renderComponent();
+
+        expect(apiRequest.get).toHaveBeenCalledWith(
+            '/api/claim-profile-options/',
+        );
+        const affiliations = screen.getByTestId('styled-select-affiliations');
+        expect(
+            await within(affiliations).findByText('Cascale'),
+        ).toBeInTheDocument();
+        expect(within(affiliations).getByText('ZDHC')).toBeInTheDocument();
+        expect(
+            within(affiliations).queryByText('Sustainable Apparel Coalition'),
+        ).not.toBeInTheDocument();
+        const certifications = screen.getByTestId(
+            'styled-select-certifications',
+        );
+        expect(within(certifications).getByText('LEED')).toBeInTheDocument();
+    });
+
+    test('renders empty dropdowns when the options request fails', async () => {
+        apiRequest.get.mockRejectedValue(new Error('network'));
+
+        renderComponent();
+
+        await screen.findByText('Compliance & Partnerships');
+        const affiliations = screen.getByTestId('styled-select-affiliations');
+        expect(within(affiliations).queryAllByRole('option')).toHaveLength(0);
+    });
+
+    test('links to support when an option is missing', () => {
+        renderComponent();
+
+        expect(
+            screen.getByText(/Don't see your affiliation in the list\?/),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(/Don't see your certification in the list\?/),
+        ).toBeInTheDocument();
+        screen.getAllByRole('link', { name: 'Contact us' }).forEach(link => {
+            expect(link).toHaveAttribute(
+                'href',
+                'mailto:support@opensupplyhub.org',
+            );
+        });
     });
 });
 

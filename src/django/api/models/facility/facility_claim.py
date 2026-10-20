@@ -10,8 +10,6 @@ from countries.lib.countries import COUNTRY_CHOICES
 from api.constants import (
     FacilityClaimStatuses,
     OriginSource,
-    Affiliations,
-    Certifications
 )
 
 
@@ -65,72 +63,6 @@ class FacilityClaim(models.Model):
         (WEAVING, WEAVING),
         (OTHER, OTHER),
     )
-
-    AFFILIATION_CHOICES = [
-        (choice, choice)
-        for choice in
-        [
-            Affiliations.BENEFITS_BUSINESS_WORKERS,
-            Affiliations.BETTER_MILLS_PROGRAM,
-            Affiliations.BETTER_WORK,
-            Affiliations.CANOPY,
-            Affiliations.CASCALE,
-            Affiliations.ETHICAL_TRADING_INITIATIVE,
-            Affiliations.FAIR_LABOR_ASSOCIATION,
-            Affiliations.FAIR_WEAR_FOUNDATION,
-            Affiliations.HERFINANCE,
-            Affiliations.HERHEATH,
-            Affiliations.HERRESPECT,
-            Affiliations.SEDEX,
-            Affiliations.SOCIAL_LABOR_CONVERGENCE_PLAN,
-            # Superseded by CASCALE. Kept a valid choice so the claims that
-            # already store it keep validating; the claim form no longer
-            # offers it. See OSDEV-2219.
-            Affiliations.SUSTAINABLE_APPAREL_COALITION,
-            Affiliations.SWEATFREE_PURCHASING_CONSORTIUM,
-            Affiliations.ZDHC,
-        ]
-    ]
-
-    CERTIFICATION_CHOICES = [
-        (choice, choice)
-        for choice in
-        [
-            Certifications.BCI,
-            Certifications.B_CORP,
-            Certifications.BLUESIGN,
-            Certifications.CANOPY,
-            Certifications.CRADLE_TO_CRADLE,
-            Certifications.EU_ECOLABEL,
-            Certifications.FAIRTRADE_USA,
-            Certifications.FSC,
-            Certifications.GLOBAL_RECYCLING_STANDARD,
-            Certifications.GOTS,
-            Certifications.GREEN_BUTTON,
-            Certifications.GREEN_SCREEN,
-            Certifications.HIGG_INDEX,
-            Certifications.IMO_CONTROL,
-            Certifications.INTERNATIONAL_WOOL_TEXTILE,
-            Certifications.ISO_9000,
-            Certifications.IVN_LEATHER,
-            Certifications.LEATHER_WORKING_GROUP,
-            Certifications.NORDIC_SWAN,
-            Certifications.OEKO_TEX_STANDARD,
-            Certifications.OEKO_TEX_STEP,
-            Certifications.OEKO_TEX_ECO_PASSPORT,
-            Certifications.OEKO_TEX_MADE_IN_GREEN,
-            Certifications.PEFC,
-            Certifications.REACH,
-            Certifications.RESPONSIBLE_DOWN_STANDARD,
-            Certifications.RESPONSIBLE_WOOL_STANDARD,
-            Certifications.RAINFOREST_ALLIANCE,
-            Certifications.SAB8000,
-            Certifications.ABVTEX,
-            Certifications.EMPRESA_B,
-            Certifications.ORIGEM_SUSTENTAVEL,
-            Certifications.SELO_ABR,
-        ]
-    ]
 
     uuid = models.UUIDField(
         null=False,
@@ -289,9 +221,9 @@ class FacilityClaim(models.Model):
         models.CharField(
             null=False,
             blank=False,
-            choices=AFFILIATION_CHOICES,
             max_length=50,
-            help_text='A group the facility is affiliated with',
+            help_text=('A group the facility is affiliated with. Offered '
+                       'values are managed as ClaimAffiliation options.'),
             verbose_name='facility affiliation',
         ),
         null=True,
@@ -303,9 +235,10 @@ class FacilityClaim(models.Model):
         models.CharField(
             null=False,
             blank=False,
-            choices=CERTIFICATION_CHOICES,
             max_length=50,
-            help_text='A certification the facility has achieved',
+            help_text=('A certification the facility has achieved. '
+                       'Offered values are managed as ClaimCertification '
+                       'options.'),
             verbose_name='facility certification',
         ),
         null=True,
