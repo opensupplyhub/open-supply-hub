@@ -97,7 +97,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0248_exclude_candidates_from_facility_index'),
+        ('api', '0250_exclude_candidates_from_facility_index'),
     ]
 
     operations = [
