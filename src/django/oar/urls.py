@@ -25,6 +25,9 @@ from api.views.v1.candidate_retirement_requests \
      import CandidateRetirementRequests
 from api.views.v1.link_type_vocabulary \
      import LinkTypeVocabularyView
+from api.views.v1.identity_resolver \
+     import IdentityResolverView, ResolverDescriptionView
+from api.views.v1.identity_resolver import RESOLVER_PATH_PREFIX
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -160,6 +163,22 @@ schema_view = get_schema_view(
     patterns=[path("", include(public_apis + api_v1))],
 )
 
+# The identifier paths. Root-level rather than under api/ because the
+# identifier address is a published contract that has to outlive our
+# internal API versioning.
+resolver_apis = [
+    path(
+        '{}/<str:os_id>'.format(RESOLVER_PATH_PREFIX),
+        IdentityResolverView.as_view(),
+        name='identity-resolver',
+    ),
+    path(
+        '.well-known/resolver',
+        ResolverDescriptionView.as_view(),
+        name='resolver-description',
+    ),
+]
+
 # The link type vocabulary. Lives under api/ because it is an API
 # resource, and that prefix is already routed at the edge.
 vocabulary_apis = [
@@ -250,5 +269,6 @@ internal_apis = [
 
 
 urlpatterns = (
-    public_apis + api_v1 + internal_apis + info_apis + vocabulary_apis
+    public_apis + api_v1 + internal_apis + info_apis
+    + vocabulary_apis + resolver_apis
 )
