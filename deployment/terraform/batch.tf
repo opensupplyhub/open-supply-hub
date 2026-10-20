@@ -520,6 +520,7 @@ data "template_file" "db_sync_job_definition" {
     log_group_name                 = "log${local.short}Batch"
     instance_source                = var.instance_source
     claims_automation_account_email = var.claims_automation_account_email
+    earth_genome_contributor_id    = var.earth_genome_contributor_id
     aws_region                     = var.aws_region
     aws_storage_bucket_name        = local.files_bucket_name
     efs_file_system_id             = aws_efs_file_system.efs_db_sync[0].id

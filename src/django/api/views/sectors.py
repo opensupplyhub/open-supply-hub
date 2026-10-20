@@ -61,6 +61,10 @@ def get_sectors_for_contributor(contributor):
 
 
 def get_item_sectors(contributor):
+    # An item attached to a candidate facility is not visible anywhere,
+    # so its sectors must not surface through ?embed=1&contributor=
+    # either (OSDEV-3376). The FK join does not apply Facility.objects;
+    # exclude() keeps items with no facility.
     return set(
         FacilityListItem.objects.filter(
             status__in=[
@@ -71,6 +75,7 @@ def get_item_sectors(contributor):
             source__is_active=True,
             source__is_public=True,
         )
+        .exclude(facility__is_candidate=True)
         .annotate(values=Func('sector', function='unnest'))
         .values_list('values', flat=True)
         .distinct()
