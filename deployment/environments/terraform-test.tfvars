@@ -112,6 +112,8 @@ aws_chatbot_manage_channel_configuration = true
 manage_bedrock_cost_budget = true
 
 waf_enabled = true
+waf_rate_limit_enabled = true
+waf_rate_limit_action = "count"
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvmXPN2tV5nf0j18Vaed5v"
 hubspot_subscription_id = "12847627"

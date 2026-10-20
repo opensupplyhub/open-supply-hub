@@ -95,6 +95,8 @@ craft_cms_origin_domain = "open-supply.production.servd.dev"
 aws_chatbot_manage_channel_configuration = false
 
 waf_enabled = true
+waf_rate_limit_enabled = true
+waf_rate_limit_action = "count"
 memcached_view_cache_timeout_seconds = 120
 stripe_price_id = "price_1RdvlxPEfpkrtRDTscTnTbOh"
 hubspot_subscription_id = "12847627"

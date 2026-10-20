@@ -271,6 +271,16 @@ data "aws_secretsmanager_secret_version" "ip_whitelist" {
   secret_id = data.aws_secretsmanager_secret.ip_whitelist[0].id
 }
 
+data "aws_secretsmanager_secret" "waf_rate_limit_exempt_ips" {
+  count = var.waf_rate_limit_exempt_ips_secret_name != "" ? 1 : 0
+  name  = var.waf_rate_limit_exempt_ips_secret_name
+}
+
+data "aws_secretsmanager_secret_version" "waf_rate_limit_exempt_ips" {
+  count     = var.waf_rate_limit_exempt_ips_secret_name != "" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.waf_rate_limit_exempt_ips[0].id
+}
+
 data "aws_secretsmanager_secret" "anonymized_database_name" {
   count = var.anonymized_database_name_secret_name != "" ? 1 : 0
   name  = var.anonymized_database_name_secret_name
@@ -515,6 +525,8 @@ locals {
 
   ip_denylist  = var.ip_denylist_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.ip_denylist[0].secret_string) : var.ip_denylist
   ip_whitelist = var.ip_whitelist_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.ip_whitelist[0].secret_string) : var.ip_whitelist
+
+  waf_rate_limit_exempt_ips = var.waf_rate_limit_exempt_ips_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.waf_rate_limit_exempt_ips[0].secret_string) : var.waf_rate_limit_exempt_ips
 
   anonymized_database_name         = var.anonymized_database_name_secret_name != "" ? data.aws_secretsmanager_secret_version.anonymized_database_name[0].secret_string : var.anonymized_database_name
   anonymized_database_name_arn     = var.anonymized_database_name_secret_name != "" ? data.aws_secretsmanager_secret.anonymized_database_name[0].arn : ""
