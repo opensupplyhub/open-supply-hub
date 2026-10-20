@@ -7,10 +7,10 @@ from api.models import IdentityRecordAssociation
 
 OS_ID = 'XX2000001AAAAA5'
 RESOLVER_URI = (
-    'https://resolver.example.org/records/FAC-00000001'
+    'https://resolver.test-issuer.example/records/REC-00000001'
 )
 OTHER_RESOLVER_URI = (
-    'https://resolver.example.org/records/FAC-00000002'
+    'https://resolver.test-issuer.example/records/REC-00000002'
 )
 
 
@@ -28,7 +28,7 @@ class IdentityRecordAssociationTest(TestCase):
             'resolver_uri': RESOLVER_URI,
             'record_type': 'untp:DigitalFacilityRecord',
             'issuer': 'did:web:issuer.example.org',
-            'registrant_reference': 'FAC-00000001',
+            'registrant_reference': 'REC-00000001',
         }
         fields.update(overrides)
         return IdentityRecordAssociation(**fields)
@@ -46,7 +46,7 @@ class IdentityRecordAssociationTest(TestCase):
         self.assertEqual(
             found.issuer, 'did:web:issuer.example.org'
         )
-        self.assertEqual(found.registrant_reference, 'FAC-00000001')
+        self.assertEqual(found.registrant_reference, 'REC-00000001')
         self.assertIsNotNone(found.uuid)
 
     def test_same_os_id_and_resolver_twice_is_rejected(self):
@@ -59,13 +59,11 @@ class IdentityRecordAssociationTest(TestCase):
 
     def test_conflicting_resolver_for_same_os_id_is_detectable(self):
         """
-        A second association for the same OS ID pointing at a
-        *different* resolver is storable, and must be detectable so the
-        registration endpoint can return a 409.
-
-        It is deliberately not a database constraint. Issuers other than
-        RBA are still an open question, so forbidding a second issuer
-        outright would foreclose a decision that has not been made.
+        A second association for the same OS ID naming a different
+        resolver is storable and must be detectable, so the registration
+        endpoint can return a 409. Deliberately not a database
+        constraint: issuers beyond the pilot's are an open question, and
+        a constraint would foreclose it.
         """
         self._make(live_from=timezone.now()).save()
         self._make(
@@ -82,9 +80,9 @@ class IdentityRecordAssociationTest(TestCase):
     def test_non_https_resolver_uri_is_rejected(self):
         """The Resolver URI must be an absolute HTTPS URI."""
         for bad in (
-            'http://resolver.example.org/records/FAC-00000001',
-            '/records/FAC-00000001',
-            'resolver.example.org/records/FAC-00000001',
+            'http://resolver.example.org/records/REC-00000001',
+            '/records/REC-00000001',
+            'resolver.example.org/records/REC-00000001',
             'ftp://example.org/record',
             'not a uri at all',
         ):
