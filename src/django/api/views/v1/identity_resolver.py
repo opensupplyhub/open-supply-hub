@@ -168,7 +168,7 @@ class IdentityResolverView(APIView):
     renderer_classes = (JSONRenderer, LinksetRenderer, StaticHTMLRenderer)
     content_negotiation_class = ResolverContentNegotiation
 
-    def get(self, request, os_id):
+    def get(self, request, os_id=None):
         # Pilot gate. For a well-formed identifier this is byte for byte
         # the answer a running resolver gives for one it cannot resolve,
         # which is true while the switch is off and says nothing about
@@ -180,6 +180,16 @@ class IdentityResolverView(APIView):
         # and is not worth trading away: the switch keeps the pilot out
         # of casual discovery rather than acting as an access control.
         if not resolution_is_open():
+            return _error(
+                NOT_RESOLVABLE_HERE, status.HTTP_404_NOT_FOUND
+            )
+
+        # The description document advertises this prefix as
+        # resolverRoot, so it has to be a route we own. Otherwise the one
+        # URL discovery points at is unmatched, and the SPA middleware
+        # answers it with index.html and a 200. A bare prefix carries no
+        # identifier, so it is not resolvable here.
+        if not os_id:
             return _error(
                 NOT_RESOLVABLE_HERE, status.HTTP_404_NOT_FOUND
             )

@@ -260,12 +260,37 @@ class IdentityResolverTest(ResolverFixture, APITestCase):
         spelling validates and then misses a case-sensitive lookup unless
         it is folded first.
         """
-        response = self.client.get(
-            '/osid/{}'.format(OS_ID.lower()), HTTP_ACCEPT='text/html'
+        spellings = (
+            # Lower-case country code, upper-case body. This is the one
+            # that regressed silently: it passes the checksum, so it
+            # reached a case-sensitive lookup and missed.
+            OS_ID[:2].lower() + OS_ID[2:],
+            OS_ID.lower(),
         )
 
-        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-        self.assertTrue(response['Location'].endswith(OS_ID))
+        for spelling in spellings:
+            with self.subTest(os_id=spelling):
+                response = self.client.get(
+                    '/osid/{}'.format(spelling), HTTP_ACCEPT='text/html'
+                )
+
+                self.assertEqual(
+                    response.status_code, status.HTTP_302_FOUND
+                )
+                self.assertTrue(response['Location'].endswith(OS_ID))
+
+    def test_the_advertised_resolver_root_is_our_answer(self):
+        """
+        The description document publishes this prefix as resolverRoot.
+        A client that discovers the resolver and fetches it must not get
+        the web app, which is what an unmatched path returns.
+        """
+        response = self.client.get('/osid/')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(
+            response['Content-Type'], 'application/json'
+        )
 
     def test_a_trailing_slash_is_still_our_answer(self):
         """

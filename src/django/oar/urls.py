@@ -171,6 +171,14 @@ schema_view = get_schema_view(
 # answers unmatched paths with index.html, so a near-miss would be a 200
 # carrying the web app rather than the 404 this contract promises.
 resolver_apis = [
+    # The bare prefix, which the description document publishes as
+    # resolverRoot. Answered rather than left unmatched, so discovery
+    # does not land on the web app.
+    path(
+        '{}/'.format(RESOLVER_PATH_PREFIX),
+        IdentityResolverView.as_view(),
+        name='identity-resolver-root',
+    ),
     path(
         '{}/<str:os_id>'.format(RESOLVER_PATH_PREFIX),
         IdentityResolverView.as_view(),
