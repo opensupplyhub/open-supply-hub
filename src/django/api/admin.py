@@ -284,8 +284,49 @@ class FacilityClaimReviewNoteAdmin(SimpleHistoryAdmin):
 
 
 class FacilityAliasAdmin(SimpleHistoryAdmin):
+    # A NOT_A_FACILITY tombstone has facility=None; every field here is
+    # read-only so the change form renders it as "-" rather than offering
+    # a required FK select (OSDEV-3246).
     history_list_display = ('os_id', 'facility')
-    readonly_fields = ('os_id', 'facility', 'reason')
+    list_display = ('os_id', 'facility', 'reason', 'created_at')
+    list_filter = ('reason',)
+    search_fields = ('os_id', 'retired_external_id')
+    readonly_fields = (
+        'os_id',
+        'facility',
+        'reason',
+        'retired_source',
+        'retired_external_id',
+        'retirement_tally',
+    )
+
+
+class FacilityCandidateVoteAdmin(admin.ModelAdmin):
+    # Read-only (OSDEV-3245): votes are written through the API only.
+    list_display = ('facility', 'user', 'vote', 'created_at', 'updated_at')
+    list_filter = ('vote',)
+    search_fields = ('facility__id', 'user__email')
+    readonly_fields = ('facility', 'user', 'vote', 'created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+class FacilityCandidateRetirementRequestAdmin(admin.ModelAdmin):
+    # Read-only (OSDEV-3245): opened and dissolved by vote writes, closed
+    # by POST /api/v1/candidate-retirement-requests/{id}/approve/.
+    list_display = ('facility', 'tally', 'created_at', 'updated_at')
+    search_fields = ('facility__id',)
+    readonly_fields = ('facility', 'tally', 'created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class SourceAdmin(admin.ModelAdmin):
@@ -518,6 +559,11 @@ admin_site.register(models.FacilityClaim, FacilityClaimAdmin)
 admin_site.register(models.FacilityClaimReviewNote,
                     FacilityClaimReviewNoteAdmin)
 admin_site.register(models.FacilityAlias, FacilityAliasAdmin)
+admin_site.register(models.FacilityCandidateVote, FacilityCandidateVoteAdmin)
+admin_site.register(
+    models.FacilityCandidateRetirementRequest,
+    FacilityCandidateRetirementRequestAdmin,
+)
 admin_site.register(Flag, FlagAdmin)
 admin_site.register(Sample, SampleAdmin)
 admin_site.register(Switch, SwitchAdmin)
