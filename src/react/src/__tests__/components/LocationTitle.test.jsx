@@ -43,4 +43,19 @@ describe('ProductionLocation LocationTitle', () => {
 
         expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('');
     });
+
+    test('renders the satellite-detected placeholder for a candidate', () => {
+        const data = {
+            properties: {
+                name: '',
+                is_candidate: true,
+            },
+        };
+
+        renderLocationTitle({ data });
+
+        expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+            'Unnamed location (satellite-detected)',
+        );
+    });
 });

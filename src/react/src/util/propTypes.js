@@ -37,6 +37,7 @@ import {
     ENABLE_MODERATION_PAUSE_INFO,
     ENABLE_CLAIMS_V2_DASHBOARD,
     RELAXED_CLAIM_ELIGIBILITY,
+    EARTH_GENOME_CANDIDATES,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -380,6 +381,7 @@ export const featureFlagPropType = oneOf([
     ENABLE_MODERATION_PAUSE_INFO,
     ENABLE_CLAIMS_V2_DASHBOARD,
     RELAXED_CLAIM_ELIGIBILITY,
+    EARTH_GENOME_CANDIDATES,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(

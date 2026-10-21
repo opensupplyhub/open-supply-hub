@@ -333,6 +333,20 @@ class APIV1ModerationEventErrorMessages:
     PERMISSION_DENIED = 'You do not have permission to perform this action.'
 
 
+class APIV1CandidateVoteErrorMessages:
+    NOT_A_CANDIDATE = (
+        'The location with the given id is not a candidate open to '
+        'validation votes.'
+    )
+    INVALID_VOTE = "vote must be 'confirmed' or 'not_a_facility'."
+    REQUEST_NOT_FOUND = 'Candidate retirement request not found.'
+    PILOT_DISABLED = 'Not found.'
+    CONSENSUS_BROKEN = (
+        'The live tally no longer supports retirement; the request has '
+        'been closed and the candidate was not retired.'
+    )
+
+
 # If the error isn’t field-specific, the non_field_errors key will be used
 # for issues spanning multiple fields or related to the overall data
 # object.
