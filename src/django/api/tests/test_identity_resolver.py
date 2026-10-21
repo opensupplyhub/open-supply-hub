@@ -188,7 +188,7 @@ class IdentityResolverTest(ResolverFixture, APITestCase):
     def test_a_hyphenated_identifier_resolves(self):
         """
         validate_os_id accepts the hyphenated spelling, so the lookup has
-        to use the normalised form. Otherwise a hyphenated identifier
+        to use the normalized form. Otherwise a hyphenated identifier
         passes validation and then answers not-resolvable-here for a
         location we hold.
         """
@@ -230,9 +230,74 @@ class IdentityResolverTest(ResolverFixture, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
         self.assertTrue(
             response['Location'].endswith(
-                '/{}/identity-record'.format(OS_ID)
+                '/facilities/{}/identity-record'.format(OS_ID)
             )
         )
+
+    @override_switch('enable_production_location_page', active=True)
+    def test_record_page_redirect_ignores_the_location_page_switch(self):
+        """
+        The record page is mounted under `facilities` only. Composing the
+        redirect from the location page URL would follow that switch to a
+        path the web app does not serve, and the visitor would land on
+        the ordinary profile with no sign anything was missed.
+        """
+        self._register()
+
+        response = self.client.get(self.url, HTTP_ACCEPT='text/html')
+
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertTrue(
+            response['Location'].endswith(
+                '/facilities/{}/identity-record'.format(OS_ID)
+            )
+        )
+
+    def test_a_lower_case_identifier_resolves(self):
+        """
+        Crockford base 32 is case-insensitive on decode, and lowercasing
+        the country code leaves the checksum unchanged, so a lower-case
+        spelling validates and then misses a case-sensitive lookup unless
+        it is folded first.
+        """
+        response = self.client.get(
+            '/osid/{}'.format(OS_ID.lower()), HTTP_ACCEPT='text/html'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_302_FOUND)
+        self.assertTrue(response['Location'].endswith(OS_ID))
+
+    def test_a_trailing_slash_is_still_our_answer(self):
+        """
+        Unmatched paths are answered by the SPA middleware with
+        index.html, so a near-miss has to be a route we own or it is a
+        200 carrying the web app instead of the resolver's answer.
+        """
+        resolved = self.client.get(
+            '{}/'.format(self.url), HTTP_ACCEPT='text/html'
+        )
+        self.assertEqual(resolved.status_code, status.HTTP_302_FOUND)
+
+        description = self.client.get('/.well-known/resolver/')
+        self.assertEqual(description.status_code, status.HTTP_200_OK)
+
+    def test_the_linkset_body_is_json_whatever_else_is_accepted(self):
+        """
+        The link-set branch is chosen from the raw Accept header while
+        DRF selects a renderer independently. A parameterized HTML type
+        outranks the bare link-set type and selects the HTML renderer,
+        which hands the dict to Django to iterate, sending the bare key
+        `linkset` under a JSON media type.
+        """
+        response = self.client.get(
+            self.url,
+            HTTP_ACCEPT='{}, text/html;charset=utf-8'.format(LINKSET),
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], LINKSET)
+        # Parses, rather than being a repr that merely looks like JSON.
+        self.assertIn('linkset', json.loads(response.content))
 
     def test_production_location_relation_points_at_the_location(self):
         """

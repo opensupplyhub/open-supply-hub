@@ -115,10 +115,18 @@ def _production_location_url(request, os_id):
     return '{}/{}/{}'.format(site_root(request), route_prefix, os_id)
 
 
+# The record page is mounted at one route only, under `facilities`, and
+# does not move with the production location page switch. Composing this
+# from _production_location_url would follow that switch to a path the
+# web app does not serve, and the visitor would silently land on the
+# ordinary profile instead of the record they followed the identifier for.
+IDENTITY_RECORD_ROUTE_PREFIX = 'facilities'
+
+
 def _identity_record_url(request, os_id):
     """The page showing the registered record."""
-    return '{}/identity-record'.format(
-        _production_location_url(request, os_id)
+    return '{}/{}/{}/identity-record'.format(
+        site_root(request), IDENTITY_RECORD_ROUTE_PREFIX, os_id
     )
 
 
@@ -171,6 +179,14 @@ class IdentityResolverView(APIView):
                 NOT_RESOLVABLE_HERE, status.HTTP_404_NOT_FOUND
             )
 
+        # validate_os_id accepts the hyphenated spelling, and Crockford
+        # base 32 is case-insensitive on decode, so normalize to the
+        # stored form before validating or looking anything up. Without
+        # the case fold a lower-case country code passes validation (the
+        # checksum is unchanged by it) and then misses every lookup,
+        # answering not-resolvable-here for a location we hold.
+        os_id = os_id.replace('-', '').replace(' ', '').upper()
+
         # Checked before anything touches the database, so a malformed
         # identifier costs a string comparison rather than a query.
         if not validate_os_id(os_id, raise_on_invalid=False):
@@ -178,12 +194,6 @@ class IdentityResolverView(APIView):
                 'The identifier is not a well-formed OS ID.',
                 status.HTTP_400_BAD_REQUEST,
             )
-
-        # validate_os_id accepts the hyphenated spelling, so normalise to
-        # the stored form before looking anything up. Without this a
-        # hyphenated identifier passes validation and then misses every
-        # lookup, answering not-resolvable-here for a location we hold.
-        os_id = os_id.replace('-', '').replace(' ', '')
 
         # An identifier issued only on a private instance is
         # indistinguishable from a public one without this lookup, so the
@@ -202,6 +212,16 @@ class IdentityResolverView(APIView):
                 status=status.HTTP_200_OK,
                 content_type=LINKSET_MEDIA_TYPE,
             )
+            # The branch above is chosen from the raw Accept header while
+            # DRF picks a renderer independently, and the two can
+            # disagree: an Accept naming a parameterized HTML type
+            # outranks the bare link-set type and selects
+            # StaticHTMLRenderer, which hands the dict to Django to
+            # iterate, emitting the bare key under a JSON media type.
+            # Set on the request rather than the response, because
+            # finalize_response copies these across unconditionally.
+            request.accepted_renderer = LinksetRenderer()
+            request.accepted_media_type = LINKSET_MEDIA_TYPE
             response['Link'] = self._link_header(linkset)
             return response
 
@@ -318,7 +338,7 @@ class ResolverDescriptionView(APIView):
                 ],
                 'identifier': [
                     {
-                        'id': 'osid',
+                        'id': RESOLVER_PATH_PREFIX,
                         'title': 'OS ID',
                         'description': (
                             'Open Supply Hub production location '

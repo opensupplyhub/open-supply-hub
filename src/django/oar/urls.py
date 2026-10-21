@@ -166,6 +166,10 @@ schema_view = get_schema_view(
 # The identifier paths. Root-level rather than under api/ because the
 # identifier address is a published contract that has to outlive our
 # internal API versioning.
+# Each path is declared with and without a trailing slash. Without the
+# twin the slashed spelling is not a valid route, and the SPA middleware
+# answers unmatched paths with index.html, so a near-miss would be a 200
+# carrying the web app rather than the 404 this contract promises.
 resolver_apis = [
     path(
         '{}/<str:os_id>'.format(RESOLVER_PATH_PREFIX),
@@ -173,9 +177,19 @@ resolver_apis = [
         name='identity-resolver',
     ),
     path(
+        '{}/<str:os_id>/'.format(RESOLVER_PATH_PREFIX),
+        IdentityResolverView.as_view(),
+        name='identity-resolver-slash',
+    ),
+    path(
         '.well-known/resolver',
         ResolverDescriptionView.as_view(),
         name='resolver-description',
+    ),
+    path(
+        '.well-known/resolver/',
+        ResolverDescriptionView.as_view(),
+        name='resolver-description-slash',
     ),
 ]
 
