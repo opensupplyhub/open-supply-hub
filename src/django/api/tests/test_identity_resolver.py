@@ -90,7 +90,7 @@ class ResolverFixture:
 class IdentityResolverTest(ResolverFixture, APITestCase):
     """
     The resolver path, content negotiation and the not-resolvable-here
-    answer (OSDEV-3581, OSDEV-3586).
+    answer (OSDEV-3581).
 
     The literal path is asserted rather than reversed. /osid/{os_id} is a
     published contract, so a rename has to break a test.
@@ -407,7 +407,7 @@ class IdentityResolverTest(ResolverFixture, APITestCase):
 @override_switch('enable_identity_resolver', active=True)
 class PrivateInstanceIdentifierTest(APITestCase):
     """
-    The not-resolvable-here answer (OSDEV-3586).
+    The not-resolvable-here answer (OSDEV-3581).
 
     No fixtures: every identifier in these tests is absent from this
     instance, which is exactly the condition under test.
