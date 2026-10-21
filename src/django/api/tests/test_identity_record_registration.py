@@ -237,6 +237,49 @@ class TestIdentityRecordRegistration(RegistrationFixture, APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
+    def test_a_pending_association_does_not_block_registration(self):
+        """
+        The conflict check asks for a live association, which is what its
+        409 says. Nothing writes a pending row today, so this builds one
+        directly to pin that the live_from filter is what excludes it.
+        """
+        IdentityRecordAssociation.objects.create(
+            os_id=self.os_id,
+            resolver_uri=OTHER_RESOLVER_URI,
+            record_type=self.body['record_type'],
+            issuer=self.body['issuer'],
+            live_from=None,
+        )
+
+        response = self._post()
+
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertTrue(
+            IdentityRecordAssociation.objects
+            .filter(os_id=self.os_id, resolver_uri=RESOLVER_URI)
+            .exists()
+        )
+
+    def test_status_reports_a_pending_association(self):
+        """
+        `moderation_status` is derived from live_from rather than
+        hardcoded. Nothing writes a pending row today, so this builds one
+        directly.
+        """
+        association = IdentityRecordAssociation.objects.create(
+            os_id=self.os_id,
+            resolver_uri=RESOLVER_URI,
+            record_type=self.body['record_type'],
+            issuer=self.body['issuer'],
+            live_from=None,
+        )
+
+        response = self.client.get(f'{self.url}{association.uuid}/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['moderation_status'], 'PENDING')
+        self.assertIsNone(response.data['live_from'])
+
     def test_malformed_os_id_is_rejected(self):
         """A bad checksum is a 400, and never reaches the database."""
         url = '/api/v1/production-locations/XX0000000BADID1/identity-records/'
@@ -378,7 +421,7 @@ class TestIdentityRecordRegistration(RegistrationFixture, APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
 
     def test_status_is_readable(self):
-        """3.2: the current state, and once live, when it resolves."""
+        """The current state, and once live, when it resolves."""
         created = self._post()
         moderation_id = created.data['moderation_id']
 
