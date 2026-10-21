@@ -10,6 +10,7 @@ from api.models.facility.facility_candidate_retirement_request import (
 )
 from api.permissions import IsSuperuser
 from api.services import candidate_validation
+from api.services.candidate_switch import candidates_enabled
 
 
 class CandidateRetirementRequests(ViewSet):
@@ -36,6 +37,18 @@ class CandidateRetirementRequests(ViewSet):
     '''
     swagger_schema = None
     permission_classes = [IsSuperuser]
+
+    def initial(self, request, *args, **kwargs):
+        # 404 for every action while the pilot switch is off (OSDEV-3627),
+        # checked before super() runs authentication, permissions and
+        # throttling: an anonymous or non-moderator caller gets the same
+        # 404 as a moderator, so a disabled route never advertises itself
+        # with a 401/403.
+        if not candidates_enabled():
+            raise NotFound(
+                detail=APIV1CandidateVoteErrorMessages.PILOT_DISABLED
+            )
+        super().initial(request, *args, **kwargs)
 
     def list(self, request):
         rows = (

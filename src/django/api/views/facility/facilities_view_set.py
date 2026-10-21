@@ -14,6 +14,7 @@ from api.serializers.facility.facility_candidate_details_serializer import (
     NOINDEX_VALUE,
 )
 from api.services.candidate_retirement import tombstone_payload
+from api.services.candidate_switch import candidates_enabled
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -1595,12 +1596,14 @@ class FacilitiesViewSet(ListModelMixin,
             # carries the caller's own vote, so it is kept out of the two
             # shared response caches wrapping this method (both honor
             # Cache-Control: private) and marked noindex for crawlers.
+            # While the pilot switch is off (OSDEV-3627) a candidate OS
+            # ID is simply not found, as before the pilot.
             candidate = (
                 Facility.including_candidates
                 .filter(pk=pk, is_candidate=True)
                 .select_related('created_from__source__contributor')
                 .first()
-            )
+            ) if candidates_enabled() else None
             if candidate is not None:
                 response = Response(
                     FacilityCandidateDetailsSerializer(

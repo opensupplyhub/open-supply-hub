@@ -167,6 +167,7 @@ class CandidateFixtureMixin:
         )
 
 
+@override_switch('earth_genome_candidates', active=True)
 class FacilityEndpointsCandidateAuditTest(CandidateFixtureMixin, APITestCase):
     """/api/facilities/ actions that read Facility.objects directly."""
 
@@ -348,6 +349,7 @@ class ClaimsCandidateAuditTest(CandidateFixtureMixin, APITestCase):
         self.assertEqual(list(claimed_ids['pending']), [])
 
 
+@override_switch('earth_genome_candidates', active=True)
 class V1ProductionLocationsCandidateAuditTest(
     CandidateFixtureMixin, APITestCase
 ):
