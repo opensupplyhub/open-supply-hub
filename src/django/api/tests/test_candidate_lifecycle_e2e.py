@@ -60,6 +60,7 @@ from api.services.candidate_validation import (
     UNVERIFIED,
 )
 from api.tests.test_data import geocoding_data
+from waffle.testutils import override_switch
 
 V1_OPEN_SEARCH_SERVICE = 'api.views.v1.production_locations.OpenSearchService'
 SIGNALS_OPEN_SEARCH_CONNECTION = 'api.signals.OpenSearchServiceConnection'
@@ -127,6 +128,7 @@ DETECTIONS = [
 
 
 @override_settings(**PILOT_THRESHOLDS)
+@override_switch('earth_genome_candidates', active=True)
 class CandidateLifecycleE2ETest(APITestCase):
     fixtures = ['sectors']
 

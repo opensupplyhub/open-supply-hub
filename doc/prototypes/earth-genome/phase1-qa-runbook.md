@@ -44,11 +44,12 @@ merges to `main` through its own draft PR, in this order (from
 
 - [ ] Deploy the release; `migrate` ran in `post_deployment` and applied
   `0248_exclude_candidates_from_facility_index`,
-  `0249_facility_alias_tombstone`, `0250_facility_candidate_vote`:
+  `0249_facility_alias_tombstone`, `0250_facility_candidate_vote`,
+  `0251_add_earth_genome_candidates_switch`:
 
   ```sql
   SELECT name FROM django_migrations
-  WHERE app = 'api' AND name LIKE '024[678]%' ORDER BY name;
+  WHERE app = 'api' AND name LIKE '02[45][0-9]%' ORDER BY name;
   ```
 
 - [ ] Create the Earth Genome contributor once per environment (Django admin:
@@ -79,6 +80,15 @@ merges to `main` through its own draft PR, in this order (from
   `CANDIDATE_SUGGESTION_LIMIT=5` (OSDEV-3244). All are read from the
   environment at start-up.
 - [ ] `vector_tile` waffle switch is on (the map draws from tiles).
+- [ ] **Turn the pilot on**: the `earth_genome_candidates` waffle switch
+  (OSDEV-3627) ships inactive; activate it in the Django admin (Waffle →
+  Switches) before step 2. Until then the ingest command refuses to run and
+  every candidate endpoint answers 404. To pause the pilot later, deactivate
+  it: no deploy, no data loss.
+
+  ```sql
+  SELECT name, active FROM waffle_switch WHERE name = 'earth_genome_candidates';
+  ```
 - [ ] You have: a superuser login (moderator approvals), two or three
   ordinary confirmed accounts (voters), and an API token for one of them.
 

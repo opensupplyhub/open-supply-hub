@@ -38,7 +38,7 @@ jest.mock('../../components/VectorTileFacilityGridLayer', () => () => null);
 jest.mock('../../components/VectorTileGridLegend', () => () => null);
 jest.mock('../../components/Candidate/CandidatePolygonsLayer', () => ({
     __esModule: true,
-    default: () => null,
+    default: () => <div data-testid="candidate-polygons-layer" />,
 }));
 jest.mock('../../components/Candidate/CandidateValidationPanel', () => ({
     __esModule: true,
@@ -118,15 +118,22 @@ const makeFacility = (overrides = {}) => ({
     ...overrides,
 });
 
-const makeStore = facilityData =>
+const makeStore = (facilityData, { pilotEnabled = true } = {}) =>
     createStore(() => ({
         facilities: { singleFacility: { data: facilityData } },
         vectorTileLayer: { gridColorRamp: [] },
+        // OSDEV-3627: the candidate footprint layer sits behind the
+        // earth_genome_candidates switch (read via /api-feature-flags/).
+        featureFlags: {
+            fetching: false,
+            flags: { earth_genome_candidates: pilotEnabled },
+        },
+        embeddedMap: { embed: false },
     }));
 
-const renderMap = (facilityData = null) =>
+const renderMap = (facilityData = null, storeOptions = {}) =>
     render(
-        <Provider store={makeStore(facilityData)}>
+        <Provider store={makeStore(facilityData, storeOptions)}>
             <MemoryRouter initialEntries={['/production-locations/OS12345']}>
                 <Route
                     path="/production-locations/:osID"
@@ -137,6 +144,24 @@ const renderMap = (facilityData = null) =>
     );
 
 describe('ProductionLocationDetailsMap', () => {
+    describe('pilot switch (OSDEV-3627)', () => {
+        it('draws the candidate footprint layer while the switch is on', () => {
+            renderMap(makeFacility());
+
+            expect(
+                screen.getByTestId('candidate-polygons-layer'),
+            ).toBeInTheDocument();
+        });
+
+        it('leaves the candidate footprint layer out while the switch is off', () => {
+            renderMap(makeFacility(), { pilotEnabled: false });
+
+            expect(
+                screen.queryByTestId('candidate-polygons-layer'),
+            ).not.toBeInTheDocument();
+        });
+    });
+
     describe('suggested match marker (OSDEV-3247)', () => {
         it('draws the chosen match as a second marker from its facility detail', async () => {
             apiRequest.get.mockResolvedValue({

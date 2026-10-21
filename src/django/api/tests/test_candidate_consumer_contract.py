@@ -74,6 +74,7 @@ def _square(point, half=0.01):
 
 
 @override_settings(ALLOWED_HOSTS=['testserver', '.allowed.org'])
+@override_switch('earth_genome_candidates', active=True)
 @override_switch('vector_tile', active=True)
 class CandidateConsumerContractTest(APITestCase):
     fixtures = ['sectors']
