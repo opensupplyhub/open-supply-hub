@@ -9,13 +9,11 @@ from api.constants import OriginSource
 
 class IdentityRecordAssociation(models.Model):
     """
-    Links an OS ID to an external Resolver URI for a record published about
-    that location by another organization.
-
-    Open Supply Hub stores the association and nothing else. No credential
-    body is copied, cached or re-published. The stored value is always the
-    issuer's Resolver URI and never a Credential URL, which is what lets the
-    always-current guarantee hold without synchronization between the two
+    Links an OS ID to an external Resolver URI for a record published
+    about that location by another organization, storing the association
+    and nothing else. The stored value is always a Resolver URI and
+    never a Credential URL, which is what lets the always-current
+    guarantee hold without synchronization between the two
     organizations.
     """
 
@@ -44,7 +42,8 @@ class IdentityRecordAssociation(models.Model):
     # superseded identifier keeps resolving to the surviving record through
     # FacilityAlias. Storing the identifier rather than a row reference
     # means a merge does not touch this table at all, and resolution follows
-    # the alias on read, which is the behaviour promised to RBA.
+    # the alias on read, which is the behavior the November pilot
+    # promises.
     os_id = models.CharField(
         max_length=32,
         null=False,
