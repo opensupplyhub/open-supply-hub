@@ -67,6 +67,7 @@ from api.services.candidate_matches import (
     suggested_matches_for_point,
 )
 from api.services.candidate_retirement import is_retired_detection
+from api.services.candidate_switch import SWITCH_NAME, candidates_enabled
 from api.services.earth_index import EarthIndexClient, EarthIndexError
 from countries.lib.countries import COUNTRY_CHOICES
 
@@ -581,6 +582,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if not candidates_enabled():
+            raise CommandError(
+                f'The Earth Genome candidate pilot is switched off: the '
+                f'waffle switch {SWITCH_NAME!r} is inactive in this '
+                'environment (OSDEV-3627). Enable it in the Django admin '
+                '(Waffle > Switches) before ingesting.'
+            )
         from_api = (
             options.get('project') is not None
             or options.get('deep_search') is not None

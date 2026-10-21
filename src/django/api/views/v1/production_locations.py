@@ -10,6 +10,7 @@ from django.utils.cache import patch_cache_control
 
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
@@ -25,6 +26,7 @@ from api.services.candidate_retirement import (
     tombstone_payload,
 )
 from api.services import candidate_validation
+from api.services.candidate_switch import candidates_enabled
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -84,6 +86,26 @@ logger = logging.getLogger(__name__)
 
 class ProductionLocations(ViewSet):
     swagger_schema = None
+
+    # The actions that exist only for the Earth Genome candidate pilot
+    # and therefore answer 404 while the pilot switch is off
+    # (OSDEV-3627). ``retrieve`` is deliberately not listed: it serves
+    # confirmed production locations too, and gates its own candidate
+    # fallback.
+    CANDIDATE_ONLY_ACTIONS = frozenset({'candidates', 'candidate_votes'})
+
+    def initial(self, request, *args, **kwargs):
+        # Checked before super() runs authentication, permissions and
+        # throttling, so a disabled endpoint answers 404 for every caller
+        # rather than 401/403, and a POST to it never spends a
+        # DataUploadThrottle slot out of the caller's write quota (that
+        # scope is shared with create/partial_update).
+        if (self.action in self.CANDIDATE_ONLY_ACTIONS
+                and not candidates_enabled()):
+            raise NotFound(
+                detail=APIV1CandidateVoteErrorMessages.PILOT_DISABLED
+            )
+        super().initial(request, *args, **kwargs)
 
     @staticmethod
     def __init_opensearch() -> Tuple[OpenSearchService,
@@ -247,9 +269,11 @@ class ProductionLocations(ViewSet):
             # Candidates are never indexed (OSDEV-3243), so they always
             # miss OpenSearch; one primary-key lookup serves them from
             # the database instead (OSDEV-3249).
+            # While the pilot switch is off (OSDEV-3627) a candidate OS
+            # ID is simply not found, as before the pilot.
             candidate = Facility.including_candidates.filter(
                 pk=pk, is_candidate=True
-            ).first()
+            ).first() if candidates_enabled() else None
             if candidate is not None:
                 return self.__candidate_response(
                     candidate_production_location(candidate, request.user)
@@ -305,6 +329,7 @@ class ProductionLocations(ViewSet):
         out-of-range or oversized (more than 2 degrees on a side) bbox is
         400. Only ``is_candidate`` rows are ever returned, so the
         brand/CSO data contract (confirmed facilities only) is unaffected.
+        404 while the pilot switch is off (OSDEV-3627, see ``initial``).
         '''
         params = CandidatesBboxQueryParamSerializer(data=request.query_params)
         if not params.is_valid():
@@ -385,7 +410,8 @@ class ProductionLocations(ViewSet):
         for a live candidate: a confirmed one keeps accepting votes and
         the derived state follows the tally. State derivation and the
         consensus-no handling (auto-retire vs. moderation gate) live in
-        api/services/candidate_validation.py.
+        api/services/candidate_validation.py. 404 while the pilot switch
+        is off (OSDEV-3627, see ``initial``).
         '''
         facility = Facility.including_candidates.filter(pk=pk).first()
         if facility is None:
