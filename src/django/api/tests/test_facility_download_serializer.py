@@ -11,13 +11,19 @@ from api.models.extended_field import ExtendedField
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
+from api.models.facility.facility_list_item import FacilityListItem
 from api.serializers.facility.data_center_download_helper import (
+    ADDED_ON_DATE_KEY,
+    PROVENANCE_KEY,
     UNKNOWN_CONTRIBUTOR_LABEL,
+    DataCenterDownloadHelper,
 )
 from api.serializers.facility.facility_download_serializer import (
+    FacilityDownloadListSerializer,
     FacilityDownloadSerializer,
 )
 from api.services.masked_contributors import MaskedContributors
+from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 CLAIM_HEADERS = [
     "claim_created_at",
@@ -149,6 +155,23 @@ class FacilityDownloadSerializerTest(TestCase):
             "",
         ]
         self.assertEqual(row, expected_row)
+
+    @patch.object(
+        FacilityDownloadSerializer,
+        "prefetch_data_center_provenance",
+        autospec=True,
+    )
+    def test_many_prefetches_data_center_provenance_once_per_page(
+        self, mock_prefetch
+    ):
+        """Serializing a page prefetches the data center provenance once,
+        for the whole page, before the rows are built."""
+        facilities = [self.facility_one, self.facility_two]
+        serializer = FacilityDownloadSerializer(facilities, many=True)
+
+        self.assertIsInstance(serializer, FacilityDownloadListSerializer)
+        self.assertEqual(len(serializer.data), 2)
+        mock_prefetch.assert_called_once_with(serializer.child, facilities)
 
     def test_get_row_with_claim_from_contributor_with_extended_fields(self):
         """Uses the English claim name and labels the claiming contributor."""
@@ -911,4 +934,286 @@ class DataCenterInformationTest(TestCase):
         serializer = FacilityDownloadSerializer()
         self.assertEqual(
             serializer.get_headers()[-1], "data_center_information"
+        )
+
+
+PROVENANCE_VALUES = {
+    "source_name": "US EPA FRS",
+    "source_link": "https://example.com/dc?id=1",
+    "information_source_type": "air quality permit",
+    "date_of_source": "2024-06",
+    "notes": "Operator inferred from website",
+    "data_collection_methodology": "Downloaded directly from source",
+    "ai_usage_notes": "Fields extracted with an LLM, human reviewed",
+}
+
+EMPTY_PROVENANCE_VALUES = {field: None for field in PROVENANCE_VALUES}
+
+
+class DataCenterInformationProvenanceTest(FacilityAPITestCaseBase):
+    """`data_center_information` rows carry the provenance of the
+    FacilityListItem they were contributed through (OSDEV-3547)."""
+
+    def _create_list_item(self, row_index, **provenance):
+        return FacilityListItem.objects.create(
+            name="Data Center",
+            address="1 Data Center Way",
+            country_code="US",
+            sector=["Data Center"],
+            row_index=row_index,
+            source=self.source,
+            **provenance,
+        )
+
+    @staticmethod
+    def _expected_provenance(item, values):
+        return {
+            **values,
+            ADDED_ON_DATE_KEY: item.created_at.date().isoformat(),
+        }
+
+    @staticmethod
+    def _data_center_facility(*data_center_fields):
+        return SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                *data_center_fields,
+            ],
+        )
+
+    def test_row_carries_provenance_of_its_list_item(self):
+        """Every provenance value of the row's FacilityListItem lands under
+        the row's `provenance` key, next to the data center fields."""
+        item = self._create_list_item(2, **PROVENANCE_VALUES)
+        facility = self._data_center_facility(
+            _data_center_field(
+                ExtendedField.PUE, 1.2, facility_list_item_id=item.id
+            ),
+            _data_center_field(
+                ExtendedField.CAPACITY, 20, facility_list_item_id=item.id
+            ),
+        )
+        cell = FacilityDownloadSerializer().get_data_center_information(
+            facility
+        )
+        self.assertEqual(
+            json.loads(cell),
+            {
+                "EPA": [
+                    {
+                        ExtendedField.PUE: 1.2,
+                        ExtendedField.CAPACITY: 20,
+                        PROVENANCE_KEY: self._expected_provenance(
+                            item, PROVENANCE_VALUES
+                        ),
+                    },
+                ],
+            },
+        )
+
+    def test_each_submission_gets_its_own_provenance(self):
+        """Two submissions from one contributor stay two rows, each with
+        the provenance of its own list item."""
+        first = self._create_list_item(2, **PROVENANCE_VALUES)
+        second_values = {
+            **EMPTY_PROVENANCE_VALUES,
+            "source_name": "Operator website",
+        }
+        second = self._create_list_item(3, **second_values)
+        facility = self._data_center_facility(
+            _data_center_field(
+                ExtendedField.PUE, 1.2, facility_list_item_id=first.id
+            ),
+            _data_center_field(
+                ExtendedField.PUE, 1.4, facility_list_item_id=second.id
+            ),
+        )
+        cell = FacilityDownloadSerializer().get_data_center_information(
+            facility
+        )
+        self.assertEqual(
+            json.loads(cell),
+            {
+                "EPA": [
+                    {
+                        ExtendedField.PUE: 1.2,
+                        PROVENANCE_KEY: self._expected_provenance(
+                            first, PROVENANCE_VALUES
+                        ),
+                    },
+                    {
+                        ExtendedField.PUE: 1.4,
+                        PROVENANCE_KEY: self._expected_provenance(
+                            second, second_values
+                        ),
+                    },
+                ],
+            },
+        )
+
+    def test_list_item_without_provenance_gets_null_values(self):
+        """A list item contributed without provenance still gets a
+        `provenance` object, with null values and its added-on date."""
+        facility = self._data_center_facility(
+            _data_center_field(
+                ExtendedField.PUE,
+                1.2,
+                facility_list_item_id=self.list_item.id,
+            ),
+        )
+        cell = FacilityDownloadSerializer().get_data_center_information(
+            facility
+        )
+        self.assertEqual(
+            json.loads(cell)["EPA"][0][PROVENANCE_KEY],
+            self._expected_provenance(
+                self.list_item, EMPTY_PROVENANCE_VALUES
+            ),
+        )
+
+    def test_row_without_existing_list_item_has_no_provenance(self):
+        """Rows with no list item id, or whose list item no longer exists,
+        are still output, just without a `provenance` key."""
+        missing_item_id = FacilityListItem.objects.order_by("-id")[0].id + 1
+        facility = self._data_center_facility(
+            _data_center_field(ExtendedField.PUE, 1.2),
+            _data_center_field(
+                ExtendedField.UPS_CAPACITY,
+                300,
+                contributor=CONTINENT_8_CONTRIBUTOR,
+                facility_list_item_id=missing_item_id,
+            ),
+        )
+        cell = FacilityDownloadSerializer().get_data_center_information(
+            facility
+        )
+        self.assertEqual(
+            json.loads(cell),
+            {
+                "EPA": [{ExtendedField.PUE: 1.2}],
+                "Continent 8": [{ExtendedField.UPS_CAPACITY: 300}],
+            },
+        )
+
+    def test_masked_contributor_rows_keep_their_provenance(self):
+        """Masked contributors' rows are merged under the shared label,
+        each keeping its own provenance."""
+        first = self._create_list_item(2, **PROVENANCE_VALUES)
+        second = self._create_list_item(3)
+        facility = self._data_center_facility(
+            _data_center_field(
+                ExtendedField.PUE, 1.2, facility_list_item_id=first.id
+            ),
+            _data_center_field(
+                ExtendedField.UPS_CAPACITY,
+                300,
+                contributor=OTHER_MASKED_CONTRIBUTOR,
+                facility_list_item_id=second.id,
+            ),
+        )
+        masked = MaskedContributors(
+            contributor_ids={
+                EPA_CONTRIBUTOR["id"],
+                OTHER_MASKED_CONTRIBUTOR["id"],
+            }
+        )
+        serializer = FacilityDownloadSerializer(masked_contributors=masked)
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {
+                MASKED_CONTRIBUTOR_LABEL: [
+                    {
+                        ExtendedField.PUE: 1.2,
+                        PROVENANCE_KEY: self._expected_provenance(
+                            first, PROVENANCE_VALUES
+                        ),
+                    },
+                    {
+                        ExtendedField.UPS_CAPACITY: 300,
+                        PROVENANCE_KEY: self._expected_provenance(
+                            second, EMPTY_PROVENANCE_VALUES
+                        ),
+                    },
+                ],
+            },
+        )
+
+    def test_prefetch_loads_a_page_in_one_query(self):
+        """Prefetching a page costs one query; building the cells after it
+        costs none."""
+        first = self._create_list_item(2, **PROVENANCE_VALUES)
+        second = self._create_list_item(3)
+        data_centers = [
+            self._data_center_facility(
+                _data_center_field(
+                    ExtendedField.PUE, 1.2, facility_list_item_id=first.id
+                ),
+            ),
+            self._data_center_facility(
+                _data_center_field(
+                    ExtendedField.PUE, 1.4, facility_list_item_id=second.id
+                ),
+            ),
+        ]
+        production_location = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Final Product Assembly"),
+                _data_center_field(
+                    ExtendedField.CAPACITY,
+                    500,
+                    facility_list_item_id=self.list_item.id,
+                ),
+            ],
+        )
+        helper = DataCenterDownloadHelper()
+
+        with self.assertNumQueries(1):
+            helper.prefetch_provenance([*data_centers, production_location])
+
+        with self.assertNumQueries(0):
+            cells = [
+                json.loads(helper.get_cell(facility))
+                for facility in data_centers
+            ]
+
+        self.assertEqual(
+            [cell["EPA"][0][PROVENANCE_KEY] for cell in cells],
+            [
+                self._expected_provenance(first, PROVENANCE_VALUES),
+                self._expected_provenance(second, EMPTY_PROVENANCE_VALUES),
+            ],
+        )
+
+    def test_prefetch_skips_pages_without_data_centers(self):
+        """A page with no data center makes no provenance query."""
+        production_location = SimpleNamespace(
+            extended_fields=[_facility_type_field("Final Product Assembly")],
+        )
+        helper = DataCenterDownloadHelper()
+
+        with self.assertNumQueries(0):
+            helper.prefetch_provenance([production_location])
+            self.assertEqual(helper.get_cell(production_location), "")
+
+    def test_get_cell_without_prefetch_loads_each_list_item_once(self):
+        """Without a prefetch the cell is still complete: the missing list
+        items are loaded on first use and then reused."""
+        item = self._create_list_item(2, **PROVENANCE_VALUES)
+        facility = self._data_center_facility(
+            _data_center_field(
+                ExtendedField.PUE, 1.2, facility_list_item_id=item.id
+            ),
+        )
+        helper = DataCenterDownloadHelper()
+
+        with self.assertNumQueries(1):
+            first_cell = helper.get_cell(facility)
+        with self.assertNumQueries(0):
+            second_cell = helper.get_cell(facility)
+
+        self.assertEqual(first_cell, second_cell)
+        self.assertEqual(
+            json.loads(first_cell)["EPA"][0][PROVENANCE_KEY],
+            self._expected_provenance(item, PROVENANCE_VALUES),
         )

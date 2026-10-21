@@ -1,5 +1,8 @@
 import copy
-from typing import Any, Dict, List
+from typing import Any, Dict, Iterable, List
+
+from django.db.models.manager import BaseManager
+from rest_framework.serializers import ListSerializer
 
 from api.constants import (
     CLAIMED_DOWNLOAD_FIELDS_MAPPING,
@@ -41,8 +44,24 @@ from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
 from api.partner_fields.wage_indicator_provider import WageIndicatorProvider
 
 
+class FacilityDownloadListSerializer(ListSerializer):
+    """Serializes one page of a full facility download.
+
+    Lets the child serializer load per-page data (data center provenance)
+    in one query before the rows are built one facility at a time.
+    """
+
+    def to_representation(self, data):
+        facilities = data.all() if isinstance(data, BaseManager) else data
+        self.child.prefetch_data_center_provenance(facilities)
+        return super().to_representation(facilities)
+
+
 class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
     """Builds CSV headers and rows for full (non-embed) facility downloads."""
+
+    class Meta(FacilityDownloadSerializerBase.Meta):
+        list_serializer_class = FacilityDownloadListSerializer
 
     CLAIMED_FIELDS_HEADERS = [
         header for header, _ in CLAIMED_DOWNLOAD_FIELDS_MAPPING
@@ -261,6 +280,13 @@ class FacilityDownloadSerializer(FacilityDownloadSerializerBase):
         if field_name not in self.__system_partner_fields:
             return []
         return self.__wage_indicator_helper.get_cells(facility)
+
+    def prefetch_data_center_provenance(
+        self, facilities: Iterable[FacilityIndexNewManager]
+    ) -> None:
+        """Load the data center provenance for a page of facilities in one
+        query, so ``get_data_center_information`` doesn't query per row."""
+        self.__data_center_helper.prefetch_provenance(facilities)
 
     def get_data_center_information(
         self, facility: FacilityIndexNewManager
