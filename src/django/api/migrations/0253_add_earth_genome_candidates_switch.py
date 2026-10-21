@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0250_facility_candidate_vote'),
+        ('api', '0252_facility_candidate_vote'),
     ]
 
     operations = [

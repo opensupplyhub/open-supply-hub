@@ -43,9 +43,9 @@ merges to `main` through its own draft PR, in this order (from
 ## 1. Prerequisites (10 min)
 
 - [ ] Deploy the release; `migrate` ran in `post_deployment` and applied
-  `0248_exclude_candidates_from_facility_index`,
-  `0249_facility_alias_tombstone`, `0250_facility_candidate_vote`,
-  `0251_add_earth_genome_candidates_switch`:
+  `0250_exclude_candidates_from_facility_index`,
+  `0251_facility_alias_tombstone`, `0252_facility_candidate_vote`,
+  `0253_add_earth_genome_candidates_switch`:
 
   ```sql
   SELECT name FROM django_migrations
