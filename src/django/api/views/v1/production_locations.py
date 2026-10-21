@@ -2,11 +2,15 @@ import logging
 import copy
 from typing import Tuple, List, Any, Optional, Dict
 
+from django.contrib.gis.geos import Polygon
 from django.http import QueryDict
 from django.db import transaction
+from django.db.models import Q
+from django.utils.cache import patch_cache_control
 
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
@@ -22,6 +26,7 @@ from api.services.candidate_retirement import (
     tombstone_payload,
 )
 from api.services import candidate_validation
+from api.services.candidate_switch import candidates_enabled
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -40,6 +45,14 @@ from api.serializers.v1.duplicate_override_query_param_serializer \
     import DuplicateOverrideQueryParamSerializer
 from api.serializers.v1.ignore_warnings_query_param_serializer \
     import IgnoreWarningsQueryParamSerializer
+from api.serializers.v1.candidates_bbox_query_param_serializer \
+    import CandidatesBboxQueryParamSerializer
+from api.serializers.facility.facility_candidate_details_serializer import (
+    NOINDEX_HEADER,
+    NOINDEX_VALUE,
+    candidate_production_location,
+    geometry_geojson,
+)
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
 from api.models.facility.facility_candidate_vote import FacilityCandidateVote
@@ -73,6 +86,26 @@ logger = logging.getLogger(__name__)
 
 class ProductionLocations(ViewSet):
     swagger_schema = None
+
+    # The actions that exist only for the Earth Genome candidate pilot
+    # and therefore answer 404 while the pilot switch is off
+    # (OSDEV-3627). ``retrieve`` is deliberately not listed: it serves
+    # confirmed production locations too, and gates its own candidate
+    # fallback.
+    CANDIDATE_ONLY_ACTIONS = frozenset({'candidates', 'candidate_votes'})
+
+    def initial(self, request, *args, **kwargs):
+        # Checked before super() runs authentication, permissions and
+        # throttling, so a disabled endpoint answers 404 for every caller
+        # rather than 401/403, and a POST to it never spends a
+        # DataUploadThrottle slot out of the caller's write quota (that
+        # scope is shared with create/partial_update).
+        if (self.action in self.CANDIDATE_ONLY_ACTIONS
+                and not candidates_enabled()):
+            raise NotFound(
+                detail=APIV1CandidateVoteErrorMessages.PILOT_DISABLED
+            )
+        super().initial(request, *args, **kwargs)
 
     @staticmethod
     def __init_opensearch() -> Tuple[OpenSearchService,
@@ -200,7 +233,23 @@ class ProductionLocations(ViewSet):
         return Response(response)
 
     @handle_errors_decorator
-    def retrieve(self, _, pk=None):
+    def retrieve(self, request, pk=None):
+        '''
+        One production location by OS ID, from OpenSearch.
+
+        Candidate production locations (Earth Genome satellite detections,
+        OSDEV-3249) have no OpenSearch document, so on a miss the OS ID is
+        checked against ``Facility.including_candidates`` and a candidate
+        is served from the database with the candidate labeling
+        (``is_candidate``, ``source``, ``external_id``, ``confidence``,
+        ``polygon``, ``validation`` and ``suggested_matches``; see
+        api/serializers/facility/facility_candidate_details_serializer.py).
+        Candidates are reachable only this way and through
+        ``GET .../candidates/?bbox=``: the ``list`` search, the tiles and
+        ``/api/facilities-downloads/`` never include them. A retired
+        candidate answers 410, anything else unknown 404, and confirmed
+        facilities are untouched by the fallback.
+        '''
         query_params = QueryDict("", mutable=True)
         query_params.update({"os_id": pk})
 
@@ -217,6 +266,18 @@ class ProductionLocations(ViewSet):
         locations = response.get("data", [])
 
         if len(locations) == 0:
+            # Candidates are never indexed (OSDEV-3243), so they always
+            # miss OpenSearch; one primary-key lookup serves them from
+            # the database instead (OSDEV-3249).
+            # While the pilot switch is off (OSDEV-3627) a candidate OS
+            # ID is simply not found, as before the pilot.
+            candidate = Facility.including_candidates.filter(
+                pk=pk, is_candidate=True
+            ).first() if candidates_enabled() else None
+            if candidate is not None:
+                return self.__candidate_response(
+                    candidate_production_location(candidate, request.user)
+                )
             # A retired OS ID (NOT_A_FACILITY tombstone, OSDEV-3246) is
             # not in OpenSearch and is excluded from historical_os_id, so
             # it always lands here. One primary-key lookup on the miss
@@ -239,6 +300,98 @@ class ProductionLocations(ViewSet):
 
         return Response(locations[0])
 
+    @staticmethod
+    def __candidate_response(data):
+        '''
+        A candidate payload carries the caller's own vote, so it must not
+        be stored in a shared cache (``Cache-Control: private``), and it
+        must not be indexed by search engines (``X-Robots-Tag: noindex``;
+        the SPA has no server-rendered head to carry a meta tag).
+        '''
+        response = Response(data)
+        patch_cache_control(response, private=True)
+        response[NOINDEX_HEADER] = NOINDEX_VALUE
+        return response
+
+    @action(detail=False, methods=['GET'], url_path='candidates')
+    def candidates(self, request):
+        '''
+        Candidate production locations inside a bounding box (OSDEV-3249).
+
+        ``GET /api/v1/production-locations/candidates/?bbox=minLng,minLat,
+        maxLng,maxLat[&limit=N]`` is open, read-only and rate limited like
+        the other v1 reads. It answers a GeoJSON FeatureCollection of the
+        candidates whose detected polygon (or point, when there is no
+        polygon) intersects the box, each Feature labeled with
+        ``os_id``, ``confidence``, ``source``, the derived validation
+        ``state`` and ``tally`` and the pin ``centroid``. ``limit``
+        defaults to 200 and is capped at 500; a malformed, inverted,
+        out-of-range or oversized (more than 2 degrees on a side) bbox is
+        400. Only ``is_candidate`` rows are ever returned, so the
+        brand/CSO data contract (confirmed facilities only) is unaffected.
+        404 while the pilot switch is off (OSDEV-3627, see ``initial``).
+        '''
+        params = CandidatesBboxQueryParamSerializer(data=request.query_params)
+        if not params.is_valid():
+            field, messages = next(iter(params.errors.items()))
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
+                    'errors': [{'field': field, 'detail': str(messages[0])}],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        envelope = Polygon.from_bbox(params.validated_data['bbox'])
+        envelope.srid = 4326
+        candidates = list(
+            Facility.including_candidates
+            .filter(is_candidate=True)
+            .filter(
+                Q(polygon__intersects=envelope)
+                | Q(polygon__isnull=True, location__intersects=envelope)
+            )
+            .order_by('id')
+            .only('id', 'location', 'polygon', 'confidence', 'source')
+            [:params.validated_data['limit']]
+        )
+        vote_tallies = candidate_validation.tallies(
+            candidate.id for candidate in candidates
+        )
+        return self.__candidate_response({
+            'type': 'FeatureCollection',
+            'features': [
+                self.__candidate_feature(
+                    candidate, vote_tallies[candidate.id]
+                )
+                for candidate in candidates
+            ],
+        })
+
+    @staticmethod
+    def __candidate_feature(facility, vote_tally):
+        state = candidate_validation.derive_state(vote_tally)
+        geometry = (
+            facility.polygon if facility.polygon is not None
+            else facility.location
+        )
+        return {
+            'type': 'Feature',
+            'id': facility.id,
+            'geometry': geometry_geojson(geometry),
+            'properties': {
+                'os_id': facility.id,
+                'confidence': facility.confidence,
+                'source': facility.source,
+                'state': candidate_validation.public_state(state),
+                'tally': vote_tally,
+                'centroid': {
+                    'lat': facility.location.y,
+                    'lng': facility.location.x,
+                },
+            },
+        }
+
     @action(
         detail=True,
         methods=['GET', 'POST'],
@@ -257,7 +410,8 @@ class ProductionLocations(ViewSet):
         for a live candidate: a confirmed one keeps accepting votes and
         the derived state follows the tally. State derivation and the
         consensus-no handling (auto-retire vs. moderation gate) live in
-        api/services/candidate_validation.py.
+        api/services/candidate_validation.py. 404 while the pilot switch
+        is off (OSDEV-3627, see ``initial``).
         '''
         facility = Facility.including_candidates.filter(pk=pk).first()
         if facility is None:
