@@ -169,11 +169,16 @@ class IdentityResolverView(APIView):
     content_negotiation_class = ResolverContentNegotiation
 
     def get(self, request, os_id):
-        # Pilot gate. Answers exactly as it does for an identifier this
-        # instance cannot resolve, which is true while the switch is off
-        # and says nothing about the feature existing. A distinct status
-        # or message here would announce the resolver to anyone who
-        # guessed the path, which is the thing the switch is for.
+        # Pilot gate. For a well-formed identifier this is byte for byte
+        # the answer a running resolver gives for one it cannot resolve,
+        # which is true while the switch is off and says nothing about
+        # the feature existing.
+        #
+        # It is not a general secret. A malformed identifier is a 400
+        # once the resolver is live and a 404 while it is dark, so one
+        # probe shows the switch state. The 400 is the routing contract
+        # and is not worth trading away: the switch keeps the pilot out
+        # of casual discovery rather than acting as an access control.
         if not resolution_is_open():
             return _error(
                 NOT_RESOLVABLE_HERE, status.HTTP_404_NOT_FOUND

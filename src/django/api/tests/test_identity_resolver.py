@@ -542,6 +542,20 @@ class ResolverSwitchOffTest(ResolverFixture, APITestCase):
         self.assertEqual(dark.status_code, running.status_code)
         self.assertEqual(dark.json(), running.json())
 
+    def test_a_malformed_identifier_shows_the_switch_state(self):
+        """
+        The gate's limit, pinned rather than described. A malformed
+        identifier is a 400 once the resolver is live and a 404 while it
+        is dark, so one probe distinguishes them. Recorded rather than
+        closed, because the 400 is the routing contract.
+        """
+        with override_switch('enable_identity_resolver', active=True):
+            live = self.client.get('/osid/{}'.format(BAD_OS_ID))
+        dark = self.client.get('/osid/{}'.format(BAD_OS_ID))
+
+        self.assertEqual(live.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(dark.status_code, status.HTTP_404_NOT_FOUND)
+
     def test_resolver_description_is_not_published(self):
         response = self.client.get('/.well-known/resolver')
 
