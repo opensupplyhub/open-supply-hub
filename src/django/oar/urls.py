@@ -23,6 +23,8 @@ from api.views.v1.moderation_events \
      import ModerationEvents
 from api.views.v1.candidate_retirement_requests \
      import CandidateRetirementRequests
+from api.views.v1.link_type_vocabulary \
+     import LinkTypeVocabularyView
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -158,6 +160,33 @@ schema_view = get_schema_view(
     patterns=[path("", include(public_apis + api_v1))],
 )
 
+# The link type vocabulary. Lives under api/ because it is an API
+# resource, and that prefix is already routed at the edge.
+vocabulary_apis = [
+    path(
+        'api/v1/voc/',
+        LinkTypeVocabularyView.as_view(),
+        name='link-type-vocabulary',
+    ),
+    # Each term dereferences to its own definition. The link-set keys the
+    # resolver emits are these URIs, and a key that 404s is not a
+    # vocabulary.
+    path(
+        'api/v1/voc/<str:term>',
+        LinkTypeVocabularyView.as_view(),
+        name='link-type-definition',
+    ),
+    # The same term with a trailing slash. Without this the path is not a
+    # valid route, and the SPA middleware answers unmatched paths with
+    # index.html, so a near-miss would be a 200 carrying the web app
+    # rather than the 404 this contract promises.
+    path(
+        'api/v1/voc/<str:term>/',
+        LinkTypeVocabularyView.as_view(),
+        name='link-type-definition-slash',
+    ),
+]
+
 info_apis = [
     path('api/info/contributors/', views.active_contributors_count,
          name='active_contributors_count'),
@@ -220,4 +249,6 @@ internal_apis = [
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
-urlpatterns = public_apis + api_v1 + internal_apis + info_apis
+urlpatterns = (
+    public_apis + api_v1 + internal_apis + info_apis + vocabulary_apis
+)
