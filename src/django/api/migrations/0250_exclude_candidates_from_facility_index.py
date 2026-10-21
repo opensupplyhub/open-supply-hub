@@ -17,19 +17,19 @@ def exclude_candidates_from_facility_index(apps, schema_editor):
     on delete. Any candidate rows already in the index are deleted.
     """
     helper.run_sql_files([
-        '0248_index_facilities_exclude_candidates.sql',
+        '0250_index_facilities_exclude_candidates.sql',
     ])
 
 
 def include_candidates_in_facility_index(apps, schema_editor):
     helper.run_sql_files([
-        '0248_revert_index_facilities_exclude_candidates.sql',
+        '0250_revert_index_facilities_exclude_candidates.sql',
     ])
 
 
 class Migration(Migration):
     dependencies = [
-        ('api', '0247_add_zone_set_and_zone'),
+        ('api', '0249_identity_record_switches'),
     ]
 
     operations = [

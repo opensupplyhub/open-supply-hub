@@ -794,17 +794,6 @@ def _env_int(name, default=None):
         )
         return default
 
-
-# Earth Genome pilot guardrail (OSDEV-3248). The id of the Contributor that
-# the candidate ingest pipeline writes under. Only a Facility created from a
-# list item whose Source belongs to this contributor may be a candidate
-# (is_candidate=True) or carry an empty name or address; every other ORM
-# creation path is rejected in Facility.save(). Unset, blank or
-# non-numeric means None: nobody may create such rows. Contributor ids
-# differ per environment (OS Hub and RBA each need their own value). See
-# api/services/candidate_guard.py.
-EARTH_GENOME_CONTRIBUTOR_ID = _env_int('EARTH_GENOME_CONTRIBUTOR_ID')
-
 # Earth Genome candidate validation (OSDEV-3245). States are derived from
 # the live vote tally (design decision D6) by
 # api/services/candidate_validation.py; these knobs are the thresholds.
@@ -847,26 +836,6 @@ EARTH_INDEX_API_URL = (
 ).rstrip('/')
 EARTH_INDEX_API_KEY = os.getenv('EARTH_INDEX_API_KEY') or None
 EARTH_INDEX_PROJECT_ID = os.getenv('EARTH_INDEX_PROJECT_ID') or None
-def _env_int(name, default=None):
-    """Read an integer environment variable, tolerating bad values.
-
-    Unset or blank returns ``default``. A non-numeric value also returns
-    ``default`` but logs a warning naming the variable, so a typo in an
-    env var degrades to the safe default instead of raising at import
-    time and taking the service down at boot.
-    """
-    raw = (os.getenv(name) or '').strip()
-    if not raw:
-        return default
-    try:
-        return int(raw)
-    except ValueError:
-        logging.getLogger(__name__).warning(
-            'Environment variable %s=%r is not an integer; using %r.',
-            name, raw, default,
-        )
-        return default
-
 
 # Earth Genome pilot guardrail (OSDEV-3248). The id of the Contributor that
 # the candidate ingest pipeline writes under. Only a Facility created from a

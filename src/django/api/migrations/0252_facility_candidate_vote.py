@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('api', '0249_facility_alias_tombstone'),
+        ('api', '0251_facility_alias_tombstone'),
     ]
 
     operations = [
