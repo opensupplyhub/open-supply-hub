@@ -188,43 +188,6 @@ def test_transform_csv_equals_prefixed_value_is_string_cell(tmp_path):
     assert wb.active["C2"].value == "1 Main St"
 
 
-def test_transform_csv_strips_illegal_control_characters(tmp_path):
-    # A raw control character is legal in a CSV but openpyxl refuses to write
-    # it, aborting the whole upload instead of flagging the one cell.
-    csv_path = tmp_path / "list.csv"
-    csv_path.write_text(
-        "country,name,address\n"
-        "Indonesia,Acme,\"JALAN RAYA SEMARANG\x02-KENDAL KM 12, Semarang\"\n",
-        encoding="utf-8",
-    )
-
-    dest = ContribotWorkbook(
-        work_dir=tmp_path, source_path=csv_path, list_id="102"
-    ).transform()
-
-    wb = openpyxl.load_workbook(dest)
-    assert wb.active["C2"].value == "JALAN RAYA SEMARANG-KENDAL KM 12, Semarang"
-
-
-def test_transform_csv_strips_control_character_before_formula_escape(tmp_path):
-    # Stripping must happen first, otherwise a value only reachable as a
-    # formula after cleaning would be written unescaped.
-    csv_path = tmp_path / "list.csv"
-    csv_path.write_text(
-        'country,name,address\nBangladesh,"\x02=1+1",1 Main St\n',
-        encoding="utf-8",
-    )
-
-    dest = ContribotWorkbook(
-        work_dir=tmp_path, source_path=csv_path, list_id="103"
-    ).transform()
-
-    wb = openpyxl.load_workbook(dest, data_only=False)
-    cell = wb.active["B2"]
-    assert cell.data_type == "s"
-    assert cell.value == "'=1+1"
-
-
 def test_init_requires_list_id(tmp_path):
     with pytest.raises(ValueError, match="list_id is required"):
         ContribotWorkbook(

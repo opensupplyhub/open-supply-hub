@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Union
 
 import pandas as pd
-from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 PathLike = Union[str, Path]
 
@@ -77,22 +76,10 @@ class ContribotWorkbook:
         if df.empty:
             raise ValueError(f"CSV has no data rows: {csv_path.name}")
 
-        df = df.map(self._clean_cell)
+        df = df.map(
+            lambda value: f"'{value}"
+            if isinstance(value, str) and value.startswith("=")
+            else value
+        )
         xlsx_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_excel(xlsx_path, index=False, engine="openpyxl")
-
-    @staticmethod
-    def _clean_cell(value):
-        """Make one CSV value safe to write into a worksheet.
-
-        Control characters that are legal in a CSV are rejected outright by
-        openpyxl, which aborts the whole upload rather than flagging the cell,
-        so they are dropped here. A leading ``=`` is then escaped so the value
-        is not treated as a formula.
-        """
-        if not isinstance(value, str):
-            return value
-        value = ILLEGAL_CHARACTERS_RE.sub("", value)
-        if value.startswith("="):
-            value = f"'{value}"
-        return value
