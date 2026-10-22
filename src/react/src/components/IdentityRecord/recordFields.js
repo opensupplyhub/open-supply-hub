@@ -26,14 +26,6 @@ export const formatAddress = address => {
 
 export const getSubject = credential => credential?.credentialSubject || {};
 
-export const getIssuerId = credential => {
-    const { issuer } = credential || {};
-    if (!issuer) {
-        return null;
-    }
-    return typeof issuer === 'string' ? issuer : issuer.id || null;
-};
-
 export const getProcessCategories = credential =>
     (getSubject(credential).processCategory || [])
         .map(category => category?.name || category?.code)

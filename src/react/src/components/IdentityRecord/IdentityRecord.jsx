@@ -12,7 +12,6 @@ import {
     failureMessage,
     formatAddress,
     getClaims,
-    getIssuerId,
     getOperator,
     getProcessCategories,
     getSubject,

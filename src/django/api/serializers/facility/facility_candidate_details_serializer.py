@@ -192,5 +192,11 @@ class FacilityCandidateDetailsSerializer:
                 'is_claimed': False,
                 'partner_fields': {},
                 'is_data_center': False,
+                # A candidate is not a production location, so nothing
+                # can be registered against it. Present rather than
+                # omitted because the detail page is shared with
+                # confirmed facilities and reads every key the
+                # confirmed serializer emits.
+                'has_identity_record': False,
             },
         }
