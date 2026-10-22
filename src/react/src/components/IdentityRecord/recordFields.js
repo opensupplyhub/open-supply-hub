@@ -119,8 +119,7 @@ export const getOperator = credential => {
  * can decide whether to come back.
  */
 export const FAILURE_MESSAGES = {
-    not_registered:
-        'No record is registered against this identifier yet.',
+    not_registered: 'No record is registered against this identifier yet.',
     timeout:
         'The issuer did not respond in time. The record still exists and ' +
         'this is usually temporary.',
@@ -130,8 +129,7 @@ export const FAILURE_MESSAGES = {
     upstream_error:
         'The issuer returned an error. The record still exists and this ' +
         'is usually temporary.',
-    malformed:
-        'The record could not be read in the format it was returned in.',
+    malformed: 'The record could not be read in the format it was returned in.',
     encrypted:
         'This record is encrypted. Encrypted records are not shown here.',
     unsafe_uri: 'The registered address for this record cannot be opened.',

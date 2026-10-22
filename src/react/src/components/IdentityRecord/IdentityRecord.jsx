@@ -164,9 +164,7 @@ export const IdentityRecord = ({ classes, match }) => {
                             <dt className={classes.term}>
                                 Issuer&rsquo;s identifier
                             </dt>
-                            <dd className={classes.detail}>
-                                {registeredId}
-                            </dd>
+                            <dd className={classes.detail}>{registeredId}</dd>
                         </>
                     )}
                     {operator && (
@@ -194,8 +192,8 @@ export const IdentityRecord = ({ classes, match }) => {
                         Claims on this record
                     </Typography>
                     <Typography className={classes.caveat}>
-                        These are statements made on the record by its
-                        issuer. Each one carries its own status below.
+                        These are statements made on the record by its issuer.
+                        Each one carries its own status below.
                     </Typography>
                     <ul className={classes.claims}>
                         {claims.map(claim => (
@@ -241,9 +239,7 @@ export const IdentityRecord = ({ classes, match }) => {
                     </dd>
                     {data.document_uri && (
                         <>
-                            <dt className={classes.term}>
-                                Signed credential
-                            </dt>
+                            <dt className={classes.term}>Signed credential</dt>
                             <dd className={classes.detail}>
                                 <a
                                     href={data.document_uri}
@@ -264,9 +260,9 @@ export const IdentityRecord = ({ classes, match }) => {
                  */}
                 <Typography className={classes.caveat}>
                     Open Supply Hub stores only a link to this record and
-                    fetches it each time this page is opened. The signature
-                    on the credential is not checked here; follow the link
-                    above to verify it with the issuer.
+                    fetches it each time this page is opened. The signature on
+                    the credential is not checked here; follow the link above to
+                    verify it with the issuer.
                 </Typography>
             </Paper>
 
