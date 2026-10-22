@@ -98,6 +98,15 @@ python3 src/dedupe-hub/harness/evaluate.py \
     --flags src/dedupe-hub/harness/.data/pick_one_flags.csv \
     --scores "candidate=src/dedupe-hub/harness/.data/candidate_scores.csv"
 
+# 4b. Same comparison per slice (named countries, the lookalike class, and every
+#     other country with enough pairs). The slice list lives in slices.py. Add
+#     --csv to keep the numbers, e.g. to compare repeated runs.
+python3 src/dedupe-hub/harness/slice_report.py \
+    --pairs src/dedupe-hub/harness/.data/pairs.csv \
+    --flags src/dedupe-hub/harness/.data/pick_one_flags.csv \
+    --scores "candidate=src/dedupe-hub/harness/.data/candidate_scores.csv" \
+    --csv src/dedupe-hub/harness/.data/slices_candidate.csv
+
 # 5. Compare against the committed operating point (0.8 / 0.3) in
 #    gazetteer_match_defaults.py, then shadow-run on Test with
 #    dedupe_hub_live=false before deploying. Read that file's docstring and the

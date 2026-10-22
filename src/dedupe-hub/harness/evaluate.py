@@ -59,6 +59,8 @@ def load_pairs(path):
                 "prod": float(r["confidence"]),
                 "name_l": (r.get("item_clean_name") or r.get("item_name") or "").upper(),
                 "name_r": (r.get("fac_name") or "").upper(),
+                "country": (r.get("item_country") or r.get("fac_country")
+                            or "").strip().lower(),
                 "train": stable_train_half(mid),
             })
     return rows
