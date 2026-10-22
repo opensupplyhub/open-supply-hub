@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django import forms
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.urls import path
@@ -262,13 +263,80 @@ class FacilityMatchAdmin(SimpleHistoryAdmin):
     pretty_results.short_description = 'Results'
 
 
+class ContributorAdminForm(forms.ModelForm):
+    """
+    Custom form for ContributorAdmin that includes inactive partner fields in
+    the pick list and pre-populates the "chosen" box with any inactive fields
+    already assigned to the contributor.
+    """
+
+    class Meta:
+        model = models.Contributor
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        """Pre-populate partner_fields initial value to include inactive ones."""
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.initial['partner_fields'] = list(
+                self.instance.all_partner_fields.values_list('pk', flat=True)
+            )
+
+
 class ContributorAdmin(SimpleHistoryAdmin):
+    form = ContributorAdminForm
     history_list_display = ('is_verified', 'verification_notes')
     search_fields = ('name', 'admin__email')
     filter_horizontal = ('partner_fields',)
 
     def get_ordering(self, request):
+        """Return contributors ordered by name."""
         return ['name']
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        """Include inactive partner fields in the pick list, labelled '(inactive)'."""
+        if db_field.name == 'partner_fields':
+            kwargs['queryset'] = (
+                PartnerField.objects.get_all_including_inactive()
+            )
+            field = super().formfield_for_manytomany(
+                db_field, request, **kwargs
+            )
+            field.label_from_instance = (
+                lambda obj: obj.name if obj.active
+                else f'{obj.name} (inactive)'
+            )
+            return field
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def save_related(self, request, form, formsets, change):
+        """
+        Save related objects, then reconcile inactive partner fields.
+
+        Django's default set() uses the active-only manager, so it never sees
+        inactive fields in the "current" set and won't remove them when the
+        admin un-assigns them. We fix this by computing the diff ourselves
+        against the full (including inactive) queryset.
+        """
+        super().save_related(request, form, formsets, change)
+        if 'partner_fields' not in form.cleaned_data:
+            return
+        contributor = form.instance
+        desired_pks = {obj.pk for obj in form.cleaned_data['partner_fields']}
+        current_pks = set(
+            PartnerField.objects.get_all_including_inactive()
+            .filter(contributor=contributor)
+            .values_list('pk', flat=True)
+        )
+        to_remove = current_pks - desired_pks
+        if to_remove:
+            # contributor.partner_fields.remove() filters through the
+            # active-only manager and silently skips inactive fields, so
+            # delete from the junction table directly instead.
+            models.Contributor.partner_fields.through.objects.filter(
+                contributor_id=contributor.pk,
+                partnerfield_id__in=to_remove,
+            ).delete()
 
 
 class FacilityClaimAdmin(SimpleHistoryAdmin):
