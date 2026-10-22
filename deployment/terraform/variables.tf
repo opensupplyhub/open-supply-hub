@@ -1263,14 +1263,14 @@ variable "earth_index_api_url" {
   description = "EARTH_INDEX_API_URL for the CLI task: base URL of the Earth Index API that `ingest_satellite_detections --project` exports deep-search results from (OSDEV-3244)."
 }
 
-variable "earth_index_api_key" {
+variable "earth_index_api_key_secret_name" {
   type        = string
   default     = ""
   sensitive   = true
   description = "EARTH_INDEX_API_KEY for the CLI task: an Earth Index API key (bearer token). Empty means the ingest can only read from a file (OSDEV-3244)."
 }
 
-variable "earth_index_project_id" {
+variable "earth_index_project_id_secret_name" {
   type        = string
   default     = ""
   description = "EARTH_INDEX_PROJECT_ID for the CLI task: the Earth Index project `ingest_satellite_detections --project` uses when given no value (OSDEV-3244)."

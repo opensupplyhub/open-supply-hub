@@ -132,5 +132,5 @@ contribot_google_drive_service_key_secret_name = "oshub/development/contribot-go
 claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]
 
 earth_genome_contributor_id = 99
-earth_index_api_key = "oshub/development/earth-index-api-key"
-earth_index_project_id = "oshub/development/earth-index-project-id"
+earth_index_api_key_secret_name = "oshub/development/earth-index-api-key"
+earth_index_project_id_secret_name = "oshub/development/earth-index-project-id"
