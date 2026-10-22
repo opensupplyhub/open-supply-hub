@@ -587,8 +587,10 @@ locals {
   contribot_slack_failures_api_url_arn   = var.contribot_slack_failures_api_url_secret_name != "" ? data.aws_secretsmanager_secret.contribot_slack_failures_api_url[0].arn : ""
   contribot_google_drive_service_key_arn = var.contribot_google_drive_service_key_secret_name != "" ? data.aws_secretsmanager_secret.contribot_google_drive_service_key[0].arn : ""
 
-  earth_index_api_key    = var.earth_index_api_key_secret_name != "" ? data.aws_secretsmanager_secret_version.earth_index_api_key[0].secret_string : var.earth_index_api_key
-  earth_index_project_id = var.earth_index_project_id_secret_name != "" ? data.aws_secretsmanager_secret_version.earth_index_project_id[0].secret_string : var.earth_index_project_id
+  # No plaintext fallback variables exist for these (only *_secret_name), so an
+  # empty secret name yields an empty value, as the variable defaults did.
+  earth_index_api_key    = var.earth_index_api_key_secret_name != "" ? data.aws_secretsmanager_secret_version.earth_index_api_key[0].secret_string : ""
+  earth_index_project_id = var.earth_index_project_id_secret_name != "" ? data.aws_secretsmanager_secret_version.earth_index_project_id[0].secret_string : ""
 
   # ARNs granted to ECS/Batch execution roles for valueFrom injection.
   ecs_secretsmanager_secret_arns = compact([
