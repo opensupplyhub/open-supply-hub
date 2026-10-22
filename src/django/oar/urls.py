@@ -23,6 +23,11 @@ from api.views.v1.moderation_events \
      import ModerationEvents
 from api.views.v1.candidate_retirement_requests \
      import CandidateRetirementRequests
+from api.views.v1.link_type_vocabulary \
+     import LinkTypeVocabularyView
+from api.views.v1.identity_resolver \
+     import IdentityResolverView, ResolverDescriptionView
+from api.views.v1.identity_resolver import RESOLVER_PATH_PREFIX
 from api.views.stripe.download_locations_checkout_session_view \
      import DownloadLocationsCheckoutSessionView
 from api.views.stripe.download_locations_checkout_webhook_view \
@@ -158,6 +163,71 @@ schema_view = get_schema_view(
     patterns=[path("", include(public_apis + api_v1))],
 )
 
+# The identifier paths. Root-level rather than under api/ because the
+# identifier address is a published contract that has to outlive our
+# internal API versioning.
+# Each path is declared with and without a trailing slash. Without the
+# twin the slashed spelling is not a valid route, and the SPA middleware
+# answers unmatched paths with index.html, so a near-miss would be a 200
+# carrying the web app rather than the 404 this contract promises.
+resolver_apis = [
+    # The bare prefix, which the description document publishes as
+    # resolverRoot. Answered rather than left unmatched, so discovery
+    # does not land on the web app.
+    path(
+        '{}/'.format(RESOLVER_PATH_PREFIX),
+        IdentityResolverView.as_view(),
+        name='identity-resolver-root',
+    ),
+    path(
+        '{}/<str:os_id>'.format(RESOLVER_PATH_PREFIX),
+        IdentityResolverView.as_view(),
+        name='identity-resolver',
+    ),
+    path(
+        '{}/<str:os_id>/'.format(RESOLVER_PATH_PREFIX),
+        IdentityResolverView.as_view(),
+        name='identity-resolver-slash',
+    ),
+    path(
+        '.well-known/resolver',
+        ResolverDescriptionView.as_view(),
+        name='resolver-description',
+    ),
+    path(
+        '.well-known/resolver/',
+        ResolverDescriptionView.as_view(),
+        name='resolver-description-slash',
+    ),
+]
+
+# The link type vocabulary. Lives under api/ because it is an API
+# resource, and that prefix is already routed at the edge.
+vocabulary_apis = [
+    path(
+        'api/v1/voc/',
+        LinkTypeVocabularyView.as_view(),
+        name='link-type-vocabulary',
+    ),
+    # Each term dereferences to its own definition. The link-set keys the
+    # resolver emits are these URIs, and a key that 404s is not a
+    # vocabulary.
+    path(
+        'api/v1/voc/<str:term>',
+        LinkTypeVocabularyView.as_view(),
+        name='link-type-definition',
+    ),
+    # The same term with a trailing slash. Without this the path is not a
+    # valid route, and the SPA middleware answers unmatched paths with
+    # index.html, so a near-miss would be a 200 carrying the web app
+    # rather than the 404 this contract promises.
+    path(
+        'api/v1/voc/<str:term>/',
+        LinkTypeVocabularyView.as_view(),
+        name='link-type-definition-slash',
+    ),
+]
+
 info_apis = [
     path('api/info/contributors/', views.active_contributors_count,
          name='active_contributors_count'),
@@ -220,4 +290,7 @@ internal_apis = [
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 
-urlpatterns = public_apis + api_v1 + internal_apis + info_apis
+urlpatterns = (
+    public_apis + api_v1 + internal_apis + info_apis
+    + vocabulary_apis + resolver_apis
+)
