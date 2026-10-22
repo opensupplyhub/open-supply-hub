@@ -185,7 +185,10 @@ class ModerationEvents(ViewSet):
             send_production_location_creation_email(event, request)
 
         return Response(
-            {"os_id": item.facility_id}, status=status.HTTP_201_CREATED
+            ModerationEventsService.build_approval_response(
+                item, add_production_location_processor.created_facility_match
+            ),
+            status=status.HTTP_201_CREATED,
         )
 
     @action(
@@ -216,4 +219,10 @@ class ModerationEvents(ViewSet):
         if event.source == ModerationEvent.Source.SLC:
             send_slc_contribution_approval_email(request, event, item)
 
-        return Response({"os_id": item.facility_id}, status=status.HTTP_200_OK)
+        return Response(
+            ModerationEventsService.build_approval_response(
+                item,
+                update_production_location_processor.created_facility_match,
+            ),
+            status=status.HTTP_200_OK,
+        )

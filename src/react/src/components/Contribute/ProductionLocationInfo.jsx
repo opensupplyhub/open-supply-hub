@@ -166,8 +166,17 @@ const ProductionLocationInfo = ({
                 );
             break;
         case 'PATCH':
-            handleProductionLocation = data =>
-                handleUpdateProductionLocation(data, osID);
+            handleProductionLocation = (
+                data,
+                duplicateOverride,
+                ignoreWarnings,
+            ) =>
+                handleUpdateProductionLocation(
+                    data,
+                    osID,
+                    duplicateOverride,
+                    ignoreWarnings,
+                );
             break;
         default:
             handleProductionLocation = () => {
@@ -1496,8 +1505,20 @@ function mapDispatchToProps(dispatch) {
                     ignoreWarnings,
                 ),
             ),
-        handleUpdateProductionLocation: (data, osID) =>
-            dispatch(updateProductionLocation(data, osID)),
+        handleUpdateProductionLocation: (
+            data,
+            osID,
+            duplicateOverride,
+            ignoreWarnings,
+        ) =>
+            dispatch(
+                updateProductionLocation(
+                    data,
+                    osID,
+                    duplicateOverride,
+                    ignoreWarnings,
+                ),
+            ),
         fetchModerationEvent: moderationID =>
             dispatch(fetchSingleModerationEvent(moderationID)),
         fetchProductionLocation: osId =>

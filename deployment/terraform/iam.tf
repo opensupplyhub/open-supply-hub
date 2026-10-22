@@ -116,6 +116,69 @@ resource "aws_iam_role_policy" "s3_read_write_files_bucket" {
   policy = data.aws_iam_policy_document.s3_read_write_files_bucket.json
 }
 
+# OSDEV-3370: dedicated role for signing claim-attachment download URLs.
+# A presigned URL inherits the permissions of the principal that signed
+# it, so URLs handed to claimants must not be backed by the app task
+# role (which can also write and delete). The Django app assumes this
+# role (CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN) only to mint 60-second GET
+# URLs from the download endpoint.
+#
+# GetObject is granted on the whole files bucket rather than only the
+# claim_attachments/ prefix because attachments uploaded before
+# OSDEV-3370 live at the bucket root. Tighten this to
+# "${aws_s3_bucket.files.arn}/claim_attachments/*" once the legacy
+# objects are migrated under the prefix (tracked in OSDEV-2278).
+data "aws_iam_policy_document" "claim_attachments_signer_assume" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [aws_iam_role.app_task_role.arn]
+    }
+  }
+}
+
+resource "aws_iam_role" "claim_attachments_signer" {
+  name               = "ecs${local.short}ClaimAttachmentsSigner"
+  assume_role_policy = data.aws_iam_policy_document.claim_attachments_signer_assume.json
+}
+
+data "aws_iam_policy_document" "claim_attachments_signer_s3" {
+  statement {
+    effect = "Allow"
+
+    resources = [
+      "${aws_s3_bucket.files.arn}/*",
+    ]
+
+    actions = [
+      "s3:GetObject",
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "claim_attachments_signer_s3" {
+  name   = "S3GetClaimAttachments"
+  role   = aws_iam_role.claim_attachments_signer.name
+  policy = data.aws_iam_policy_document.claim_attachments_signer_s3.json
+}
+
+data "aws_iam_policy_document" "assume_claim_attachments_signer" {
+  statement {
+    effect    = "Allow"
+    actions   = ["sts:AssumeRole"]
+    resources = [aws_iam_role.claim_attachments_signer.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "assume_claim_attachments_signer" {
+  name   = "AssumeClaimAttachmentsSigner"
+  role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.assume_claim_attachments_signer.json
+}
+
 # Lets the Django app task invoke models via Bedrock for the SLC
 # submission quality check (SubmissionQualityProcessor), using the task's
 # IAM role rather than a long-lived API key. The set of invocable models
@@ -276,6 +339,188 @@ resource "aws_iam_role_policy" "batch_s3_read_policy" {
 resource "aws_iam_instance_profile" "container_instance" {
   name = aws_iam_role.container_instance_ec2.name
   role = aws_iam_role.container_instance_ec2.name
+}
+
+#
+# Bastion IAM resources
+#
+# OSDEV-3531: instance role for the bastion so the SSM agent can register
+# it with Systems Manager. Access to the bastion (interactive shells, DB
+# port forwarding, CI jobs) goes through SSM Session Manager instead of
+# SSH, which lets tcp/22 be closed on the bastion security group.
+resource "aws_iam_role" "bastion" {
+  name               = "bastion${local.short}InstanceRole"
+  assume_role_policy = data.aws_iam_policy_document.container_instance_ec2_assume_role.json
+}
+
+resource "aws_iam_role_policy_attachment" "bastion_ssm" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "bastion" {
+  name = aws_iam_role.bastion.name
+  role = aws_iam_role.bastion.name
+}
+
+# OSDEV-3531: what the GitHub Actions workflows need to reach private
+# resources through this environment's bastion with SSM: DB and OpenSearch
+# port forwarding (deployment/ssm/ssm_tunnel.sh) and Run Command for the
+# Logstash lock files (deployment/clear_opensearch/clear_opensearch.sh).
+# The CI IAM users are not managed here: attach this policy to the user
+# whose access keys the workflows use for this environment.
+data "aws_iam_policy_document" "bastion_ssm_ci_access" {
+  statement {
+    sid       = "DescribeBastion"
+    effect    = "Allow"
+    actions   = ["ec2:DescribeInstances"]
+    resources = ["*"]
+  }
+
+  # SessionDocumentAccessCheck makes StartSession also require permission on
+  # the session document, so the default interactive shell document cannot
+  # be used: only the port forwarding document below is allowed.
+  statement {
+    sid       = "StartSessionOnBastion"
+    effect    = "Allow"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["Bastion"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Environment"
+      values   = [var.environment]
+    }
+
+    # BoolIfExists, not Bool: the key is usually absent from the request, and
+    # Bool treats a missing key as false, which denied every session.
+    condition {
+      test     = "BoolIfExists"
+      variable = "ssm:SessionDocumentAccessCheck"
+      values   = ["true"]
+    }
+  }
+
+  statement {
+    sid       = "PortForwardingDocument"
+    effect    = "Allow"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ssm:${var.aws_region}::document/AWS-StartPortForwardingSessionToRemoteHost"]
+  }
+
+  statement {
+    sid       = "SendCommandToBastion"
+    effect    = "Allow"
+    actions   = ["ssm:SendCommand"]
+    resources = ["arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["Bastion"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Environment"
+      values   = [var.environment]
+    }
+  }
+
+  statement {
+    sid       = "RunShellScriptDocument"
+    effect    = "Allow"
+    actions   = ["ssm:SendCommand"]
+    resources = ["arn:aws:ssm:${var.aws_region}::document/AWS-RunShellScript"]
+  }
+
+  statement {
+    sid       = "ManageOwnSessions"
+    effect    = "Allow"
+    actions   = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = ["arn:aws:ssm:*:*:session/$${aws:username}-*"]
+  }
+
+  statement {
+    sid       = "ReadCommandResults"
+    effect    = "Allow"
+    actions   = ["ssm:GetCommandInvocation"]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "bastion_ssm_ci_access" {
+  name        = "bastion${local.short}SsmCiAccess"
+  description = "SSM port forwarding and Run Command on the ${var.environment} bastion for GitHub Actions"
+  policy      = data.aws_iam_policy_document.bastion_ssm_ci_access.json
+}
+
+# OSDEV-3531: what people need to reach this environment's bastion from
+# their own computer with SSM, replacing SSH: an interactive shell
+# (SSM-SessionManagerRunShell, which runs as ssm-user with sudo) and port
+# forwarding, e.g. to the database. Attach it to the IAM users or group of
+# the people who need bastion access; it is not attached here.
+data "aws_iam_policy_document" "bastion_ssm_user_access" {
+  # SessionDocumentAccessCheck makes StartSession also require permission on
+  # the session document, so only the two documents below can be used.
+  statement {
+    sid       = "StartSessionOnBastion"
+    effect    = "Allow"
+    actions   = ["ssm:StartSession"]
+    resources = ["arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:instance/*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Name"
+      values   = ["Bastion"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "ssm:resourceTag/Environment"
+      values   = [var.environment]
+    }
+
+    # BoolIfExists, not Bool: the key is usually absent from the request, and
+    # Bool treats a missing key as false, which denied every session.
+    condition {
+      test     = "BoolIfExists"
+      variable = "ssm:SessionDocumentAccessCheck"
+      values   = ["true"]
+    }
+  }
+
+  # SSM-SessionManagerRunShell is an account-level document (it holds the
+  # Session Manager preferences), so its ARN includes the account ID; AWS-*
+  # documents are owned by AWS and their ARNs have no account ID.
+  statement {
+    sid     = "SessionDocuments"
+    effect  = "Allow"
+    actions = ["ssm:StartSession"]
+    resources = [
+      "arn:aws:ssm:${var.aws_region}:${data.aws_caller_identity.current.account_id}:document/SSM-SessionManagerRunShell",
+      "arn:aws:ssm:${var.aws_region}::document/AWS-StartPortForwardingSessionToRemoteHost",
+    ]
+  }
+
+  statement {
+    sid       = "ManageOwnSessions"
+    effect    = "Allow"
+    actions   = ["ssm:TerminateSession", "ssm:ResumeSession"]
+    resources = ["arn:aws:ssm:*:*:session/$${aws:username}-*"]
+  }
+}
+
+resource "aws_iam_policy" "bastion_ssm_user_access" {
+  name        = "bastion${local.short}SsmUserAccess"
+  description = "SSM shell and port forwarding on the ${var.environment} bastion for people"
+  policy      = data.aws_iam_policy_document.bastion_ssm_user_access.json
 }
 
 #

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
 import { bool, func, number, object, arrayOf, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -7,10 +7,6 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import Security from '@material-ui/icons/Security';
 import People from '@material-ui/icons/People';
 import Language from '@material-ui/icons/Language';
@@ -22,6 +18,15 @@ import BusinessStep from './Steps/BusinessStep/BusinessStep';
 import ProfileStep from './Steps/ProfileStep/ProfileStep';
 import ErrorState from './ErrorState/ErrorState';
 import SubmissionErrorsBanner from './SubmissionErrorsBanner/SubmissionErrorsBanner';
+import ContributionWarningDialog from '../../Contribute/ContributionWarningDialog';
+import {
+    fetchClaimQualityWarnings,
+    makeDismissal,
+    nameAddressUnchanged,
+    rememberCheck,
+    rememberedWarningsFor,
+} from '../../../util/claimQualityCheck';
+import ClaimOutcomeDialog from '../../ClaimOutcomeDialog';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
 import {
@@ -66,7 +71,11 @@ import {
     useClaimFormCleanup,
     useApplySubmissionErrorsToForm,
 } from './hooks';
-import { claimIntroRoute, mapRoute } from '../../../util/constants';
+import {
+    claimIntroRoute,
+    mapRoute,
+    ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+} from '../../../util/constants';
 
 const iconMapping = {
     Security,
@@ -108,6 +117,7 @@ const ClaimForm = ({
     parentCompaniesError,
     productionLocationError,
     userHasSignedIn,
+    isNameAddressEditable,
     fetchCountries,
     fetchFacilityProcessingType,
     fetchParentCompanies,
@@ -123,6 +133,14 @@ const ClaimForm = ({
 }) => {
     // Track emissions validation errors from ProfileStep.
     const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
+
+    // The advisory data-quality warnings returned for an edited name or
+    // address on the Business step (OSDEV-3489), shown in a dialog
+    // before the step advances, kept with the values they were returned
+    // for; and whether that check is in flight.
+    const [pendingWarnings, setPendingWarnings] = useState(null);
+    const [checkingQuality, setCheckingQuality] = useState(false);
+    const [lastQualityCheck, setLastQualityCheck] = useState(null);
 
     // Redirect to intro page if user accessed form directly via URL.
     useRequireIntroAccess(history, osID);
@@ -171,7 +189,33 @@ const ClaimForm = ({
         handleSubmit,
         emissionsHasErrors,
         clearSubmissionError,
+        isNameAddressEditable,
     );
+
+    // Seed the editable company name and address from the production
+    // location once it loads, but only while the waffle switch is on so a
+    // switch-off claim never carries these values. Only empty fields are
+    // filled so a claimant's edits survive step changes; the intro page
+    // resets the form when the OS ID changes, so values never leak between
+    // locations.
+    const locationOsId = productionLocationData?.os_id;
+    useEffect(() => {
+        if (!isNameAddressEditable || !locationOsId) {
+            return;
+        }
+        if (!formData.facilityNameEnglish) {
+            updateFieldWithoutTouch(
+                'facilityNameEnglish',
+                productionLocationData.name || '',
+            );
+        }
+        if (!formData.facilityAddress) {
+            updateFieldWithoutTouch(
+                'facilityAddress',
+                productionLocationData.address || '',
+            );
+        }
+    }, [isNameAddressEditable, locationOsId]);
 
     useApplySubmissionErrorsToForm(claimForm, submissionError);
 
@@ -229,9 +273,63 @@ const ClaimForm = ({
     const currentStepComponent = stepComponents[activeStep];
     const StepComponent = currentStepComponent || EligibilityStep;
 
+    const advanceStep = () => {
+        markComplete(activeStep);
+        setStep(getNextStep(activeStep));
+    };
+
+    const currentNameAddress = () => ({
+        name: claimForm.values.facilityNameEnglish,
+        address: claimForm.values.facilityAddress,
+    });
+
+    // On leaving the Business step an edited name or address goes
+    // through the backend's advisory quality check before the step
+    // advances, so the claimant is warned while the fields are still in
+    // front of them rather than at submit, two steps and a document
+    // upload later. Skipped when the values are the ones the location
+    // already lists (nothing new is asserted) and when the claimant has
+    // already continued past warnings for exactly these values; values
+    // the check already answered re-show that answer rather than asking
+    // again. The check fails open: a failed request advances the step.
+    const passesQualityCheck = async () => {
+        if (
+            activeStep !== CLAIM_FORM_STEPS.BUSINESS ||
+            !isNameAddressEditable
+        ) {
+            return true;
+        }
+        const values = currentNameAddress();
+        const listed = {
+            name: productionLocationData?.name,
+            address: productionLocationData?.address,
+        };
+        const dismissal = claimForm.values.qualityWarningsDismissed;
+        if (
+            nameAddressUnchanged(values, listed) ||
+            (dismissal && nameAddressUnchanged(values, dismissal))
+        ) {
+            return true;
+        }
+        let warnings = rememberedWarningsFor(values, lastQualityCheck);
+        if (warnings === null) {
+            setCheckingQuality(true);
+            warnings = await fetchClaimQualityWarnings(osID, values);
+            setCheckingQuality(false);
+            setLastQualityCheck(rememberCheck(values, warnings));
+        }
+        if (warnings.length === 0) {
+            return true;
+        }
+        setPendingWarnings({ values, warnings });
+        return false;
+    };
+
     const handleNext = async () => {
         // Get all fields from current step's validation schema.
-        const schema = getValidationSchemaForStep(activeStep);
+        const schema = getValidationSchemaForStep(activeStep, {
+            isNameAddressEditable,
+        });
         const schemaFields = schema.describe().fields;
 
         // Mark all fields in current step as touched to show validation errors.
@@ -245,14 +343,35 @@ const ClaimForm = ({
         // Validate only the current step's fields, not the entire form.
         try {
             await schema.validate(claimForm.values, { abortEarly: false });
-            // If validation passes, proceed to next step.
-            markComplete(activeStep);
-            const nextStepIndex = getNextStep(activeStep);
-            setStep(nextStepIndex);
         } catch (validationErrors) {
             // Validation failed for current step, stay on this step.
             // Errors will be displayed via Formik's error state.
+            return;
         }
+        if (await passesQualityCheck()) {
+            advanceStep();
+        }
+    };
+
+    // "Continue anyway": remember which warnings were dismissed, and for
+    // which values, so the submission can report them and a later edit
+    // of either value runs the check again. The dismissal is for the
+    // values the check answered, not whatever the fields hold now: the
+    // fields are locked while the check runs and the dialog is modal, so
+    // the two cannot normally differ, but if they do the current values
+    // go through the check instead of inheriting the dismissal.
+    const continuePastQualityWarnings = async () => {
+        const { values, warnings } = pendingWarnings;
+        setPendingWarnings(null);
+        if (!nameAddressUnchanged(currentNameAddress(), values)) {
+            await handleNext();
+            return;
+        }
+        updateFieldWithoutTouch(
+            'qualityWarningsDismissed',
+            makeDismissal(values, warnings),
+        );
+        advanceStep();
     };
 
     const handleBack = () => {
@@ -302,6 +421,7 @@ const ClaimForm = ({
                             handleChange={handleFieldChange}
                             handleBlur={handleBlur}
                             updateFieldWithoutTouch={updateFieldWithoutTouch}
+                            fieldsDisabled={checkingQuality}
                             errors={claimForm.errors}
                             touched={claimForm.touched}
                             countryOptions={countriesOptions}
@@ -331,9 +451,13 @@ const ClaimForm = ({
                                         variant="contained"
                                         onClick={handleNext}
                                         className={classes.buttonPrimary}
-                                        disabled={isButtonDisabled}
+                                        disabled={
+                                            isButtonDisabled || checkingQuality
+                                        }
                                     >
-                                        {NEXT_BUTTON_TEXT[activeStep]}
+                                        {checkingQuality
+                                            ? 'Checking...'
+                                            : NEXT_BUTTON_TEXT[activeStep]}
                                     </Button>
                                 )}
                                 {isLastStep(activeStep) && (
@@ -357,40 +481,29 @@ const ClaimForm = ({
                     </Paper>
                 </form>
             </div>
-            <Dialog open={dialogIsOpen}>
-                <DialogTitle className={classes.dialogTitle}>
-                    <Typography className={classes.dialogTitle}>
-                        Thank you for submitting your claim request!
-                    </Typography>
-                </DialogTitle>
-                <DialogContent>
-                    <Typography
-                        variant="body1"
-                        className={classes.dialogBodyText}
-                    >
-                        You will receive a notification once it has been
-                        reviewed.
-                    </Typography>
-                </DialogContent>
-                <DialogActions className={classes.dialogActions}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => history.push('/claimed')}
-                        className={classes.backButton}
-                    >
-                        To My Claims
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => history.push(mapRoute)}
-                        className={classes.continueButton}
-                    >
-                        Search OS Hub
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <ContributionWarningDialog
+                open={pendingWarnings !== null}
+                onClose={() => setPendingWarnings(null)}
+                onSubmitAnyway={continuePastQualityWarnings}
+                warnings={pendingWarnings?.warnings ?? []}
+                submitAnywayLabel="Continue anyway"
+            />
+            <ClaimOutcomeDialog
+                open={dialogIsOpen}
+                title="Thank you for submitting your claim request!"
+                body="You will receive a notification once it has been reviewed."
+                actions={[
+                    {
+                        label: 'To My Claims',
+                        onClick: () => history.push('/claimed'),
+                        secondary: true,
+                    },
+                    {
+                        label: 'Search OS Hub',
+                        onClick: () => history.push(mapRoute),
+                    },
+                ]}
+            />
         </div>
     );
 };
@@ -429,6 +542,7 @@ ClaimForm.propTypes = {
     parentCompaniesError: array,
     productionLocationError: array,
     userHasSignedIn: bool.isRequired,
+    isNameAddressEditable: bool.isRequired,
     fetchCountries: func.isRequired,
     fetchFacilityProcessingType: func.isRequired,
     fetchParentCompanies: func.isRequired,
@@ -472,6 +586,7 @@ const mapStateToProps = ({
     auth: {
         user: { user },
     },
+    featureFlags: { flags },
 }) => ({
     activeStep,
     completedSteps,
@@ -491,6 +606,7 @@ const mapStateToProps = ({
     parentCompaniesError,
     productionLocationError,
     userHasSignedIn: !user.isAnon,
+    isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
 });
 
 const mapDispatchToProps = dispatch => ({

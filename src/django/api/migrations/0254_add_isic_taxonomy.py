@@ -15,28 +15,28 @@ helper = MigrationHelper(connection)
 
 def add_isic_indexing_functions(apps, schema_editor):
     helper.run_sql_files([
-        '0234_extract_isic_code.sql',
-        '0234_index_isic_4.sql',
+        '0254_extract_isic_code.sql',
+        '0254_index_isic_4.sql',
     ])
 
 
 def revert_isic_indexing_functions(apps, schema_editor):
     helper.run_sql_files([
-        '0234_revert_index_isic_4.sql',
+        '0254_revert_index_isic_4.sql',
     ])
 
 
 def update_indexing_procedures(apps, schema_editor):
     helper.run_sql_files([
-        '0234_index_facilities.sql',
-        '0234_index_facilities_by.sql',
+        '0254_index_facilities_isic.sql',
+        '0254_extended_field_indexing_isic.sql',
     ])
 
 
 def revert_indexing_procedures(apps, schema_editor):
     helper.run_sql_files([
-        '0171_index_facilities.sql',
-        '0171_index_facilities_by.sql',
+        '0250_index_facilities_exclude_candidates.sql',
+        '0254_revert_extended_field_indexing_isic.sql',
     ])
 
 
@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('api', '0233_index_facility_processing_search'),
+        ('api', '0253_add_earth_genome_candidates_switch'),
     ]
 
     operations = [

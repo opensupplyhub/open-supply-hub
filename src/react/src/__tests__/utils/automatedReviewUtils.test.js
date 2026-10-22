@@ -1,0 +1,246 @@
+/* eslint-env jest */
+
+import {
+    parseAutomatedReview,
+    getEvidenceText,
+    getExtract,
+    matchesEvidenceKey,
+    hasValidReviewBlock,
+    getSuggestedDraft,
+    isPdfFile,
+    P1_MARKER,
+} from '../../components/ClaimsV2/automatedReviewUtils';
+
+const block = payload =>
+    `Automated review ran.\n\n${P1_MARKER}\n${JSON.stringify(payload)}`;
+
+const validPayload = {
+    v: 1,
+    kind: 'automated_review',
+    decision: 'NOT_VALIDATED',
+    scores: { name: 0.85 },
+    draft: 'Dear claimant, …',
+    evidence: {
+        'utility-bill.png': {
+            original: 'Rēķins par elektroenerģiju',
+            translated: 'Electricity invoice',
+            lang: 'lv',
+        },
+        'no-text.png': {},
+    },
+};
+
+const note = (text, createdAt = '2026-09-01T00:00:00Z') => ({
+    note: text,
+    created_at: createdAt,
+    note_type: 'INTERNAL',
+});
+
+describe('parseAutomatedReview', () => {
+    it('parses a valid v1 block out of the notes', () => {
+        const review = parseAutomatedReview([note(block(validPayload))]);
+        expect(review.decision).toBe('NOT_VALIDATED');
+        expect(review.scores.name).toBe(0.85);
+    });
+
+    it('returns the newest valid block when the pipeline re-ran', () => {
+        const older = block({ ...validPayload, decision: 'OLD' });
+        const newer = block({ ...validPayload, decision: 'NEW' });
+        const review = parseAutomatedReview([
+            note(newer, '2026-09-10T00:00:00Z'),
+            note(older, '2026-09-01T00:00:00Z'),
+        ]);
+        expect(review.decision).toBe('NEW');
+    });
+
+    it('degrades to null on absence, bad JSON, or wrong version', () => {
+        expect(parseAutomatedReview([note('a plain note')])).toBeNull();
+        expect(
+            parseAutomatedReview([note(`${P1_MARKER}\n{not json`)]),
+        ).toBeNull();
+        expect(
+            parseAutomatedReview([
+                note(block({ ...validPayload, v: 2 })),
+            ]),
+        ).toBeNull();
+        expect(
+            parseAutomatedReview([
+                note(block({ ...validPayload, kind: 'other' })),
+            ]),
+        ).toBeNull();
+        expect(parseAutomatedReview(undefined)).toBeNull();
+    });
+});
+
+describe('getEvidenceText', () => {
+    const review = parseAutomatedReview([note(block(validPayload))]);
+
+    it('returns original/translated/lang for a known file', () => {
+        expect(getEvidenceText(review, 'utility-bill.png')).toEqual({
+            original: 'Rēķins par elektroenerģiju',
+            translated: 'Electricity invoice',
+            lang: 'lv',
+        });
+    });
+
+    it('returns null for unknown files, empty entries, or no review', () => {
+        expect(getEvidenceText(review, 'missing.pdf')).toBeNull();
+        expect(getEvidenceText(review, 'no-text.png')).toBeNull();
+        expect(getEvidenceText(null, 'utility-bill.png')).toBeNull();
+    });
+
+    /*
+     * Blocks posted before the pipeline carried original_file_name key
+     * evidence by the derived artifact name — badge.pdf's text sits
+     * under badge.json. Every production block before Oct 2026 looks
+     * like this, so the stem fallback is what makes their text visible.
+     */
+    it('falls back to a stem match for legacy .json evidence keys', () => {
+        const legacyReview = parseAutomatedReview([
+            note(
+                block({
+                    ...validPayload,
+                    evidence: {
+                        'registration-document.json': {
+                            translated: 'BUSINESS LICENSE Example Winery',
+                            lang: 'fr',
+                        },
+                    },
+                }),
+            ),
+        ]);
+        expect(
+            getEvidenceText(legacyReview, 'registration-document.pdf'),
+        ).toEqual({
+            original: null,
+            translated: 'BUSINESS LICENSE Example Winery',
+            lang: 'fr',
+        });
+        // Exact keys still win and unrelated stems still miss.
+        expect(
+            getEvidenceText(legacyReview, 'other-file.pdf'),
+        ).toBeNull();
+    });
+
+    it('never borrows another document with the same stem', () => {
+        // license.jpg was OCRed, license.pdf produced nothing: the PDF
+        // must show no text rather than the JPG's.
+        const sameStemReview = parseAutomatedReview([
+            note(
+                block({
+                    ...validPayload,
+                    evidence: {
+                        'license.jpg': { translated: 'JPG text', lang: 'en' },
+                    },
+                }),
+            ),
+        ]);
+        expect(getEvidenceText(sameStemReview, 'license.pdf')).toBeNull();
+        expect(getEvidenceText(sameStemReview, 'license.jpg')).toEqual({
+            original: null,
+            translated: 'JPG text',
+            lang: 'en',
+        });
+    });
+});
+
+describe('matchesEvidenceKey', () => {
+    it('accepts the exact key and the legacy .json artifact name only', () => {
+        expect(matchesEvidenceKey('badge.pdf', 'badge.pdf')).toBe(true);
+        expect(matchesEvidenceKey('badge.pdf', 'badge.json')).toBe(true);
+        expect(matchesEvidenceKey('badge.pdf', 'badge.JSON')).toBe(true);
+        // A same-stem key with another extension is a different document.
+        expect(matchesEvidenceKey('license.pdf', 'license.jpg')).toBe(false);
+        expect(matchesEvidenceKey('badge.pdf', 'other.json')).toBe(false);
+        expect(
+            matchesEvidenceKey('https://example.com', 'https://example.com'),
+        ).toBe(true);
+    });
+
+    it('never stem-matches URL evidence — exact URLs only', () => {
+        // .../license.pdf and .../license.json are different pages;
+        // the legacy fallback exists for bare attachment artifact
+        // names, so nothing containing :// may use it, on either side.
+        expect(
+            matchesEvidenceKey(
+                'https://example.com/license.pdf',
+                'https://example.com/license.json',
+            ),
+        ).toBe(false);
+        expect(
+            matchesEvidenceKey('license.pdf', 'https://x.com/license.json'),
+        ).toBe(false);
+        expect(
+            matchesEvidenceKey('https://x.com/license.pdf', 'license.json'),
+        ).toBe(false);
+    });
+});
+
+describe('getSuggestedDraft', () => {
+    it('returns the draft only when present and non-empty', () => {
+        const review = parseAutomatedReview([note(block(validPayload))]);
+        expect(getSuggestedDraft(review)).toBe('Dear claimant, …');
+        expect(
+            getSuggestedDraft(
+                parseAutomatedReview([
+                    note(block({ ...validPayload, draft: '  ' })),
+                ]),
+            ),
+        ).toBeNull();
+        expect(getSuggestedDraft(null)).toBeNull();
+    });
+});
+
+describe('isPdfFile', () => {
+    it('detects pdfs case-insensitively and rejects the rest', () => {
+        expect(isPdfFile('doc.pdf')).toBe(true);
+        expect(isPdfFile('DOC.PDF')).toBe(true);
+        expect(isPdfFile('scan.png')).toBe(false);
+        expect(isPdfFile(undefined)).toBe(false);
+    });
+});
+
+describe('getExtract', () => {
+    const review = {
+        extracts: {
+            address: {
+                value: 'Atlantijas iela 15, Riga',
+                source: 'utility-bill.png',
+            },
+            person: { value: 'Demo Claimant 1' },
+            broken: { source: 'x.png' },
+        },
+    };
+
+    it('returns the value and source for a present extract', () => {
+        expect(getExtract(review, 'address')).toEqual({
+            value: 'Atlantijas iela 15, Riga',
+            source: 'utility-bill.png',
+        });
+    });
+
+    it('tolerates a missing source', () => {
+        expect(getExtract(review, 'person')).toEqual({
+            value: 'Demo Claimant 1',
+            source: null,
+        });
+    });
+
+    it('returns null for absent/invalid extracts or no review', () => {
+        expect(getExtract(review, 'name')).toBeNull();
+        expect(getExtract(review, 'broken')).toBeNull();
+        expect(getExtract(null, 'address')).toBeNull();
+        expect(getExtract({}, 'address')).toBeNull();
+    });
+});
+
+describe('hasValidReviewBlock', () => {
+    it('is true only for notes whose block actually parses', () => {
+        expect(hasValidReviewBlock(block(validPayload))).toBe(true);
+        expect(hasValidReviewBlock(`${P1_MARKER}\n{not json`)).toBe(false);
+        expect(
+            hasValidReviewBlock(block({ ...validPayload, v: 2 })),
+        ).toBe(false);
+        expect(hasValidReviewBlock('a plain note')).toBe(false);
+    });
+});

@@ -42,7 +42,15 @@ def handler(event, context):
         logger.warning("No DynamoDB row for list_id=%s", list_id)
 
     list_name = item.get("list_name") or event.get("list_name") or ""
+    contributor_email = item.get("contributor_email") or ""
+
+    # Moderators find approval-queue items by contributor email, and every one
+    # of the thousands of items already on the board is named
+    # "<list name> <contributor email>". Match that, or these items are
+    # effectively unsearchable next to the rest.
     item_list_name = list_name or f"#{list_id}"
+    if contributor_email:
+        item_list_name = f"{item_list_name} {contributor_email}"
 
     notify_message = NotifyMessage(
         list_id=list_id,
@@ -51,7 +59,7 @@ def handler(event, context):
         list_name=list_name,
         contributor_id=item.get("contributor_id"),
         contributor_name=item.get("contributor_name") or "",
-        contributor_email=item.get("contributor_email") or "",
+        contributor_email=contributor_email,
         file_name=item.get("file_name") or "",
         report_url=event.get("report_url"),
         num_lines=event.get("num_lines"),
@@ -86,6 +94,7 @@ def handler(event, context):
                 processed_url=event.get("report_url"),
                 os_hub_url=f"{base_url}/lists/{list_id}",
                 list_size=event.get("num_lines"),
+                error_ratio=event.get("error_ratio"),
             )
         except (ClientError, RuntimeError):
             logger.exception("Monday notification failed")

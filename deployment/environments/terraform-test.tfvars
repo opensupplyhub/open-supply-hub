@@ -44,6 +44,10 @@ anonymized_database_dump_enabled = true
 # (codebuild_github_runner_connection_secret_name) after one-time OAuth setup.
 codebuild_github_runner_enabled = true
 
+# One-off Fargate task that restores the anonymized dump into this
+# environment's database (deployment/terraform/database_restore.tf).
+database_restore_enabled = true
+
 app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
 app_ecs_deployment_max_percent = "400"
@@ -108,6 +112,8 @@ aws_chatbot_manage_channel_configuration = true
 manage_bedrock_cost_budget = true
 
 waf_enabled = true
+waf_rate_limit_enabled = true
+waf_rate_limit_action = "count"
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvmXPN2tV5nf0j18Vaed5v"
 hubspot_subscription_id = "12847627"
@@ -152,3 +158,7 @@ contribot_monday_api_key_secret_name = "oshub/test/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/test/contribot-slack-api-url"
 contribot_slack_failures_api_url_secret_name = "oshub/test/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/test/contribot-google-drive-service-key"
+
+# OSDEV-3374: automated-claims pipeline Lambda execution role, allowed to
+# read claim attachments directly (s3:GetObject on claim_attachments/* only).
+claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]

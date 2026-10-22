@@ -134,7 +134,7 @@ resource "aws_lambda_function" "contribot_fetch_lists" {
   description      = "ContriBot task that fetches newly processed facility lists."
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
-  runtime          = "python3.10"
+  runtime          = "python3.13"
   timeout          = 900
   memory_size      = 256
 
@@ -159,7 +159,7 @@ resource "aws_lambda_function" "contribot_process_list" {
   description      = "ContriBot task that processes a single facility list."
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
-  runtime          = "python3.10"
+  runtime          = "python3.13"
   timeout          = 900
   memory_size      = 1024
 
@@ -184,7 +184,7 @@ resource "aws_lambda_function" "contribot_notify" {
   description      = "ContriBot task that notifies moderators about processed lists."
   role             = aws_iam_role.contribot_lambda.arn
   handler          = "handler.handler"
-  runtime          = "python3.10"
+  runtime          = "python3.13"
   timeout          = 900
   memory_size      = 256
 
@@ -262,7 +262,7 @@ resource "aws_lambda_function" "contribot_retry_failed_lists" {
   description      = "ContriBot task that re-enqueues FAILED facility lists."
   role             = aws_iam_role.contribot_retry_failed_lists.arn
   handler          = "handler.handler"
-  runtime          = "python3.10"
+  runtime          = "python3.13"
   timeout          = 900
   memory_size      = 256
 

@@ -92,6 +92,8 @@ craft_cms_origin_domain = "open-supply.staging.servd.dev"
 aws_chatbot_manage_channel_configuration = false
 
 waf_enabled = true
+waf_rate_limit_enabled = true
+waf_rate_limit_action = "count"
 memcached_view_cache_timeout_seconds = 120
 stripe_price_id = "price_1RdRDaPEOEmdKJkvQVzxn5qA"
 hubspot_subscription_id = "12847627"
@@ -124,3 +126,7 @@ contribot_monday_api_key_secret_name = "oshub/development/contribot-monday-api-k
 contribot_slack_api_url_secret_name = "oshub/development/contribot-slack-api-url"
 contribot_slack_failures_api_url_secret_name = "oshub/development/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/development/contribot-google-drive-service-key"
+
+# OSDEV-3374: automated-claims pipeline Lambda execution role, allowed to
+# read claim attachments directly (s3:GetObject on claim_attachments/* only).
+claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]

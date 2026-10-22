@@ -180,6 +180,7 @@ data "template_file" "app" {
     cache_host                                    = aws_route53_record.cache.name
     cache_port                                    = var.ec_memcached_port
     aws_storage_bucket_name                       = local.files_bucket_name
+    claim_attachments_signing_role_arn            = aws_iam_role.claim_attachments_signer.arn
     kafka_bootstrap_servers                       = join(",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name                        = var.topic_dedup_basic_name
     opensearch_host                               = aws_opensearch_domain.opensearch.endpoint
@@ -187,9 +188,11 @@ data "template_file" "app" {
     opensearch_ssl                                = var.opensearch_ssl
     opensearch_ssl_cert_verification              = var.opensearch_ssl_cert_verification
     instance_source                               = var.instance_source
+    claims_automation_account_email               = var.claims_automation_account_email
     stripe_price_id                               = var.stripe_price_id
     dromo_schema_id                               = var.dromo_schema_id
     memcached_view_cache_timeout_seconds          = var.memcached_view_cache_timeout_seconds
+    earth_genome_contributor_id                   = var.earth_genome_contributor_id
     rds_master_secret_arn                         = local.rds_master_secret_arn
     django_secret_key_arn                         = local.django_secret_key_arn
     default_from_email_arn                        = local.default_from_email_arn
@@ -248,6 +251,12 @@ data "template_file" "app_cli" {
     opensearch_ssl                                = var.opensearch_ssl
     opensearch_ssl_cert_verification              = var.opensearch_ssl_cert_verification
     instance_source                               = var.instance_source
+    claims_automation_account_email               = var.claims_automation_account_email
+    earth_genome_contributor_id                   = var.earth_genome_contributor_id
+    earth_index_api_url                           = var.earth_index_api_url
+    earth_index_api_key                           = var.earth_index_api_key
+    earth_index_project_id                        = var.earth_index_project_id
+    aws_s3_expected_bucket_owner                  = data.aws_caller_identity.current.account_id
     rds_master_secret_arn                         = local.rds_master_secret_arn
     django_secret_key_arn                         = local.django_secret_key_arn
     default_from_email_arn                        = local.default_from_email_arn
@@ -292,6 +301,7 @@ data "template_file" "app_dd" {
     dedupe_hub_name                  = var.dedupe_hub_name
     dedupe_hub_version               = var.dedupe_hub_version
     instance_source                  = var.instance_source
+    claims_automation_account_email  = var.claims_automation_account_email
     rds_master_secret_arn            = local.rds_master_secret_arn
     rollbar_server_side_access_token = local.rollbar_server_side_access_token
   }

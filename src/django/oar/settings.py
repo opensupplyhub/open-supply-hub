@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
+import logging
 import os
 import requests
 import sys
@@ -62,6 +63,20 @@ ENVIRONMENT = os.getenv('DJANGO_ENV', 'Local')
 
 # Set environment instance source
 INSTANCE_SOURCE = os.getenv('INSTANCE_SOURCE', 'os_hub')
+
+# The account the claims automation pipeline acts as. Review notes it
+# authors (LLM review notes, reminder emails) are flagged is_automated
+# on the claim payloads so the claims dashboard can distinguish a
+# moderator's ask from an automated nudge (OSDEV-3357).
+#
+# Fail-closed by design: empty means NO note is ever flagged automated,
+# so an environment must explicitly name the account. Deployed
+# environments receive the value via the task/job definitions
+# (deployment/terraform, claims_automation_account_email); local dev
+# sets it in docker-compose.yml.
+CLAIMS_AUTOMATION_ACCOUNT_EMAIL = os.getenv(
+    'CLAIMS_AUTOMATION_ACCOUNT_EMAIL', ''
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
@@ -233,7 +248,7 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'api.pagination.PageAndSizePagination',
     'PAGE_SIZE': 20,
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.openapi.AutoSchema',
     'DEFAULT_THROTTLE_CLASSES': [
         'api.throttles.BurstRateThrottle',
         'api.throttles.SustainedRateThrottle',
@@ -353,9 +368,11 @@ MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS = int(
     os.getenv('MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS', 60 * 10)
 )
 # Compressed payloads over this size are not cached, leaving headroom
-# below memcached's ~5 MB per-item limit for key and protocol overhead.
+# below memcached's 1 MB per-item limit (`max_item_size`, set by
+# `ec_memcached_max_item_size` in deployment/terraform) for the key and
+# item overhead. Keep this below that limit if the limit changes.
 VIEW_RESPONSE_CACHE_MAX_BYTES = int(
-    os.getenv('VIEW_RESPONSE_CACHE_MAX_BYTES', 4 * 1024 * 1024)
+    os.getenv('VIEW_RESPONSE_CACHE_MAX_BYTES', 900 * 1024)
 )
 CACHE_BACKEND = 'django.core.cache.backends.memcached.PyLibMCCache'
 
@@ -373,7 +390,14 @@ CACHES = {
         'BACKEND': CACHE_BACKEND,
         'LOCATION': MEMCACHED_LOCATION,
         'KEY_PREFIX': 'view',
-    }
+    },
+    'facility_downloads': {
+        # Facility download sessions must be visible to every Django
+        # process, so they can't live in the per-process default cache.
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'facility_downloads',
+    },
 }
 
 # Logging
@@ -629,6 +653,13 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 # Reference # https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html
 
 AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL')
+# The AWS account id that owns the application buckets. When set, S3
+# downloads made by management commands pass it as ExpectedBucketOwner so
+# a bucket name taken over by another account is refused. Unset locally
+# (MinIO has no account id).
+AWS_S3_EXPECTED_BUCKET_OWNER = (
+    os.getenv('AWS_S3_EXPECTED_BUCKET_OWNER') or None
+)
 
 if DEBUG and AWS_S3_ENDPOINT_URL:
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
@@ -636,6 +667,24 @@ if DEBUG and AWS_S3_ENDPOINT_URL:
     AWS_S3_USE_SSL = False
 
 AWS_S3_FILE_OVERWRITE = False
+
+# Deliberately NOT overriding AWS_QUERYSTRING_EXPIRE (default 1 hour):
+# django-storages presigned URLs are consumed by the facility-list file
+# download in the dashboard and by PartnerFieldGroup.icon_file, which is
+# rendered as an image from an API response that CloudFront caches — a
+# shorter expiry breaks those. Claim attachments do not rely on this
+# default: they are excluded from serializers entirely and downloads go
+# through FacilityClaimViewSet's endpoint, which mints 60-second
+# single-object URLs, with a 15-minute s3:signatureAge cap enforced at
+# the bucket policy for the claim_attachments/ prefix.
+
+# IAM role assumed to sign claim-attachment download URLs (OSDEV-3370).
+# Scoped to s3:GetObject on claim attachments, so a minted URL is never
+# backed by the app task role's broader permissions. Unset locally and
+# in tests, where default storage URL generation is used instead.
+CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN = os.getenv(
+    'CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN'
+)
 
 TESTING = "test" in sys.argv
 
@@ -723,3 +772,77 @@ DARK_VISITORS_TOKEN = os.getenv('DARK_VISITORS_TOKEN', '')
 
 # Email anonymization secret for the sync_databases management command.
 EMAIL_ANONYMIZATION_SECRET = os.getenv('EMAIL_ANONYMIZATION_SECRET', '')
+
+
+def _env_int(name, default=None):
+    """Read an integer environment variable, tolerating bad values.
+
+    Unset or blank returns ``default``. A non-numeric value also returns
+    ``default`` but logs a warning naming the variable, so a typo in an
+    env var degrades to the safe default instead of raising at import
+    time and taking the service down at boot.
+    """
+    raw = (os.getenv(name) or '').strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        logging.getLogger(__name__).warning(
+            'Environment variable %s=%r is not an integer; using %r.',
+            name, raw, default,
+        )
+        return default
+
+# Earth Genome candidate validation (OSDEV-3245). States are derived from
+# the live vote tally (design decision D6) by
+# api/services/candidate_validation.py; these knobs are the thresholds.
+# Numeric values are pilot defaults pending Product sign-off.
+#
+# CANDIDATE_VOTE_THRESHOLD: minimum total votes before a candidate can
+#   leave 'unverified'.
+# CANDIDATE_CONFIRM_MARGIN / CANDIDATE_RETIRE_MARGIN: the share of the
+#   total a side needs for consensus (confirmed / retired). Asymmetric on
+#   purpose: retiring is irreversible, so it needs a higher bar.
+# CANDIDATE_AUTO_RETIRE: True retires a candidate (hard delete + tombstone)
+#   on the vote that reaches consensus-no; False (default, pilot safety)
+#   opens a FacilityCandidateRetirementRequest for a moderator instead.
+CANDIDATE_VOTE_THRESHOLD = int(os.getenv('CANDIDATE_VOTE_THRESHOLD', '3'))
+CANDIDATE_CONFIRM_MARGIN = float(
+    os.getenv('CANDIDATE_CONFIRM_MARGIN', '0.6')
+)
+CANDIDATE_RETIRE_MARGIN = float(os.getenv('CANDIDATE_RETIRE_MARGIN', '0.75'))
+CANDIDATE_AUTO_RETIRE = (
+    os.getenv('CANDIDATE_AUTO_RETIRE', 'False').strip().lower()
+    in ('true', '1', 'yes')
+)
+
+# Candidate proximity suggestions (OSDEV-3244). Confirmed facilities within
+# CANDIDATE_SUGGESTION_RADIUS_M metres of a candidate's centroid are
+# suggested as possible existing records for it, nearest first, at most
+# CANDIDATE_SUGGESTION_LIMIT of them. Computed on read by
+# api/services/candidate_matches.py; nothing is stored.
+CANDIDATE_SUGGESTION_RADIUS_M = _env_int('CANDIDATE_SUGGESTION_RADIUS_M', 500)
+CANDIDATE_SUGGESTION_LIMIT = _env_int('CANDIDATE_SUGGESTION_LIMIT', 5)
+
+# Earth Index API (OSDEV-3244): the service hosting Earth Genome's deep
+# searches. `ingest_satellite_detections --project` exports a project's
+# finished deep-search results straight from it (api/services/earth_index.py).
+# EARTH_INDEX_API_KEY: an Earth Index API key, sent as a bearer token.
+#   Unset means the command can only ingest from a file.
+# EARTH_INDEX_PROJECT_ID: the project `--project` uses when given no value.
+EARTH_INDEX_API_URL = (
+    os.getenv('EARTH_INDEX_API_URL') or 'https://api.earthindex.ai'
+).rstrip('/')
+EARTH_INDEX_API_KEY = os.getenv('EARTH_INDEX_API_KEY') or None
+EARTH_INDEX_PROJECT_ID = os.getenv('EARTH_INDEX_PROJECT_ID') or None
+
+# Earth Genome pilot guardrail (OSDEV-3248). The id of the Contributor that
+# the candidate ingest pipeline writes under. Only a Facility created from a
+# list item whose Source belongs to this contributor may be a candidate
+# (is_candidate=True) or carry an empty name or address; every other ORM
+# creation path is rejected in Facility.save(). Unset, blank or
+# non-numeric means None: nobody may create such rows. Contributor ids
+# differ per environment (OS Hub and RBA each need their own value). See
+# api/services/candidate_guard.py.
+EARTH_GENOME_CONTRIBUTOR_ID = _env_int('EARTH_GENOME_CONTRIBUTOR_ID')

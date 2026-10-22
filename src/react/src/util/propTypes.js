@@ -35,6 +35,9 @@ import {
     ENABLE_V1_CLAIMS_FLOW,
     ENABLE_PRODUCTION_LOCATION_PAGE,
     ENABLE_MODERATION_PAUSE_INFO,
+    ENABLE_CLAIMS_V2_DASHBOARD,
+    RELAXED_CLAIM_ELIGIBILITY,
+    EARTH_GENOME_CANDIDATES,
 } from './constants';
 
 export const registrationFormValuesPropType = shape({
@@ -376,6 +379,9 @@ export const featureFlagPropType = oneOf([
     ENABLE_V1_CLAIMS_FLOW,
     ENABLE_PRODUCTION_LOCATION_PAGE,
     ENABLE_MODERATION_PAUSE_INFO,
+    ENABLE_CLAIMS_V2_DASHBOARD,
+    RELAXED_CLAIM_ELIGIBILITY,
+    EARTH_GENOME_CANDIDATES,
 ]);
 
 export const facilityClaimsListPropType = arrayOf(
@@ -401,8 +407,8 @@ export const facilityClaimNotePropType = shape({
 });
 
 const attachmentPropTypes = shape({
+    id: number.isRequired,
     file_name: string.isRequired,
-    claim_attachment: string.isRequired,
 });
 
 export const facilityClaimAttachmentsPropType = oneOfType([

@@ -4,6 +4,7 @@ from rest_framework.test import APITestCase
 from django.urls import reverse
 from django.contrib.auth.models import Group
 from unittest.mock import patch, MagicMock
+from urllib.parse import parse_qs, urlsplit
 
 from api.models.user import User
 from api.models.contributor.contributor import Contributor
@@ -12,11 +13,15 @@ from api.models.facility_download_limit import FacilityDownloadLimit
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from django.utils import timezone
 from django.utils.timezone import make_aware, datetime
+from api.tests.download_session_cache import (
+    isolated_download_session_cache,
+)
 
 # Override constants different from production value for easier testing.
 FREE_FACILITIES_DOWNLOAD_LIMIT = 3
 
 
+@isolated_download_session_cache()
 class FacilitiesDownloadViewSetTest(APITestCase):
     fixtures = ["facilities_index"]
 
@@ -46,6 +51,22 @@ class FacilitiesDownloadViewSetTest(APITestCase):
 
     def get_facility_downloads(self, params=None):
         return self.client.get(self.download_url, params or {})
+
+    def assert_next_link(self, next_link, expected_params):
+        """
+        Next links carry the download session id, which is random, so
+        compare everything else exactly and only check the id is present.
+        """
+        parts = urlsplit(next_link)
+        self.assertEqual(
+            f"{parts.scheme}://{parts.netloc}{parts.path}",
+            "http://testserver/api/facilities-downloads/"
+        )
+        params = parse_qs(parts.query)
+        download_id = params.pop("download_id", [None])
+        self.assertEqual(len(download_id), 1)
+        self.assertTrue(download_id[0])
+        self.assertEqual(params, expected_params)
 
     def test_queryset_ordering(self):
         user = self.create_user()
@@ -119,6 +140,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "10",
@@ -172,6 +194,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -241,6 +264,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "12",
@@ -294,6 +318,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -363,6 +388,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "14",
@@ -416,6 +442,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -485,6 +512,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "16",
@@ -538,6 +566,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -607,6 +636,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "18",
@@ -660,6 +690,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -734,6 +765,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "3",
@@ -789,6 +821,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -858,6 +891,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "5",
@@ -911,6 +945,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -980,6 +1015,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "7",
@@ -1033,6 +1069,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "False",
+                "",
                 "",
                 "",
                 "",
@@ -1102,6 +1139,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
             [
                 "9",
@@ -1163,6 +1201,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
         ]
         actual_data = response.data.get("results", {}).get("rows", [])
@@ -1179,9 +1218,9 @@ class FacilitiesDownloadViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get("count"), 18)
         self.assertIsNone(response.data.get("previous"))
-        self.assertEqual(
+        self.assert_next_link(
             response.data.get("next"),
-            "http://testserver/api/facilities-downloads/?pageSize=5&page=2"
+            {"pageSize": ["5"], "page": ["2"]}
         )
 
     def test_query_parameters(self):
@@ -1257,6 +1296,7 @@ class FacilitiesDownloadViewSetTest(APITestCase):
                 "",
                 "",
                 "",
+                "",
             ],
         ]
 
@@ -1276,13 +1316,10 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             }
         )
 
-        expected_root = "http://testserver/api/facilities-downloads/"
-        expected_query = "?countries=IN&countries=US&pageSize=2&page=2"
-
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
+        self.assert_next_link(
             response.data.get("next", ""),
-            expected_root + expected_query
+            {"countries": ["IN", "US"], "pageSize": ["2"], "page": ["2"]}
         )
 
     @patch(
@@ -1447,32 +1484,31 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             paid_download_records=0,
         )
 
-        # Request first page to get the total count from the payload
-        resp_page1 = self.get_facility_downloads({"pageSize": 10, "page": 1})
-        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
-        total_count = resp_page1.data.get("count")
-        self.assertIsNotNone(total_count)
-
-        # Quotas should remain unchanged after first page
-        limit.refresh_from_db()
-        self.assertEqual(limit.free_download_records, 20)
-        self.assertEqual(limit.paid_download_records, 0)
-
-        # Request last page to trigger quota registration using total_count
         # Patch email/checkout to avoid external calls during tests
         with patch(
             'api.services.facilities_download_service.'
             'FacilitiesDownloadService.send_email_if_needed',
             return_value=None
         ):
-            resp_page2 = self.get_facility_downloads({
-                "pageSize": 10,
-                "page": 2
-            })
-        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+            resp_page1 = self.get_facility_downloads(
+                {"pageSize": 10, "page": 1}
+            )
+        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
+        total_count = resp_page1.data.get("count")
+        self.assertIsNotNone(total_count)
 
+        # The whole result set is charged when the download starts
         limit.refresh_from_db()
         expected_free = max(20 - total_count, 0)
+        self.assertEqual(limit.free_download_records, expected_free)
+        self.assertEqual(limit.paid_download_records, 0)
+
+        # Fetching the remaining pages doesn't charge again
+        resp_page2 = self.client.get(resp_page1.data["next"])
+        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+        self.assertIsNone(resp_page2.data["next"])
+
+        limit.refresh_from_db()
         self.assertEqual(limit.free_download_records, expected_free)
         self.assertEqual(limit.paid_download_records, 0)
 
@@ -1486,26 +1522,28 @@ class FacilitiesDownloadViewSetTest(APITestCase):
             paid_download_records=20,
         )
 
-        resp_page1 = self.get_facility_downloads({"pageSize": 10, "page": 1})
-        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
-        total_count = resp_page1.data.get("count")
-        self.assertIsNotNone(total_count)
-
-        # Trigger decrement on last page
         with patch(
             'api.services.facilities_download_service.'
             'FacilitiesDownloadService.send_email_if_needed',
             return_value=None
         ):
-            resp_page2 = self.get_facility_downloads({
-                "pageSize": 10,
-                "page": 2
-            })
-        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+            resp_page1 = self.get_facility_downloads(
+                {"pageSize": 10, "page": 1}
+            )
+        self.assertEqual(resp_page1.status_code, status.HTTP_200_OK)
+        total_count = resp_page1.data.get("count")
+        self.assertIsNotNone(total_count)
 
         limit.refresh_from_db()
         self.assertEqual(limit.free_download_records, 0)
         expected_paid = max(20 - max(total_count - 5, 0), 0)
+        self.assertEqual(limit.paid_download_records, expected_paid)
+
+        resp_page2 = self.client.get(resp_page1.data["next"])
+        self.assertEqual(resp_page2.status_code, status.HTTP_200_OK)
+
+        limit.refresh_from_db()
+        self.assertEqual(limit.free_download_records, 0)
         self.assertEqual(limit.paid_download_records, expected_paid)
 
     def test_exhausted_quota_all_mine_still_allowed(self):

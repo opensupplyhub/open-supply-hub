@@ -4,8 +4,13 @@ This module provisions an AWS CodeBuild project that acts as an **ephemeral
 GitHub Actions runner** for the long-running database jobs:
 
 - **DB - Save Anonymized DB** (`.github/workflows/db_save_anonymized.yml`)
-- **DB - Apply Anonymized DB** (`.github/workflows/db_apply_anonimized.yml`)
-- **Deploy to AWS** → `restore_database` job (`.github/workflows/deploy_to_aws.yml`)
+
+The restore jobs (**DB - Apply Anonymized DB** and **Deploy to AWS** →
+`restore_database`) no longer use this runner: they run the restore as a
+Fargate task inside the target environment's VPC
+(`deployment/terraform/database_restore.tf`, started by
+`deployment/run_restore_task`), which is much faster than sending the dump
+through the bastion's SSM port forward.
 
 ## How it works
 
@@ -18,26 +23,25 @@ GitHub Actions runner** for the long-running database jobs:
 
 See the [AWS documentation](https://docs.aws.amazon.com/codebuild/latest/userguide/action-runner.html) for details.
 
-The database access pattern is unchanged: job steps still open an SSH tunnel
-through the public bastion of the target environment (see
-`src/anon-tools/do_dump.sh` / `do_restore.sh`). The runner only provides
-compute, disk, and Docker.
+Database access goes through the bastion of the target environment with AWS
+Systems Manager, not SSH (OSDEV-3531). Each job step opens a Session Manager
+port forward on the runner with `deployment/ssm/ssm_tunnel.sh`
+(`localhost:5433` -> `database.service.osh.internal:5432`) and runs the
+anon-tools container with `--network host`, so `src/anon-tools/do_dump.sh`
+connects to `localhost:5433`. The runner only provides compute,
+disk, and Docker.
 
-Bastion reachability was verified at migration time: the SSH ingress
-allowlist of each environment's bastion (`bastion_ssh_ingress` in
-`deployment/terraform/firewall.tf`, fed by `local.external_access_cidr_blocks`
-from the per-env SM secret `oshub/<env>/external-access-cidr-blocks`) admits
-the runner's AWS egress IPs, so no security group changes were needed. If those
-allowlists are ever tightened, attach this
-CodeBuild project to the Test VPC (private subnets) so its egress goes
-through the NAT gateway's stable Elastic IP, and allowlist that single
-address on the bastions.
+Because Session Manager is reached through the public AWS API, the runner does
+not need network access to the bastion and no security group allowlist is
+involved. The AWS credentials used by each job need the
+`bastion<Project><Env>SsmCiAccess` policy (`deployment/terraform/iam.tf`) for
+the target environment.
 
 The module is enabled only in the **Test** environment
 (`codebuild_github_runner_enabled = true` in
 `deployment/environments/terraform-test.tfvars`); the single runner project
 serves jobs targeting all environments because per-environment AWS
-credentials and SSH keys come from GitHub environment secrets, not from the
+credentials come from GitHub environment secrets, not from the
 runner's own account.
 
 ## One-time manual setup (before the first `terraform apply`)
@@ -72,15 +76,11 @@ repository: the org-level runner group setting **Allow public repositories**
 2. Run **DB - Save Anonymized DB** with `deploy-env: Development` (lowest
    risk) and confirm the anonymized dump lands in
    `s3://oshub-dumps-anonymized/`.
-3. Run **DB - Apply Anonymized DB** with `deploy-env: Test`.
-4. Run **Deploy to AWS** to Test with `restore-db: true` to exercise the
-   `restore_database` job.
 
 Note on compute sizing: `BUILD_GENERAL1_LARGE` is intentional. A production
 dump run measured ~14.25 GB of memory utilization (dominated by page cache
 during the local restore/anonymization), which rules out
-`BUILD_GENERAL1_MEDIUM` (8 GB RAM); the dump job is the sizing driver, the
-restore jobs are far lighter.
+`BUILD_GENERAL1_MEDIUM` (8 GB RAM).
 
 Note on concurrency: CodeBuild starts one ephemeral build per queued job, so
 two runs targeting the same environment would execute in parallel. Do not
@@ -90,5 +90,5 @@ trigger simultaneous dump/restore runs against the same environment.
 
 The CodeBuild project name (`codebuild_github_runner_project_name`, default
 `osh-github-actions-runner`) is referenced verbatim in the `runs-on` labels of
-the three workflows above. If you rename the project, update the workflows in
+the workflow above. If you rename the project, update the workflows in
 the same change.

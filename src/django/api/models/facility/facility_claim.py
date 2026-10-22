@@ -74,6 +74,7 @@ class FacilityClaim(models.Model):
             Affiliations.BETTER_MILLS_PROGRAM,
             Affiliations.BETTER_WORK,
             Affiliations.CANOPY,
+            Affiliations.CASCALE,
             Affiliations.ETHICAL_TRADING_INITIATIVE,
             Affiliations.FAIR_LABOR_ASSOCIATION,
             Affiliations.FAIR_WEAR_FOUNDATION,
@@ -82,6 +83,9 @@ class FacilityClaim(models.Model):
             Affiliations.HERRESPECT,
             Affiliations.SEDEX,
             Affiliations.SOCIAL_LABOR_CONVERGENCE_PLAN,
+            # Superseded by CASCALE. Kept a valid choice so the claims that
+            # already store it keep validating; the claim form no longer
+            # offers it. See OSDEV-2219.
             Affiliations.SUSTAINABLE_APPAREL_COALITION,
             Affiliations.SWEATFREE_PURCHASING_CONSORTIUM,
             Affiliations.ZDHC,
@@ -208,7 +212,12 @@ class FacilityClaim(models.Model):
         max_length=200,
         null=True,
         blank=True,
-        help_text='Not editable official English facility name for the claim.',
+        help_text=(
+            'The official English facility name asserted by the claimant. '
+            'Editable through the claim form and the claimed-details form; '
+            'promoted on the production location page while the claim is '
+            'approved.'
+        ),
         verbose_name='facility name in English')
     facility_name_native_language = models.CharField(
         max_length=200,
@@ -221,7 +230,11 @@ class FacilityClaim(models.Model):
         null=True,
         blank=True,
         verbose_name='address',
-        help_text='Not editable facility address for this claim.')
+        help_text=(
+            'The facility address asserted by the claimant. Editable '
+            'through the claim form and the claimed-details form; promoted '
+            'on the production location page while the claim is approved.'
+        ))
     facility_location = gis_models.PointField(
         null=True,
         verbose_name='location',
@@ -508,6 +521,15 @@ class FacilityClaim(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # Stamped only by the claimant-facing pending-claim endpoints (field
+    # edits, attachment add/remove) — never by moderator actions, which
+    # also bump updated_at. This is what lets the claims queue show and
+    # sort by "updated by claimant" without conflating moderator edits.
+    claimant_updated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=('When the claimant last updated this claim or its '
+                   'attachments through the pending-claim edit flow.'))
 
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source']

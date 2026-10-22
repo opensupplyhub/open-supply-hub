@@ -1,6 +1,7 @@
 """Generic compressed response caching for DRF view methods.
 
-Memcached rejects items over its per-item size limit (~5 MB), which makes
+Memcached rejects items over its per-item size limit (1 MB, see
+``VIEW_RESPONSE_CACHE_MAX_BYTES`` in settings), which makes
 plain ``cache_page`` unusable for endpoints with large, variable payloads.
 This module compresses response data before caching and skips the cache
 write entirely when the compressed payload is still too large, so a
@@ -99,6 +100,10 @@ def cache_view_response(
     ``pk``) are part of the cache key, so detail endpoints keyed on a path
     variable are cached per resource.
 
+    A 200 whose ``Cache-Control`` carries ``private`` is passed through
+    uncached, the same rule Django's ``cache_page`` applies, so a view can
+    opt a per-user response out of a shared cache entry.
+
     Arguments:
     key_prefix (str) -- Namespace for this view's cache entries.
     vary_on (callable) -- Optional callable taking the request and
@@ -122,7 +127,8 @@ def cache_view_response(
                 return Response(cached_data)
 
             response = view_method(self, request, *args, **kwargs)
-            if response.status_code == 200:
+            if (response.status_code == 200
+                    and 'private' not in response.get('Cache-Control', '')):
                 response_cache.set(cache_key, response.data)
             return response
         return _wrapped

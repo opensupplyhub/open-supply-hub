@@ -5,10 +5,15 @@ from api.constants import (
     FacilityClaimStatuses,
     OriginSource
 )
-from api.models.facility.facility_manager import FacilityManager
+from api.models.facility.facility_manager import (
+    FacilityIncludingCandidatesManager,
+    FacilityManager,
+)
+from api.services.candidate_guard import assert_may_create_candidate
 from simple_history.models import HistoricalRecords
 
 from django.contrib.gis.db import models as gis_models
+from django.contrib.postgres.indexes import GistIndex
 from django.db import models
 from django.db.models import ExpressionWrapper, Q
 
@@ -22,6 +27,39 @@ class Facility(models.Model):
     """
     class Meta:
         verbose_name_plural = "facilities"
+        constraints = [
+            # Conditional so the backing unique index stores only sourced
+            # rows: unsourced facilities all carry external_id NULL and
+            # can never conflict, so indexing them would only cost disk.
+            models.UniqueConstraint(
+                fields=['source', 'external_id'],
+                condition=Q(external_id__isnull=False),
+                name='api_facility_source_external_id_uniq',
+            ),
+            # NULL external_id rows never hit the unique constraint, so it
+            # cannot by itself stop a sourced row from being re-ingested
+            # without an id. Any row claiming an external source must
+            # carry that source's id.
+            models.CheckConstraint(
+                check=Q(source='') | Q(external_id__isnull=False),
+                name='api_facility_source_requires_external_id',
+            ),
+        ]
+        indexes = [
+            # Partial: candidates are a tiny fraction of the table, and
+            # the majority-side filter (is_candidate=False) is a seq scan
+            # regardless, so indexing non-candidate rows buys nothing.
+            models.Index(
+                fields=['is_candidate'],
+                condition=Q(is_candidate=True),
+                name='api_facility_is_candidate_idx',
+            ),
+            GistIndex(
+                fields=['polygon'],
+                condition=Q(polygon__isnull=False),
+                name='api_facility_polygon_gist',
+            ),
+        ]
 
     id = models.CharField(
         max_length=32,
@@ -85,6 +123,48 @@ class Facility(models.Model):
         max_length=200,
         help_text="The environment value where instance running"
     )
+    is_candidate = models.BooleanField(
+        null=False,
+        default=False,
+        help_text=('Whether this facility is an unconfirmed candidate '
+                   'created by an automated detection source (e.g. '
+                   'satellite imagery) rather than a confirmed, named '
+                   'facility.'))
+    # spatial_index=False: the partial GiST index in Meta.indexes replaces
+    # the automatic full-table one, and keeping the flag off also stops
+    # simple_history from copying an unused index onto the (even larger)
+    # historical table.
+    polygon = gis_models.PolygonField(
+        null=True,
+        blank=True,
+        spatial_index=False,
+        help_text=('The detected footprint of a candidate facility in '
+                   'WGS 84 (EPSG:4326).'))
+    confidence = models.FloatField(
+        null=True,
+        blank=True,
+        help_text=('The detection confidence score reported by the '
+                   'automated source for a candidate facility.'))
+    # null=True (not the usual '' convention) is required: the
+    # (source, external_id) unique constraint relies on NULLs being
+    # distinct so unsourced facilities can coexist — with '' the pair
+    # ('', '') would permit exactly one facility in the whole table.
+    external_id = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text=('The identifier of this facility in the external '
+                   'source system, used together with source for '
+                   'ingest idempotency.'))
+    source = models.CharField(
+        max_length=200,
+        null=False,
+        blank=True,
+        default='',
+        help_text=('The external detection source that created this '
+                   'facility as a candidate (e.g. earth_genome). Empty '
+                   'for facilities created through the normal '
+                   'contribution flow.'))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
@@ -101,17 +181,37 @@ class Facility(models.Model):
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source']
     )
+    # `objects` must stay the first manager declared: Django's
+    # _default_manager is the first one, and it is what get_object_or_404,
+    # the admin and DRF FK validation use, so candidates are hidden from
+    # all of them unless a code path opts in via `including_candidates`.
+    # See FacilityManager for the full traversal semantics.
     objects = FacilityManager()
+    including_candidates = FacilityIncludingCandidatesManager()
 
     def __str__(self):
         return '{name} ({id})'.format(**self.__dict__)
 
     def save(self, *args, **kwargs):
+        # Pilot guardrail (OSDEV-3248): the DB accepts '' for name and
+        # address, so this is the one place every ORM creation path
+        # passes through. Only the designated Earth Genome contributor
+        # may insert a candidate or a row missing a name or address;
+        # named non-candidate rows are never checked, and updates to an
+        # existing row are not re-checked.
+        if self._state.adding and (
+            self.is_candidate
+            or not (self.name or '').strip()
+            or not (self.address or '').strip()
+        ):
+            assert_may_create_candidate(self)
         if self.id == '':
             new_id = None
             while new_id is None:
                 new_id = make_os_id(self.country_code)
-                if Facility.objects.filter(id=new_id).exists():
+                # Candidates hold OS IDs too; a collision with one would
+                # otherwise slip past the default manager and fail on the PK.
+                if Facility.including_candidates.filter(id=new_id).exists():
                     new_id = None
             self.id = new_id
         super(Facility, self).save(*args, **kwargs)

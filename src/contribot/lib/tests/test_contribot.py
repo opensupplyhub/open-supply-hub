@@ -502,6 +502,17 @@ class TestRowHeight:
         long = contribution._get_height_for_row(self._sheet("x" * 200), 0)
         assert long > short
 
+    def test_prematerialised_rows_match_walking_the_sheet(self, contribution):
+        # Callers pass rows= to avoid re-walking the sheet per row; the result
+        # must be identical to letting the helper materialise it itself.
+        ws = self._sheet("x" * 120)
+        ws["A2"] = "short"
+        rows = list(ws.rows)
+        for i in range(2):
+            assert contribution._get_height_for_row(
+                ws, i, rows=rows
+            ) == contribution._get_height_for_row(ws, i)
+
 
 # --------------------------------------------------------------------------- #
 # check_name_address_duplicates
@@ -531,6 +542,54 @@ class TestDuplicates:
         assert osh.num_identical >= 1
         assert any(d["code"] == "T0010" for d in osh.diagnostics_table)
         assert len(osh.df_similarity) >= 1
+
+    def test_pair_spanning_a_scoring_block_is_still_found(self, make_contribution):
+        # Rows are scored in SIMILARITY_BLOCK_ROWS-sized blocks against every
+        # other row. A duplicate whose two halves sit in different blocks must
+        # still be reported, so shrink the block to force the split.
+        rows = 7
+        df = pd.DataFrame(
+            {
+                "country": ["Bangladesh"] * rows,
+                "name": [f"Distinct Mill {i} Limited" for i in range(rows)],
+                "address": [f"{i} Unrelated Street, Dhaka" for i in range(rows)],
+            }
+        )
+        df.loc[0, "name"] = "Acme Textiles Limited"
+        df.loc[rows - 1, "name"] = "Acme Textiles Limited"
+        df.loc[0, "address"] = "123 Industrial Road, Dhaka"
+        df.loc[rows - 1, "address"] = "123 Industrial Road, Dhaka"
+
+        osh = make_contribution(df=df)
+        osh.SIMILARITY_BLOCK_ROWS = 2
+        osh.check_name_address_duplicates()
+
+        # +2 because the similarity frame stores Excel row numbers.
+        pairs = set(zip(osh.df_similarity.i, osh.df_similarity.j))
+        assert (2, rows + 1) in pairs
+        assert osh.num_identical >= 1
+
+    def test_block_size_does_not_change_results(self, make_contribution):
+        names = [f"Mill {i} Limited" for i in range(9)]
+        addresses = [f"{i} Road, Dhaka" for i in range(9)]
+        names[3] = names[8] = "Shared Textiles Limited"
+        addresses[3] = addresses[8] = "9 Shared Road, Dhaka"
+        df = pd.DataFrame(
+            {"country": ["Bangladesh"] * 9, "name": names, "address": addresses}
+        )
+
+        blocked = make_contribution(df=df)
+        blocked.SIMILARITY_BLOCK_ROWS = 2
+        blocked.check_name_address_duplicates()
+
+        single = make_contribution(df=df)
+        single.SIMILARITY_BLOCK_ROWS = 1000
+        single.check_name_address_duplicates()
+
+        assert list(zip(blocked.df_similarity.i, blocked.df_similarity.j)) == list(
+            zip(single.df_similarity.i, single.df_similarity.j)
+        )
+        assert list(blocked.df_similarity.ratio) == list(single.df_similarity.ratio)
 
 
 # --------------------------------------------------------------------------- #
@@ -610,3 +669,84 @@ class TestSummaryAndSave:
         assert summary["runtime_total_seconds"] >= 0
         assert summary["datetime_started"] == contribution.START.isoformat()
         assert "datetime_completed" in summary
+
+
+# --------------------------------------------------------------------------- #
+# Regression tests for OSDEV-3216
+#
+# Three unguarded paths in the Airflow predecessor crashed the whole hourly
+# batch, permanently skipping every list in it. The Step Functions rebuild
+# isolates failures per list, so these no longer strand other uploads — but the
+# affected file still fails, so the underlying faults are fixed here.
+# --------------------------------------------------------------------------- #
+class TestOversizedFile:
+    """A file above the row limit is rejected, not silently trimmed.
+
+    Trimming produced a report whose own row count and error ratio described
+    the truncated frame, so it read as a complete review. Approving on that
+    basis ingested rows nothing had looked at.
+    """
+
+    def _frame(self, rows):
+        return pd.DataFrame(
+            {
+                "country": ["Bangladesh"] * rows,
+                "name": ["Acme Textiles Limited"] * rows,
+                "address": ["123 Industrial Road, Dhaka Division"] * rows,
+                "sector_product_type": ["Apparel|Textiles"] * rows,
+            }
+        )
+
+    def test_over_row_limit_is_rejected(self, make_contribution):
+        oversized = self._frame(contribot.MAX_ROWS + 1)
+        with pytest.raises(ValueError) as excinfo:
+            make_contribution(df=oversized)
+        message = str(excinfo.value)
+        assert str(contribot.MAX_ROWS + 1) in message
+        assert str(contribot.MAX_ROWS) in message
+        assert "split" in message.lower()
+
+    def test_at_row_limit_is_accepted(self, make_contribution):
+        """The limit is inclusive - exactly MAX_ROWS must still process."""
+        osh = make_contribution(df=self._frame(contribot.MAX_ROWS))
+        assert len(osh.df) == contribot.MAX_ROWS
+
+
+class TestMissingAddressColumn:
+    def _frame(self):
+        return pd.DataFrame(
+            {
+                "country": ["Bangladesh", "Germany"],
+                "name": ["Acme Textiles Limited", "Globex Manufacturing GmbH"],
+                "sector_product_type": ["Apparel|Textiles", "Electronics|Components"],
+            }
+        )
+
+    def test_duplicate_check_does_not_crash(self, make_contribution):
+        """A missing address column is a finding (T0003), not a crash."""
+        osh = make_contribution(df=self._frame())
+        osh.check_name_address_duplicates()
+
+    def test_country_in_address_check_does_not_crash(self, make_contribution):
+        osh = make_contribution(df=self._frame())
+        osh.check_for_country_name_in_address()
+
+    def test_full_process_does_not_crash(self, make_contribution):
+        osh = make_contribution(df=self._frame())
+        osh.process()
+        assert "T0003" in {d["code"] for d in osh.diagnostics_table}
+
+
+class TestUnrecognisedColumnFinding:
+    def test_finding_carries_column_name_and_message(self, make_contribution):
+        """T0008 must populate both the record's name and the rendered message.
+
+        column_name drives the record; column feeds the "{{ column }}" template.
+        Passing only one of them leaves the other empty.
+        """
+        df = pd.DataFrame({"country": ["Germany"], "surprise": ["x"]})
+        osh = make_contribution(df=df)
+        osh.check_table()
+        rec = next(d for d in osh.diagnostics_table if d["code"] == "T0008")
+        assert rec["name"] == "surprise"
+        assert "surprise" in rec["error"]

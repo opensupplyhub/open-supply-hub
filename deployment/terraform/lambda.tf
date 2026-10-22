@@ -2,15 +2,18 @@
 # Alert Batch failures resources
 #
 resource "aws_lambda_function" "alert_batch_failures" {
-  filename = "${path.module}/lambda-functions/alert_batch_failures/alert_batch_failures.zip"
-  # source_code_hash = filebase64sha256(
-  #   "${path.module}/lambda-functions/alert_batch_failures/alert_batch_failures.zip",
-  # )
+  # source_code_hash is what makes a rebuilt archive a diff. Without it the
+  # provider tracks nothing about the zip's contents and apply never
+  # re-uploads, which is how this function ran a stale 2023 archive for years
+  # while deployment/infra rebuilt the correct one on every plan.
+  filename         = "${path.module}/lambda-functions/alert_batch_failures/alert_batch_failures.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda-functions/alert_batch_failures/alert_batch_failures.zip")
+
   function_name = "func${local.short}AlertBatchFailures"
   description   = "Function to alert on AWS Batch Job Failures."
   role          = aws_iam_role.alert_batch_failures.arn
   handler       = "alert_batch_failures.handler"
-  runtime       = "python3.8"
+  runtime       = "python3.13"
   timeout       = 10
   memory_size   = 128
 
@@ -31,19 +34,23 @@ resource "aws_cloudwatch_event_rule" "alert_batch_failures" {
   name        = "rule${local.short}AlertBatchFailures"
   description = "Rule to send alerts when batch jobs fail."
 
-  event_pattern = <<PATTERN
-{
-  "source": ["aws.batch"],
-  "detail-type": ["Batch Job State Change"],
-  "detail": {
-    "status": ["FAILED"],
-    "jobQueue": [
-      "${aws_batch_job_queue.default.arn}"
-    ]
-  }
-}
-PATTERN
-
+  # The db_sync queue is listed because a FAILED nightly sync — including a
+  # promotion re-assert that fails at the end of that same job — is otherwise
+  # silent. A re-assert failure leaves promotions reverted, which is the decay
+  # it exists to prevent, and nothing else would report it.
+  event_pattern = jsonencode({
+    source        = ["aws.batch"]
+    "detail-type" = ["Batch Job State Change"]
+    detail = {
+      status = ["FAILED"]
+      # Splat rather than an index: db_sync is count-gated, and this yields an
+      # empty list where it does not exist instead of an out-of-range index.
+      jobQueue = concat(
+        [aws_batch_job_queue.default.arn],
+        aws_batch_job_queue.db_sync[*].arn,
+      )
+    }
+  })
 }
 
 resource "aws_cloudwatch_event_target" "alert_batch_failures" {
@@ -64,15 +71,16 @@ resource "aws_lambda_permission" "alert_batch_failures" {
 # Alert Step Functions failures resources
 #
 resource "aws_lambda_function" "alert_sfn_failures" {
-  filename = "${path.module}/lambda-functions/alert_sfn_failures/alert_sfn_failures.zip"
-  # source_code_hash = filebase64sha256(
-  #   "${path.module}/lambda-functions/alert_sfn_failures/alert_sfn_failures.zip",
-  # )
+  # See the note on alert_batch_failures above: without source_code_hash a
+  # rebuilt archive is never re-uploaded.
+  filename         = "${path.module}/lambda-functions/alert_sfn_failures/alert_sfn_failures.zip"
+  source_code_hash = filebase64sha256("${path.module}/lambda-functions/alert_sfn_failures/alert_sfn_failures.zip")
+
   function_name = "func${local.short}AlertStepFunctionsFailures"
   description   = "Function to alert on AWS Step Functions Failures."
   role          = aws_iam_role.alert_sfn_failures.arn
   handler       = "alert_sfn_failures.handler"
-  runtime       = "python3.8"
+  runtime       = "python3.13"
   timeout       = 10
   memory_size   = 128
 

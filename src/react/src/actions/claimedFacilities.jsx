@@ -18,12 +18,12 @@ export const completeFetchClaimedFacilities = createAction(
 );
 export const clearClaimedFacilities = createAction('CLEAR_CLAIMED_FACILITIES');
 
-export function fetchClaimedFacilities() {
+export function fetchClaimedFacilities(statuses) {
     return dispatch => {
         dispatch(startFetchClaimedFacilities());
 
         return apiRequest
-            .get(makeGetClaimedFacilitiesURL())
+            .get(makeGetClaimedFacilitiesURL(statuses))
             .then(({ data }) => dispatch(completeFetchClaimedFacilities(data)))
             .catch(err =>
                 dispatch(

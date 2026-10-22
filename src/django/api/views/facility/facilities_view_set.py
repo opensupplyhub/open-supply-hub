@@ -1,13 +1,20 @@
 import logging
-import os
-from datetime import datetime
 from functools import wraps
 from api.facility_actions.processing_facility_api import ProcessingFacilityAPI
+from api.helpers.claim_attachments import create_claim_attachment
 from api.facility_actions.processing_facility_executor import (
     ProcessingFacilityExecutor
 )
+from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.serializers.facility.facility_candidate_details_serializer import (
+    FacilityCandidateDetailsSerializer,
+    NOINDEX_HEADER,
+    NOINDEX_VALUE,
+)
+from api.services.candidate_retirement import tombstone_payload
+from api.services.candidate_switch import candidates_enabled
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -40,7 +47,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
-from django.utils.text import slugify
+from django.utils.cache import patch_cache_control
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 from django.conf import settings
@@ -56,7 +63,6 @@ from api.models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
-    FacilityClaimAttachments,
     FacilityClaimReviewNote,
     FacilityListItem,
     FacilityLocation,
@@ -97,9 +103,17 @@ from api.serializers import (
 )
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
-from api.throttles import DataUploadThrottle
+from api.throttles import DataUploadThrottle, DuplicateThrottle
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
+)
+from api.services.claim_quality_check_service import (
+    SOURCE_CLAIM_FORM,
+    check_claim_quality,
+    record_claim_quality_outcome,
+)
+from api.serializers.facility.claim_quality_check_serializer import (
+    ClaimQualityCheckSerializer,
 )
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
@@ -164,7 +178,14 @@ class FacilitiesViewSet(ListModelMixin,
 
     def get_throttles(self):
         if self.request.method == 'POST':
-            return [DataUploadThrottle()]
+            throttles = [DataUploadThrottle()]
+            if self.action == 'claim_quality_check':
+                # The advisory check is retried with a byte-identical
+                # body (a double-click, a re-run after a failed request),
+                # which DuplicateThrottle collapses so each only reaches
+                # the model once; the SLC check it mirrors does the same.
+                throttles.append(DuplicateThrottle())
+            return throttles
 
         return super().get_throttles()
 
@@ -629,6 +650,18 @@ class FacilitiesViewSet(ListModelMixin,
     def retrieve(self, request, pk=None):
         """
         Returns the facility specified by a given OS ID in GeoJSON format (contains Spotlight data under `partner_fields` property).
+
+        ### Candidate production locations
+        Candidates (unconfirmed Earth Genome satellite detections) are reachable only by direct OS ID lookup here and
+        through `GET /api/v1/production-locations/candidates/?bbox=`; they are excluded from `/api/facilities/` search,
+        `/api/facilities-downloads/`, the vector tiles and the v1 `/api/v1/production-locations/` search, so no download
+        or search contract ever receives them. A candidate answers 200 with this same Feature shape, `name` and `address`
+        empty, `properties.is_candidate: true` and `properties.candidate` carrying `source`, `external_id`, `confidence`,
+        `polygon` (GeoJSON or null), the validation `state` (`unverified` | `disputed` | `confirmed` |
+        `retirement_pending`), `tally` (`confirmed` / `not_a_facility` counts), `your_vote`, `voting_open` and
+        `suggested_matches` (nearby confirmed facilities: `os_id`, `name`, `address`, `distance_m`). Confirmed facilities
+        carry no `is_candidate` key. A retired candidate answers 410 Gone. Candidate responses are sent with
+        `X-Robots-Tag: noindex` and `Cache-Control: private`.
 
         ### Sample Response
             {
@@ -1558,12 +1591,41 @@ class FacilitiesViewSet(ListModelMixin,
                 queryset, context=context).data
             return Response(response_data)
         except FacilityIndex.DoesNotExist as exc:
+            # Candidates never get an index row (OSDEV-3243); serve them
+            # labeled from api_facility instead (OSDEV-3249). The payload
+            # carries the caller's own vote, so it is kept out of the two
+            # shared response caches wrapping this method (both honor
+            # Cache-Control: private) and marked noindex for crawlers.
+            # While the pilot switch is off (OSDEV-3627) a candidate OS
+            # ID is simply not found, as before the pilot.
+            candidate = (
+                Facility.including_candidates
+                .filter(pk=pk, is_candidate=True)
+                .select_related('created_from__source__contributor')
+                .first()
+            ) if candidates_enabled() else None
+            if candidate is not None:
+                response = Response(
+                    FacilityCandidateDetailsSerializer(
+                        candidate, context={'request': request}
+                    ).data
+                )
+                patch_cache_control(response, private=True)
+                response[NOINDEX_HEADER] = NOINDEX_VALUE
+                return response
             # If the facility is not found but an alias is available,
-            # redirect to the alias
-            aliases = FacilityAlias.objects.filter(os_id=pk)
-            if len(aliases) == 0:
+            # redirect to the alias. A NOT_A_FACILITY tombstone has no
+            # target facility: the OS ID was retired, so answer 410 Gone
+            # instead of redirecting (OSDEV-3246).
+            alias = FacilityAlias.objects.filter(os_id=pk).first()
+            if alias is None:
                 raise NotFound() from exc
-            os_id = aliases.first().facility.id
+            if alias.facility_id is None:
+                return Response(
+                    tombstone_payload(alias),
+                    status=status.HTTP_410_GONE,
+                )
+            os_id = alias.facility_id
 
             redirect_url = f'/api/facilities/{os_id}/'
             query_string = request.META.get('QUERY_STRING', '')
@@ -2424,6 +2486,17 @@ class FacilitiesViewSet(ListModelMixin,
                     "facility_production_types"
                 ),
                 facility_type=validated_data.get("facility_type"),
+                # The claim form sends these two fields as empty strings
+                # while the enable_claim_name_address_edit switch is off;
+                # the serializer normalizes blank to None, which is also
+                # what Django's default wrote to these nullable columns
+                # before they were passed here. Only the response shape
+                # changes: both keys are now present (as null) on claims
+                # created without them.
+                facility_name_english=validated_data.get(
+                    "facility_name_english"
+                ),
+                facility_address=validated_data.get("facility_address"),
             )
 
             sectors = validated_data.get("sectors")
@@ -2434,11 +2507,18 @@ class FacilitiesViewSet(ListModelMixin,
             facility_claim.save()
 
             for file in files:
-                self.__handle_file_upload(
-                    file,
-                    contributor.name,
-                    facility_claim
-                )
+                self.__handle_file_upload(file, facility_claim)
+
+            # Logs what the claim form submitted for the quality check
+            # (OSDEV-3489) and leaves the moderator a note of any
+            # warnings the claimant continued past. No-op while the
+            # name/address fields are not editable.
+            record_claim_quality_outcome(
+                facility_claim,
+                request.user,
+                validated_data.get('dismissed_warnings') or [],
+                SOURCE_CLAIM_FORM,
+            )
 
             send_claim_facility_confirmation_email(request, facility_claim)
             Facility.update_facility_updated_at_field(facility.id)
@@ -2463,20 +2543,55 @@ class FacilitiesViewSet(ListModelMixin,
         except Contributor.DoesNotExist as exc:
             raise NotFound(detail='Contributor not found.') from exc
 
-    def __handle_file_upload(self, file, contributor_name, facility_claim):
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S%f')[:-3]
-        file_name, file_extension = os.path.splitext(file.name)
+    @swagger_auto_schema(auto_schema=None, methods=['POST'])
+    @action(detail=True, methods=['POST'],
+            url_path='claim/quality-check',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def claim_quality_check(self, request, pk=None):
+        """
+        Advisory LLM data-quality check of the name and address a
+        claimant is about to assert for this location (OSDEV-3489),
+        called by the claim form on leaving the Business step and by
+        the claimed-details form before saving. Returns
+        {"warnings": [{type, title, message}]}, empty when nothing is
+        flagged, the check is switched off, the values are the ones
+        the location already lists, or the model call failed (the
+        check fails open). Never writes anything: a claimant who
+        continues past the warnings reports them as
+        `dismissed_warnings` on the write that follows.
 
-        file.name = (
-            f'{slugify(file_name, allow_unicode=True)}-'
-            f'{contributor_name}-{timestamp}{file_extension}'
-        )
+        Rate limited by DataUploadThrottle like every POST on this
+        viewset, which is what bounds per-user model calls, and by
+        DuplicateThrottle, which turns an identical repeat within its
+        window into a 429 instead of another model call; see
+        doc/ops/monitoring.md.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
 
-        FacilityClaimAttachments.objects.create(
-            claim=facility_claim,
-            file_name=f'{slugify(file_name)}{file_extension}',
-            claim_attachment=file
+        try:
+            facility = Facility.objects.get(pk=pk)
+            contributor = request.user.contributor
+        except Facility.DoesNotExist as exc:
+            raise NotFound(detail='Facility not found.') from exc
+        except Contributor.DoesNotExist as exc:
+            raise NotFound(detail='Contributor not found.') from exc
+
+        serializer = ClaimQualityCheckSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        warnings = check_claim_quality(
+            facility,
+            serializer.validated_data['facility_name_english'],
+            serializer.validated_data['facility_address'],
+            contributor.id,
         )
+        return Response({'warnings': warnings})
+
+    def __handle_file_upload(self, file, facility_claim):
+        # Storage and naming are shared with the pending-claim edit
+        # endpoints (OSDEV-3370): opaque UUID object keys, display name
+        # kept in the database.
+        create_claim_attachment(file, facility_claim)
 
     @swagger_auto_schema(auto_schema=None, methods=['GET'])
     @action(detail=False, methods=['GET'],
@@ -2505,10 +2620,37 @@ class FacilitiesViewSet(ListModelMixin,
 
         if not switch_is_active('claim_a_facility'):
             raise NotFound()
+
+        # Default stays approved-only so existing consumers are
+        # unaffected; My Facilities passes ?statuses=PENDING,APPROVED to
+        # also show claims awaiting review (OSDEV-3371).
+        valid_statuses = {
+            FacilityClaimStatuses.PENDING,
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.DENIED,
+            FacilityClaimStatuses.REVOKED,
+        }
+        statuses_param = request.query_params.get('statuses')
+        if statuses_param:
+            statuses = [
+                status.strip().upper()
+                for status in statuses_param.split(',')
+                if status.strip()
+            ]
+            invalid = set(statuses) - valid_statuses
+            if invalid:
+                raise BadRequestException(
+                    'Invalid claim statuses: {}.'.format(
+                        ', '.join(sorted(invalid))
+                    )
+                )
+        else:
+            statuses = [FacilityClaimStatuses.APPROVED]
+
         try:
             claims = FacilityClaim.objects.filter(
                 contributor=request.user.contributor,
-                status=FacilityClaimStatuses.APPROVED)
+                status__in=statuses)
         except Contributor.DoesNotExist as exc:
             raise NotFound(
                 'The current User does not have an associated Contributor'
@@ -2540,6 +2682,15 @@ class FacilitiesViewSet(ListModelMixin,
 
         target = Facility.objects.get(id=target_id)
         merge = Facility.objects.get(id=merge_id)
+
+        # On the RBA private instance, merging away a publicly-synced record
+        # produces state the one-way sync cannot repair: it recreates that
+        # record on the next run because it still exists publicly. Only the
+        # merged-away record is at risk, so a synced target is fine. Refuse
+        # before any writes. See api/helpers/rba_instance.
+        rejection = merge_rejection_reason(merge)
+        if rejection:
+            raise ValidationError({'detail': rejection})
 
         inactive_match_statuses = (FacilityMatch.PENDING,
                                    FacilityMatch.REJECTED)
@@ -3049,7 +3200,13 @@ class FacilitiesViewSet(ListModelMixin,
 
         historical_facility_queryset = Facility.history.filter(id=pk)
 
-        if historical_facility_queryset.count() == 0:
+        # The history manager is not Facility.objects, so a candidate's
+        # rows are visible here (OSDEV-3376). Hide the location while its
+        # latest record is still a candidate; a location that has since
+        # been confirmed keeps its full history, and a deleted one keeps
+        # the DELETE entry it always had.
+        latest_record = historical_facility_queryset.first()
+        if latest_record is None or latest_record.is_candidate:
             raise NotFound()
 
         facility_history = create_facility_history_list(

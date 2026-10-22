@@ -2,7 +2,9 @@ import json
 from datetime import date
 
 from api.constants import FacilityClaimStatuses
+from api.signals import moderation_event_update_handler_for_opensearch
 from api.models import (
+    ModerationEvent,
     Contributor,
     Facility,
     FacilityClaim,
@@ -16,11 +18,18 @@ from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
 from django.contrib.gis.geos import Point
+from django.db.models.signals import post_save
 from django.urls import reverse
 
 
 class FacilityClaimTest(APITestCase):
     def setUp(self):
+        # A claimed-details edit of the name or address now records a
+        # moderation event; its OpenSearch propagation is outside unit
+        # tests, like in the moderation event test base.
+        post_save.disconnect(
+            moderation_event_update_handler_for_opensearch, ModerationEvent
+        )
         self.email = "test@example.com"
         self.password = "example123"
         self.user = User.objects.create(email=self.email)
@@ -467,4 +476,39 @@ class FacilityClaimTest(APITestCase):
         self.assertEqual(
             claim.point_of_contact_publicly_visible,
             True,
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_create_claim_accepts_cascale_affiliation(self):
+        """Cascale is selectable, and the name it replaced still validates."""
+        self.client.post(
+            "/user-login/",
+            {"email": self.email, "password": self.password},
+            format="json",
+        )
+
+        claim_url = f"/api/facilities/{self.facility.id}/claim/"
+        claim_data = {
+            "your_name": "John Doe",
+            "your_title": "Manager",
+            "your_business_website": "https://example.com",
+            "business_website": "https://facility.com",
+            "business_linkedin_profile": "https://linkedin.com/company/f",
+            # Cascale is the current name; 'Sustainable Apparel Coalition' is
+            # the superseded one that existing claims still store, so both
+            # must remain acceptable. See OSDEV-2219.
+            "facility_affiliations": [
+                "Cascale",
+                "Sustainable Apparel Coalition",
+            ],
+        }
+
+        response = self.client.post(claim_url, claim_data)
+        self.assertEqual(200, response.status_code)
+
+        claim = FacilityClaim.objects.filter(facility=self.facility).first()
+        self.assertIsNotNone(claim)
+        self.assertEqual(
+            claim.facility_affiliations,
+            ["Cascale", "Sustainable Apparel Coalition"],
         )

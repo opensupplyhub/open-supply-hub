@@ -11,6 +11,9 @@ from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility_claim import FacilityClaim
+from api.models.facility.facility_claim_attachments import (
+    FacilityClaimAttachments
+)
 from api.models.facility.facility_activity_report import FacilityActivityReport
 from api.models.facility.facility_location import FacilityLocation
 from api.models.facility.facility_alias import FacilityAlias
@@ -35,19 +38,57 @@ def signal_error_notifier(error_log_message, response):
 
 @receiver(post_delete, sender=Facility)
 def location_post_delete_handler_for_opensearch(instance, **kwargs):
+    """
+    Remove the facility's production-locations document.
+
+    Candidates (OSDEV-3243) are kept out of that index, so for them the
+    document is normally missing. The delete is still attempted so that
+    a document left behind by any future confirmed-to-candidate
+    transition can never be orphaned; a 404 is then the expected outcome
+    and is not an inconsistency. Candidate deletes happen inside the
+    retirement transaction (OSDEV-3246), so an OpenSearch outage is
+    logged and swallowed for them instead of rolling the retirement
+    back; for confirmed facilities it still propagates.
+    """
     opensearch = OpenSearchServiceConnection()
     try:
         response = opensearch.client.delete(
             index=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             id=instance.id,
         )
+    except NotFoundError:
+        if instance.is_candidate:
+            log.debug(
+                '[Location Deletion] Candidate %s had no OpenSearch '
+                'document, as expected.',
+                instance.id,
+            )
+            return
+        # opensearch-py raises on a 404 rather than returning
+        # result='not_found'; same inconsistency as reported below.
+        signal_error_notifier(
+            '[Location Deletion] Facility not found in OpenSearch, '
+            'indicating data inconsistency.',
+            {'result': 'not_found', 'id': instance.id},
+        )
+        return
     except ConnectionError:
+        if instance.is_candidate:
+            log.error(
+                '[Location Deletion] Lost connection to OpenSearch while '
+                'deleting candidate %s; continuing, the document is not '
+                'expected to exist.',
+                instance.id,
+            )
+            return
         log.error(
             '[Location Deletion] Lost connection to OpenSearch cluster.'
         )
         raise
 
     if response and response.get('result') == 'not_found':
+        if instance.is_candidate:
+            return
         error_log_message = (
             "[Location Deletion] Facility not found "
             "in OpenSearch, indicating "
@@ -121,3 +162,42 @@ for model in [
     FacilityLocation
 ]:
     post_save.connect(set_origin_source_on_create, sender=model)
+
+
+@receiver(
+    post_delete,
+    sender=FacilityClaimAttachments,
+    dispatch_uid='claim_attachment_file_cleanup',
+)
+def claim_attachment_post_delete_file_cleanup(instance, **kwargs):
+    """
+    Remove the stored file when an attachment row is deleted. Django
+    emulates FK cascades in Python, so this also runs for every
+    attachment removed by deleting its claim (e.g. facility deletion).
+    save=False because the row is already gone.
+    """
+    if instance.claim_attachment:
+        try:
+            instance.claim_attachment.delete(save=False)
+        except Exception:
+            # The row is already gone, so the in-memory instance is the
+            # last thing that knows which S3 object this was. Log the
+            # storage key: without it, recovering an orphaned object
+            # would mean diffing the whole bucket against the table.
+            storage_key = instance.claim_attachment.name
+            log.exception(
+                'Failed to delete stored file for claim attachment %s '
+                '(claim %s, storage key %s)',
+                instance.pk,
+                instance.claim_id,
+                storage_key,
+            )
+            report_error_to_rollbar(
+                message='Failed to delete stored claim attachment file',
+                extra_data={
+                    'attachment_id': instance.pk,
+                    'claim_id': instance.claim_id,
+                    'storage_key': storage_key,
+                    'file_name': instance.file_name,
+                },
+            )

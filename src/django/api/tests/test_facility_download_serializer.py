@@ -1,16 +1,23 @@
 import copy
+import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 
+from api.constants import MASKED_CONTRIBUTOR_LABEL
+from api.models.extended_field import ExtendedField
 from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
+from api.serializers.facility.data_center_download_helper import (
+    UNKNOWN_CONTRIBUTOR_LABEL,
+)
 from api.serializers.facility.facility_download_serializer import (
     FacilityDownloadSerializer,
 )
+from api.services.masked_contributors import MaskedContributors
 
 CLAIM_HEADERS = [
     "claim_created_at",
@@ -106,6 +113,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *CLAIM_HEADERS,
             "is_closed",
             *PARTNER_FIELD_HEADERS,
+            "data_center_information",
         ]
         self.assertEqual(headers, expected_headers)
 
@@ -138,6 +146,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
+            "",
         ]
         self.assertEqual(row, expected_row)
 
@@ -172,6 +181,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
+            "",
         ]
         self.assertEqual(row, expected_row)
 
@@ -567,6 +577,7 @@ class FacilityDownloadSerializerTest(TestCase):
             *EMPTY_CLAIM_VALUES,
             "False",
             *EMPTY_PARTNER_FIELD_VALUES,
+            "",
         ]
         self.assertEqual(row, expected_row)
 
@@ -643,3 +654,261 @@ class FacilityDownloadSerializerTest(TestCase):
         row = serializer.get_row(facility)
         self.assertEqual(row[10], "50-100|500-1000")
         self.assertEqual(row[11], "Other Parent Co")
+
+
+def _facility_type_field(matched_facility_type):
+    """Build a `facility_type` ExtendedField entry resolving to
+    `matched_facility_type`, in the shape stored on FacilityIndex."""
+    return {
+        "field_name": ExtendedField.FACILITY_TYPE,
+        "value": {
+            "raw_values": matched_facility_type,
+            "matched_values": [
+                ["facility_type", "exact", matched_facility_type, None],
+            ],
+        },
+    }
+
+
+EPA_CONTRIBUTOR = {"id": 1, "admin_id": 10, "name": "EPA"}
+CONTINENT_8_CONTRIBUTOR = {"id": 2, "admin_id": 20, "name": "Continent 8"}
+OTHER_MASKED_CONTRIBUTOR = {"id": 3, "admin_id": 30, "name": "Other Masked Co"}
+
+
+def _data_center_field(
+    field_name,
+    raw_value,
+    contributor=EPA_CONTRIBUTOR,
+    facility_list_item_id=None,
+):
+    """Build a data-center ExtendedField entry, in the shape
+    `create_extendedfield` stores for `ExtendedField.DATA_CENTER_FIELDS`,
+    plus the `contributor` and `facility_list_item_id` FacilityIndex
+    denormalizes onto every extended_fields entry."""
+    return {
+        "field_name": field_name,
+        "value": {"raw_value": raw_value},
+        "contributor": contributor,
+        "facility_list_item_id": facility_list_item_id,
+    }
+
+
+class DataCenterInformationTest(TestCase):
+    """`data_center_information`: a single JSON column, grouped by
+    contributor, carrying every data-center-specific ExtendedField
+    contributed for a facility (OSDEV-3437)."""
+
+    def test_empty_for_non_data_center_facility(self):
+        """A production facility gets an empty cell, even if a
+        data-center-shaped field happens to be present."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Final Product Assembly"),
+                _data_center_field(ExtendedField.CAPACITY, 500),
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        self.assertEqual(serializer.get_data_center_information(facility), "")
+
+    def test_empty_for_data_center_with_no_data_center_fields(self):
+        """A data center with no data-center ExtendedFields contributed yet
+        gets an empty cell rather than an empty JSON object."""
+        facility = SimpleNamespace(
+            extended_fields=[_facility_type_field("Data Center")],
+        )
+        serializer = FacilityDownloadSerializer()
+        self.assertEqual(serializer.get_data_center_information(facility), "")
+
+    def test_groups_fields_from_one_submission_under_one_row(self):
+        """Fields contributed together (same facility_list_item_id) land in
+        one row dict, keyed by contributor."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                _data_center_field(
+                    ExtendedField.UPS_CAPACITY,
+                    300,
+                    contributor=CONTINENT_8_CONTRIBUTOR,
+                    facility_list_item_id=1,
+                ),
+                _data_center_field(
+                    ExtendedField.UPS_CAPACITY_UNITS,
+                    "MW",
+                    contributor=CONTINENT_8_CONTRIBUTOR,
+                    facility_list_item_id=1,
+                ),
+                # Not a data-center field; must not leak into the column.
+                {
+                    "field_name": ExtendedField.PARENT_COMPANY,
+                    "value": {"name": "Acme Holdings"},
+                    "contributor": CONTINENT_8_CONTRIBUTOR,
+                    "facility_list_item_id": 1,
+                },
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {
+                "Continent 8": [
+                    {
+                        ExtendedField.UPS_CAPACITY: 300,
+                        ExtendedField.UPS_CAPACITY_UNITS: "MW",
+                    },
+                ],
+            },
+        )
+
+    def test_separate_submissions_stay_in_separate_rows(self):
+        """Two submissions from the same contributor (different
+        facility_list_item_id) become two rows, not one merged row."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                _data_center_field(
+                    ExtendedField.UPS_CAPACITY,
+                    300,
+                    contributor=CONTINENT_8_CONTRIBUTOR,
+                    facility_list_item_id=1,
+                ),
+                _data_center_field(
+                    ExtendedField.UPS_CAPACITY,
+                    204,
+                    contributor=CONTINENT_8_CONTRIBUTOR,
+                    facility_list_item_id=2,
+                ),
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {
+                "Continent 8": [
+                    {ExtendedField.UPS_CAPACITY: 300},
+                    {ExtendedField.UPS_CAPACITY: 204},
+                ],
+            },
+        )
+
+    def test_different_contributors_get_separate_keys(self):
+        """Each contributor gets its own top-level key in the JSON object."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                _data_center_field(
+                    ExtendedField.PUE,
+                    1.2,
+                    contributor=EPA_CONTRIBUTOR,
+                    facility_list_item_id=1,
+                ),
+                _data_center_field(
+                    ExtendedField.UPS_CAPACITY,
+                    300,
+                    contributor=CONTINENT_8_CONTRIBUTOR,
+                    facility_list_item_id=2,
+                ),
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {
+                "EPA": [{ExtendedField.PUE: 1.2}],
+                "Continent 8": [{ExtendedField.UPS_CAPACITY: 300}],
+            },
+        )
+
+    def test_masked_contributor_rows_are_labeled_not_dropped(self):
+        """A masked contributor's data-center rows still appear - the
+        identity is hidden, the data is not (mirrors get_contributors)."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                _data_center_field(
+                    ExtendedField.PUE,
+                    1.2,
+                    contributor=EPA_CONTRIBUTOR,
+                    facility_list_item_id=1,
+                ),
+            ],
+        )
+        masked = MaskedContributors(
+            contributor_ids={EPA_CONTRIBUTOR["id"]}
+        )
+        serializer = FacilityDownloadSerializer(masked_contributors=masked)
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {MASKED_CONTRIBUTOR_LABEL: [{ExtendedField.PUE: 1.2}]},
+        )
+
+    def test_multiple_masked_contributors_collapse_into_one_bucket(self):
+        """Two different masked contributors' rows both land under the
+        same shared label, rather than getting distinguishable keys that
+        would undo the masking by inference."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                _data_center_field(
+                    ExtendedField.PUE,
+                    1.2,
+                    contributor=EPA_CONTRIBUTOR,
+                    facility_list_item_id=1,
+                ),
+                _data_center_field(
+                    ExtendedField.UPS_CAPACITY,
+                    300,
+                    contributor=OTHER_MASKED_CONTRIBUTOR,
+                    facility_list_item_id=2,
+                ),
+            ],
+        )
+        masked = MaskedContributors(
+            contributor_ids={
+                EPA_CONTRIBUTOR["id"],
+                OTHER_MASKED_CONTRIBUTOR["id"],
+            }
+        )
+        serializer = FacilityDownloadSerializer(masked_contributors=masked)
+        cell = serializer.get_data_center_information(facility)
+        data = json.loads(cell)
+        self.assertCountEqual(data.keys(), [MASKED_CONTRIBUTOR_LABEL])
+        self.assertCountEqual(
+            data[MASKED_CONTRIBUTOR_LABEL],
+            [
+                {ExtendedField.PUE: 1.2},
+                {ExtendedField.UPS_CAPACITY: 300},
+            ],
+        )
+
+    def test_missing_contributor_falls_back_to_unknown_label(self):
+        """A malformed entry with no contributor blob still surfaces its
+        data, under a fallback label, instead of raising or being
+        silently dropped."""
+        facility = SimpleNamespace(
+            extended_fields=[
+                _facility_type_field("Data Center"),
+                {
+                    "field_name": ExtendedField.PUE,
+                    "value": {"raw_value": 1.2},
+                    "facility_list_item_id": 1,
+                },
+            ],
+        )
+        serializer = FacilityDownloadSerializer()
+        cell = serializer.get_data_center_information(facility)
+        self.assertEqual(
+            json.loads(cell),
+            {UNKNOWN_CONTRIBUTOR_LABEL: [{ExtendedField.PUE: 1.2}]},
+        )
+
+    def test_get_headers_includes_data_center_information_column(self):
+        """The column is always present in the header row, regardless of
+        whether any downloaded facility is a data center."""
+        serializer = FacilityDownloadSerializer()
+        self.assertEqual(
+            serializer.get_headers()[-1], "data_center_information"
+        )

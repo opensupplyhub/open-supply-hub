@@ -330,6 +330,12 @@ export const profileFormFields = Object.freeze([
     accountConfirmNewPasswordField,
 ]);
 
+// OSDEV-2280 PII warning shown above every claim document upload.
+export const CLAIM_PII_WARNING_TEXT =
+    'We do NOT require and you should NOT submit documents containing ' +
+    'sensitive personal information such as salary information, personal ' +
+    'phone numbers, home addresses, or personal ID numbers.';
+
 export const mainRoute = '/';
 export const mapRoute = '/map';
 export const settingsRoute = '/settings';
@@ -359,6 +365,7 @@ export const dashboardListsRoute = '/dashboard/lists';
 export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
+export const dashboardClaimsV2Route = '/dashboard/claims-v2';
 export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
 export const dashboardContributionRecordRoute =
     '/dashboard/moderation-queue/:moderationID';
@@ -372,6 +379,9 @@ export const dashboardActivityReportsRoute = '/dashboard/activityreports';
 export const dashboardLinkOsIdRoute = '/dashboard/linkid';
 export const dashboardGeocoderRoute = '/dashboard/geocoder';
 export const claimedFacilitiesRoute = '/claimed';
+// Registered before claimedFacilitiesDetailRoute so 'pending' is never
+// captured as a :claimID.
+export const pendingClaimEditRoute = '/claimed/pending/:claimID';
 export const claimedFacilitiesDetailRoute = '/claimed/:claimID';
 export const dashboardClaimsDetailsRoute = '/dashboard/claims/:claimID';
 export const aboutClaimedFacilitiesRoute = `${InfoLink}/${InfoPaths.claimedFacilities}`;
@@ -589,9 +599,17 @@ export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 export const PRIVATE_INSTANCE = 'private_instance';
 export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
 export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
+// Earth Genome candidate pilot kill switch (OSDEV-3627): off hides the
+// candidate footprint layer; the API answers 404 for candidates anyway.
+export const EARTH_GENOME_CANDIDATES = 'earth_genome_candidates';
+// Relaxed claim eligibility (employees may claim) — swaps the
+// owner/manager wording across claimant- and moderator-facing copy.
+export const RELAXED_CLAIM_ELIGIBILITY = 'relaxed_claim_eligibility';
 export const ENABLE_PRODUCTION_LOCATION_PAGE =
     'enable_production_location_page';
 export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
+export const ENABLE_CLAIMS_V2_DASHBOARD = 'enable_claims_v2_dashboard';
+export const ENABLE_CLAIM_NAME_ADDRESS_EDIT = 'enable_claim_name_address_edit';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -733,6 +751,8 @@ export const GRID_COLOR_RAMP = Object.freeze([
 export const OARFont = "'Darker Grotesque',sans-serif";
 export const OARColor = '#8428FA';
 export const SelectedMarkerColor = '#FFCF3F';
+// Marker for a suggested nearby match shown next to a candidate footprint.
+export const SuggestedMatchMarkerColor = '#1E88E5';
 export const OARActionColor = '#FFCF3F';
 export const OARSecondaryColor = '#FFA6D0';
 
@@ -747,7 +767,7 @@ export const OS_HUB_BLOG_LINK = 'https://blog.opensupplyhub.org';
 export const NavbarItems = [
     {
         type: 'link',
-        label: 'Explore',
+        label: 'Map',
         href: '/',
         internal: true,
     },
@@ -1660,3 +1680,5 @@ export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
     CLIENT: 'CLIENT',
     SERVER: 'SERVER',
 };
+
+export const externalOSHubLink = 'https://www.opensupplyhub.org/';

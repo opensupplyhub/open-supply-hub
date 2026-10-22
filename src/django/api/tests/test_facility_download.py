@@ -26,8 +26,12 @@ from waffle.testutils import override_flag, override_switch
 from django.contrib.gis.geos import Point
 from django.urls import reverse
 from django.utils import timezone
+from api.tests.download_session_cache import (
+    isolated_download_session_cache,
+)
 
 
+@isolated_download_session_cache()
 class FacilityDownloadTest(FacilityAPITestCaseBase):
     fixtures = ["sectors"]
 
@@ -44,7 +48,22 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
         self.embed_config = EmbedConfig.objects.create()
 
         self.contributor.embed_config = self.embed_config
+        # Embed mode downloads are only honoured for contributors with an
+        # embedded map enabled.
+        self.contributor.embed_level = 1
         self.contributor.save()
+
+        # Non-embed downloads require a logged-in user. Use a user without
+        # a contributor so downloads aren't treated as own-data downloads.
+        # Tests that need a specific user log in again explicitly.
+        self.downloader_email = "downloader@example.com"
+        self.downloader = User.objects.create(email=self.downloader_email)
+        self.downloader.set_password(self.user_password)
+        self.downloader.save()
+        self.client.login(
+            email=self.downloader_email,
+            password=self.user_password
+        )
         self.embed_one = EmbedField.objects.create(
             embed_config=self.embed_config,
             order=0,
@@ -228,6 +247,8 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             [""] * len(self.partner_field_headers)
         )
 
+        self.data_center_header = "data_center_information"
+        self.empty_data_center_values = ""
         self.default_headers = [
             "os_id",
             "contribution_date",
@@ -248,6 +269,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             *self.claim_headers,
             "is_closed",
             *self.partner_field_headers,
+            self.data_center_header,
         ]
         self.contrib_facility_base_row = [
             self.contrib_facility.id,
@@ -269,6 +291,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             *self.empty_claim_values,
             "False",
             *self.empty_partner_field_values,
+            self.empty_data_center_values,
         ]
 
         self.user_two = User.objects.create(email="test2@example.com")
@@ -296,18 +319,25 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "business_linkedin_profile": "https://example.com",
         }
 
+        # File contents must start with the real magic bytes for their
+        # extension — attachment uploads validate content, not just the
+        # file name (OSDEV-3370).
         file_data = {
             'test_attachment_1.jpg': (
-                b'claimant_attachment_content_jpg', 'image/jpg'
+                b'\xff\xd8\xff\xe0claimant_attachment_content_jpg',
+                'image/jpg'
             ),
             'test_attachment_2.jpeg': (
-                b'claimant_attachment_content_jpeg', 'image/jpeg'
+                b'\xff\xd8\xff\xe0claimant_attachment_content_jpeg',
+                'image/jpeg'
             ),
             'test_attachment_3.png': (
-                b'claimant_attachment_content_png', 'image/png'
+                b'\x89PNG\r\n\x1a\nclaimant_attachment_content_png',
+                'image/png'
             ),
             'test_attachment_4.pdf': (
-                b'claimant_attachment_content_pdf', 'application/pdf'
+                b'%PDF-1.4 claimant_attachment_content_pdf',
+                'application/pdf'
             )
         }
 
@@ -564,6 +594,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             *self.empty_claim_values,
             "False",
             *self.empty_partner_field_values,
+            self.empty_data_center_values
         ]
         self.assertEqual(len(base_row), len(expected_base_row))
         self.assertEqual(base_row, expected_base_row)
@@ -890,6 +921,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             *self.empty_claim_values,
             "False",
             *self.empty_partner_field_values,
+            self.empty_data_center_values
         ]
         self.assertEqual(len(base_row), len(row))
         self.assertEqual(base_row, row)
@@ -954,6 +986,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             "",
             "False",
             *self.empty_partner_field_values,
+            self.empty_data_center_values
         ]
         self.assertEquals(rows[0], row)
 
@@ -990,6 +1023,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             *self.empty_claim_values,
             "False",
             *self.empty_partner_field_values,
+            self.empty_data_center_values
         ]
         self.assertEqual(row, rows[0])
 
@@ -1057,6 +1091,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             *self.empty_claim_values,
             "False",
             *self.empty_partner_field_values,
+            self.empty_data_center_values
         ]
         self.assertEquals(rows[0], row)
 
@@ -1089,6 +1124,7 @@ class FacilityDownloadTest(FacilityAPITestCaseBase):
             *self.empty_claim_values,
             "False",
             *self.empty_partner_field_values,
+            self.empty_data_center_values
         ]
         self.assertEquals(rows[0], row)
 

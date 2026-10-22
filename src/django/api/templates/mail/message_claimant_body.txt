@@ -8,13 +8,22 @@ Facility Details:
 - Facility: {{ facility_name }}, {{ facility_address }}, {{ facility_country }}
 - Facility URL: {{ facility_url }}
 
-We have completed our review of the material(s) submitted with the request and require additional information to proceed with this claim. A Facility Claim request will only be approved when it is submitted by a facility owner and/or senior management staff at the facility location in question. Additional information about our claims process can be found here. (https://info.opensupplyhub.org/resources/claim-a-facility)
+We have completed our review of the material(s) submitted with the request and require additional information to proceed with this claim. A Facility Claim request will only be approved when it is submitted by {% if relaxed_eligibility %}an authorized employee of the production location or its parent company{% else %}a facility owner and/or senior management staff at the facility location in question{% endif %}. Additional information about our claims process can be found here. (https://info.opensupplyhub.org/resources/claim-a-facility)
 
 Action Items:
 
 {{ message_to_claimant }}
 
-Please reply to this message with the requested items. From there, we can process this straight away. We'll review the materials and get in touch if we need any additional information.
+How to update your claim:
+
+You can now update your pending claim directly on Open Supply Hub — no need to send documents by email:
+
+1. Log in to your Open Supply Hub account and go to My Account > My Facilities ({{ claimed_url }}).
+2. Click your pending claim to open it for editing.
+3. Update any of your claim details and upload the requested documents in the Documents section (you can also remove a document you uploaded by mistake).
+4. Click "Save changes". Our Claims Team is notified automatically and will continue the review.
+
+Updating your claim on the platform is the fastest and most secure way to provide the requested items. If you cannot access your account, you can reply to this message instead. We'll review the materials and get in touch if we need any additional information.
 
 Best Regards,
 

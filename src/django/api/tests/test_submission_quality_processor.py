@@ -1,3 +1,5 @@
+import json
+import re
 from unittest.mock import patch
 
 from botocore.exceptions import ProfileNotFound
@@ -22,6 +24,11 @@ from api.moderation_event_actions.creation.dtos.create_moderation_event_dto \
 from api.services.submission_quality_service import (
     QualityVerdict,
     SubmissionQualityVerdicts,
+)
+
+_PROCESSOR_LOGGER = (
+    'api.moderation_event_actions.creation.location_contribution'
+    '.processors.submission_quality_processor'
 )
 
 CLEAN_VERDICTS = SubmissionQualityVerdicts(
@@ -75,12 +82,14 @@ class TestSubmissionQualityProcessor(APITestCase):
     def _submit(
         self, contributor, input_data, ignore_warnings=False,
         request_type=ModerationEvent.RequestType.CREATE.value, os=None,
+        duplicate_override=False,
     ):
         event_dto = CreateModerationEventDTO(
             contributor=contributor,
             raw_data=input_data,
             request_type=request_type,
             ignore_warnings=ignore_warnings,
+            duplicate_override=duplicate_override,
             os=os,
         )
         return self.moderation_event_creator.perform_event_creation(
@@ -112,6 +121,23 @@ class TestSubmissionQualityProcessor(APITestCase):
             location=Point(0, 0),
             created_from=list_item
         )
+
+    def _single_log_line(self, logs, prefix):
+        matching = [line for line in logs.output if prefix in line]
+        self.assertEqual(len(matching), 1, logs.output)
+        return matching[0]
+
+    def _body_digest(self, line):
+        match = re.search(r'body_digest=([0-9a-f]{16})$', line)
+        self.assertIsNotNone(match, line)
+        return match.group(1)
+
+    def _logged_fields(self, input_data):
+        return json.dumps({
+            'name': input_data['name'],
+            'address': input_data['address'],
+            'country': input_data['country'],
+        })
 
     def _patch_evaluate(self, return_value):
         return patch(
@@ -177,6 +203,115 @@ class TestSubmissionQualityProcessor(APITestCase):
         self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
         self.assertIsNotNone(result.moderation_event)
 
+    def test_evaluated_submission_fields_are_logged(self):
+        # Every evaluated submission logs the judged fields as received,
+        # even when nothing is flagged, so that they can be compared
+        # against any later ignore_warnings resubmission.
+        with self._patch_evaluate(CLEAN_VERDICTS), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(self.contributor, self.base_input_data)
+
+        line = self._single_log_line(
+            logs, 'Submission quality check evaluated'
+        )
+        self.assertIn(f'contributor={self.contributor.id}', line)
+        self.assertIn('warnings=[]', line)
+        self.assertIn(
+            f'fields={self._logged_fields(self.base_input_data)}', line
+        )
+        self._body_digest(line)
+
+    def test_flagged_submission_logs_warning_types(self):
+        verdicts = _flagged_verdicts(
+            name_quality='Looks like test data.',
+            address_country_mismatch='Address does not look like US.',
+        )
+        with self._patch_evaluate(verdicts), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(self.contributor, self.base_input_data)
+
+        line = self._single_log_line(
+            logs, 'Submission quality check evaluated'
+        )
+        self.assertIn("'name_quality'", line)
+        self.assertIn("'address_country_mismatch'", line)
+        self.assertIn(
+            f'fields={self._logged_fields(self.base_input_data)}', line
+        )
+
+    def test_bypassed_submission_fields_are_logged(self):
+        resubmitted_data = {
+            **self.base_input_data,
+            'name': 'Blue Horizon Garment Factory',
+        }
+        with self._patch_evaluate(None), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(
+                self.contributor, resubmitted_data, ignore_warnings=True,
+            )
+
+        line = self._single_log_line(
+            logs, 'Submission quality check bypassed via ignore_warnings'
+        )
+        self.assertIn(f'contributor={self.contributor.id}', line)
+        self.assertIn(
+            f'fields={self._logged_fields(resubmitted_data)}', line
+        )
+        self._body_digest(line)
+
+    def test_only_allowlisted_fields_are_logged_in_the_clear(self):
+        # Free-text fields can carry third-party personal data and must
+        # never reach the logs; only the digest may reflect them.
+        notes = 'Spoke to Jane Roe, jane.roe@example.org, +1 555 0100'
+        input_data = {
+            **self.base_input_data,
+            'notes': notes,
+            'source_link': 'https://example.org/private-doc',
+            'parent_company': 'Blue Horizon Holdings',
+        }
+        with self._patch_evaluate(CLEAN_VERDICTS), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(self.contributor, input_data)
+
+        for line in logs.output:
+            self.assertNotIn('Jane Roe', line)
+            self.assertNotIn('example.org', line)
+            self.assertNotIn('Blue Horizon Holdings', line)
+            self.assertNotIn('notes', line)
+
+    def test_body_digest_tracks_changes_outside_the_logged_fields(self):
+        # A resubmission that only changes an unlogged field is still
+        # detectable as "something changed" via the digest, while an
+        # identical resubmission produces the same digest.
+        flagged = {**self.base_input_data, 'notes': 'first attempt'}
+        changed_notes = {**self.base_input_data, 'notes': 'second attempt'}
+
+        # duplicate_override so the resubmissions of an already-accepted
+        # body reach this processor instead of stopping at the duplicate
+        # check that runs before it.
+        with self._patch_evaluate(CLEAN_VERDICTS), self.assertLogs(
+            _PROCESSOR_LOGGER, level='INFO'
+        ) as logs:
+            self._submit(self.contributor, flagged)
+            self._submit(
+                self.contributor, flagged,
+                ignore_warnings=True, duplicate_override=True,
+            )
+            self._submit(
+                self.contributor, changed_notes,
+                ignore_warnings=True, duplicate_override=True,
+            )
+
+        evaluated, same, changed = [
+            self._body_digest(line) for line in logs.output
+        ]
+        self.assertEqual(evaluated, same)
+        self.assertNotEqual(evaluated, changed)
+
     def test_service_construction_failure_fails_open(self):
         # SubmissionQualityService builds its bedrock client lazily
         # inside evaluate()'s fail-open handler, so an environment where
@@ -231,7 +366,78 @@ class TestSubmissionQualityProcessor(APITestCase):
         self.assertEqual(result.status_code, status.HTTP_409_CONFLICT)
         self.assertIsNone(result.moderation_event)
 
-    def test_update_request_type_is_never_flagged(self):
+    def test_flagged_update_blocks_creation_with_warning(self):
+        existing_facility = self._create_existing_facility()
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts) as mock_evaluate:
+            result = self._submit(
+                self.contributor,
+                self.base_input_data,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        mock_evaluate.assert_called_once()
+        self.assertEqual(result.status_code, status.HTTP_409_CONFLICT)
+        self.assertIsNone(result.moderation_event)
+        self.assertEqual(
+            [warning['type'] for warning in result.errors['warnings']],
+            ['name_quality']
+        )
+
+    def test_clean_update_is_not_flagged(self):
+        existing_facility = self._create_existing_facility()
+        with self._patch_evaluate(CLEAN_VERDICTS):
+            result = self._submit(
+                self.contributor,
+                self.base_input_data,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+        self.assertEqual(
+            result.moderation_event.request_type,
+            ModerationEvent.RequestType.UPDATE.value
+        )
+
+    def test_ignore_warnings_bypasses_the_check_for_update(self):
+        existing_facility = self._create_existing_facility()
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts) as mock_evaluate:
+            result = self._submit(
+                self.contributor,
+                self.base_input_data,
+                ignore_warnings=True,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        mock_evaluate.assert_not_called()
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertIsNotNone(result.moderation_event)
+
+    def test_api_update_is_never_flagged(self):
+        existing_facility = self._create_existing_facility()
+        api_input_data = {
+            **self.base_input_data,
+            'source': ModerationEvent.Source.API.value,
+        }
+        verdicts = _flagged_verdicts(name_quality='Looks like test data.')
+        with self._patch_evaluate(verdicts) as mock_evaluate:
+            result = self._submit(
+                self.contributor,
+                api_input_data,
+                request_type=ModerationEvent.RequestType.UPDATE.value,
+                os=existing_facility,
+            )
+
+        mock_evaluate.assert_not_called()
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+
+    @override_switch('slc_submission_quality_check', active=False)
+    def test_switch_off_skips_check_for_update(self):
         existing_facility = self._create_existing_facility()
         verdicts = _flagged_verdicts(name_quality='Looks like test data.')
         with self._patch_evaluate(verdicts) as mock_evaluate:
@@ -243,4 +449,4 @@ class TestSubmissionQualityProcessor(APITestCase):
             )
 
         mock_evaluate.assert_not_called()
-        self.assertNotEqual(result.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)

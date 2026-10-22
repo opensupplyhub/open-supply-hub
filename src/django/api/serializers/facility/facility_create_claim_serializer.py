@@ -1,7 +1,7 @@
-import os
 from datetime import date
 
 from rest_framework import serializers
+from contricleaner.lib.helpers.clean import clean
 from django.core.validators import URLValidator
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -10,13 +10,10 @@ from api.exceptions import BadRequestException
 from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
 from api.constants import JS_MAX_SAFE_INTEGER
+from api.helpers.claim_attachments import validate_attachment_files
 from api.helpers.helpers import validate_workers_count
 from api.serializers.facility.utils import add_http_prefix_to_url
-from oar.settings import (
-    MAX_ATTACHMENT_SIZE_IN_BYTES,
-    MAX_ATTACHMENT_AMOUNT,
-    ALLOWED_ATTACHMENT_EXTENSIONS
-)
+from api.services.claim_quality_warnings import DismissedWarningsField
 
 
 def validate_workers(value):
@@ -45,24 +42,7 @@ def validate_url_field(field_name, value):
 
 
 def validate_files(files):
-    if len(files) > MAX_ATTACHMENT_AMOUNT:
-        raise DRFValidationError(
-            f"Maximum {MAX_ATTACHMENT_AMOUNT} attachments allowed."
-        )
-
-    for file in files:
-        extension = os.path.splitext(file.name)[-1].lower()
-        if extension not in ALLOWED_ATTACHMENT_EXTENSIONS:
-            raise DRFValidationError(
-                f"{file.name} has an unsupported file type."
-            )
-
-        if file.size > MAX_ATTACHMENT_SIZE_IN_BYTES:
-            raise DRFValidationError(
-                f"{file.name} exceeds the 5MB size limit."
-            )
-
-    return files
+    return validate_attachment_files(files)
 
 
 def validate_non_future_date(value):
@@ -70,6 +50,31 @@ def validate_non_future_date(value):
     if value and value > date.today():
         raise DRFValidationError(
             'Please enter a valid date (not in the future).'
+        )
+    return value
+
+
+def validate_claimed_name_or_address(field_name, value):
+    '''
+    Strip and normalize a claimed name or address: blank becomes None
+    (the model columns are nullable and the tracked-change logic treats
+    NULL and '' as equal), and a value that ContriCleaner's clean()
+    reduces to nothing is rejected with ContriCleaner's wording, since
+    that is the rule the value must pass when it is recorded as a
+    contribution at approval. clean() only strips whitespace and a fixed
+    set of characters (newlines, -, /, ', ,, : and surrounding quotes), so
+    other punctuation-only values such as '...' pass here just as they
+    would in a list upload.
+    '''
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    if not clean(value):
+        raise serializers.ValidationError(
+            f'{field_name} cannot consist solely of punctuation or '
+            'whitespace.'
         )
     return value
 
@@ -293,6 +298,26 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
         max_length=300
     )
+    # The name and address the claimant asserts for the production
+    # location. Optional so the form can omit them while the
+    # enable_claim_name_address_edit switch is off. Validated with the
+    # same rule ContriCleaner applies, so recording them as a contribution
+    # at approval cannot fail on them later. Blank is normalized to None.
+    facility_name_english = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    facility_address = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=200
+    )
+    # The data-quality warnings the claimant chose to continue past on
+    # the Business step (OSDEV-3489); recorded as an INTERNAL review
+    # note for the moderator. Posted as a JSON string, since the claim
+    # form submits multipart form data.
+    dismissed_warnings = DismissedWarningsField(required=False)
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)
@@ -302,6 +327,14 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
 
     def validate_business_linkedin_profile(self, value):
         return validate_url_field("business_linkedin_profile", value)
+
+    def validate_facility_name_english(self, value):
+        return validate_claimed_name_or_address(
+            'facility_name_english', value
+        )
+
+    def validate_facility_address(self, value):
+        return validate_claimed_name_or_address('facility_address', value)
 
     def validate(self, data):
         facility = self.context["facility"]

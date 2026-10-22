@@ -16,7 +16,7 @@ BetterStack ──► GET /health-check/ ──► HTTP 200 "ok"   (app process 
 
 ALB / ECS   ──► GET /health-check/ ──► same liveness probe
 
-CloudWatch  ──► RDS + Memcached metrics
+CloudWatch  ──► RDS + Memcached + Lambda metrics
             ──► SNS topic…GlobalNotifications
             ──► AWS Chatbot
             ──► Slack
@@ -155,13 +155,48 @@ All envs use `cache.t3.medium` (~3.09 GiB). CPU stays at the shared default:
 
 Both alarms: `evaluation_periods = 1`; `alarm_actions` / `ok_actions` / `insufficient_data_actions` → `aws_sns_topic.global`.
 
+### Lambda (all functions)
+
+Defined in `deployment/terraform/alarms.tf`. One **un-dimensioned** alarm on the `AWS/Lambda` `Errors` metric covers every Lambda function in the environment's region at once — there is no `FunctionName` dimension, so functions added later are covered the moment they are created.
+
+| Alarm | Metric | Period | Pages when |
+| --- | --- | ---: | --- |
+| `alarm…LambdaErrors` | `Errors` (`AWS/Lambda`, no `FunctionName` dimension — covers all functions) | 300s | Sum > `lambda_errors_alarm_threshold` (default **0**, i.e. any error) |
+
+`evaluation_periods = 1`; `alarm_actions` / `ok_actions` → `aws_sns_topic.global`. `treat_missing_data = notBreaching`: an idle environment publishes no datapoints, which is normal, so there are no insufficient-data pages.
+
+Functions in scope (`local.short` = e.g. `OpenSupplyHubProduction`):
+
+| Function | Defined in | Covered |
+| --- | --- | --- |
+| `func…AlertBatchFailures` | `lambda.tf` | Yes |
+| `func…AlertStepFunctionsFailures` | `lambda.tf` | Yes |
+| `func…ContribotFetchLists` | `contribot_lambda.tf` | Yes |
+| `func…ContribotProcessList` | `contribot_lambda.tf` | Yes |
+| `func…ContribotNotify` | `contribot_lambda.tf` | Yes |
+| `func…ContribotRetryFailedLists` | `contribot_lambda.tf` | Yes |
+| `func…NlbTargetsRegistrar` | `database-private-link-provider/lambda-nlb-registrar.tf` | Yes, where that module is applied |
+| `func…RedirectToS3origin` | `lambda.tf` (Lambda@Edge) | Partial — see below |
+| `func…AddSecurityHeaders` | `lambda.tf` (Lambda@Edge) | Partial — see below |
+
+The trade-off of a single un-dimensioned alarm: Slack reports that *a* Lambda errored, not which one. To identify it, open the `AWS/Lambda` `Errors` metric broken down by `FunctionName` for the alarm window, or the relevant `/aws/lambda/func…` log group.
+
+**Lambda@Edge caveat.** `RedirectToS3origin` and `AddSecurityHeaders` are created in `us-east-1` (the `aws.certificates` provider), but CloudFront executes them at edge locations worldwide and [their CloudWatch metrics and logs are published in the AWS Region closest to where the function executed](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-edge-testing-debugging.html), not centrally. This alarm therefore only sees edge errors for executions that land in `var.aws_region`.
+
+Closing that gap is not a matter of adding a dimension, because **a CloudWatch alarm can only publish to an SNS topic in its own region** — an alarm in `us-east-1` (or any other edge region) cannot use `aws_sns_topic.global`. The options, if edge coverage becomes a requirement:
+
+1. Create a second SNS topic in `us-east-1` and add its ARN to the Chatbot channel configuration (Chatbot accepts topics from multiple regions), then add a matching un-dimensioned alarm there. Covers `us-east-1` edge executions and anything else in that region.
+2. Use CloudFront's own `LambdaExecutionError` / `LambdaValidationError` metrics, which are global and reported in `us-east-1`. These are CloudFront **additional metrics** and must be enabled per distribution at extra cost.
+
+Neither is in place today; both edge functions are thin (a redirect and a response-header rewrite) and their failures surface as CloudFront 5xx.
+
 ### ECS CPU (autoscaling)
 
 `aws-ecs-service-autoscaling` raises/lowers desired count on ECS `CPUUtilization` high/low. Those alarms drive scaling policies; they are **not** wired to the global SNS topic unless `sns_topic_arn` is passed (currently omitted). Treat them as capacity signals, not pages.
 
-### Bedrock (SLC submission quality check)
+### Bedrock (SLC submission and claim quality checks)
 
-Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check makes one Bedrock (Claude Haiku) call per new SLC submission — organic volume is tens of calls per **week**. There is deliberately no in-app cap on these calls: per-user volume is bounded by the endpoint's `DataUploadThrottle` (30/minute), and runaway volume (a frontend retry loop, scripted submissions across accounts) is caught by monitoring instead, accepting a bounded-spend risk rather than risking the check or submissions being silently degraded by a cap.
+Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check makes one Bedrock (Claude Haiku) call per new SLC submission — organic volume is tens of calls per **week**. The claim name/address quality check (OSDEV-3489, `POST /api/facilities/{id}/claim/quality-check/`) makes one call each time a claimant leaves the claim form's Business step or saves the claimed-details form with a name or address that differs from the location's listing; claim volume is lower still. Both use the same model, IAM grant, alarms and budget. There is deliberately no in-app cap on these calls: per-user volume is bounded by each endpoint's `DataUploadThrottle` (30/minute), and runaway volume (a frontend retry loop, scripted submissions across accounts) is caught by monitoring instead, accepting a bounded-spend risk rather than risking the check or submissions being silently degraded by a cap.
 
 | Alarm | Metric | Period | Pages when |
 | --- | --- | ---: | --- |
@@ -171,7 +206,17 @@ Defined in `deployment/terraform/alarms.tf`. The SLC submission quality check ma
 
 A monthly AWS Budget on Bedrock spend (`budget…Bedrock`, limit `bedrock_cost_budget_monthly_limit_usd`, default **$25**) alerts at 80% actual and 100% forecasted through the same SNS → Chatbot → Slack path. Budgets are account-wide, so only the account-owner envs create one (`manage_bedrock_cost_budget = true` — Test and Production today, mirroring the Chatbot ownership pattern).
 
-The Django app also logs per-call token usage (`Submission quality check tokens: input=… output=…`) to CloudWatch Logs for verifying actual consumption against expectations (~640 tokens/call).
+The Django app also logs per-call token usage (`Submission quality check tokens: input=… output=… check=slc|claim`) to CloudWatch Logs for verifying actual consumption against expectations (~640 tokens/call for SLC; the claim check's prompt also carries the currently listed name and address). The fail-open line (`Submission quality check failed; skipping (fail open). check=…`) keeps the same text for both checks, so the `SubmissionQualityCheckFailures` metric filter and alarm cover both; the `check=` label tells them apart in Logs Insights.
+
+To follow what the claim check does in production, the app logs one line per event, each with the contributor and facility ids and the judged name, address and country (never any other field):
+
+| Line | When |
+| --- | --- |
+| `Claim quality check evaluated: … model=ok\|failed warnings=[…] fields={…}` | Every model evaluation, flagged or not. `model=failed` marks a fail-open failure (its `warnings` is always empty), so a clean verdict and an outage are not confused when watching the `different_location` false-positive rate |
+| `Claim quality check skipped (values unchanged): …` | The check endpoint was called with the values the location already lists (for a claimed location, the approved claim's values); no model call |
+| `Claim quality check outcome: … claim=… source=claim_form\|claimed_details dismissed=[…] fields={…}` | A claim POST or claimed-details PUT stored a name or address; `dismissed` lists the warning types the claimant continued past (also written to the claim as an INTERNAL review note) |
+
+Comparing an `evaluated` line with the `outcome` line that follows for the same contributor shows whether a warning led to different values being submitted, or was dismissed.
 
 ## Suggested triage order
 

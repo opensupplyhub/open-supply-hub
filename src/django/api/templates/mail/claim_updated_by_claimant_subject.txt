@@ -1,0 +1,1 @@
+A claimant updated pending claim #{{ claim_id }} ({{ facility_name }})

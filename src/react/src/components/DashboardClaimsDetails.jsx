@@ -183,7 +183,10 @@ function DashboardClaimsDetails({
                 </Typography>
             </div>
 
-            <DashboardClaimsDetailsAttachments attachments={data.attachments} />
+            <DashboardClaimsDetailsAttachments
+                claimId={data.id}
+                attachments={data.attachments}
+            />
 
             {data.notes.map(note => (
                 <DashboardClaimsDetailsNote key={note.id} note={note} />

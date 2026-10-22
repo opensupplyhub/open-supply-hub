@@ -38,6 +38,7 @@ services:
       - CACHE_PORT=11211
       - INSTANCE_SOURCE=os_hub
       - DJANGO_ENV=Local
+      - CLAIMS_AUTOMATION_ACCOUNT_EMAIL=data@opensupplyhub.org
       - DJANGO_SECRET_KEY=secret
       - DJANGO_LOG_LEVEL=INFO
       - OAR_CLIENT_KEY=
@@ -54,6 +55,7 @@ services:
       - OPENSEARCH_SSL=False
       - OPENSEARCH_SSL_CERT_VERIFICATION=False
       - EMAIL_ANONYMIZATION_SECRET=secret
+      - EARTH_GENOME_CONTRIBUTOR_ID=
     build:
       context: ./src/django
       dockerfile: Dockerfile
@@ -89,7 +91,7 @@ services:
       - proxynet
 
   minio:
-    image: minio/minio:latest
+    image: ghcr.io/valencia-max/minio:release.2025-09-07t16-13-09z
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin

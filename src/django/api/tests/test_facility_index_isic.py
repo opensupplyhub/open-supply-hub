@@ -1,6 +1,10 @@
+from django.contrib.gis.geos import Point
 from django.db import connection
+from django.test import override_settings
 
 from api.models.extended_field import ExtendedField
+from api.models.facility.facility import Facility
+from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
@@ -196,3 +200,69 @@ class FacilityIndexIsicTest(FacilityAPITestCaseBase):
                         [division_code],
                     )
                     self.assertIsNone(cursor.fetchone()[0])
+
+    def test_extended_field_trigger_populates_isic_columns(self):
+        # setUp inserts the isic_4 ExtendedField after the facility is
+        # already indexed, which is the order list processing uses. The
+        # api_extendedfield trigger alone must bring the columns up to date.
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual(sorted(facility_index.isic_section), ['A', 'C', 'J'])
+        self.assertEqual(
+            sorted(facility_index.isic_class),
+            ['0111', '1410', '6201'],
+        )
+
+    def test_extended_field_trigger_refreshes_isic_columns_on_update(self):
+        self._replace_entries([
+            {'class': '1311 - Preparation and spinning of textile fibres'},
+        ])
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual(facility_index.isic_section, ['C'])
+        self.assertEqual(facility_index.isic_division, ['13'])
+        self.assertEqual(facility_index.isic_group, ['131'])
+        self.assertEqual(facility_index.isic_class, ['1311'])
+
+    def test_extended_field_trigger_clears_isic_columns_on_delete(self):
+        self.isic_field.delete()
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual(facility_index.isic_section, [])
+        self.assertEqual(facility_index.isic_class, [])
+
+    def test_index_facilities_by_still_excludes_candidates(self):
+        # 0254 re-creates the procedures 0250 changed; candidates must
+        # still never get an index row.
+        candidate_item = FacilityListItem.objects.create(
+            name='Candidate',
+            address='Address',
+            country_code='US',
+            sector=['Apparel'],
+            row_index=2,
+            geocoded_point=Point(1, 1),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.source,
+        )
+        with override_settings(
+            EARTH_GENOME_CONTRIBUTOR_ID=self.contributor.id,
+        ):
+            candidate = Facility.objects.create(
+                name='Candidate',
+                address='Address',
+                country_code='US',
+                location=Point(1, 1),
+                created_from=candidate_item,
+                is_candidate=True,
+            )
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'CALL index_facilities_by(%s)',
+                [[candidate.id, self.facility.id]],
+            )
+
+        self.assertFalse(
+            FacilityIndex.objects.filter(id=candidate.id).exists()
+        )
+        self.assertTrue(
+            FacilityIndex.objects.filter(id=self.facility.id).exists()
+        )

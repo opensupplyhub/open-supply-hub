@@ -186,7 +186,6 @@ export const makeDashboardApiBlocksURL = () => '/api/api-blocks/';
 export const makeDashboardApiBlockURL = id => `/api/api-blocks/${id}/`;
 
 export const makeDashboardGeocoderURL = () => '/api/geocoder/';
-export const makeClaimGeocoderURL = id => `/api/facility-claims/${id}/geocode/`;
 
 export const makeDashboardActivityReportsURL = () =>
     '/api/facility-activity-reports/';
@@ -249,6 +248,8 @@ export const makeGetFacilitiesDownloadURLWithQueryString = (qs, pageSize) =>
 export const makeGetDownloadLocationsCheckoutSessionURL = () =>
     '/api/v1/download-locations-checkout-session/';
 export const makeClaimFacilityAPIURL = osId => `/api/facilities/${osId}/claim/`;
+export const makeClaimQualityCheckURL = osId =>
+    `/api/facilities/${osId}/claim/quality-check/`;
 export const makeSplitFacilityAPIURL = osID => `/api/facilities/${osID}/split/`;
 export const makeTransferFacilityAPIURL = osID =>
     `/api/facilities/${osID}/move/`;
@@ -299,6 +300,17 @@ export const makeGetFacilityClaimsURLWithQueryString = qs =>
     `/api/facility-claims/?${qs}`;
 export const makeGetFacilityClaimByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/`;
+// Authorization-checked download: the API answers with a short-lived
+// redirect to the file. Attachment payloads carry no direct storage
+// URLs (OSDEV-3370).
+export const makeFacilityClaimAttachmentDownloadURL = (claimID, attachmentID) =>
+    `/api/facility-claims/${claimID}/attachments/${attachmentID}/download/`;
+export const makePendingClaimURL = claimID =>
+    `/api/facility-claims/${claimID}/pending/`;
+export const makePendingClaimAttachmentsURL = claimID =>
+    `/api/facility-claims/${claimID}/attachments/`;
+export const makePendingClaimAttachmentURL = (claimID, attachmentID) =>
+    `/api/facility-claims/${claimID}/attachments/${attachmentID}/`;
 export const makeMessageFacilityClaimantByClaimIDURL = claimID =>
     `/api/facility-claims/${claimID}/message-claimant/`;
 export const makeApproveFacilityClaimByClaimIDURL = claimID =>
@@ -312,8 +324,13 @@ export const makeAddNewFacilityClaimReviewNoteURL = claimID =>
 
 export const makeGetOrUpdateApprovedFacilityClaimURL = claimID =>
     `/api/facility-claims/${claimID}/claimed/`;
-export const makeGetClaimedFacilitiesURL = () => '/api/facilities/claimed/';
+export const makeGetClaimedFacilitiesURL = statuses =>
+    statuses && statuses.length > 0
+        ? `/api/facilities/claimed/?statuses=${statuses.join(',')}`
+        : '/api/facilities/claimed/';
 export const makeClaimedFacilityDetailsLink = claimID => `/claimed/${claimID}/`;
+export const makePendingClaimEditLink = claimID =>
+    `/claimed/pending/${claimID}`;
 
 export const makeLogDownloadUrl = (path, recordCount) =>
     `/api/log-download/?path=${encodeURIComponent(

@@ -18,7 +18,12 @@ def get_canonical_items():
     "clean" value is one which has been passed through the `clean` function.
     """
     with get_session() as session:
-        facility_result = session.query(Facility.id, Facility.country_code, Facility.name, Facility.address).all()
+        # Candidate facilities (OSDEV-3243) are never match targets: a
+        # contributor upload must not be matched to an unconfirmed
+        # satellite detection, so they are kept out of the gazetteer's
+        # canonical set entirely.
+        facility_result = session.query(Facility.id, Facility.country_code, Facility.name, Facility.address). \
+            filter(Facility.is_candidate.is_(False)).all()
         facility_dict_data = transform_to_dict(facility_result)
 
         items = {str(i['id']):
@@ -39,8 +44,13 @@ def get_canonical_items():
                     FacilityListItem,
                     FacilityListItem.id == FacilityMatch.facility_list_item_id
                 ). \
+                join(
+                    Facility,
+                    Facility.id == FacilityMatch.facility_id
+                ). \
                 filter(
                     FacilityMatch.status == FacilityMatch.CONFIRMED,
+                    Facility.is_candidate.is_(False),
                 ).all()
         }
 

@@ -1,6 +1,7 @@
 from rest_framework.request import Request
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db import transaction
 from django.template.loader import get_template
 from waffle import switch_is_active
 from api.models import (
@@ -10,11 +11,20 @@ from api.models import (
     Facility
 )
 from countries.lib.countries import COUNTRY_NAMES
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
+from api.services.facility_claim_review_note_service import (
+    create_review_note,
+)
 
 
 PRODUCTION_LOCATION_PAGE_SWITCH = 'enable_production_location_page'
 MODERATION_PAUSE_EMAILS_SWITCH = 'enable_moderation_pause_info'
+# Relaxed claim-eligibility policy (employees may claim): swaps the
+# owner/senior-management wording in claimant-facing copy.
+RELAXED_CLAIM_ELIGIBILITY_SWITCH = 'relaxed_claim_eligibility'
 
 
 def make_oshub_url(request: Request):
@@ -89,6 +99,9 @@ def send_claim_facility_confirmation_email(request, facility_claim):
         'facility_name': facility_claim.facility.name,
         'facility_address': facility_claim.facility.address,
         'facility_url': make_facility_url(request, facility_claim.facility),
+        'relaxed_eligibility': switch_is_active(
+            RELAXED_CLAIM_ELIGIBILITY_SWITCH
+        ),
     }
 
     send_mail(
@@ -100,7 +113,37 @@ def send_claim_facility_confirmation_email(request, facility_claim):
     )
 
 
+@transaction.atomic
 def send_message_to_claimant_email(request, facility_claim, message):
+    """
+    Email a moderator message to the claimant and record it as a
+    CLAIMANT_MESSAGE review note.
+
+    The note is created here, next to the send, keeping the record and
+    the delivery as coupled as an external, irreversible send allows
+    (and so future delivery changes — e.g. bounce handling — happen in
+    one place). It is written before
+    the send on purpose: this function is atomic (nesting as a savepoint
+    under an already-atomic caller), so a failed send raises and rolls
+    the note back regardless of the calling context. Do NOT swallow send
+    errors and return normally — that would commit a CLAIMANT_MESSAGE
+    note for an email that never went out.
+
+    Known, accepted trade-off: if the outer transaction fails AFTER a
+    successful send (e.g. response serialization), the email has gone
+    out but the note rolls back — the claimant may get a duplicate on
+    retry. The reverse design (send after commit) would instead commit
+    phantom "emailed" records on send failure, which corrupts queue-
+    stage derivation; a record-less duplicate email is the cheaper
+    failure.
+    """
+    create_review_note(
+        facility_claim,
+        request.user,
+        message,
+        FacilityClaimReviewNoteTypes.CLAIMANT_MESSAGE,
+    )
+
     subj_template = get_template('mail/message_claimant_subject.txt')
     text_template = get_template('mail/message_claimant_body.txt')
     html_template = get_template('mail/message_claimant_body.html')
@@ -113,15 +156,34 @@ def send_message_to_claimant_email(request, facility_claim, message):
         'facility_address': facility_claim.facility.address,
         'facility_country': facility_country,
         'facility_url': make_facility_url(request, facility_claim.facility),
+        # OSDEV-2278: claimants update pending claims (fields and
+        # documents) on the platform instead of replying with
+        # attachments by email.
+        'claimed_url': '{}/claimed'.format(make_oshub_url(request)),
+        # Same eligibility sentence switch as the confirmation email, so
+        # the wrapper never contradicts the relaxed message body it
+        # carries.
+        'relaxed_eligibility': switch_is_active(
+            RELAXED_CLAIM_ELIGIBILITY_SWITCH
+        ),
     }
 
-    send_mail(
+    sent_count = send_mail(
         subj_template.render().rstrip(),
         text_template.render(message_dictionary),
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
         html_message=html_template.render(message_dictionary)
     )
+    if sent_count != 1:
+        # send_mail can report 0 without raising (e.g. an effectively
+        # empty recipient). Treat that as a failed delivery so the
+        # CLAIMANT_MESSAGE note rolls back with it instead of recording
+        # an email nobody received.
+        raise RuntimeError(
+            'Claimant message email was not sent '
+            f'(send_mail returned {sent_count}).'
+        )
 
 
 def send_claim_facility_approval_email(request, facility_claim):
@@ -198,6 +260,56 @@ def send_claim_facility_revocation_email(request, facility_claim):
     )
 
 
+def send_claim_updated_by_claimant_notice(request, facility_claim, changes):
+    """
+    Internal notice to the Claims team when a claimant edits their own
+    pending claim (OSDEV-3371). `changes` is a list of human-readable
+    change descriptions (changed field names, attachment add/remove
+    events). The email deliberately carries only names and a dashboard
+    link — never document contents or download URLs.
+    """
+    subj_template = get_template('mail/claim_updated_by_claimant_subject.txt')
+    text_template = get_template('mail/claim_updated_by_claimant_body.txt')
+    html_template = get_template('mail/claim_updated_by_claimant_body.html')
+
+    facility = facility_claim.facility
+    notice_dictionary = {
+        'claim_id': facility_claim.id,
+        'facility_name': facility.name,
+        'facility_address': facility.address,
+        'facility_country': COUNTRY_NAMES.get(facility.country_code, ''),
+        'contributor_name': facility_claim.contributor.name,
+        'updated_at': facility_claim.claimant_updated_at,
+        'changes': changes,
+        'claim_dashboard_url': '{}/dashboard/claims/{}'.format(
+            make_oshub_url(request), facility_claim.id
+        ),
+    }
+
+    message = text_template.render(notice_dictionary)
+
+    create_review_note(
+        facility_claim,
+        request.user,
+        message,
+        FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+    )
+
+    sent_count = send_mail(
+        subj_template.render(notice_dictionary).rstrip(),
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [settings.NOTIFICATION_EMAIL_TO],
+        html_message=html_template.render(notice_dictionary)
+    )
+
+    if sent_count != 1:
+        raise RuntimeError(
+            'Claim update notice email was not sent '
+            f'(send_mail returned {sent_count}).'
+        )
+
+
 def send_approved_claim_notice_to_one_contributor(request, claim, contributor):
     subj_template = get_template(
         'mail/approved_facility_claim_contributor_notice_subject.txt')
@@ -238,7 +350,26 @@ def send_approved_claim_notice_to_list_contributors(request, facility_claim):
                                                       contributor)
 
 
-def send_claim_update_note_to_one_contributor(request, claim, contributor):
+# Claim fields whose edit changes the name or address the production
+# location page displays, which the update notice calls out explicitly.
+CLAIM_NAME_ADDRESS_FIELDS = ('facility_name_english', 'facility_address')
+
+# Labels for the update notice where the model's verbose name reads badly.
+CLAIM_CHANGE_LABELS = {
+    'facility_name_english': 'Facility name (English)',
+}
+
+
+def _claim_change_label(change):
+    if change['name'] in CLAIM_CHANGE_LABELS:
+        return CLAIM_CHANGE_LABELS[change['name']]
+    verbose_name = change['verbose_name']
+    return verbose_name[:1].upper() + verbose_name[1:]
+
+
+def send_claim_update_note_to_one_contributor(
+    request, claim, contributor, changes=None
+):
     subj_template = get_template(
         'mail/facility_claim_profile_update_contributor_notice_subject.txt')
     text_template = get_template(
@@ -248,12 +379,15 @@ def send_claim_update_note_to_one_contributor(request, claim, contributor):
 
     facility_country = COUNTRY_NAMES[claim.facility.country_code]
 
-    changes = claim.get_changes()
+    if changes is None:
+        changes = claim.get_changes()
+    name_or_address_changed = False
     if changes:
+        name_or_address_changed = any(
+            c['name'] in CLAIM_NAME_ADDRESS_FIELDS for c in changes
+        )
         changes = [
-            '{}: {}'.format(
-                c['verbose_name'][:1].upper() + c['verbose_name'][1:],
-                c['current'])
+            '{}: {}'.format(_claim_change_label(c), c['current'])
             for c in changes
         ]
 
@@ -263,6 +397,7 @@ def send_claim_update_note_to_one_contributor(request, claim, contributor):
         'facility_country': facility_country,
         'facility_url': make_facility_url(request, claim.facility),
         'changes': changes,
+        'name_or_address_changed': name_or_address_changed,
     }
 
     send_mail(
@@ -274,18 +409,30 @@ def send_claim_update_note_to_one_contributor(request, claim, contributor):
     )
 
 
-def send_claim_update_notice_to_list_contributors(request, facility_claim):
+def send_claim_update_notice_to_list_contributors(
+    request, facility_claim, changes=None
+):
+    '''
+    Notify every contributor listed on the claimed location, except the
+    claimant: recording a claimed name or address as a contribution
+    makes the claimant one of the location's contributors, and they do
+    not need to hear about their own edit. `changes` is the claim diff
+    to report (claim.get_changes() when omitted); the caller passes it
+    when a later save of the claim would have hidden the edit.
+    '''
     list_contributors = [
         source.contributor
         for source in
         facility_claim.facility.sources()
         if source.contributor is not None
+        and source.contributor != facility_claim.contributor
     ]
 
     for contributor in list_contributors:
         send_claim_update_note_to_one_contributor(request,
                                                   facility_claim,
-                                                  contributor)
+                                                  contributor,
+                                                  changes)
 
 
 def send_api_notice(contributor, limit, grace_limit=None):

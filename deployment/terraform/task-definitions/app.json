@@ -38,16 +38,19 @@
         { "name": "CACHE_HOST", "value": "${cache_host}" },
         { "name": "CACHE_PORT", "value": "${cache_port}" },
         { "name": "AWS_STORAGE_BUCKET_NAME", "value": "${aws_storage_bucket_name}" },
+        { "name": "CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN", "value": "${claim_attachments_signing_role_arn}" },
         { "name": "KAFKA_BOOTSTRAP_SERVERS", "value": "${kafka_bootstrap_servers}" },
         { "name": "KAFKA_TOPIC_DEDUPE_BASIC_NAME", "value": "${kafka_topic_basic_name}" },
         { "name": "OPENSEARCH_HOST", "value": "${opensearch_host}" },
         { "name": "OPENSEARCH_PORT", "value": "${opensearch_port}" },
         { "name": "OPENSEARCH_SSL", "value": "${opensearch_ssl}" },
         { "name": "OPENSEARCH_SSL_CERT_VERIFICATION", "value": "${opensearch_ssl_cert_verification}" },
+        { "name": "CLAIMS_AUTOMATION_ACCOUNT_EMAIL", "value": "${claims_automation_account_email}" },
         { "name": "INSTANCE_SOURCE", "value": "${instance_source}" },
         { "name": "STRIPE_PRICE_ID", "value": "${stripe_price_id}" },
         { "name": "REACT_APP_DROMO_SCHEMA_ID", "value": "${dromo_schema_id}" },
-        { "name": "MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS", "value": "${memcached_view_cache_timeout_seconds}" }
+        { "name": "MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS", "value": "${memcached_view_cache_timeout_seconds}" },
+        { "name": "EARTH_GENOME_CONTRIBUTOR_ID", "value": "${earth_genome_contributor_id}" }
     ],
     "secrets": [
         { "name": "POSTGRES_USER", "valueFrom": "${rds_master_secret_arn}:username::" },

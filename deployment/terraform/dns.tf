@@ -107,6 +107,20 @@ resource "aws_route53_record" "ses_dkim" {
   records = ["${element(aws_ses_domain_dkim.app.dkim_tokens, count.index)}.dkim.amazonses.com"]
 }
 
+#
+# OSDEV-3112: UNTP mock Identity Resolver sandbox (Trust Provenance).
+# Pilot-lifetime record — teardown due 2026-10-31 (ticket AC#2) unless
+# Trust Provenance requests a further extension before then.
+#
+resource "aws_route53_record" "untp_idr_sandbox" {
+  count   = var.environment == "Staging" ? 1 : 0
+  zone_id = data.aws_route53_zone.external.zone_id
+  name    = "idr.sandbox.${local.domain_name}"
+  type    = "CNAME"
+  ttl     = "300"
+  records = ["osh.idr.truststack.dev"]
+}
+
 resource "aws_service_discovery_private_dns_namespace" "service_discovery" {
   name        = var.r53_service_discovery_zone
   description = "app service discovery"

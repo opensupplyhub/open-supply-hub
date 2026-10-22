@@ -1,6 +1,6 @@
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import models
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 
 from api.constants import FacilitiesQueryParams
 from api.isic import parse_isic4_filter_values
@@ -26,6 +26,36 @@ def build_isic_filter(parsed_isic_filters):
 
 
 class FacilityIndexNewManager(models.Manager):
+    def without_candidates(self):
+        """
+        FacilityIndex rows whose Facility is not a candidate.
+
+        ``api_facilityindex`` has no ``is_candidate`` column, so the
+        ``Facility.objects`` default manager (OSDEV-3380) cannot protect
+        surfaces that read the index directly: ``/api/facilities/``,
+        ``/api/facilities-downloads/``, the vector tiles and the CSV
+        export. The index trigger is being taught to skip candidate rows
+        (OSDEV-3243); this is the Django-side guard for rows that reach the
+        index anyway. It is a ``NOT EXISTS`` against the partial
+        ``api_facility_is_candidate_idx`` index, so it costs one probe of
+        a small set per row rather than a join against ``api_facility``.
+
+        Deliberately not folded into ``get_queryset()``: the details view
+        (``FacilityIndex.objects.get(pk=...)``) must keep resolving a
+        candidate so OSDEV-3249 can render it labeled, and the
+        processing/merge code looks up index rows by id after writes.
+        """
+        from .facility import Facility
+
+        return self.get_queryset().filter(
+            ~Exists(
+                Facility.including_candidates.filter(
+                    id=OuterRef('id'),
+                    is_candidate=True,
+                )
+            )
+        )
+
     def filter_by_query_params(
         self,
         params,
@@ -96,7 +126,9 @@ class FacilityIndexNewManager(models.Manager):
         isic_4_filters = params.getlist(FacilitiesQueryParams.ISIC_4)
 
         from .facility_index import FacilityIndex
-        facilities_qs = FacilityIndex.objects.all()
+        # Not ``self``: test_facility_search_accented_characters calls this
+        # method unbound with the TestCase as ``self``.
+        facilities_qs = FacilityIndex.objects.without_candidates()
 
         if id is None and string_matches_os_id_format(free_text_query):
             id = free_text_query
@@ -106,6 +138,9 @@ class FacilityIndexNewManager(models.Manager):
             from .facility_alias import FacilityAlias
 
             try:
+                # A NOT_A_FACILITY tombstone has facility_id None, so a
+                # retired OS ID rewrites to id=None and matches nothing
+                # rather than redirecting (OSDEV-3246).
                 id = FacilityAlias.objects.get(pk=id).facility_id
             except FacilityAlias.DoesNotExist:
                 pass

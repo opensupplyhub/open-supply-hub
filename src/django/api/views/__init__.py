@@ -12,7 +12,7 @@ from .auth.verify_email_view import VerifyEmailView
 from .contributor.active_contributors_count import active_contributors_count
 from .contributor.active_contributors import active_contributors
 from .contributor.all_contributor_types import all_contributor_types
-from .contributor.all_contributors import all_contributors
+from .contributor.all_contributors import AllContributors
 from .contributor.contributor_embed_config import (
     contributor_embed_config,
     getContributorTypeCount,

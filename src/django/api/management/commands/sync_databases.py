@@ -10,6 +10,10 @@ from django.utils import timezone
 from django.db.models import EmailField
 from django.db import connections
 
+from api.candidate_exclusion import exclude_candidate_rows
+from api.reassert_rba_promotions import after_database_sync
+from api.services import candidate_guard
+
 from api.models.extended_field import ExtendedField
 from api.models.user import User
 from api.models.source import Source
@@ -73,6 +77,18 @@ class DatabaseSynchronizer:
     #         - Auto-managed Django fields.
     #         - Fields handled separately in Phase 2 (circular references).
     #         - Fields that shouldn't be synchronized between databases.
+    #
+    #     candidate_lookup: String | None
+    #         ORM path from this model to Facility.is_candidate
+    #         ('is_candidate' on Facility, 'facility__is_candidate' on a
+    #         model with a facility FK). Source rows matching it are never
+    #         read, so candidate production locations (OSDEV-3378) and the
+    #         rows hanging off them stay on the source instance. Without it
+    #         a child row of a candidate fails to insert: Facility.objects
+    #         cannot find the candidate on the target, the FK keeps its
+    #         source-database instance and save() raises a cross-database
+    #         ValueError, which counts as a sync error and blocks the
+    #         post-sync reassert. Models with no path to Facility omit it.
     SYNC_MODELS = {
         'User': {
             'model': User,
@@ -127,6 +143,7 @@ class DatabaseSynchronizer:
         },
         'FacilityListItem': {
             'model': FacilityListItem,
+            'candidate_lookup': 'facility__is_candidate',
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
@@ -141,6 +158,7 @@ class DatabaseSynchronizer:
         },
         'Facility': {
             'model': Facility,
+            'candidate_lookup': 'is_candidate',
             'sync_field': 'id',
             'pk_type': 'custom',
             'foreign_keys': {
@@ -153,6 +171,7 @@ class DatabaseSynchronizer:
         },
         'FacilityMatch': {
             'model': FacilityMatch,
+            'candidate_lookup': 'facility__is_candidate',
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
@@ -166,6 +185,7 @@ class DatabaseSynchronizer:
         },
         'FacilityLocation': {
             'model': FacilityLocation,
+            'candidate_lookup': 'facility__is_candidate',
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
@@ -180,6 +200,7 @@ class DatabaseSynchronizer:
         },
         'FacilityClaim': {
             'model': FacilityClaim,
+            'candidate_lookup': 'facility__is_candidate',
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
@@ -195,6 +216,7 @@ class DatabaseSynchronizer:
         },
         'ExtendedField': {
             'model': ExtendedField,
+            'candidate_lookup': 'facility__is_candidate',
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
@@ -210,6 +232,7 @@ class DatabaseSynchronizer:
         },
         'FacilityActivityReport': {
             'model': FacilityActivityReport,
+            'candidate_lookup': 'facility__is_candidate',
             'sync_field': 'uuid',
             'pk_type': 'auto_increment',
             'foreign_keys': {
@@ -225,6 +248,7 @@ class DatabaseSynchronizer:
         },
         'FacilityAlias': {
             'model': FacilityAlias,
+            'candidate_lookup': 'facility__is_candidate',
             'sync_field': 'os_id',
             'pk_type': 'custom',
             'foreign_keys': {
@@ -279,6 +303,10 @@ class DatabaseSynchronizer:
 
         # Set up database connection.
         self.__setup_source_database_connection()
+
+    @property
+    def error_count(self):
+        return self.__stats['errors']
 
     def sync_all(self):
         '''Synchronize all configured models in dependency order.'''
@@ -373,8 +401,11 @@ class DatabaseSynchronizer:
                 # Get only records updated since last run.
                 current_start = (last_processed_timestamp
                                  if last_processed_timestamp else last_run)
-                source_records = model_class.objects.using('source').filter(
-                    updated_at__gt=current_start
+                source_records = exclude_candidate_rows(
+                    model_class.objects.using('source').filter(
+                        updated_at__gt=current_start
+                    ),
+                    model_config.get('candidate_lookup'),
                 ).order_by('updated_at').iterator(
                     chunk_size=self.__chunk_size)
 
@@ -529,10 +560,17 @@ class DatabaseSynchronizer:
             record_data, foreign_keys, model_name
         )
 
-        # Create and save the record.
+        # Create and save the record. The candidate guard (OSDEV-3248) is
+        # suspended for the insert: the sync replays rows that were
+        # already validated on the source instance, and RBA's own
+        # EARTH_GENOME_CONTRIBUTOR_ID (unset, or a different contributor
+        # id) must not reject a candidate or nameless Facility the source
+        # accepted. Without this, one such row would error the Facility
+        # sync and block the post-sync promotion reassert.
         try:
             new_record = model_class(**record_data)
-            new_record.save()
+            with candidate_guard.suspended():
+                new_record.save()
         except Exception as e:
             logger.exception(f'Error inserting record in {model_name}: {e}.')
             raise
@@ -781,11 +819,15 @@ class DatabaseSynchronizer:
                 # Query source records by updated_at.
                 current_start = (last_processed_timestamp
                                  if last_processed_timestamp else last_run)
-                source_list_items = \
+                # Items of candidate locations were skipped in Phase 1, so
+                # looking them up on the target would only log a miss.
+                source_list_items = exclude_candidate_rows(
                     FacilityListItem.objects.using('source').filter(
                         updated_at__gt=current_start
-                    ).order_by('updated_at').iterator(
-                        chunk_size=self.__chunk_size)
+                    ),
+                    self.SYNC_MODELS['FacilityListItem']['candidate_lookup'],
+                ).order_by('updated_at').iterator(
+                    chunk_size=self.__chunk_size)
 
                 logger.info(
                     'Created iterator for FacilityListItem facility '
@@ -1101,3 +1143,8 @@ class Command(BaseCommand):
                 self.style.ERROR(f'Synchronization failed: {e}')
             )
             raise CommandError(f'Synchronization failed: {e}')
+
+        after_database_sync(
+            error_count=synchronizer.error_count,
+            dry_run=options['dry_run'],
+        )

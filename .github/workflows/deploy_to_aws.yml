@@ -385,6 +385,9 @@ jobs:
           if [ "$ENV_SLUG" = "test" ]; then
             candidates+=("anonymized-database-dump|-anonymized-database-dump")
           fi
+          if [ "$ENV_SLUG" = "test" ] || [ "$ENV_SLUG" = "preprod" ]; then
+            candidates+=("database-restore|-database-restore")
+          fi
 
           wave1=()
           wave2=()
@@ -488,9 +491,9 @@ jobs:
 
   restore_database:
     needs: stop_logstash
-    # Ephemeral GitHub Actions runner on AWS CodeBuild (Test account); the
-    # project is managed by deployment/terraform/codebuild_github_runner.
-    runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    # Only starts and watches the restore task (database_restore.tf), so a
+    # GitHub-hosted runner is enough.
+    runs-on: ubuntu-latest
     environment: ${{ inputs.deploy-env || (github.ref_name == 'main' && 'Development') || (startsWith(github.ref_name, 'releases/') && 'Pre-prod') }}
     if:  ${{ inputs.deploy-mode != 'terraform-plan' && inputs.deploy-mode != 'terraform-plan-and-apply' }}
     steps:
@@ -507,27 +510,20 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-west-1
-          ENV_SLUG: ${{ steps.get_env_name.outputs.lowercase }}
         run: |
-          SECRET_JSON=$(aws secretsmanager get-secret-value \
-            --secret-id "oshub/${ENV_SLUG}/rds-master" \
-            --query SecretString --output text)
-          DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
-          DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
-
-          cd ./src/anon-tools
-          mkdir -p ./keys
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ./keys/key
-          docker build -t restore -f Dockerfile.restore .
-          docker run -v ./keys/key:/keys/key --shm-size=2gb --rm \
-              -e AWS_ACCESS_KEY_ID \
-              -e AWS_SECRET_ACCESS_KEY \
-              -e AWS_DEFAULT_REGION \
-              -e ENVIRONMENT=${{ vars.ENV_NAME }} \
-              -e DATABASE_NAME=opensupplyhub \
-              -e DATABASE_USERNAME="$DB_USER" \
-              -e DATABASE_PASSWORD="$DB_PASS" \
-              restore
+          # Runs as a Fargate task inside the environment's VPC, next to RDS
+          # (deployment/terraform/database_restore.tf), and streams its log here.
+          bash ./deployment/run_restore_task start "${{ vars.ENV_NAME }}"
+      - name: Stop the restore task
+        # Also runs when the workflow is cancelled or a step fails, so the
+        # Fargate task doesn't keep restoring on its own.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          bash ./deployment/run_restore_task stop
       - name: Reset database for ${{ vars.ENV_NAME }}
         if: ${{ vars.ENV_NAME == 'Development' && inputs.restore-db == true}}
         run: |
@@ -607,10 +603,11 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
           OPENSEARCH_DOMAIN: ${{ steps.export_variables.outputs.OPENSEARCH_DOMAIN }}
           EFS_AP_ID: ${{ steps.export_variables.outputs.EFS_AP_ID }}
           EFS_ID: ${{ steps.export_variables.outputs.EFS_ID }}
-          BASTION_IP: ${{ vars.BASTION_IP }}
+          ENVIRONMENT: ${{ vars.ENV_NAME }}
         run: |
           if [ "${{ inputs.restore-db }}" = "true" ]; then
             CLEAR_OPENSEARCH_TARGET=both
@@ -618,20 +615,16 @@ jobs:
             CLEAR_OPENSEARCH_TARGET=${{ inputs.clear-opensearch-target }}
           fi
           export CLEAR_OPENSEARCH_TARGET
-          cd ./deployment/clear_opensearch
-          mkdir -p script
-          mkdir -p ssh
-          echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ssh/config
-          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ssh/id_rsa
-          echo "" >> ssh/id_rsa
-          echo -n ${{ vars.BASTION_IP }} > script/.env
-          envsubst '${OPENSEARCH_DOMAIN} ${EFS_AP_ID} ${EFS_ID} ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY} ${CLEAR_OPENSEARCH_TARGET}' \
-            < clear_opensearch.sh.tpl > script/clear_opensearch.sh
-          envsubst < run.sh.tpl > script/run.sh
-          docker run --rm  \
-              -v ./script:/script \
-              -v ./ssh:/root/.ssh \
-              kroniak/ssh-client bash /script/run.sh
+          bash ./deployment/clear_opensearch/clear_opensearch.sh
+      - name: Close the OpenSearch tunnel
+        # Also runs when the workflow is cancelled or a step fails.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-west-1"
+        run: |
+          bash "$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh" stop 9443
 
   start_logstash:
     needs: clear_opensearch

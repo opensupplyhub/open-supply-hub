@@ -102,6 +102,8 @@ aws_chatbot_manage_channel_configuration = true
 manage_bedrock_cost_budget = true
 
 waf_enabled = true
+waf_rate_limit_enabled = true
+waf_rate_limit_action = "count"
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1TPjKeAnUgyIppdhAECREwYL"
 hubspot_subscription_id = "12847627"
@@ -142,8 +144,33 @@ vanta_assumed_role_principals_secret_name = "oshub/production/vanta-assumed-role
 anonymizer_destination_aws_account_secret_name = "oshub/production/anonymizer-destination-aws-account"
 anonymizer_kms_key_admin_users_secret_name = "oshub/production/anonymizer-kms-key-admin-users"
 contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-token"
+# OSDEV-3545: re-enabled. The 9/18 activation's duplicate cards were
+# reconciled on 2026-09-21 (OSDEV-3540), and the board-target decision is
+# resolved: AWS keeps posting to the live approval queue alongside legacy
+# (mixed cards accepted, not a separate parallel-run board).
+#
+# NOTE: the DynamoDB __CURSOR__ item -- not contribot_last_list_id below --
+# decides where the instance resumes. The cursor is untouched by the pause,
+# so applying this alone resumes from where the instance stopped on
+# 2026-09-21 and re-cards every list legacy has processed since. Advancing
+# __CURSOR__ is a deploy-day step that must happen immediately before the
+# apply; see OSDEV-3545.
+contribot_schedule_enabled = true
 contribot_monday_board_id = "3514246658"
+# OSDEV-3545: fallback only. Read by lists_repository.get_last_list_id() just
+# when the DynamoDB __CURSOR__ item is missing or unparseable, so it has no
+# effect while the cursor exists. Refreshed from 9684 to the highest list the
+# legacy instance had processed at the 2.31 code freeze, so that if the state
+# table is ever recreated the instance resumes near where production actually
+# is instead of re-carding every still-PENDING list above 9684. Replacing this
+# fallback with a loud failure on a missing cursor is deferred to OSDEV-2545.
+contribot_last_list_id = "9721"
+contribot_google_drive_shared_directory_id = "1eRc0dlAvlo467NfGZI0PoE1TX2J7xTg0"
 contribot_monday_api_key_secret_name = "oshub/production/contribot-monday-api-key"
 contribot_slack_api_url_secret_name = "oshub/production/contribot-slack-api-url"
 contribot_slack_failures_api_url_secret_name = "oshub/production/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/production/contribot-google-drive-service-key"
+
+# OSDEV-3374: automated-claims pipeline Lambda execution role, allowed to
+# read claim attachments directly (s3:GetObject on claim_attachments/* only).
+claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]

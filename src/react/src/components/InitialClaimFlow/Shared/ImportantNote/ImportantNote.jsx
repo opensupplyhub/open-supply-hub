@@ -1,5 +1,5 @@
 import React from 'react';
-import { string, object, oneOf } from 'prop-types';
+import { node, object, oneOf } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
@@ -30,7 +30,7 @@ ImportantNote.defaultProps = {
 
 ImportantNote.propTypes = {
     classes: object.isRequired,
-    text: string.isRequired,
+    text: node.isRequired,
     iconType: oneOf(['warning', 'info']),
 };
 

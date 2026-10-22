@@ -32,12 +32,15 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
 
     class Meta:
         model = FacilityClaim
-        fields = ('id', 'created_at', 'updated_at', 'contact_person', 'email',
+        fields = ('id', 'created_at', 'updated_at', 'claimant_updated_at',
+                  'contact_person', 'email',
                   'company_name', 'website', 'facility_description', 'status',
                   'contributor', 'facility', 'status_change', 'notes',
                   'facility_parent_company', 'job_title', 'linkedin_profile',
+                  'claimant_linkedin_profile_url',
                   'attachments', 'facility_website', 'sector',
-                  'facility_workers_count', 'facility_name_native_language')
+                  'facility_workers_count', 'facility_name_native_language',
+                  'facility_name_english', 'facility_address')
 
     def get_contributor(self, claim):
         return UserProfileSerializer(claim.contributor.admin).data
@@ -54,8 +57,13 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                 'status_change_reason': None,
             }
 
+        # status_change_by can be null on legacy decided claims —
+        # guard so those rows serialize instead of raising.
         return {
-            'status_change_by': claim.status_change_by.email,
+            'status_change_by': (
+                claim.status_change_by.email
+                if claim.status_change_by else None
+            ),
             'status_change_date': claim.status_change_date,
             'status_change_reason': claim.status_change_reason,
         }
@@ -81,5 +89,19 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
 
     def get_attachments(self, claim):
         attachments = FacilityClaimAttachments.objects.filter(claim=claim)
-        serializer = FacilityClaimAttachmentsSerializer(attachments, many=True)
-        return serializer.data
+        data = FacilityClaimAttachmentsSerializer(attachments, many=True).data
+
+        # storage_key is the attachment's S3 object key (an opaque UUID
+        # name under claim_attachments/ — never a URL and never the
+        # uploader's filename). It is exposed only on this staff-facing
+        # serializer so the automated-claims pipeline can read the
+        # object directly via IAM (OSDEV-3374) instead of receiving a
+        # presigned URL. The claimant-facing PendingClaimSerializer
+        # deliberately does not expose it.
+        storage_keys = {
+            attachment.id: attachment.claim_attachment.name
+            for attachment in attachments
+        }
+        for item in data:
+            item['storage_key'] = storage_keys.get(item['id'])
+        return data

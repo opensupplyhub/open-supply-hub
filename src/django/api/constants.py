@@ -98,17 +98,32 @@ class FacilityClaimStatuses:
     REVOKED = 'REVOKED'
 
 
+class FacilityClaimReviewNoteTypes:
+    # Direction of the note:
+    #   INTERNAL         moderator -> moderator
+    #   CLAIMANT_MESSAGE moderator -> claimant (emailed)
+    #   CLAIMANT_UPDATE  claimant  -> moderator (claim edits/uploads,
+    #                    OSDEV-2278)
+    INTERNAL = 'INTERNAL'
+    CLAIMANT_MESSAGE = 'CLAIMANT_MESSAGE'
+    CLAIMANT_UPDATE = 'CLAIMANT_UPDATE'
+
+
 class Affiliations:
     BENEFITS_BUSINESS_WORKERS = 'Benefits for Business and Workers (BBW)'
     BETTER_MILLS_PROGRAM = 'Better Mills Program'
     BETTER_WORK = 'Better Work (ILO)'
     CANOPY = 'Canopy'
+    CASCALE = 'Cascale'
     ETHICAL_TRADING_INITIATIVE = 'Ethical Trading Initiative'
     EUROPEAN_OUTDOOR_GROUP = 'European Outdoor Group'
     FAIR_LABOR_ASSOCIATION = 'Fair Labor Association'
     FAIR_WEAR_FOUNDATION = 'Fair Wear Foundation'
     SEDEX = 'SEDEX'
     SOCIAL_LABOR_CONVERGENCE_PLAN = 'Social and Labor Convergence Plan (SLCP)'
+    # Superseded by CASCALE (the organization rebranded). Retained so the
+    # claims already storing this string stay valid; it is no longer
+    # offered in the claim form. See OSDEV-2219.
     SUSTAINABLE_APPAREL_COALITION = 'Sustainable Apparel Coalition'
     SWEATFREE_PURCHASING_CONSORTIUM = 'Sweatfree Purchasing Consortium'
     HERHEATH = 'HERhealth'
@@ -227,6 +242,36 @@ class APIErrorMessages:
 
 class FacilitiesDownloadSettings:
     FREE_FACILITIES_DOWNLOAD_LIMIT = 5000
+    # Query param that ties pages 2..N of a download to the session that
+    # was opened (and charged) by page 1.
+    DOWNLOAD_ID_PARAM = 'download_id'
+    # Must be a cache shared by every Django process (memcached), since
+    # consecutive pages can be served by different workers or tasks.
+    SESSION_CACHE_ALIAS = 'facility_downloads'
+    SESSION_TTL_SECONDS = 1800
+
+
+class FacilitiesDownloadErrorMessages:
+    SESSION_REQUIRED = (
+        'Pages after the first one require the download_id returned in the '
+        '"next" link of the first page. Start the download from page 1.'
+    )
+    SESSION_INVALID = (
+        'The download session is invalid or has expired. Please start the '
+        'download again from page 1.'
+    )
+    SESSION_UNAVAILABLE = (
+        'Downloads are temporarily unavailable. Please try again later.'
+    )
+    LOGIN_REQUIRED = 'You must be logged in to download production locations.'
+    EMBED_SINGLE_CONTRIBUTOR = (
+        'Embedded map downloads must filter by exactly one contributor.'
+    )
+    EMBED_NOT_ENABLED = (
+        'Embedded map is not configured for the provided contributor.'
+    )
+    INVALID_PAGE = 'The page parameter must be a positive integer.'
+    INVALID_PAGE_SIZE = 'The pageSize parameter must be a positive integer.'
 
 
 class FacilitiesListSettings:
@@ -287,6 +332,20 @@ class APIV1ModerationEventErrorMessages:
     EVENT_NOT_PENDING = 'The moderation event should be in PENDING status.'
     INVALID_UUID_FORMAT = 'Invalid UUID format.'
     PERMISSION_DENIED = 'You do not have permission to perform this action.'
+
+
+class APIV1CandidateVoteErrorMessages:
+    NOT_A_CANDIDATE = (
+        'The location with the given id is not a candidate open to '
+        'validation votes.'
+    )
+    INVALID_VOTE = "vote must be 'confirmed' or 'not_a_facility'."
+    REQUEST_NOT_FOUND = 'Candidate retirement request not found.'
+    PILOT_DISABLED = 'Not found.'
+    CONSENSUS_BROKEN = (
+        'The live tally no longer supports retirement; the request has '
+        'been closed and the candidate was not retired.'
+    )
 
 
 # If the error isn’t field-specific, the non_field_errors key will be used

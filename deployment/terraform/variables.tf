@@ -347,7 +347,7 @@ variable "rds_shared_preload_libraries" {
 variable "rds_pgaudit_log" {
   description = "Comma-separated classes of SQL statements recorded by pgaudit. Classes: none, all, ddl, function, misc, misc_set, read, role, write; a class can be subtracted by prefixing it with '-' (e.g. \"all,-misc\"). Deliberately \"none\" for phase 1 of the staged rollout: CREATE EXTENSION pgaudit has to land before this is set, or DDL records are written without object type or object name. OSDEV-3236 flips it to \"ddl,role\". See doc/ops/database-auditing.md."
   type        = string
-  default     = "none"
+  default     = "ddl,role"
 
   validation {
     condition = alltrue([
@@ -801,6 +801,13 @@ variable "instance_source" {
   default = "os_hub"
 }
 
+# The account whose claim review notes are flagged is_automated on the
+# claims API (reminder emails, LLM review notes) — see
+# CLAIMS_AUTOMATION_ACCOUNT_EMAIL in src/django/oar/settings.py.
+variable "claims_automation_account_email" {
+  default = "data@opensupplyhub.org"
+}
+
 variable "opensearch_instance_type" {
   type    = string
   default = "t3.small.search"
@@ -919,6 +926,48 @@ variable "anonymized_database_password" {
   type      = string
   default   = ""
   sensitive = true
+}
+
+variable "database_restore_enabled" {
+  description = "Create the one-off Fargate task that restores the anonymized dump into this environment's database (database_restore.tf)"
+  type        = bool
+  default     = false
+}
+
+variable "database_restore_dump_s3_bucket" {
+  description = "Bucket holding the anonymized dump the restore task loads"
+  type        = string
+  default     = "oshub-dumps-anonymized"
+}
+
+variable "database_restore_dump_s3_key" {
+  description = "Key of the anonymized dump the restore task loads"
+  type        = string
+  default     = "osh_prod_large_anon.dump"
+}
+
+variable "database_restore_fargate_cpu" {
+  description = "CPU units for the database restore task (4096 = 4 vCPU)"
+  type        = number
+  default     = 4096
+}
+
+variable "database_restore_fargate_memory" {
+  description = "Memory (MiB) for the database restore task"
+  type        = number
+  default     = 16384
+}
+
+variable "database_restore_ephemeral_storage_gib" {
+  description = "Task storage (GiB) for the downloaded dump; Fargate allows 21-200"
+  type        = number
+  default     = 100
+}
+
+variable "database_restore_jobs" {
+  description = "pg_restore parallel jobs; keep at or below the target RDS instance's vCPUs"
+  type        = number
+  default     = 8
 }
 
 variable "codebuild_github_runner_enabled" {
@@ -1072,6 +1121,63 @@ variable "waf_enabled" {
   default = false
 }
 
+variable "waf_rate_limit_enabled" {
+  type        = bool
+  default     = false
+  description = "Add the API rate-based rules to the WAF web ACL (requires waf_enabled)"
+}
+
+variable "waf_rate_limit_action" {
+  type        = string
+  default     = "count"
+  description = "Action of the API rate-based rules: count (only record matches) or block (respond with 429)"
+
+  validation {
+    condition     = contains(["count", "block"], var.waf_rate_limit_action)
+    error_message = "waf_rate_limit_action must be either \"count\" or \"block\"."
+  }
+}
+
+variable "waf_rate_limit_evaluation_window_sec" {
+  type        = number
+  default     = 300
+  description = "Time window, in seconds, over which the API rate-based rules count requests per IP"
+
+  validation {
+    condition     = contains([60, 120, 300, 600], var.waf_rate_limit_evaluation_window_sec)
+    error_message = "waf_rate_limit_evaluation_window_sec must be one of 60, 120, 300 or 600."
+  }
+}
+
+variable "waf_api_rate_limit_per_ip" {
+  type        = number
+  default     = 2000
+  description = "Maximum /api/ requests per IP within the evaluation window, for all requests"
+
+  validation {
+    condition     = var.waf_api_rate_limit_per_ip >= 10 && var.waf_api_rate_limit_per_ip <= 2000000000
+    error_message = "waf_api_rate_limit_per_ip must be between 10 and 2000000000."
+  }
+}
+
+variable "waf_api_anon_rate_limit_per_ip" {
+  type        = number
+  default     = 500
+  description = "Maximum /api/ requests per IP within the evaluation window, for requests without an API token"
+
+  validation {
+    condition     = var.waf_api_anon_rate_limit_per_ip >= 10 && var.waf_api_anon_rate_limit_per_ip <= 2000000000
+    error_message = "waf_api_anon_rate_limit_per_ip must be between 10 and 2000000000."
+  }
+}
+
+variable "waf_rate_limit_exempt_ips" {
+  type        = list(string)
+  default     = []
+  description = "CIDR blocks (IPv4 or IPv6) exempt from the API rate-based rules"
+  sensitive   = true
+}
+
 variable "enable_legacy_info_site_redirect" {
   type    = bool
   default = false
@@ -1143,6 +1249,31 @@ variable "dromo_schema_id" {
   type        = string
   default     = ""
   description = "Dromo schema ID for data management"
+}
+
+variable "earth_genome_contributor_id" {
+  type        = string
+  default     = ""
+  description = "EARTH_GENOME_CONTRIBUTOR_ID: id of the api_contributor row the Earth Genome candidate ingest writes under. Only this contributor may create candidate (nameless) facilities (OSDEV-3248). Empty means nobody may; set per environment before the ingest runs."
+}
+
+variable "earth_index_api_url" {
+  type        = string
+  default     = "https://api.earthindex.ai"
+  description = "EARTH_INDEX_API_URL for the CLI task: base URL of the Earth Index API that `ingest_satellite_detections --project` exports deep-search results from (OSDEV-3244)."
+}
+
+variable "earth_index_api_key" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "EARTH_INDEX_API_KEY for the CLI task: an Earth Index API key (bearer token). Empty means the ingest can only read from a file (OSDEV-3244)."
+}
+
+variable "earth_index_project_id" {
+  type        = string
+  default     = ""
+  description = "EARTH_INDEX_PROJECT_ID for the CLI task: the Earth Index project `ingest_satellite_detections --project` uses when given no value (OSDEV-3244)."
 }
 
 # VPN EC2 variables
@@ -1280,6 +1411,18 @@ variable "contribot_schedule_expression" {
   default     = "rate(5 minutes)"
 }
 
+variable "contribot_schedule_enabled" {
+  type        = bool
+  description = <<-EOT
+    Whether the ContriBot fetch and retry schedules are active. Set to false to
+    pause the instance without destroying anything -- the DynamoDB cursor is
+    left untouched, so re-enabling resumes from where it stopped. Both rules are
+    governed together: disabling only the fetch rule leaves the retry rule
+    re-driving FAILED lists.
+  EOT
+  default     = true
+}
+
 variable "contribot_last_list_id" {
   type        = string
   description = "Initial fetch_lists resume watermark when the DynamoDB cursor item is missing or invalid."
@@ -1331,6 +1474,12 @@ variable "bedrock_cost_budget_monthly_limit_usd" {
   type        = string
   description = "Monthly USD limit for the Bedrock cost budget. Alerts at 80% actual and 100% forecasted spend via the global SNS topic (Slack)."
   default     = "25"
+}
+
+variable "lambda_errors_alarm_threshold" {
+  type        = number
+  description = "Sum of AWS/Lambda Errors over 5 minutes, across all functions in the environment's region, above which the alarm pages Slack. Defaults to 0 so any single Lambda error is surfaced; raise it per environment only if a known-noisy function makes that impractical."
+  default     = 0
 }
 
 # ---------------------------------------------------------------------------
@@ -1454,6 +1603,12 @@ variable "ip_whitelist_secret_name" {
   default = ""
 }
 
+variable "waf_rate_limit_exempt_ips_secret_name" {
+  type        = string
+  default     = ""
+  description = "Secrets Manager secret holding a JSON list of CIDR blocks exempt from the API rate-based rules"
+}
+
 variable "anonymized_database_name_secret_name" {
   type    = string
   default = ""
@@ -1558,4 +1713,17 @@ variable "contribot_slack_failures_api_url_secret_name" {
 variable "contribot_google_drive_service_key_secret_name" {
   type    = string
   default = ""
+}
+
+# IAM role ARNs (typically in another AWS account, e.g. the
+# automated-claims pipeline's Lambda execution role) that may read claim
+# attachment objects directly from the files bucket. Granted s3:GetObject
+# on the claim_attachments/ prefix only, via the bucket policy
+# (storage.tf). Set per environment in uncommitted tfvars; empty by
+# default so no cross-account access exists unless explicitly configured.
+# To get this value from the AWS console:
+# Lambda → auto-claims-moderate-claim → Configuration → Permissions → Execution role.
+variable "claim_attachments_reader_role_arns" {
+  type    = list(string)
+  default = []
 }
