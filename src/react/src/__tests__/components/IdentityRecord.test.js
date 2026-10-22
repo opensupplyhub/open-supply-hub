@@ -6,6 +6,7 @@ import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import { IdentityRecord } from '../../components/IdentityRecord/IdentityRecord';
 import {
+    asText,
     failureMessage,
     formatAddress,
     getClaims,
@@ -211,6 +212,78 @@ describe('identityRecord helpers', () => {
         expect(getClaims(bare)).toEqual([]);
         expect(getProcessCategories(bare)).toEqual([]);
         expect(getOperator(bare)).toBeNull();
+    });
+
+    /*
+     * The backend checks only that the document is an object carrying
+     * credentialSubject, so every shape below is one an issuer can
+     * legally publish. A throw here would be caught by the boundary
+     * wrapping the whole application, not just this page, so the
+     * visitor would lose the site rather than the record.
+     */
+    it('does not throw on singular values where a list is expected', () => {
+        const compacted = {
+            credentialSubject: {
+                name: 'Compacted',
+                // JSON-LD collapses one-element lists to a bare object.
+                processCategory: { name: 'Manufacturing' },
+                relatedParty: { role: 'operator', party: { name: 'Solo' } },
+                performanceClaim: {
+                    name: 'Only claim',
+                    claimedPerformance: { score: { code: 'Declared' } },
+                    conformityTopic: { name: 'Labour' },
+                    referenceCriteria: { name: 'Hours' },
+                },
+            },
+        };
+
+        expect(getProcessCategories(compacted)).toEqual(['Manufacturing']);
+        expect(getOperator(compacted)).toBe('Solo');
+
+        const claims = getClaims(compacted);
+        expect(claims).toHaveLength(1);
+        expect(claims[0].name).toBe('Only claim');
+        expect(claims[0].scores).toEqual(['Declared']);
+        expect(claims[0].topics).toEqual(['Labour']);
+        expect(claims[0].criteria).toEqual(['Hours']);
+    });
+
+    it('drops object-valued scalars rather than rendering them', () => {
+        const languageTagged = {
+            credentialSubject: {
+                // A value object is legal JSON-LD, and React throws on
+                // an object child.
+                name: { '@value': 'Acme', '@language': 'en' },
+                processCategory: ['Weaving'],
+                performanceClaim: [
+                    { name: { '@value': 'Odd' }, claimDate: {} },
+                ],
+            },
+        };
+
+        expect(asText(languageTagged.credentialSubject.name)).toBeNull();
+
+        const claims = getClaims(languageTagged);
+        expect(claims[0].name).toBe('Claim');
+        expect(claims[0].claimDate).toBeNull();
+    });
+
+    it('reads an address sent as a string or as a list', () => {
+        expect(formatAddress('1 Example Road, Example City')).toBe(
+            '1 Example Road, Example City',
+        );
+        expect(
+            formatAddress([{ streetAddress: '2 Example Road' }]),
+        ).toBe('2 Example Road');
+        expect(formatAddress({ streetAddress: { '@value': 'x' } })).toBeNull();
+    });
+
+    it('survives a credentialSubject sent as a list', () => {
+        const listed = { credentialSubject: [{ name: 'Listed' }] };
+
+        expect(getClaims(listed)).toEqual([]);
+        expect(getProcessCategories(listed)).toEqual([]);
+        expect(getOperator(listed)).toBeNull();
     });
 
     it('gives a specific message per failure reason', () => {

@@ -9,6 +9,7 @@ import Typography from '@material-ui/core/Typography';
 import apiRequest from '../../util/apiRequest';
 import { makeGetIdentityRecordURL } from '../../util/util';
 import {
+    asText,
     failureMessage,
     formatAddress,
     getClaims,
@@ -118,9 +119,14 @@ export const IdentityRecord = ({ classes, match }) => {
     const { credential } = data;
     const subject = getSubject(credential);
     const address = formatAddress(subject.address);
+    // Every value below comes from the issuer unmapped, so each one is
+    // coerced to text before it reaches JSX. React throws on an object
+    // child, and the boundary that would catch it wraps the whole app.
     const country =
-        subject.countryOfOperation?.countryName ||
-        subject.countryOfOperation?.countryCode;
+        asText(subject.countryOfOperation?.countryName) ||
+        asText(subject.countryOfOperation?.countryCode);
+    const name = asText(subject.name);
+    const registeredId = asText(subject.registeredId);
     const categories = getProcessCategories(credential);
     const claims = getClaims(credential);
     const operator = getOperator(credential);
@@ -135,7 +141,7 @@ export const IdentityRecord = ({ classes, match }) => {
 
             <Paper className={classes.card}>
                 <Typography variant="headline" className={classes.name}>
-                    {subject.name || 'Digital Facility Record'}
+                    {name || 'Digital Facility Record'}
                 </Typography>
 
                 <dl className={classes.fields}>
@@ -153,13 +159,13 @@ export const IdentityRecord = ({ classes, match }) => {
                             <dd className={classes.detail}>{country}</dd>
                         </>
                     )}
-                    {subject.registeredId && (
+                    {registeredId && (
                         <>
                             <dt className={classes.term}>
                                 Issuer&rsquo;s identifier
                             </dt>
                             <dd className={classes.detail}>
-                                {subject.registeredId}
+                                {registeredId}
                             </dd>
                         </>
                     )}

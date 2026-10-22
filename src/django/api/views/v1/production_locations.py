@@ -847,6 +847,18 @@ class ProductionLocations(ViewSet):
         # identifier, so it opens when that path opens.
         if not switch_is_active(IDENTITY_RESOLVER_SWITCH):
             raise Http404()
+
+        # Validated and checked for existence before anything reaches the
+        # retrieval service, as the write side already does. Without this
+        # an arbitrary string is echoed back with a 200 and runs the
+        # alias lookups, and the page renders a soft 404 for an
+        # identifier that was never issued.
+        if not validate_os_id(pk, raise_on_invalid=False):
+            raise Http404()
+
+        if not os_id_exists_here(pk):
+            raise Http404()
+
         outcome = retrieve_identity_record(pk)
 
         if not outcome.ok:

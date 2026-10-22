@@ -5,30 +5,78 @@
  * backend deliberately does not flatten it: which fields are shown, and
  * under what labels, is this page's decision rather than the service's.
  * These helpers are where that decision lives.
+ *
+ * Nothing here may assume a shape. The backend checks only that the
+ * document is an object carrying credentialSubject, so every value below
+ * is an issuer's to choose, and JSON-LD compaction routinely turns a
+ * one-element list into a bare object. A `.map` on such a value throws
+ * during render, and the boundary that catches it wraps the whole
+ * application rather than this page, so a single odd record would take
+ * the site down for the visitor. Hence asArray and asText.
  */
+
+// A list the issuer may have written as a single value, or as nothing.
+export const asArray = value => {
+    if (Array.isArray(value)) {
+        return value;
+    }
+    return value === null || value === undefined ? [] : [value];
+};
+
+/*
+ * A value that has to render as text. Objects and arrays are dropped
+ * rather than coerced: React throws on an object child, and
+ * "[object Object]" is worse than an absent row.
+ */
+export const asText = value => {
+    if (typeof value === 'string') {
+        return value || null;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+        return String(value);
+    }
+    return null;
+};
 
 export const formatAddress = address => {
     if (!address) {
         return null;
     }
 
+    // An issuer may send one address or a list of them; read the first.
+    const [first] = asArray(address);
+    if (!first) {
+        return null;
+    }
+    if (typeof first === 'string') {
+        return first || null;
+    }
+
+    const country = first.addressCountry || {};
     const parts = [
-        address.streetAddress,
-        address.addressLocality,
-        address.addressRegion,
-        address.postalCode,
-        address.addressCountry?.countryName ||
-            address.addressCountry?.countryCode,
+        asText(first.streetAddress),
+        asText(first.addressLocality),
+        asText(first.addressRegion),
+        asText(first.postalCode),
+        asText(country.countryName) || asText(country.countryCode),
     ].filter(Boolean);
 
     return parts.length ? parts.join(', ') : null;
 };
 
-export const getSubject = credential => credential?.credentialSubject || {};
+export const getSubject = credential => {
+    // credentialSubject is a list in JSON-LD as often as it is an object.
+    const [subject] = asArray(credential?.credentialSubject);
+    return subject && typeof subject === 'object' ? subject : {};
+};
 
 export const getProcessCategories = credential =>
-    (getSubject(credential).processCategory || [])
-        .map(category => category?.name || category?.code)
+    asArray(getSubject(credential).processCategory)
+        .map(category =>
+            typeof category === 'string'
+                ? category
+                : asText(category?.name) || asText(category?.code),
+        )
         .filter(Boolean);
 
 /*
@@ -41,26 +89,25 @@ export const getProcessCategories = credential =>
  * each one rather than being dropped.
  */
 export const getClaims = credential =>
-    (getSubject(credential).performanceClaim || []).map((claim, index) => ({
-        key: claim?.id || `claim-${index}`,
-        name: claim?.name || 'Claim',
-        claimDate: claim?.claimDate || null,
-        scores: (claim?.claimedPerformance || [])
-            .map(performance => performance?.score?.code)
+    asArray(getSubject(credential).performanceClaim).map((claim, index) => ({
+        key: asText(claim?.id) || `claim-${index}`,
+        name: asText(claim?.name) || 'Claim',
+        claimDate: asText(claim?.claimDate),
+        scores: asArray(claim?.claimedPerformance)
+            .map(performance => asText(performance?.score?.code))
             .filter(Boolean),
-        topics: (claim?.conformityTopic || [])
-            .map(topic => topic?.name)
+        topics: asArray(claim?.conformityTopic)
+            .map(topic => asText(topic?.name))
             .filter(Boolean),
-        criteria: (claim?.referenceCriteria || [])
-            .map(criterion => criterion?.name)
+        criteria: asArray(claim?.referenceCriteria)
+            .map(criterion => asText(criterion?.name))
             .filter(Boolean),
     }));
 
 export const getOperator = credential => {
-    const parties = getSubject(credential).relatedParty || [];
+    const parties = asArray(getSubject(credential).relatedParty);
     const operator = parties.find(party => party?.role === 'operator');
-    const name = operator?.party?.name;
-    return name || null;
+    return asText(operator?.party?.name);
 };
 
 /*
