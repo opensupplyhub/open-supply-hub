@@ -217,7 +217,9 @@ class PartnerFieldsViewSetTest(APITestCase):
     def test_include_inactive_true_returns_inactive_fields(self):
         """Verify ?include_inactive=true returns active and inactive fields."""
         active_field = self._create_partner_field("inc_active", active=True)
-        inactive_field = self._create_partner_field("inc_inactive", active=False)
+        inactive_field = self._create_partner_field(
+            "inc_inactive", active=False
+        )
 
         self._login_superuser()
         response = self.client.get(self.url, {"include_inactive": "true"})
@@ -231,7 +233,9 @@ class PartnerFieldsViewSetTest(APITestCase):
     def test_include_inactive_false_excludes_inactive_fields(self):
         """Verify ?include_inactive=false returns only active fields."""
         active_field = self._create_partner_field("excl_active", active=True)
-        inactive_field = self._create_partner_field("excl_inactive", active=False)
+        inactive_field = self._create_partner_field(
+            "excl_inactive", active=False
+        )
 
         self._login_superuser()
         response = self.client.get(self.url, {"include_inactive": "false"})
@@ -245,7 +249,9 @@ class PartnerFieldsViewSetTest(APITestCase):
     def test_include_inactive_non_true_value_excludes_inactive_fields(self):
         """Verify ?include_inactive=yes (non-true) returns only active fields."""
         active_field = self._create_partner_field("yes_active", active=True)
-        inactive_field = self._create_partner_field("yes_inactive", active=False)
+        inactive_field = self._create_partner_field(
+            "yes_inactive", active=False
+        )
 
         self._login_superuser()
         response = self.client.get(self.url, {"include_inactive": "yes"})
