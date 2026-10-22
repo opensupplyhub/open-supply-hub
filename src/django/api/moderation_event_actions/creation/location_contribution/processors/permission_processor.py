@@ -25,6 +25,7 @@ class PermissionProcessor(ContributionProcessor):
 
         partner_field_names = list(
             PartnerField.objects
+            .get_all_including_inactive()
             .filter(name__in=incoming_keys)
             .values_list("name", flat=True)
         )
@@ -32,9 +33,12 @@ class PermissionProcessor(ContributionProcessor):
         if not partner_field_names:
             return super().process(event_dto)
 
-        # Permission validation.
+        # Permission validation — check against all assigned fields, including
+        # inactive ones, so partners can submit before their field goes live.
         contributor_allowed: set[str] = set(
-            event_dto.contributor.partner_fields.values_list("name", flat=True)
+            event_dto.contributor.all_partner_fields.values_list(
+                "name", flat=True
+            )
         )
         requested_partner_field_names: set[str] = set(partner_field_names)
         unauthorized: set[str] = requested_partner_field_names \
