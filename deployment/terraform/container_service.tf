@@ -252,7 +252,7 @@ data "template_file" "app_cli" {
     opensearch_ssl_cert_verification              = var.opensearch_ssl_cert_verification
     instance_source                               = var.instance_source
     claims_automation_account_email               = var.claims_automation_account_email
-    earth_genome_contributor_id                   = var.earth_genome_contributor_id
+    earth_genome_contributor_id                   = local.earth_genome_contributor_id
     earth_index_api_url                           = var.earth_index_api_url
     earth_index_api_key                           = local.earth_index_api_key
     earth_index_project_id                        = local.earth_index_project_id
