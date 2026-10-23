@@ -32,6 +32,7 @@ INSERT INTO api_facilityindex (
     contrib_types, contributors, sector, lists, custom_text,
     number_of_workers, facility_type, processing_type, product_type,
     isic_section, isic_division, isic_group, isic_class,
+    isic5_section, isic5_division, isic5_group, isic5_class,
     parent_company_name, native_language_name, parent_company_id,
     facility_names, facility_list_items, facility_locations,
     approved_claim, facility_addresses, claim_info,
@@ -64,6 +65,10 @@ coalesce((select array_agg(distinct(isic_section)) from index_isic_section(af.id
 coalesce((select array_agg(distinct(isic_division)) from index_isic_division(af.id)), '{}'), -- isic_division
 coalesce((select array_agg(distinct(isic_group)) from index_isic_group(af.id)), '{}'), -- isic_group
 coalesce((select array_agg(distinct(isic_class)) from index_isic_class(af.id)), '{}'), -- isic_class
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'section', 'isic_5') AS code), '{}'), -- isic5_section
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'division', 'isic_5') AS code), '{}'), -- isic5_division
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'group', 'isic_5') AS code), '{}'), -- isic5_group
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'class', 'isic_5') AS code), '{}'), -- isic5_class
 coalesce((select array_agg(distinct (parent_company_name)) from index_parent_company_name(af.id)), '{}'), -- parent_company_name
 coalesce((select array_agg(distinct (native_language_name)) from index_native_language_name(af.id)), '{}'), -- native_language_name
 coalesce((select array_agg(distinct (parent_company_id)) from index_parent_company_id(af.id)), '{}'), -- parent_company_id
@@ -111,6 +116,10 @@ isic_section=excluded.isic_section,
 isic_division=excluded.isic_division,
 isic_group=excluded.isic_group,
 isic_class=excluded.isic_class,
+isic5_section=excluded.isic5_section,
+isic5_division=excluded.isic5_division,
+isic5_group=excluded.isic5_group,
+isic5_class=excluded.isic5_class,
 sector=excluded.sector,
 facility_list_items=excluded.facility_list_items,
 facility_locations=excluded.facility_locations,
@@ -150,6 +159,7 @@ INSERT INTO api_facilityindex (
     contrib_types, contributors, sector, lists, custom_text,
     number_of_workers, facility_type, processing_type, product_type,
     isic_section, isic_division, isic_group, isic_class,
+    isic5_section, isic5_division, isic5_group, isic5_class,
     parent_company_name, native_language_name, parent_company_id,
     facility_names, facility_list_items, facility_locations,
     approved_claim, facility_addresses, claim_info,
@@ -182,6 +192,10 @@ coalesce((select array_agg(distinct(isic_section)) from index_isic_section(af.id
 coalesce((select array_agg(distinct(isic_division)) from index_isic_division(af.id)), '{}'), -- isic_division
 coalesce((select array_agg(distinct(isic_group)) from index_isic_group(af.id)), '{}'), -- isic_group
 coalesce((select array_agg(distinct(isic_class)) from index_isic_class(af.id)), '{}'), -- isic_class
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'section', 'isic_5') AS code), '{}'), -- isic5_section
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'division', 'isic_5') AS code), '{}'), -- isic5_division
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'group', 'isic_5') AS code), '{}'), -- isic5_group
+coalesce((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'class', 'isic_5') AS code), '{}'), -- isic5_class
 coalesce((select array_agg(distinct (parent_company_name)) from index_parent_company_name(af.id)), '{}'), -- parent_company_name
 coalesce((select array_agg(distinct (native_language_name)) from index_native_language_name(af.id)), '{}'), -- native_language_name
 coalesce((select array_agg(distinct (parent_company_id)) from index_parent_company_id(af.id)), '{}'), -- parent_company_id
@@ -228,6 +242,10 @@ isic_section=excluded.isic_section,
 isic_division=excluded.isic_division,
 isic_group=excluded.isic_group,
 isic_class=excluded.isic_class,
+isic5_section=excluded.isic5_section,
+isic5_division=excluded.isic5_division,
+isic5_group=excluded.isic5_group,
+isic5_class=excluded.isic5_class,
 sector=excluded.sector,
 facility_list_items=excluded.facility_list_items,
 facility_locations=excluded.facility_locations,

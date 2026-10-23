@@ -90,14 +90,13 @@ export const FIELD_CONFIG = Object.freeze({
         key: 'isic_4',
         label: 'ISIC Rev. 4',
         tooltipText:
-            "The United Nations' International Standard Industrial Classification, Revision 4: the economic activity of this production location, as reported by organizations.",
+            "The United Nations' International Standard Industrial Classification, Revision 4: the economic activity of this production location.",
     }),
-    isic_4_mapped: Object.freeze({
-        key: 'isic_4_mapped',
-        label: 'Mapped from OS Hub (ISIC Rev. 4)',
-        drawerFieldName: 'ISIC Rev. 4',
+    isic_5: Object.freeze({
+        key: 'isic_5',
+        label: 'ISIC Rev. 5',
         tooltipText:
-            "ISIC Rev. 4 values Open Supply Hub worked out from this production location's Location Type or Processing Type, not reported by an organization.",
+            "The United Nations' International Standard Industrial Classification, Revision 5: the economic activity of this production location.",
     }),
     status: Object.freeze({
         key: 'status',
@@ -120,7 +119,7 @@ export const FIELD_CONFIG = Object.freeze({
 export const INDUSTRY_CLASSIFICATION_SECTION = Object.freeze({
     label: 'Industry Classification',
     description:
-        "Industry classification schemes classify a production location by its economic activity. Values can be submitted by contributors or mapped from the location's OS Hub Location Type and Processing Type.",
+        'Industry classification schemes classify a production location by its economic activity. Values come from contributors, including Open Supply Hub, which classifies locations from their Location Type and Processing Type.',
 });
 
 /** Display order for General Information section fields. */

@@ -37,9 +37,7 @@ export const updateProcessingTypeFilter = createAction(
     'UPDATE_PROCESSING_TYPE_FILTER',
 );
 export const updateIsic4Filter = createAction('UPDATE_ISIC4_FILTER');
-export const updateIsic4IncludeMappedFilter = createAction(
-    'UPDATE_ISIC4_INCLUDE_MAPPED_FILTER',
-);
+export const updateIsic5Filter = createAction('UPDATE_ISIC5_FILTER');
 export const updateProductTypeFilter = createAction(
     'UPDATE_PRODUCT_TYPE_FILTER',
 );

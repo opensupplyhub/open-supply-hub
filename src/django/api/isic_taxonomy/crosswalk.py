@@ -89,9 +89,9 @@ def replace_crosswalk_entries(entry_model, rows):
 def get_mapped_isic_values(facility_types, processing_types):
     '''
     The crosswalk rows that apply to a location, for its profile: what each
-    came from and its ISIC path by title. Reads the same SQL function as the
-    search index, so profile and search agree. Rows that deliberately map
-    to nothing are left out.
+    came from and its ISIC path (level, code and title). Reads the same SQL
+    function as the search index, so profile and search agree. Rows that
+    deliberately map to nothing are left out.
     '''
     from api.models import IsicCrosswalkEntry
 
@@ -105,6 +105,7 @@ def get_mapped_isic_values(facility_types, processing_types):
         path = [
             {
                 'level': level.replace('isic_', ''),
+                'code': getattr(entry, level),
                 'title': getattr(entry, f'{level}_title'),
             }
             for level in LEVEL_PATTERNS

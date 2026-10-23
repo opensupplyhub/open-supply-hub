@@ -40,7 +40,8 @@ const createPreloadedState = () => ({
         parentCompany: [],
         facilityType: [],
         processingType: [],
-        isic4: [{ value: 'section:C', label: 'C Manufacturing' }],
+        isic4: [{ value: 'section:C', label: 'Manufacturing' }],
+        isic5: [],
         productType: [],
         numberOfWorkers: [],
         dataSources: [],
@@ -80,6 +81,7 @@ describe('HomepageSidebarSearch ISIC reset', () => {
         fireEvent.click(getByText('Reset Search'));
 
         expect(reduxStore.getState().filters.isic4).toEqual([]);
+        expect(reduxStore.getState().filters.isic5).toEqual([]);
         expect(queryByText('Reset Search')).not.toBeInTheDocument();
     });
 });

@@ -4,7 +4,7 @@ from api.models import Contributor, ExtendedField, ProductType
 from api.facility_type_processing_type import (
     get_facility_and_processing_type,
 )
-from api.isic_taxonomy.isic4_lookup import match_isic4
+from api.isic_taxonomy.isic_lookup import full_entry, match_isic
 
 
 def extract_int_range_value(value):
@@ -87,21 +87,31 @@ def update_claim_fields(claim, claim_fields_to_update):
 
 # As many values as the v1 API accepts for isic_4, so one cell cannot set
 # off thousands of lookups.
-MAX_ISIC_4_VALUES = 15
+MAX_ISIC_VALUES = 15
+# The field an ISIC value arrives in says its revision.
+ISIC_REVISION_BY_FIELD = {ExtendedField.ISIC_4: '4', ExtendedField.ISIC_5: '5'}
+BARE_CODE = re.compile(r'^\s*([A-Za-z]|\d{1,4})\s*$')
 
 
-def _isic4_texts(entry):
+def _isic_texts(entry, revision):
+    # Values are separated by "|". Many titles contain commas, so commas
+    # only split a value made of bare codes ("1311, 1312").
     texts = []
     for part in entry.split('|'):
-        if len(texts) >= MAX_ISIC_4_VALUES:
+        pieces = part.split(',')
+        if not match_isic(part, revision) and all(
+            BARE_CODE.match(piece) or not piece.strip() for piece in pieces
+        ):
+            texts.extend(piece for piece in pieces if piece.strip())
+        elif part.strip():
+            texts.append(part)
+        if len(texts) >= MAX_ISIC_VALUES:
             break
-        pieces = [part] if match_isic4(part) else part.split(',')
-        # Blank pieces ("a,,b") don't count toward the limit.
-        texts.extend(piece for piece in pieces if piece.strip())
-    return texts[:MAX_ISIC_4_VALUES]
+    return texts[:MAX_ISIC_VALUES]
 
 
-def get_isic_4_extendedfield_value(field_value):
+def get_isic_extendedfield_value(field_value, field_name):
+    revision = ISIC_REVISION_BY_FIELD[field_name]
     if field_value is None:
         return {'raw_value': []}
 
@@ -115,24 +125,26 @@ def get_isic_4_extendedfield_value(field_value):
     for entry in entries:
         if entry in (None, '', {}):
             continue
-        # A list upload sends text: ISIC Rev 4 codes or titles, several
-        # separated by "|" or, as contributors also write them, commas.
-        # Titles contain commas themselves, so a value is tried whole
-        # before it is split on them. Values that match nothing are left
-        # out rather than guessed.
+        # A list upload sends text: ISIC codes or titles of the column's
+        # revision. Values that match nothing are left out rather than
+        # guessed.
         if isinstance(entry, str):
-            for text in _isic4_texts(entry):
-                match = match_isic4(text)
+            for text in _isic_texts(entry, revision):
+                match = match_isic(text, revision)
                 if match:
-                    # A copy: match_isic4 is cached and shares its result.
+                    # A copy: match_isic is cached and shares its result.
                     normalized_entries.append(dict(match[0]))
                     matched_values.append([text.strip(), match[1]])
             continue
-        if not isinstance(entry, dict):
+        if not isinstance(entry, dict) or all_values_empty(entry):
             continue
-        if all_values_empty(entry):
-            continue
-        normalized_entries.append(entry)
+        # ISIC 5 values are stored with every level filled in, which its
+        # index columns rely on. isic_4 objects (v1 API, RBA) are stored as
+        # sent.
+        if revision == '5':
+            entry = full_entry(entry, revision)
+        if entry:
+            normalized_entries.append(entry)
 
     value = {'raw_value': normalized_entries}
     if matched_values:
@@ -215,8 +227,8 @@ def create_extendedfield(field, field_value, item, contributor):
             field_value = {
                 'raw_value': field_value,
             }
-        elif field == ExtendedField.ISIC_4:
-            normalized_isic = get_isic_4_extendedfield_value(field_value)
+        elif field in ISIC_REVISION_BY_FIELD:
+            normalized_isic = get_isic_extendedfield_value(field_value, field)
             if not normalized_isic.get('raw_value'):
                 return
             field_value = normalized_isic
@@ -270,6 +282,7 @@ RAW_DATA_FIELDS = (
     ExtendedField.LEI_ID,
     ExtendedField.RBA_ID,
     ExtendedField.ISIC_4,
+    ExtendedField.ISIC_5,
 ) + ExtendedField.DATA_CENTER_FIELDS
 
 

@@ -41,7 +41,7 @@ from .utils import (
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
 from api.helpers.data_center import is_data_center
 from api.isic_taxonomy.crosswalk import get_mapped_isic_values
-from api.isic_taxonomy.runtime_config import get_taxonomy_config
+from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -535,12 +535,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     def get_isic_4_mapped(self, facility):
         '''
-        ISIC values mapped from the location's Facility Type and Processing
-        Type through the crosswalk (OSDEV-3382/OSDEV-3622). Empty until staff
-        enable ISIC in Django admin, so the profile and the search filter go
-        live together.
+        The ISIC Rev 4 values Open Supply Hub contributes for the location,
+        mapped from its Facility Type and Processing Type through the
+        crosswalk (OSDEV-3382/OSDEV-3622). Empty while the ISIC switch is
+        off, so the profile and the search filter go live together.
         '''
-        if not get_taxonomy_config()['isic4']['enabled']:
+        if not switch_is_active(ISIC_TAXONOMY_SWITCH):
             return []
         return get_mapped_isic_values(
             facility.facility_type,
