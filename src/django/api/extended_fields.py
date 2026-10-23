@@ -95,7 +95,9 @@ def _isic4_texts(entry):
     for part in entry.split('|'):
         if len(texts) >= MAX_ISIC_4_VALUES:
             break
-        texts.extend([part] if match_isic4(part) else part.split(','))
+        pieces = [part] if match_isic4(part) else part.split(',')
+        # Blank pieces ("a,,b") don't count toward the limit.
+        texts.extend(piece for piece in pieces if piece.strip())
     return texts[:MAX_ISIC_4_VALUES]
 
 
@@ -122,7 +124,8 @@ def get_isic_4_extendedfield_value(field_value):
             for text in _isic4_texts(entry):
                 match = match_isic4(text)
                 if match:
-                    normalized_entries.append(match[0])
+                    # A copy: match_isic4 is cached and shares its result.
+                    normalized_entries.append(dict(match[0]))
                     matched_values.append([text.strip(), match[1]])
             continue
         if not isinstance(entry, dict):

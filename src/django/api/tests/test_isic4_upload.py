@@ -186,6 +186,17 @@ class Isic4ExtendedFieldValueTest(SimpleTestCase):
 
         self.assertEqual(len(value['raw_value']), MAX_ISIC_4_VALUES)
 
+    def test_blank_pieces_do_not_count_toward_the_limit(self):
+        value = get_isic_4_extendedfield_value(',' * 40 + '1410')
+
+        self.assertEqual(value['raw_value'], [APPAREL])
+
+    def test_stored_entries_are_copies_of_the_cached_match(self):
+        first = get_isic_4_extendedfield_value('1410')['raw_value'][0]
+        first['class'] = 'changed'
+
+        self.assertEqual(match_isic4('1410')[0], APPAREL)
+
     def test_very_long_text_is_not_scanned(self):
         self.assertIsNone(match_isic4('apparel ' * 100))
 
