@@ -29,6 +29,7 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     facility_parent_company = SerializerMethodField()
     email = SerializerMethodField()
     attachments = SerializerMethodField()
+    claim_invite = SerializerMethodField()
 
     class Meta:
         model = FacilityClaim
@@ -40,7 +41,26 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                   'claimant_linkedin_profile_url',
                   'attachments', 'facility_website', 'sector',
                   'facility_workers_count', 'facility_name_native_language',
-                  'facility_name_english', 'facility_address')
+                  'facility_name_english', 'facility_address',
+                  'claim_invite')
+
+    def get_claim_invite(self, claim):
+        # The invite whose claim link this claim was submitted from, so
+        # moderators can see who referred the claimant.
+        invite = claim.claim_invite
+        if invite is None:
+            return None
+
+        return {
+            'sent_by_contributor': {
+                'id': invite.sent_by_contributor.id,
+                'name': invite.sent_by_contributor.name,
+            },
+            'sent_by_email': invite.sent_by_user.email,
+            'recipient_email': invite.recipient_email,
+            'note': invite.note,
+            'created_at': invite.created_at,
+        }
 
     def get_contributor(self, claim):
         return UserProfileSerializer(claim.contributor.admin).data

@@ -175,6 +175,41 @@ function DashboardClaimsDetails({
                     label="Local Language Name"
                     value={data.facility_name_native_language}
                 />
+                {data.claim_invite && (
+                    <>
+                        <InfoSection
+                            label="Invited By"
+                            value={
+                                <>
+                                    {createLink(
+                                        makeProfileRouteLink(
+                                            data.claim_invite
+                                                .sent_by_contributor.id,
+                                        ),
+                                        data.claim_invite.sent_by_contributor
+                                            .name,
+                                    )}
+                                    {` (${data.claim_invite.sent_by_email})`}
+                                </>
+                            }
+                        />
+                        <InfoSection
+                            label="Invite Sent To"
+                            value={data.claim_invite.recipient_email}
+                        />
+                        <InfoSection
+                            label="Invite Sent On"
+                            value={formatDate(
+                                data.claim_invite.created_at,
+                                DATE_FORMATS.LONG_WITH_TIME,
+                            )}
+                        />
+                        <InfoSection
+                            label="Note From Inviter"
+                            value={data.claim_invite.note}
+                        />
+                    </>
+                )}
             </Paper>
 
             <div style={dashboardClaimsDetailsStyles.notesHeaderStyles}>

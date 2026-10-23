@@ -240,6 +240,42 @@ class FacilityClaimInviteTest(APITestCase):
         claim = FacilityClaim.objects.get()
         self.assertEqual(invite, claim.claim_invite)
 
+    def claim_details(self, claim):
+        superuser = User.objects.create_superuser(
+            email='moderator@example.com', password=self.password
+        )
+        self.client.login(email=superuser.email, password=self.password)
+        response = self.client.get(f'/api/facility-claims/{claim.id}/')
+        self.assertEqual(200, response.status_code, response.content)
+        return response.json()
+
+    def test_claim_details_show_the_invite_to_moderators(self):
+        self.login_sender()
+        self.send_invite(note='We work with them.')
+        invite = FacilityClaimInvite.objects.get()
+        self.submit_claim(claim_invite=str(invite.uuid))
+
+        details = self.claim_details(FacilityClaim.objects.get())
+
+        claim_invite = details['claim_invite']
+        self.assertEqual(
+            {'id': self.sender.id, 'name': 'Example Brand'},
+            claim_invite['sent_by_contributor'],
+        )
+        self.assertEqual(self.sender_email, claim_invite['sent_by_email'])
+        self.assertEqual(
+            'manager@factory.example', claim_invite['recipient_email']
+        )
+        self.assertEqual('We work with them.', claim_invite['note'])
+        self.assertIsNotNone(claim_invite['created_at'])
+
+    def test_claim_details_without_an_invite_have_no_invite(self):
+        self.submit_claim()
+
+        details = self.claim_details(FacilityClaim.objects.get())
+
+        self.assertIsNone(details['claim_invite'])
+
     def test_claim_with_unknown_or_malformed_invite_code_still_succeeds(self):
         for code in ('not-a-uuid', '00000000-0000-0000-0000-000000000000'):
             response = self.submit_claim(claim_invite=code)
