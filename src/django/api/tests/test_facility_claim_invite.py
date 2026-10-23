@@ -151,6 +151,33 @@ class FacilityClaimInviteTest(APITestCase):
         self.assertEqual(400, self.send_invite(note='a' * 501).status_code)
         self.assertFalse(FacilityClaimInvite.objects.exists())
 
+    def test_rejects_links_in_the_note(self):
+        self.login_sender()
+        for note in (
+            'Verify your account at https://evil.example/login',
+            'Go to http://203.0.113.5 now',
+            'See www.example.org',
+            'Log in at evil.com/verify',
+            'Visit SECURE-LOGIN.CO',
+            'Details at bit.ly',
+        ):
+            response = self.send_invite(note=note)
+            self.assertEqual(400, response.status_code, note)
+            self.assertIn('links', str(response.json()), note)
+        self.assertFalse(FacilityClaimInvite.objects.exists())
+
+    def test_allows_notes_without_links(self):
+        self.login_sender()
+        for i, note in enumerate((
+            'We work with them. Please claim by Nov. 30.',
+            'Ask for the plant manager at Example Co. Ltd.',
+            'Our v2.0 audit is due soon.',
+        )):
+            response = self.send_invite(
+                recipient_email=f'manager{i}@factory.example', note=note
+            )
+            self.assertEqual(201, response.status_code, note)
+
     def test_rejects_claimed_or_pending_location(self):
         for claim_status in (FacilityClaimStatuses.APPROVED,
                              FacilityClaimStatuses.PENDING):

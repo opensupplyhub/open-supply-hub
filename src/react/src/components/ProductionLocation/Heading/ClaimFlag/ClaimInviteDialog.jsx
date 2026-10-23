@@ -141,7 +141,7 @@ const ClaimInviteDialog = ({
                     onChange={e => setNote(e.target.value)}
                     className={classes.textField}
                     InputProps={{ className: classes.noteInput }}
-                    helperText={`${note.length}/${CLAIM_INVITE_NOTE_MAX_LENGTH}`}
+                    helperText={`No links or web addresses. ${note.length}/${CLAIM_INVITE_NOTE_MAX_LENGTH}`}
                     inputProps={{
                         maxLength: CLAIM_INVITE_NOTE_MAX_LENGTH,
                         'data-testid': 'claim-invite-note',
