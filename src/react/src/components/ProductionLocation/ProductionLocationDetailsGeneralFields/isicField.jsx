@@ -81,6 +81,7 @@ export const IsicValue = ({ titles, mapped, showPath }) => (
                 : titles[titles.length - 1]}
         </span>
         <Chip
+            component="span"
             label={SCHEME}
             size="small"
             style={chipStyle(COLOURS.VERSION_TAG_BG, COLOURS.VERSION_TAG_TEXT)}
@@ -88,6 +89,7 @@ export const IsicValue = ({ titles, mapped, showPath }) => (
         />
         {mapped && (
             <Chip
+                component="span"
                 label={STATUS_MAPPED}
                 size="small"
                 style={chipStyle(
