@@ -61,11 +61,14 @@ class Migration(migrations.Migration):
     procedure changes that fill them, and IsicTaxonomyConfig.
 
     Also adds the `enable_isic_taxonomy` switch, created inactive. The
-    profile serializer and the taxonomy config, content and counts views
-    check it before touching IsicTaxonomyConfig or the new columns:
+    taxonomy config, content and counts views (and the profile's mapped
+    values) check it before reading IsicTaxonomyConfig or the crosswalk:
     `migrate` runs in post-deploy, after the new image is live, so
     without the switch they would query a table that does not exist yet
-    (as in 0247). It doubles as the kill switch for ISIC on the site.
+    (as in 0247). It hides ISIC on the site but does not gate the
+    `isic_4` search filter. It cannot cover the new api_facilityindex
+    columns, which every FacilityIndex query selects: as with 0171, search
+    and profiles can fail until this migration has run.
     """
 
     dependencies = [

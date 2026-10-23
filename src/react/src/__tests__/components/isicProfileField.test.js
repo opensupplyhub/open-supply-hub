@@ -185,7 +185,7 @@ describe('Industry Classification section', () => {
             isic4Mapped: [mapped('Sewing', ['Manufacturing'])],
         });
 
-        expect(props({ isic4Mapped: [mapped('Sewing', [])] })).toBeNull();
+        expect(mappedProps({ isic4Mapped: [mapped('Sewing', [])] })).toBeNull();
         expect(
             render(isicMapped.drawerData.promotedContribution.value).getByTestId(
                 'isic-mapped-badge',

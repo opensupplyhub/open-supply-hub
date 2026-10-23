@@ -1,6 +1,6 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from waffle import switch_is_active
@@ -15,14 +15,14 @@ from api.taxonomy_counts import (
 )
 from api.view_response_cache import cache_view_response
 
-TAXONOMY_COUNT_KINDS = ('isic4', 'isic4_mapped_extra')
-# The response cache keys on every query param, so an unknown param would
-# force a fresh full count; reject them instead.
-TAXONOMY_COUNT_PARAMS = {
-    'kind',
-    'include_mapped',
-    FacilitiesQueryParams.ISIC_4,
+# The response cache keys on every query param, so a param a kind does not
+# use, or a repeated one, would force a fresh count; reject them instead.
+PARAMS_BY_KIND = {
+    'isic4': {'kind', 'include_mapped'},
+    'isic4_mapped_extra': {'kind', FacilitiesQueryParams.ISIC_4},
 }
+TAXONOMY_COUNT_KINDS = tuple(PARAMS_BY_KIND)
+SINGLE_VALUE_PARAMS = ('kind', 'include_mapped')
 
 # Each distinct selection is its own cache entry and COUNT query, so the
 # public endpoint only accepts well-formed codes and a bounded selection.
@@ -76,10 +76,13 @@ class TaxonomyCountsView(APIView):
     )
     @cache_view_response('taxonomy_counts')
     def get(self, request):
-        unknown = set(request.query_params) - TAXONOMY_COUNT_PARAMS
-        if unknown:
+        repeated = [
+            param for param in SINGLE_VALUE_PARAMS
+            if len(request.query_params.getlist(param)) > 1
+        ]
+        if repeated:
             raise ValidationError({
-                param: 'Unknown parameter.' for param in sorted(unknown)
+                param: 'Give this parameter once.' for param in repeated
             })
 
         kind = request.query_params.get('kind')
@@ -91,27 +94,35 @@ class TaxonomyCountsView(APIView):
                 ),
             })
 
+        unknown = set(request.query_params) - PARAMS_BY_KIND[kind]
+        if unknown:
+            raise ValidationError({
+                param: 'Unknown parameter.' for param in sorted(unknown)
+            })
+
+        # A 404 is not cached, so counts appear as soon as the switch is on.
         if not switch_is_active(ISIC_TAXONOMY_SWITCH):
-            return Response({})
+            raise NotFound('ISIC is switched off.')
 
         if kind == 'isic4_mapped_extra':
-            parsed_isic_filters = parse_isic4_filter_values(
-                request.query_params.getlist(FacilitiesQueryParams.ISIC_4)
-            )
-            if len(parsed_isic_filters) > MAX_ISIC_SELECTIONS:
+            values = request.query_params.getlist(FacilitiesQueryParams.ISIC_4)
+            parsed_isic_filters = parse_isic4_filter_values(values)
+            if len(values) > MAX_ISIC_SELECTIONS:
                 raise ValidationError({
                     FacilitiesQueryParams.ISIC_4: (
                         f'At most {MAX_ISIC_SELECTIONS} values are allowed.'
                     ),
                 })
+            # Every value must be a well-formed level:code; ignored junk
+            # would still make a new cache entry.
             invalid = [
                 code for field_name, code in parsed_isic_filters
                 if not LEVEL_PATTERNS[field_name].match(code)
             ]
-            if invalid:
+            if invalid or len(parsed_isic_filters) != len(values):
                 raise ValidationError({
                     FacilitiesQueryParams.ISIC_4: (
-                        f'Invalid ISIC codes: {", ".join(invalid)}.'
+                        'Expected level:code values such as class:1410.'
                     ),
                 })
             return Response({

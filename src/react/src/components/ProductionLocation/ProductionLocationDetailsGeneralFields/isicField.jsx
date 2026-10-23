@@ -116,7 +116,9 @@ const getIndustryClassificationGroup = data => {
         value => `${pathKey(value)}\u0000${value.sourceName}`,
     );
     const mapped = uniqBy(
-        get(data, 'properties.isic_4_mapped', []).map(toMapped),
+        get(data, 'properties.isic_4_mapped', [])
+            .map(toMapped)
+            .filter(value => value.titles.length),
         pathKey,
     );
     const fields = [
