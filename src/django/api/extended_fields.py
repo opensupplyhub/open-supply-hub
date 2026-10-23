@@ -4,6 +4,7 @@ from api.models import Contributor, ExtendedField, ProductType
 from api.facility_type_processing_type import (
     get_facility_and_processing_type,
 )
+from api.isic_taxonomy.isic4_lookup import match_isic4
 
 
 def extract_int_range_value(value):
@@ -94,8 +95,23 @@ def get_isic_4_extendedfield_value(field_value):
         entries = [field_value]
 
     normalized_entries = []
+    matched_values = []
     for entry in entries:
         if entry in (None, '', {}):
+            continue
+        # A list upload sends text: ISIC Rev 4 codes or titles, several
+        # separated by "|" or, as contributors also write them, commas.
+        # Titles contain commas themselves, so a value is tried whole
+        # before it is split on them. Values that match nothing are left
+        # out rather than guessed.
+        if isinstance(entry, str):
+            for part in entry.split('|'):
+                texts = [part] if match_isic4(part) else part.split(',')
+                for text in texts:
+                    match = match_isic4(text)
+                    if match:
+                        normalized_entries.append(match[0])
+                        matched_values.append([text.strip(), match[1]])
             continue
         if not isinstance(entry, dict):
             continue
@@ -103,7 +119,10 @@ def get_isic_4_extendedfield_value(field_value):
             continue
         normalized_entries.append(entry)
 
-    return {'raw_value': normalized_entries}
+    value = {'raw_value': normalized_entries}
+    if matched_values:
+        value['matched_values'] = matched_values
+    return value
 
 
 def get_parent_company_extendedfield_value(field_value):
