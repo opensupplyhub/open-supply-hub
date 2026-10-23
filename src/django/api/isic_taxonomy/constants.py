@@ -17,10 +17,11 @@ REQUIRED_HEADERS = (
 ALLOWED_EXTENSIONS = {'.csv', '.xlsx', '.ods', '.odt'}
 
 MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
-# An ODS file is a zip: cap the unpacked sheet and repeated cells too, so a
-# small upload cannot expand into gigabytes.
+# An ODS file is a zip: cap the unpacked sheet and the cells read per row
+# too, so a small upload cannot expand into gigabytes. Real rows have 11
+# columns.
 MAX_ODS_CONTENT_BYTES = 50 * 1024 * 1024
-MAX_ODS_COLUMN_REPEAT = 64
+MAX_ODS_ROW_CELLS = 64
 
 ISIC_TAXONOMY_SWITCH = 'enable_isic_taxonomy'
 
