@@ -40,6 +40,8 @@ from .utils import (
 )
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
 from api.helpers.data_center import is_data_center
+from api.isic_taxonomy.crosswalk import get_mapped_isic_values
+from api.isic_taxonomy.runtime_config import get_taxonomy_config
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -57,6 +59,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     is_claimed = SerializerMethodField()
     partner_fields = SerializerMethodField()
     is_data_center = SerializerMethodField()
+    isic_4_mapped = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -84,6 +87,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'is_claimed',
             'partner_fields',
             'is_data_center',
+            'isic_4_mapped',
         )
         geo_field = 'location'
 
@@ -528,3 +532,17 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     def get_is_data_center(self, facility):
         return is_data_center(facility=facility.id)
+
+    def get_isic_4_mapped(self, facility):
+        '''
+        ISIC values mapped from the location's Facility Type and Processing
+        Type through the crosswalk (OSDEV-3382/OSDEV-3622). Empty until staff
+        enable ISIC in Django admin, so the profile and the search filter go
+        live together.
+        '''
+        if not get_taxonomy_config()['isic4']['enabled']:
+            return []
+        return get_mapped_isic_values(
+            facility.facility_type,
+            facility.processing_type,
+        )

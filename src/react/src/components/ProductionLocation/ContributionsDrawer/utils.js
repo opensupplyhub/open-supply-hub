@@ -23,6 +23,7 @@ export const getContributorCount = contributions => {
         return 0;
     }
     const sourceNames = contributions
+        .filter(contribution => !contribution?.isMapped)
         .map(contribution => {
             const name = contribution?.sourceName;
             return name != null ? String(name).trim() : name;
@@ -32,3 +33,10 @@ export const getContributorCount = contributions => {
     const uniqueCount = new Set(sourceNames).size;
     return uniqueCount;
 };
+
+// Values Open Supply Hub derived itself (ISIC mapped from Location Type or
+// Processing Type, OSDEV-3622), counted apart from organizations.
+export const getMappedCount = contributions =>
+    Array.isArray(contributions)
+        ? contributions.filter(contribution => contribution?.isMapped).length
+        : 0;

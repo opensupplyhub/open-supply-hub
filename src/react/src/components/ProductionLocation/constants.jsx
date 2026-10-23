@@ -88,9 +88,9 @@ export const FIELD_CONFIG = Object.freeze({
     }),
     isic_4: Object.freeze({
         key: 'isic_4',
-        label: 'ISIC 4',
+        label: 'International Standard Industrial Classification (ISIC)',
         tooltipText:
-            'The International Standard Industrial Classification (ISIC Rev. 4) code as defined by the United Nations indicating the primary economic activity of this production location based on the ISIC taxonomy classification.',
+            "The United Nations' classification of the economic activity of this production location. The tag shows the revision it was submitted under. Values marked Mapped from OS Hub were derived by Open Supply Hub from this location's Location Type or Processing Type, not reported by an organization.",
     }),
     status: Object.freeze({
         key: 'status',

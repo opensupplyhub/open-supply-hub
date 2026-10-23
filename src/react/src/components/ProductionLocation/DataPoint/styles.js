@@ -109,6 +109,11 @@ export default theme =>
             backgroundColor: COLOURS.CROWDSOURCED_CHIP_BG,
             color: COLOURS.CROWDSOURCED_CHIP_TEXT,
         }),
+        mappedChip: Object.freeze({
+            backgroundColor: COLOURS.MAPPED_CHIP_BG,
+            color: COLOURS.MAPPED_CHIP_TEXT,
+            border: `1px dashed ${COLOURS.MAPPED_CHIP_BORDER}`,
+        }),
         dateItem: Object.freeze({
             position: 'relative',
         }),
