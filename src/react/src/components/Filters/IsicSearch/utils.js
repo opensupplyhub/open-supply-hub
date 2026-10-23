@@ -54,7 +54,8 @@ export function searchEntries(entries, query, selectedIds) {
 export const filterValue = (entry, revision) =>
     `${entry.level}:${entry.codes[revision]}`;
 
-export const revisionsOf = entry => Object.keys(entry.codes).sort();
+export const revisionsOf = entry =>
+    Object.keys(entry.codes).sort((a, b) => a.localeCompare(b));
 
 // The selected entries, read back from the isic4 / isic5 filters.
 export function selectedEntries(entries, selections) {
