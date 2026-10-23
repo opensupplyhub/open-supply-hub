@@ -526,6 +526,20 @@ class IsicMappedSearchTest(FacilityAPITestCaseBase):
         )
         self.assertEqual(response.status_code, 400)
 
+    def test_counts_reject_params_another_kind_uses(self):
+        # Each would be its own cache entry and a fresh count.
+        for params in (
+            {'kind': 'isic4', 'isic_4': 'class:1410'},
+            {'kind': 'isic4_mapped_extra', 'include_mapped': 'true'},
+            {'kind': 'isic4_mapped_extra', 'isic_4': 'not-a-code'},
+            {'kind': 'isic4', 'include_mapped': ['true', 'false']},
+        ):
+            with self.subTest(params=params):
+                response = self.client.get(
+                    reverse('taxonomy_counts'), params,
+                )
+                self.assertEqual(response.status_code, 400)
+
     def test_mapped_extra_count_rejects_oversized_selection(self):
         response = self.client.get(
             reverse('taxonomy_counts'),
