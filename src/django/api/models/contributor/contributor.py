@@ -138,6 +138,14 @@ class Contributor(models.Model):
         blank=True,
         help_text='Partner fields that this contributor can access'
     )
+
+    @property
+    def all_partner_fields_including_inactive(self):
+        """Return partner fields for this contributor, including inactive."""
+        from api.models.partner_field import PartnerField
+        return PartnerField.objects.get_all_including_inactive().filter(
+            contributor=self
+        )
     anonymise_in_paid_products = models.BooleanField(
         'Anonymise contributor name in paid products',
         default=False,
