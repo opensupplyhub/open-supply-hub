@@ -38,7 +38,12 @@ class TaxonomyCountsView(APIView):
             'main search UI.'
         ),
     )
-    @cache_view_response('taxonomy_counts')
+    # The switch is part of the cache key, so turning ISIC off is not
+    # answered from counts cached while it was on.
+    @cache_view_response(
+        'taxonomy_counts',
+        vary_on=lambda request: str(switch_is_active(ISIC_TAXONOMY_SWITCH)),
+    )
     def get(self, request):
         unknown = set(request.query_params) - TAXONOMY_COUNT_PARAMS
         if unknown:

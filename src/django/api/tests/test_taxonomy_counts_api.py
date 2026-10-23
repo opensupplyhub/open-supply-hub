@@ -121,6 +121,13 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
             )
         self.assertEqual(response.data['section:C'], 1)
 
+        # Back off: not answered from the counts cached while it was on.
+        response = self.client.get(
+            reverse('taxonomy_counts'),
+            {'kind': 'isic4'},
+        )
+        self.assertEqual(response.status_code, 404)
+
     def test_invalid_kind_returns_400(self):
         response = self.client.get(
             reverse('taxonomy_counts'),
