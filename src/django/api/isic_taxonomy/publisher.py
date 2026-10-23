@@ -178,7 +178,6 @@ def _update_config_after_publish(
     with transaction.atomic():
         config.version = version
         config.json_s3_key = final_keys['json_s3_key']
-        config.bundle_s3_key = ''
         config.section_count = counts['section_count']
         config.division_count = counts['division_count']
         config.group_count = counts['group_count']

@@ -1,6 +1,7 @@
 from django.contrib.gis.geos import Point
 from django.core.cache import caches
 from django.urls import reverse
+from waffle.testutils import override_switch
 
 from api.models import (
     Facility,
@@ -13,6 +14,7 @@ from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
+@override_switch('enable_isic_taxonomy', active=True)
 class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
     def setUp(self):
         super().setUp()
@@ -83,6 +85,27 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
         self.assertEqual(response.data['group:141'], 1)
         self.assertEqual(response.data['class:1410'], 1)
         self.assertEqual(response.data['class:620'], 1)
+
+    def test_unknown_param_returns_400(self):
+        # The response cache keys on every param; an unknown one would
+        # force a full count on each request.
+        response = self.client.get(
+            reverse('taxonomy_counts'),
+            {'kind': 'isic4', 'cache_buster': '1'},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('cache_buster', response.data)
+
+    @override_switch('enable_isic_taxonomy', active=False)
+    def test_switch_off_returns_no_counts(self):
+        response = self.client.get(
+            reverse('taxonomy_counts'),
+            {'kind': 'isic4'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {})
 
     def test_invalid_kind_returns_400(self):
         response = self.client.get(

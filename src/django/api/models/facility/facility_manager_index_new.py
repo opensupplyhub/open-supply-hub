@@ -19,9 +19,14 @@ def build_isic_filter(parsed_isic_filters):
     if not parsed_isic_filters:
         return None
 
-    isic_filter = Q()
+    # One overlap per level, however many codes are selected.
+    codes_by_field = {}
     for field_name, code in parsed_isic_filters:
-        isic_filter |= Q(**{f'{field_name}__overlap': [code]})
+        codes_by_field.setdefault(field_name, []).append(code)
+
+    isic_filter = Q()
+    for field_name, codes in codes_by_field.items():
+        isic_filter |= Q(**{f'{field_name}__overlap': codes})
     return isic_filter
 
 

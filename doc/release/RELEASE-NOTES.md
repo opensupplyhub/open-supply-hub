@@ -12,7 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Database changes
 
 #### Migrations
-* `0254_add_isic_taxonomy.py` - Adds the `isic_section`, `isic_division`, `isic_group` and `isic_class` arrays to `api_facilityindex` and the singleton `api_isictaxonomyconfig` table. Adds the `index_isic_*` SQL functions, which read only the `isic_4` ExtendedFields visible on a location (an approved claim's, or an active match's from an active source, as for processing type). Re-creates `index_facilities_by` / `index_facilities` from 0250 (candidates stay excluded), `perform_extended_field_indexing` from 0131, and the list item, match and source (0235) and claim (0236) indexing procedures, each with the four ISIC columns. Runs under a 5s `lock_timeout`; the reverse restores every prior definition. See [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340).
+* `0254_add_isic_taxonomy.py` - Adds the `isic_section`, `isic_division`, `isic_group` and `isic_class` arrays to `api_facilityindex` the singleton `api_isictaxonomyconfig` table, and the `enable_isic_taxonomy` switch, created inactive, which keeps the new table and columns unread until it is on (closing the window before `migrate` runs) and doubles as a kill switch. Adds the `index_isic_*` SQL functions, which read only the `isic_4` ExtendedFields visible on a location (an approved claim's, or an active match's from an active source, as for processing type). Re-creates `index_facilities_by` / `index_facilities` from 0250 (candidates stay excluded), `perform_extended_field_indexing` from 0131, and the list item, match and source (0235) and claim (0236) indexing procedures, each with the four ISIC columns. Runs under a 5s `lock_timeout`; the reverse restores every prior definition. See [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340).
 * `0255_index_isic_search.py` - Builds the multicolumn GIN index `api_facilityindex_isic_gin` on the four ISIC arrays `CONCURRENTLY` (non-atomic, as 0233), so `api_facilityindex` stays writable while it builds; an invalid index left by an interrupted build is dropped first. See [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340).
 
 #### Schema changes
@@ -28,7 +28,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
     * `backfill_facility_index --fields isic_4`
-* [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - `backfill_facility_index --fields isic_4` fills the ISIC columns of existing locations; `reindex_database` is not needed. After the deployment, upload, publish and enable the ISIC Rev 4 taxonomy in Django admin; the search field stays hidden until then.
+* [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - `backfill_facility_index --fields isic_4` fills the ISIC columns of existing locations; it is a one-time call in `post_deployment` to remove after this release. `reindex_database` is not needed. To turn ISIC on: upload, publish and enable the ISIC Rev 4 taxonomy in Django admin, then turn on the `enable_isic_taxonomy` switch. The search field stays hidden until both are done.
 
 
 ## Release 2.32.0
