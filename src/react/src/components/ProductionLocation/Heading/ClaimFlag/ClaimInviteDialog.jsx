@@ -161,11 +161,13 @@ const ClaimInviteDialog = ({
                         setErrorMessage(null);
                     }}
                     className={classes.textField}
-                    InputProps={{ className: classes.noteInput }}
                     helperText={`No links or web addresses. ${note.length}/${CLAIM_INVITE_NOTE_MAX_LENGTH}`}
-                    inputProps={{
-                        maxLength: CLAIM_INVITE_NOTE_MAX_LENGTH,
-                        'data-testid': 'claim-invite-note',
+                    InputProps={{
+                        className: classes.noteInput,
+                        inputProps: {
+                            maxLength: CLAIM_INVITE_NOTE_MAX_LENGTH,
+                            'data-testid': 'claim-invite-note',
+                        },
                     }}
                 />
                 {errorMessage && (
