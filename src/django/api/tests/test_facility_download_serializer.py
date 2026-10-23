@@ -968,7 +968,12 @@ class DataCenterInformationProvenanceTest(FacilityAPITestCaseBase):
     @staticmethod
     def _expected_provenance(item, values):
         return {
-            **values,
+            **{
+                attribute: value
+                for attribute, value
+                in values.items()
+                if value is not None
+            },
             ADDED_ON_DATE_KEY: item.created_at.date().isoformat(),
         }
 
@@ -1051,9 +1056,9 @@ class DataCenterInformationProvenanceTest(FacilityAPITestCaseBase):
             },
         )
 
-    def test_list_item_without_provenance_gets_null_values(self):
-        """A list item contributed without provenance still gets a
-        `provenance` object, with null values and its added-on date."""
+    def test_list_item_without_provenance_excludes_null_values(self):
+        """A list item contributed without provenance still excludes a
+        null values and its added-on date."""
         facility = self._data_center_facility(
             _data_center_field(
                 ExtendedField.PUE,
