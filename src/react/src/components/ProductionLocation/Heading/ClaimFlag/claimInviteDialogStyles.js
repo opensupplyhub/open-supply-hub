@@ -24,6 +24,11 @@ export default theme =>
                 borderRadius: 0,
             }),
         }),
+        // The multiline outlined input pads its root, which is content-box
+        // at 100% width, so without this it overflows the dialog.
+        noteInput: Object.freeze({
+            boxSizing: 'border-box',
+        }),
         error: Object.freeze({
             marginTop: '10px',
         }),

@@ -140,6 +140,7 @@ const ClaimInviteDialog = ({
                     value={note}
                     onChange={e => setNote(e.target.value)}
                     className={classes.textField}
+                    InputProps={{ className: classes.noteInput }}
                     helperText={`${note.length}/${CLAIM_INVITE_NOTE_MAX_LENGTH}`}
                     inputProps={{
                         maxLength: CLAIM_INVITE_NOTE_MAX_LENGTH,
