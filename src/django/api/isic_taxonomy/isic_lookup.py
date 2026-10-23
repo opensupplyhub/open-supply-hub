@@ -123,5 +123,7 @@ def is_single_level(entry, revision):
     if len(levels) != 1:
         return False
     match = CODE_PREFIX.match(str(entry[levels[0]]))
-    code = match.group(1).upper() if match else None
+    if match is None:
+        return False
+    code = match.group(1).upper()
     return code in titles(revision) and level_of(code) == levels[0]

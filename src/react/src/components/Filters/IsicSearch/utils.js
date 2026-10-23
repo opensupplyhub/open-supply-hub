@@ -119,8 +119,14 @@ export const isicObjects = options =>
 export const isicOptions = entries =>
     (entries || []).flatMap(entry => {
         const level = [...LEVEL_ORDER].reverse().find(name => entry[name]);
-        const match = level && /^\s*(\S+)\s+-\s+(.+)$/.exec(entry[level]);
-        return match
-            ? [{ value: `${level}:${match[1]}`, label: match[2].trim() }]
+        const text = level ? String(entry[level]) : '';
+        const at = text.indexOf(' - ');
+        return at > 0
+            ? [
+                  {
+                      value: `${level}:${text.slice(0, at).trim()}`,
+                      label: text.slice(at + 3).trim(),
+                  },
+              ]
             : [];
     });
