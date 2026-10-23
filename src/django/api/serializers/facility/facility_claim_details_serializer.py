@@ -56,6 +56,8 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                 'id': invite.sent_by_contributor.id,
                 'name': invite.sent_by_contributor.name,
             },
+            # Profile pages are looked up by user id.
+            'sent_by_user_id': invite.sent_by_user.id,
             'sent_by_email': invite.sent_by_user.email,
             'recipient_email': invite.recipient_email,
             'note': invite.note,

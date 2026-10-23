@@ -183,8 +183,7 @@ function DashboardClaimsDetails({
                                 <>
                                     {createLink(
                                         makeProfileRouteLink(
-                                            data.claim_invite
-                                                .sent_by_contributor.id,
+                                            data.claim_invite.sent_by_user_id,
                                         ),
                                         data.claim_invite.sent_by_contributor
                                             .name,

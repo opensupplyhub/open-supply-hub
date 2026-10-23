@@ -446,6 +446,7 @@ export const facilityClaimPropType = shape({
             id: number.isRequired,
             name: string.isRequired,
         }).isRequired,
+        sent_by_user_id: number.isRequired,
         sent_by_email: string.isRequired,
         recipient_email: string.isRequired,
         note: string.isRequired,

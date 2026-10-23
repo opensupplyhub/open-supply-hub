@@ -162,6 +162,10 @@ class FacilityClaimInviteTest(APITestCase):
             'Log in at evil.com/verify',
             'Visit SECURE-LOGIN.CO',
             'Details at bit.ly',
+            'Visit login.attacker.ai/verify',
+            'See example.museum',
+            'Open 203.0.113.5/login',
+            'Write to jane@factory.example',
         ):
             response = self.send_invite(note=note)
             self.assertEqual(400, response.status_code, note)
@@ -174,6 +178,7 @@ class FacilityClaimInviteTest(APITestCase):
             'We work with them. Please claim by Nov. 30.',
             'Ask for the plant manager at Example Co. Ltd.',
             'Our v2.0 audit is due soon.',
+            'Ask for the manager, e.g. the plant manager.',
         )):
             response = self.send_invite(
                 recipient_email=f'manager{i}@factory.example', note=note
@@ -312,6 +317,7 @@ class FacilityClaimInviteTest(APITestCase):
             {'id': self.sender.id, 'name': 'Example Brand'},
             claim_invite['sent_by_contributor'],
         )
+        self.assertEqual(self.sender_user.id, claim_invite['sent_by_user_id'])
         self.assertEqual(self.sender_email, claim_invite['sent_by_email'])
         self.assertEqual(
             'manager@factory.example', claim_invite['recipient_email']
