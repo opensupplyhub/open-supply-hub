@@ -88,9 +88,16 @@ export const FIELD_CONFIG = Object.freeze({
     }),
     isic_4: Object.freeze({
         key: 'isic_4',
-        label: 'International Standard Industrial Classification (ISIC)',
+        label: 'ISIC Rev. 4',
         tooltipText:
-            "The United Nations' classification of the economic activity of this production location. The tag shows the revision it was submitted under. Values marked Mapped from OS Hub were derived by Open Supply Hub from this location's Location Type or Processing Type, not reported by an organization.",
+            "The United Nations' International Standard Industrial Classification, Revision 4: the economic activity of this production location, as reported by organizations.",
+    }),
+    isic_4_mapped: Object.freeze({
+        key: 'isic_4_mapped',
+        label: 'Mapped from OS Hub (ISIC Rev. 4)',
+        drawerFieldName: 'ISIC Rev. 4',
+        tooltipText:
+            "ISIC Rev. 4 values Open Supply Hub worked out from this production location's Location Type or Processing Type, not reported by an organization.",
     }),
     status: Object.freeze({
         key: 'status',
@@ -109,6 +116,13 @@ export const FIELD_CONFIG = Object.freeze({
     }),
 });
 
+/** Industry Classification section (OSDEV-3622). */
+export const INDUSTRY_CLASSIFICATION_SECTION = Object.freeze({
+    label: 'Industry Classification',
+    description:
+        "Industry classification schemes classify a production location by its economic activity. Values can be submitted by contributors or mapped from the location's OS Hub Location Type and Processing Type.",
+});
+
 /** Display order for General Information section fields. */
 export const ORDERED_GENERAL_FIELD_KEYS = Object.freeze([
     FIELD_CONFIG.name.key,
@@ -120,7 +134,6 @@ export const ORDERED_GENERAL_FIELD_KEYS = Object.freeze([
     FIELD_CONFIG.number_of_workers.key,
     FIELD_CONFIG.native_language_name.key,
     FIELD_CONFIG.parent_company_os_id.key,
-    FIELD_CONFIG.isic_4.key,
     FIELD_CONFIG.rba_id.key,
     FIELD_CONFIG.duns_id.key,
     FIELD_CONFIG.lei_id.key,

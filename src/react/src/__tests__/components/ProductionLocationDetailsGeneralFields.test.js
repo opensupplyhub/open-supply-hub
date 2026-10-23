@@ -151,14 +151,14 @@ describe('ProductionLocationDetailsGeneralFields component', () => {
                 isic_4_mapped: mapped,
             },
         });
-        const isicDataPoint = () =>
+        const dataPointLabelled = label => () =>
             screen
                 .getAllByTestId('data-point')
-                .find(point =>
-                    within(point).queryByText(
-                        'International Standard Industrial Classification (ISIC)',
-                    ),
-                );
+                .find(point => within(point).queryByText(label));
+        const isicDataPoint = dataPointLabelled('ISIC Rev. 4');
+        const mappedDataPoint = dataPointLabelled(
+            'Mapped from OS Hub (ISIC Rev. 4)',
+        );
         const cutAndSew = {
             facility_type: 'Final Product Assembly',
             processing_type: 'Cut & Sew',
@@ -176,43 +176,44 @@ describe('ProductionLocationDetailsGeneralFields component', () => {
             ],
         };
 
-        test('a location with only a mapped value shows it, marked, with its source', () => {
+        test('a location with only a mapped value gets the Industry Classification section with the mapped line', () => {
             renderComponent({ data: withIsic({ mapped: [cutAndSew] }) });
-            const point = isicDataPoint();
+            const point = mappedDataPoint();
 
+            expect(
+                screen.getByText('Industry Classification'),
+            ).toBeInTheDocument();
+            expect(isicDataPoint()).toBeUndefined();
             expect(
                 within(point).getByText(
                     'Manufacture of wearing apparel, except fur apparel',
                 ),
             ).toBeInTheDocument();
-            expect(within(point).getByText('ISIC 4')).toBeInTheDocument();
-            expect(
-                within(point).getByTestId('data-point-status-chip'),
-            ).toHaveTextContent('Mapped from OS Hub');
             expect(
                 within(point).getByText('From Processing Type \u201DCut & Sew\u201C'),
             ).toBeInTheDocument();
+            expect(
+                within(point).queryByTestId('data-point-contributor'),
+            ).not.toBeInTheDocument();
             expect(point).not.toHaveTextContent(/1410|C -/);
         });
 
-        test('the side panel shows the full path and counts the mapped value apart', () => {
+        test('the mapped side panel shows the full path, mapped to ISIC Rev. 4', () => {
             renderComponent({ data: withIsic({ mapped: [cutAndSew] }) });
-            within(isicDataPoint())
+            within(mappedDataPoint())
                 .getByTestId('data-point-sources-button')
                 .click();
 
             const drawer = screen.getByTestId('contributions-drawer');
             expect(
                 within(drawer).getByTestId('contributions-drawer-subtitle'),
-            ).toHaveTextContent(
-                '1 value was mapped from OS Hub data for International Standard Industrial Classification (ISIC)',
-            );
+            ).toHaveTextContent('1 value was mapped from OS Hub data to ISIC Rev. 4');
             expect(drawer).toHaveTextContent(
                 'Manufacturing › Manufacture of wearing apparel › Manufacture of wearing apparel, except fur apparel',
             );
         });
 
-        test('a submitted value is shown first, as crowdsourced', () => {
+        test('a submitted value gets its own ISIC Rev. 4 field, as crowdsourced', () => {
             renderComponent({
                 data: withIsic({
                     isic4: [
@@ -236,14 +237,13 @@ describe('ProductionLocationDetailsGeneralFields component', () => {
             ).toHaveTextContent('Crowdsourced');
             expect(within(point).getByText('Manufacturing')).toBeInTheDocument();
             expect(within(point).getByText('Test Contributor')).toBeInTheDocument();
+            expect(mappedDataPoint()).toBeDefined();
         });
 
-        test('no ISIC data, no ISIC field', () => {
+        test('no ISIC data, no Industry Classification section', () => {
             renderComponent({ data: withIsic({}) });
             expect(
-                screen.queryByText(
-                    'International Standard Industrial Classification (ISIC)',
-                ),
+                screen.queryByText('Industry Classification'),
             ).not.toBeInTheDocument();
         });
     });

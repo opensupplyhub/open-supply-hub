@@ -20,11 +20,7 @@ import { getTotalContributionsCount } from '../ContributionsDrawer/utils';
 import SourcesButton from './SourcesButton/SourcesButton';
 import MetaContributor from './MetaContributor/MetaContributor';
 import MetaDate from './MetaDate/MetaDate';
-import {
-    STATUS_CLAIMED,
-    STATUS_CROWDSOURCED,
-    STATUS_MAPPED,
-} from './constants';
+import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
 import getStatusChipClass from './utils';
 import dataPointStyles from './styles';
 
@@ -189,7 +185,7 @@ DataPoint.propTypes = {
     label: string.isRequired,
     value: oneOfType([string, node]).isRequired,
     tooltipText: oneOfType([string, node]),
-    statusLabel: oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED, STATUS_MAPPED]),
+    statusLabel: oneOf([STATUS_CLAIMED, STATUS_CROWDSOURCED]),
     contributorName: string,
     coordinatesErrorText: string,
     userId: oneOfType([string, number]),

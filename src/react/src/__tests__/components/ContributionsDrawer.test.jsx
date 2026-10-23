@@ -181,7 +181,7 @@ describe('ContributionsDrawer', () => {
 
         expect(
             screen.getByTestId('contributions-drawer-subtitle'),
-        ).toHaveTextContent('2 values were mapped from OS Hub data for ISIC');
+        ).toHaveTextContent('2 values were mapped from OS Hub data to ISIC');
     });
 
     test('renders promoted card when promotedContribution provided', () => {
