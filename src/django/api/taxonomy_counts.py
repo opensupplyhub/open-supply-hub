@@ -31,16 +31,23 @@ COUNTS_SQL = """
             ) AS code
         WHERE cardinality(fi.isic5_section) > 0
     )
-    SELECT entry.entry_id, count(DISTINCT located.id)
-    FROM located
-    JOIN unnest(%(revisions)s::text[], %(codes)s::text[], %(ids)s::text[])
-        AS entry(revision, code, entry_id)
-        ON entry.revision = located.revision AND entry.code = located.code
-    WHERE NOT EXISTS (
-        SELECT 1 FROM api_facility af
-        WHERE af.id = located.id AND af.is_candidate
-    )
-    GROUP BY entry.entry_id
+    -- Distinct (location, entry) pairs first: about twice as fast as
+    -- count(DISTINCT) per entry.
+    SELECT entry_id, count(*)
+    FROM (
+        SELECT DISTINCT located.id, entry.entry_id
+        FROM located
+        JOIN unnest(
+            %(revisions)s::text[], %(codes)s::text[], %(ids)s::text[]
+        ) AS entry(revision, code, entry_id)
+            ON entry.revision = located.revision
+            AND entry.code = located.code
+        WHERE NOT EXISTS (
+            SELECT 1 FROM api_facility af
+            WHERE af.id = located.id AND af.is_candidate
+        )
+    ) AS pairs
+    GROUP BY entry_id
 """
 
 
