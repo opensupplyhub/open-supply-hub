@@ -5,13 +5,19 @@ from api.migrations._migration_helper import MigrationHelper
 
 helper = MigrationHelper(connection)
 
-# One multicolumn GIN index serves the isic_4 overlap filter on any level.
-# Without it every ISIC search reads the whole of api_facilityindex.
+# One multicolumn GIN index per revision serves the ISIC overlap filters on
+# any level. Without them every ISIC search reads the whole of
+# api_facilityindex.
 INDEXES = {
     'api_facilityindex_isic_gin': (
         'CREATE INDEX CONCURRENTLY IF NOT EXISTS api_facilityindex_isic_gin '
         'ON api_facilityindex USING gin '
         '(isic_section, isic_division, isic_group, isic_class)'
+    ),
+    'api_facilityindex_isic5_gin': (
+        'CREATE INDEX CONCURRENTLY IF NOT EXISTS api_facilityindex_isic5_gin '
+        'ON api_facilityindex USING gin '
+        '(isic5_section, isic5_division, isic5_group, isic5_class)'
     ),
 }
 

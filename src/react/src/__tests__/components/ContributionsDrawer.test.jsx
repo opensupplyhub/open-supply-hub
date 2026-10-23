@@ -137,53 +137,6 @@ describe('ContributionsDrawer', () => {
         ).toHaveTextContent('1 organization has contributed data for Address');
     });
 
-    test('counts mapped ISIC values apart from organizations', () => {
-        renderContributionsDrawer({
-            fieldName: 'ISIC',
-            promotedContribution: {
-                value: 'Manufacture of wearing apparel',
-                sourceName: 'Source A',
-                date: '2022-01-01',
-                userId: 1,
-            },
-            contributions: [
-                {
-                    value: 'Manufacturing',
-                    sourceName: 'From Processing Type "Sewing"',
-                    isMapped: true,
-                },
-            ],
-        });
-
-        expect(
-            screen.getByTestId('contributions-drawer-subtitle'),
-        ).toHaveTextContent(
-            '1 organization has contributed data and 1 value was mapped from OS Hub data for ISIC',
-        );
-    });
-
-    test('names only mapped values when no organization contributed', () => {
-        renderContributionsDrawer({
-            fieldName: 'ISIC',
-            promotedContribution: {
-                value: 'Manufacturing',
-                sourceName: 'From Processing Type "Sewing"',
-                isMapped: true,
-            },
-            contributions: [
-                {
-                    value: 'Activities of head offices',
-                    sourceName: 'From Location Type "Office / HQ"',
-                    isMapped: true,
-                },
-            ],
-        });
-
-        expect(
-            screen.getByTestId('contributions-drawer-subtitle'),
-        ).toHaveTextContent('2 values were mapped from OS Hub data to ISIC');
-    });
-
     test('renders promoted card when promotedContribution provided', () => {
         renderContributionsDrawer({
             open: true,

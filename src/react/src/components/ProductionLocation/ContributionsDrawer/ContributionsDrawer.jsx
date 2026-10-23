@@ -22,7 +22,6 @@ import InfoPromotedText from './InfoPromotedText/InfoPromotedText';
 import DrawerSubtitle from './DrawerSubtitle/DrawerSubtitle';
 import {
     getContributorCount,
-    getMappedCount,
     getContributionsCount,
     getContributionsSectionLabel,
 } from './utils';
@@ -43,10 +42,6 @@ const ContributionsDrawer = ({
     );
     const contributorCount = useMemo(
         () => getContributorCount([...contributions, promotedContribution]),
-        [contributions, promotedContribution],
-    );
-    const mappedCount = useMemo(
-        () => getMappedCount([...contributions, promotedContribution]),
         [contributions, promotedContribution],
     );
     const sectionLabel = useMemo(
@@ -83,7 +78,6 @@ const ContributionsDrawer = ({
                 <DrawerSubtitle
                     fieldName={fieldName}
                     contributorCount={contributorCount}
-                    mappedCount={mappedCount}
                 />
                 <Divider />
                 {promotedContribution ? (

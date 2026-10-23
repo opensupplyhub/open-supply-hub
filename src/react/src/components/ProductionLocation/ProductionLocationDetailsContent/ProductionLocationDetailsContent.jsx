@@ -11,6 +11,7 @@ import DataSourcesInfo from '../Heading/DataSourcesInfo/DataSourcesInfo';
 import GeneralFields from '../ProductionLocationDetailsGeneralFields/ProductionLocationDetailsGeneralFields';
 import ClaimDataContainer from '../ClaimSection/ClaimDataContainer/ClaimDataContainer';
 import PartnerDataContainer from '../PartnerSection/PartnerDataContainer/PartnerDataContainer';
+import IndustryClassificationSection from '../IndustryClassificationSection/IndustryClassificationSection';
 import DetailsMap from '../ProductionLocationDetailsMap/ProductionLocationDetailsMap';
 import CandidateHeading from '../../Candidate/CandidateHeading';
 import CandidateValidationPanel, {
@@ -126,6 +127,10 @@ const ProductionLocationDetailsContent = ({
                 </Grid>
             </Grid>
             <ClaimDataContainer className={classes.containerItem} />
+            <IndustryClassificationSection
+                className={classes.containerItem}
+                data={data}
+            />
             <PartnerDataContainer />
         </div>
     );

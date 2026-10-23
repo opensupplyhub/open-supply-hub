@@ -17,7 +17,7 @@ class Command(BaseCommand):
         # in every environment.
         call_command(
             'backfill_facility_index',
-            fields='isic_4,isic_4_mapped',
+            fields='isic_4,isic_5,isic_4_mapped',
             parallel=backfill_parallel_worker_count(),
             batch_size=10000,
         )

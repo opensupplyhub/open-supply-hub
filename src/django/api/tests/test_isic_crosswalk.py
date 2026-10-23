@@ -419,7 +419,7 @@ class IsicMappedIndexingTest(FacilityAPITestCaseBase):
 
 @override_switch('enable_isic_taxonomy', active=True)
 class IsicMappedSearchTest(FacilityAPITestCaseBase):
-    '''Mapped values are opt-in in search and in the counts.'''
+    '''Values Open Supply Hub maps are always searched and counted.'''
 
     def setUp(self):
         super().setUp()
@@ -438,123 +438,36 @@ class IsicMappedSearchTest(FacilityAPITestCaseBase):
             feature['id'] for feature in response.json()['features']
         ]
 
-    def test_mapped_values_are_excluded_by_default(self):
-        self.assertEqual(self._search_ids({'isic_4': 'class:1410'}), [])
-
-    def test_opt_in_includes_mapped_values(self):
+    def test_mapped_values_are_searched(self):
         self.assertEqual(
-            self._search_ids({
-                'isic_4': 'section:C',
-                'isic_4_include_mapped': 'true',
-            }),
-            [self.facility.id],
+            self._search_ids({'isic_4': 'class:1410'}), [self.facility.id],
         )
 
-    def test_opt_in_combines_with_other_filters(self):
+    def test_mapped_values_combine_with_other_filters(self):
         self.assertEqual(
-            self._search_ids({
-                'isic_4': 'class:1410',
-                'isic_4_include_mapped': 'true',
-                'countries': 'US',
-            }),
+            self._search_ids({'isic_4': 'class:1410', 'countries': 'US'}),
             [self.facility.id],
         )
         self.assertEqual(
-            self._search_ids({
-                'isic_4': 'class:1410',
-                'isic_4_include_mapped': 'true',
-                'countries': 'CN',
-            }),
+            self._search_ids({'isic_4': 'class:1410', 'countries': 'CN'}),
             [],
         )
 
-    def test_opt_in_false_behaves_like_default(self):
+    def test_isic_5_search_finds_mapped_isic_4_values(self):
+        # Mapped values are ISIC 4; ISIC 5 group 141 translates to them.
         self.assertEqual(
-            self._search_ids({
-                'isic_4': 'class:1410',
-                'isic_4_include_mapped': 'false',
-            }),
-            [],
+            self._search_ids({'isic_5': 'group:141'}), [self.facility.id],
         )
 
-    def test_counts_exclude_mapped_values_by_default(self):
-        response = self.client.get(
-            reverse('taxonomy_counts'), {'kind': 'isic4'}
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertNotIn('class:1410', response.data)
-
-    def test_counts_with_include_mapped(self):
-        response = self.client.get(
-            reverse('taxonomy_counts'),
-            {'kind': 'isic4', 'include_mapped': 'true'},
-        )
-        self.assertEqual(response.data['section:C'], 1)
-        self.assertEqual(response.data['class:1410'], 1)
-
-    def test_counts_count_a_location_once_when_submitted_and_mapped(self):
+    def test_counts_include_mapped_values_once(self):
         FacilityIndex.objects.filter(id=self.facility.id).update(
             isic_section=['C'],
         )
         response = self.client.get(
-            reverse('taxonomy_counts'),
-            {'kind': 'isic4', 'include_mapped': 'true'},
+            reverse('taxonomy_counts'), {'kind': 'isic'},
         )
-        self.assertEqual(response.data['section:C'], 1)
-
-    def test_mapped_extra_count(self):
-        response = self.client.get(
-            reverse('taxonomy_counts'),
-            {'kind': 'isic4_mapped_extra', 'isic_4': 'division:14'},
-        )
-        self.assertEqual(response.data, {'count': 1})
-
-        FacilityIndex.objects.filter(id=self.facility.id).update(
-            isic_division=['14'],
-        )
-        caches['view_cache'].clear()
-        response = self.client.get(
-            reverse('taxonomy_counts'),
-            {'kind': 'isic4_mapped_extra', 'isic_4': 'division:14'},
-        )
-        self.assertEqual(response.data, {'count': 0})
-
-    def test_mapped_extra_count_rejects_malformed_codes(self):
-        response = self.client.get(
-            reverse('taxonomy_counts'),
-            {'kind': 'isic4_mapped_extra', 'isic_4': 'class:abc'},
-        )
-        self.assertEqual(response.status_code, 400)
-
-    def test_counts_reject_params_another_kind_uses(self):
-        # Each would be its own cache entry and a fresh count.
-        for params in (
-            {'kind': 'isic4', 'isic_4': 'class:1410'},
-            {'kind': 'isic4_mapped_extra', 'include_mapped': 'true'},
-            {'kind': 'isic4_mapped_extra', 'isic_4': 'not-a-code'},
-            {'kind': 'isic4', 'include_mapped': ['true', 'false']},
-        ):
-            with self.subTest(params=params):
-                response = self.client.get(
-                    reverse('taxonomy_counts'), params,
-                )
-                self.assertEqual(response.status_code, 400)
-
-    def test_mapped_extra_count_rejects_oversized_selection(self):
-        response = self.client.get(
-            reverse('taxonomy_counts'),
-            {
-                'kind': 'isic4_mapped_extra',
-                'isic_4': [f'class:{n:04d}' for n in range(51)],
-            },
-        )
-        self.assertEqual(response.status_code, 400)
-
-    def test_mapped_extra_count_without_selection_is_zero(self):
-        response = self.client.get(
-            reverse('taxonomy_counts'), {'kind': 'isic4_mapped_extra'}
-        )
-        self.assertEqual(response.data, {'count': 0})
+        self.assertEqual(response.data['4:C'], 1)
+        self.assertEqual(response.data['4:141'], 1)
 
 
 # The loader's backfill spawns worker processes on their own connections;

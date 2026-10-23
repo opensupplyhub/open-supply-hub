@@ -14,7 +14,6 @@ import DataPoint from '../DataPoint/DataPoint';
 import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
 import getSelectedDrawerField from '../utils';
 import getVisibleFields, { getDataCenterFieldGroups } from './utils';
-import getIndustryClassificationGroup from './isicField';
 import useDrawerState from '../hooks';
 import { SHOW_ADDITIONAL_IDENTIFIERS } from '../../../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
@@ -59,22 +58,12 @@ const ProductionLocationDetailsGeneralFields = ({
         [data, isDataCenter],
     );
 
-    // Further sections after General Information: data-center groups, then
-    // Industry Classification (OSDEV-3622).
-    const sectionGroups = useMemo(
-        () =>
-            [...dataCenterGroups, getIndustryClassificationGroup(data)].filter(
-                Boolean,
-            ),
-        [data, dataCenterGroups],
-    );
-
     const allFields = useMemo(
         () =>
-            sectionGroups.reduce((acc, group) => acc.concat(group.fields), [
+            dataCenterGroups.reduce((acc, group) => acc.concat(group.fields), [
                 ...visibleFields,
             ]),
-        [visibleFields, sectionGroups],
+        [visibleFields, dataCenterGroups],
     );
 
     const selectedDrawerField = useMemo(
@@ -144,7 +133,7 @@ const ProductionLocationDetailsGeneralFields = ({
             <Grid item xs={12} className={classes.dataList}>
                 {renderDataPoints(visibleFields)}
             </Grid>
-            {sectionGroups.map(group => (
+            {dataCenterGroups.map(group => (
                 <React.Fragment key={group.label}>
                     <Grid item container xs={12} className={classes.titleRow}>
                         <Typography
@@ -169,10 +158,7 @@ const ProductionLocationDetailsGeneralFields = ({
             <ContributionsDrawer
                 open={isDrawerOpen}
                 onClose={closeDrawer}
-                fieldName={
-                    selectedDrawerField?.drawerFieldName ??
-                    selectedDrawerField?.label
-                }
+                fieldName={selectedDrawerField?.label}
                 promotedContribution={
                     selectedDrawerField?.drawerData?.promotedContribution
                 }

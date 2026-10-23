@@ -4,7 +4,6 @@ from django.test.utils import CaptureQueriesContext
 from waffle.testutils import override_switch
 
 from api.models import ExtendedField
-from api.models.isic_taxonomy_config import IsicTaxonomyConfig
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
@@ -17,9 +16,6 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
         super().setUp()
         caches['view_cache'].clear()
         self.addCleanup(caches['view_cache'].clear)
-        self.config = IsicTaxonomyConfig.load()
-        self.config.is_active = True
-        self.config.save()
 
     def _add_processing_type(self, facility_type, processing_type):
         value = {
@@ -45,26 +41,29 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         return response.json()['properties']['isic_4_mapped']
 
-    def test_returns_path_by_title_with_its_source(self):
+    def test_returns_path_with_codes_and_its_source(self):
         self._add_processing_type('Final Product Assembly', 'Cut & Sew')
 
         self.assertEqual(self._mapped(), [{
             'facility_type': 'Final Product Assembly',
             'processing_type': 'Cut & Sew',
             'path': [
-                {'level': 'section', 'title': 'Manufacturing'},
+                {'level': 'section', 'code': 'C', 'title': 'Manufacturing'},
                 {
                     'level': 'division',
+                    'code': '14',
                     'title': 'Manufacture of wearing apparel',
                 },
                 {
                     'level': 'group',
+                    'code': '141',
                     'title': (
                         'Manufacture of wearing apparel, except fur apparel'
                     ),
                 },
                 {
                     'level': 'class',
+                    'code': '1410',
                     'title': (
                         'Manufacture of wearing apparel, except fur apparel'
                     ),
@@ -72,20 +71,13 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
             ],
         }])
 
-    def test_never_returns_codes(self):
-        self._add_processing_type('Final Product Assembly', 'Cut & Sew')
-
-        for value in self._mapped():
-            for step in value['path']:
-                self.assertEqual(set(step), {'level', 'title'})
-
     def test_keeps_the_level_the_crosswalk_supports(self):
         # Sewing maps to section C only; no more specific level is inferred.
         self._add_processing_type('Final Product Assembly', 'Sewing')
 
         self.assertEqual(
             self._mapped()[0]['path'],
-            [{'level': 'section', 'title': 'Manufacturing'}],
+            [{'level': 'section', 'code': 'C', 'title': 'Manufacturing'}],
         )
 
     def test_omits_values_that_do_not_map(self):
@@ -96,18 +88,10 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
     def test_empty_without_taxonomy_values(self):
         self.assertEqual(self._mapped(), [])
 
-    def test_empty_until_isic_is_enabled(self):
-        self._add_processing_type('Final Product Assembly', 'Cut & Sew')
-        self.config.is_active = False
-        self.config.save()
-        caches['view_cache'].clear()
-
-        self.assertEqual(self._mapped(), [])
-
     @override_switch('enable_isic_taxonomy', active=False)
     def test_switch_off_skips_isic_tables(self):
         # migrate runs after the new image is live, so with the switch off
-        # the profile must not read the ISIC config or crosswalk.
+        # the profile must not read the crosswalk.
         self._add_processing_type('Final Product Assembly', 'Cut & Sew')
         caches['view_cache'].clear()
 
@@ -116,7 +100,6 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
 
         self.assertEqual(mapped, [])
         self.assertFalse(any(
-            'isictaxonomyconfig' in q['sql']
-            or 'isic_mapped_entries' in q['sql']
+            'isic_mapped_entries' in q['sql']
             for q in queries
         ))
