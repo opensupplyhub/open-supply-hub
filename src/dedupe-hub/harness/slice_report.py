@@ -63,6 +63,16 @@ def wilson_half(k, n, z=1.96):
 
 
 def measure(rows, col, auto, floor):
+    """Score one model on one group of pairs and return the numbers as a dict.
+
+    Every pair lands in exactly one of five cells, decided by the auto bar and
+    the floor: auto ok (at or above the bar and a real match), auto bad (at or
+    above the bar but not a match, a wrong merge), review (between the floor
+    and the bar), missed (below the floor but a real match, a duplicate) and
+    none ok (below the floor and not a match). Also returns precision at the
+    bar, recall at the bar and recall at the floor, each with a 95% margin.
+    Returns None when the model has no scores for any of these pairs.
+    """
     sub = [r for r in rows if col in r]
     n = len(sub)
     if not n:
@@ -95,10 +105,19 @@ def measure(rows, col, auto, floor):
 
 
 def pct(x, width=6):
+    """Format a 0-1 share as a percentage with one decimal, right-aligned to
+    `width`. A missing value (NaN) prints as 'n/a'."""
     return f"{'n/a':>{width}s}" if x != x else f"{x * 100:{width}.1f}"
 
 
 def print_table(model, mode, slices, col, auto, floor):
+    """Print one table: a row per slice, for one model and one label view.
+
+    `slices` is the {name: rows} dict from slices.assign. In the middle block
+    the percentages are shares of that slice's pairs and add up to 100. The
+    last column is the raw count of wrong auto-merges, which is what the
+    lookalike slice is judged on.
+    """
     print(f"\n=== {model} | {mode} labels | auto >= {auto}, floor {floor} ===")
     print(f"{'slice':24s} {'n':>6s} {'pos':>5s} {'AUC':>6s} | "
           f"{'autoOK%':>7s} {'autoBAD%':>8s} {'review%':>7s} {'missed%':>7s} "
@@ -122,6 +141,9 @@ def print_table(model, mode, slices, col, auto, floor):
 
 
 def main():
+    """Read the pairs, scores and flags, then print the per-slice report for
+    production and for every model given with --scores. With --csv, also save
+    every number to a file so repeated runs can be compared."""
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--pairs", required=True)
