@@ -318,6 +318,13 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
     # note for the moderator. Posted as a JSON string, since the claim
     # form submits multipart form data.
     dismissed_warnings = DismissedWarningsField(required=False)
+    # The ?invite= code from a claim invite link (FacilityClaimInvite
+    # uuid). Unknown or malformed codes are ignored, never rejected.
+    claim_invite = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=64,
+    )
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)

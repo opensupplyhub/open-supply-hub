@@ -63,6 +63,7 @@ from api.models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimInvite,
     FacilityClaimReviewNote,
     FacilityListItem,
     FacilityLocation,
@@ -84,7 +85,10 @@ from api.facility_history import (
     create_dissociate_match_change_reason,
     create_facility_history_list,
 )
-from api.mail import send_claim_facility_confirmation_email
+from api.mail import (
+    send_claim_facility_confirmation_email,
+    send_claim_invite_email,
+)
 
 from api.pagination import FacilitiesGeoJSONPagination
 from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
@@ -103,7 +107,11 @@ from api.serializers import (
 )
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
-from api.throttles import DataUploadThrottle, DuplicateThrottle
+from api.throttles import (
+    ClaimInviteThrottle,
+    DataUploadThrottle,
+    DuplicateThrottle,
+)
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
@@ -114,6 +122,14 @@ from api.services.claim_quality_check_service import (
 )
 from api.serializers.facility.claim_quality_check_serializer import (
     ClaimQualityCheckSerializer,
+)
+from api.serializers.facility.facility_claim_invite_serializer import (
+    FacilityClaimInviteSerializer,
+)
+from api.services.facility_claim_invite_service import (
+    CLAIM_INVITE_SWITCH,
+    find_invite_for_claim,
+    validate_can_invite,
 )
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
@@ -185,6 +201,8 @@ class FacilitiesViewSet(ListModelMixin,
                 # which DuplicateThrottle collapses so each only reaches
                 # the model once; the SLC check it mirrors does the same.
                 throttles.append(DuplicateThrottle())
+            if self.action == 'claim_invite':
+                throttles.append(ClaimInviteThrottle())
             return throttles
 
         return super().get_throttles()
@@ -2504,6 +2522,11 @@ class FacilitiesViewSet(ListModelMixin,
             if sectors and len(sectors) > 0:
                 facility_claim.sector = sectors
 
+            facility_claim.claim_invite = find_invite_for_claim(
+                validated_data.get("claim_invite"),
+                facility,
+            )
+
             facility_claim.save()
 
             for file in files:
@@ -2586,6 +2609,53 @@ class FacilitiesViewSet(ListModelMixin,
             contributor.id,
         )
         return Response({'warnings': warnings})
+
+    @swagger_auto_schema(auto_schema=None, methods=['POST'])
+    @action(detail=True, methods=['POST'],
+            url_path='claim-invite',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    @transaction.atomic
+    def claim_invite(self, request, pk=None):
+        """
+        Email someone at an unclaimed production location a link to
+        claim its profile, naming the sender's organization as the
+        reference. Records a FacilityClaimInvite whose uuid is carried
+        in the claim link, so a claim submitted from it can be traced
+        back. Rejected with 400 when the location is closed, already
+        claimed or pending, or has been invited too recently (see
+        facility_claim_invite_service); per-sender volume is bounded by
+        ClaimInviteThrottle.
+        """
+        if not switch_is_active(CLAIM_INVITE_SWITCH):
+            raise NotFound()
+
+        try:
+            facility = Facility.objects.get(pk=pk)
+            contributor = request.user.contributor
+        except Facility.DoesNotExist as exc:
+            raise NotFound(detail='Facility not found.') from exc
+        except Contributor.DoesNotExist as exc:
+            raise NotFound(detail='Contributor not found.') from exc
+
+        serializer = FacilityClaimInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        recipient_email = serializer.validated_data['recipient_email']
+
+        validate_can_invite(facility, recipient_email)
+
+        claim_invite = FacilityClaimInvite.objects.create(
+            facility=facility,
+            sent_by_user=request.user,
+            sent_by_contributor=contributor,
+            recipient_email=recipient_email,
+            note=serializer.validated_data['note'],
+        )
+        send_claim_invite_email(request, claim_invite)
+
+        return Response(
+            {'recipient_email': recipient_email},
+            status=status.HTTP_201_CREATED,
+        )
 
     def __handle_file_upload(self, file, facility_claim):
         # Storage and naming are shared with the pending-claim edit

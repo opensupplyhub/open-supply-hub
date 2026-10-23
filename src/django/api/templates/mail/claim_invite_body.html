@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            {{ sender_name }} invited you to claim your facility's profile on OS Hub
+        </title>
+    </head>
+    <body>
+        <p>
+            Hello,
+        </p>
+        <p>
+            {{ sender_name }} found your facility on Open Supply Hub (OS Hub), the free, open map of
+            global supply chains, and invited you to claim its profile:
+        </p>
+        <ul>
+            <li>
+                Name of Production Location: {{ production_location_name }}
+            </li>
+            <li>
+                Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
+            </li>
+            <li>
+                OS Hub Profile: <a href="{{ production_location_url }}">{{ production_location_url }}</a>
+            </li>
+        </ul>
+        {% if note %}
+        <p>
+            A note from {{ sender_name }}:
+        </p>
+        <blockquote>
+            {{ note|linebreaksbr }}
+        </blockquote>
+        {% endif %}
+        <p>
+            Claiming is free and takes a few minutes. Once your claim is approved, your profile shows a
+            Claimed badge, and you can add contacts, certifications, production capabilities, MOQs and more,
+            so brands and retailers see accurate information about your location.
+        </p>
+        <p>
+            <a href="{{ claim_url }}"><strong>Start your claim</strong></a>
+        </p>
+        <p>
+            Tips for a quick approval:
+        </p>
+        <ul>
+            <li>
+                Sign in or create a free OS Hub account. If you create a new account, confirm your email
+                address, then come back to the link above to continue your claim.
+            </li>
+            <li>
+                Have proof that you work at the location ready, such as an employee ID badge, employment
+                letter, job contract or business card.
+            </li>
+            <li>
+                Have proof of the location's name and address ready, such as a business registration,
+                business license or utility bill.
+            </li>
+        </ul>
+        <p>
+            Read the <a href="https://info.opensupplyhub.org/resources/claim-a-facility">full guide to claiming a profile</a>.
+        </p>
+        <p>
+            If you don't work at this production location, you can ignore this email.
+        </p>
+        <p>
+            Best Regards,
+        </p>
+        {% include "mail/claims_team_signature_block.html" %}
+    </body>
+</html>

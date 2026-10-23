@@ -47,6 +47,7 @@ from .facility.facility_claim_review_note import (
 from .facility.facility_claim_attachments import (
     FacilityClaimAttachments
 )
+from .facility.facility_claim_invite import FacilityClaimInvite
 from .facility.facility_list import FacilityList
 from .facility.facility_list_item import FacilityListItem
 from .facility.facility_list_item_temp import FacilityListItemTemp

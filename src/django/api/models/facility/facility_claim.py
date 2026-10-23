@@ -419,6 +419,15 @@ class FacilityClaim(models.Model):
         blank=True,
         help_text='The sector(s) for goods made at the facility',
     )
+    claim_invite = models.ForeignKey(
+        'FacilityClaimInvite',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='claims',
+        help_text='The invite whose claim link this claim was submitted '
+                  'from, if any.'
+    )
     origin_source = models.CharField(
         choices=OriginSource.CHOICES,
         blank=True,

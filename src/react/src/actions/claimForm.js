@@ -11,6 +11,7 @@ import {
     appendSimpleField,
 } from '../util/util';
 import { dismissedWarningsFor } from '../util/claimQualityCheck';
+import { forgetClaimInviteCode, getClaimInviteCode } from '../util/claimInvite';
 
 // Step navigation actions.
 export const setActiveClaimFormStep = createAction(
@@ -102,11 +103,17 @@ export function submitClaimFormData(osID, freeEmissionsEstimateHasErrors) {
             );
         }
 
+        const claimInviteCode = getClaimInviteCode(osID);
+        if (claimInviteCode) {
+            postData.append('claim_invite', claimInviteCode);
+        }
+
         dispatch(startSubmitClaimFormData());
 
         return apiRequest
             .post(makeClaimFacilityAPIURL(osID), postData)
             .then(({ data }) => {
+                forgetClaimInviteCode(osID);
                 dispatch(completeSubmitClaimFormData(data));
             })
             .catch(err =>

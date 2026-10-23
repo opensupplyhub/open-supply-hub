@@ -92,6 +92,8 @@ const ProductionLocationDetailsContent = ({
                 isPending={!!isPendingClaim}
                 claimInfo={data?.properties?.claim_info}
                 isEmbed={!!embed}
+                facilityName={data?.properties?.name}
+                isClosed={!!data?.properties?.is_closed}
             />
             <Grid container className={classes.containerItem} spacing={16}>
                 <Grid item xs={12} lg={7} className={classes.identityRowItem}>

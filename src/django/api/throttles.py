@@ -43,6 +43,15 @@ class DataUploadThrottle(UserCustomRateThrottle):
     model_rate_field = 'data_upload_rate'
 
 
+class ClaimInviteThrottle(UserRateThrottle):
+    """
+    Bounds how many claim invite emails one user can send. Not
+    overridable per user, unlike the UserCustomRateThrottle scopes.
+    """
+    cache = caches['api_throttling']
+    scope = 'claim_invite'
+
+
 class DuplicateThrottle(BaseThrottle):
     cache = caches['api_throttling']
     MAX_REQUEST_SIZE = 1024 * 1024  # 1MB limit
