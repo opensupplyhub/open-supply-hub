@@ -279,7 +279,9 @@ class ContributorAdminForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.initial['partner_fields'] = list(
-                self.instance.all_partner_fields_including_inactive.values_list('pk', flat=True)
+                self.instance
+                .all_partner_fields_including_inactive
+                .values_list('pk', flat=True)
             )
 
 
