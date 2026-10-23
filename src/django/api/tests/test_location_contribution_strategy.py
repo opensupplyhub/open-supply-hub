@@ -2462,14 +2462,16 @@ class TestLocationContributionStrategy(APITestCase):
         The PermissionProcessor checks all fields including inactive ones, so
         the submission should succeed (202 Accepted).
         """
-        inactive_field = PartnerField.objects.get_all_including_inactive().create(
-            name='inactive_spotlight_field',
-            type=PartnerField.STRING,
-            active=False,
+        inactive_field = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name='inactive_spotlight_field',
+                type=PartnerField.STRING,
+                active=False,
+            )
         )
 
-        # add() writes to the junction table directly, so it works for inactive
-        # fields even though reads go through the active-only manager.
+        # add() writes to the junction table directly, so it works for
+        # inactive fields even though reads go through the active-only manager.
         self.contributor.partner_fields.add(inactive_field)
 
         production_location = self._create_existing_facility()
@@ -2503,8 +2505,8 @@ class TestLocationContributionStrategy(APITestCase):
         """
         AC#2: A partner NOT assigned to an inactive field is rejected with 403.
 
-        The PermissionProcessor recognises inactive fields as valid field names,
-        so attempting to submit one without assignment is a permission violation.
+        The PermissionProcessor recognises inactive fields as valid names,
+        so submitting one without assignment is a permission violation.
         """
         PartnerField.objects.get_all_including_inactive().create(
             name='unassigned_inactive_field',
@@ -2548,10 +2550,12 @@ class TestLocationContributionStrategy(APITestCase):
         The PartnerFieldTypeProcessor validates field types for inactive fields
         the same way it does for active ones.
         """
-        inactive_field = PartnerField.objects.get_all_including_inactive().create(
-            name='typed_inactive_field',
-            type=PartnerField.STRING,
-            active=False,
+        inactive_field = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name='typed_inactive_field',
+                type=PartnerField.STRING,
+                active=False,
+            )
         )
 
         self.contributor.partner_fields.add(inactive_field)

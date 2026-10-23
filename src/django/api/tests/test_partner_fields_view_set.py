@@ -247,7 +247,7 @@ class PartnerFieldsViewSetTest(APITestCase):
         self.assertNotIn(str(inactive_field.uuid), result_uuids)
 
     def test_include_inactive_non_true_value_excludes_inactive_fields(self):
-        """Verify ?include_inactive=yes (non-true) returns only active fields."""
+        """Verify ?include_inactive=yes (non-true) returns only active."""
         active_field = self._create_partner_field("yes_active", active=True)
         inactive_field = self._create_partner_field(
             "yes_inactive", active=False

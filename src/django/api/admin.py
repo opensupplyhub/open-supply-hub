@@ -275,7 +275,7 @@ class ContributorAdminForm(forms.ModelForm):
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
-        """Pre-populate partner_fields initial value to include inactive ones."""
+        """Pre-populate partner_fields to include inactive ones."""
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             self.initial['partner_fields'] = list(
@@ -294,7 +294,7 @@ class ContributorAdmin(SimpleHistoryAdmin):
         return ['name']
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
-        """Include inactive partner fields in the pick list, labelled '(inactive)'."""
+        """Include inactive partner fields in the pick list."""
         if db_field.name == 'partner_fields':
             kwargs['queryset'] = (
                 PartnerField.objects.get_all_including_inactive()

@@ -66,10 +66,12 @@ class CreatePartnerExtendedfieldsForSingleItemTest(TestCase):
         Without this, activating the field later would require partners to
         resubmit their data rather than triggering a logstash reindex.
         """
-        inactive_field = PartnerField.objects.get_all_including_inactive().create(
-            name="ac4_inactive_field",
-            type=PartnerField.STRING,
-            active=False,
+        inactive_field = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name="ac4_inactive_field",
+                type=PartnerField.STRING,
+                active=False,
+            )
         )
         self.contributor.partner_fields.add(inactive_field)
 
@@ -83,7 +85,7 @@ class CreatePartnerExtendedfieldsForSingleItemTest(TestCase):
                 facility_list_item=self.item,
                 field_name="ac4_inactive_field",
             ).exists(),
-            "ExtendedField should be created even when the partner field is inactive.",
+            "ExtendedField should be created even when the field is inactive.",
         )
         ef = ExtendedField.objects.get(
             facility_list_item=self.item,
@@ -93,10 +95,12 @@ class CreatePartnerExtendedfieldsForSingleItemTest(TestCase):
 
     def test_active_partner_field_value_is_still_written(self):
         """Active partner fields continue to produce ExtendedField rows."""
-        active_field = PartnerField.objects.get_all_including_inactive().create(
-            name="ac4_active_field",
-            type=PartnerField.STRING,
-            active=True,
+        active_field = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name="ac4_active_field",
+                type=PartnerField.STRING,
+                active=True,
+            )
         )
         self.contributor.partner_fields.add(active_field)
 
