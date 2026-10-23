@@ -165,7 +165,11 @@ class DataCenterDownloadHelper:
 
         for item in items:
             created_at = item['created_at']
-            provenance = {field: item[field] for field in PROVENANCE_FIELDS if item[field] is not None}
+            provenance = {
+                field: item[field]
+                for field in PROVENANCE_FIELDS
+                if item[field] is not None
+            }
             provenance[ADDED_ON_DATE_KEY] = (
                 created_at.date().isoformat() if created_at else None
             )
