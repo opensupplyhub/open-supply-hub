@@ -545,3 +545,44 @@ class ModerationEventsAddProductionLocationTest(
             [response.data["os_id"]],
             [feature["id"] for feature in search.json()["features"]],
         )
+
+    def test_mapped_isic_after_approval_with_a_taxonomy_processing_type(
+        self,
+    ):
+        """
+        OSDEV-3382: a location approved with an OS Hub processing type
+        gets the crosswalk's ISIC (Cut & Sew -> 1410), kept apart from
+        submitted ISIC and found only by the opt-in search.
+        """
+        from api.models.facility.facility_index import FacilityIndex
+
+        # ContriCleaner fills facility_type from processing_type when a
+        # submission names only the latter, so approved events carry both.
+        for field in ("facility_type", "processing_type"):
+            self.moderation_event.cleaned_data["fields"][field] = {
+                "raw_values": "Cut & Sew",
+                "processed_values": ["Cut & Sew"],
+            }
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+        os_id = response.data["os_id"]
+
+        index_row = FacilityIndex.objects.get(id=os_id)
+        self.assertEqual(["1410"], index_row.isic_mapped_class)
+        self.assertEqual([], index_row.isic_class)
+
+        def search(**params):
+            result = self.client.get(
+                "/api/facilities/", {"isic_4": "class:1410", **params}
+            )
+            return [feature["id"] for feature in result.json()["features"]]
+
+        self.assertEqual([], search())
+        self.assertEqual([os_id], search(isic_4_include_mapped="true"))
