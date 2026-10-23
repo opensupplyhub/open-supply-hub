@@ -38,7 +38,14 @@ class PartnerFieldsViewSet(ReadOnlyModelViewSet):
     pagination_class = PartnerFieldCursorPagination
 
     def get_queryset(self):
-        """Return active fields, or all fields when ?include_inactive=true."""
+        """
+        Return active fields by default, or all fields (including inactive)
+        when ?include_inactive=true is passed.
+
+        The ?include_inactive parameter is superuser-only in practice because
+        the viewset already had permission_classes = [IsSuperuser] before this
+        method was added — that gate was not added by this change.
+        """
         if self.request.query_params.get('include_inactive') == 'true':
             return PartnerField.objects.get_all_including_inactive()
         return PartnerField.objects.all()
