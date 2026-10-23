@@ -12,7 +12,7 @@ from functools import lru_cache
 
 from thefuzz import fuzz, process
 
-from api.isic_taxonomy.revisions import isic_entry, titles
+from api.isic_taxonomy.revisions import isic_entry, level_of, titles
 
 # Full-string similarity, stricter than the processing type matcher (85,
 # WRatio): a wrong industry is worse than none, and WRatio scores short
@@ -87,3 +87,41 @@ def full_entry(entry, revision):
             return isic_entry(code, revision) if code in titles(revision) \
                 else None
     return None
+
+
+def entries_from_filter_values(values, revision):
+    """
+    Full entries for "level:code" values, as the search field and the claim
+    forms send them, or for entries as the claim API returns them (the
+    claimed-details editor sends back what it loaded). None if any value is
+    not a code of that level in the revision.
+    """
+    entries = []
+    for value in values or []:
+        if isinstance(value, dict):
+            entry = full_entry(value, revision)
+            if entry is None:
+                return None
+            entries.append(entry)
+            continue
+        level, _, code = str(value).partition(':')
+        code = code.strip().upper()
+        if code not in titles(revision) or level_of(code) != level:
+            return None
+        entries.append(isic_entry(code, revision))
+    return entries
+
+
+def is_single_level(entry, revision):
+    """
+    True for a value naming one level with a code of that level, e.g.
+    {'class': '1410 - Manufacture of wearing apparel, ...'}, as the
+    single-location form sends.
+    """
+    levels = [level for level in ('section', 'division', 'group', 'class')
+              if entry.get(level)]
+    if len(levels) != 1:
+        return False
+    match = CODE_PREFIX.match(str(entry[levels[0]]))
+    code = match.group(1).upper() if match else None
+    return code in titles(revision) and level_of(code) == levels[0]

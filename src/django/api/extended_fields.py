@@ -4,7 +4,11 @@ from api.models import Contributor, ExtendedField, ProductType
 from api.facility_type_processing_type import (
     get_facility_and_processing_type,
 )
-from api.isic_taxonomy.isic_lookup import full_entry, match_isic
+from api.isic_taxonomy.isic_lookup import (
+    full_entry,
+    is_single_level,
+    match_isic,
+)
 
 
 def extract_int_range_value(value):
@@ -140,8 +144,9 @@ def get_isic_extendedfield_value(field_value, field_name):
             continue
         # ISIC 5 values are stored with every level filled in, which its
         # index columns rely on. isic_4 objects (v1 API, RBA) are stored as
-        # sent.
-        if revision == '5':
+        # sent, except a single level with a valid code, as the
+        # single-location form sends, which gets its parent levels.
+        if revision == '5' or is_single_level(entry, revision):
             entry = full_entry(entry, revision)
         if entry:
             normalized_entries.append(entry)
@@ -340,6 +345,8 @@ CLAIM_FIELDS = (
     ('parent_company', ExtendedField.PARENT_COMPANY),
     ('parent_company_name', ExtendedField.PARENT_COMPANY),
     ('facility_product_types', ExtendedField.PRODUCT_TYPE),
+    ('isic_4', ExtendedField.ISIC_4),
+    ('isic_5', ExtendedField.ISIC_5),
 )
 
 
@@ -359,7 +366,7 @@ def create_extendedfields_for_claim(claim):
             field_value = getattr(claim, 'facility_production_types')
         else:
             field_value = getattr(claim, claim_field)
-        if field_value is not None and field_value != "":
+        if field_value not in (None, "", []):
             if extended_field == ExtendedField.NUMBER_OF_WORKERS:
                 field_value = extract_int_range_value(field_value)
             elif extended_field == ExtendedField.PARENT_COMPANY:
@@ -392,6 +399,10 @@ def create_extendedfields_for_claim(claim):
                     )
             elif extended_field == ExtendedField.PRODUCT_TYPE:
                 field_value = get_product_type_extendedfield_value(field_value)
+            elif extended_field in ISIC_REVISION_BY_FIELD:
+                field_value = get_isic_extendedfield_value(
+                    field_value, extended_field,
+                )
 
             try:
                 field = ExtendedField.objects.get(facility_claim=claim,
