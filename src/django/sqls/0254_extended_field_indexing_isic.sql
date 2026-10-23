@@ -1,3 +1,6 @@
+-- extended_fields is aggregated in ExtendedField id order, so owners'
+-- values (e.g. embed downloads joined with "|") come out the same way
+-- every time; before, the order was whatever the plan returned.
 /*
 OSDEV-3340. The ISIC columns of api_facilityindex are derived only from
 isic_4 ExtendedFields, so the procedure the api_extendedfield triggers call
@@ -43,7 +46,7 @@ COALESCE((SELECT array_agg(DISTINCT(isic_class)) FROM index_isic_class(af.id)), 
 COALESCE((SELECT array_agg(DISTINCT (parent_company_name)) FROM index_parent_company_name(af.id)), '{}'), -- parent_company_name
 COALESCE((SELECT array_agg(DISTINCT (native_language_name)) FROM index_native_language_name(af.id)), '{}'), -- native_language_name
 COALESCE((SELECT array_agg(DISTINCT (parent_company_id)) FROM index_parent_company_id(af.id)), '{}'), -- parent_company_id
-COALESCE((SELECT array_agg(extended_field) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
+COALESCE((SELECT array_agg(extended_field ORDER BY (extended_field->>'id')::int) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
 now() -- updated_at
 FROM api_facility af
 WHERE
