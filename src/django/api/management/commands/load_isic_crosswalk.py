@@ -1,3 +1,4 @@
+from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 
 from api.isic_taxonomy.crosswalk import (
@@ -12,9 +13,8 @@ from api.models import IsicCrosswalkEntry
 class Command(BaseCommand):
     help = (
         'Replace the OS Hub to ISIC Rev 4 crosswalk with the rows of a CSV '
-        'file (default: the crosswalk shipped with the code). Run '
-        '`backfill_facility_index --fields isic_4_mapped` afterwards to '
-        'apply it to existing locations.'
+        'file (default: the crosswalk shipped with the code), then refresh '
+        'the mapped ISIC values of existing locations.'
     )
 
     def add_arguments(self, parser):
@@ -46,5 +46,8 @@ class Command(BaseCommand):
         count = replace_crosswalk_entries(IsicCrosswalkEntry, rows)
         self.stdout.write(self.style.SUCCESS(
             f'Loaded {count} crosswalk rows ({mapped_rows} map to ISIC). '
-            'Now run: backfill_facility_index --fields isic_4_mapped'
+            'Refreshing mapped ISIC values.'
         ))
+        # The triggers only fire when a location's types change, so apply
+        # the new crosswalk to every existing location now.
+        call_command('backfill_facility_index', fields='isic_4_mapped')

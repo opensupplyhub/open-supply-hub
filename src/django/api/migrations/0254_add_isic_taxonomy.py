@@ -4,13 +4,24 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import connection, migrations, models
 from django.db.migrations import RunPython
 
-from api.migrations._isic_taxonomy_helper import (
-    clear_isic_taxonomy_config,
-    seed_isic_taxonomy_config,
-)
 from api.migrations._migration_helper import MigrationHelper
 
 helper = MigrationHelper(connection)
+
+SWITCH_NAME = 'enable_isic_taxonomy'
+
+
+def create_switch(apps, schema_editor):
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.get_or_create(
+        name=SWITCH_NAME,
+        defaults={'active': False},
+    )
+
+
+def delete_switch(apps, schema_editor):
+    Switch = apps.get_model('waffle', 'Switch')
+    Switch.objects.filter(name=SWITCH_NAME).delete()
 
 
 def add_isic_indexing_functions(apps, schema_editor):
@@ -45,6 +56,17 @@ def revert_indexing_procedures(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    """
+    Adds the ISIC columns to api_facilityindex, the functions and
+    procedure changes that fill them, and IsicTaxonomyConfig.
+
+    Also adds the `enable_isic_taxonomy` switch, created inactive. The
+    profile serializer and the taxonomy config, content and counts views
+    check it before touching IsicTaxonomyConfig or the new columns:
+    `migrate` runs in post-deploy, after the new image is live, so
+    without the switch they would query a table that does not exist yet
+    (as in 0247). It doubles as the kill switch for ISIC on the site.
+    """
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
@@ -189,18 +211,6 @@ class Migration(migrations.Migration):
                         max_length=512,
                     ),
                 ),
-                (
-                    'bundle_s3_key',
-                    models.CharField(
-                        blank=True,
-                        default='',
-                        help_text=(
-                            'S3 key for the published isicRev4Taxonomy.js '
-                            'bundle.'
-                        ),
-                        max_length=512,
-                    ),
-                ),
                 ('section_count', models.PositiveIntegerField(default=0)),
                 ('division_count', models.PositiveIntegerField(default=0)),
                 ('group_count', models.PositiveIntegerField(default=0)),
@@ -248,10 +258,7 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'ISIC taxonomies',
             },
         ),
-        RunPython(
-            seed_isic_taxonomy_config,
-            reverse_code=clear_isic_taxonomy_config,
-        ),
+        RunPython(create_switch, delete_switch),
         migrations.RunSQL(
             sql=migrations.RunSQL.noop,
             reverse_sql="SET LOCAL lock_timeout = '5s';",

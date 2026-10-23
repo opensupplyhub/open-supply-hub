@@ -11,3 +11,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
+        # One-time ISIC backfill for Release 2.33.0; remove once it has run
+        # in every environment.
+        call_command('backfill_facility_index', fields='isic_4,isic_4_mapped')

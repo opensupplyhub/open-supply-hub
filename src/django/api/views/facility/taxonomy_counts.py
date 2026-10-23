@@ -3,9 +3,11 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from waffle import switch_is_active
 
 from api.constants import FacilitiesQueryParams
 from api.isic import parse_isic4_filter_values
+from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
 from api.isic_taxonomy.crosswalk import LEVEL_PATTERNS
 from api.taxonomy_counts import (
     compute_isic4_counts,
@@ -14,6 +16,13 @@ from api.taxonomy_counts import (
 from api.view_response_cache import cache_view_response
 
 TAXONOMY_COUNT_KINDS = ('isic4', 'isic4_mapped_extra')
+# The response cache keys on every query param, so an unknown param would
+# force a fresh full count; reject them instead.
+TAXONOMY_COUNT_PARAMS = {
+    'kind',
+    'include_mapped',
+    FacilitiesQueryParams.ISIC_4,
+}
 
 # Each distinct selection is its own cache entry and COUNT query, so the
 # public endpoint only accepts well-formed codes and a bounded selection.
@@ -67,6 +76,12 @@ class TaxonomyCountsView(APIView):
     )
     @cache_view_response('taxonomy_counts')
     def get(self, request):
+        unknown = set(request.query_params) - TAXONOMY_COUNT_PARAMS
+        if unknown:
+            raise ValidationError({
+                param: 'Unknown parameter.' for param in sorted(unknown)
+            })
+
         kind = request.query_params.get('kind')
         if kind not in TAXONOMY_COUNT_KINDS:
             raise ValidationError({
@@ -75,6 +90,9 @@ class TaxonomyCountsView(APIView):
                     f'Expected one of: {", ".join(TAXONOMY_COUNT_KINDS)}.'
                 ),
             })
+
+        if not switch_is_active(ISIC_TAXONOMY_SWITCH):
+            return Response({})
 
         if kind == 'isic4_mapped_extra':
             parsed_isic_filters = parse_isic4_filter_values(
@@ -102,8 +120,12 @@ class TaxonomyCountsView(APIView):
                 ),
             })
 
+        include_mapped = request.query_params.get('include_mapped', 'false')
+        if include_mapped not in ('true', 'false'):
+            raise ValidationError({
+                'include_mapped': 'Expected true or false.',
+            })
+
         return Response(compute_isic4_counts(
-            include_mapped=(
-                request.query_params.get('include_mapped') == 'true'
-            ),
+            include_mapped=include_mapped == 'true',
         ))

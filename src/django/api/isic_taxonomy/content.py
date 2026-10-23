@@ -3,7 +3,9 @@ import logging
 
 from django.conf import settings
 from django.core.cache import caches
+from waffle import switch_is_active
 
+from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
 from api.migrations._tigerline_helper import get_s3_client
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
 
@@ -91,6 +93,9 @@ def load_isic4_taxonomy_content(
     *,
     config: IsicTaxonomyConfig | None = None,
 ) -> dict:
+    if not switch_is_active(ISIC_TAXONOMY_SWITCH):
+        raise IsicTaxonomyNotAvailable('ISIC taxonomy is switched off.')
+
     if config is None:
         config = IsicTaxonomyConfig.load()
 

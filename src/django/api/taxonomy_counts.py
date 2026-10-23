@@ -5,41 +5,27 @@ from api.models.facility.facility_manager_index_new import build_isic_filter
 
 # Locations per ISIC node, in one pass over api_facilityindex. Every location
 # with an ISIC code has a section (ancestors are derived), so the WHERE skips
-# the rest. Candidates are excluded as in FacilityIndex.objects
-# .without_candidates(), which the search starts from.
-SUBMITTED_COUNTS_SQL = """
+# the rest. With include_mapped, a location counts once under a node whether
+# its code was submitted, mapped, or both (DISTINCT per row). Candidates are
+# excluded as in FacilityIndex.objects.without_candidates(), which the
+# search starts from.
+COUNTS_SQL = """
     SELECT nodes.level, code.value, count(*)
     FROM api_facilityindex fi
     CROSS JOIN LATERAL (VALUES
-        ('section', fi.isic_section),
-        ('division', fi.isic_division),
-        ('group', fi.isic_group),
-        ('class', fi.isic_class)
-    ) AS nodes(level, codes)
-    CROSS JOIN LATERAL unnest(nodes.codes) AS code(value)
-    WHERE cardinality(fi.isic_section) > 0
-      AND NOT EXISTS (
-        SELECT 1 FROM api_facility af
-        WHERE af.id = fi.id AND af.is_candidate
-      )
-    GROUP BY nodes.level, code.value
-"""
-
-# A location counts once under a node whether its code was submitted,
-# mapped, or both (DISTINCT per row).
-WITH_MAPPED_COUNTS_SQL = """
-    SELECT nodes.level, code.value, count(*)
-    FROM api_facilityindex fi
-    CROSS JOIN LATERAL (VALUES
-        ('section', fi.isic_section || fi.isic_mapped_section),
-        ('division', fi.isic_division || fi.isic_mapped_division),
-        ('group', fi.isic_group || fi.isic_mapped_group),
-        ('class', fi.isic_class || fi.isic_mapped_class)
+        ('section', fi.isic_section
+            || CASE WHEN %(mapped)s THEN fi.isic_mapped_section END),
+        ('division', fi.isic_division
+            || CASE WHEN %(mapped)s THEN fi.isic_mapped_division END),
+        ('group', fi.isic_group
+            || CASE WHEN %(mapped)s THEN fi.isic_mapped_group END),
+        ('class', fi.isic_class
+            || CASE WHEN %(mapped)s THEN fi.isic_mapped_class END)
     ) AS nodes(level, codes)
     CROSS JOIN LATERAL (SELECT DISTINCT unnest(nodes.codes)) AS code(value)
     WHERE (
         cardinality(fi.isic_section) > 0
-        OR cardinality(fi.isic_mapped_section) > 0
+        OR (%(mapped)s AND cardinality(fi.isic_mapped_section) > 0)
       )
       AND NOT EXISTS (
         SELECT 1 FROM api_facility af
@@ -52,9 +38,7 @@ WITH_MAPPED_COUNTS_SQL = """
 def compute_isic4_counts(include_mapped=False):
     '''Location counts keyed by level:code, e.g. {"class:1410": 12}.'''
     with connection.cursor() as cursor:
-        cursor.execute(
-            WITH_MAPPED_COUNTS_SQL if include_mapped else SUBMITTED_COUNTS_SQL
-        )
+        cursor.execute(COUNTS_SQL, {'mapped': include_mapped})
         return {
             f'{level}:{code}': count
             for level, code, count in cursor.fetchall()
