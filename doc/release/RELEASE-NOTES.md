@@ -38,6 +38,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `backfill_facility_index --fields isic_4_mapped`
 * [OSDEV-3340](https://opensupplyhub.atlassian.net/browse/OSDEV-3340) - `backfill_facility_index --fields isic_4` fills the ISIC columns of existing locations; it is a one-time call in `post_deployment` to remove after this release. `reindex_database` is not needed. To turn ISIC on: upload, publish and enable the ISIC Rev 4 taxonomy in Django admin, then turn on the `enable_isic_taxonomy` switch. The search field stays hidden until both are done.
 * [OSDEV-3382](https://opensupplyhub.atlassian.net/browse/OSDEV-3382) - `backfill_facility_index --fields isic_4_mapped` fills the mapped ISIC columns of existing locations, also a one-time call in `post_deployment`; after that the triggers keep them current. To change the crosswalk later, edit the CSV, deploy, and run `load_isic_crosswalk`, which reloads the table and refreshes the mapped columns.
+* [OSDEV-3622](https://opensupplyhub.atlassian.net/browse/OSDEV-3622) - After `enable_isic_taxonomy` is turned on, profiles already in the response cache can take up to 10 minutes to show mapped ISIC values.
 
 
 ## Release 2.32.0
