@@ -118,11 +118,11 @@ class FacilityClaimInviteTest(APITestCase):
         email = mail.outbox[0]
         self.assertEqual(['manager@factory.example'], email.to)
         self.assertEqual(
-            "Example Brand invited you to claim your facility's profile on "
+            "Example Brand invited you to claim your profile on "
             "OS Hub",
             email.subject,
         )
-        self.assertIn('Example Brand found your facility', email.body)
+        self.assertIn('Example Brand found your listing', email.body)
         self.assertIn(
             f'/claim/{self.facility.id}?invite={invite.uuid}', email.body
         )

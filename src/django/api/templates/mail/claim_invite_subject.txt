@@ -1,1 +1,1 @@
-{% autoescape off %}{{ sender_name }} invited you to claim your facility's profile on OS Hub{% endautoescape %}
+{% autoescape off %}{{ sender_name }} invited you to claim your profile on OS Hub{% endautoescape %}
