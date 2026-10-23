@@ -10,7 +10,7 @@ from api.isic_taxonomy.errors import (
     IsicTaxonomyPublishError,
     IsicTaxonomyValidationError,
 )
-from api.isic_taxonomy.generator import generate_js_bundle, generate_json
+from api.isic_taxonomy.generator import generate_json
 from api.isic_taxonomy.parser import normalize_extension, parse_spreadsheet
 from api.isic_taxonomy.publisher import (
     artifact_s3_keys,
@@ -176,11 +176,9 @@ class IsicTaxonomyParserTest(TestCase):
         taxonomy = build_taxonomy(validate_file(SAMPLE_CSV, 'sample.csv'))
 
         json_body = generate_json(taxonomy)
-        js_body = generate_js_bundle(taxonomy).decode('utf-8')
 
         self.assertIn(b'"sections"', json_body)
-        self.assertTrue(js_body.startswith('export const ISIC_REV4_TAXONOMY'))
-        self.assertIn('0111', js_body)
+        self.assertIn(b'0111', json_body)
 
     def test_count_taxonomy_levels(self):
         taxonomy = parse_and_validate(SAMPLE_CSV, 'sample.csv')
@@ -247,6 +245,37 @@ class IsicTaxonomyParserTest(TestCase):
                 build_ods_bytes([], content_xml=payload), 'sample.ods',
             )
 
+    @patch('api.isic_taxonomy.parser.MAX_ODS_CONTENT_BYTES', 100)
+    def test_parse_spreadsheet_rejects_oversized_ods_content(self):
+        # A zip can unpack far beyond the 5 MB upload limit.
+        header = FULL_CSV_HEADER.strip().split(',')
+
+        with self.assertRaises(IsicTaxonomyValidationError):
+            parse_spreadsheet(
+                build_ods_bytes([header, SAMPLE_ROW]), 'sample.ods',
+            )
+
+    def test_parse_spreadsheet_caps_repeated_ods_cells(self):
+        payload = (
+            '<office:document-content'
+            ' xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"'
+            ' xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"'
+            ' xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">'
+            '<office:body><office:spreadsheet><table:table>'
+            '<table:table-row>'
+            '<table:table-cell table:number-columns-repeated="2147483647">'
+            '<text:p>x</text:p></table:table-cell>'
+            '</table:table-row>'
+            '</table:table></office:spreadsheet></office:body>'
+            '</office:document-content>'
+        )
+
+        # Without the cap this allocates a list of 2^31 cells.
+        with self.assertRaises(IsicTaxonomyValidationError):
+            parse_spreadsheet(
+                build_ods_bytes([], content_xml=payload), 'sample.ods',
+            )
+
     def test_parse_spreadsheet_rejects_malformed_ods_xml(self):
         with self.assertRaises(IsicTaxonomyValidationError):
             parse_spreadsheet(
@@ -307,7 +336,6 @@ class IsicTaxonomyPublisherTest(TestCase):
         self.assertTrue(config.is_active)
         self.assertEqual(config.class_count, 1)
         self.assertEqual(config.last_error, '')
-        self.assertEqual(config.bundle_s3_key, '')
 
         self.assertEqual(s3_client.put_object.call_count, 2)
         self.assertEqual(s3_client.copy_object.call_count, 2)
@@ -326,7 +354,6 @@ class IsicTaxonomyPublisherTest(TestCase):
         config.version = 3
         config.is_active = True
         config.json_s3_key = 'taxonomy/isic4/v3/isic_rev4.json'
-        config.bundle_s3_key = 'taxonomy/isic4/v3/isicRev4Taxonomy.js'
         config.class_count = 1
         config.save()
 

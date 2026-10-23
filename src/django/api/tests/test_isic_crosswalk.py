@@ -2,6 +2,7 @@ import csv
 import os
 import tempfile
 from io import StringIO
+from unittest.mock import patch
 
 from django.core.cache import caches
 from django.core.management import call_command
@@ -9,6 +10,7 @@ from django.core.management.base import CommandError
 from django.db import connection
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from waffle.testutils import override_switch
 
 from api.constants import FacilityClaimStatuses
 from api.facility_index_backfill.specs import (
@@ -415,6 +417,7 @@ class IsicMappedIndexingTest(FacilityAPITestCaseBase):
             self.assertEqual(cursor.fetchall(), [])
 
 
+@override_switch('enable_isic_taxonomy', active=True)
 class IsicMappedSearchTest(FacilityAPITestCaseBase):
     '''Mapped values are opt-in in search and in the counts.'''
 
@@ -540,15 +543,19 @@ class IsicMappedSearchTest(FacilityAPITestCaseBase):
         self.assertEqual(response.data, {'count': 0})
 
 
+# The loader's backfill spawns worker processes on their own connections;
+# stub it so tests never write outside the test transaction.
+@patch('api.management.commands.load_isic_crosswalk.call_command')
 class LoadIsicCrosswalkCommandTest(TestCase):
-    def test_dry_run_changes_nothing(self):
+    def test_dry_run_changes_nothing(self, backfill):
         IsicCrosswalkEntry.objects.all().delete()
         out = StringIO()
         call_command('load_isic_crosswalk', dry_run=True, stdout=out)
         self.assertEqual(IsicCrosswalkEntry.objects.count(), 0)
         self.assertIn('Nothing was changed', out.getvalue())
+        backfill.assert_not_called()
 
-    def test_reload_replaces_rows(self):
+    def test_reload_replaces_rows(self, backfill):
         IsicCrosswalkEntry.objects.all().delete()
         call_command('load_isic_crosswalk', stdout=StringIO())
         self.assertEqual(
@@ -556,7 +563,16 @@ class LoadIsicCrosswalkCommandTest(TestCase):
             len(load_crosswalk_rows()),
         )
 
-    def test_invalid_file_is_rejected_without_changes(self):
+    def test_reload_refreshes_existing_locations(self, backfill):
+        # The triggers fire only when a location's types change, so a
+        # crosswalk edit reaches existing locations through the backfill.
+        call_command('load_isic_crosswalk', stdout=StringIO())
+
+        backfill.assert_called_once_with(
+            'backfill_facility_index', fields='isic_4_mapped',
+        )
+
+    def test_invalid_file_is_rejected_without_changes(self, backfill):
         before = IsicCrosswalkEntry.objects.count()
         with self.assertRaises(CommandError):
             call_command(

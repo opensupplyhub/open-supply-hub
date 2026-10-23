@@ -1,16 +1,14 @@
 import React from 'react';
 import get from 'lodash/get';
 import uniqBy from 'lodash/uniqBy';
-import { arrayOf, bool, string } from 'prop-types';
-import Chip from '@material-ui/core/Chip';
 
-import COLOURS from '../../../util/COLOURS';
 import {
     STATUS_CLAIMED,
     STATUS_CROWDSOURCED,
     STATUS_MAPPED,
 } from '../DataPoint/constants';
 import { FIELD_CONFIG } from '../constants.jsx';
+import IsicValue from './IsicValue';
 
 /*
 ISIC on the production location profile (OSDEV-3622): titles, never codes,
@@ -21,7 +19,6 @@ shows the full path. Values mapped from Location Type or Processing Type
 */
 
 const LEVELS = ['section', 'division', 'group', 'class'];
-const SCHEME = 'ISIC 4';
 
 // "C - Manufacturing" -> "Manufacturing", as extract_isic_code() reads it.
 export const stripIsicCode = raw =>
@@ -47,13 +44,15 @@ const toSubmitted = item => {
         }));
 };
 
+// The app's font draws U+201D as the opening quote and U+201C as the
+// closing one (see ContactInfoStep).
 export const describeMappedSource = ({
     facility_type: facilityType,
     processing_type: processingType,
 }) =>
     processingType && processingType !== facilityType
-        ? `From Processing Type "${processingType}"`
-        : `From Location Type "${facilityType}"`;
+        ? `From Processing Type \u201D${processingType}\u201C`
+        : `From Location Type \u201D${facilityType}\u201C`;
 
 const toMapped = mappedValue => ({
     titles: mappedValue.path.map(step => step.title),
@@ -61,55 +60,6 @@ const toMapped = mappedValue => ({
     statusLabel: STATUS_MAPPED,
     isMapped: true,
 });
-
-const chipStyle = (background, color, border = 'none') => ({
-    background,
-    color,
-    border,
-    borderRadius: 4,
-    fontWeight: 600,
-    marginLeft: 8,
-});
-
-export const IsicValue = ({ titles, mapped, showPath }) => (
-    <span data-testid="isic-value">
-        <span data-testid="isic-value-text">
-            {showPath
-                ? titles
-                      .filter((title, i) => title !== titles[i - 1])
-                      .join(' › ')
-                : titles[titles.length - 1]}
-        </span>
-        <Chip
-            component="span"
-            label={SCHEME}
-            size="small"
-            style={chipStyle(COLOURS.VERSION_TAG_BG, COLOURS.VERSION_TAG_TEXT)}
-            data-testid="isic-scheme-tag"
-        />
-        {mapped && (
-            <Chip
-                component="span"
-                label={STATUS_MAPPED}
-                size="small"
-                style={chipStyle(
-                    COLOURS.MAPPED_CHIP_BG,
-                    COLOURS.MAPPED_CHIP_TEXT,
-                    `1px dashed ${COLOURS.MAPPED_CHIP_BORDER}`,
-                )}
-                data-testid="isic-mapped-badge"
-            />
-        )}
-    </span>
-);
-
-IsicValue.propTypes = {
-    titles: arrayOf(string).isRequired,
-    mapped: bool,
-    showPath: bool,
-};
-
-IsicValue.defaultProps = { mapped: false, showPath: false };
 
 // Side panel card: full path, and the badge, which on the profile itself
 // sits in the status chip slot instead.

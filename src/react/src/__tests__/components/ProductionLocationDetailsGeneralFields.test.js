@@ -190,7 +190,7 @@ describe('ProductionLocationDetailsGeneralFields component', () => {
                 within(point).getByTestId('data-point-status-chip'),
             ).toHaveTextContent('Mapped from OS Hub');
             expect(
-                within(point).getByText('From Processing Type "Cut & Sew"'),
+                within(point).getByText('From Processing Type \u201DCut & Sew\u201C'),
             ).toBeInTheDocument();
             expect(point).not.toHaveTextContent(/1410|C -/);
         });
