@@ -1,3 +1,6 @@
+-- extended_fields is aggregated in ExtendedField id order, so owners'
+-- values (e.g. embed downloads joined with "|") come out the same way
+-- every time; before, the order was whatever the plan returned.
 /*
 OSDEV-3340. isic_4 ExtendedFields count toward the isic_* columns of
 api_facilityindex only while they are visible on the location (an approved
@@ -58,7 +61,7 @@ COALESCE((SELECT array_agg(facility_name) FROM index_facility_names(af.id)), '{}
 COALESCE((SELECT array_agg(facility_list_item) FROM index_facility_list_items(af.id, af.location)), '{}'), -- facility_list_items
 COALESCE((SELECT array_agg(facility_address) FROM index_facility_addresses(af.id)), '{}'), -- facility_addresses
 COALESCE((SELECT ARRAY_AGG(custom_field_info) FROM index_custom_field_info(af.id)), '{}'), -- custom_field_info
-COALESCE((SELECT array_agg(extended_field) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
+COALESCE((SELECT array_agg(extended_field ORDER BY (extended_field->>'id')::int) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
 COALESCE((SELECT info FROM index_created_from_info(af.created_from_id)), '{}'), --created_from_info
 COALESCE((SELECT array_agg(item_sectors) FROM index_item_sectors(af.id)), '{}'), -- item_sectors
 COALESCE((SELECT string_agg(DISTINCT(custom_text),' ') FROM custom_text(af.id)), ''), -- custom_text_search
@@ -120,7 +123,7 @@ COALESCE((SELECT array_agg(facility_name) FROM index_facility_names(af.id)), '{}
 COALESCE((SELECT array_agg(facility_list_item) FROM index_facility_list_items(af.id, af.location)), '{}'), -- facility_list_items
 COALESCE((SELECT array_agg(facility_address) FROM index_facility_addresses(af.id)), '{}'), -- facility_addresses
 COALESCE((SELECT ARRAY_AGG(custom_field_info) FROM index_custom_field_info(af.id)), '{}'), -- custom_field_info
-COALESCE((SELECT array_agg(extended_field) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
+COALESCE((SELECT array_agg(extended_field ORDER BY (extended_field->>'id')::int) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
 COALESCE((SELECT array_agg(item_sectors) FROM index_item_sectors(af.id)), '{}'), -- item_sectors
 COALESCE((SELECT string_agg(DISTINCT(custom_text),' ') FROM custom_text(af.id)), ''), -- custom_text_search
 COALESCE((SELECT array_agg(DISTINCT(facility_type)) FROM index_facility_type(af.id)), '{}'), -- facility_type
@@ -196,7 +199,7 @@ COALESCE((SELECT array_agg(facility_name) FROM index_facility_names(af.id)), '{}
 COALESCE((SELECT array_agg(facility_list_item) FROM index_facility_list_items(af.id, af.location)), '{}'), -- facility_list_items
 COALESCE((SELECT array_agg(facility_address) FROM index_facility_addresses(af.id)), '{}'), -- facility_addresses
 COALESCE((SELECT ARRAY_AGG(custom_field_info) FROM index_custom_field_info(af.id)), '{}'), -- custom_field_info
-COALESCE((SELECT array_agg(extended_field) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
+COALESCE((SELECT array_agg(extended_field ORDER BY (extended_field->>'id')::int) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
 COALESCE((SELECT info FROM index_created_from_info(af.created_from_id)), '{}'), --created_from_info
 COALESCE((SELECT array_agg(item_sectors) FROM index_item_sectors(af.id)), '{}'), -- item_sectors
 COALESCE((SELECT string_agg(DISTINCT(custom_text),' ') FROM custom_text(af.id)), ''), -- custom_text_search
@@ -245,7 +248,7 @@ COALESCE((SELECT array_agg(approved_claim_id) FROM index_approved_claim_ids(af.i
 COALESCE((SELECT array_agg(DISTINCT(sector)) FROM index_sector(af.id)), '{}'), -- sector
 COALESCE((SELECT approved_claim FROM index_approved_claim(af.id))), -- approved_claim
 COALESCE((SELECT claim_info FROM index_claim_info(af.id))), -- claim_info
-COALESCE((SELECT array_agg(extended_field) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
+COALESCE((SELECT array_agg(extended_field ORDER BY (extended_field->>'id')::int) FROM index_extended_fields(af.id)), '{}'), -- extended_fields
 COALESCE((SELECT array_agg(claim_sector) FROM index_claim_sectors(af.id)), '{}'), -- claim_sectors
 COALESCE((SELECT array_agg(DISTINCT(facility_type)) FROM index_facility_type(af.id)), '{}'), -- facility_type
 COALESCE((SELECT array_agg(DISTINCT(processing_type)) FROM index_processing_type(af.id)), '{}'), -- processing_type

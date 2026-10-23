@@ -1,3 +1,6 @@
+-- extended_fields is aggregated in ExtendedField id order, so owners'
+-- values (e.g. embed downloads joined with "|") come out the same way
+-- every time; before, the order was whatever the plan returned.
 /*
 OSDEV-3340. Re-creates index_facilities_by(ids) and index_facilities() from
 their latest definition (0250_index_facilities_exclude_candidates.sql, which
@@ -71,7 +74,7 @@ coalesce((select approved_claim from index_approved_claim(af.id))), -- approved_
 coalesce((select array_agg(facility_address) from index_facility_addresses(af.id)), '{}'), -- facility_addresses
 coalesce((select claim_info from index_claim_info(af.id))), -- claim_info
 coalesce((SELECT ARRAY_AGG(custom_field_info) FROM index_custom_field_info(af.id)), '{}'), -- custom_field_info
-coalesce((select array_agg(extended_field) from index_extended_fields(af.id)), '{}'), -- extended_fields
+coalesce((select array_agg(extended_field ORDER BY (extended_field->>'id')::int) from index_extended_fields(af.id)), '{}'), -- extended_fields
 coalesce((select info from index_created_from_info(af.created_from_id)), '{}'), --created_from_info
 coalesce((select array_agg(activity_report_info) from index_activity_reports_info(af.id, af.name)), '{}'), --activity_reports_info
 coalesce((select array_agg(item_sectors) from index_item_sectors(af.id)), '{}'), -- item_sectors
@@ -189,7 +192,7 @@ coalesce((select approved_claim from index_approved_claim(af.id))), -- approved_
 coalesce((select array_agg(facility_address) from index_facility_addresses(af.id)), '{}'), -- facility_addresses
 coalesce((select claim_info from index_claim_info(af.id))), -- claim_info
 coalesce((SELECT ARRAY_AGG(custom_field_info) FROM index_custom_field_info(af.id)), '{}'), -- custom_field_info
-coalesce((select array_agg(extended_field) from index_extended_fields(af.id)), '{}'), -- extended_fields
+coalesce((select array_agg(extended_field ORDER BY (extended_field->>'id')::int) from index_extended_fields(af.id)), '{}'), -- extended_fields
 coalesce((select info from index_created_from_info(af.created_from_id)), '{}'), --created_from_info
 coalesce((select array_agg(activity_report_info) from index_activity_reports_info(af.id, af.name)), '{}'), --activity_reports_info
 coalesce((select array_agg(item_sectors) from index_item_sectors(af.id)), '{}'), -- item_sectors
