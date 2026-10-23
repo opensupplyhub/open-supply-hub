@@ -27,6 +27,9 @@ FUZZY = 'FUZZY'
 
 LEVEL_BY_LENGTH = {2: 'division', 3: 'group', 4: 'class'}
 
+# No ISIC title is near this long; longer text is not worth a fuzzy scan.
+MAX_TEXT_LENGTH = 200
+
 
 def _key(text):
     return re.sub(r'[^a-z0-9]+', ' ', text.lower()).strip()
@@ -49,12 +52,12 @@ def _structure():
         # A group and its only class can share a title; the class is the
         # more specific answer, and the structure lists it last.
         code_by_title[_key(title)] = code
-    return titles, section_of, code_by_title
+    return titles, section_of, code_by_title, list(code_by_title)
 
 
 def isic4_entry(code):
     """{'section': 'C - Manufacturing', ..., 'class': '1410 - ...'}"""
-    titles, section_of, _ = _structure()
+    titles, section_of, _, _ = _structure()
     section = code if code.isalpha() else section_of[code[:2]]
     entry = {'section': f'{section} - {titles[section]}'}
     for length, level in LEVEL_BY_LENGTH.items():
@@ -63,16 +66,22 @@ def isic4_entry(code):
     return entry
 
 
+@lru_cache(maxsize=4096)
 def match_isic4(text):
     """(entry, CODE | EXACT | FUZZY) for one value, or None."""
     value = (text or '').strip()
-    if not value:
+    if not value or len(value) > MAX_TEXT_LENGTH:
         return None
-    titles, _, code_by_title = _structure()
+    titles, _, code_by_title, title_keys = _structure()
 
     code = value.upper()
     if code in titles:
         return isic4_entry(code), CODE
+    # Excel drops leading zeros from class codes ("0111" -> "111").
+    # Restore one only when the digits are not already a code of their
+    # own. Shorter numbers are left alone: a stray "2" is not division 02.
+    if len(code) == 3 and code.isdigit() and '0' + code in titles:
+        return isic4_entry('0' + code), CODE
 
     key = _key(value)
     if key in code_by_title:
@@ -80,7 +89,7 @@ def match_isic4(text):
 
     best = process.extractOne(
         key,
-        list(code_by_title),
+        title_keys,
         scorer=fuzz.token_sort_ratio,
         score_cutoff=FUZZY_MIN_SCORE,
     )

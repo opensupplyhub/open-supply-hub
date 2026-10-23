@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase
 
 from api.extended_fields import (
+    MAX_ISIC_4_VALUES,
     create_extendedfields_for_single_item,
     get_isic_4_extendedfield_value,
 )
@@ -56,6 +57,17 @@ class Isic4LookupTest(SimpleTestCase):
         self.assertEqual(match_isic4('c'), (
             {'section': 'C - Manufacturing'}, CODE,
         ))
+
+    def test_restores_a_leading_zero_excel_dropped(self):
+        # "0111" saved as a number in Excel arrives as "111".
+        self.assertEqual(match_isic4('111')[0]['class'], match_isic4(
+            '0111')[0]['class'])
+        self.assertIsNone(match_isic4('2'))
+
+    def test_digits_that_are_a_code_keep_their_own_meaning(self):
+        # "141" is the apparel group, even though "0141" (cattle) loses
+        # its zero the same way; the contributor's text wins.
+        self.assertEqual(match_isic4('141')[0]['group'], APPAREL['group'])
 
     def test_derives_the_section_of_a_division(self):
         self.assertEqual(
@@ -168,6 +180,14 @@ class Isic4ExtendedFieldValueTest(SimpleTestCase):
             get_isic_4_extendedfield_value([{'class': '1410 - Apparel'}]),
             {'raw_value': [{'class': '1410 - Apparel'}]},
         )
+
+    def test_one_cell_resolves_at_most_the_v1_limit(self):
+        value = get_isic_4_extendedfield_value(','.join(['1410'] * 10000))
+
+        self.assertEqual(len(value['raw_value']), MAX_ISIC_4_VALUES)
+
+    def test_very_long_text_is_not_scanned(self):
+        self.assertIsNone(match_isic4('apparel ' * 100))
 
     def test_text_that_matches_nothing_stores_nothing(self):
         self.assertEqual(

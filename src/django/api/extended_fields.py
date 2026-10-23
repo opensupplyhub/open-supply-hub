@@ -85,6 +85,20 @@ def update_claim_fields(claim, claim_fields_to_update):
         claim.save(update_fields=changed_claim_fields + ['updated_at'])
 
 
+# As many values as the v1 API accepts for isic_4, so one cell cannot set
+# off thousands of lookups.
+MAX_ISIC_4_VALUES = 15
+
+
+def _isic4_texts(entry):
+    texts = []
+    for part in entry.split('|'):
+        if len(texts) >= MAX_ISIC_4_VALUES:
+            break
+        texts.extend([part] if match_isic4(part) else part.split(','))
+    return texts[:MAX_ISIC_4_VALUES]
+
+
 def get_isic_4_extendedfield_value(field_value):
     if field_value is None:
         return {'raw_value': []}
@@ -105,13 +119,11 @@ def get_isic_4_extendedfield_value(field_value):
         # before it is split on them. Values that match nothing are left
         # out rather than guessed.
         if isinstance(entry, str):
-            for part in entry.split('|'):
-                texts = [part] if match_isic4(part) else part.split(',')
-                for text in texts:
-                    match = match_isic4(text)
-                    if match:
-                        normalized_entries.append(match[0])
-                        matched_values.append([text.strip(), match[1]])
+            for text in _isic4_texts(entry):
+                match = match_isic4(text)
+                if match:
+                    normalized_entries.append(match[0])
+                    matched_values.append([text.strip(), match[1]])
             continue
         if not isinstance(entry, dict):
             continue
