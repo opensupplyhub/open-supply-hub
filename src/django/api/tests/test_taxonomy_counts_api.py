@@ -97,15 +97,29 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 400)
         self.assertIn('cache_buster', response.data)
 
+    def test_repeated_param_returns_400(self):
+        response = self.client.get(
+            reverse('taxonomy_counts'),
+            {'kind': ['isic4', 'isic4']},
+        )
+
+        self.assertEqual(response.status_code, 400)
+
     @override_switch('enable_isic_taxonomy', active=False)
-    def test_switch_off_returns_no_counts(self):
+    def test_switch_off_returns_404_that_is_not_cached(self):
         response = self.client.get(
             reverse('taxonomy_counts'),
             {'kind': 'isic4'},
         )
+        self.assertEqual(response.status_code, 404)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, {})
+        # Turning the switch on shows counts at once, not after the cache.
+        with override_switch('enable_isic_taxonomy', active=True):
+            response = self.client.get(
+                reverse('taxonomy_counts'),
+                {'kind': 'isic4'},
+            )
+        self.assertEqual(response.data['section:C'], 1)
 
     def test_invalid_kind_returns_400(self):
         response = self.client.get(

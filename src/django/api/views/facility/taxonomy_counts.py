@@ -1,6 +1,6 @@
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from waffle import switch_is_active
@@ -10,9 +10,10 @@ from api.taxonomy_counts import compute_isic4_counts
 from api.view_response_cache import cache_view_response
 
 TAXONOMY_COUNT_KINDS = ('isic4',)
-# The response cache keys on every query param, so an unknown param would
-# force a fresh full count; reject them instead.
+# The response cache keys on every query param, so an unknown or repeated
+# param would force a fresh full count; reject them instead.
 TAXONOMY_COUNT_PARAMS = {'kind'}
+SINGLE_VALUE_PARAMS = ('kind',)
 
 
 class TaxonomyCountsView(APIView):
@@ -44,6 +45,14 @@ class TaxonomyCountsView(APIView):
             raise ValidationError({
                 param: 'Unknown parameter.' for param in sorted(unknown)
             })
+        repeated = [
+            param for param in SINGLE_VALUE_PARAMS
+            if len(request.query_params.getlist(param)) > 1
+        ]
+        if repeated:
+            raise ValidationError({
+                param: 'Give this parameter once.' for param in repeated
+            })
 
         kind = request.query_params.get('kind')
         if kind not in TAXONOMY_COUNT_KINDS:
@@ -54,7 +63,8 @@ class TaxonomyCountsView(APIView):
                 ),
             })
 
+        # A 404 is not cached, so counts appear as soon as the switch is on.
         if not switch_is_active(ISIC_TAXONOMY_SWITCH):
-            return Response({})
+            raise NotFound('ISIC is switched off.')
 
         return Response(compute_isic4_counts())
