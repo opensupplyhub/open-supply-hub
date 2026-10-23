@@ -2,7 +2,9 @@ from django.contrib.gis.geos import Point
 from django.db import connection
 from django.test import override_settings
 
+from api.constants import FacilityClaimStatuses
 from api.models.extended_field import ExtendedField
+from api.models.facility.facility_claim import FacilityClaim
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.facility_index import FacilityIndex
@@ -266,3 +268,65 @@ class FacilityIndexIsicTest(FacilityAPITestCaseBase):
         self.assertTrue(
             FacilityIndex.objects.filter(id=self.facility.id).exists()
         )
+
+    def test_isic_columns_have_a_valid_gin_index(self):
+        # 0255 builds it CONCURRENTLY; an interrupted build would leave it
+        # invalid and unused by the planner.
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT idx.indisvalid, am.amname "
+                "FROM pg_index idx "
+                "JOIN pg_class cls ON cls.oid = idx.indexrelid "
+                "JOIN pg_am am ON am.oid = cls.relam "
+                "WHERE cls.relname = 'api_facilityindex_isic_gin'"
+            )
+            self.assertEqual(cursor.fetchall(), [(True, 'gin')])
+
+    def _index(self):
+        return FacilityIndex.objects.get(id=self.facility.id)
+
+    def test_deactivating_the_source_hides_its_isic_values(self):
+        # perform_source_indexing must recompute the ISIC columns, as it
+        # does facility_type / processing_type (OSDEV-3428).
+        self.assertEqual(sorted(self._index().isic_section), ['A', 'C', 'J'])
+
+        self.source.is_active = False
+        self.source.save()
+        self.assertEqual(self._index().isic_section, [])
+
+        self.source.is_active = True
+        self.source.save()
+        self.assertEqual(sorted(self._index().isic_section), ['A', 'C', 'J'])
+
+    def test_deactivating_the_match_hides_its_isic_values(self):
+        self.match.is_active = False
+        self.match.save()
+
+        self.assertEqual(self._index().isic_class, [])
+
+    def test_claim_isic_values_show_only_while_the_claim_is_approved(self):
+        # perform_facility_claim_indexing must recompute the ISIC columns.
+        self.isic_field.delete()
+        claim = FacilityClaim.objects.create(
+            facility=self.facility,
+            contributor=self.contributor,
+            contact_person='Person',
+            job_title='Title',
+            status=FacilityClaimStatuses.PENDING,
+        )
+        ExtendedField.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            facility_claim=claim,
+            field_name=ExtendedField.ISIC_4,
+            value={'raw_value': [{'class': '1410 - Apparel'}]},
+        )
+        self.assertEqual(self._index().isic_class, [])
+
+        claim.status = FacilityClaimStatuses.APPROVED
+        claim.save()
+        self.assertEqual(self._index().isic_class, ['1410'])
+
+        claim.status = FacilityClaimStatuses.REVOKED
+        claim.save()
+        self.assertEqual(self._index().isic_class, [])

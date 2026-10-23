@@ -225,6 +225,11 @@ class FacilityIndexNewManager(models.Manager):
         )
         if isic_filter:
             facilities_qs = facilities_qs.filter(isic_filter)
+        elif any(isic_4_filters):
+            # ISIC was asked for but nothing in it is a level:code value.
+            # Ignoring it would present every location as a match
+            # (OSDEV-3340 AC4).
+            facilities_qs = facilities_qs.none()
 
         if len(product_types):
             clean_product_types = []

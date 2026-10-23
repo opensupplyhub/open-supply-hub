@@ -58,7 +58,7 @@ def build_xlsx_bytes(rows):
     return buffer.getvalue()
 
 
-def build_ods_bytes(rows):
+def build_ods_bytes(rows, extra_sheet_rows=None, content_xml=None):
     table_rows = []
     for row in rows:
         cells = ''.join(
@@ -81,9 +81,19 @@ def build_ods_bytes(rows):
         '<table:table>'
         f'{"".join(table_rows)}'
         '</table:table>'
-        '</office:spreadsheet></office:body>'
+        + (
+            '<table:table><table:table-row>'
+            + ''.join(
+                '<table:table-cell office:value-type="string">'
+                f'<text:p>{cell}</text:p></table:table-cell>'
+                for cell in extra_sheet_rows
+            )
+            + '</table:table-row></table:table>'
+            if extra_sheet_rows else ''
+        )
+        + '</office:spreadsheet></office:body>'
         '</office:document-content>'
-    )
+    ) if content_xml is None else content_xml
 
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w') as archive:
@@ -209,6 +219,40 @@ class IsicTaxonomyParserTest(TestCase):
 
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]['description'], 'Growing of cereals')
+
+    def test_parse_spreadsheet_reads_only_the_first_ods_sheet(self):
+        # A notes sheet must not turn into taxonomy rows (as for XLSX,
+        # where only the active sheet is read).
+        header = FULL_CSV_HEADER.strip().split(',')
+        ods_content = build_ods_bytes(
+            [header, SAMPLE_ROW],
+            extra_sheet_rows=['Notes', 'Prepared for upload'],
+        )
+
+        rows = parse_spreadsheet(ods_content, 'sample.ods')
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['section'], 'A')
+
+    def test_parse_spreadsheet_rejects_ods_entity_expansion(self):
+        payload = (
+            '<?xml version="1.0"?>'
+            '<!DOCTYPE lolz [<!ENTITY lol "lol">'
+            '<!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">]>'
+            '<office:document-content>&lol2;</office:document-content>'
+        )
+
+        with self.assertRaises(IsicTaxonomyValidationError):
+            parse_spreadsheet(
+                build_ods_bytes([], content_xml=payload), 'sample.ods',
+            )
+
+    def test_parse_spreadsheet_rejects_malformed_ods_xml(self):
+        with self.assertRaises(IsicTaxonomyValidationError):
+            parse_spreadsheet(
+                build_ods_bytes([], content_xml='<not-closed>'),
+                'sample.ods',
+            )
 
     def test_parse_spreadsheet_reads_odt_extension(self):
         header = FULL_CSV_HEADER.strip().split(',')

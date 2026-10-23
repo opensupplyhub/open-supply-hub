@@ -246,7 +246,9 @@ export function IsicTaxonomySearch({
     const listboxId = 'isic4-taxonomy-results';
     const infoPopoverId = 'isic4-taxonomy-information';
     const infoPopoverTitleId = 'isic4-taxonomy-information-title';
-    const label = 'International Standard Industrial Classification "ISIC"';
+    // Plain parentheses: the app font draws straight double quotes as
+    // mismatched curly ones.
+    const label = 'International Standard Industrial Classification (ISIC)';
     const keepInfoOpen = () => {
         if (infoCloseTimerRef.current) {
             clearTimeout(infoCloseTimerRef.current);
@@ -339,15 +341,8 @@ export function IsicTaxonomySearch({
         return null;
     }
 
-    if (fetching || !taxonomy) {
-        return (
-            <div className={classes.root}>
-                {renderLabel()}
-                <CircularProgress size={24} />
-            </div>
-        );
-    }
-
+    // A failed fetch leaves taxonomy null, so the error is checked before
+    // the loading branch or the spinner would never go away.
     if (error) {
         return (
             <div className={classes.root}>
@@ -355,6 +350,15 @@ export function IsicTaxonomySearch({
                 <p className={classes.hint}>
                     Unable to load ISIC taxonomy. Try refreshing the page.
                 </p>
+            </div>
+        );
+    }
+
+    if (fetching || !taxonomy) {
+        return (
+            <div className={classes.root}>
+                {renderLabel()}
+                <CircularProgress size={24} />
             </div>
         );
     }
@@ -386,7 +390,7 @@ export function IsicTaxonomySearch({
                 classes={classes}
                 listboxId={listboxId}
                 showResultsPanel={showResultsPanel}
-                resultsCount={visibleRows.length}
+                activeRowIndex={activeRowIndex}
             />
 
             {showResultsPanel && (
@@ -441,7 +445,7 @@ export function IsicTaxonomySearch({
             <p className={classes.hint}>
                 {showResultsPanel
                     ? hint
-                    : 'Click to browse ISIC sections, or type to search all levels'}
+                    : 'Searches ISIC Revision 4. Click to browse sections, or type to search all levels'}
             </p>
         </div>
     );

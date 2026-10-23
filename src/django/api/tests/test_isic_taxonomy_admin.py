@@ -1,3 +1,5 @@
+import shutil
+import tempfile
 from unittest.mock import patch
 
 from django.contrib.auth.models import Permission
@@ -45,9 +47,13 @@ def create_staff_user(*, email='staff@test.com', with_permission=True):
     return user
 
 
+# Uploaded spreadsheets go to a throwaway directory, not the source tree.
+TEST_MEDIA_ROOT = tempfile.mkdtemp(prefix='isic-taxonomy-admin-test-')
+
 TEST_STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'OPTIONS': {'location': TEST_MEDIA_ROOT},
     },
     'staticfiles': {
         'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
@@ -61,6 +67,11 @@ TEST_STORAGES = {
     STORAGES=TEST_STORAGES,
 )
 class IsicTaxonomyAdminViewTest(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(TEST_MEDIA_ROOT, ignore_errors=True)
+
     def setUp(self):
         caches['view_cache'].clear()
         IsicTaxonomyConfig.objects.all().delete()

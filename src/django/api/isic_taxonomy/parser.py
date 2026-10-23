@@ -4,6 +4,8 @@ import zipfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+from defusedxml import DefusedXmlException
+from defusedxml.ElementTree import fromstring as safe_fromstring
 from openpyxl import load_workbook
 
 from api.isic_taxonomy.constants import ALLOWED_EXTENSIONS, REQUIRED_HEADERS
@@ -127,9 +129,22 @@ def _parse_ods(file_content: bytes) -> list[list[str]]:
             ),
         ]) from exc
 
-    root = ET.fromstring(content)
+    # defusedxml: the archive is uploaded, so refuse entity-expansion
+    # payloads. Only the first sheet is read, as for XLSX (active sheet).
+    try:
+        root = safe_fromstring(content)
+    except (ET.ParseError, DefusedXmlException) as exc:
+        raise IsicTaxonomyValidationError([
+            IsicTaxonomyError(
+                message=(
+                    'Could not read the ODS file. Ensure it is a valid '
+                    'OpenDocument spreadsheet.'
+                ),
+            ),
+        ]) from exc
+    table = root.find('.//table:table', ODS_NS)
     rows = []
-    for table in root.findall('.//table:table', ODS_NS):
+    if table is not None:
         for row in table.findall('table:table-row', ODS_NS):
             cells = []
             for cell in row.findall('table:table-cell', ODS_NS):

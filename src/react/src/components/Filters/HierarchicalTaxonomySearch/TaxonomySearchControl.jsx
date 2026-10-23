@@ -25,7 +25,6 @@ function TaxonomySearchControl({
     classes,
     listboxId,
     showResultsPanel,
-    resultsCount,
     activeRowIndex,
     validationMessage,
 }) {
@@ -74,10 +73,7 @@ function TaxonomySearchControl({
                     disabled={disabled}
                     aria-controls={showResultsPanel ? listboxId : undefined}
                     aria-autocomplete="list"
-                    aria-expanded={
-                        showResultsPanel &&
-                        (activeRowIndex !== null || resultsCount > 0)
-                    }
+                    aria-expanded={showResultsPanel}
                     aria-activedescendant={activeDescendantId}
                     aria-invalid={!!validationMessage}
                     role="combobox"
@@ -107,15 +103,12 @@ TaxonomySearchControl.propTypes = {
     classes: object.isRequired,
     listboxId: string.isRequired,
     showResultsPanel: bool.isRequired,
-    resultsCount: number,
-    activeRowIndex: number,
+    activeRowIndex: number.isRequired,
     validationMessage: string,
 };
 
 TaxonomySearchControl.defaultProps = {
     disabled: false,
-    resultsCount: 0,
-    activeRowIndex: null,
     validationMessage: '',
 };
 

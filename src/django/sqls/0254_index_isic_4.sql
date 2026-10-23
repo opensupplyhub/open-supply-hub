@@ -19,7 +19,28 @@ BEGIN
     WHERE aef.facility_id = af_id
       AND aef.field_name = isic_field_name
       AND aef.value ? raw_value_key
-      AND jsonb_typeof(aef.value -> raw_value_key) IN ('array', 'object');
+      AND jsonb_typeof(aef.value -> raw_value_key) IN ('array', 'object')
+      -- Only values visible on the location, as in index_processing_type():
+      -- an approved claim's, or an active match's from an active source.
+      AND (
+        EXISTS (
+          SELECT 1
+          FROM api_facilityclaim afc
+          WHERE afc.id = aef.facility_claim_id
+            AND afc.status = 'APPROVED'
+        )
+        OR aef.facility_list_item_id IN (
+          SELECT afm.facility_list_item_id
+          FROM api_facilitymatch afm
+          JOIN api_facilitylistitem afli ON afli.id = afm.facility_list_item_id
+          JOIN api_source source ON source.id = afli.source_id
+          WHERE afm.facility_id = af_id
+            AND afm.status IN ('AUTOMATIC', 'CONFIRMED', 'MERGED')
+            AND afm.is_active = TRUE
+            AND afli.facility_id = af_id
+            AND source.is_active = TRUE
+        )
+      );
 END;
 $Body$;
 

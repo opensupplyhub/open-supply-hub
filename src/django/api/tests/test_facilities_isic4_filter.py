@@ -82,6 +82,25 @@ class FacilitiesIsic4FilterTest(FacilityAPITestCaseBase):
         ids = {feature['id'] for feature in response.data['features']}
         self.assertEqual(ids, {self.facility.id})
 
+    def test_unparseable_isic_values_match_nothing(self):
+        # AC4: unmatched input must not fall back to every location.
+        for values in (['300'], ['bogus:123'], ['class:'], ['dressing']):
+            with self.subTest(values=values):
+                response = self.client.get(
+                    reverse('facility-list'), {'isic_4': values},
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data['features'], [])
+
+    def test_one_valid_value_still_matches(self):
+        response = self.client.get(
+            reverse('facility-list'),
+            {'isic_4': ['bogus:123', 'class:1410']},
+        )
+
+        ids = {feature['id'] for feature in response.data['features']}
+        self.assertEqual(ids, {self.facility.id})
+
     def test_section_filter_returns_matching_facilities(self):
         response = self.client.get(
             reverse('facility-list'),

@@ -6,7 +6,7 @@ from api.models.facility.facility_index import FacilityIndex
 
 def searchable_facility_index_queryset():
     """Facilities included in GET /api/facilities/ search results."""
-    return FacilityIndex.objects.all()
+    return FacilityIndex.objects.without_candidates()
 
 
 def _aggregate_array_field_counts(queryset, field_name):

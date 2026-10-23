@@ -61,7 +61,7 @@ const COUNTS = Object.freeze({
     'section:C': 321,
 });
 
-const createPreloadedState = () => ({
+const createPreloadedState = (taxonomyState = {}) => ({
     filterOptions: {
         isic4Taxonomy: {
             config: {
@@ -72,11 +72,12 @@ const createPreloadedState = () => ({
             data: TAXONOMY,
             fetching: false,
             error: null,
+            ...taxonomyState,
         },
     },
 });
 
-const renderControl = (props = {}) => {
+const renderControl = (props = {}, taxonomyState = {}) => {
     const onIsic4Change = jest.fn();
     const onRequestCounts = jest.fn();
     const result = renderWithProviders(
@@ -87,7 +88,7 @@ const renderControl = (props = {}) => {
             onRequestCounts={onRequestCounts}
             {...props}
         />,
-        { preloadedState: createPreloadedState() },
+        { preloadedState: createPreloadedState(taxonomyState) },
     );
 
     return { ...result, onIsic4Change, onRequestCounts };
@@ -97,6 +98,19 @@ const getResultRow = label =>
     screen.getByRole('button', { name: label }).closest('li');
 
 describe('IsicTaxonomySearch', () => {
+    test('names the field plainly and the revision it searches', () => {
+        renderControl();
+
+        expect(
+            screen.getByText(
+                'International Standard Industrial Classification (ISIC)',
+            ),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(/Searches ISIC Revision 4/),
+        ).toBeInTheDocument();
+    });
+
     test('opens the required ISIC explanation on hover', async () => {
         renderControl();
         const infoButton = screen.getByRole('button', {
@@ -251,6 +265,29 @@ describe('IsicTaxonomySearch', () => {
             }),
         );
         expect(onIsic4Change).toHaveBeenLastCalledWith([]);
+    });
+
+    test('shows the load error instead of a spinner when the fetch fails', () => {
+        renderControl({}, { data: null, error: ['Not found'] });
+
+        expect(
+            screen.getByText(
+                'Unable to load ISIC taxonomy. Try refreshing the page.',
+            ),
+        ).toBeInTheDocument();
+        expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
+    });
+
+    test('points screen readers at the highlighted option', () => {
+        renderControl();
+        const input = screen.getByRole('combobox');
+
+        fireEvent.change(input, { target: { value: 'cereals' } });
+        fireEvent.keyDown(input, { key: 'ArrowDown' });
+
+        const activeId = input.getAttribute('aria-activedescendant');
+        expect(activeId).toMatch(/-option-0$/);
+        expect(document.getElementById(activeId)).not.toBeNull();
     });
 
     test('supports keyboard selection', () => {

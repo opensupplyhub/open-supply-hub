@@ -30,13 +30,17 @@ def update_indexing_procedures(apps, schema_editor):
     helper.run_sql_files([
         '0254_index_facilities_isic.sql',
         '0254_extended_field_indexing_isic.sql',
+        '0254_isic_dependent_triggers.sql',
     ])
 
 
 def revert_indexing_procedures(apps, schema_editor):
+    # Each file re-creates the definitions this migration replaced.
     helper.run_sql_files([
         '0250_index_facilities_exclude_candidates.sql',
         '0254_revert_extended_field_indexing_isic.sql',
+        '0235_add_taxonomy_columns_to_dependent_triggers.sql',
+        '0236_add_taxonomy_columns_to_claim_trigger.sql',
     ])
 
 
@@ -48,12 +52,20 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # api_facilityindex is read by long-running queries (downloads,
+        # tiles); the ALTERs below must not queue behind them and stall
+        # every query that arrives meanwhile. SET LOCAL lasts to the end of
+        # the migration transaction; the RunSQL at the end does the same
+        # when migrating backwards (as in 0251).
+        migrations.RunSQL(
+            sql="SET LOCAL lock_timeout = '5s';",
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         migrations.AddField(
             model_name='facilityindex',
             name='isic_class',
             field=ArrayField(
                 base_field=models.CharField(
-                    db_index=True,
                     help_text=(
                         'Normalized ISIC Rev 4 class codes from isic_4 '
                         'ExtendedField.'
@@ -69,7 +81,6 @@ class Migration(migrations.Migration):
             name='isic_division',
             field=ArrayField(
                 base_field=models.CharField(
-                    db_index=True,
                     help_text=(
                         'Normalized ISIC Rev 4 division codes from isic_4 '
                         'ExtendedField.'
@@ -85,7 +96,6 @@ class Migration(migrations.Migration):
             name='isic_group',
             field=ArrayField(
                 base_field=models.CharField(
-                    db_index=True,
                     help_text=(
                         'Normalized ISIC Rev 4 group codes from isic_4 '
                         'ExtendedField.'
@@ -101,7 +111,6 @@ class Migration(migrations.Migration):
             name='isic_section',
             field=ArrayField(
                 base_field=models.CharField(
-                    db_index=True,
                     help_text=(
                         'Normalized ISIC Rev 4 section codes from isic_4 '
                         'ExtendedField.'
@@ -242,5 +251,9 @@ class Migration(migrations.Migration):
         RunPython(
             seed_isic_taxonomy_config,
             reverse_code=clear_isic_taxonomy_config,
+        ),
+        migrations.RunSQL(
+            sql=migrations.RunSQL.noop,
+            reverse_sql="SET LOCAL lock_timeout = '5s';",
         ),
     ]

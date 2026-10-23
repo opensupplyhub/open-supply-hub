@@ -144,7 +144,6 @@ class FacilityIndex(models.Model):
         max_length=10,
         null=False,
         blank=False,
-        db_index=True,
         help_text=(
             'Normalized ISIC Rev 4 section codes from isic_4 ExtendedField.'
         )),
@@ -153,7 +152,6 @@ class FacilityIndex(models.Model):
         max_length=10,
         null=False,
         blank=False,
-        db_index=True,
         help_text=(
             'Normalized ISIC Rev 4 division codes from isic_4 ExtendedField.'
         )),
@@ -162,7 +160,6 @@ class FacilityIndex(models.Model):
         max_length=10,
         null=False,
         blank=False,
-        db_index=True,
         help_text=(
             'Normalized ISIC Rev 4 group codes from isic_4 ExtendedField.'
         )),
@@ -171,7 +168,6 @@ class FacilityIndex(models.Model):
         max_length=10,
         null=False,
         blank=False,
-        db_index=True,
         help_text=(
             'Normalized ISIC Rev 4 class codes from isic_4 ExtendedField.'
         )),
