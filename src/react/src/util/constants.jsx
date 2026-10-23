@@ -26,6 +26,8 @@ export const ClaimFacilityInfoLink =
 
 export const EMPTY_PLACEHOLDER = 'N/A';
 
+export const externalOSHubLink = 'https://www.opensupplyhub.org/';
+
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
@@ -782,7 +784,7 @@ export const NavbarItems = [
                         {
                             type: 'button',
                             label: 'Introduction',
-                            href: InfoLink,
+                            href: externalOSHubLink,
                         },
                         {
                             type: 'button',
@@ -1680,5 +1682,3 @@ export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
     CLIENT: 'CLIENT',
     SERVER: 'SERVER',
 };
-
-export const externalOSHubLink = 'https://www.opensupplyhub.org/';
