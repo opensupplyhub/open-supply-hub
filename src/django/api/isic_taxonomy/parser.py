@@ -10,7 +10,7 @@ from openpyxl import load_workbook
 
 from api.isic_taxonomy.constants import (
     ALLOWED_EXTENSIONS,
-    MAX_ODS_COLUMN_REPEAT,
+    MAX_ODS_ROW_CELLS,
     MAX_ODS_CONTENT_BYTES,
     REQUIRED_HEADERS,
 )
@@ -170,10 +170,12 @@ def _parse_ods(file_content: bytes) -> list[list[str]]:
                     )
                 )
                 # LibreOffice writes trailing blank cells as one huge
-                # repeat; real rows have 11 columns.
-                repeat = min(repeat, MAX_ODS_COLUMN_REPEAT)
+                # repeat; stop once the row has more cells than any real one.
+                repeat = min(repeat, MAX_ODS_ROW_CELLS - len(cells))
                 value = _ods_cell_text(cell)
                 cells.extend([value] * repeat)
+                if len(cells) >= MAX_ODS_ROW_CELLS:
+                    break
             if any(cells):
                 rows.append(cells)
     return rows

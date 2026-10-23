@@ -276,6 +276,34 @@ class IsicTaxonomyParserTest(TestCase):
                 build_ods_bytes([], content_xml=payload), 'sample.ods',
             )
 
+    @patch('api.isic_taxonomy.parser.MAX_ODS_ROW_CELLS', 3)
+    def test_parse_spreadsheet_caps_cells_per_ods_row(self):
+        # Many cells each under the per-cell limit still stop at the row
+        # limit.
+        cell = (
+            '<table:table-cell table:number-columns-repeated="2">'
+            '<text:p>x</text:p></table:table-cell>'
+        )
+        payload = (
+            '<office:document-content'
+            ' xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"'
+            ' xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"'
+            ' xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">'
+            '<office:body><office:spreadsheet><table:table>'
+            f'<table:table-row>{cell * 1000}</table:table-row>'
+            '</table:table></office:spreadsheet></office:body>'
+            '</office:document-content>'
+        )
+
+        with patch('api.isic_taxonomy.parser._ods_cell_text') as cell_text:
+            cell_text.return_value = 'x'
+            with self.assertRaises(IsicTaxonomyValidationError):
+                parse_spreadsheet(
+                    build_ods_bytes([], content_xml=payload), 'sample.ods',
+                )
+
+        self.assertEqual(cell_text.call_count, 2)
+
     def test_parse_spreadsheet_rejects_malformed_ods_xml(self):
         with self.assertRaises(IsicTaxonomyValidationError):
             parse_spreadsheet(
