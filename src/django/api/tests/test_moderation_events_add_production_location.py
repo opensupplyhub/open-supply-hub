@@ -510,3 +510,38 @@ class ModerationEventsAddProductionLocationTest(
         index_row = FacilityIndex.objects.get(id=response.data["os_id"])
         self.assertNotEqual([], index_row.facility_type)
         self.assertNotEqual([], index_row.processing_type)
+
+    def test_isic_index_columns_populated_after_approval(self):
+        """
+        OSDEV-3340: the isic_4 value a location is approved with (v1 API /
+        SLC, the path RBA uses) must reach ISIC search, end to end. The
+        OSDEV-3428 class of bug (columns computed before the FacilityMatch
+        exists) is covered for ISIC by the source, match and claim tests
+        in test_facility_index_isic.py.
+        """
+        from api.models.facility.facility_index import FacilityIndex
+
+        self.add_extended_fields_data()
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        index_row = FacilityIndex.objects.get(id=response.data["os_id"])
+        self.assertEqual(['C'], index_row.isic_section)
+        self.assertEqual(['28'], index_row.isic_division)
+        self.assertEqual(['282'], index_row.isic_group)
+        self.assertEqual(['2818'], index_row.isic_class)
+
+        search = self.client.get(
+            "/api/facilities/", {"isic_4": "division:28"}
+        )
+        self.assertEqual(
+            [response.data["os_id"]],
+            [feature["id"] for feature in search.json()["features"]],
+        )
