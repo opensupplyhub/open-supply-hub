@@ -2566,7 +2566,7 @@ class TestLocationContributionStrategy(APITestCase):
             'name': 'Blue Horizon Facility',
             'address': '990 Spring Garden St., Philadelphia PA 19123',
             'country': 'US',
-            # String field but value is an int — type mismatch should give 422.
+            # String field but value is an int — type mismatch → 422.
             'typed_inactive_field': 42,
         }
 
