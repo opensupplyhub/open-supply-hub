@@ -34,7 +34,8 @@ const DrawerSubtitle = ({
             component="p"
             data-testid="contributions-drawer-subtitle"
         >
-            {sourcesText} for{' '}
+            {/* Values only mapped are mapped "to" a scheme. */}
+            {sourcesText} {count === 0 && mappedCount > 0 ? 'to' : 'for'}{' '}
             <span className={classes.fieldName}>{fieldName}</span>
         </Typography>
     );

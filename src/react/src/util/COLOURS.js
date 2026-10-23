@@ -50,8 +50,6 @@ export default {
     MAPPED_CHIP_BG: '#E7F1F7',
     MAPPED_CHIP_TEXT: '#245F80',
     MAPPED_CHIP_BORDER: '#B5D3E4',
-    VERSION_TAG_BG: '#F1EFEA',
-    VERSION_TAG_TEXT: '#4A4A55',
     AMBER_YELLOW: '#fbc02d',
     LIGHT_AMBER: '#fff8e1',
     AMBER_50: '#fffbeb',

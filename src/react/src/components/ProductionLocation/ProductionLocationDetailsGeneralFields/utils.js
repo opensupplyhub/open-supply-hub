@@ -13,7 +13,6 @@ import {
     DATA_CENTER_FIELD_GROUPS,
     NO_UNIT_SPECIFIED,
 } from '../constants.jsx';
-import getIsicDataPointProps from './isicField';
 
 const toDrawerContribution = (item, value) => ({
     value,
@@ -181,11 +180,6 @@ const getOrderedFieldConfigs = includeAdditionalIdentifiers => {
         key: fieldName,
         getDataPointProps: data => {
             if (!data) return null;
-            // ISIC also shows values mapped from facility and processing
-            // type, which are not extended fields (OSDEV-3622).
-            if (fieldName === FIELD_CONFIG.isic_4.key) {
-                return getIsicDataPointProps(data);
-            }
             let values = get(
                 data,
                 `properties.extended_fields.${fieldName}`,
