@@ -86,3 +86,40 @@ export function withEntry(selections, entry, include) {
     });
     return next;
 }
+
+// The entry a typed code names in one revision, for the forms (search is
+// titles only). Excel-style lost zeros are not guessed here.
+export const findByCode = (entries, revision, query) => {
+    const code = query.trim().toUpperCase();
+    return entries.find(entry => entry.codes[revision] === code) || null;
+};
+
+/*
+The forms keep ISIC values as { 4: [option], 5: [option] }, options as the
+filters use them. These convert to and from what the APIs take and return.
+*/
+export const EMPTY_ISIC = Object.freeze({ 4: [], 5: [] });
+
+// { isic_4: ['class:1410'], isic_5: [...] }, as the claim API takes them.
+export const isicFilterValues = value => ({
+    isic_4: (value[4] || []).map(option => option.value),
+    isic_5: (value[5] || []).map(option => option.value),
+});
+
+// [{ class: '1410 - Manufacture of ...' }], as the v1 API takes them.
+export const isicObjects = options =>
+    options.map(({ value, label }) => {
+        const [level, code] = value.split(':');
+        return { [level]: `${code} - ${label}` };
+    });
+
+// Options for stored entries ({ section: 'C - Manufacturing', ... }), by
+// their most specific level.
+export const isicOptions = entries =>
+    (entries || []).flatMap(entry => {
+        const level = [...LEVEL_ORDER].reverse().find(name => entry[name]);
+        const match = level && /^\s*(\S+)\s+-\s+(.+)$/.exec(entry[level]);
+        return match
+            ? [{ value: `${level}:${match[1]}`, label: match[2].trim() }]
+            : [];
+    });
