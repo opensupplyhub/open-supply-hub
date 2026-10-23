@@ -172,6 +172,17 @@ facilities_list_parameters = [
         ),
     ),
     Parameter(
+        'isic_4_include_mapped',
+        IN_QUERY,
+        type=TYPE_BOOLEAN,
+        required=False,
+        description=(
+            'When true, the isic_4 filter also matches locations whose ISIC '
+            'value was mapped from their facility type or processing type. '
+            'By default only contributor-submitted ISIC values match.'
+        ),
+    ),
+    Parameter(
         'product_type',
         IN_QUERY,
         type=TYPE_STRING,

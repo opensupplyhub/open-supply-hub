@@ -37,6 +37,7 @@ class FacilitiesQueryParams:
     FACILITY_TYPE = 'facility_type'
     PROCESSING_TYPE = 'processing_type'
     ISIC_4 = 'isic_4'
+    ISIC_4_INCLUDE_MAPPED = 'isic_4_include_mapped'
     PROCESSING_TYPE_EXACT = 'processing_type_exact'
     PRODUCT_TYPE = 'product_type'
     NUMBER_OF_WORKERS = 'number_of_workers'

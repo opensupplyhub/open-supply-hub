@@ -28,6 +28,13 @@ const createPreloadedState = ({
         facilityProcessingType: { data: [], fetching: false, error: null },
         taxonomyCounts: {
             isic4: { data: null, fetching: false, error: null },
+            isic4Mapped: { data: null, fetching: false, error: null },
+        },
+        isic4MappedExtraCount: {
+            requestKey: null,
+            count: null,
+            fetching: false,
+            error: null,
         },
         numberOfWorkers: { data: [], fetching: false, error: null },
         isic4Taxonomy: {
@@ -43,6 +50,7 @@ const createPreloadedState = ({
         facilityType: [],
         processingType: [],
         isic4: [],
+        isic4IncludeMapped: false,
         productType: [],
         numberOfWorkers: [],
         nativeLanguageName: '',
@@ -94,6 +102,20 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
         });
     });
 
+    test('shows the mapped-values opt-in, unticked, under ISIC', async () => {
+        const { findByTestId } = renderComponent(
+            createPreloadedState({
+                isic4TaxonomyConfig: {
+                    enabled: true,
+                    version: 1,
+                    taxonomyUrl: '/api/taxonomy/isic4/?v=1',
+                },
+            }),
+        );
+
+        expect(await findByTestId('isic4-include-mapped')).not.toBeChecked();
+    });
+
     test('hides ISIC in embedded maps', () => {
         const { queryByTestId } = renderComponent(
             createPreloadedState({
@@ -107,6 +129,7 @@ describe('FilterSidebarExtendedSearch ISIC gating', () => {
         );
 
         expect(queryByTestId('isic-taxonomy-search')).not.toBeInTheDocument();
+        expect(queryByTestId('isic4-include-mapped')).not.toBeInTheDocument();
     });
 
     test('shows a config error when taxonomy settings fail', async () => {

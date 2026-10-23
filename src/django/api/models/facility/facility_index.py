@@ -172,6 +172,42 @@ class FacilityIndex(models.Model):
             'Normalized ISIC Rev 4 class codes from isic_4 ExtendedField.'
         )),
         default=list)
+    isic_mapped_section = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 section codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
+    isic_mapped_division = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 division codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
+    isic_mapped_group = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 group codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
+    isic_mapped_class = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 class codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
     product_type = postgres.ArrayField(models.CharField(
         max_length=2000,
         null=False,

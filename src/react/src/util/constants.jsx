@@ -1682,3 +1682,7 @@ export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
 };
 
 export const externalOSHubLink = 'https://www.opensupplyhub.org/';
+
+// Taxonomy counts kind for ISIC counts that include values mapped from
+// facility and processing type (OSDEV-3382).
+export const ISIC4_MAPPED_COUNTS_KIND = 'isic4Mapped';

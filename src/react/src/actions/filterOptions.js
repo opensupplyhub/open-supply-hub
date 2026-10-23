@@ -16,6 +16,7 @@ import {
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
     makeGetTaxonomyCountsURL,
+    makeGetIsic4MappedExtraCountURL,
     makeGetTaxonomyConfigURL,
     makeGetProcessingTypeSuggestionsURL,
     makeGetNumberOfWorkersURL,
@@ -109,6 +110,16 @@ export const failFetchTaxonomyCounts = createAction(
 );
 export const completeFetchTaxonomyCounts = createAction(
     'COMPLETE_FETCH_TAXONOMY_COUNTS',
+);
+
+export const startFetchIsic4MappedExtraCount = createAction(
+    'START_FETCH_ISIC4_MAPPED_EXTRA_COUNT',
+);
+export const failFetchIsic4MappedExtraCount = createAction(
+    'FAIL_FETCH_ISIC4_MAPPED_EXTRA_COUNT',
+);
+export const completeFetchIsic4MappedExtraCount = createAction(
+    'COMPLETE_FETCH_ISIC4_MAPPED_EXTRA_COUNT',
 );
 
 export const startFetchProcessingTypeSuggestions = createAction(
@@ -406,14 +417,52 @@ export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
     };
 }
 
-export const fetchTaxonomyCountsIfNeeded = () => (dispatch, getState) => {
+export const fetchTaxonomyCountsIfNeeded = (kind = 'isic4') => (
+    dispatch,
+    getState,
+) => {
     const { data, fetching } =
-        getState().filterOptions.taxonomyCounts.isic4 ?? {};
+        getState().filterOptions.taxonomyCounts[kind] ?? {};
 
     if (data === null && !fetching) {
-        dispatch(fetchTaxonomyCounts('isic4'));
+        dispatch(fetchTaxonomyCounts(kind));
     }
 };
+
+// How many more locations the selected ISIC nodes match when values mapped
+// from facility and processing type are included: the "(+N)" beside the
+// opt-in (OSDEV-3382). The request URL identifies the selection, so a slow
+// response for an earlier selection is ignored by the reducer.
+export function fetchIsic4MappedExtraCount(isic4 = []) {
+    return dispatch => {
+        const requestKey = makeGetIsic4MappedExtraCountURL(isic4);
+        dispatch(startFetchIsic4MappedExtraCount({ requestKey }));
+
+        return apiRequest
+            .get(requestKey)
+            .then(({ data }) =>
+                dispatch(
+                    completeFetchIsic4MappedExtraCount({
+                        requestKey,
+                        count: data.count,
+                    }),
+                ),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching the ISIC mapped count',
+                        messages =>
+                            failFetchIsic4MappedExtraCount({
+                                requestKey,
+                                error: messages,
+                            }),
+                    ),
+                ),
+            );
+    };
+}
 
 export function fetchNumberOfWorkersOptions() {
     return dispatch => {

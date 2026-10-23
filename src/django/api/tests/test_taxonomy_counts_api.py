@@ -10,6 +10,7 @@ from api.models import (
     Source,
 )
 from api.models.facility.facility_index import FacilityIndex
+from api.taxonomy_counts import compute_isic4_counts
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
@@ -91,3 +92,31 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
         )
 
         self.assertEqual(response.status_code, 400)
+
+    def test_counts_match_a_brute_force_count(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            isic_mapped_section=['C', 'H'],
+            isic_mapped_division=['14', '52'],
+            isic_mapped_group=['141', '521'],
+            isic_mapped_class=['1410', '5210'],
+        )
+        FacilityIndex.objects.filter(id=self.facility_two.id).update(
+            isic_mapped_section=['C'],
+            isic_mapped_class=['1410'],
+        )
+
+        for include_mapped in (False, True):
+            expected = {}
+            for index in FacilityIndex.objects.all():
+                for level in ('section', 'division', 'group', 'class'):
+                    codes = set(getattr(index, f'isic_{level}'))
+                    if include_mapped:
+                        codes |= set(getattr(index, f'isic_mapped_{level}'))
+                    for code in codes:
+                        key = f'{level}:{code}'
+                        expected[key] = expected.get(key, 0) + 1
+            with self.subTest(include_mapped=include_mapped):
+                self.assertEqual(
+                    compute_isic4_counts(include_mapped=include_mapped),
+                    expected,
+                )

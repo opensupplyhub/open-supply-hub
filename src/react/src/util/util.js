@@ -88,6 +88,7 @@ import {
     API_V1_ERROR_REQUEST_SOURCE_ENUM,
     SLC_FORM_CONSTRAINTS,
     ENABLE_PRODUCTION_LOCATION_PAGE,
+    ISIC4_MAPPED_COUNTS_KIND,
 } from './constants';
 import { freeEmissionsEstimateFormConfig } from '../components/FreeEmissionsEstimate/constants';
 
@@ -213,8 +214,19 @@ export const makeGetGroupedSectorsURL = () => '/api/sectors/?grouped=true';
 export const makeGetParentCompaniesURL = () => '/api/parent-companies/';
 export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
+// isic4Mapped is the isic4 count with values mapped from facility and
+// processing type included (OSDEV-3382).
 export const makeGetTaxonomyCountsURL = kind =>
-    `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
+    kind === ISIC4_MAPPED_COUNTS_KIND
+        ? '/api/taxonomy-counts/?kind=isic4&include_mapped=true'
+        : `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
+export const makeGetIsic4MappedExtraCountURL = (isic4 = []) =>
+    `/api/taxonomy-counts/?${querystring.stringify({
+        kind: 'isic4_mapped_extra',
+        isic_4: isic4
+            .map(({ value }) => value)
+            .sort((a, b) => a.localeCompare(b)),
+    })}`;
 export const makeGetTaxonomyConfigURL = () => '/api/taxonomy-config/';
 export const makeGetProcessingTypeSuggestionsURL = (
     query = '',
@@ -443,6 +455,7 @@ export const createQueryStringFromSearchFilters = (
         facilityType = [],
         processingType = [],
         isic4 = [],
+        isic4IncludeMapped = false,
         productType = [],
         numberOfWorkers = [],
         nativeLanguageName = '',
@@ -479,6 +492,7 @@ export const createQueryStringFromSearchFilters = (
             processingType,
         ),
         isic_4: createCompactSortedQuerystringInputObject(isic4),
+        isic_4_include_mapped: isic4IncludeMapped && isic4.length ? 'true' : '',
         processing_type_exact: createCompactSortedQuerystringInputObject(
             processingType.filter(option => option.isExact),
         ),
@@ -567,6 +581,7 @@ export const createFiltersFromQueryString = qs => {
         facility_type: facilityType = [],
         processing_type: processingType = [],
         isic_4: isic4 = [],
+        isic_4_include_mapped: isic4IncludeMapped = '',
         processing_type_exact: exactProcessingTypes = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
@@ -618,6 +633,7 @@ export const createFiltersFromQueryString = qs => {
         facilityType: createSelectOptionsFromParams(facilityType),
         processingType: hydratedProcessingTypes,
         isic4: createSelectOptionsFromParams(isic4),
+        isic4IncludeMapped: isic4IncludeMapped === 'true',
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,

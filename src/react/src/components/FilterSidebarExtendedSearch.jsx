@@ -41,6 +41,7 @@ import {
     mapFacilityTypeOptions,
     restoreExactProcessingTypeLabels,
 } from '../util/util';
+import { ISIC4_MAPPED_COUNTS_KIND } from '../util/constants';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
 const PARENT_COMPANY = 'PARENT_COMPANY';
@@ -52,6 +53,9 @@ const NUMBER_OF_WORKERS = 'NUMBER_OF_WORKERS';
 const isExtendedFieldForThisContributor = (field, extendedFields) =>
     extendedFields.includes(field.toLowerCase());
 
+const LazyIsicMappedValuesToggle = React.lazy(() =>
+    import('./Filters/HierarchicalTaxonomySearch/IsicMappedValuesToggle'),
+);
 const LazyIsicTaxonomySearch = React.lazy(() =>
     import('./Filters/HierarchicalTaxonomySearch/IsicTaxonomySearch'),
 );
@@ -71,6 +75,7 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
         processingType,
         updateProcessingType,
         isic4,
+        isic4IncludeMapped,
         updateIsic4,
         productType,
         updateProductType,
@@ -89,6 +94,7 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
         isSideBarSearch,
         isic4Taxonomy,
         isic4Counts,
+        isic4MappedCounts,
     } = props;
     const {
         config: isic4TaxonomyConfig,
@@ -139,6 +145,14 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
         }
     }, [numberOfWorkersOptions, fetchNumberOfWorkers]);
 
+    // The tree requests counts once, on first use; switching the mapped
+    // opt-in afterwards needs the other set of counts.
+    useEffect(() => {
+        if (isic4TaxonomyConfig?.enabled && isic4IncludeMapped) {
+            fetchIsic4Counts(ISIC4_MAPPED_COUNTS_KIND);
+        }
+    }, [fetchIsic4Counts, isic4IncludeMapped, isic4TaxonomyConfig]);
+
     if (fetchingFacilities && fetchingExtendedOptions) return null;
 
     if (fetchingExtendedOptions) {
@@ -150,6 +164,12 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
     }
 
     const isic4TaxonomyEnabled = isic4TaxonomyConfig?.enabled ?? false;
+    const isic4CountsKind = isic4IncludeMapped
+        ? ISIC4_MAPPED_COUNTS_KIND
+        : 'isic4';
+    const isic4CountsForMode = isic4IncludeMapped
+        ? isic4MappedCounts
+        : isic4Counts;
     const isic4TaxonomyConfigFailed =
         !isic4TaxonomyConfig &&
         !isic4TaxonomyFetching &&
@@ -253,10 +273,15 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
                 <div className="form__field">
                     <Suspense fallback={null}>
                         <LazyIsicTaxonomySearch
-                            counts={isic4Counts}
+                            counts={isic4CountsForMode}
                             isic4={isic4}
                             onIsic4Change={updateIsic4}
-                            onRequestCounts={fetchIsic4Counts}
+                            onRequestCounts={() =>
+                                fetchIsic4Counts(isic4CountsKind)
+                            }
+                            disabled={fetchingFacilities}
+                        />
+                        <LazyIsicMappedValuesToggle
                             disabled={fetchingFacilities}
                         />
                     </Suspense>
@@ -320,7 +345,9 @@ FilterSidebarExtendedSearch.defaultProps = {
     }),
     numberOfWorkersOptions: null,
     isic4: [],
+    isic4IncludeMapped: false,
     isic4Counts: null,
+    isic4MappedCounts: null,
 };
 
 FilterSidebarExtendedSearch.propTypes = {
@@ -336,7 +363,9 @@ FilterSidebarExtendedSearch.propTypes = {
     isic4: facilityTypeOptionsPropType,
     updateIsic4: func.isRequired,
     isic4Taxonomy: object.isRequired,
+    isic4IncludeMapped: bool,
     isic4Counts: object,
+    isic4MappedCounts: object,
     fetchIsic4Counts: func.isRequired,
     productType: productTypeOptionsPropType.isRequired,
     numberOfWorkers: numberOfWorkerOptionsPropType.isRequired,
@@ -359,7 +388,10 @@ function mapStateToProps({
             data: numberOfWorkersOptions,
             fetching: fetchingNumberOfWorkers,
         },
-        taxonomyCounts: { isic4: { data: isic4Counts } = {} } = {},
+        taxonomyCounts: {
+            isic4: { data: isic4Counts } = {},
+            isic4Mapped: { data: isic4MappedCounts } = {},
+        } = {},
         isic4Taxonomy,
     },
     filters: {
@@ -368,6 +400,7 @@ function mapStateToProps({
         facilityType,
         processingType,
         isic4,
+        isic4IncludeMapped,
         productType,
         numberOfWorkers,
         nativeLanguageName,
@@ -387,7 +420,9 @@ function mapStateToProps({
         facilityType,
         processingType,
         isic4,
+        isic4IncludeMapped,
         isic4Counts,
+        isic4MappedCounts,
         isic4Taxonomy,
         productType,
         numberOfWorkers,
@@ -419,7 +454,7 @@ function mapDispatchToProps(dispatch) {
             dispatch(fetchFacilityProcessingTypeOptions()),
         fetchIsic4TaxonomyConfig: () =>
             dispatch(fetchIsic4TaxonomyConfigIfNeeded()),
-        fetchIsic4Counts: () => dispatch(fetchTaxonomyCountsIfNeeded()),
+        fetchIsic4Counts: kind => dispatch(fetchTaxonomyCountsIfNeeded(kind)),
         fetchSuggestionsForProcessingType: (query, facilityTypes) =>
             dispatch(fetchProcessingTypeSuggestions(query, facilityTypes)),
         fetchNumberOfWorkers: () => dispatch(fetchNumberOfWorkersOptions()),

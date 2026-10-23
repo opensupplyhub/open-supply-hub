@@ -50,6 +50,15 @@ ISIC4_LEVEL_FIELDS = {
     'class': 'isic_class',
 }
 
+# Codes mapped from OS Hub Facility Type / Processing Type through the
+# crosswalk (OSDEV-3382), searched only when the caller opts in.
+ISIC4_MAPPED_FIELD_BY_FIELD = {
+    'isic_section': 'isic_mapped_section',
+    'isic_division': 'isic_mapped_division',
+    'isic_group': 'isic_mapped_group',
+    'isic_class': 'isic_mapped_class',
+}
+
 
 def parse_isic4_filter_values(values):
     """

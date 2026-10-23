@@ -14,6 +14,7 @@ import {
     updateFacilityTypeFilter,
     updateProcessingTypeFilter,
     updateIsic4Filter,
+    updateIsic4IncludeMappedFilter,
     updateProductTypeFilter,
     updateNumberofWorkersFilter,
     updateNativeLanguageNameFilter,
@@ -57,6 +58,7 @@ const initialState = Object.freeze({
     facilityType: Object.freeze([]),
     processingType: Object.freeze([]),
     isic4: Object.freeze([]),
+    isic4IncludeMapped: false,
     productType: Object.freeze([]),
     numberOfWorkers: Object.freeze([]),
     dataSources: Object.freeze([]),
@@ -128,6 +130,10 @@ export default createReducer(
         [updateIsic4Filter]: (state, payload) =>
             update(state, {
                 isic4: { $set: payload },
+            }),
+        [updateIsic4IncludeMappedFilter]: (state, payload) =>
+            update(state, {
+                isic4IncludeMapped: { $set: !!payload },
             }),
         [updateProductTypeFilter]: (state, payload) =>
             update(state, {

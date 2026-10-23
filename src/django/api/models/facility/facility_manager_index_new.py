@@ -3,7 +3,10 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Q
 
 from api.constants import FacilitiesQueryParams
-from api.isic import parse_isic4_filter_values
+from api.isic import (
+    ISIC4_MAPPED_FIELD_BY_FIELD,
+    parse_isic4_filter_values,
+)
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -15,13 +18,16 @@ from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 
 
-def build_isic_filter(parsed_isic_filters):
+def build_isic_filter(parsed_isic_filters, include_mapped=False):
     if not parsed_isic_filters:
         return None
 
     isic_filter = Q()
     for field_name, code in parsed_isic_filters:
         isic_filter |= Q(**{f'{field_name}__overlap': [code]})
+        if include_mapped:
+            mapped_field_name = ISIC4_MAPPED_FIELD_BY_FIELD[field_name]
+            isic_filter |= Q(**{f'{mapped_field_name}__overlap': [code]})
     return isic_filter
 
 
@@ -221,7 +227,10 @@ class FacilityIndexNewManager(models.Manager):
             facilities_qs = facilities_qs.filter(_fp_match=True)
 
         isic_filter = build_isic_filter(
-            parse_isic4_filter_values(isic_4_filters)
+            parse_isic4_filter_values(isic_4_filters),
+            include_mapped=params.get(
+                FacilitiesQueryParams.ISIC_4_INCLUDE_MAPPED
+            ) == 'true',
         )
         if isic_filter:
             facilities_qs = facilities_qs.filter(isic_filter)
