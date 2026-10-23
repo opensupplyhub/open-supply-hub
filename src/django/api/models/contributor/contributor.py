@@ -140,7 +140,7 @@ class Contributor(models.Model):
     )
 
     @property
-    def all_partner_fields(self):
+    def all_partner_fields_including_inactive(self):
         """Return partner fields for this contributor, including inactive."""
         from api.models.partner_field import PartnerField
         return PartnerField.objects.get_all_including_inactive().filter(

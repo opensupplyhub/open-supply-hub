@@ -36,7 +36,7 @@ class PermissionProcessor(ContributionProcessor):
         # Permission validation — check against all assigned fields, including
         # inactive ones, so partners can submit before their field goes live.
         contributor_allowed: set[str] = set(
-            event_dto.contributor.all_partner_fields.values_list(
+            event_dto.contributor.all_partner_fields_including_inactive.values_list(
                 "name", flat=True
             )
         )

@@ -314,7 +314,7 @@ def create_partner_extendedfields_for_single_item(
     contributor = item.source.contributor
 
     for partner_field in item.source.contributor \
-            .all_partner_fields:
+            .all_partner_fields_including_inactive:
         field = partner_field.name
         field_type = partner_field.type
         field_value = raw_data.get(field)

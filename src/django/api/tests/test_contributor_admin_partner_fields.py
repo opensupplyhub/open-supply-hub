@@ -98,7 +98,7 @@ class ContributorAdminPartnerFieldsTest(TestCase):
 
         self.assertIn(
             self.inactive_field,
-            self.contributor.all_partner_fields,
+            self.contributor.all_partner_fields_including_inactive,
         )
 
     def test_saving_removes_inactive_field_taken_out_of_chosen(self):
@@ -111,5 +111,5 @@ class ContributorAdminPartnerFieldsTest(TestCase):
 
         self.assertNotIn(
             self.inactive_field,
-            self.contributor.all_partner_fields,
+            self.contributor.all_partner_fields_including_inactive,
         )
