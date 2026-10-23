@@ -2,7 +2,9 @@ import logging
 
 from django.core.cache import caches
 from django.urls import reverse
+from waffle import switch_is_active
 
+from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
 from api.isic_taxonomy.content import invalidate_isic4_taxonomy_content_cache
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
 
@@ -48,6 +50,11 @@ def build_isic4_config(*, config: IsicTaxonomyConfig | None = None) -> dict:
 
 
 def get_taxonomy_config() -> dict:
+    if not switch_is_active(ISIC_TAXONOMY_SWITCH):
+        return {
+            'isic4': {'enabled': False, 'version': 0, 'taxonomyUrl': None},
+        }
+
     cache = caches['view_cache']
     try:
         cached = cache.get(TAXONOMY_CONFIG_CACHE_KEY)

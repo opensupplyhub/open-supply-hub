@@ -1,8 +1,11 @@
 from unittest.mock import MagicMock, patch
 
 from django.core.cache import caches
+from django.db import connection
 from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from waffle.testutils import override_switch
 
 from api.isic_taxonomy.constants import ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL
 from api.isic_taxonomy.content import (
@@ -28,6 +31,7 @@ LOC_MEM_VIEW_CACHE = {
 }
 
 
+@override_switch('enable_isic_taxonomy', active=True)
 @override_settings(
     AWS_STORAGE_BUCKET_NAME='test-bucket',
     CACHES=LOC_MEM_VIEW_CACHE,
@@ -80,6 +84,21 @@ class TaxonomyConfigAPITest(TestCase):
             },
         )
 
+    @override_switch('enable_isic_taxonomy', active=False)
+    def test_switch_off_reports_disabled_without_reading_config(self):
+        # Before `migrate` the config table may not exist yet.
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(reverse('taxonomy_config'))
+
+        self.assertFalse(
+            any('api_isictaxonomyconfig' in q['sql'] for q in queries)
+        )
+
+        self.assertEqual(
+            response.json(),
+            {'isic4': {'enabled': False, 'version': 0, 'taxonomyUrl': None}},
+        )
+
     def test_response_is_cached_for_sixty_seconds(self):
         first = self.client.get(reverse('taxonomy_config'))
         second = self.client.get(reverse('taxonomy_config'))
@@ -110,6 +129,7 @@ class TaxonomyConfigAPITest(TestCase):
         self.assertNotIn('ISIC4_TAXONOMY_URL', body)
 
 
+@override_switch('enable_isic_taxonomy', active=True)
 @override_settings(
     AWS_STORAGE_BUCKET_NAME='test-bucket',
     CACHES=LOC_MEM_VIEW_CACHE,

@@ -46,12 +46,6 @@ class IsicTaxonomyConfig(models.Model):
         default='',
         help_text='S3 key for the published isic_rev4.json artifact.',
     )
-    bundle_s3_key = models.CharField(
-        max_length=512,
-        blank=True,
-        default='',
-        help_text='S3 key for the published isicRev4Taxonomy.js bundle.',
-    )
     section_count = models.PositiveIntegerField(default=0)
     division_count = models.PositiveIntegerField(default=0)
     group_count = models.PositiveIntegerField(default=0)

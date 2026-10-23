@@ -8,7 +8,12 @@ from defusedxml import DefusedXmlException
 from defusedxml.ElementTree import fromstring as safe_fromstring
 from openpyxl import load_workbook
 
-from api.isic_taxonomy.constants import ALLOWED_EXTENSIONS, REQUIRED_HEADERS
+from api.isic_taxonomy.constants import (
+    ALLOWED_EXTENSIONS,
+    MAX_ODS_COLUMN_REPEAT,
+    MAX_ODS_CONTENT_BYTES,
+    REQUIRED_HEADERS,
+)
 from api.isic_taxonomy.errors import (
     IsicTaxonomyError,
     IsicTaxonomyValidationError,
@@ -118,6 +123,15 @@ def _parse_xlsx(file_content: bytes) -> list[list[str]]:
 def _parse_ods(file_content: bytes) -> list[list[str]]:
     try:
         with zipfile.ZipFile(io.BytesIO(file_content)) as archive:
+            if (
+                archive.getinfo('content.xml').file_size
+                > MAX_ODS_CONTENT_BYTES
+            ):
+                raise IsicTaxonomyValidationError([
+                    IsicTaxonomyError(
+                        message='The ODS file is too large to read.',
+                    ),
+                ])
             content = archive.read('content.xml')
     except (zipfile.BadZipFile, KeyError) as exc:
         raise IsicTaxonomyValidationError([
@@ -155,6 +169,9 @@ def _parse_ods(file_content: bytes) -> list[list[str]]:
                         1,
                     )
                 )
+                # LibreOffice writes trailing blank cells as one huge
+                # repeat; real rows have 11 columns.
+                repeat = min(repeat, MAX_ODS_COLUMN_REPEAT)
                 value = _ods_cell_text(cell)
                 cells.extend([value] * repeat)
             if any(cells):
