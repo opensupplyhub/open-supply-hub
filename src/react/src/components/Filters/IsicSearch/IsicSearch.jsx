@@ -88,9 +88,9 @@ export function IsicSearch({
                 <output>Loading industry categories&hellip;</output>
             ) : (
                 <>
-                    No ISIC category matches {'”'}
+                    No ISIC category matches {'\u201D'}
                     {trimmedQuery}
-                    {'“'}. Try a shorter or more general word.
+                    {'\u201C'}. Try a shorter or more general word.
                 </>
             )}
         </div>
