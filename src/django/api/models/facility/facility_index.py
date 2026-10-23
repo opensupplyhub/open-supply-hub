@@ -172,6 +172,38 @@ class FacilityIndex(models.Model):
             'Normalized ISIC Rev 4 class codes from isic_4 ExtendedField.'
         )),
         default=list)
+    isic5_section = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 section codes from isic_5 ExtendedField.'
+        )),
+        default=list)
+    isic5_division = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 division codes from isic_5 ExtendedField.'
+        )),
+        default=list)
+    isic5_group = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 group codes from isic_5 ExtendedField.'
+        )),
+        default=list)
+    isic5_class = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 class codes from isic_5 ExtendedField.'
+        )),
+        default=list)
     isic_mapped_section = postgres.ArrayField(models.CharField(
         max_length=10,
         null=False,

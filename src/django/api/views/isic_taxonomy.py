@@ -3,12 +3,13 @@ from rest_framework.exceptions import NotFound
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from waffle import switch_is_active
 
-from api.isic_taxonomy.constants import ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL
-from api.isic_taxonomy.content import (
-    IsicTaxonomyNotAvailable,
-    load_isic4_taxonomy_content,
-)
+from api.isic_taxonomy import revisions
+from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
+
+# The UN files only change with a deploy.
+ISIC_TAXONOMY_CACHE_CONTROL = 'public, max-age=3600'
 
 
 class IsicTaxonomyView(APIView):
@@ -17,16 +18,14 @@ class IsicTaxonomyView(APIView):
 
     @swagger_auto_schema(
         operation_description=(
-            'Return the active ISIC Rev 4 taxonomy tree as JSON. '
-            'Content is loaded from the private files bucket by Django '
-            'and cached server-side for one hour; cache is invalidated '
-            'on publish or enable/disable.'
+            'Return the ISIC Rev 4 and Rev 5 categories the search field '
+            'offers, one entry per level and title, with the code it has in '
+            'each revision. From the UN files shipped with the code.'
         ),
     )
     def get(self, request):
-        try:
-            response = Response(load_isic4_taxonomy_content())
-            response['Cache-Control'] = ISIC4_TAXONOMY_BROWSER_CACHE_CONTROL
-            return response
-        except IsicTaxonomyNotAvailable:
-            raise NotFound('ISIC taxonomy is not available.')
+        if not switch_is_active(ISIC_TAXONOMY_SWITCH):
+            raise NotFound('ISIC is switched off.')
+        response = Response({'entries': revisions.entries()})
+        response['Cache-Control'] = ISIC_TAXONOMY_CACHE_CONTROL
+        return response

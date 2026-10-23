@@ -5,7 +5,7 @@
 OSDEV-3340. isic_4 ExtendedFields count toward the isic_* columns of
 api_facilityindex only while they are visible on the location (an approved
 claim, or an active match from an active source; see
-isic_4_entry_elements() in 0254_index_isic_4.sql), the rule
+isic_entry_elements() in 0254_index_isic_4.sql), the rule
 index_facility_type / index_processing_type follow. So, as 0235 and 0236 did
 for facility_type and processing_type, the procedures of the tables that
 visibility depends on recompute the four ISIC columns too: list items,
@@ -47,6 +47,10 @@ SET
 	isic_division,
 	isic_group,
 	isic_class,
+	isic5_section,
+	isic5_division,
+	isic5_group,
+	isic5_class,
 	updated_at) =
 (
 	SELECT
@@ -71,6 +75,10 @@ COALESCE((SELECT array_agg(DISTINCT(isic_section)) FROM index_isic_section(af.id
 COALESCE((SELECT array_agg(DISTINCT(isic_division)) FROM index_isic_division(af.id)), '{}'), -- isic_division
 COALESCE((SELECT array_agg(DISTINCT(isic_group)) FROM index_isic_group(af.id)), '{}'), -- isic_group
 COALESCE((SELECT array_agg(DISTINCT(isic_class)) FROM index_isic_class(af.id)), '{}'), -- isic_class
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'section', 'isic_5') AS code), '{}'), -- isic5_section
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'division', 'isic_5') AS code), '{}'), -- isic5_division
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'group', 'isic_5') AS code), '{}'), -- isic5_group
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'class', 'isic_5') AS code), '{}'), -- isic5_class
 now() -- updated_at
 FROM api_facility af
 WHERE
@@ -110,6 +118,10 @@ SET
 	isic_division,
 	isic_group,
 	isic_class,
+	isic5_section,
+	isic5_division,
+	isic5_group,
+	isic5_class,
 	updated_at) =
 (
 	SELECT
@@ -132,6 +144,10 @@ COALESCE((SELECT array_agg(DISTINCT(isic_section)) FROM index_isic_section(af.id
 COALESCE((SELECT array_agg(DISTINCT(isic_division)) FROM index_isic_division(af.id)), '{}'), -- isic_division
 COALESCE((SELECT array_agg(DISTINCT(isic_group)) FROM index_isic_group(af.id)), '{}'), -- isic_group
 COALESCE((SELECT array_agg(DISTINCT(isic_class)) FROM index_isic_class(af.id)), '{}'), -- isic_class
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'section', 'isic_5') AS code), '{}'), -- isic5_section
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'division', 'isic_5') AS code), '{}'), -- isic5_division
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'group', 'isic_5') AS code), '{}'), -- isic5_group
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'class', 'isic_5') AS code), '{}'), -- isic5_class
 now() -- updated_at
 FROM api_facility af
 WHERE
@@ -186,6 +202,10 @@ SET
 	isic_division,
 	isic_group,
 	isic_class,
+	isic5_section,
+	isic5_division,
+	isic5_group,
+	isic5_class,
 	updated_at) =
 (
 	SELECT
@@ -209,6 +229,10 @@ COALESCE((SELECT array_agg(DISTINCT(isic_section)) FROM index_isic_section(af.id
 COALESCE((SELECT array_agg(DISTINCT(isic_division)) FROM index_isic_division(af.id)), '{}'), -- isic_division
 COALESCE((SELECT array_agg(DISTINCT(isic_group)) FROM index_isic_group(af.id)), '{}'), -- isic_group
 COALESCE((SELECT array_agg(DISTINCT(isic_class)) FROM index_isic_class(af.id)), '{}'), -- isic_class
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'section', 'isic_5') AS code), '{}'), -- isic5_section
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'division', 'isic_5') AS code), '{}'), -- isic5_division
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'group', 'isic_5') AS code), '{}'), -- isic5_group
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'class', 'isic_5') AS code), '{}'), -- isic5_class
 now() -- updated_at
 FROM api_facility af
 WHERE
@@ -241,6 +265,10 @@ SET
 	isic_division,
 	isic_group,
 	isic_class,
+	isic5_section,
+	isic5_division,
+	isic5_group,
+	isic5_class,
 	updated_at) =
 (
 	SELECT
@@ -256,6 +284,10 @@ COALESCE((SELECT array_agg(DISTINCT(isic_section)) FROM index_isic_section(af.id
 COALESCE((SELECT array_agg(DISTINCT(isic_division)) FROM index_isic_division(af.id)), '{}'), -- isic_division
 COALESCE((SELECT array_agg(DISTINCT(isic_group)) FROM index_isic_group(af.id)), '{}'), -- isic_group
 COALESCE((SELECT array_agg(DISTINCT(isic_class)) FROM index_isic_class(af.id)), '{}'), -- isic_class
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'section', 'isic_5') AS code), '{}'), -- isic5_section
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'division', 'isic_5') AS code), '{}'), -- isic5_division
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'group', 'isic_5') AS code), '{}'), -- isic5_group
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'class', 'isic_5') AS code), '{}'), -- isic5_class
 now() -- updated_at
 FROM api_facility af
 WHERE

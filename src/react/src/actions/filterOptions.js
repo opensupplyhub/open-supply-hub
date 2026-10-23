@@ -16,8 +16,7 @@ import {
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
     makeGetTaxonomyCountsURL,
-    makeGetIsic4MappedExtraCountURL,
-    makeGetTaxonomyConfigURL,
+    makeGetIsicTaxonomyURL,
     makeGetProcessingTypeSuggestionsURL,
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
@@ -112,16 +111,6 @@ export const completeFetchTaxonomyCounts = createAction(
     'COMPLETE_FETCH_TAXONOMY_COUNTS',
 );
 
-export const startFetchIsic4MappedExtraCount = createAction(
-    'START_FETCH_ISIC4_MAPPED_EXTRA_COUNT',
-);
-export const failFetchIsic4MappedExtraCount = createAction(
-    'FAIL_FETCH_ISIC4_MAPPED_EXTRA_COUNT',
-);
-export const completeFetchIsic4MappedExtraCount = createAction(
-    'COMPLETE_FETCH_ISIC4_MAPPED_EXTRA_COUNT',
-);
-
 export const startFetchProcessingTypeSuggestions = createAction(
     'START_FETCH_PROCESSING_TYPE_SUGGESTIONS',
 );
@@ -151,22 +140,10 @@ export const completeFetchClaimStatusOption = createAction(
     'COMPLETE_FETCH_CLAIM_STATUS_OPTIONS',
 );
 
-export const startFetchIsic4TaxonomyConfig = createAction(
-    'START_FETCH_ISIC4_TAXONOMY_CONFIG',
-);
-export const failFetchIsic4TaxonomyConfig = createAction(
-    'FAIL_FETCH_ISIC4_TAXONOMY_CONFIG',
-);
-export const completeFetchIsic4TaxonomyConfig = createAction(
-    'COMPLETE_FETCH_ISIC4_TAXONOMY_CONFIG',
-);
-
-export const startFetchIsic4Taxonomy = createAction(
-    'START_FETCH_ISIC4_TAXONOMY',
-);
-export const failFetchIsic4Taxonomy = createAction('FAIL_FETCH_ISIC4_TAXONOMY');
-export const completeFetchIsic4Taxonomy = createAction(
-    'COMPLETE_FETCH_ISIC4_TAXONOMY',
+export const startFetchIsicTaxonomy = createAction('START_FETCH_ISIC_TAXONOMY');
+export const failFetchIsicTaxonomy = createAction('FAIL_FETCH_ISIC_TAXONOMY');
+export const completeFetchIsicTaxonomy = createAction(
+    'COMPLETE_FETCH_ISIC_TAXONOMY',
 );
 
 export const resetFilterOptions = createAction('RESET_FILTER_OPTIONS');
@@ -417,52 +394,13 @@ export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
     };
 }
 
-export const fetchTaxonomyCountsIfNeeded = (kind = 'isic4') => (
-    dispatch,
-    getState,
-) => {
-    const { data, fetching } =
-        getState().filterOptions.taxonomyCounts[kind] ?? {};
+export const fetchTaxonomyCountsIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.taxonomyCounts.isic;
 
     if (data === null && !fetching) {
-        dispatch(fetchTaxonomyCounts(kind));
+        dispatch(fetchTaxonomyCounts('isic'));
     }
 };
-
-// How many more locations the selected ISIC nodes match when values mapped
-// from facility and processing type are included: the "(+N)" beside the
-// opt-in (OSDEV-3382). The request URL identifies the selection, so a slow
-// response for an earlier selection is ignored by the reducer.
-export function fetchIsic4MappedExtraCount(isic4 = []) {
-    return dispatch => {
-        const requestKey = makeGetIsic4MappedExtraCountURL(isic4);
-        dispatch(startFetchIsic4MappedExtraCount({ requestKey }));
-
-        return apiRequest
-            .get(requestKey)
-            .then(({ data }) =>
-                dispatch(
-                    completeFetchIsic4MappedExtraCount({
-                        requestKey,
-                        count: data.count,
-                    }),
-                ),
-            )
-            .catch(err =>
-                dispatch(
-                    logErrorAndDispatchFailure(
-                        err,
-                        'An error prevented fetching the ISIC mapped count',
-                        messages =>
-                            failFetchIsic4MappedExtraCount({
-                                requestKey,
-                                error: messages,
-                            }),
-                    ),
-                ),
-            );
-    };
-}
 
 export function fetchNumberOfWorkersOptions() {
     return dispatch => {
@@ -541,117 +479,31 @@ export const fetchAllPrimaryFilterOptionsIfNeeded = () => dispatch => {
     dispatch(fetchListOptionsIfNeeded());
 };
 
-export function fetchIsic4TaxonomyConfig() {
-    return async dispatch => {
-        dispatch(startFetchIsic4TaxonomyConfig());
+export function fetchIsicTaxonomy() {
+    return dispatch => {
+        dispatch(startFetchIsicTaxonomy());
 
-        try {
-            const response = await fetch(makeGetTaxonomyConfigURL());
-
-            if (!response.ok) {
-                return dispatch(
+        return apiRequest
+            .get(makeGetIsicTaxonomyURL())
+            .then(({ data }) =>
+                dispatch(completeFetchIsicTaxonomy(data.entries)),
+            )
+            .catch(err =>
+                dispatch(
                     logErrorAndDispatchFailure(
-                        { response: { status: response.status, data: null } },
-                        'An error prevented fetching ISIC taxonomy config',
-                        failFetchIsic4TaxonomyConfig,
+                        err,
+                        'An error prevented fetching ISIC categories',
+                        failFetchIsicTaxonomy,
                     ),
-                );
-            }
-
-            const config = await response.json();
-
-            if (!config?.isic4) {
-                return dispatch(
-                    logErrorAndDispatchFailure(
-                        { response: { status: null, data: null } },
-                        'Taxonomy config response did not include isic4',
-                        failFetchIsic4TaxonomyConfig,
-                    ),
-                );
-            }
-
-            return dispatch(completeFetchIsic4TaxonomyConfig(config.isic4));
-        } catch (err) {
-            return dispatch(
-                logErrorAndDispatchFailure(
-                    err,
-                    'An error prevented fetching ISIC taxonomy config',
-                    failFetchIsic4TaxonomyConfig,
                 ),
             );
-        }
     };
 }
 
-export const fetchIsic4TaxonomyConfigIfNeeded = () => async (
-    dispatch,
-    getState,
-) => {
-    const { config, fetching } = getState().filterOptions.isic4Taxonomy ?? {};
+export const fetchIsicTaxonomyIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.isicTaxonomy;
 
-    if (config != null || fetching) {
-        return config;
+    if (data === null && !fetching) {
+        dispatch(fetchIsicTaxonomy());
     }
-
-    return dispatch(fetchIsic4TaxonomyConfig());
 };
-
-export function fetchIsic4Taxonomy() {
-    return async (dispatch, getState) => {
-        await dispatch(fetchIsic4TaxonomyConfigIfNeeded());
-
-        const isic4Config = getState().filterOptions.isic4Taxonomy?.config;
-        if (!isic4Config?.enabled || !isic4Config.taxonomyUrl) {
-            return null;
-        }
-
-        const { data, fetching } = getState().filterOptions.isic4Taxonomy ?? {};
-
-        if (data != null) {
-            return data;
-        }
-
-        if (fetching) {
-            return null;
-        }
-
-        dispatch(startFetchIsic4Taxonomy());
-
-        try {
-            const response = await fetch(isic4Config.taxonomyUrl);
-
-            if (!response.ok) {
-                return dispatch(
-                    logErrorAndDispatchFailure(
-                        { response: { status: response.status, data: null } },
-                        'An error prevented fetching ISIC taxonomy',
-                        failFetchIsic4Taxonomy,
-                    ),
-                );
-            }
-
-            const taxonomy = await response.json();
-
-            if (!taxonomy?.sections) {
-                return dispatch(
-                    logErrorAndDispatchFailure(
-                        { response: { status: null, data: null } },
-                        'ISIC taxonomy response did not include sections',
-                        failFetchIsic4Taxonomy,
-                    ),
-                );
-            }
-
-            dispatch(completeFetchIsic4Taxonomy(taxonomy));
-            return taxonomy;
-        } catch (err) {
-            return dispatch(
-                logErrorAndDispatchFailure(
-                    err,
-                    'An error prevented fetching ISIC taxonomy',
-                    failFetchIsic4Taxonomy,
-                ),
-            );
-        }
-    };
-}

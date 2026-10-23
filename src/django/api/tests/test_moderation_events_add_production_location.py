@@ -584,5 +584,5 @@ class ModerationEventsAddProductionLocationTest(
             )
             return [feature["id"] for feature in result.json()["features"]]
 
-        self.assertEqual([], search())
-        self.assertEqual([os_id], search(isic_4_include_mapped="true"))
+        # Open Supply Hub's mapped values are always searched.
+        self.assertEqual([os_id], search())

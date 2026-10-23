@@ -1,5 +1,3 @@
-import django.db.models.deletion
-from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection, migrations, models
 from django.db.migrations import RunPython
@@ -57,22 +55,21 @@ def revert_indexing_procedures(apps, schema_editor):
 
 class Migration(migrations.Migration):
     """
-    Adds the ISIC columns to api_facilityindex, the functions and
-    procedure changes that fill them, and IsicTaxonomyConfig.
+    Adds the ISIC Rev 4 and Rev 5 columns to api_facilityindex and the
+    functions and procedure changes that fill them from the isic_4 and
+    isic_5 ExtendedFields.
 
     Also adds the `enable_isic_taxonomy` switch, created inactive. The
-    taxonomy config, content and counts views (and the profile's mapped
-    values) check it before reading IsicTaxonomyConfig or the crosswalk:
-    `migrate` runs in post-deploy, after the new image is live, so
-    without the switch they would query a table that does not exist yet
-    (as in 0247). It hides ISIC on the site but does not gate the
-    `isic_4` search filter. It cannot cover the new api_facilityindex
+    taxonomy and counts views (and the profile's mapped values) check it
+    before reading the new columns or the crosswalk table: `migrate` runs
+    in post-deploy, after the new image is live (as in 0247). It hides
+    ISIC on the site but does not gate the `isic_4` / `isic_5` search
+    filters. It cannot cover the new api_facilityindex
     columns, which every FacilityIndex query selects: as with 0171, search
     and profiles can fail until this migration has run.
     """
 
     dependencies = [
-        migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('api', '0253_add_earth_genome_candidates_switch'),
     ]
 
@@ -146,121 +143,64 @@ class Migration(migrations.Migration):
                 size=None,
             ),
         ),
+        migrations.AddField(
+            model_name='facilityindex',
+            name='isic5_class',
+            field=ArrayField(
+                base_field=models.CharField(
+                    help_text=(
+                        'ISIC Rev 5 class codes from isic_5 ExtendedField.'
+                    ),
+                    max_length=10,
+                ),
+                default=list,
+                size=None,
+            ),
+        ),
+        migrations.AddField(
+            model_name='facilityindex',
+            name='isic5_division',
+            field=ArrayField(
+                base_field=models.CharField(
+                    help_text=(
+                        'ISIC Rev 5 division codes from isic_5 ExtendedField.'
+                    ),
+                    max_length=10,
+                ),
+                default=list,
+                size=None,
+            ),
+        ),
+        migrations.AddField(
+            model_name='facilityindex',
+            name='isic5_group',
+            field=ArrayField(
+                base_field=models.CharField(
+                    help_text=(
+                        'ISIC Rev 5 group codes from isic_5 ExtendedField.'
+                    ),
+                    max_length=10,
+                ),
+                default=list,
+                size=None,
+            ),
+        ),
+        migrations.AddField(
+            model_name='facilityindex',
+            name='isic5_section',
+            field=ArrayField(
+                base_field=models.CharField(
+                    help_text=(
+                        'ISIC Rev 5 section codes from isic_5 ExtendedField.'
+                    ),
+                    max_length=10,
+                ),
+                default=list,
+                size=None,
+            ),
+        ),
         RunPython(add_isic_indexing_functions, revert_isic_indexing_functions),
         RunPython(update_indexing_procedures, revert_indexing_procedures),
-        migrations.CreateModel(
-            name='IsicTaxonomyConfig',
-            fields=[
-                (
-                    'id',
-                    models.PositiveSmallIntegerField(
-                        default=1,
-                        editable=False,
-                        primary_key=True,
-                        serialize=False,
-                    ),
-                ),
-                (
-                    'is_active',
-                    models.BooleanField(
-                        default=False,
-                        help_text=(
-                            'When enabled, the ISIC Rev 4 filter is shown in '
-                            'extended search.'
-                        ),
-                    ),
-                ),
-                (
-                    'version',
-                    models.PositiveIntegerField(
-                        default=0,
-                        help_text=(
-                            'Monotonic publish version; used in the S3 key '
-                            'prefix.'
-                        ),
-                    ),
-                ),
-                (
-                    'source_file',
-                    models.FileField(
-                        blank=True,
-                        help_text=(
-                            'Most recently uploaded taxonomy spreadsheet.'
-                        ),
-                        null=True,
-                        upload_to='taxonomy/isic4/source/',
-                    ),
-                ),
-                (
-                    'source_filename',
-                    models.CharField(
-                        blank=True,
-                        default='',
-                        help_text=(
-                            'Original filename from the admin upload, for '
-                            'display only.'
-                        ),
-                        max_length=255,
-                    ),
-                ),
-                (
-                    'json_s3_key',
-                    models.CharField(
-                        blank=True,
-                        default='',
-                        help_text=(
-                            'S3 key for the published isic_rev4.json artifact.'
-                        ),
-                        max_length=512,
-                    ),
-                ),
-                ('section_count', models.PositiveIntegerField(default=0)),
-                ('division_count', models.PositiveIntegerField(default=0)),
-                ('group_count', models.PositiveIntegerField(default=0)),
-                ('class_count', models.PositiveIntegerField(default=0)),
-                (
-                    'published_at',
-                    models.DateTimeField(
-                        blank=True,
-                        help_text=(
-                            'Timestamp when the active version was published.'
-                        ),
-                        null=True,
-                    ),
-                ),
-                (
-                    'last_error',
-                    models.TextField(
-                        blank=True,
-                        default='',
-                        help_text=(
-                            'Human-readable failure from the most recent '
-                            'publish attempt.'
-                        ),
-                    ),
-                ),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                (
-                    'uploaded_by',
-                    models.ForeignKey(
-                        blank=True,
-                        help_text=(
-                            'Staff user who published the active taxonomy '
-                            'version.'
-                        ),
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
-                        related_name='isic_taxonomy_uploads',
-                        to=settings.AUTH_USER_MODEL,
-                    ),
-                ),
-            ],
-            options={
-                'verbose_name': 'ISIC taxonomy',
-                'verbose_name_plural': 'ISIC taxonomies',
-            },
-        ),
         RunPython(create_switch, delete_switch),
         migrations.RunSQL(
             sql=migrations.RunSQL.noop,

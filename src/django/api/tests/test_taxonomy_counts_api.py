@@ -11,7 +11,6 @@ from api.models import (
     Source,
 )
 from api.models.facility.facility_index import FacilityIndex
-from api.taxonomy_counts import compute_isic4_counts
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
@@ -67,32 +66,36 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
             isic_group=['141'],
             isic_class=['1410'],
         )
+        # The second location was uploaded under ISIC 5: apparel, and 6310
+        # (computing infrastructure, which ISIC 4 calls 6311).
         FacilityIndex.objects.filter(id=self.facility_two.id).update(
             contributors_count=1,
-            isic_section=['J'],
-            isic_class=['620'],
+            isic5_section=['C', 'K'],
+            isic5_division=['14', '63'],
+            isic5_group=['141', '631'],
+            isic5_class=['1410', '6310'],
         )
 
-    def test_isic4_counts_match_index(self):
+    def test_counts_cover_both_revisions_once_per_location(self):
         response = self.client.get(
             reverse('taxonomy_counts'),
-            {'kind': 'isic4'},
+            {'kind': 'isic'},
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['section:C'], 1)
-        self.assertEqual(response.data['section:J'], 1)
-        self.assertEqual(response.data['division:14'], 1)
-        self.assertEqual(response.data['group:141'], 1)
-        self.assertEqual(response.data['class:1410'], 1)
-        self.assertEqual(response.data['class:620'], 1)
+        # Same title in both revisions: one entry, each location once.
+        self.assertEqual(response.data['4:C'], 2)
+        self.assertEqual(response.data['4:141'], 2)
+        # ISIC 4's 6311 counts the location uploaded as ISIC 5 6310.
+        self.assertEqual(response.data['4:6311'], 1)
+        self.assertNotIn('5:6310', response.data)  # hidden: repeats 631
 
     def test_unknown_param_returns_400(self):
         # The response cache keys on every param; an unknown one would
         # force a full count on each request.
         response = self.client.get(
             reverse('taxonomy_counts'),
-            {'kind': 'isic4', 'cache_buster': '1'},
+            {'kind': 'isic', 'cache_buster': '1'},
         )
 
         self.assertEqual(response.status_code, 400)
@@ -101,7 +104,7 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
     def test_repeated_param_returns_400(self):
         response = self.client.get(
             reverse('taxonomy_counts'),
-            {'kind': ['isic4', 'isic4']},
+            {'kind': ['isic', 'isic']},
         )
 
         self.assertEqual(response.status_code, 400)
@@ -110,7 +113,7 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
     def test_switch_off_returns_404_that_is_not_cached(self):
         response = self.client.get(
             reverse('taxonomy_counts'),
-            {'kind': 'isic4'},
+            {'kind': 'isic'},
         )
         self.assertEqual(response.status_code, 404)
 
@@ -118,14 +121,14 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
         with override_switch('enable_isic_taxonomy', active=True):
             response = self.client.get(
                 reverse('taxonomy_counts'),
-                {'kind': 'isic4'},
+                {'kind': 'isic'},
             )
-        self.assertEqual(response.data['section:C'], 1)
+        self.assertEqual(response.data['4:C'], 2)
 
         # Back off: not answered from the counts cached while it was on.
         response = self.client.get(
             reverse('taxonomy_counts'),
-            {'kind': 'isic4'},
+            {'kind': 'isic'},
         )
         self.assertEqual(response.status_code, 404)
 
@@ -136,31 +139,3 @@ class TaxonomyCountsAPITest(FacilityAPITestCaseBase):
         )
 
         self.assertEqual(response.status_code, 400)
-
-    def test_counts_match_a_brute_force_count(self):
-        FacilityIndex.objects.filter(id=self.facility.id).update(
-            isic_mapped_section=['C', 'H'],
-            isic_mapped_division=['14', '52'],
-            isic_mapped_group=['141', '521'],
-            isic_mapped_class=['1410', '5210'],
-        )
-        FacilityIndex.objects.filter(id=self.facility_two.id).update(
-            isic_mapped_section=['C'],
-            isic_mapped_class=['1410'],
-        )
-
-        for include_mapped in (False, True):
-            expected = {}
-            for index in FacilityIndex.objects.all():
-                for level in ('section', 'division', 'group', 'class'):
-                    codes = set(getattr(index, f'isic_{level}'))
-                    if include_mapped:
-                        codes |= set(getattr(index, f'isic_mapped_{level}'))
-                    for code in codes:
-                        key = f'{level}:{code}'
-                        expected[key] = expected.get(key, 0) + 1
-            with self.subTest(include_mapped=include_mapped):
-                self.assertEqual(
-                    compute_isic4_counts(include_mapped=include_mapped),
-                    expected,
-                )

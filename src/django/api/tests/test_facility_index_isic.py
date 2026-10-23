@@ -3,6 +3,7 @@ from django.db import connection
 from django.test import override_settings
 
 from api.constants import FacilityClaimStatuses
+from api.isic_taxonomy import revisions
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility_claim import FacilityClaim
 from api.models.facility.facility import Facility
@@ -232,6 +233,27 @@ class FacilityIndexIsicTest(FacilityAPITestCaseBase):
         self.assertEqual(facility_index.isic_section, [])
         self.assertEqual(facility_index.isic_class, [])
 
+    def test_isic_5_values_fill_their_own_columns(self):
+        # ISIC 5 codes stay in their revision: 1104 here is malt.
+        isic_5 = ExtendedField.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            facility_list_item=self.list_item,
+            field_name=ExtendedField.ISIC_5,
+            value={'raw_value': [revisions.isic_entry('1104', '5')]},
+        )
+
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual(facility_index.isic5_section, ['C'])
+        self.assertEqual(facility_index.isic5_division, ['11'])
+        self.assertEqual(facility_index.isic5_group, ['110'])
+        self.assertEqual(facility_index.isic5_class, ['1104'])
+        self.assertNotIn('1104', facility_index.isic_class)
+
+        isic_5.delete()
+        facility_index.refresh_from_db()
+        self.assertEqual(facility_index.isic5_class, [])
+
     def test_index_facilities_by_still_excludes_candidates(self):
         # 0254 re-creates the procedures 0250 changed; candidates must
         # still never get an index row.
@@ -278,9 +300,10 @@ class FacilityIndexIsicTest(FacilityAPITestCaseBase):
                 "FROM pg_index idx "
                 "JOIN pg_class cls ON cls.oid = idx.indexrelid "
                 "JOIN pg_am am ON am.oid = cls.relam "
-                "WHERE cls.relname = 'api_facilityindex_isic_gin'"
+                "WHERE cls.relname IN "
+                "('api_facilityindex_isic_gin', 'api_facilityindex_isic5_gin')"
             )
-            self.assertEqual(cursor.fetchall(), [(True, 'gin')])
+            self.assertEqual(cursor.fetchall(), [(True, 'gin')] * 2)
 
     def _index(self):
         return FacilityIndex.objects.get(id=self.facility.id)

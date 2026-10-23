@@ -71,7 +71,6 @@ from .extended_field import (
 )
 from .nonstandard_field import NonstandardField
 from .partner_field import PartnerField
-from .isic_taxonomy_config import IsicTaxonomyConfig
 from .isic_crosswalk_entry import IsicCrosswalkEntry
 from .partner_data_file_upload import PartnerDataFileUpload
 from .partner_field_group import PartnerFieldGroup

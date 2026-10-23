@@ -28,6 +28,10 @@ SET
 	isic_division,
 	isic_group,
 	isic_class,
+	isic5_section,
+	isic5_division,
+	isic5_group,
+	isic5_class,
 	parent_company_name,
 	native_language_name,
 	parent_company_id,
@@ -43,6 +47,10 @@ COALESCE((SELECT array_agg(DISTINCT(isic_section)) FROM index_isic_section(af.id
 COALESCE((SELECT array_agg(DISTINCT(isic_division)) FROM index_isic_division(af.id)), '{}'), -- isic_division
 COALESCE((SELECT array_agg(DISTINCT(isic_group)) FROM index_isic_group(af.id)), '{}'), -- isic_group
 COALESCE((SELECT array_agg(DISTINCT(isic_class)) FROM index_isic_class(af.id)), '{}'), -- isic_class
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'section', 'isic_5') AS code), '{}'), -- isic5_section
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'division', 'isic_5') AS code), '{}'), -- isic5_division
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'group', 'isic_5') AS code), '{}'), -- isic5_group
+COALESCE((SELECT array_agg(code) FROM index_isic_level_code(af.id, 'class', 'isic_5') AS code), '{}'), -- isic5_class
 COALESCE((SELECT array_agg(DISTINCT (parent_company_name)) FROM index_parent_company_name(af.id)), '{}'), -- parent_company_name
 COALESCE((SELECT array_agg(DISTINCT (native_language_name)) FROM index_native_language_name(af.id)), '{}'), -- native_language_name
 COALESCE((SELECT array_agg(DISTINCT (parent_company_id)) FROM index_parent_company_id(af.id)), '{}'), -- parent_company_id
