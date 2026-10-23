@@ -8,6 +8,7 @@ from api.models import (
     FacilityMatch,
     Source,
 )
+from api.isic_taxonomy import revisions
 from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
@@ -153,3 +154,58 @@ class FacilitiesIsic4FilterTest(FacilityAPITestCaseBase):
         self.assertEqual(response.status_code, 200)
         ids = {feature['id'] for feature in response.data['features']}
         self.assertEqual(ids, set())
+
+    def _set_isic5(self, facility, class_code):
+        path = revisions.chain(class_code, '5')
+        FacilityIndex.objects.filter(id=facility.id).update(**{
+            f'isic5_{level}': [code]
+            for level, code in zip(
+                ('section', 'division', 'group', 'class'), path,
+            )
+        })
+
+    def _ids(self, params):
+        response = self.client.get(reverse('facility-list'), params)
+        self.assertEqual(response.status_code, 200)
+        return {feature['id'] for feature in response.data['features']}
+
+    def test_isic_5_filter_returns_isic_5_values(self):
+        self._set_isic5(self.facility_two, '6310')
+
+        self.assertEqual(
+            self._ids({'isic_5': 'group:631'}), {self.facility_two.id},
+        )
+
+    def test_isic_4_filter_finds_values_uploaded_as_isic_5(self):
+        # ISIC 5 6310 corresponds to ISIC 4 6311.
+        self._set_isic5(self.facility_two, '6310')
+
+        self.assertEqual(
+            self._ids({'isic_4': 'class:6311'}), {self.facility_two.id},
+        )
+
+    def test_isic_5_filter_finds_values_uploaded_as_isic_4(self):
+        # A group selection covers its classes, translated.
+        self.assertEqual(
+            self._ids({'isic_5': 'group:141'}), {self.facility.id},
+        )
+
+    def test_a_code_is_read_in_its_own_revision(self):
+        # ISIC 5 1104 is malt; ISIC 4 1104 (soft drinks) does not match it.
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            isic_section=['C'], isic_division=['11'],
+            isic_group=['110'], isic_class=['1104'],
+        )
+
+        self.assertEqual(self._ids({'isic_5': 'class:1104'}), set())
+        self.assertEqual(
+            self._ids({'isic_4': 'class:1104'}), {self.facility.id},
+        )
+
+    def test_isic_4_and_isic_5_combine_with_or(self):
+        self._set_isic5(self.facility_two, '6310')
+
+        self.assertEqual(
+            self._ids({'isic_4': 'class:1410', 'isic_5': 'class:6310'}),
+            {self.facility.id, self.facility_two.id},
+        )

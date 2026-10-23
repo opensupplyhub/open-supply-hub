@@ -168,7 +168,19 @@ facilities_list_parameters = [
         required=False,
         description=(
             'ISIC Rev 4 filter using level:code values such as '
-            'section:C, division:01, group:011, or class:0111.'
+            'section:C, division:01, group:011, or class:0111. Also matches '
+            'locations with an ISIC Rev 5 value that corresponds through '
+            'the UN correspondence table.'
+        ),
+    ),
+    Parameter(
+        'isic_5',
+        IN_QUERY,
+        type=TYPE_STRING,
+        required=False,
+        description=(
+            'ISIC Rev 5 filter using level:code values, as isic_4. Combines '
+            'with isic_4 with OR.'
         ),
     ),
     Parameter(

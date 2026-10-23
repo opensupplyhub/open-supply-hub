@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Q
 
 from api.constants import FacilitiesQueryParams
-from api.isic import parse_isic4_filter_values
+from api.isic import build_isic_filter, parse_isic_filter_values
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -13,21 +13,6 @@ from api.models.facility.partner_contributor_filter import (
 )
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
-
-
-def build_isic_filter(parsed_isic_filters):
-    if not parsed_isic_filters:
-        return None
-
-    # One overlap per level, however many codes are selected.
-    codes_by_field = {}
-    for field_name, code in parsed_isic_filters:
-        codes_by_field.setdefault(field_name, []).append(code)
-
-    isic_filter = Q()
-    for field_name, codes in codes_by_field.items():
-        isic_filter |= Q(**{f'{field_name}__overlap': codes})
-    return isic_filter
 
 
 class FacilityIndexNewManager(models.Manager):
@@ -128,7 +113,10 @@ class FacilityIndexNewManager(models.Manager):
 
         sectors = params.getlist(FacilitiesQueryParams.SECTOR)
 
-        isic_4_filters = params.getlist(FacilitiesQueryParams.ISIC_4)
+        isic_params = {
+            '4': params.getlist(FacilitiesQueryParams.ISIC_4),
+            '5': params.getlist(FacilitiesQueryParams.ISIC_5),
+        }
 
         from .facility_index import FacilityIndex
         # Not ``self``: test_facility_search_accented_characters calls this
@@ -225,12 +213,13 @@ class FacilityIndexNewManager(models.Manager):
         if has_fp_filter:
             facilities_qs = facilities_qs.filter(_fp_match=True)
 
-        isic_filter = build_isic_filter(
-            parse_isic4_filter_values(isic_4_filters)
-        )
+        isic_filter = build_isic_filter({
+            revision: parse_isic_filter_values(values)
+            for revision, values in isic_params.items()
+        })
         if isic_filter:
             facilities_qs = facilities_qs.filter(isic_filter)
-        elif any(isic_4_filters):
+        elif any(any(values) for values in isic_params.values()):
             # ISIC was asked for but nothing in it is a level:code value.
             # Ignoring it would present every location as a match
             # (OSDEV-3340 AC4).

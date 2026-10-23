@@ -42,6 +42,8 @@ ISIC_4_FILTER = (
     ")"
 )
 
+ISIC_5_FILTER = ISIC_4_FILTER.replace("'isic_4'", "'isic_5'")
+
 # Only facilities where a single contributor has more than one matched list
 # item can change when index_sector() is recomputed (the OSDEV-992 change
 # keeps one item per contributor instead of all of them); this skips the
@@ -163,6 +165,17 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': ISIC_4_FILTER,
+    },
+    'isic_5': {
+        'columns': {
+            f'isic5_{level}': (
+                "COALESCE((SELECT array_agg(code) "
+                f"FROM index_isic_level_code(afi.id, '{level}', 'isic_5') "
+                "AS code), '{}')"
+            )
+            for level in ('section', 'division', 'group', 'class')
+        },
+        'filter_sql': ISIC_5_FILTER,
     },
     'sector': {
         'columns': {

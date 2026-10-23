@@ -55,6 +55,7 @@ const defaultProps = {
     facilityType: [],
     processingType: [],
     isic4: [],
+    isic5: [],
     productType: [],
     numberOfWorkers: [],
     fetchingFacilities: false,

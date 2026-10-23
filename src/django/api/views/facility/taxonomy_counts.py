@@ -6,10 +6,10 @@ from rest_framework.views import APIView
 from waffle import switch_is_active
 
 from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
-from api.taxonomy_counts import compute_isic4_counts
+from api.taxonomy_counts import compute_isic_counts
 from api.view_response_cache import cache_view_response
 
-TAXONOMY_COUNT_KINDS = ('isic4',)
+TAXONOMY_COUNT_KINDS = ('isic',)
 # The response cache keys on every query param, so an unknown or repeated
 # param would force a fresh full count; reject them instead.
 TAXONOMY_COUNT_PARAMS = {'kind'}
@@ -28,8 +28,9 @@ class TaxonomyCountsView(APIView):
                 required=True,
                 enum=list(TAXONOMY_COUNT_KINDS),
                 description=(
-                    'Taxonomy to count. isic4 returns counts keyed by '
-                    'level:code (e.g. section:C, class:0111).'
+                    'Taxonomy to count. isic returns counts keyed by the '
+                    'entry ids of GET /api/taxonomy/isic/ (e.g. 4:1410), '
+                    'covering ISIC Rev 4 and Rev 5 values.'
                 ),
             ),
         ],
@@ -72,4 +73,4 @@ class TaxonomyCountsView(APIView):
         if not switch_is_active(ISIC_TAXONOMY_SWITCH):
             raise NotFound('ISIC is switched off.')
 
-        return Response(compute_isic4_counts())
+        return Response(compute_isic_counts())

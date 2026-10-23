@@ -1,10 +1,13 @@
-CREATE OR REPLACE FUNCTION isic_4_entry_elements(af_id TEXT)
+-- The visible entries of one ISIC field (isic_4 or isic_5) on a location.
+CREATE OR REPLACE FUNCTION isic_entry_elements(
+    af_id TEXT,
+    isic_field_name TEXT
+)
 RETURNS SETOF jsonb
 LANGUAGE plpgsql
 STABLE
 AS $Body$
 DECLARE
-    isic_field_name constant text := 'isic_4';
     raw_value_key constant text := 'raw_value';
 BEGIN
     RETURN QUERY
@@ -45,13 +48,20 @@ END;
 $Body$;
 
 
-CREATE OR REPLACE FUNCTION index_isic_level_code(af_id TEXT, level_key TEXT)
+-- isic_5 values are always stored with every level filled in, so their
+-- columns read each level as stored; isic_4 derives missing parent levels
+-- (index_isic_group and below), since structured v1 values may omit them.
+CREATE OR REPLACE FUNCTION index_isic_level_code(
+    af_id TEXT,
+    level_key TEXT,
+    isic_field_name TEXT
+)
 RETURNS SETOF TEXT
 LANGUAGE sql
 STABLE
 AS $Body$
     SELECT DISTINCT extract_isic_code(elem ->> level_key)
-    FROM isic_4_entry_elements(af_id) AS elem
+    FROM isic_entry_elements(af_id, isic_field_name) AS elem
     WHERE extract_isic_code(elem ->> level_key) IS NOT NULL;
 $Body$;
 
@@ -61,7 +71,7 @@ RETURNS TABLE (isic_class TEXT)
 LANGUAGE sql
 STABLE
 AS $Body$
-    SELECT index_isic_level_code(af_id, 'class');
+    SELECT index_isic_level_code(af_id, 'class', 'isic_4');
 $Body$;
 
 
@@ -82,7 +92,7 @@ AS $Body$
                     THEN left(extract_isic_code(elem ->> 'class'), 3)
             END
         ) AS isic_group
-        FROM isic_4_entry_elements(af_id) AS elem
+        FROM isic_entry_elements(af_id, 'isic_4') AS elem
     ) AS derived
     WHERE derived.isic_group IS NOT NULL;
 $Body$;
@@ -109,7 +119,7 @@ AS $Body$
                     THEN left(extract_isic_code(elem ->> 'class'), 2)
             END
         ) AS isic_division
-        FROM isic_4_entry_elements(af_id) AS elem
+        FROM isic_entry_elements(af_id, 'isic_4') AS elem
     ) AS derived
     WHERE derived.isic_division IS NOT NULL;
 $Body$;
@@ -191,7 +201,7 @@ AS $Body$
                 )
             )
         ) AS isic_section
-        FROM isic_4_entry_elements(af_id) AS elem
+        FROM isic_entry_elements(af_id, 'isic_4') AS elem
     ) AS derived
     WHERE derived.isic_section IS NOT NULL;
 $Body$;

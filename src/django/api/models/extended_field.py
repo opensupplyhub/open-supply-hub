@@ -23,6 +23,7 @@ class ExtendedField(models.Model):
     LEI_ID = 'lei_id'
     RBA_ID = 'rba_id'
     ISIC_4 = 'isic_4'
+    ISIC_5 = 'isic_5'
 
     # --- Data center attribute fields (see OSDEV-2568 / OSDEV-3066) ---
     # Named entities
@@ -130,6 +131,7 @@ class ExtendedField(models.Model):
         (LEI_ID, LEI_ID),
         (RBA_ID, RBA_ID),
         (ISIC_4, ISIC_4),
+        (ISIC_5, ISIC_5),
     ) + tuple((f, f) for f in DATA_CENTER_FIELDS)
 
     uuid = models.UUIDField(

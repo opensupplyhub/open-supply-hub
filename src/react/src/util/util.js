@@ -215,7 +215,7 @@ export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
 export const makeGetTaxonomyCountsURL = kind =>
     `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
-export const makeGetTaxonomyConfigURL = () => '/api/taxonomy-config/';
+export const makeGetIsicTaxonomyURL = () => '/api/taxonomy/isic/';
 export const makeGetProcessingTypeSuggestionsURL = (
     query = '',
     facilityTypes = [],
@@ -443,6 +443,7 @@ export const createQueryStringFromSearchFilters = (
         facilityType = [],
         processingType = [],
         isic4 = [],
+        isic5 = [],
         productType = [],
         numberOfWorkers = [],
         nativeLanguageName = '',
@@ -479,6 +480,7 @@ export const createQueryStringFromSearchFilters = (
             processingType,
         ),
         isic_4: createCompactSortedQuerystringInputObject(isic4),
+        isic_5: createCompactSortedQuerystringInputObject(isic5),
         processing_type_exact: createCompactSortedQuerystringInputObject(
             processingType.filter(option => option.isExact),
         ),
@@ -567,6 +569,7 @@ export const createFiltersFromQueryString = qs => {
         facility_type: facilityType = [],
         processing_type: processingType = [],
         isic_4: isic4 = [],
+        isic_5: isic5 = [],
         processing_type_exact: exactProcessingTypes = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
@@ -618,6 +621,7 @@ export const createFiltersFromQueryString = qs => {
         facilityType: createSelectOptionsFromParams(facilityType),
         processingType: hydratedProcessingTypes,
         isic4: createSelectOptionsFromParams(isic4),
+        isic5: createSelectOptionsFromParams(isic5),
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,
