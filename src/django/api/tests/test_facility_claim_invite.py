@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.gis.geos import Point
 from django.core import mail
@@ -20,6 +21,7 @@ from api.models import (
     Source,
     User,
 )
+from api.throttles import ClaimInviteThrottle
 from api.services.facility_claim_invite_service import (
     CLAIM_INVITE_SWITCH,
     PER_FACILITY_MAX_INVITES,
@@ -234,6 +236,27 @@ class FacilityClaimInviteTest(APITestCase):
 
         response = self.send_invite(recipient_email='another@factory.example')
         self.assertEqual(400, response.status_code)
+
+    @patch.object(ClaimInviteThrottle, 'rate', '2/day', create=True)
+    def test_daily_limit_counts_only_sent_invites(self):
+        self.login_sender()
+        self.assertEqual(201, self.send_invite().status_code)
+        # Refused repeats to the same address don't use up the limit.
+        for _ in range(3):
+            self.assertEqual(400, self.send_invite().status_code)
+
+        self.assertEqual(
+            201,
+            self.send_invite(
+                recipient_email='second@factory.example'
+            ).status_code,
+        )
+        self.assertEqual(
+            429,
+            self.send_invite(
+                recipient_email='third@factory.example'
+            ).status_code,
+        )
 
     def claim_form_data(self, **overrides):
         data = {

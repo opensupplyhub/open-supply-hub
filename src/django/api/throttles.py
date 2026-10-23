@@ -51,6 +51,20 @@ class ClaimInviteThrottle(UserRateThrottle):
     cache = caches['api_throttling']
     scope = 'claim_invite'
 
+    # The request is only checked against the limit here. It is counted
+    # by record_invite once the invite is sent, so refused attempts
+    # (closed or claimed locations, repeat recipients) don't use it up.
+    def throttle_success(self):
+        return True
+
+    def record_invite(self, request, view):
+        key = self.get_cache_key(request, view)
+        if key is None:
+            return
+        history = self.cache.get(key, [])
+        history.insert(0, self.timer())
+        self.cache.set(key, history, self.duration)
+
 
 class DuplicateThrottle(BaseThrottle):
     cache = caches['api_throttling']

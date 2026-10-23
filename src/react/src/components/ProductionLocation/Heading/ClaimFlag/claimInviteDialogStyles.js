@@ -19,7 +19,6 @@ export default theme =>
         }),
         textField: Object.freeze({
             marginTop: '10px',
-            minWidth: '300px',
             '& fieldset': Object.freeze({
                 borderRadius: 0,
             }),

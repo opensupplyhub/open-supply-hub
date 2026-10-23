@@ -10,6 +10,11 @@ export const CLAIM_INVITE_NOTE_MAX_LENGTH = 500;
 
 const storageKey = osID => `claim-invite-${osID}`;
 
+// A code left behind on a shared computer must not be attached to
+// someone else's claim of the same location later, so it lapses after
+// a week; opening the invite link again stores it afresh.
+const CODE_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+
 // Kept in localStorage, not sessionStorage: an invitee who registers
 // confirms their email from a link that opens a new tab, and the code
 // should still be there when they come back to claim. Storage can be
@@ -19,7 +24,10 @@ export const rememberClaimInviteCode = (osID, search) => {
     try {
         const code = new URLSearchParams(search).get('invite');
         if (osID && code) {
-            localStorage.setItem(storageKey(osID), code);
+            localStorage.setItem(
+                storageKey(osID),
+                JSON.stringify({ code, savedAt: Date.now() }),
+            );
         }
     } catch (e) {
         // Attribution is best effort.
@@ -28,7 +36,14 @@ export const rememberClaimInviteCode = (osID, search) => {
 
 export const getClaimInviteCode = osID => {
     try {
-        return localStorage.getItem(storageKey(osID));
+        const { code, savedAt } = JSON.parse(
+            localStorage.getItem(storageKey(osID)),
+        );
+        if (Date.now() - savedAt > CODE_LIFETIME_MS) {
+            localStorage.removeItem(storageKey(osID));
+            return null;
+        }
+        return code || null;
     } catch (e) {
         return null;
     }

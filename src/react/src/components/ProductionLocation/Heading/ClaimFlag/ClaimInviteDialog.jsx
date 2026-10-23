@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -39,8 +39,15 @@ const ClaimInviteDialog = ({
     const [note, setNote] = useState('');
     const [status, setStatus] = useState(STATUS.idle);
     const [errorMessage, setErrorMessage] = useState(null);
+    // A send can still be in flight after the dialog is closed and
+    // reopened. inFlight blocks a second send until it settles, and the
+    // session counter drops its result so it can't change the reopened
+    // dialog.
+    const inFlight = useRef(false);
+    const session = useRef(0);
 
     const closeDialog = () => {
+        session.current += 1;
         onClose();
         setRecipientEmail('');
         setNote('');
@@ -52,15 +59,23 @@ const ClaimInviteDialog = ({
     // button, which MUI renders as type="button", so a click submits once.
     const handleSubmit = event => {
         event.preventDefault();
-        if (!recipientEmail.trim() || status === STATUS.sending) return;
+        if (!recipientEmail.trim() || inFlight.current) return;
 
+        const sendSession = session.current;
+        inFlight.current = true;
         setStatus(STATUS.sending);
         setErrorMessage(null);
         sendClaimInvite(osId, { recipientEmail: recipientEmail.trim(), note })
-            .then(() => setStatus(STATUS.sent))
+            .then(() => {
+                if (sendSession === session.current) setStatus(STATUS.sent);
+            })
             .catch(error => {
+                if (sendSession !== session.current) return;
                 setStatus(STATUS.idle);
                 setErrorMessage(error.message);
+            })
+            .finally(() => {
+                inFlight.current = false;
             });
     };
 
@@ -126,7 +141,10 @@ const ClaimInviteDialog = ({
                     variant="outlined"
                     label="Their email address"
                     value={recipientEmail}
-                    onChange={e => setRecipientEmail(e.target.value)}
+                    onChange={e => {
+                        setRecipientEmail(e.target.value);
+                        setErrorMessage(null);
+                    }}
                     className={classes.textField}
                     inputProps={{ 'data-testid': 'claim-invite-email' }}
                 />
@@ -138,7 +156,10 @@ const ClaimInviteDialog = ({
                     variant="outlined"
                     label="Add a personal note (optional)"
                     value={note}
-                    onChange={e => setNote(e.target.value)}
+                    onChange={e => {
+                        setNote(e.target.value);
+                        setErrorMessage(null);
+                    }}
                     className={classes.textField}
                     InputProps={{ className: classes.noteInput }}
                     helperText={`No links or web addresses. ${note.length}/${CLAIM_INVITE_NOTE_MAX_LENGTH}`}

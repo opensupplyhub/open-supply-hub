@@ -2630,7 +2630,9 @@ class FacilitiesViewSet(ListModelMixin,
             raise NotFound()
 
         try:
-            facility = Facility.objects.get(pk=pk)
+            # Lock the location so concurrent invites to it are checked
+            # against the limits one at a time.
+            facility = Facility.objects.select_for_update().get(pk=pk)
             contributor = request.user.contributor
         except Facility.DoesNotExist as exc:
             raise NotFound(detail='Facility not found.') from exc
@@ -2651,6 +2653,7 @@ class FacilitiesViewSet(ListModelMixin,
             note=serializer.validated_data['note'],
         )
         send_claim_invite_email(request, claim_invite)
+        ClaimInviteThrottle().record_invite(request, self)
 
         return Response(
             {'recipient_email': recipient_email},
