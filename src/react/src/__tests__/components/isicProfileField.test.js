@@ -61,20 +61,20 @@ describe('ISIC profile field', () => {
 
     test('names the Location Type or Processing Type a value came from', () => {
         expect(describeMappedSource(mapped('Sewing', []))).toBe(
-            'From Processing Type "Sewing"',
+            'From Processing Type \u201DSewing\u201C',
         );
         expect(
             describeMappedSource({
                 facility_type: 'Data Center',
                 processing_type: '',
             }),
-        ).toBe('From Location Type "Data Center"');
+        ).toBe('From Location Type \u201DData Center\u201C');
         expect(
             describeMappedSource({
                 facility_type: 'Office / HQ',
                 processing_type: 'Office / HQ',
             }),
-        ).toBe('From Location Type "Office / HQ"');
+        ).toBe('From Location Type \u201DOffice / HQ\u201C');
     });
 
     test('no ISIC data, no field', () => {
@@ -156,7 +156,7 @@ describe('ISIC profile field', () => {
 
         expect(text(field.value)).toBe('Manufacturing');
         expect(field.statusLabel).toBe(STATUS_MAPPED);
-        expect(field.contributorName).toBe('From Processing Type "Sewing"');
+        expect(field.contributorName).toBe('From Processing Type \u201DSewing\u201C');
         expect(field.userId).toBeUndefined();
         expect(field.date).toBeNull();
         expect(
@@ -178,7 +178,7 @@ describe('ISIC profile field', () => {
             render(field.value).queryByTestId('isic-mapped-badge'),
         ).not.toBeInTheDocument();
         const [card] = field.drawerData.contributions;
-        expect(card.sourceName).toBe('From Processing Type "Sewing"');
+        expect(card.sourceName).toBe('From Processing Type \u201DSewing\u201C');
         expect(card.isMapped).toBe(true);
     });
 
@@ -194,6 +194,6 @@ describe('ISIC profile field', () => {
 
         expect(
             field.drawerData.contributions.map(card => card.sourceName),
-        ).toEqual(['From Processing Type "Sewing"']);
+        ).toEqual(['From Processing Type \u201DSewing\u201C']);
     });
 });

@@ -1,10 +1,14 @@
 from django.core.cache import caches
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+from waffle.testutils import override_switch
 
 from api.models import ExtendedField
 from api.models.isic_taxonomy_config import IsicTaxonomyConfig
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
+@override_switch('enable_isic_taxonomy', active=True)
 class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
     '''GET /api/facilities/{os_id}/ returns ISIC values mapped from the
     location's Facility Type and Processing Type (OSDEV-3622).'''
@@ -99,3 +103,20 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
         caches['view_cache'].clear()
 
         self.assertEqual(self._mapped(), [])
+
+    @override_switch('enable_isic_taxonomy', active=False)
+    def test_switch_off_skips_isic_tables(self):
+        # migrate runs after the new image is live, so with the switch off
+        # the profile must not read the ISIC config or crosswalk.
+        self._add_processing_type('Final Product Assembly', 'Cut & Sew')
+        caches['view_cache'].clear()
+
+        with CaptureQueriesContext(connection) as queries:
+            mapped = self._mapped()
+
+        self.assertEqual(mapped, [])
+        self.assertFalse(any(
+            'isictaxonomyconfig' in q['sql']
+            or 'isic_mapped_entries' in q['sql']
+            for q in queries
+        ))
