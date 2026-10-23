@@ -162,3 +162,7 @@ contribot_google_drive_service_key_secret_name = "oshub/test/contribot-google-dr
 # OSDEV-3374: automated-claims pipeline Lambda execution role, allowed to
 # read claim attachments directly (s3:GetObject on claim_attachments/* only).
 claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]
+
+earth_genome_contributor_id_secret_name = "oshub/test/earth-genome-contributor-id"
+earth_index_api_key_secret_name = "oshub/test/earth-index-api-key"
+earth_index_project_id_secret_name = "oshub/test/earth-index-project-id"
