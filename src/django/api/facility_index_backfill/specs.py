@@ -34,6 +34,27 @@ PROCESSING_TYPE_FILTER = (
     ")"
 )
 
+ISIC_4_FILTER = (
+    "EXISTS ("
+    "SELECT 1 FROM api_extendedfield aef "
+    "WHERE aef.facility_id = afi.id "
+    "AND aef.field_name = 'isic_4'"
+    ")"
+)
+
+# Only locations with a facility or processing type can map to ISIC; the
+# third clause clears locations whose mapping a crosswalk change removed.
+# Parenthesized because build_*_sql appends filters after AND.
+ISIC_4_MAPPED_FILTER = (
+    "("
+    "cardinality(afi.facility_type) > 0 "
+    "OR cardinality(afi.processing_type) > 0 "
+    "OR cardinality(afi.isic_mapped_section) > 0"
+    ")"
+)
+
+ISIC_5_FILTER = ISIC_4_FILTER.replace("'isic_4'", "'isic_5'")
+
 # Only facilities where a single contributor has more than one matched list
 # item can change when index_sector() is recomputed (the OSDEV-992 change
 # keeps one item per contributor instead of all of them); this skips the
@@ -122,6 +143,62 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': PROCESSING_TYPE_FILTER,
+    },
+    'isic_4': {
+        'columns': {
+            'isic_section': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_section) "
+                "FROM index_isic_section(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_division': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_division) "
+                "FROM index_isic_division(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_group': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_group) "
+                "FROM index_isic_group(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+            'isic_class': (
+                "COALESCE("
+                "(SELECT array_agg(DISTINCT isic_class) "
+                "FROM index_isic_class(afi.id)), "
+                "'{}'"
+                ")"
+            ),
+        },
+        'filter_sql': ISIC_4_FILTER,
+    },
+    'isic_4_mapped': {
+        'columns': {
+            f'isic_mapped_{level}': (
+                "COALESCE((SELECT array_agg(isic_code ORDER BY isic_code) "
+                "FROM isic_mapped_codes("
+                "afi.facility_type, afi.processing_type) "
+                f"WHERE isic_level = '{level}'), '{{}}')"
+            )
+            for level in ('section', 'division', 'group', 'class')
+        },
+        'filter_sql': ISIC_4_MAPPED_FILTER,
+    },
+    'isic_5': {
+        'columns': {
+            f'isic5_{level}': (
+                "COALESCE((SELECT array_agg(code) "
+                f"FROM index_isic_level_code(afi.id, '{level}', 'isic_5') "
+                "AS code), '{}')"
+            )
+            for level in ('section', 'division', 'group', 'class')
+        },
+        'filter_sql': ISIC_5_FILTER,
     },
     'sector': {
         'columns': {

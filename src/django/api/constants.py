@@ -36,6 +36,8 @@ class FacilitiesQueryParams:
     PARENT_COMPANY = 'parent_company'
     FACILITY_TYPE = 'facility_type'
     PROCESSING_TYPE = 'processing_type'
+    ISIC_4 = 'isic_4'
+    ISIC_5 = 'isic_5'
     PROCESSING_TYPE_EXACT = 'processing_type_exact'
     PRODUCT_TYPE = 'product_type'
     NUMBER_OF_WORKERS = 'number_of_workers'
@@ -331,6 +333,20 @@ class APIV1ModerationEventErrorMessages:
     EVENT_NOT_PENDING = 'The moderation event should be in PENDING status.'
     INVALID_UUID_FORMAT = 'Invalid UUID format.'
     PERMISSION_DENIED = 'You do not have permission to perform this action.'
+
+
+class APIV1CandidateVoteErrorMessages:
+    NOT_A_CANDIDATE = (
+        'The location with the given id is not a candidate open to '
+        'validation votes.'
+    )
+    INVALID_VOTE = "vote must be 'confirmed' or 'not_a_facility'."
+    REQUEST_NOT_FOUND = 'Candidate retirement request not found.'
+    PILOT_DISABLED = 'Not found.'
+    CONSENSUS_BROKEN = (
+        'The live tally no longer supports retirement; the request has '
+        'been closed and the candidate was not retired.'
+    )
 
 
 # If the error isn’t field-specific, the non_field_errors key will be used

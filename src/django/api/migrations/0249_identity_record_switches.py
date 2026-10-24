@@ -8,12 +8,9 @@ SWITCHES = (
 
 class Migration(migrations.Migration):
     """
-    Creates the two pilot switches, both inactive.
-
-    Created here rather than left absent so they are visible in the Django
-    admin of every environment and can be turned on without a deploy. An
-    absent switch already reads as inactive, so this changes nothing about
-    behaviour; it changes who can see that the lever exists.
+    Creates the two pilot switches, inactive, where they are not already
+    present. Created here rather than left absent so the levers are
+    visible in the Django admin of every environment.
     """
 
     def create_identity_record_switches(apps, schema_editor):

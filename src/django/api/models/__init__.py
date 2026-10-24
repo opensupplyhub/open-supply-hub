@@ -32,6 +32,10 @@ from .facility.facility_alias import (
   FacilityAlias,
   HistoricalFacilityAlias,
 )
+from .facility.facility_candidate_vote import FacilityCandidateVote
+from .facility.facility_candidate_retirement_request import (
+  FacilityCandidateRetirementRequest,
+)
 from .facility.facility_claim import (
   FacilityClaim,
   HistoricalFacilityClaim,
@@ -67,6 +71,7 @@ from .extended_field import (
 )
 from .nonstandard_field import NonstandardField
 from .partner_field import PartnerField
+from .isic_crosswalk_entry import IsicCrosswalkEntry
 from .partner_data_file_upload import PartnerDataFileUpload
 from .partner_field_group import PartnerFieldGroup
 from .product_type import ProductType

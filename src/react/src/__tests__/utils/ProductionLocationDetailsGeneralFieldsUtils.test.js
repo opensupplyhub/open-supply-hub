@@ -369,6 +369,7 @@ describe('getVisibleFields', () => {
         });
     });
 
+    // ISIC has its own Industry Classification section (OSDEV-3622).
     describe('exact full output (full fixture)', () => {
         const expectedKeysWithoutRba = [
             'name',
@@ -379,7 +380,6 @@ describe('getVisibleFields', () => {
             'processing_type',
             'number_of_workers',
             'parent_company_os_id',
-            'isic_4',
             'status',
         ];
         const expectedKeysWithRba = [
@@ -391,7 +391,6 @@ describe('getVisibleFields', () => {
             'processing_type',
             'number_of_workers',
             'parent_company_os_id',
-            'isic_4',
             'rba_id',
             'status',
         ];
@@ -425,7 +424,7 @@ describe('getVisibleFields', () => {
             expect(result).toHaveLength(expectedKeysWithRba.length);
             expect(result.map(field => field.key)).toEqual(expectedKeysWithRba);
             const rbaIndex = result.findIndex(field => field.key === 'rba_id');
-            expect(rbaIndex).toBe(9);
+            expect(rbaIndex).toBe(8);
             expect(result[rbaIndex].value).toBe('RBA-001');
         });
     });
