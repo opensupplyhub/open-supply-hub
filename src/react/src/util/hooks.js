@@ -17,6 +17,7 @@ import { CONFIRM_ACTION, MERGE_ACTION, REJECT_ACTION } from './constants';
 
 import { slcValidationSchema } from './util';
 import { DATA_CENTER_FORM_INITIAL_VALUES } from '../components/Contribute/DataCenterFields/constants';
+import { EMPTY_ISIC } from '../components/Filters/IsicSearch/utils';
 
 export const useUpdateLeafletMapImperatively = (
     resetButtonClickCount,
@@ -398,6 +399,7 @@ export const useSingleLocationContributionForm = onSubmit =>
             processingType: [],
             numberOfWorkers: '',
             parentCompany: '',
+            isic: EMPTY_ISIC,
         },
         validationSchema: slcValidationSchema,
         onSubmit,

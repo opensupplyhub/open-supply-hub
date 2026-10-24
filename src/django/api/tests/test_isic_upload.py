@@ -171,10 +171,11 @@ class IsicExtendedFieldValueTest(SimpleTestCase):
                 )
 
     def test_structured_values_are_unchanged(self):
-        # The v1 API (and RBA) send objects; those keep working as before.
+        # The v1 API (and RBA) send objects with several levels; those keep
+        # working as before.
+        value = {'section': 'C - Manufacturing', 'class': '1410 - Apparel'}
         self.assertEqual(
-            isic_4_value([{'class': '1410 - Apparel'}]),
-            {'raw_value': [{'class': '1410 - Apparel'}]},
+            isic_4_value([value]), {'raw_value': [value]},
         )
 
     def test_one_cell_resolves_at_most_the_v1_limit(self):
