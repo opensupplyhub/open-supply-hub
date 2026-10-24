@@ -14,10 +14,15 @@ import FormFieldHint from '../../../Shared/FormFieldHint/FormFieldHint';
 import IconComponent from '../../../../Shared/IconComponent/IconComponent';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import StyledSelect from '../../../../Filters/StyledSelect';
+import IsicValuePicker from '../../../../Filters/IsicSearch/IsicValuePicker';
+import FeatureFlag from '../../../../FeatureFlag';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import withScrollReset from '../../../HOCs/withScrollReset';
 import ClaimEmissionsEstimate from '../../ClaimEmissionsEstimate/ClaimEmissionsEstimate';
-import { mockedSectors } from '../../../../../util/constants';
+import {
+    ENABLE_ISIC_TAXONOMY,
+    mockedSectors,
+} from '../../../../../util/constants';
 import {
     mapDjangoChoiceTuplesToSelectOptions,
     mapFacilityTypeOptions,
@@ -842,6 +847,24 @@ const ProfileStep = ({
                                 )}
                         </div>
                     </div>
+                    <FeatureFlag flag={ENABLE_ISIC_TAXONOMY}>
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label="Industry Classification (ISIC)"
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <IsicValuePicker
+                                value={{
+                                    4: formData.isic4 || [],
+                                    5: formData.isic5 || [],
+                                }}
+                                onChange={value => {
+                                    handleChange('isic4', value[4]);
+                                    handleChange('isic5', value[5]);
+                                }}
+                            />
+                        </div>
+                    </FeatureFlag>
                     <div className={classes.doubleFieldContainer}>
                         <div className={classes.fieldContainer}>
                             <FormFieldTitle

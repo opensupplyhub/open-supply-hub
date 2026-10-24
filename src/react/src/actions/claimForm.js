@@ -46,6 +46,8 @@ const appendFormField = (postData, key, value) => {
         'facility_product_types',
         'facility_affiliations',
         'facility_certifications',
+        'isic_4',
+        'isic_5',
     ];
 
     const fileFieldsKeys = [

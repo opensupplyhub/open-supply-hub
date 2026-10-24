@@ -84,3 +84,37 @@ def replace_crosswalk_entries(entry_model, rows):
         entry_model.objects.all().delete()
         entry_model.objects.bulk_create(entry_model(**row) for row in rows)
     return len(rows)
+
+
+def get_mapped_isic_values(facility_types, processing_types):
+    '''
+    The crosswalk rows that apply to a location, for its profile: what each
+    came from and its ISIC path (level, code and title). Reads the same SQL
+    function as the search index, so profile and search agree. Rows that
+    deliberately map to nothing are left out.
+    '''
+    from api.models import IsicCrosswalkEntry
+
+    entries = IsicCrosswalkEntry.objects.raw(
+        'SELECT * FROM isic_mapped_entries(%s::varchar[], %s::varchar[]) '
+        'ORDER BY facility_type, processing_type',
+        [list(facility_types or []), list(processing_types or [])],
+    )
+    values = []
+    for entry in entries:
+        path = [
+            {
+                'level': level.replace('isic_', ''),
+                'code': getattr(entry, level),
+                'title': getattr(entry, f'{level}_title'),
+            }
+            for level in LEVEL_PATTERNS
+            if getattr(entry, level)
+        ]
+        if path:
+            values.append({
+                'facility_type': entry.facility_type,
+                'processing_type': entry.processing_type,
+                'path': path,
+            })
+    return values
