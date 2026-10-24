@@ -40,6 +40,10 @@ jest.mock(
     () => () => <div data-testid="operational-details-section" />,
 );
 jest.mock(
+    '../../components/ProductionLocation/IndustryClassificationSection/IndustryClassificationSection',
+    () => () => <div data-testid="industry-classification-section" />,
+);
+jest.mock(
     '../../components/ProductionLocation/PartnerSection/PartnerDataContainer/PartnerDataContainer',
     () => () => <div data-testid="spotlight-section" />,
 );

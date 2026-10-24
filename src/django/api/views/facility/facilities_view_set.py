@@ -2486,6 +2486,8 @@ class FacilitiesViewSet(ListModelMixin,
                     "facility_production_types"
                 ),
                 facility_type=validated_data.get("facility_type"),
+                isic_4=validated_data.get("isic_4"),
+                isic_5=validated_data.get("isic_5"),
                 # The claim form sends these two fields as empty strings
                 # while the enable_claim_name_address_edit switch is off;
                 # the serializer normalizes blank to None, which is also

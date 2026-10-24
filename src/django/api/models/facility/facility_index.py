@@ -140,6 +140,106 @@ class FacilityIndex(models.Model):
         db_index=True,
         help_text='ExtendedField for processing type.'),
         default=list)
+    isic_section = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'Normalized ISIC Rev 4 section codes from isic_4 ExtendedField.'
+        )),
+        default=list)
+    isic_division = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'Normalized ISIC Rev 4 division codes from isic_4 ExtendedField.'
+        )),
+        default=list)
+    isic_group = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'Normalized ISIC Rev 4 group codes from isic_4 ExtendedField.'
+        )),
+        default=list)
+    isic_class = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'Normalized ISIC Rev 4 class codes from isic_4 ExtendedField.'
+        )),
+        default=list)
+    isic5_section = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 section codes from isic_5 ExtendedField.'
+        )),
+        default=list)
+    isic5_division = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 division codes from isic_5 ExtendedField.'
+        )),
+        default=list)
+    isic5_group = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 group codes from isic_5 ExtendedField.'
+        )),
+        default=list)
+    isic5_class = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 5 class codes from isic_5 ExtendedField.'
+        )),
+        default=list)
+    isic_mapped_section = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 section codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
+    isic_mapped_division = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 division codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
+    isic_mapped_group = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 group codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
+    isic_mapped_class = postgres.ArrayField(models.CharField(
+        max_length=10,
+        null=False,
+        blank=False,
+        help_text=(
+            'ISIC Rev 4 class codes mapped from the facility and '
+            'processing type through the crosswalk.'
+        )),
+        default=list)
     product_type = postgres.ArrayField(models.CharField(
         max_length=2000,
         null=False,
