@@ -7,7 +7,7 @@ class FacilityClaimInvite(models.Model):
     An email invitation, sent by a registered user from an unclaimed
     production location's profile, asking someone at the location to
     claim it. The uuid travels in the claim link (?invite=<uuid>) so a
-    claim submitted from the invite can be traced back to it.
+    claim submitted from the invite can be traced back to it (OSDEV-3649).
     """
     uuid = models.UUIDField(
         null=False,
