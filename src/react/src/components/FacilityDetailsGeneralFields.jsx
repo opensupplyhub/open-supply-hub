@@ -6,6 +6,7 @@ import isNil from 'lodash/isNil';
 import filter from 'lodash/filter';
 import { withStyles } from '@material-ui/core/styles';
 
+import { Link } from 'react-router-dom';
 import FacilityDetailsItem from './FacilityDetailsItem';
 import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo/FacilityDetailsClaimedInfo';
 import ShowOnly from './ShowOnly';
@@ -19,6 +20,7 @@ import {
     CLAIM_A_FACILITY,
     REPORT_A_FACILITY,
     SHOW_ADDITIONAL_IDENTIFIERS,
+    ENABLE_IDENTITY_RESOLVER,
 } from '../util/constants';
 
 const locationFieldsStyles = theme =>
@@ -35,6 +37,26 @@ const locationFieldsStyles = theme =>
             maxWidth: '1072px',
             paddingLeft: theme.spacing.unit * 3,
             paddingBottom: theme.spacing.unit * 3,
+        },
+        identityRecord: {
+            background: '#F9F7F7',
+            borderRadius: '6px',
+            padding: theme.spacing.unit * 2,
+            marginTop: theme.spacing.unit * 2,
+            width: '100%',
+        },
+        identityRecordTitle: {
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            marginBottom: '0.25rem',
+        },
+        identityRecordText: {
+            fontSize: '14px',
+            marginBottom: '0.5rem',
+        },
+        identityRecordLink: {
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: '#0427a4',
         },
         dataCenterGroupTitle: {
             fontSize: '18px',
@@ -290,6 +312,12 @@ const FacilityDetailsGeneralFields = ({
     rather than rendered on their own.
     */
     const isDataCenter = !!get(data, 'properties.is_data_center', false);
+    const hasIdentityRecord = !!get(
+        data,
+        'properties.has_identity_record',
+        false,
+    );
+    const osId = get(data, 'id', null);
 
     const renderDataCenterField = ({ key, label, unitsField }) => {
         let unit = null;
@@ -366,6 +394,50 @@ const FacilityDetailsGeneralFields = ({
                     )}
                     {embed ? renderEmbedFields() : renderExtendedFields()}
                     {!embed && isDataCenter ? renderDataCenterGroups() : null}
+                    {/*
+                     * Deliberately outside the SHOW_ADDITIONAL_IDENTIFIERS
+                     * block above. Placing it there would tie shipping the
+                     * pilot to turning that flag on, which also exposes
+                     * DUNS and LEI, and that is a separate product
+                     * decision (OSDEV-3585).
+                     *
+                     * Rendered only when a record is registered. With none,
+                     * the page is the standard facility page with no empty
+                     * section and no error state (FR-14).
+                     *
+                     * Gated on the resolver switch as well. The serializer
+                     * already returns has_identity_record false while the
+                     * resolver is off, so this is the second of two gates;
+                     * it is here so the link cannot appear from a cached
+                     * or embedded payload that predates the switch.
+                     */}
+                    {!embed && hasIdentityRecord ? (
+                        <FeatureFlag flag={ENABLE_IDENTITY_RESOLVER}>
+                            <Grid item xs={12}>
+                                <div className={classes.identityRecord}>
+                                    <Typography
+                                        component="h3"
+                                        className={classes.identityRecordTitle}
+                                    >
+                                        Registered record
+                                    </Typography>
+                                    <Typography
+                                        className={classes.identityRecordText}
+                                    >
+                                        Another organization has published a
+                                        record about this location and
+                                        registered it against this OS ID.
+                                    </Typography>
+                                    <Link
+                                        to={`/facilities/${osId}/identity-record`}
+                                        className={classes.identityRecordLink}
+                                    >
+                                        View the registered record
+                                    </Link>
+                                </div>
+                            </Grid>
+                        </FeatureFlag>
+                    ) : null}
                     <FeatureFlag flag={REPORT_A_FACILITY}>
                         <ShowOnly when={!!activityReport}>
                             <FacilityDetailsItem
