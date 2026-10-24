@@ -4,7 +4,7 @@ title, or text close to a title, checked against one revision's UN structure
 (revisions.py). The column a value came in under says the revision: the same
 code can mean different things in ISIC 4 and ISIC 5. Results use the shape
 ISIC ExtendedFields already store, so search and profiles read them
-unchanged.
+unchanged. The claim and contribution forms (OSDEV-2974) use it too.
 """
 
 import re
