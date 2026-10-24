@@ -3,8 +3,14 @@ from django.db.models import Q
 from api.isic_taxonomy import revisions
 from api.isic_taxonomy.constants import LEVELS
 
-# api_facilityindex columns per revision; {level} is section..class.
-ISIC_COLUMNS = {'4': 'isic_{level}', '5': 'isic5_{level}'}
+# api_facilityindex columns per revision; {level} is section..class. ISIC 4
+# also searches the values Open Supply Hub contributes, mapped from each
+# location's Facility Type / Processing Type through the crosswalk
+# (OSDEV-3382).
+ISIC_COLUMNS = {
+    '4': ('isic_{level}', 'isic_mapped_{level}'),
+    '5': ('isic5_{level}',),
+}
 
 
 def parse_isic_filter_values(values):
@@ -40,7 +46,8 @@ def build_isic_filter(selected):
 
     isic_filter = Q()
     for (revision, level), level_codes in codes.items():
-        if level_codes:
-            column = ISIC_COLUMNS[revision].format(level=level)
-            isic_filter |= Q(**{f'{column}__overlap': sorted(level_codes)})
+        for column in ISIC_COLUMNS[revision] if level_codes else ():
+            isic_filter |= Q(**{
+                f'{column.format(level=level)}__overlap': sorted(level_codes),
+            })
     return isic_filter or None

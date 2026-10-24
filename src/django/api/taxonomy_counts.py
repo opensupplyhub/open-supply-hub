@@ -5,7 +5,8 @@ from api.isic_taxonomy import revisions
 # Locations per search entry, in one pass over api_facilityindex. Each
 # location's codes are joined to the entries they count toward (its own, and
 # through the UN correspondence the other revision's), so a location counts
-# once per entry whichever revision it was uploaded under. Every location
+# once per entry whichever revision it was uploaded under, and whether a
+# value was contributed or mapped by Open Supply Hub. Every location
 # with an ISIC code has a section (parent levels are stored), so the WHERE
 # skips the rest. Candidates are excluded as in
 # FacilityIndex.objects.without_candidates(), which the search starts from.
@@ -16,8 +17,11 @@ COUNTS_SQL = """
             unnest(
                 fi.isic_section || fi.isic_division
                 || fi.isic_group || fi.isic_class
+                || fi.isic_mapped_section || fi.isic_mapped_division
+                || fi.isic_mapped_group || fi.isic_mapped_class
             ) AS code
         WHERE cardinality(fi.isic_section) > 0
+            OR cardinality(fi.isic_mapped_section) > 0
         UNION ALL
         SELECT fi.id, '5' AS revision, code
         FROM api_facilityindex fi,

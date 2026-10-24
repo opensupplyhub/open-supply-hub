@@ -42,6 +42,17 @@ ISIC_4_FILTER = (
     ")"
 )
 
+# Only locations with a facility or processing type can map to ISIC; the
+# third clause clears locations whose mapping a crosswalk change removed.
+# Parenthesized because build_*_sql appends filters after AND.
+ISIC_4_MAPPED_FILTER = (
+    "("
+    "cardinality(afi.facility_type) > 0 "
+    "OR cardinality(afi.processing_type) > 0 "
+    "OR cardinality(afi.isic_mapped_section) > 0"
+    ")"
+)
+
 ISIC_5_FILTER = ISIC_4_FILTER.replace("'isic_4'", "'isic_5'")
 
 # Only facilities where a single contributor has more than one matched list
@@ -165,6 +176,18 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             ),
         },
         'filter_sql': ISIC_4_FILTER,
+    },
+    'isic_4_mapped': {
+        'columns': {
+            f'isic_mapped_{level}': (
+                "COALESCE((SELECT array_agg(isic_code ORDER BY isic_code) "
+                "FROM isic_mapped_codes("
+                "afi.facility_type, afi.processing_type) "
+                f"WHERE isic_level = '{level}'), '{{}}')"
+            )
+            for level in ('section', 'division', 'group', 'class')
+        },
+        'filter_sql': ISIC_4_MAPPED_FILTER,
     },
     'isic_5': {
         'columns': {

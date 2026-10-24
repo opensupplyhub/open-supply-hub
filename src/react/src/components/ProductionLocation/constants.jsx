@@ -88,9 +88,15 @@ export const FIELD_CONFIG = Object.freeze({
     }),
     isic_4: Object.freeze({
         key: 'isic_4',
-        label: 'ISIC 4',
+        label: 'ISIC Rev. 4',
         tooltipText:
-            'The International Standard Industrial Classification (ISIC Rev. 4) code as defined by the United Nations indicating the primary economic activity of this production location based on the ISIC taxonomy classification.',
+            "The United Nations' International Standard Industrial Classification, Revision 4: the economic activity of this production location.",
+    }),
+    isic_5: Object.freeze({
+        key: 'isic_5',
+        label: 'ISIC Rev. 5',
+        tooltipText:
+            "The United Nations' International Standard Industrial Classification, Revision 5: the economic activity of this production location.",
     }),
     status: Object.freeze({
         key: 'status',
@@ -109,6 +115,13 @@ export const FIELD_CONFIG = Object.freeze({
     }),
 });
 
+/** Industry Classification section (OSDEV-3622). */
+export const INDUSTRY_CLASSIFICATION_SECTION = Object.freeze({
+    label: 'Industry Classification',
+    description:
+        'Industry classification schemes classify a production location by its economic activity. Values come from contributors, including Open Supply Hub, which classifies locations from their Location Type and Processing Type.',
+});
+
 /** Display order for General Information section fields. */
 export const ORDERED_GENERAL_FIELD_KEYS = Object.freeze([
     FIELD_CONFIG.name.key,
@@ -120,7 +133,6 @@ export const ORDERED_GENERAL_FIELD_KEYS = Object.freeze([
     FIELD_CONFIG.number_of_workers.key,
     FIELD_CONFIG.native_language_name.key,
     FIELD_CONFIG.parent_company_os_id.key,
-    FIELD_CONFIG.isic_4.key,
     FIELD_CONFIG.rba_id.key,
     FIELD_CONFIG.duns_id.key,
     FIELD_CONFIG.lei_id.key,

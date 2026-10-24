@@ -58,6 +58,7 @@ class ApprovedFacilityClaimSerializer(ModelSerializer):
                   'affiliation_choices', 'certification_choices',
                   'facility_affiliations', 'facility_certifications',
                   'facility_product_types', 'facility_production_types',
+                  'isic_4', 'isic_5',
                   'production_type_choices', 'sector',
                   'location_name', 'location_address')
 

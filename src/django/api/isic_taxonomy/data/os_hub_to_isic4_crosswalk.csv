@@ -1,0 +1,147 @@
+facility_type,processing_type,isic_section,isic_section_title,isic_division,isic_division_title,isic_group,isic_group_title,isic_class,isic_class_title,match_type
+Data Center,,J,Information and communication,63,Information service activities,631,"Data processing, hosting and related activities; web portals",6311,"Data processing, hosting and related activities",Exact
+Raw Material Processing or Production,,,,,,,,,,Does not map
+Textile or Material Production,,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,,C,Manufacturing,,,,,,,Partial / broader level
+Office / HQ,,M,"Professional, scientific and technical activities",70,Activities of head offices; management consultancy activities,701,Activities of head offices,7010,Activities of head offices,Description-based
+Warehousing / Distribution,,H,Transportation and storage,52,Warehousing and support activities for transportation,521,Warehousing and storage,5210,Warehousing and storage,Exact
+Raw Material Processing or Production,Biological Recycling,E,"Water supply; sewerage, waste management and remediation activities",,,,,,,Partial / broader level
+Raw Material Processing or Production,Boiling,,,,,,,,,Does not map
+Raw Material Processing or Production,Breeding,A,"Agriculture, forestry and fishing",01,"Crop and animal production, hunting and related service activities",014,Animal production,,,Description-based
+Raw Material Processing or Production,Chemical Recycling,E,"Water supply; sewerage, waste management and remediation activities",38,"Waste collection, treatment and disposal activities; materials recovery",,,,,Description-based
+Raw Material Processing or Production,Chemical Synthesis,,,,,,,,,Does not map
+Raw Material Processing or Production,Collecting,,,,,,,,,Does not map
+Raw Material Processing or Production,Concentrating,,,,,,,,,Does not map
+Raw Material Processing or Production,Disassembly,E,"Water supply; sewerage, waste management and remediation activities",38,"Waste collection, treatment and disposal activities; materials recovery",,,,,Partial / broader level
+Raw Material Processing or Production,Down Processing,C,Manufacturing,10,Manufacture of food products,101,Processing and preserving of meat,1010,Processing and preserving of meat,Description-based
+Raw Material Processing or Production,Dry Spinning,C,Manufacturing,20,Manufacture of chemicals and chemical products,203,Manufacture of man-made fibres,2030,Manufacture of man-made fibres,Description-based
+Raw Material Processing or Production,Extrusion,,,,,,,,,Does not map
+Raw Material Processing or Production,Ginning,A,"Agriculture, forestry and fishing",01,"Crop and animal production, hunting and related service activities",016,Support activities to agriculture and post-harvest crop activities,0163,Post-harvest crop activities,Description-based
+Raw Material Processing or Production,Hatchery,A,"Agriculture, forestry and fishing",,,,,,,Partial / broader level
+Raw Material Processing or Production,Mechanical Recycling,E,"Water supply; sewerage, waste management and remediation activities",38,"Waste collection, treatment and disposal activities; materials recovery",,,,,Description-based
+Raw Material Processing or Production,Melt Spinning,C,Manufacturing,20,Manufacture of chemicals and chemical products,203,Manufacture of man-made fibres,2030,Manufacture of man-made fibres,Description-based
+Raw Material Processing or Production,Preparation,,,,,,,,,Does not map
+Raw Material Processing or Production,Preparatory,,,,,,,,,Does not map
+Raw Material Processing or Production,Processing Site,,,,,,,,,Does not map
+Raw Material Processing or Production,Pulp making,C,Manufacturing,17,Manufacture of paper and paper products,170,Manufacture of paper and paper products,1701,"Manufacture of pulp, paper and paperboard",Exact
+Raw Material Processing or Production,Raw Material Processing or Production,,,,,,,,,Does not map
+Raw Material Processing or Production,Retting,A,"Agriculture, forestry and fishing",01,"Crop and animal production, hunting and related service activities",011,Growing of non-perennial crops,0116,Growing of fibre crops,Description-based
+Raw Material Processing or Production,Scouring,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",,,Partial / broader level
+Raw Material Processing or Production,Shredding,,,,,,,,,Does not map
+Raw Material Processing or Production,Slaughterhouse,C,Manufacturing,10,Manufacture of food products,101,Processing and preserving of meat,1010,Processing and preserving of meat,Description-based
+Raw Material Processing or Production,Slaughtering,C,Manufacturing,10,Manufacture of food products,101,Processing and preserving of meat,1010,Processing and preserving of meat,Description-based
+Raw Material Processing or Production,Sorting,,,,,,,,,Does not map
+Raw Material Processing or Production,Spinning,C,Manufacturing,,,,,,,Partial / broader level
+Raw Material Processing or Production,Standardization / Chemical finishing,C,Manufacturing,,,,,,,Partial / broader level
+Raw Material Processing or Production,Synthetic Leather Production,,,,,,,,,Does not map
+Raw Material Processing or Production,Tannery,C,Manufacturing,15,Manufacture of leather and related products,151,"Tanning and dressing of leather; manufacture of luggage, handbags, saddlery and harness; dressing and dyeing of fur",1511,Tanning and dressing of leather; dressing and dyeing of fur,Exact
+Raw Material Processing or Production,Tanning,C,Manufacturing,15,Manufacture of leather and related products,151,"Tanning and dressing of leather; manufacture of luggage, handbags, saddlery and harness; dressing and dyeing of fur",1511,Tanning and dressing of leather; dressing and dyeing of fur,Exact
+Raw Material Processing or Production,Textile Recycling,E,"Water supply; sewerage, waste management and remediation activities",38,"Waste collection, treatment and disposal activities; materials recovery",,,,,Partial / broader level
+Raw Material Processing or Production,Top making,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1311,Preparation and spinning of textile fibres,Description-based
+Raw Material Processing or Production,Twisting/Texturizing Facility,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1311,Preparation and spinning of textile fibres,Description-based
+Raw Material Processing or Production,Wet Spinning,C,Manufacturing,20,Manufacture of chemicals and chemical products,203,Manufacture of man-made fibres,2030,Manufacture of man-made fibres,Description-based
+Raw Material Processing or Production,Yarn spinning,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1311,Preparation and spinning of textile fibres,Exact
+Textile or Material Production,Blending,,,,,,,,,Does not map
+Textile or Material Production,Bonding,,,,,,,,,Does not map
+Textile or Material Production,Buffing,,,,,,,,,Does not map
+Textile or Material Production,Components,,,,,,,,,Does not map
+Textile or Material Production,Doubling,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1311,Preparation and spinning of textile fibres,Description-based
+Textile or Material Production,Embellishment,,,,,,,,,Does not map
+Textile or Material Production,Embossing,,,,,,,,,Does not map
+Textile or Material Production,Embroidery,C,Manufacturing,13,Manufacture of textiles,139,Manufacture of other textiles,1399,Manufacture of other textiles n.e.c.,Description-based
+Textile or Material Production,Fabric Mill,C,Manufacturing,13,Manufacture of textiles,,,,,Partial / broader level
+Textile or Material Production,Flat Knit,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Fusing,,,,,,,,,Does not map
+Textile or Material Production,Garment Accessories Manufacturing,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Knitting,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Circular Knitting,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Lace Knitting,C,Manufacturing,13,Manufacture of textiles,139,Manufacture of other textiles,1399,Manufacture of other textiles n.e.c.,Description-based
+Textile or Material Production,Knitting Seamless,C,Manufacturing,14,Manufacture of wearing apparel,143,Manufacture of knitted and crocheted apparel,1430,Manufacture of knitted and crocheted apparel,Description-based
+Textile or Material Production,Knitting V Bed,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Knitting Warp,C,Manufacturing,13,Manufacture of textiles,139,Manufacture of other textiles,,,Description-based
+Textile or Material Production,Laminating,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Material Creation,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Material Production,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Mill,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Nonwoven manufacturing,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Nonwoven Processing,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Painting,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Pressing,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Pelletizing,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Spraying,C,Manufacturing,,,,,,,Partial / broader level
+Textile or Material Production,Straight bar knitting,C,Manufacturing,14,Manufacture of wearing apparel,143,Manufacture of knitted and crocheted apparel,1430,Manufacture of knitted and crocheted apparel,Description-based
+Textile or Material Production,Textile or Material Production,,,,,,,,,Does not map
+Textile or Material Production,Textile Mill,C,Manufacturing,13,Manufacture of textiles,,,,,Partial / broader level
+Textile or Material Production,Weaving,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1312,Weaving of textiles,Exact
+Textile or Material Production,Welding,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",Batch Dyeing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Coating,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",Continuous dyeing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Direct Digital Ink Printing,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Partial / broader level
+"Printing, Product Dyeing and Laundering",Dyeing,C,Manufacturing,,,,,,,Context-dependent
+"Printing, Product Dyeing and Laundering",Fabric All Over Print,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Partial / broader level
+"Printing, Product Dyeing and Laundering",Fabric Chemical Finishing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Finishing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Context-dependent
+"Printing, Product Dyeing and Laundering",Fiber Dye,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",,,Description-based
+"Printing, Product Dyeing and Laundering",Flat Screen Printing,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Context-dependent
+"Printing, Product Dyeing and Laundering",Garment Dyeing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Garment Place Print,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Description-based
+"Printing, Product Dyeing and Laundering",Garment Wash,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Garment Finishing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Hand Dye,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",Laundering,,,,,,,,,Does not map
+"Printing, Product Dyeing and Laundering",Laundry,,,,,,,,,Does not map
+"Printing, Product Dyeing and Laundering",Pre-treatment,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",Printing,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Exact
+"Printing, Product Dyeing and Laundering","Printing, Product Dyeing and Laundering",C,Manufacturing,,,,,,,Description-based
+"Printing, Product Dyeing and Laundering",Product Dyeing,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",Rotary Printing,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Partial / broader level
+"Printing, Product Dyeing and Laundering",Screen Printing,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Partial / broader level
+"Printing, Product Dyeing and Laundering",Spray Dye,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",Sublimation,C,Manufacturing,,,,,,,Partial / broader level
+"Printing, Product Dyeing and Laundering",Textile Dyeing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Exact
+"Printing, Product Dyeing and Laundering",Textile Printing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Textile Chemical Finishing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Exact
+"Printing, Product Dyeing and Laundering",Textile Mechanical Finishing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Exact
+"Printing, Product Dyeing and Laundering",Tye Dye,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+"Printing, Product Dyeing and Laundering",Washing,,,,,,,,,Does not map
+"Printing, Product Dyeing and Laundering",Wet Processing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Partial / broader level
+"Printing, Product Dyeing and Laundering",Wet roller printing,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Partial / broader level
+"Printing, Product Dyeing and Laundering",Yarn Dyeing,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+Final Product Assembly,Assembly,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Cutting,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Cut & Sew,C,Manufacturing,14,Manufacture of wearing apparel,141,"Manufacture of wearing apparel, except fur apparel",1410,"Manufacture of wearing apparel, except fur apparel",Description-based
+Final Product Assembly,Embellishment,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Embroidery,C,Manufacturing,13,Manufacture of textiles,139,Manufacture of other textiles,1399,Manufacture of other textiles n.e.c.,Description-based
+Final Product Assembly,Final Product Assembly,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Finished Goods,,,,,,,,,Does not map
+Final Product Assembly,Ironing,,,,,,,,,Does not map
+Final Product Assembly,Knitwear Assembly,C,Manufacturing,14,Manufacture of wearing apparel,143,Manufacture of knitted and crocheted apparel,1430,Manufacture of knitted and crocheted apparel,Description-based
+Final Product Assembly,Knit Composite,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Linking,C,Manufacturing,14,Manufacture of wearing apparel,143,Manufacture of knitted and crocheted apparel,1430,Manufacture of knitted and crocheted apparel,Description-based
+Final Product Assembly,Manufacturing,C,Manufacturing,,,,,,,Exact
+Final Product Assembly,Making up,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Marker Making,C,Manufacturing,14,Manufacture of wearing apparel,141,"Manufacture of wearing apparel, except fur apparel",1410,"Manufacture of wearing apparel, except fur apparel",Context-dependent
+Final Product Assembly,Molding,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Packaging,,,,,,,,,Does not map
+Final Product Assembly,Pattern Grading,C,Manufacturing,14,Manufacture of wearing apparel,141,"Manufacture of wearing apparel, except fur apparel",1410,"Manufacture of wearing apparel, except fur apparel",Context-dependent
+Final Product Assembly,Pleating,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+Final Product Assembly,Product Finishing,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Ready Made Garment,C,Manufacturing,14,Manufacture of wearing apparel,,,,,Exact
+Final Product Assembly,Sample Making,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Seam taping,C,Manufacturing,14,Manufacture of wearing apparel,141,"Manufacture of wearing apparel, except fur apparel",1410,"Manufacture of wearing apparel, except fur apparel",Context-dependent
+Final Product Assembly,Sewing,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Steaming,C,Manufacturing,13,Manufacture of textiles,131,"Spinning, weaving and finishing of textiles",1313,Finishing of textiles,Description-based
+Final Product Assembly,Stitching,C,Manufacturing,,,,,,,Partial / broader level
+Final Product Assembly,Tailoring,,,,,,,,,Does not map
+Office / HQ,Headquarters,M,"Professional, scientific and technical activities",70,Activities of head offices; management consultancy activities,701,Activities of head offices,7010,Activities of head offices,Exact
+Office / HQ,No processing,,,,,,,,,Does not map
+Office / HQ,Office,,,,,,,,,Does not map
+Office / HQ,Office / HQ,M,"Professional, scientific and technical activities",70,Activities of head offices; management consultancy activities,701,Activities of head offices,7010,Activities of head offices,Partial / broader level
+Office / HQ,Recruitment Agency,N,Administrative and support service activities,78,Employment activities,781,Activities of employment placement agencies,7810,Activities of employment placement agencies,Description-based
+Office / HQ,Sourcing Agent,G,Wholesale and retail trade; repair of motor vehicles and motorcycles,46,"Wholesale trade, except of motor vehicles and motorcycles",461,Wholesale on a fee or contract basis,4610,Wholesale on a fee or contract basis,Description-based
+Office / HQ,Trading,G,Wholesale and retail trade; repair of motor vehicles and motorcycles,,,,,,,Partial / broader level
+Office / HQ,Union Headquarters/Office,S,Other service activities,94,Activities of membership organizations,942,Activities of trade unions,9420,Activities of trade unions,Exact
+Warehousing / Distribution,Packing,,,,,,,,,Does not map
+Warehousing / Distribution,Warehousing / Distribution,H,Transportation and storage,52,Warehousing and support activities for transportation,521,Warehousing and storage,5210,Warehousing and storage,Exact

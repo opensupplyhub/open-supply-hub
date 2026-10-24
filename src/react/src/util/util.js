@@ -90,6 +90,7 @@ import {
     ENABLE_PRODUCTION_LOCATION_PAGE,
 } from './constants';
 import { freeEmissionsEstimateFormConfig } from '../components/FreeEmissionsEstimate/constants';
+import { isicObjects } from '../components/Filters/IsicSearch/utils';
 
 import renderUniqueListItems from './renderUtils';
 import { createListItemCSV } from './util.listItemCSV';
@@ -1850,13 +1851,15 @@ const filterNonEmptyFields = fields =>
     );
 
 export const parseContribData = contribData => {
-    const { numberOfWorkers, country, ...fields } = contribData;
+    const { numberOfWorkers, country, isic, ...fields } = contribData;
     const countryValue = country?.value;
 
     const parsedFields = convertToSnakeFields(filterNonEmptyFields(fields));
 
     return {
         ...parsedFields,
+        ...(!isEmpty(isic?.[4]) && { isic_4: isicObjects(isic[4]) }),
+        ...(!isEmpty(isic?.[5]) && { isic_5: isicObjects(isic[5]) }),
         ...(numberOfWorkers && {
             number_of_workers: generateRangeField(numberOfWorkers),
         }),

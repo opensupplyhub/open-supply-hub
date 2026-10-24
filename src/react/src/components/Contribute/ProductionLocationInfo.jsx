@@ -34,6 +34,7 @@ import {
     productionLocationInfoRouteCommon,
     MODERATION_STATUSES_ENUM,
     DISABLE_LIST_UPLOADING,
+    ENABLE_ISIC_TAXONOMY,
     MAINTENANCE_MESSAGE,
 } from '../../util/constants';
 import {
@@ -60,6 +61,8 @@ import ModerationPauseBanner from '../ModerationPauseBanner';
 import FeatureFlag from '../FeatureFlag';
 import RequiredAsterisk from '../RequiredAsterisk';
 import StyledSelect from '../Filters/StyledSelect';
+import IsicValuePicker from '../Filters/IsicSearch/IsicValuePicker';
+import { EMPTY_ISIC } from '../Filters/IsicSearch/utils';
 import RequireAuthNotice from '../RequireAuthNotice';
 import StyledTooltip from '../StyledTooltip';
 
@@ -241,6 +244,7 @@ const ProductionLocationInfo = ({
             processingType: [],
             numberOfWorkers: '',
             parentCompany: '',
+            isic: EMPTY_ISIC,
             ...DATA_CENTER_FORM_INITIAL_VALUES,
         });
     };
@@ -1294,6 +1298,35 @@ const ProductionLocationInfo = ({
                                         }
                                     />
                                 </div>
+                                <FeatureFlag flag={ENABLE_ISIC_TAXONOMY}>
+                                    <div
+                                        className={`${classes.inputSectionWrapStyles} ${classes.wrapStyles}`}
+                                    >
+                                        <Typography
+                                            component="h2"
+                                            className={classes.titleStyles}
+                                        >
+                                            Industry Classification (ISIC)
+                                        </Typography>
+                                        <Typography
+                                            component="h4"
+                                            className={classes.subTitleStyles}
+                                        >
+                                            Choose ISIC 4 or ISIC 5, then search
+                                            for the categories that describe
+                                            this production location.
+                                        </Typography>
+                                        <IsicValuePicker
+                                            value={contributionForm.values.isic}
+                                            onChange={value =>
+                                                contributionForm.setFieldValue(
+                                                    'isic',
+                                                    value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                </FeatureFlag>
                             </>
                         )}
                         {isDataCenterSelected && (
