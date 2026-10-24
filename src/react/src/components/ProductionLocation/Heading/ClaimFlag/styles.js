@@ -79,6 +79,17 @@ export default theme => {
         link: {
             color: theme.palette.primary.main,
         },
+        // A button (it opens a dialog, it doesn't navigate) styled to
+        // match the claim link beside it in the same sentence.
+        inviteLink: {
+            background: 'none',
+            border: 0,
+            padding: 0,
+            font: 'inherit',
+            color: theme.palette.primary.main,
+            textDecoration: 'underline',
+            cursor: 'pointer',
+        },
         statusContent: {
             display: 'flex',
             flexDirection: 'column',

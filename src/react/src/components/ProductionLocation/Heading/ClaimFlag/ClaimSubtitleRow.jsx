@@ -11,21 +11,45 @@ const ClaimSubtitleRow = ({
     isPending,
     contributorName,
     formattedDate,
+    onInviteClick,
 }) => {
     const showClaimLink = !isClaimed && !isPending;
     const showClaimedByLine = isClaimed && (contributorName || formattedDate);
 
     if (!showClaimLink && !showClaimedByLine) return null;
 
+    const claimLink = text => (
+        <RouterLink
+            to={claimFacilityLink}
+            href={claimFacilityLink}
+            className={classes.link}
+        >
+            {text}
+        </RouterLink>
+    );
+
+    // With claim invites on, one sentence offers both: claim it yourself
+    // if you work here, or invite someone who does.
+    const claimLinkContent = onInviteClick ? (
+        <>
+            {claimLink('Claim this production location')} if you work here, or{' '}
+            <button
+                type="button"
+                onClick={onInviteClick}
+                className={classes.inviteLink}
+                data-testid="claim-invite-link"
+            >
+                invite someone who does
+            </button>
+            .
+        </>
+    ) : (
+        claimLink('I want to claim this production location')
+    );
+
     const subtitleContent = showClaimLink ? (
         <Typography component="p" variant="body1" className={classes.subtitle}>
-            <RouterLink
-                to={claimFacilityLink}
-                href={claimFacilityLink}
-                className={classes.link}
-            >
-                I want to claim this production location
-            </RouterLink>
+            {claimLinkContent}
         </Typography>
     ) : (
         <Typography component="p" variant="body1" className={classes.subtitle}>
@@ -99,11 +123,13 @@ ClaimSubtitleRow.propTypes = {
     isPending: PropTypes.bool.isRequired,
     contributorName: PropTypes.string,
     formattedDate: PropTypes.string,
+    onInviteClick: PropTypes.func,
 };
 
 ClaimSubtitleRow.defaultProps = {
     contributorName: null,
     formattedDate: null,
+    onInviteClick: null,
 };
 
 export default ClaimSubtitleRow;

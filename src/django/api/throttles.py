@@ -43,6 +43,29 @@ class DataUploadThrottle(UserCustomRateThrottle):
     model_rate_field = 'data_upload_rate'
 
 
+class ClaimInviteThrottle(UserRateThrottle):
+    """
+    Bounds how many claim invite emails one user can send. Not
+    overridable per user, unlike the UserCustomRateThrottle scopes.
+    """
+    cache = caches['api_throttling']
+    scope = 'claim_invite'
+
+    # The request is only checked against the limit here. It is counted
+    # by record_invite once the invite is sent, so refused attempts
+    # (closed or claimed locations, repeat recipients) don't use it up.
+    def throttle_success(self):
+        return True
+
+    def record_invite(self, request, view):
+        key = self.get_cache_key(request, view)
+        if key is None:
+            return
+        history = self.cache.get(key, [])
+        history.insert(0, self.timer())
+        self.cache.set(key, history, self.duration)
+
+
 class DuplicateThrottle(BaseThrottle):
     cache = caches['api_throttling']
     MAX_REQUEST_SIZE = 1024 * 1024  # 1MB limit
