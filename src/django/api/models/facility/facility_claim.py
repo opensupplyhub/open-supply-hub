@@ -351,6 +351,24 @@ class FacilityClaim(models.Model):
         help_text='The processing types associated with the facility',
         verbose_name='processing types',
     )
+    isic_4 = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'ISIC Rev 4 values the claimant submitted, each with every '
+            'level filled in.'
+        ),
+        verbose_name='ISIC Rev. 4',
+    )
+    isic_5 = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'ISIC Rev 5 values the claimant submitted, each with every '
+            'level filled in.'
+        ),
+        verbose_name='ISIC Rev. 5',
+    )
     point_of_contact_person_name = models.CharField(
         max_length=200,
         null=True,
