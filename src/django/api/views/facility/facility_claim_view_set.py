@@ -3,6 +3,7 @@ from datetime import datetime
 from api.models.transactions.index_facilities_new import index_facilities_new
 
 from api.helpers.helpers import validate_workers_count
+from api.isic_taxonomy.isic_lookup import entries_from_filter_values
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -97,6 +98,10 @@ CLAIM_PROFILE_DATE_FIELDS = (
     'opening_date',
 )
 
+# ISIC values, sent as "level:code" lists and stored as full entries. Edits
+# publish like the other claim fields (OSDEV-2974).
+CLAIM_PROFILE_ISIC_FIELDS = {'isic_4': '4', 'isic_5': '5'}
+
 CLAIM_PROFILE_EMISSION_FIELDS = (
     'estimated_annual_throughput',
     'energy_coal',
@@ -170,6 +175,7 @@ CLAIM_PROFILE_INDIVIDUAL_FIELDS = (
 CLAIM_PROFILE_TRACKED_FIELDS = (
     CLAIM_PROFILE_INDIVIDUAL_FIELDS
     + CLAIM_PROFILE_ARRAY_FIELDS
+    + tuple(CLAIM_PROFILE_ISIC_FIELDS)
     + CLAIM_PROFILE_DATE_FIELDS
     + CLAIM_PROFILE_EMISSION_FIELDS
     + CLAIM_PROFILE_SIMPLE_FIELDS
@@ -642,6 +648,21 @@ class FacilityClaimViewSet(ModelViewSet):
                     setattr(claim, field_name, data)
                 else:
                     setattr(claim, field_name, None)
+
+            for field_name, revision in CLAIM_PROFILE_ISIC_FIELDS.items():
+                if field_name not in request.data:
+                    continue
+                entries = entries_from_filter_values(
+                    request.data.get(field_name), revision,
+                )
+                if entries is None:
+                    raise ValidationError({
+                        field_name: (
+                            f'Each value must be an ISIC Rev. {revision} '
+                            'code, e.g. class:1410.'
+                        ),
+                    })
+                setattr(claim, field_name, entries or None)
 
             for date_field in CLAIM_PROFILE_DATE_FIELDS:
                 value = request.data.get(date_field)

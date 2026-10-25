@@ -2,6 +2,7 @@ from api.helpers.data_center import (
     DATE_OF_SOURCE_FORMAT_MESSAGE,
     normalize_date_of_source,
 )
+from api.isic_taxonomy.isic_lookup import full_entry
 from api.serializers.v1.isic4_entry_serializer \
     import ISIC4EntrySerializer
 from api.serializers.v1.coordinates_serializer \
@@ -70,6 +71,19 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             'min_length': 'Provide at least one ISIC-4 object.',
             'max_length': 'Provide at most 15 ISIC-4 objects.',
             'empty': 'Field isic_4 cannot be empty if provided.',
+        },
+    )
+    isic_5 = serializers.ListField(
+        child=ISIC4EntrySerializer(),
+        required=False,
+        allow_empty=False,
+        min_length=1,
+        max_length=15,
+        error_messages={
+            'not_a_list': 'Field isic_5 must be a list of objects.',
+            'min_length': 'Provide at least one ISIC-5 object.',
+            'max_length': 'Provide at most 15 ISIC-5 objects.',
+            'empty': 'Field isic_5 cannot be empty if provided.',
         },
     )
 
@@ -182,6 +196,23 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
 
     def validate_isic_4(self, value):
         """Validate that there are no duplicate ISIC-4 objects."""
+        return self._validate_no_duplicate_isic(value, 'ISIC-4')
+
+    def validate_isic_5(self, value):
+        """
+        ISIC 5 objects must name an ISIC Rev 5 code: they are stored with
+        every level filled in from it (OSDEV-3442).
+        """
+        unknown = [obj for obj in value if not full_entry(obj, '5')]
+        if unknown:
+            raise serializers.ValidationError(
+                'Each ISIC-5 object must include a code from ISIC Rev. 5, '
+                'e.g. "1104 - Manufacture of malt".'
+            )
+        return self._validate_no_duplicate_isic(value, 'ISIC-5')
+
+    @staticmethod
+    def _validate_no_duplicate_isic(value, name):
         seen = []
 
         for isic_obj in value:
@@ -190,7 +221,7 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
             isic_tuple = tuple(sorted(isic_obj.items()))
             if isic_tuple in seen:
                 raise serializers.ValidationError(
-                    "Duplicate ISIC-4 objects are not allowed "
+                    f"Duplicate {name} objects are not allowed "
                     "within the same array."
                 )
             seen.append(isic_tuple)

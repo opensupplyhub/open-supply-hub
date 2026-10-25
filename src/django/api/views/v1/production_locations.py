@@ -1,9 +1,11 @@
 import logging
 import copy
 from typing import Tuple, List, Any, Optional, Dict
+from uuid import UUID
 
 from django.contrib.gis.geos import Polygon
-from django.http import QueryDict
+from django.http import Http404, QueryDict
+from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils.cache import patch_cache_control
@@ -16,6 +18,8 @@ from rest_framework.response import Response
 from rest_framework.parsers import JSONParser
 from waffle import switch_is_active
 
+from django.utils import timezone
+
 from api.views.v1.utils import (
     serialize_params,
     handle_errors_decorator,
@@ -27,6 +31,7 @@ from api.services.candidate_retirement import (
 )
 from api.services import candidate_validation
 from api.services.candidate_switch import candidates_enabled
+from api.services.os_id_presence import os_id_exists_here
 from api.views.v1.opensearch_query_builder.production_locations_query_builder \
     import ProductionLocationsQueryBuilder
 from api.views.v1.opensearch_query_builder.opensearch_query_director \
@@ -56,8 +61,17 @@ from api.serializers.facility.facility_candidate_details_serializer import (
 from api.models.moderation_event import ModerationEvent
 from api.models.facility.facility import Facility
 from api.models.facility.facility_candidate_vote import FacilityCandidateVote
+from api.models.identity_record_association import (
+    IdentityRecordAssociation,
+)
 from api.models.partner_field import PartnerField
 from api.models.extended_field import ExtendedField
+from api.identity_record_switches import (
+    IDENTITY_RECORD_REGISTRATION_SWITCH,
+)
+from api.os_id import validate_os_id
+from api.serializers.v1.identity_record_registration_serializer \
+    import IdentityRecordRegistrationSerializer
 from api.throttles import (
     DataUploadThrottle,
     DuplicateThrottle
@@ -94,17 +108,33 @@ class ProductionLocations(ViewSet):
     # fallback.
     CANDIDATE_ONLY_ACTIONS = frozenset({'candidates', 'candidate_votes'})
 
+    # Actions gated on the registration switch, checked before
+    # authentication so the answer cannot depend on who is asking.
+    IDENTITY_RECORD_WRITE_ACTIONS = frozenset({
+        'create_identity_record',
+        'retrieve_identity_record',
+    })
+
     def initial(self, request, *args, **kwargs):
-        # Checked before super() runs authentication, permissions and
-        # throttling, so a disabled endpoint answers 404 for every caller
-        # rather than 401/403, and a POST to it never spends a
-        # DataUploadThrottle slot out of the caller's write quota (that
-        # scope is shared with create/partial_update).
+        # Both pilot gates run before super() does authentication,
+        # permissions and throttling, so a disabled endpoint answers 404
+        # for every caller rather than 401/403, and a POST to it never
+        # spends a DataUploadThrottle slot out of the caller's write
+        # quota (that scope is shared with create/partial_update).
+        # Checking inside the handler instead would return 401 to an
+        # anonymous caller and 404 to an authenticated one, which tells
+        # an anonymous prober the route exists.
         if (self.action in self.CANDIDATE_ONLY_ACTIONS
                 and not candidates_enabled()):
             raise NotFound(
                 detail=APIV1CandidateVoteErrorMessages.PILOT_DISABLED
             )
+
+        if (self.action in self.IDENTITY_RECORD_WRITE_ACTIONS
+                and not switch_is_active(
+                    IDENTITY_RECORD_REGISTRATION_SWITCH)):
+            raise Http404()
+
         super().initial(request, *args, **kwargs)
 
     @staticmethod
@@ -136,8 +166,18 @@ class ProductionLocations(ViewSet):
         '''
         Returns the list of permissions specific to the current action.
         '''
-        if (self.action == 'create'
-                or self.action == 'partial_update'):
+        authenticated_actions = (
+            'create',
+            'partial_update',
+            # Registering a record against an OS ID, and reading the state
+            # of a registration. Restricting this further to an approved
+            # registrant is a standing-policy question rather than a pilot
+            # one: the November pilot accepts the registrant's assertion as
+            # submitted for the demonstration.
+            'create_identity_record',
+            'retrieve_identity_record',
+        )
+        if self.action in authenticated_actions:
             return [IsRegisteredAndConfirmed]
         if self.__is_vote_write():
             # OSDEV-3245: the same bar as the other v1 write actions. A
@@ -204,7 +244,13 @@ class ProductionLocations(ViewSet):
         # duplicate or quality-warning dialog). 429 is excluded: that is
         # the throttle's own rejection, and clearing on it would let every
         # second identical request through.
-        if (response.status_code >= status.HTTP_400_BAD_REQUEST
+        # Only the two actions that carry a DuplicateThrottle. Other
+        # actions never record an entry to clear, and clear() reads
+        # request.data, which raises ParseError on a malformed body.
+        # finalize_response runs outside DRF's exception handling, so that
+        # would surface as a 500 rather than the 400 the caller should get.
+        if (self.action in ('create', 'partial_update')
+                and response.status_code >= status.HTTP_400_BAD_REQUEST
                 and response.status_code
                 != status.HTTP_429_TOO_MANY_REQUESTS):
             DuplicateThrottle().clear(request, self)
@@ -549,6 +595,232 @@ class ProductionLocations(ViewSet):
                 'cleaned_data': result.moderation_event.cleaned_data,
             },
             status=result.status_code
+        )
+
+    @staticmethod
+    def __os_id_exists_here(os_id):
+        """
+        Whether this instance knows the identifier, following a merge.
+
+        Delegates to the shared check so the write side here and the
+        resolver's read side cannot drift on what "here" means.
+        """
+        return os_id_exists_here(os_id)
+
+    @staticmethod
+    def __identity_record_response(association):
+        """
+        The registration response envelope, where `moderation_id` is the
+        association's own uuid. The pilot path creates no
+        ModerationEvent because the association is Open Supply Hub's own
+        construction, but the field keeps its name so the envelope
+        mirrors the existing submission API.
+        """
+        return {
+            'moderation_id': str(association.uuid),
+            # Derived rather than hardcoded. Everything this endpoint
+            # creates is live on creation, but the model supports the
+            # pending row the general case will need.
+            'moderation_status': (
+                'APPROVED' if association.is_live else 'PENDING'
+            ),
+            'created_at': association.created_at,
+            'live_from': association.live_from,
+        }
+
+    @action(
+        detail=True,
+        methods=['POST'],
+        url_path='identity-records',
+    )
+    def create_identity_record(self, request, pk=None):
+        """
+        Register an external record against an OS ID, storing the
+        association and nothing else.
+
+        A 422 for "well formed but not resolvable here" is never
+        returned, because this instance cannot tell that case apart from
+        an identifier that does not exist; both get 404.
+        """
+
+        os_id = pk
+
+        if not validate_os_id(os_id, raise_on_invalid=False):
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    'errors': [{
+                        'field': 'os_id',
+                        'detail': f'{os_id} is not a valid OS ID.',
+                    }],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not self.__os_id_exists_here(os_id):
+            return Response(
+                {
+                    'detail': 'Identifier not found on this instance.',
+                    'errors': [{
+                        'field': 'os_id',
+                        'detail': (
+                            f'{os_id} is not a production location on this '
+                            'instance.'
+                        ),
+                    }],
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = IdentityRecordRegistrationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {
+                    'detail': APIV1CommonErrorMessages.COMMON_REQ_BODY_ERROR,
+                    'errors': [
+                        {'field': field, 'detail': ' '.join(map(str, msgs))}
+                        for field, msgs in serializer.errors.items()
+                    ],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = serializer.validated_data
+        resolver_uri = data['resolver_uri']
+
+        existing = IdentityRecordAssociation.objects.filter(os_id=os_id)
+
+        if existing.filter(
+            live_from__isnull=False
+        ).exclude(resolver_uri=resolver_uri).exists():
+            return Response(
+                {
+                    'detail': (
+                        'This identifier already has a live association '
+                        'with a different resolver URI.'
+                    ),
+                    'errors': [{
+                        'field': 'resolver_uri',
+                        'detail': (
+                            'An identifier resolves to one resolver at '
+                            'a time. Changing it is not self-service '
+                            'during the pilot; contact Open Supply Hub.'
+                        ),
+                    }],
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        submitted = {
+            'record_type': data['record_type'],
+            'issuer': data['issuer'],
+            'registrant_reference': data.get('registrant_reference', ''),
+        }
+
+        # get_or_create rather than a read followed by a write: the lookup
+        # is the unique (os_id, resolver_uri) pair, so two concurrent
+        # retries of the same registration resolve to one row instead of
+        # one of them raising IntegrityError.
+        association, created = \
+            IdentityRecordAssociation.objects.get_or_create(
+                os_id=os_id,
+                resolver_uri=resolver_uri,
+                defaults={
+                    **submitted,
+                    'live_from': timezone.now(),
+                    # Set here rather than through the shared
+                    # post_save signal, which saves a second time
+                    # and would record a spurious history row for
+                    # every registration.
+                    'origin_source': settings.INSTANCE_SOURCE,
+                },
+            )
+
+        if created:
+            return Response(
+                self.__identity_record_response(association),
+                status=status.HTTP_202_ACCEPTED,
+            )
+
+        # The pair is already registered. Only an identical resubmission is
+        # a safe retry; differing details are an attempted update, which
+        # this endpoint does not do, and answering 200 would report a
+        # change that did not happen.
+        changed = sorted(
+            field for field, value in submitted.items()
+            if getattr(association, field) != value
+        )
+
+        if changed:
+            return Response(
+                {
+                    'detail': (
+                        'This identifier is already registered with this '
+                        'resolver URI and different details.'
+                    ),
+                    'errors': [{
+                        'field': field,
+                        'detail': (
+                            'Changing a registration is not self-service '
+                            'during the pilot; contact Open Supply Hub.'
+                        ),
+                    } for field in changed],
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        # An exact repeat returns the existing registration rather than a
+        # 409, so an issuer whose response was lost can safely retry. 200
+        # rather than 202, because nothing was created.
+        return Response(
+            self.__identity_record_response(association),
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=['GET'],
+        url_path='identity-records/(?P<moderation_id>[^/.]+)',
+    )
+    def retrieve_identity_record(
+        self, request, pk=None, moderation_id=None
+    ):
+        """
+        Current state of a registration, and once live, the time from
+        which it resolves.
+        """
+
+        try:
+            parsed_id = UUID(str(moderation_id))
+        except ValueError:
+            # A non-UUID in the path is a miss, not a crash. Filtering on
+            # a UUIDField with a malformed value raises rather than
+            # returning empty.
+            parsed_id = None
+
+        association = None
+        if parsed_id is not None:
+            association = IdentityRecordAssociation.objects.filter(
+                os_id=pk, uuid=parsed_id
+            ).first()
+
+        if association is None:
+            return Response(
+                {
+                    'detail': 'Registration not found.',
+                    'errors': [{
+                        'field': 'moderation_id',
+                        'detail': (
+                            f'No registration {moderation_id} for {pk}.'
+                        ),
+                    }],
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            self.__identity_record_response(association),
+            status=status.HTTP_200_OK,
         )
 
     @transaction.atomic
