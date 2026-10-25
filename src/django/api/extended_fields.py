@@ -4,6 +4,11 @@ from api.models import Contributor, ExtendedField, ProductType
 from api.facility_type_processing_type import (
     get_facility_and_processing_type,
 )
+from api.isic_taxonomy.isic_lookup import (
+    full_entry,
+    is_single_level,
+    match_isic,
+)
 
 
 def extract_int_range_value(value):
@@ -84,7 +89,33 @@ def update_claim_fields(claim, claim_fields_to_update):
         claim.save(update_fields=changed_claim_fields + ['updated_at'])
 
 
-def get_isic_4_extendedfield_value(field_value):
+# As many values as the v1 API accepts for isic_4, so one cell cannot set
+# off thousands of lookups.
+MAX_ISIC_VALUES = 15
+# The field an ISIC value arrives in says its revision.
+ISIC_REVISION_BY_FIELD = {ExtendedField.ISIC_4: '4', ExtendedField.ISIC_5: '5'}
+BARE_CODE = re.compile(r'^\s*([A-Za-z]|\d{1,4})\s*$')
+
+
+def _isic_texts(entry, revision):
+    # Values are separated by "|". Many titles contain commas, so commas
+    # only split a value made of bare codes ("1311, 1312").
+    texts = []
+    for part in entry.split('|'):
+        pieces = part.split(',')
+        if not match_isic(part, revision) and all(
+            BARE_CODE.match(piece) or not piece.strip() for piece in pieces
+        ):
+            texts.extend(piece for piece in pieces if piece.strip())
+        elif part.strip():
+            texts.append(part)
+        if len(texts) >= MAX_ISIC_VALUES:
+            break
+    return texts[:MAX_ISIC_VALUES]
+
+
+def get_isic_extendedfield_value(field_value, field_name):
+    revision = ISIC_REVISION_BY_FIELD[field_name]
     if field_value is None:
         return {'raw_value': []}
 
@@ -94,16 +125,36 @@ def get_isic_4_extendedfield_value(field_value):
         entries = [field_value]
 
     normalized_entries = []
+    matched_values = []
     for entry in entries:
         if entry in (None, '', {}):
             continue
-        if not isinstance(entry, dict):
+        # A list upload sends text: ISIC codes or titles of the column's
+        # revision. Values that match nothing are left out rather than
+        # guessed.
+        if isinstance(entry, str):
+            for text in _isic_texts(entry, revision):
+                match = match_isic(text, revision)
+                if match:
+                    # A copy: match_isic is cached and shares its result.
+                    normalized_entries.append(dict(match[0]))
+                    matched_values.append([text.strip(), match[1]])
             continue
-        if all_values_empty(entry):
+        if not isinstance(entry, dict) or all_values_empty(entry):
             continue
-        normalized_entries.append(entry)
+        # ISIC 5 values are stored with every level filled in, which its
+        # index columns rely on. isic_4 objects (v1 API, RBA) are stored as
+        # sent, except a single level with a valid code, as the
+        # single-location form sends, which gets its parent levels.
+        if revision == '5' or is_single_level(entry, revision):
+            entry = full_entry(entry, revision)
+        if entry:
+            normalized_entries.append(entry)
 
-    return {'raw_value': normalized_entries}
+    value = {'raw_value': normalized_entries}
+    if matched_values:
+        value['matched_values'] = matched_values
+    return value
 
 
 def get_parent_company_extendedfield_value(field_value):
@@ -181,8 +232,8 @@ def create_extendedfield(field, field_value, item, contributor):
             field_value = {
                 'raw_value': field_value,
             }
-        elif field == ExtendedField.ISIC_4:
-            normalized_isic = get_isic_4_extendedfield_value(field_value)
+        elif field in ISIC_REVISION_BY_FIELD:
+            normalized_isic = get_isic_extendedfield_value(field_value, field)
             if not normalized_isic.get('raw_value'):
                 return
             field_value = normalized_isic
@@ -236,6 +287,7 @@ RAW_DATA_FIELDS = (
     ExtendedField.LEI_ID,
     ExtendedField.RBA_ID,
     ExtendedField.ISIC_4,
+    ExtendedField.ISIC_5,
 ) + ExtendedField.DATA_CENTER_FIELDS
 
 
@@ -293,6 +345,8 @@ CLAIM_FIELDS = (
     ('parent_company', ExtendedField.PARENT_COMPANY),
     ('parent_company_name', ExtendedField.PARENT_COMPANY),
     ('facility_product_types', ExtendedField.PRODUCT_TYPE),
+    ('isic_4', ExtendedField.ISIC_4),
+    ('isic_5', ExtendedField.ISIC_5),
 )
 
 
@@ -312,7 +366,7 @@ def create_extendedfields_for_claim(claim):
             field_value = getattr(claim, 'facility_production_types')
         else:
             field_value = getattr(claim, claim_field)
-        if field_value is not None and field_value != "":
+        if field_value not in (None, "", []):
             if extended_field == ExtendedField.NUMBER_OF_WORKERS:
                 field_value = extract_int_range_value(field_value)
             elif extended_field == ExtendedField.PARENT_COMPANY:
@@ -345,6 +399,10 @@ def create_extendedfields_for_claim(claim):
                     )
             elif extended_field == ExtendedField.PRODUCT_TYPE:
                 field_value = get_product_type_extendedfield_value(field_value)
+            elif extended_field in ISIC_REVISION_BY_FIELD:
+                field_value = get_isic_extendedfield_value(
+                    field_value, extended_field,
+                )
 
             try:
                 field = ExtendedField.objects.get(facility_claim=claim,

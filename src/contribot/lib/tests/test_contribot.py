@@ -502,6 +502,17 @@ class TestRowHeight:
         long = contribution._get_height_for_row(self._sheet("x" * 200), 0)
         assert long > short
 
+    def test_prematerialised_rows_match_walking_the_sheet(self, contribution):
+        # Callers pass rows= to avoid re-walking the sheet per row; the result
+        # must be identical to letting the helper materialise it itself.
+        ws = self._sheet("x" * 120)
+        ws["A2"] = "short"
+        rows = list(ws.rows)
+        for i in range(2):
+            assert contribution._get_height_for_row(
+                ws, i, rows=rows
+            ) == contribution._get_height_for_row(ws, i)
+
 
 # --------------------------------------------------------------------------- #
 # check_name_address_duplicates
@@ -531,6 +542,54 @@ class TestDuplicates:
         assert osh.num_identical >= 1
         assert any(d["code"] == "T0010" for d in osh.diagnostics_table)
         assert len(osh.df_similarity) >= 1
+
+    def test_pair_spanning_a_scoring_block_is_still_found(self, make_contribution):
+        # Rows are scored in SIMILARITY_BLOCK_ROWS-sized blocks against every
+        # other row. A duplicate whose two halves sit in different blocks must
+        # still be reported, so shrink the block to force the split.
+        rows = 7
+        df = pd.DataFrame(
+            {
+                "country": ["Bangladesh"] * rows,
+                "name": [f"Distinct Mill {i} Limited" for i in range(rows)],
+                "address": [f"{i} Unrelated Street, Dhaka" for i in range(rows)],
+            }
+        )
+        df.loc[0, "name"] = "Acme Textiles Limited"
+        df.loc[rows - 1, "name"] = "Acme Textiles Limited"
+        df.loc[0, "address"] = "123 Industrial Road, Dhaka"
+        df.loc[rows - 1, "address"] = "123 Industrial Road, Dhaka"
+
+        osh = make_contribution(df=df)
+        osh.SIMILARITY_BLOCK_ROWS = 2
+        osh.check_name_address_duplicates()
+
+        # +2 because the similarity frame stores Excel row numbers.
+        pairs = set(zip(osh.df_similarity.i, osh.df_similarity.j))
+        assert (2, rows + 1) in pairs
+        assert osh.num_identical >= 1
+
+    def test_block_size_does_not_change_results(self, make_contribution):
+        names = [f"Mill {i} Limited" for i in range(9)]
+        addresses = [f"{i} Road, Dhaka" for i in range(9)]
+        names[3] = names[8] = "Shared Textiles Limited"
+        addresses[3] = addresses[8] = "9 Shared Road, Dhaka"
+        df = pd.DataFrame(
+            {"country": ["Bangladesh"] * 9, "name": names, "address": addresses}
+        )
+
+        blocked = make_contribution(df=df)
+        blocked.SIMILARITY_BLOCK_ROWS = 2
+        blocked.check_name_address_duplicates()
+
+        single = make_contribution(df=df)
+        single.SIMILARITY_BLOCK_ROWS = 1000
+        single.check_name_address_duplicates()
+
+        assert list(zip(blocked.df_similarity.i, blocked.df_similarity.j)) == list(
+            zip(single.df_similarity.i, single.df_similarity.j)
+        )
+        assert list(blocked.df_similarity.ratio) == list(single.df_similarity.ratio)
 
 
 # --------------------------------------------------------------------------- #
