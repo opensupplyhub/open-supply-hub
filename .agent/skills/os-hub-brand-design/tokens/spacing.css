@@ -1,0 +1,26 @@
+/* Open Supply Hub — spacing, radii, borders, shadows
+   The brand is FLAT: no drop shadows anywhere in the decks.
+   Structure comes from color blocks and generous whitespace. */
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 40px;
+  --space-6: 64px;
+  --space-7: 96px;
+  --slide-margin: 110px; /* deck side margins at 1920px */
+
+  /* Radii — mostly square; pills for buttons/tags, soft radius for cards */
+  --radius-none: 0;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  /* Borders — thin off-black keylines when separation is needed */
+  --border-width: 1.5px;
+  --border-keyline: var(--border-width) solid var(--osh-off-black);
+
+  /* Shadows — intentionally none in this brand */
+  --shadow-none: none;
+}
