@@ -233,7 +233,10 @@ resource "aws_budgets_budget" "bedrock" {
 resource "aws_cloudwatch_log_metric_filter" "resolver_server_errors" {
   name           = "filter${local.short}ResolverServerErrors"
   log_group_name = aws_cloudwatch_log_group.app.name
-  pattern        = "\"Internal Server Error: /osid/\""
+  # Both resolver paths, not just /osid/: the description document is how a
+  # client discovers the resolver at all, so an unhandled exception there is
+  # as much an outage as one on resolution itself.
+  pattern = "?\"Internal Server Error: /osid/\" ?\"Internal Server Error: /.well-known/resolver\""
 
   metric_transformation {
     name          = "ResolverServerErrors"
@@ -268,7 +271,7 @@ resource "aws_cloudwatch_metric_alarm" "resolver_server_errors" {
 resource "aws_cloudwatch_log_metric_filter" "resolver_throttled" {
   name           = "filter${local.short}ResolverThrottled"
   log_group_name = aws_cloudwatch_log_group.app.name
-  pattern        = "\"Too Many Requests: /osid/\""
+  pattern        = "?\"Too Many Requests: /osid/\" ?\"Too Many Requests: /.well-known/resolver\""
 
   metric_transformation {
     name          = "ResolverThrottled"
