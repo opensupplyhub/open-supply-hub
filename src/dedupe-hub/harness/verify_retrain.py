@@ -37,8 +37,18 @@ SAMPLE_SIZE = 15000
 
 
 def load(path):
+    """Read the labeled pairs CSV into scoreable rows, skipping any pair that
+    cannot be scored.
+
+    A pair is skipped when either side's name is empty, or when BOTH sides are
+    empty in the same field. The email scrub in record() can empty a cell that
+    held only a contact email, and dedupe's affine-gap distance raises
+    ZeroDivisionError when asked to compare two empty strings. The skipped count
+    is printed so the loss is visible rather than silent.
+    """
     rows = []
     seen = set()
+    skipped = 0
     with open(path) as f:
         for r in csv.DictReader(f):
             mid = r["match_id"]
@@ -52,10 +62,16 @@ def load(path):
                            r.get("fac_country"))
             if not left["name"] or not right["name"]:
                 continue
+            if any(not left[f] and not right[f] for f in ("name", "address")):
+                skipped += 1
+                continue
             rows.append({"match_id": mid,
                          "label": 1 if r["status"] == "CONFIRMED" else 0,
                          "left": left, "right": right,
                          "train": stable_train_half(mid)})
+    if skipped:
+        print(f"skipped {skipped} pair(s) with both sides empty in a field "
+              f"after cleaning", flush=True)
     return rows
 
 
