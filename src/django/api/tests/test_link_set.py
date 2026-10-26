@@ -89,13 +89,16 @@ class LinkSetTest(APITestCase):
         return response, json.loads(response.content)['linkset'][0]
 
     def test_carries_both_records_when_one_is_registered(self):
-        """Our location, and exactly one entry for the record."""
+        """
+        Our location, and the registered record under two relations: our
+        own term and the issuer's. Three keys, two distinct targets.
+        """
         self._register()
 
         _, entry = self._linkset()
         relations = [k for k in entry if k != 'anchor']
 
-        self.assertEqual(len(relations), 2)
+        self.assertEqual(len(relations), 3)
 
         registered = [
             k for k in relations if k.endswith('registeredRecord')
@@ -105,6 +108,32 @@ class LinkSetTest(APITestCase):
             entry[registered[0]][0]['href'], RESOLVER_URI
         )
         self.assertEqual(len(entry[registered[0]]), 1)
+
+    def test_the_record_is_also_offered_under_the_issuer_term(self):
+        """
+        A client written against the issuer's vocabulary looks for
+        `untp:dfr` and nothing else. Carrying the same target under both
+        terms is what stops it reading this link-set and finding no
+        record. The two must not drift apart.
+        """
+        self._register()
+
+        _, entry = self._linkset()
+
+        self.assertIn('untp:dfr', entry)
+
+        ours = next(k for k in entry if k.endswith('registeredRecord'))
+        self.assertEqual(entry['untp:dfr'], entry[ours])
+
+    def test_no_issuer_term_when_nothing_is_registered(self):
+        """
+        The alias is the record, not a permanent fixture. With no record
+        there is nothing for it to point at, and an empty entry would
+        tell a client one exists.
+        """
+        _, entry = self._linkset()
+
+        self.assertNotIn('untp:dfr', entry)
 
     def test_the_registered_entry_is_the_resolver_not_a_version(self):
         """
@@ -129,11 +158,17 @@ class LinkSetTest(APITestCase):
         """
         The obligation that comes with minting our own terms: a stranger
         holding this link-set must be able to look up what the keys mean.
+
+        The issuer's `untp:dfr` is excluded by name rather than by
+        pattern, so a key that is neither ours nor that one still fails
+        here instead of being waved through.
         """
         self._register()
 
         _, entry = self._linkset()
-        relations = [k for k in entry if k != 'anchor']
+        relations = [
+            k for k in entry if k != 'anchor' and k != 'untp:dfr'
+        ]
 
         vocab = self.client.get('/api/v1/voc/')
         self.assertEqual(vocab.status_code, status.HTTP_200_OK)

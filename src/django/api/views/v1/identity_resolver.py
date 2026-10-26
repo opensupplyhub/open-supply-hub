@@ -25,6 +25,13 @@ from api.views.v1.link_type_vocabulary import (
 
 LINKSET_MEDIA_TYPE = 'application/linkset+json'
 
+# The relation type the issuer's resolver uses for a Digital Facility
+# Record, carried alongside our own term so a client written against
+# either vocabulary finds the registered record. Observed in use on the
+# issuer's live resolver; it is their term, not one we publish, so it is
+# a literal here rather than an entry in our vocabulary.
+UNTP_DFR_RELATION = 'untp:dfr'
+
 # The identifier scheme this resolver answers for, and the first segment
 # of its path. Ours rather than inherited: it is published as the
 # identifier id in the resolver description, so the constant, the route
@@ -270,13 +277,31 @@ class IdentityResolverView(APIView):
 
         association = get_live_association(os_id)
         if association is not None:
-            entries[link_type_uri(root, 'registeredRecord')] = [
+            registered_record = [
                 {
                     'href': association.resolver_uri,
                     'type': 'application/json',
                     'title': 'Registered record (current version)',
                 }
             ]
+            entries[link_type_uri(root, 'registeredRecord')] = (
+                registered_record
+            )
+            # The same target, also under the term the issuer's own
+            # resolver uses for a Digital Facility Record.
+            #
+            # Our vocabulary is the one we publish and the one the
+            # description document points at, but a client written
+            # against the other side of this pilot may look for
+            # `untp:dfr` and nothing else. RFC 9264 places no constraint
+            # on how many relations carry a target, so offering both
+            # costs a key and removes the only case where a conforming
+            # client could read this link-set and find no record.
+            #
+            # Deliberately not applied to productionLocation: there is no
+            # equivalent term, and inventing one would assert a meaning
+            # the other vocabulary has not defined.
+            entries[UNTP_DFR_RELATION] = registered_record
 
         return {'linkset': [dict(anchor=anchor, **entries)]}
 
