@@ -252,10 +252,10 @@ data "template_file" "app_cli" {
     opensearch_ssl_cert_verification              = var.opensearch_ssl_cert_verification
     instance_source                               = var.instance_source
     claims_automation_account_email               = var.claims_automation_account_email
-    earth_genome_contributor_id                   = var.earth_genome_contributor_id
+    earth_genome_contributor_id                   = local.earth_genome_contributor_id
     earth_index_api_url                           = var.earth_index_api_url
-    earth_index_api_key                           = var.earth_index_api_key
-    earth_index_project_id                        = var.earth_index_project_id
+    earth_index_api_key                           = local.earth_index_api_key
+    earth_index_project_id                        = local.earth_index_project_id
     aws_s3_expected_bucket_owner                  = data.aws_caller_identity.current.account_id
     rds_master_secret_arn                         = local.rds_master_secret_arn
     django_secret_key_arn                         = local.django_secret_key_arn
