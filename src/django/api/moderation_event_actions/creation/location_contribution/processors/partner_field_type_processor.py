@@ -41,6 +41,7 @@ class PartnerFieldTypeProcessor(ContributionProcessor):
         incoming_keys = set(raw.keys())
 
         partner_fields_qs = PartnerField.objects \
+            .get_all_including_inactive() \
             .filter(name__in=incoming_keys) \
             .values("name", "type", "json_schema")
         partner_fields_data: Dict[str, Dict] = {
