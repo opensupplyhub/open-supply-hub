@@ -282,6 +282,23 @@ its own vocabulary at a resolvable namespace. Two terms are published:
 | `productionLocation` | The Open Supply Hub page for this location. Always present. |
 | `registeredRecord` | A record registered against this identifier by its issuer. Present only when one is live. |
 
+A third key appears alongside these when a record is registered:
+
+| Key | Meaning |
+| --- | --- |
+| `untp:dfr` | The same target as `registeredRecord`. |
+
+`untp:dfr` is the relation type the issuer's own resolver uses for a Digital
+Facility Record. It is carried so that a client written against that
+vocabulary finds the record without any change on its part. It is not an
+Open Supply Hub term, so it is **not** published at `/api/v1/voc/` and does
+not dereference there.
+
+A client that validates link-set keys against the Open Supply Hub vocabulary
+should therefore expect keys it will not find a definition for, and ignore
+them rather than reject the response. Keys beginning with the namespace in
+`namespaceURI` are the ones guaranteed to dereference.
+
 The entry for a registered record carries the issuer's **Resolver URI**,
 never a link to one version, and there is never more than one. Which
 version is current stays the issuer's decision, which is what keeps the

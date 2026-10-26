@@ -287,6 +287,10 @@ class IdentityResolverView(APIView):
             entries[link_type_uri(root, 'registeredRecord')] = (
                 registered_record
             )
+            # A copy rather than the same list. Sharing the objects would
+            # mean any later per-relation edit silently changed both, and
+            # the test that holds the two together would still pass
+            # because identity, not equality, was keeping them equal.
             # The same target, also under the term the issuer's own
             # resolver uses for a Digital Facility Record.
             #
@@ -301,7 +305,9 @@ class IdentityResolverView(APIView):
             # Deliberately not applied to productionLocation: there is no
             # equivalent term, and inventing one would assert a meaning
             # the other vocabulary has not defined.
-            entries[UNTP_DFR_RELATION] = registered_record
+            entries[UNTP_DFR_RELATION] = [
+                dict(link) for link in registered_record
+            ]
 
         return {'linkset': [dict(anchor=anchor, **entries)]}
 
@@ -369,13 +375,22 @@ class ResolverDescriptionView(APIView):
                 'profileUrl': '{}?show=linktypes'.format(
                     vocabulary_namespace(root)
                 ),
-                # The relation types this resolver emits, which is what
+                # Every relation type this resolver emits, which is what
                 # the field is for. The link-set media type is advertised
                 # through content negotiation, not here.
+                #
+                # The issuer's term is listed alongside ours even though
+                # we do not define it. A client that checks this document
+                # before asking for a link-set is exactly the client the
+                # alias exists for, and omitting the term here would tell
+                # it we have no record relation and stop it asking. What
+                # we publish definitions for is a separate question,
+                # answered by namespaceURI: only our own terms dereference
+                # there.
                 'supportedLinkType': [
                     link_type_uri(root, entry['name'])
                     for entry in LINK_TYPES
-                ],
+                ] + [UNTP_DFR_RELATION],
                 'identifier': [
                     {
                         'id': RESOLVER_PATH_PREFIX,

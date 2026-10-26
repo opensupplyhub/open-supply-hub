@@ -15,6 +15,7 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.identity_record_association import IdentityRecordAssociation
 from api.models.source import Source
 from api.models.user import User
+from api.views.v1.identity_resolver import UNTP_DFR_RELATION
 
 LINKSET = 'application/linkset+json'
 OS_ID = 'XX2000001AAAAA5'
@@ -120,10 +121,10 @@ class LinkSetTest(APITestCase):
 
         _, entry = self._linkset()
 
-        self.assertIn('untp:dfr', entry)
+        self.assertIn(UNTP_DFR_RELATION, entry)
 
         ours = next(k for k in entry if k.endswith('registeredRecord'))
-        self.assertEqual(entry['untp:dfr'], entry[ours])
+        self.assertEqual(entry[UNTP_DFR_RELATION], entry[ours])
 
     def test_no_issuer_term_when_nothing_is_registered(self):
         """
@@ -133,7 +134,7 @@ class LinkSetTest(APITestCase):
         """
         _, entry = self._linkset()
 
-        self.assertNotIn('untp:dfr', entry)
+        self.assertNotIn(UNTP_DFR_RELATION, entry)
 
     def test_the_registered_entry_is_the_resolver_not_a_version(self):
         """
@@ -167,7 +168,8 @@ class LinkSetTest(APITestCase):
 
         _, entry = self._linkset()
         relations = [
-            k for k in entry if k != 'anchor' and k != 'untp:dfr'
+            k for k in entry
+            if k != 'anchor' and k != UNTP_DFR_RELATION
         ]
 
         vocab = self.client.get('/api/v1/voc/')
@@ -203,6 +205,27 @@ class LinkSetTest(APITestCase):
         )
         self.assertIn('show=linktypes', response.data['profileUrl'])
 
+    def test_description_advertises_every_relation_it_emits(self):
+        """
+        A client that checks the description before asking for a
+        link-set is the one the issuer-term alias exists for. Leaving
+        that term out here would tell it we have no record relation and
+        stop it asking, which is the whole gap the alias closes.
+
+        Publishing a definition is a separate matter: only our own terms
+        dereference under namespaceURI.
+        """
+        response = self.client.get('/.well-known/resolver')
+        supported = response.data['supportedLinkType']
+
+        self.assertIn(UNTP_DFR_RELATION, supported)
+        self.assertTrue(
+            any(t.endswith('registeredRecord') for t in supported)
+        )
+        self.assertTrue(
+            any(t.endswith('productionLocation') for t in supported)
+        )
+
     def test_links_are_served_in_the_header_too(self):
         """
         The issuer serves the link-set both in the body and
@@ -216,6 +239,16 @@ class LinkSetTest(APITestCase):
         self.assertIn(RESOLVER_URI, header)
         self.assertIn('rel=', header)
         self.assertIn(entry['anchor'], header)
+
+        # The commitment is that a header-reading client sees what a
+        # body-reading one sees. Without this, narrowing header
+        # generation to our own namespace would drop the alias from the
+        # header alone and every other test would still pass.
+        self.assertIn(
+            'rel="{}"'.format(UNTP_DFR_RELATION), header
+        )
+        ours = next(k for k in entry if k.endswith('registeredRecord'))
+        self.assertIn('rel="{}"'.format(ours), header)
 
     def test_no_registered_record_is_a_normal_response(self):
         """

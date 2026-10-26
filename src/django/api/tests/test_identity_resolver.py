@@ -18,6 +18,7 @@ from api.models.identity_record_association import (
 )
 from api.models.source import Source
 from api.models.user import User
+from api.views.v1.identity_resolver import UNTP_DFR_RELATION
 
 LINKSET = 'application/linkset+json'
 
@@ -400,22 +401,46 @@ class IdentityResolverTest(ResolverFixture, APITestCase):
 
         # Link relation types, which is what the field enumerates. The
         # link-set media type is advertised through content negotiation.
+        #
+        # Three, not two: the issuer's term is emitted as well as ours
+        # and the field says what this resolver emits, so leaving it out
+        # would tell a client that checks here first that we have no
+        # record relation.
         self.assertTrue(
             all(
-                link_type.endswith(('productionLocation', 'registeredRecord'))
+                link_type.endswith((
+                    'productionLocation',
+                    'registeredRecord',
+                    UNTP_DFR_RELATION,
+                ))
                 for link_type in response.data['supportedLinkType']
             )
         )
-        self.assertEqual(len(response.data['supportedLinkType']), 2)
+        self.assertEqual(len(response.data['supportedLinkType']), 3)
 
     def test_each_published_link_type_dereferences(self):
         """
-        The link-set keys are these URIs. A key that 404s is not a
-        vocabulary, which is the whole obligation of minting our own.
+        A key that 404s is not a vocabulary, which is the whole
+        obligation of minting our own terms.
+
+        The obligation is ours alone. `supportedLinkType` also carries
+        the issuer's term, which we emit but do not define, so the
+        guarantee is scoped to our namespace rather than to the whole
+        field. Anything advertised that is neither ours nor that one
+        still fails below, so a term cannot be added without either a
+        definition or a deliberate exemption.
         """
         description = self.client.get('/.well-known/resolver')
+        namespace = description.data['namespaceURI']
 
-        for link_type in description.data['supportedLinkType']:
+        ours = [
+            link_type
+            for link_type in description.data['supportedLinkType']
+            if link_type.startswith(namespace)
+        ]
+        self.assertTrue(ours)
+
+        for link_type in ours:
             with self.subTest(link_type=link_type):
                 definition = self.client.get(
                     link_type.replace('https://testserver', '')
@@ -424,6 +449,13 @@ class IdentityResolverTest(ResolverFixture, APITestCase):
                     definition.status_code, status.HTTP_200_OK
                 )
                 self.assertIn('description', definition.data)
+
+        undefined = [
+            link_type
+            for link_type in description.data['supportedLinkType']
+            if not link_type.startswith(namespace)
+        ]
+        self.assertEqual(undefined, [UNTP_DFR_RELATION])
 
 
 # The switch gates access, not behavior. These assert what the pilot
