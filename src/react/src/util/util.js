@@ -964,9 +964,11 @@ export function createUploadFormErrorMessages(name, file) {
     if (!file) {
         errorMessages.push(componentsWithErrorMessage.missingFile);
     } else if (typeof file.name === 'string') {
+        // Matches os.path.splitext, which the endpoint uses: a name that is
+        // only a dotted suffix (".csv") has no extension, it is a bare name.
         const dotIndex = file.name.lastIndexOf('.');
         const extension =
-            dotIndex === -1 ? '' : file.name.slice(dotIndex).toLowerCase();
+            dotIndex <= 0 ? '' : file.name.slice(dotIndex).toLowerCase();
 
         if (!facilityListFileExtensions.includes(extension)) {
             errorMessages.push(componentsWithErrorMessage.unsupportedFileType);
@@ -2264,7 +2266,11 @@ export const processDromoResults = (
     const csvContent = [headers.join(','), ...csvRows].join('\n');
 
     const csvBlob = new Blob([csvContent], { type: 'text/csv' });
-    const csvFile = new File([csvBlob], filename.replace(/\.[^/.]+$/, '.csv'), {
+    // Dromo reports no extension when the data was entered by hand rather than
+    // picked from a file, so build the name instead of substituting into it.
+    const baseName =
+        (filename || '').replace(/\.[^/.]+$/, '') || 'facility-list';
+    const csvFile = new File([csvBlob], `${baseName}.csv`, {
         type: 'text/csv',
     });
 

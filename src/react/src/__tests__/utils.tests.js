@@ -129,6 +129,7 @@ it('gets correct error message component', () => {
     const imageFile = { name: 'mmexport1792670686993.jpg' };
     const extensionlessFile = { name: 'facilities' };
     const uppercaseExcelFile = { name: 'FACILITIES.XLSX' };
+    const dotOnlyFile = { name: '.csv' };
 
     const emptyListNameDataErrors = createUploadFormErrorMessages(emptyListName, file);
     const listNameWithInvalidCharactersDataErrors = createUploadFormErrorMessages(listNameWithInvalidCharacters, file);
@@ -138,6 +139,7 @@ it('gets correct error message component', () => {
     const imageFileDataErrors = createUploadFormErrorMessages(correctListName, imageFile);
     const extensionlessFileDataErrors = createUploadFormErrorMessages(correctListName, extensionlessFile);
     const uppercaseExcelFileDataErrors = createUploadFormErrorMessages(correctListName, uppercaseExcelFile);
+    const dotOnlyFileDataErrors = createUploadFormErrorMessages(correctListName, dotOnlyFile);
 
     expect(isEqual(emptyListNameDataErrors[0], componentsWithErrorMessage.missingListName)).toBe(true);
     expect(isEqual(listNameWithInvalidCharactersDataErrors[0], componentsWithErrorMessage.invalidCharacters)).toBe(true);
@@ -147,6 +149,8 @@ it('gets correct error message component', () => {
     expect(isEqual(imageFileDataErrors[0], componentsWithErrorMessage.unsupportedFileType)).toBe(true);
     expect(isEqual(extensionlessFileDataErrors[0], componentsWithErrorMessage.unsupportedFileType)).toBe(true);
     expect(isEqual(uppercaseExcelFileDataErrors.length, 0)).toBe(true);
+    // Matches os.path.splitext on the endpoint: '.csv' is a bare name.
+    expect(isEqual(dotOnlyFileDataErrors[0], componentsWithErrorMessage.unsupportedFileType)).toBe(true);
 });
 
 it('creates a route for checking facility list items', () => {
@@ -3074,6 +3078,20 @@ describe('processDromoResults', () => {
         expect(file.options.type).toBe('text/csv');
 
         expect(updateFileName).toHaveBeenCalledWith(fileInput);
+    });
+
+    it('should name the file .csv when Dromo reports no extension', () => {
+        const results = [{ name: 'Alice', age: 30 }];
+        processDromoResults(results, 'Manual Input', fileInput, updateFileName);
+
+        expect(fileInput.current.files[0].name).toBe('Manual Input.csv');
+    });
+
+    it('should fall back to a default name when Dromo reports no filename', () => {
+        const results = [{ name: 'Alice', age: 30 }];
+        processDromoResults(results, undefined, fileInput, updateFileName);
+
+        expect(fileInput.current.files[0].name).toBe('facility-list.csv');
     });
 
     it('should not update file input if fileInput.current is null', () => {

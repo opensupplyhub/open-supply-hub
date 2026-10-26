@@ -129,7 +129,10 @@ class FacilityListCreateTest(APITestCase):
         )
 
     def test_accepts_every_supported_extension(self):
-        """Guards the endpoint against drift from ContriCleaner's parsers."""
+        """Every extension the shared tuple lists is accepted at submission.
+
+        This does not prove ContriCleaner can parse them.
+        """
         for extension in SUPPORTED_FILE_EXTENSIONS:
             with self.subTest(extension=extension):
                 previous_list_count = FacilityList.objects.all().count()

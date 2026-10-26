@@ -8,8 +8,9 @@ PARENT_COMPANY_OS_ID_FIELD = 'parent_company_os_id'
 # for issues spanning multiple fields or related to the overall data object.
 NON_FIELD_ERRORS_KEY = 'non_field_errors'
 
-# The file types ContriCleaner can parse. The list upload endpoint rejects
-# anything else at submission time, so both must read this one definition.
+# The file types ContriCleaner can parse, read by the list upload endpoint so
+# it rejects anything else at submission. ContriCleaner's own parser dispatch
+# still branches per extension, so adding a format here also needs a parser.
 SUPPORTED_FILE_EXTENSIONS = ('.csv', '.xlsx')
 UNSUPPORTED_FILE_TYPE_MESSAGE = (
     'We cannot accept the type of file you submitted. Please '
