@@ -2454,3 +2454,140 @@ class TestLocationContributionStrategy(APITestCase):
             result.errors['errors'][0]['detail'],
             'Field source_name cannot be longer than 500 characters.'
         )
+
+    def test_inactive_partner_field_assigned_to_contributor_accepted(self):
+        """
+        AC#1: A partner assigned to an inactive field can submit data for it.
+
+        The PermissionProcessor checks all fields including inactive ones, so
+        the submission should succeed (202 Accepted).
+        """
+        inactive_field = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name='inactive_spotlight_field',
+                type=PartnerField.STRING,
+                active=False,
+            )
+        )
+
+        # add() writes to the junction table directly, so it works for
+        # inactive fields even though reads go through the active-only manager.
+        self.contributor.partner_fields.add(inactive_field)
+
+        production_location = self._create_existing_facility()
+
+        input_data = {
+            'source': 'SLC',
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'inactive_spotlight_field': 'some value',
+            'coordinates': {
+                'lat': 51.078389,
+                'lng': 16.978477
+            }
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertFalse(result.errors)
+
+    def test_inactive_partner_field_not_assigned_returns_403(self):
+        """
+        AC#2: A partner NOT assigned to an inactive field is rejected with 403.
+
+        The PermissionProcessor recognises inactive fields as valid names,
+        so submitting one without assignment is a permission violation.
+        """
+        PartnerField.objects.get_all_including_inactive().create(
+            name='unassigned_inactive_field',
+            type=PartnerField.STRING,
+            active=False,
+        )
+
+        production_location = self._create_existing_facility()
+
+        input_data = {
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            'unassigned_inactive_field': 'some value',
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(
+            result.errors['errors'][0]['field'],
+            'unassigned_inactive_field',
+        )
+        self.assertEqual(
+            result.errors['errors'][0]['detail'],
+            'You do not have permission to contribute to this field.',
+        )
+
+    def test_inactive_partner_field_wrong_type_returns_422(self):
+        """
+        AC#3: Wrong-format data for an inactive field is rejected with 422.
+
+        The PartnerFieldTypeProcessor validates field types for inactive fields
+        the same way it does for active ones.
+        """
+        inactive_field = (
+            PartnerField.objects.get_all_including_inactive().create(
+                name='typed_inactive_field',
+                type=PartnerField.STRING,
+                active=False,
+            )
+        )
+
+        self.contributor.partner_fields.add(inactive_field)
+
+        production_location = self._create_existing_facility()
+
+        input_data = {
+            'name': 'Blue Horizon Facility',
+            'address': '990 Spring Garden St., Philadelphia PA 19123',
+            'country': 'US',
+            # String field but value is an int — type mismatch → 422.
+            'typed_inactive_field': 42,
+        }
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data=input_data,
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=production_location
+        )
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto
+        )
+
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertEqual(
+            result.errors['errors'][0]['field'],
+            'typed_inactive_field',
+        )
+        self.assertEqual(
+            result.errors['errors'][0]['detail'],
+            'Field typed_inactive_field must be string, not int.',
+        )
