@@ -1,5 +1,6 @@
 import json
 
+from api.constants import APIErrorMessages
 from api.models import (
     Contributor,
     FacilityList,
@@ -77,6 +78,93 @@ class FacilityListCreateTest(APITestCase):
         response = self.client.post(reverse("facility-list-list"))
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(json.loads(response.content), ["No file specified."])
+
+    def test_rejects_unsupported_file_type(self):
+        previous_list_count = FacilityList.objects.all().count()
+        previous_source_count = Source.objects.all().count()
+        image_file = SimpleUploadedFile(
+            "facilities.jpg",
+            b"\xff\xd8\xff\xe0not a spreadsheet",
+            content_type="image/jpeg",
+        )
+
+        response = self.client.post(
+            reverse("facility-list-list"),
+            {"file": image_file},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            json.loads(response.content),
+            [APIErrorMessages.UNSUPPORTED_LIST_FILE_TYPE],
+        )
+        self.assertEqual(
+            FacilityList.objects.all().count(), previous_list_count
+        )
+        self.assertEqual(
+            Source.objects.all().count(), previous_source_count
+        )
+
+    def test_rejects_file_with_no_extension(self):
+        previous_list_count = FacilityList.objects.all().count()
+        extensionless_file = SimpleUploadedFile(
+            "facilities",
+            b"\n".join([s.encode() for s in self.test_csv_rows]),
+            content_type="text/csv",
+        )
+
+        response = self.client.post(
+            reverse("facility-list-list"),
+            {"file": extensionless_file},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            FacilityList.objects.all().count(), previous_list_count
+        )
+
+    def test_accepts_xlsx_file(self):
+        previous_list_count = FacilityList.objects.all().count()
+        xlsx_file = SimpleUploadedFile(
+            "facilities.xlsx",
+            b"PK\x03\x04 placeholder workbook bytes",
+            content_type=(
+                "application/vnd.openxmlformats-officedocument"
+                ".spreadsheetml.sheet"
+            ),
+        )
+
+        response = self.client.post(
+            reverse("facility-list-list"),
+            {"file": xlsx_file},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            FacilityList.objects.all().count(), previous_list_count + 1
+        )
+
+    def test_accepts_uppercase_extension(self):
+        previous_list_count = FacilityList.objects.all().count()
+        uppercase_file = SimpleUploadedFile(
+            "FACILITIES.CSV",
+            b"\n".join([s.encode() for s in self.test_csv_rows]),
+            content_type="text/csv",
+        )
+
+        response = self.client.post(
+            reverse("facility-list-list"),
+            {"file": uppercase_file},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            FacilityList.objects.all().count(), previous_list_count + 1
+        )
 
     def test_file_and_name_specified(self):
         name = "A list of facilities"

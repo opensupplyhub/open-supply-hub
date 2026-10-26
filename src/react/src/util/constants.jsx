@@ -1447,7 +1447,12 @@ export const componentsWithErrorMessage = Object.freeze({
     ),
     mustConsistOfLetters: 'Facility List Name must also consist of letters.',
     missingFile: 'Missing required Facility List File.',
+    unsupportedFileType:
+        'Facility List File must be a CSV (.csv) or Excel (.xlsx) file.',
 });
+
+// Must stay in sync with the extensions the upload endpoint accepts.
+export const facilityListFileExtensions = Object.freeze(['.csv', '.xlsx']);
 
 export const OS_ID_LENGTH = 15;
 

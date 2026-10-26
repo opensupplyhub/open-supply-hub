@@ -239,6 +239,16 @@ class APIErrorMessages:
     FACILITY_LIST_NOT_FOUND = 'The list with the given id was not found.'
     LIST_ALREADY_INACTIVE = 'This list is already inactive.'
     LIST_NOT_APPROVED = 'Only an approved list can be deactivated.'
+    UNSUPPORTED_LIST_FILE_TYPE = (
+        'We cannot accept the type of file you submitted. Please '
+        'change your file to an Excel or UTF-8 CSV and reupload.'
+    )
+
+
+class FacilityListUploadSettings:
+    # Must stay in sync with the extensions ContriCleaner can parse, so a
+    # file accepted at submission is never rejected later by the parser.
+    SUPPORTED_FILE_EXTENSIONS = ('.csv', '.xlsx')
 
 
 class FacilitiesDownloadSettings:

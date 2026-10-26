@@ -81,6 +81,7 @@ import {
     DEFAULT_SORT_OPTION_INDEX,
     optionsForSortingResults,
     componentsWithErrorMessage,
+    facilityListFileExtensions,
     listParsingErrorMappings,
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
@@ -962,6 +963,14 @@ export function createUploadFormErrorMessages(name, file) {
 
     if (!file) {
         errorMessages.push(componentsWithErrorMessage.missingFile);
+    } else if (typeof file.name === 'string') {
+        const dotIndex = file.name.lastIndexOf('.');
+        const extension =
+            dotIndex === -1 ? '' : file.name.slice(dotIndex).toLowerCase();
+
+        if (!facilityListFileExtensions.includes(extension)) {
+            errorMessages.push(componentsWithErrorMessage.unsupportedFileType);
+        }
     }
 
     return errorMessages;

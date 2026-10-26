@@ -124,26 +124,29 @@ it('gets correct error message component', () => {
     const emptyListName = '';
     const listNameWithInvalidCharacters = 'Test / À location';
     const listNameWithOnlySymbolsAndNumbers = '53464&&&';
-    const file = {
-        current: {
-            files: [
-                'file',
-            ],
-        },
-    };
+    const file = { name: 'facilities.csv' };
     const noFile = undefined;
+    const imageFile = { name: 'mmexport1792670686993.jpg' };
+    const extensionlessFile = { name: 'facilities' };
+    const uppercaseExcelFile = { name: 'FACILITIES.XLSX' };
 
     const emptyListNameDataErrors = createUploadFormErrorMessages(emptyListName, file);
     const listNameWithInvalidCharactersDataErrors = createUploadFormErrorMessages(listNameWithInvalidCharacters, file);
     const listNameWithOnlySymbolsAndNumbersDataErrors = createUploadFormErrorMessages(listNameWithOnlySymbolsAndNumbers, file);
     const noFileDataErrors = createUploadFormErrorMessages(correctListName, noFile);
     const noDataErrors = createUploadFormErrorMessages(correctListName, file);
+    const imageFileDataErrors = createUploadFormErrorMessages(correctListName, imageFile);
+    const extensionlessFileDataErrors = createUploadFormErrorMessages(correctListName, extensionlessFile);
+    const uppercaseExcelFileDataErrors = createUploadFormErrorMessages(correctListName, uppercaseExcelFile);
 
     expect(isEqual(emptyListNameDataErrors[0], componentsWithErrorMessage.missingListName)).toBe(true);
     expect(isEqual(listNameWithInvalidCharactersDataErrors[0], componentsWithErrorMessage.invalidCharacters)).toBe(true);
     expect(isEqual(listNameWithOnlySymbolsAndNumbersDataErrors[0], componentsWithErrorMessage.mustConsistOfLetters)).toBe(true);
     expect(isEqual(noFileDataErrors[0], componentsWithErrorMessage.missingFile)).toBe(true);
     expect(isEqual(noDataErrors.length, 0)).toBe(true);
+    expect(isEqual(imageFileDataErrors[0], componentsWithErrorMessage.unsupportedFileType)).toBe(true);
+    expect(isEqual(extensionlessFileDataErrors[0], componentsWithErrorMessage.unsupportedFileType)).toBe(true);
+    expect(isEqual(uppercaseExcelFileDataErrors.length, 0)).toBe(true);
 });
 
 it('creates a route for checking facility list items', () => {
