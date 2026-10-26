@@ -205,25 +205,20 @@ class LinkSetTest(APITestCase):
         )
         self.assertIn('show=linktypes', response.data['profileUrl'])
 
-    def test_description_advertises_every_relation_it_emits(self):
+    def test_description_lists_only_types_that_dereference(self):
         """
-        A client that checks the description before asking for a
-        link-set is the one the issuer-term alias exists for. Leaving
-        that term out here would tell it we have no record relation and
-        stop it asking, which is the whole gap the alias closes.
-
-        Publishing a definition is a separate matter: only our own terms
-        dereference under namespaceURI.
+        The issuer's term belongs in link-sets, where a key is read, not
+        in the description, where every entry is a URL a client fetches.
+        A bare token there raises in the client rather than 404ing, so
+        it cannot be skipped by anyone who was not expecting it.
         """
         response = self.client.get('/.well-known/resolver')
         supported = response.data['supportedLinkType']
 
-        self.assertIn(UNTP_DFR_RELATION, supported)
+        self.assertNotIn(UNTP_DFR_RELATION, supported)
         self.assertTrue(
-            any(t.endswith('registeredRecord') for t in supported)
-        )
-        self.assertTrue(
-            any(t.endswith('productionLocation') for t in supported)
+            all(t.startswith(response.data['namespaceURI'])
+                for t in supported)
         )
 
     def test_links_are_served_in_the_header_too(self):

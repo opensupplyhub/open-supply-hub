@@ -299,6 +299,11 @@ should therefore expect keys it will not find a definition for, and ignore
 them rather than reject the response. Keys beginning with the namespace in
 `namespaceURI` are the ones guaranteed to dereference.
 
+`untp:dfr` appears **only as a link-set key**. It is not listed in
+`supportedLinkType` in the resolver description, because every entry there is
+a URL a client is expected to fetch, and a bare token would raise rather than
+return a status a client could skip.
+
 The entry for a registered record carries the issuer's **Resolver URI**,
 never a link to one version, and there is never more than one. Which
 version is current stays the issuer's decision, which is what keeps the

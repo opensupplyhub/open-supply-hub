@@ -287,24 +287,17 @@ class IdentityResolverView(APIView):
             entries[link_type_uri(root, 'registeredRecord')] = (
                 registered_record
             )
-            # A copy rather than the same list. Sharing the objects would
-            # mean any later per-relation edit silently changed both, and
-            # the test that holds the two together would still pass
-            # because identity, not equality, was keeping them equal.
-            # The same target, also under the term the issuer's own
-            # resolver uses for a Digital Facility Record.
+            # The same target under the term the issuer's resolver uses
+            # for a Digital Facility Record. A client written against
+            # that vocabulary looks for `untp:dfr` and nothing else, and
+            # RFC 9264 does not limit how many relations carry a target,
+            # so offering both removes the only case where a conforming
+            # client reads this link-set and finds no record. A copy, so
+            # a later per-relation edit cannot change both.
             #
-            # Our vocabulary is the one we publish and the one the
-            # description document points at, but a client written
-            # against the other side of this pilot may look for
-            # `untp:dfr` and nothing else. RFC 9264 places no constraint
-            # on how many relations carry a target, so offering both
-            # costs a key and removes the only case where a conforming
-            # client could read this link-set and find no record.
-            #
-            # Deliberately not applied to productionLocation: there is no
+            # Not applied to productionLocation: that vocabulary has no
             # equivalent term, and inventing one would assert a meaning
-            # the other vocabulary has not defined.
+            # it has not defined.
             entries[UNTP_DFR_RELATION] = [
                 dict(link) for link in registered_record
             ]
@@ -375,22 +368,21 @@ class ResolverDescriptionView(APIView):
                 'profileUrl': '{}?show=linktypes'.format(
                     vocabulary_namespace(root)
                 ),
-                # Every relation type this resolver emits, which is what
-                # the field is for. The link-set media type is advertised
-                # through content negotiation, not here.
+                # The relation types we publish, every one of which
+                # dereferences to a definition under namespaceURI. That
+                # is the contract of this field here, so the issuer's
+                # `untp:dfr` is deliberately absent: it is a bare token,
+                # not a URL, and a client doing the obvious thing with
+                # this list would raise on it rather than skip it. It
+                # appears in link-sets, where keys are read rather than
+                # fetched, and is documented there instead.
                 #
-                # The issuer's term is listed alongside ours even though
-                # we do not define it. A client that checks this document
-                # before asking for a link-set is exactly the client the
-                # alias exists for, and omitting the term here would tell
-                # it we have no record relation and stop it asking. What
-                # we publish definitions for is a separate question,
-                # answered by namespaceURI: only our own terms dereference
-                # there.
+                # The link-set media type is advertised through content
+                # negotiation, not here.
                 'supportedLinkType': [
                     link_type_uri(root, entry['name'])
                     for entry in LINK_TYPES
-                ] + [UNTP_DFR_RELATION],
+                ],
                 'identifier': [
                     {
                         'id': RESOLVER_PATH_PREFIX,
