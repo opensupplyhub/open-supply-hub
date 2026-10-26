@@ -40,5 +40,27 @@ export default theme => {
             gap: '16px',
             padding: `0 20px 20px 20px`,
         }),
+        // Matches the registered-record panel on the legacy profile, so
+        // the same record reads the same way on either page.
+        identityRecord: Object.freeze({
+            background: '#F9F7F7',
+            borderRadius: '6px',
+            padding: spacing * 2,
+            margin: `0 20px ${spacing * 2}px 20px`,
+            width: 'auto',
+        }),
+        identityRecordTitle: Object.freeze({
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            marginBottom: '0.25rem',
+        }),
+        identityRecordText: Object.freeze({
+            fontSize: '14px',
+            marginBottom: '0.5rem',
+        }),
+        identityRecordLink: Object.freeze({
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: '#0427a4',
+        }),
     });
 };
