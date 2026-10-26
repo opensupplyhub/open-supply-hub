@@ -43,6 +43,8 @@ from .utils import (
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
 from api.helpers.data_center import is_data_center
 from api.services.identity_record_retrieval import has_live_record
+from api.isic_taxonomy.crosswalk import get_mapped_isic_values
+from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -60,6 +62,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     is_claimed = SerializerMethodField()
     partner_fields = SerializerMethodField()
     is_data_center = SerializerMethodField()
+    isic_4_mapped = SerializerMethodField()
     has_identity_record = SerializerMethodField()
 
     class Meta:
@@ -88,6 +91,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'is_claimed',
             'partner_fields',
             'is_data_center',
+            'isic_4_mapped',
             'has_identity_record',
         )
         geo_field = 'location'
@@ -547,3 +551,17 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             return False
 
         return has_live_record(facility.id)
+
+    def get_isic_4_mapped(self, facility):
+        '''
+        The ISIC Rev 4 values Open Supply Hub contributes for the location,
+        mapped from its Facility Type and Processing Type through the
+        crosswalk (OSDEV-3382/OSDEV-3622). Empty while the ISIC switch is
+        off, so the profile and the search filter go live together.
+        '''
+        if not switch_is_active(ISIC_TAXONOMY_SWITCH):
+            return []
+        return get_mapped_isic_values(
+            facility.facility_type,
+            facility.processing_type,
+        )

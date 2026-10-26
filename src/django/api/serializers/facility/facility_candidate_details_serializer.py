@@ -192,6 +192,7 @@ class FacilityCandidateDetailsSerializer:
                 'is_claimed': False,
                 'partner_fields': {},
                 'is_data_center': False,
+                'isic_4_mapped': [],
                 # A candidate is not a production location, so nothing
                 # can be registered against it. Present rather than
                 # omitted because the detail page is shared with
