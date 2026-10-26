@@ -29,18 +29,34 @@ import identityRecordStyles from './styles';
  * state and an honest failure state are not edge cases, they are two of
  * the three normal outcomes.
  */
+/*
+ * The three outcomes of fetching the record, plus the state it starts in.
+ * Named rather than written as bare strings at each comparison, so a typo
+ * is a reference error here instead of a branch that silently never runs.
+ */
+export const STATUS = Object.freeze({
+    LOADING: 'loading',
+    READY: 'ready',
+    UNAVAILABLE: 'unavailable',
+    ERROR: 'error',
+});
+
 export const IdentityRecord = ({ classes, match }) => {
     const osID = match?.params?.osID;
-    const [state, setState] = useState({ status: 'loading' });
+    const [state, setState] = useState({ status: STATUS.LOADING });
 
     useEffect(() => {
         let active = true;
 
+        // Nothing to fetch without an identifier. This sets the failure
+        // state rather than only returning, because the initial state is
+        // LOADING and leaving it there would spin indefinitely.
         if (!osID) {
+            setState({ status: STATUS.ERROR });
             return undefined;
         }
 
-        setState({ status: 'loading' });
+        setState({ status: STATUS.LOADING });
 
         apiRequest
             .get(makeGetIdentityRecordURL(osID))
@@ -50,13 +66,16 @@ export const IdentityRecord = ({ classes, match }) => {
                 }
                 setState(
                     data.available
-                        ? { status: 'ready', data }
-                        : { status: 'unavailable', reason: data.reason },
+                        ? { status: STATUS.READY, data }
+                        : {
+                              status: STATUS.UNAVAILABLE,
+                              reason: data.reason,
+                          },
                 );
             })
             .catch(() => {
                 if (active) {
-                    setState({ status: 'error' });
+                    setState({ status: STATUS.ERROR });
                 }
             });
 
@@ -65,13 +84,15 @@ export const IdentityRecord = ({ classes, match }) => {
         };
     }, [osID]);
 
-    const locationLink = (
+    // Omitted when there is no identifier: a link to /facilities/undefined
+    // is worse than no link at all.
+    const locationLink = osID ? (
         <Link to={`/facilities/${osID}`} className={classes.locationLink}>
             View the Open Supply Hub production location
         </Link>
-    );
+    ) : null;
 
-    if (state.status === 'loading') {
+    if (state.status === STATUS.LOADING) {
         return (
             <div className={classes.root}>
                 <div className={classes.centered}>
@@ -92,9 +113,9 @@ export const IdentityRecord = ({ classes, match }) => {
      * exists. AC#2 asks for the location to stay reachable, which it does,
      * from here.
      */
-    if (state.status !== 'ready') {
+    if (state.status !== STATUS.READY) {
         const message =
-            state.status === 'error'
+            state.status === STATUS.ERROR
                 ? 'The record could not be loaded.'
                 : failureMessage(state.reason);
 

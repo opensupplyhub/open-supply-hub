@@ -57,13 +57,10 @@ const AVAILABLE = {
     credential: CREDENTIAL,
 };
 
-const renderPage = () =>
+const renderPage = (match = { params: { osID: OS_ID } }) =>
     renderWithProviders(
         <Router history={history}>
-            <IdentityRecord
-                classes={{}}
-                match={{ params: { osID: OS_ID } }}
-            />
+            <IdentityRecord classes={{}} match={match} />
         </Router>,
     );
 
@@ -172,6 +169,27 @@ describe('IdentityRecord page', () => {
                 screen.getByText(/could not be loaded/i),
             ).toBeInTheDocument(),
         );
+    });
+
+    /*
+     * Not reachable through the route, which always supplies the
+     * parameter, but the component reads it defensively and the initial
+     * state is LOADING. Without the explicit failure state it would spin
+     * forever rather than say anything.
+     */
+    it('does not spin forever when no identifier is supplied', async () => {
+        renderPage({ params: {} });
+
+        await waitFor(() =>
+            expect(
+                screen.getByText(/could not be loaded/i),
+            ).toBeInTheDocument(),
+        );
+
+        expect(apiRequest.get).not.toHaveBeenCalled();
+        expect(
+            screen.queryByText(/View the Open Supply Hub production location/i),
+        ).not.toBeInTheDocument();
     });
 });
 
