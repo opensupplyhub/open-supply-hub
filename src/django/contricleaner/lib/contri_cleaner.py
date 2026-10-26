@@ -26,7 +26,10 @@ from contricleaner.lib.handlers.pre_validation_handler \
     import PreValidationHandler
 from contricleaner.lib.handlers.serialization_handler \
     import SerializationHandler
-from contricleaner.constants import NON_FIELD_ERRORS_KEY
+from contricleaner.constants import (
+    NON_FIELD_ERRORS_KEY,
+    UNSUPPORTED_FILE_TYPE_MESSAGE,
+)
 
 
 class ContriCleaner:
@@ -90,10 +93,7 @@ class ContriCleaner:
                     SourceParserCSV(self.__data)
                 )
             else:
-                raise ParsingError(
-                    'We cannot accept the type of file you submitted. Please '
-                    'change your file to an Excel or UTF-8 CSV and reupload.'
-                )
+                raise ParsingError(UNSUPPORTED_FILE_TYPE_MESSAGE)
         return parsing_executor
 
     def __setup_handlers(self) -> ListRowHandler:

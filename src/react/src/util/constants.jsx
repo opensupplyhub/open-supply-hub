@@ -1456,7 +1456,14 @@ export const componentsWithErrorMessage = Object.freeze({
     ),
     mustConsistOfLetters: 'Facility List Name must also consist of letters.',
     missingFile: 'Missing required Facility List File.',
+    unsupportedFileType:
+        'We cannot accept the type of file you submitted. Please change ' +
+        'your file to an Excel (.xlsx) or UTF-8 CSV and reupload.',
 });
+
+// Mirrors contricleaner/constants.py, which the upload endpoint also reads.
+// JavaScript cannot import it, so this copy must be updated alongside it.
+export const facilityListFileExtensions = Object.freeze(['.csv', '.xlsx']);
 
 export const OS_ID_LENGTH = 15;
 

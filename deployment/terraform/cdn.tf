@@ -366,6 +366,67 @@ resource "aws_cloudfront_distribution" "cdn" {
     max_ttl                = 300
   }
 
+  # The identity resolver (OSDEV-3581, OSDEV-3586). These are root-level
+  # paths rather than sitting under api/, because the identifier address is
+  # a published contract that outlives internal API versioning. Without
+  # these two behaviors they fall through to the default, which serves the
+  # React bundle from S3, and the resolver is unreachable however well the
+  # Django side works.
+  #
+  # Not cached. The redirect target changes the moment a record is
+  # registered against an identifier, and a cached 302 would keep sending
+  # visitors to the plain location page after that. The always-current
+  # guarantee is the whole premise of the pilot, so correctness wins over
+  # edge caching here; revisit alongside the rate limiting in OSDEV-3587 if
+  # load ever justifies a short TTL.
+  #
+  # All headers are forwarded because the response is chosen by content
+  # negotiation. Dropping Accept would make every request look identical to
+  # Django and collapse the link-set path into the redirect path.
+  ordered_cache_behavior {
+    path_pattern     = "osid/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "originAlb"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+
+      cookies {
+        forward = "all"
+      }
+    }
+
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = ".well-known/*"
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "originAlb"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+
+      cookies {
+        forward = "all"
+      }
+    }
+
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+  }
+
   ordered_cache_behavior {
     path_pattern     = "/api-auth/*"
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]

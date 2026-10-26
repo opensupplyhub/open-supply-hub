@@ -35,6 +35,7 @@ import {
     DISABLE_LIST_UPLOADING,
     MAINTENANCE_MESSAGE,
     ENABLE_DROMO_UPLOADING,
+    facilityListFileExtensions,
     facilityListStatusChoicesEnum,
 } from '../util/constants';
 
@@ -197,7 +198,7 @@ const ContributeForm = ({
                 </p>
                 <input
                     type="file"
-                    accept=".csv,.xlsx"
+                    accept={facilityListFileExtensions.join(',')}
                     ref={fileInput}
                     style={contributeFormStyles.fileInputHidden}
                     onChange={updateSelectedFileName}
