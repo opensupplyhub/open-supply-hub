@@ -20,6 +20,11 @@ import {
     ENABLE_IDENTITY_RESOLVER,
     SHOW_ADDITIONAL_IDENTIFIERS,
 } from '../../../util/constants';
+import {
+    IDENTITY_RECORD_ENTRY_LINK_LABEL,
+    IDENTITY_RECORD_ENTRY_TEXT,
+    IDENTITY_RECORD_ENTRY_TITLE,
+} from '../../IdentityRecord/entryPointCopy';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
 import { featureFlagPropType } from '../../../util/propTypes';
 
@@ -182,17 +187,16 @@ const ProductionLocationDetailsGeneralFields = ({
                             component="h3"
                             className={classes.identityRecordTitle}
                         >
-                            Registered record
+                            {IDENTITY_RECORD_ENTRY_TITLE}
                         </Typography>
                         <Typography className={classes.identityRecordText}>
-                            Another organization has published a record about
-                            this location and registered it against this OS ID.
+                            {IDENTITY_RECORD_ENTRY_TEXT}
                         </Typography>
                         <Link
                             to={`/facilities/${osId}/identity-record`}
                             className={classes.identityRecordLink}
                         >
-                            View the registered record
+                            {IDENTITY_RECORD_ENTRY_LINK_LABEL}
                         </Link>
                     </div>
                 </Grid>

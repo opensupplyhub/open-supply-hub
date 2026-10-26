@@ -13,6 +13,11 @@ import ShowOnly from './ShowOnly';
 import FeatureFlag from './FeatureFlag';
 import { formatAttribution, formatExtendedField } from '../util/util';
 import { DATA_CENTER_FIELD_GROUPS } from './ProductionLocation/constants.jsx';
+import {
+    IDENTITY_RECORD_ENTRY_LINK_LABEL,
+    IDENTITY_RECORD_ENTRY_TEXT,
+    IDENTITY_RECORD_ENTRY_TITLE,
+} from './IdentityRecord/entryPointCopy';
 
 import {
     EXTENDED_FIELD_TYPES,
@@ -411,7 +416,7 @@ const FacilityDetailsGeneralFields = ({
                      * it is here so the link cannot appear from a cached
                      * or embedded payload that predates the switch.
                      */}
-                    {!embed && hasIdentityRecord ? (
+                    {!embed && hasIdentityRecord && osId ? (
                         <FeatureFlag flag={ENABLE_IDENTITY_RESOLVER}>
                             <Grid item xs={12}>
                                 <div className={classes.identityRecord}>
@@ -419,20 +424,18 @@ const FacilityDetailsGeneralFields = ({
                                         component="h3"
                                         className={classes.identityRecordTitle}
                                     >
-                                        Registered record
+                                        {IDENTITY_RECORD_ENTRY_TITLE}
                                     </Typography>
                                     <Typography
                                         className={classes.identityRecordText}
                                     >
-                                        Another organization has published a
-                                        record about this location and
-                                        registered it against this OS ID.
+                                        {IDENTITY_RECORD_ENTRY_TEXT}
                                     </Typography>
                                     <Link
                                         to={`/facilities/${osId}/identity-record`}
                                         className={classes.identityRecordLink}
                                     >
-                                        View the registered record
+                                        {IDENTITY_RECORD_ENTRY_LINK_LABEL}
                                     </Link>
                                 </div>
                             </Grid>

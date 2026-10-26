@@ -176,7 +176,7 @@ class Routes extends Component {
                                             flag={ENABLE_IDENTITY_RESOLVER}
                                             alternative={<RouteNotFound />}
                                         >
-                                            <Route component={IdentityRecord} />
+                                            <IdentityRecord />
                                         </FeatureFlag>
                                     )}
                                 />
