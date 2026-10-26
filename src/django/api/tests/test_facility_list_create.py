@@ -1,11 +1,14 @@
 import json
 
-from api.constants import APIErrorMessages
 from api.models import (
     Contributor,
     FacilityList,
     Source,
     User,
+)
+from contricleaner.constants import (
+    SUPPORTED_FILE_EXTENSIONS,
+    UNSUPPORTED_FILE_TYPE_MESSAGE,
 )
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -97,7 +100,7 @@ class FacilityListCreateTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
             json.loads(response.content),
-            [APIErrorMessages.UNSUPPORTED_LIST_FILE_TYPE],
+            [UNSUPPORTED_FILE_TYPE_MESSAGE],
         )
         self.assertEqual(
             FacilityList.objects.all().count(), previous_list_count
@@ -124,6 +127,28 @@ class FacilityListCreateTest(APITestCase):
         self.assertEqual(
             FacilityList.objects.all().count(), previous_list_count
         )
+
+    def test_accepts_every_supported_extension(self):
+        """Guards the endpoint against drift from ContriCleaner's parsers."""
+        for extension in SUPPORTED_FILE_EXTENSIONS:
+            with self.subTest(extension=extension):
+                previous_list_count = FacilityList.objects.all().count()
+                supported_file = SimpleUploadedFile(
+                    f"facilities{extension}",
+                    b"\n".join([s.encode() for s in self.test_csv_rows]),
+                )
+
+                response = self.client.post(
+                    reverse("facility-list-list"),
+                    {"file": supported_file},
+                    format="multipart",
+                )
+
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
+                self.assertEqual(
+                    FacilityList.objects.all().count(),
+                    previous_list_count + 1,
+                )
 
     def test_accepts_xlsx_file(self):
         previous_list_count = FacilityList.objects.all().count()

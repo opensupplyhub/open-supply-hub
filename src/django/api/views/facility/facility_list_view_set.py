@@ -26,9 +26,12 @@ from django.utils import timezone
 from ...aws_batch import submit_jobs, submit_parse_job
 from api.constants import (
     FacilityListItemsQueryParams,
-    FacilityListUploadSettings,
     ProcessingAction,
     APIErrorMessages,
+)
+from contricleaner.constants import (
+    SUPPORTED_FILE_EXTENSIONS,
+    UNSUPPORTED_FILE_TYPE_MESSAGE,
 )
 from api.exceptions import ServiceUnavailableException
 from ...facility_history import create_dissociate_match_change_reason
@@ -112,11 +115,8 @@ class FacilityListViewSet(ModelViewSet):
                 'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
                     mb))
         extension = os.path.splitext(uploaded_file.name)[1].lower()
-        supported = FacilityListUploadSettings.SUPPORTED_FILE_EXTENSIONS
-        if extension not in supported:
-            raise ValidationError(
-                APIErrorMessages.UNSUPPORTED_LIST_FILE_TYPE
-            )
+        if extension not in SUPPORTED_FILE_EXTENSIONS:
+            raise ValidationError(UNSUPPORTED_FILE_TYPE_MESSAGE)
 
         try:
             contributor = request.user.contributor
