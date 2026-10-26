@@ -27,7 +27,7 @@ string sets in. This changes only this harness, never the service.
 
 Runs inside the api-app image (dedupe 1.9.4, no pandas/sklearn):
 
-  docker run --rm -e PYTHONHASHSEED=0 \
+  docker run --rm -e PYTHONHASHSEED=0 -e PYTHONWARNINGS=ignore::FutureWarning \
     -v "$PWD/src/dedupe-hub":/dh -v "$HOME/osdev-3277/data":/data \
     --entrypoint python api-app:latest \
     /dh/harness/verify_retrain.py --pairs /data/pairs.csv \
@@ -37,7 +37,6 @@ Runs inside the api-app image (dedupe 1.9.4, no pandas/sklearn):
 """
 import argparse
 import csv
-import hashlib
 import json
 import os
 import resource
@@ -156,6 +155,13 @@ def main():
     p.add_argument("--out", required=True)
     p.add_argument("--seed", type=int, default=42,
                    help="seed for Python's and numpy's random generators (default 42)")
+    p.add_argument("--alpha", type=float,
+                   help="force the scoring model's regularization to this value and skip the "
+                        "cross-validation that normally picks it (one of 0.00001, 0.0001, "
+                        "0.001, 0.01, 0.1, 1). Shows each possible scoring model in turn")
+    p.add_argument("--model-out", help="write the fitted scoring model (regularization, "
+                                       "bias, weights) and the learned search rules here, "
+                                       "so two runs can be compared with diff")
     p.add_argument("--eval-set", help="frozen eval_set.csv: run the retrieval check "
                                       "on exactly these pairs (default: held-out half)")
     p.add_argument("--retrieval-out", help="write the retrieval check here "
@@ -210,6 +216,31 @@ def main():
     print(f"  TOTAL           : {t_sample + t_read + t_train:7.1f}s")
     print(f"  peak RSS        : {rss_mb():7.0f} MB", flush=True)
 
+    if args.alpha is not None:
+        from dedupe.api import flatten_training
+        examples, labels = flatten_training(gaz.training_pairs)
+        gaz.classifier.alpha = args.alpha
+        gaz.classifier.fit(gaz.data_model.distances(examples), numpy.array(labels), cv=False)
+        print(f"\n  scoring model refit with alpha forced to {args.alpha} "
+              f"(cross-validation skipped)", flush=True)
+
+    clf = gaz.classifier
+    summary = [
+        f"regularization alpha (picked by cross-validation): {clf.alpha}",
+        f"bias: {float(clf.bias):.8f}",
+        "weights: " + ", ".join("%.8f" % float(w) for w in clf.weights),
+        f"search rules learned: {len(gaz.predicates)}",
+    ]
+    print("\n== fitted scoring model ==")
+    for line in summary:
+        print("  " + line)
+    if args.model_out:
+        with open(args.model_out, "w") as f:
+            f.write("\n".join(summary) + "\n")
+            for pred in gaz.predicates:
+                f.write(str(pred) + "\n")
+        print(f"  wrote model and rules to {args.model_out}", flush=True)
+
     dists = gaz.data_model.distances([(r["left"], r["right"]) for r in rows])
     probs = gaz.classifier.predict_proba(dists)
     try:
@@ -227,8 +258,12 @@ def main():
     if args.retrieval_out:
         ev = eval_rows_for(rows, args.eval_set)
         if args.retrieval_limit:
-            ev = sorted(ev, key=lambda r: hashlib.md5(r["match_id"].encode()).hexdigest())
-            ev = ev[:args.retrieval_limit]
+            # A seeded random sample. Do NOT take the smallest md5 hashes: the
+            # pairs file was itself pulled by keeping the smallest md5 per
+            # country, so low hashes over-represent the big, capped countries.
+            ev = sorted(ev, key=lambda r: int(r["match_id"]) if r["match_id"].isdigit()
+                        else r["match_id"])
+            ev = random.Random(args.seed).sample(ev, min(args.retrieval_limit, len(ev)))
         print(f"\nretrieval check on {len(ev)} evaluation pairs...", flush=True)
         t1 = time.time()
         found = retrieval_results(
@@ -245,6 +280,10 @@ def main():
         pos_got = sum(got[r["match_id"]] for r in pos)
         print(f"  confirmed pairs retrieved: {pos_got} of {len(pos)} "
               f"({pos_got / len(pos):.1%})" if pos else "  no confirmed pairs checked")
+        neg = [r for r in ev if r["label"] == 0]
+        neg_got = sum(got[r["match_id"]] for r in neg)
+        print(f"  rejected pairs retrieved:  {neg_got} of {len(neg)} "
+              f"({neg_got / len(neg):.1%})" if neg else "  no rejected pairs checked")
         print(f"  all pairs retrieved:       {sum(got.values())} of {len(ev)} "
               f"({sum(got.values()) / len(ev):.1%})")
         print(f"  took {time.time() - t1:.0f}s; wrote {args.retrieval_out}", flush=True)
