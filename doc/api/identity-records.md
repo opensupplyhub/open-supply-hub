@@ -268,8 +268,10 @@ Error bodies are always JSON, whatever the caller asked for.
 
 ### Link relation types
 
-Link-set keys are link relation types drawn from a vocabulary Open Supply
-Hub publishes itself.
+Link-set keys are link relation types. Most are drawn from a vocabulary
+Open Supply Hub publishes itself; one is the issuer's own term, carried so
+that a client written against their vocabulary finds the record. Both are
+described below.
 
 There is no central registry to take them from. The UNTP 0.7.0 context
 defines `linkType` as a plain string and enumerates no values, and the
