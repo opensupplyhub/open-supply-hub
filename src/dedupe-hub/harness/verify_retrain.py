@@ -7,16 +7,37 @@ sample size, same call order -- so a green run here is evidence the service
 will cold-start on this training.json with no code change. Times the train so
 the startup-cost half of AC#3 is measured rather than asserted.
 
+Optionally (--retrieval-out) also runs a RETRIEVAL CHECK. Scoring a pair tells
+you what the model thinks of it, but not whether the learned search rules would
+ever have compared the two records in the first place. The check indexes the
+facility side of the evaluation pairs, runs every upload side against that
+index with the score cutoff at zero, and records whether each pair's own
+facility came back as a candidate. A human-approved pair that does not come back
+is one the model would never have considered: a duplicate. It is an
+approximation of the real thing, because the index holds the evaluation
+facilities rather than the whole registry; whether two records share a search
+key mostly does not depend on the other facilities, but the fuzzy word-weight
+rules use corpus statistics and can shift a little.
+
+Randomness: the 15,000-pair sample and the record samples that decide which
+search rules are learned are drawn at random. --seed (default 42) fixes Python's
+and numpy's generators so a run can be repeated. For full repeatability also pass
+`-e PYTHONHASHSEED=0` to docker run, which fixes the order dedupe iterates its
+string sets in. This changes only this harness, never the service.
+
 Runs inside the api-app image (dedupe 1.9.4, no pandas/sklearn):
 
-  docker run --rm \
-    -v "$PWD/src/dedupe-hub":/dh -v "$HOME/splink-eval/slink":/eval \
+  docker run --rm -e PYTHONHASHSEED=0 \
+    -v "$PWD/src/dedupe-hub":/dh -v "$HOME/osdev-3277/data":/data \
     --entrypoint python api-app:latest \
-    /dh/harness/verify_retrain.py --pairs /eval/pairs_geo.csv \
-      --training /dh/api/app/data/training.json --out /eval/osdev3277_scores.csv
+    /dh/harness/verify_retrain.py --pairs /data/pairs.csv \
+      --training /dh/api/app/data/training.json --out /data/scores.csv \
+      [--eval-set /data/eval_set.csv --retrieval-out /data/retrieval.csv \
+       --retrieval-limit 3000]
 """
 import argparse
 import csv
+import hashlib
 import json
 import os
 import resource
@@ -24,7 +45,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_training_json import record, stable_train_half  # noqa: E402
+from make_training_json import can_score, record, stable_train_half  # noqa: E402
 
 # The production field config. Do not edit here -- OSDEV-3277 is label-only;
 # if these drift from gazetteer_train.py the verification is meaningless.
@@ -34,17 +55,19 @@ FIELDS = [
     {"field": "address", "type": "String"},
 ]
 SAMPLE_SIZE = 15000
+MESSY_PREFIX = "ev-m-"      # ids for upload records in the retrieval check
+CANON_PREFIX = "ev-c-"      # ids for facility records in the retrieval check
 
 
 def load(path):
     """Read the labeled pairs CSV into scoreable rows, skipping any pair that
-    cannot be scored.
+    make_training_json.can_score() rejects (a name is empty, or both sides are
+    empty in the same field).
 
-    A pair is skipped when either side's name is empty, or when BOTH sides are
-    empty in the same field. The email scrub in record() can empty a cell that
-    held only a contact email, and dedupe's affine-gap distance raises
-    ZeroDivisionError when asked to compare two empty strings. The skipped count
-    is printed so the loss is visible rather than silent.
+    The email scrub in record() can empty a cell that held only a contact
+    email, and dedupe's affine-gap distance raises ZeroDivisionError when asked
+    to compare two empty strings. The skipped count is printed so the loss is
+    visible rather than silent.
     """
     rows = []
     seen = set()
@@ -60,9 +83,7 @@ def load(path):
                           r.get("item_country"))
             right = record(r.get("fac_name"), r.get("fac_address"),
                            r.get("fac_country"))
-            if not left["name"] or not right["name"]:
-                continue
-            if any(not left[f] and not right[f] for f in ("name", "address")):
+            if not can_score(left, right):
                 skipped += 1
                 continue
             rows.append({"match_id": mid,
@@ -70,26 +91,92 @@ def load(path):
                          "left": left, "right": right,
                          "train": stable_train_half(mid)})
     if skipped:
-        print(f"skipped {skipped} pair(s) with both sides empty in a field "
-              f"after cleaning", flush=True)
+        print(f"skipped {skipped} pair(s) that cannot be scored (a name is empty, "
+              f"or both sides are empty in a field after cleaning)", flush=True)
     return rows
 
 
 def rss_mb():
-    # ru_maxrss is KB on Linux, bytes on macOS; container runs Linux.
+    """Peak memory of this process in MB (ru_maxrss is KB on Linux, bytes on
+    macOS; the container runs Linux)."""
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
 
 
+def eval_rows_for(rows, eval_set_path):
+    """The rows the retrieval check runs on: the pairs in the frozen eval set
+    if one is given, otherwise the held-out half chosen by the match_id hash."""
+    if eval_set_path:
+        with open(eval_set_path, newline="") as f:
+            ids = {r["match_id"] for r in csv.DictReader(f)}
+        return [r for r in rows if r["match_id"] in ids]
+    return [r for r in rows if not r["train"]]
+
+
+def retrieval_results(gaz, messy, canonical, progress=5000):
+    """Run a trained gazetteer's search over an indexed corpus.
+
+    Indexes `canonical`, matches every record in `messy` with the score cutoff at
+    zero (so every candidate the learned search rules retrieve comes back, not
+    only high-scoring ones) and returns {messy id: {canonical id: score}}.
+    An upload that retrieves nothing is simply absent from the result.
+    """
+    gaz.index(canonical)
+    found = {}
+    results = gaz.match(messy, threshold=0.0, n_matches=None, generator=True)
+    for n, matches in enumerate(results, 1):
+        # dedupe yields a numpy structured array per upload, so test emptiness
+        # with len() (see measure_fanout.py).
+        if len(matches) == 0:
+            continue
+        mid = str(matches[0][0][0])
+        found[mid] = {str(cid): float(s) for (_, cid), s in matches}
+        if n % progress == 0:
+            print(f"  retrieval: {n} uploads matched", flush=True)
+    return found
+
+
+def retrieval_rows(eval_rows, found):
+    """One (match_id, retrieved 0/1, score) row per evaluation pair: did the
+    pair's own facility come back among the candidates, and with what score."""
+    out = []
+    for r in eval_rows:
+        score = found.get(MESSY_PREFIX + r["match_id"], {}).get(CANON_PREFIX + r["match_id"])
+        out.append((r["match_id"], int(score is not None),
+                    "" if score is None else "%.6f" % score))
+    return out
+
+
 def main():
-    p = argparse.ArgumentParser()
+    """Train the model on --training, score every pair, and optionally run the
+    retrieval check on the evaluation pairs."""
+    p = argparse.ArgumentParser(description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--pairs", required=True)
     p.add_argument("--training", required=True)
     p.add_argument("--out", required=True)
+    p.add_argument("--seed", type=int, default=42,
+                   help="seed for Python's and numpy's random generators (default 42)")
+    p.add_argument("--eval-set", help="frozen eval_set.csv: run the retrieval check "
+                                      "on exactly these pairs (default: held-out half)")
+    p.add_argument("--retrieval-out", help="write the retrieval check here "
+                                           "(match_id, retrieved, score)")
+    p.add_argument("--retrieval-limit", type=int, default=0,
+                   help="check only this many pairs, chosen by a fixed hash of "
+                        "match_id (0 = all). For a quick trial; the report only "
+                        "uses a retrieval file that covers every evaluation pair")
     args = p.parse_args()
+
+    import random
+    import numpy
+    random.seed(args.seed)
+    numpy.random.seed(args.seed)
+    if os.environ.get("PYTHONHASHSEED") is None:
+        print("note: PYTHONHASHSEED is not set; pass -e PYTHONHASHSEED=0 to docker run "
+              "for fully repeatable rule learning", flush=True)
 
     rows = load(args.pairs)
     train = [r for r in rows if r["train"]]
-    print(f"pairs {len(rows)}  train-half {len(train)}", flush=True)
+    print(f"pairs {len(rows)}  train-half {len(train)}  seed {args.seed}", flush=True)
 
     with open(args.training) as f:
         t = json.load(f)
@@ -135,7 +222,32 @@ def main():
         w.writerow(["match_id", "retrained_conf"])
         for r, s in zip(rows, probs):
             w.writerow([r["match_id"], float(s)])
-    print(f"wrote {args.out} ({len(rows)} rows)")
+    print(f"wrote {args.out} ({len(rows)} rows)", flush=True)
+
+    if args.retrieval_out:
+        ev = eval_rows_for(rows, args.eval_set)
+        if args.retrieval_limit:
+            ev = sorted(ev, key=lambda r: hashlib.md5(r["match_id"].encode()).hexdigest())
+            ev = ev[:args.retrieval_limit]
+        print(f"\nretrieval check on {len(ev)} evaluation pairs...", flush=True)
+        t1 = time.time()
+        found = retrieval_results(
+            gaz,
+            {MESSY_PREFIX + r["match_id"]: r["left"] for r in ev},
+            {CANON_PREFIX + r["match_id"]: r["right"] for r in ev})
+        out_rows = retrieval_rows(ev, found)
+        with open(args.retrieval_out, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["match_id", "retrieved", "score"])
+            w.writerows(out_rows)
+        got = {mid: flag for mid, flag, _ in out_rows}
+        pos = [r for r in ev if r["label"] == 1]
+        pos_got = sum(got[r["match_id"]] for r in pos)
+        print(f"  confirmed pairs retrieved: {pos_got} of {len(pos)} "
+              f"({pos_got / len(pos):.1%})" if pos else "  no confirmed pairs checked")
+        print(f"  all pairs retrieved:       {sum(got.values())} of {len(ev)} "
+              f"({sum(got.values()) / len(ev):.1%})")
+        print(f"  took {time.time() - t1:.0f}s; wrote {args.retrieval_out}", flush=True)
 
 
 if __name__ == "__main__":

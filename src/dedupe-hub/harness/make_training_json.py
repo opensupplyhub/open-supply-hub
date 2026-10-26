@@ -46,6 +46,7 @@ import os
 import random
 import re
 import sys
+import unicodedata
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_OUT = os.path.join(HERE, os.pardir, "api", "app", "data", "training.json")
@@ -84,13 +85,66 @@ def scrub(value: str) -> str:
     return " ".join(EMAIL_RE.sub(" ", value).split())
 
 
+try:
+    from unidecode import unidecode
+except ImportError:  # the api-app image always has it; a bare laptop may not
+    unidecode = None
+    print("WARNING: unidecode is not installed, so accents are folded with a "
+          "fallback that can differ from production's clean()", file=sys.stderr)
+
+
+def _fold_accents(text):
+    """Fallback for unidecode: drop accents so cleaning can still run."""
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
+
+
+def clean(column):
+    """Production's text cleaning, copied from app/utils/clean.py.
+
+    dedupe-hub runs this on BOTH sides before matching: the uploaded item
+    (Reader), every facility in the index (get_canonical_items) and the training
+    sample. Keep it identical to production, or the model is trained and scored
+    on text that looks different from what it sees at runtime. Returns None for
+    an empty value, as production does.
+    """
+    column = (unidecode or _fold_accents)(column or "")
+    column = re.sub('\n', ' ', column)
+    column = re.sub('-', '', column)
+    column = re.sub('/', ' ', column)
+    column = re.sub("'", '', column)
+    column = re.sub(",", '', column)
+    column = re.sub(":", ' ', column)
+    column = re.sub(' +', ' ', column)
+    column = column.strip().strip('"').strip("'").lower().strip()
+    if not column:
+        column = None
+    return column
+
+
 def record(name, address, country):
-    """Exactly the three fields gazetteer_train.py declares."""
+    """Exactly the three fields gazetteer_train.py declares, cleaned the way
+    production cleans them (see clean()), then email-scrubbed for the public
+    repo. The scrub is the one step production does not do, and it only ever
+    touches the rare cell that holds a contact email."""
     return {
-        "name": scrub((name or "").lower().strip()),
-        "address": scrub((address or "").lower().strip()),
-        "country": (country or "").lower().strip(),
+        "name": scrub(clean(name) or ""),
+        "address": scrub(clean(address) or ""),
+        "country": clean(country) or "",
     }
+
+
+def can_score(left, right):
+    """True if dedupe can compute distances for this pair of records.
+
+    Both sides need a name. And for name and for address, at least one side must
+    be non-empty: dedupe's affine-gap distance raises ZeroDivisionError when it
+    is asked to compare two empty strings. This happens when the email scrub
+    empties a cell that held only a contact email. Every script that scores
+    pairs uses this one rule, so they all keep and skip exactly the same rows.
+    """
+    if not left["name"] or not right["name"]:
+        return False
+    return not any(not left[f] and not right[f] for f in ("name", "address"))
 
 
 def prefix_len(a, b):
