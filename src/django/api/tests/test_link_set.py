@@ -121,7 +121,12 @@ class LinkSetTest(APITestCase):
 
         _, entry = self._linkset()
 
-        self.assertIn(UNTP_DFR_RELATION, entry)
+        # The literal, not the constant. This string is matched
+        # character for character by a client we do not control and
+        # cannot ask to adapt, so a typo, a case slip, or a tidying
+        # refactor of the constant has to fail here rather than ship.
+        self.assertEqual(UNTP_DFR_RELATION, 'untp:dfr')
+        self.assertIn('untp:dfr', entry)
 
         ours = next(k for k in entry if k.endswith('registeredRecord'))
         self.assertEqual(entry[UNTP_DFR_RELATION], entry[ours])

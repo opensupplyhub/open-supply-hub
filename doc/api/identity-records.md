@@ -299,10 +299,15 @@ should therefore expect keys it will not find a definition for, and ignore
 them rather than reject the response. Keys beginning with the namespace in
 `namespaceURI` are the ones guaranteed to dereference.
 
-`untp:dfr` appears **only as a link-set key**. It is not listed in
-`supportedLinkType` in the resolver description, because every entry there is
-a URL a client is expected to fetch, and a bare token would raise rather than
-return a status a client could skip.
+`untp:dfr` is emitted as a relation type wherever the link-set is served, in
+the response body and in the `Link` header alike. It is **not** listed in
+`supportedLinkType` in the resolver description: that field is the set of
+relation types Open Supply Hub publishes definitions for, and every entry in
+it dereferences under `namespaceURI`. The issuer's term is not one we define,
+so it is out of scope for that field.
+
+A client doing capability discovery should therefore read a link-set rather
+than infer the supported relations from `supportedLinkType` alone.
 
 The entry for a registered record carries the issuer's **Resolver URI**,
 never a link to one version, and there is never more than one. Which
