@@ -733,4 +733,51 @@ describe('FacilityDetailsGeneralFields component', () => {
             expect(queryByText('Named Entities')).not.toBeInTheDocument();
         });
     });
+    describe('registered record entry point', () => {
+        // The Django serializer already withholds has_identity_record while
+        // the resolver is off, so this flag is the second of two gates. It
+        // is tested because the first one living in another service is
+        // exactly why this one gets forgotten.
+        const withRecord = {
+            ...mockData,
+            properties: { ...mockData.properties, has_identity_record: true },
+        };
+
+        const flags = enabled => ({
+            featureFlags: {
+                fetching: false,
+                flags: { enable_identity_resolver: enabled },
+            },
+        });
+
+        test('is hidden while the resolver is off', () => {
+            const { queryByText } = renderComponent(
+                { data: withRecord },
+                flags(false),
+            );
+
+            expect(
+                queryByText('View the registered record'),
+            ).not.toBeInTheDocument();
+        });
+
+        test('is shown once the resolver is on', () => {
+            const { getByText } = renderComponent(
+                { data: withRecord },
+                flags(true),
+            );
+
+            expect(
+                getByText('View the registered record'),
+            ).toBeInTheDocument();
+        });
+
+        test('stays hidden with the flag on but no record registered', () => {
+            const { queryByText } = renderComponent({}, flags(true));
+
+            expect(
+                queryByText('View the registered record'),
+            ).not.toBeInTheDocument();
+        });
+    });
 });
