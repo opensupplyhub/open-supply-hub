@@ -13,8 +13,8 @@ NON_FIELD_ERRORS_KEY = 'non_field_errors'
 # still branches per extension, so adding a format here also needs a parser.
 SUPPORTED_FILE_EXTENSIONS = ('.csv', '.xlsx')
 UNSUPPORTED_FILE_TYPE_MESSAGE = (
-    'We cannot accept the type of file you submitted. Please '
-    'change your file to an Excel or UTF-8 CSV and reupload.'
+    'We cannot accept the type of file you submitted. Please change '
+    'your file to an Excel (.xlsx) or UTF-8 CSV and reupload.'
 )
 
 

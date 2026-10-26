@@ -1449,7 +1449,7 @@ export const componentsWithErrorMessage = Object.freeze({
     missingFile: 'Missing required Facility List File.',
     unsupportedFileType:
         'We cannot accept the type of file you submitted. Please change ' +
-        'your file to an Excel or UTF-8 CSV and reupload.',
+        'your file to an Excel (.xlsx) or UTF-8 CSV and reupload.',
 });
 
 // Mirrors contricleaner/constants.py, which the upload endpoint also reads.
