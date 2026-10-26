@@ -128,9 +128,11 @@ export const IdentityRecord = ({ classes, match }) => {
                     <Typography className={classes.unavailableText}>
                         {message}
                     </Typography>
-                    <Typography className={classes.unavailableText}>
-                        {locationLink}
-                    </Typography>
+                    {locationLink && (
+                        <Typography className={classes.unavailableText}>
+                            {locationLink}
+                        </Typography>
+                    )}
                 </Paper>
             </div>
         );
