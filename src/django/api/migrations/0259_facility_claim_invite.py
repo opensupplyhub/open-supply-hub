@@ -31,7 +31,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0253_add_earth_genome_candidates_switch'),
+        ('api', '0258_facility_claim_isic'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
