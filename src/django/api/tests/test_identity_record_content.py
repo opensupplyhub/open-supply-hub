@@ -142,7 +142,7 @@ class ContentFixture:
             created_from=item,
         )
         self.url = (
-            f'/api/v1/production-locations/{OS_ID}/identity-record/'
+            f'/api/v1/production-locations/{OS_ID}/identity-record-content/'
         )
         # Most of these assert on content rather than on access, so they
         # authenticate to keep the subject of each test clear. Anonymous

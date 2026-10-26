@@ -231,7 +231,7 @@ export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetIdentityRecordURL = osId =>
-    `/api/v1/production-locations/${osId}/identity-record/`;
+    `/api/v1/production-locations/${osId}/identity-record-content/`;
 export const makeGetFacilityByOSIdURL = (
     osId,
     useCreatedAtForDataPoints = false,

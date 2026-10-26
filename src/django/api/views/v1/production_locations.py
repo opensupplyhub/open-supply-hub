@@ -830,7 +830,11 @@ class ProductionLocations(ViewSet):
     @action(
         detail=True,
         methods=['GET'],
-        url_path='identity-record',
+        # Named for what it returns, and kept clearly distinct from the
+        # `identity-records` collection above: the two sat one character
+        # apart, which is a typo away from a 404 or a 405 for anyone
+        # reading the API rather than generating calls from a client.
+        url_path='identity-record-content',
     )
     def identity_record_content(self, request, pk=None):
         """
