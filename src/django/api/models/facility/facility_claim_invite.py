@@ -1,4 +1,5 @@
 import uuid
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 
@@ -30,17 +31,9 @@ class FacilityClaimInvite(models.Model):
         on_delete=models.PROTECT,
         help_text='The user who sent the invite.'
     )
-    sent_by_contributor = models.ForeignKey(
-        'Contributor',
-        null=False,
-        on_delete=models.PROTECT,
-        help_text='The contributor (organization) named as the sender in '
-                  'the invite email.'
-    )
     recipient_email = models.EmailField(
         null=False,
         blank=False,
-        db_index=True,
         help_text='The email address the invite was sent to.'
     )
     note = models.TextField(
@@ -52,10 +45,20 @@ class FacilityClaimInvite(models.Model):
                   'email as plain text.'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    @property
+    def sent_by_contributor(self):
+        """
+        The contributor (organization) named as the sender in the invite email.
+        """
+        try:
+            return self.sent_by_user.contributor
+        except ObjectDoesNotExist:
+            return None
 
     def __str__(self):
         return '{} invited {} to claim {}'.format(
-            self.sent_by_contributor_id,
+            self.sent_by_contributor.name,
             self.recipient_email,
             self.facility_id,
         )

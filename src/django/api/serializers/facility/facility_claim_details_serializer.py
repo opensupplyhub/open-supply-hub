@@ -19,6 +19,8 @@ from .facility_claim_review_note_serializer import (
     FacilityClaimReviewNoteSerializer
 )
 from .utils import _get_parent_company
+from waffle import switch_is_active
+from api.services.facility_claim_invite_service import CLAIM_INVITE_SWITCH
 
 
 class FacilityClaimDetailsSerializer(ModelSerializer):
@@ -47,6 +49,10 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     def get_claim_invite(self, claim):
         # The invite whose claim link this claim was submitted from, so
         # moderators can see who referred the claimant.
+        
+        if not switch_is_active(CLAIM_INVITE_SWITCH):
+            return None
+        
         invite = claim.claim_invite
         if invite is None:
             return None

@@ -2650,7 +2650,6 @@ class FacilitiesViewSet(ListModelMixin,
         claim_invite = FacilityClaimInvite.objects.create(
             facility=facility,
             sent_by_user=request.user,
-            sent_by_contributor=contributor,
             recipient_email=recipient_email,
             note=serializer.validated_data['note'],
         )

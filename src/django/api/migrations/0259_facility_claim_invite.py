@@ -53,11 +53,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='facilityclaiminvite',
-            name='sent_by_contributor',
-            field=models.ForeignKey(help_text='The contributor (organization) named as the sender in the invite email.', on_delete=django.db.models.deletion.PROTECT, to='api.contributor'),
-        ),
-        migrations.AddField(
-            model_name='facilityclaiminvite',
             name='sent_by_user',
             field=models.ForeignKey(help_text='The user who sent the invite.', on_delete=django.db.models.deletion.PROTECT, to=settings.AUTH_USER_MODEL),
         ),

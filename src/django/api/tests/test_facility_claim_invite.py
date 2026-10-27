@@ -361,7 +361,6 @@ class FacilityClaimInviteTest(APITestCase):
         other_invite = FacilityClaimInvite.objects.create(
             facility=other_facility,
             sent_by_user=self.sender_user,
-            sent_by_contributor=self.sender,
             recipient_email='manager@factory.example',
         )
 
