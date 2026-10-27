@@ -43,6 +43,11 @@ echo "Stop time: $(date +%T)"
 echo "Task stopped reason:"
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[stoppedReason]'
 
+# Captured before the logs are fetched, so a failed log retrieval cannot mask
+# the container's own result.
+exit_code="$(aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].containers[0].exitCode' --output text)"
+echo "Container exit code: $exit_code"
+
 echo "----- Log Stream -----"
 echo ""
 echo ""
@@ -50,3 +55,21 @@ aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppCLI" --log-stre
 echo ""
 echo ""
 echo "----- Log Stream end -----"
+
+# A task killed before the container ran (OOM, ENI failure, image pull error)
+# reports a null exitCode, which the CLI renders as "None" - that is a failure,
+# not a success.
+case "$exit_code" in
+    0)
+        exit 0
+        ;;
+    ''|None|null)
+        echo "ERROR: no container exit code reported - the container did not run to completion." >&2
+        echo "Check the stopped reason above and the Task URL." >&2
+        exit 1
+        ;;
+    *)
+        echo "ERROR: container exited with code $exit_code." >&2
+        exit "$exit_code"
+        ;;
+esac
