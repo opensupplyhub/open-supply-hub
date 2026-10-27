@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
@@ -8,11 +8,15 @@ import {
     makeClaimFacilityLinkWithFeatureFlag,
     convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../../../../util/util';
-import { ENABLE_V1_CLAIMS_FLOW } from '../../../../util/constants';
+import {
+    CLAIM_INVITE,
+    ENABLE_V1_CLAIMS_FLOW,
+} from '../../../../util/constants';
 
 import { formatClaimDate } from './utils';
 import ClaimStatusRow from './ClaimStatusRow';
 import ClaimSubtitleRow from './ClaimSubtitleRow';
+import ClaimInviteDialog from './ClaimInviteDialog';
 import productionLocationDetailsClaimFlagStyles from './styles';
 
 const ClaimFlag = ({
@@ -22,8 +26,13 @@ const ClaimFlag = ({
     isPending,
     isEmbed,
     isV1ClaimsFlowEnabled,
+    isClaimInviteEnabled,
     claimInfo,
+    facilityName,
+    isClosed,
 }) => {
+    const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+
     if (isEmbed) return null;
 
     const claimFacilityLink = makeClaimFacilityLinkWithFeatureFlag(
@@ -36,6 +45,8 @@ const ClaimFlag = ({
             : claimInfo?.contributor?.name ?? null;
     const claimedAt = claimInfo?.approved_at ?? claimInfo?.created_at;
     const formattedDate = formatClaimDate(claimedAt);
+    const canInvite =
+        isClaimInviteEnabled && !isClaimed && !isPending && !isClosed;
     const showSubtitleRow =
         (!isClaimed && !isPending) ||
         (isClaimed && (contributorName || formattedDate));
@@ -60,6 +71,17 @@ const ClaimFlag = ({
                     isPending={isPending}
                     contributorName={contributorName}
                     formattedDate={formattedDate}
+                    onInviteClick={
+                        canInvite ? () => setIsInviteDialogOpen(true) : null
+                    }
+                />
+            )}
+            {canInvite && (
+                <ClaimInviteDialog
+                    open={isInviteDialogOpen}
+                    onClose={() => setIsInviteDialogOpen(false)}
+                    osId={osId}
+                    facilityName={facilityName}
                 />
             )}
         </Grid>
@@ -73,6 +95,9 @@ ClaimFlag.propTypes = {
     isPending: PropTypes.bool.isRequired,
     isEmbed: PropTypes.bool,
     isV1ClaimsFlowEnabled: PropTypes.bool.isRequired,
+    isClaimInviteEnabled: PropTypes.bool.isRequired,
+    facilityName: PropTypes.string,
+    isClosed: PropTypes.bool,
     claimInfo: PropTypes.shape({
         contributor: PropTypes.oneOfType([
             PropTypes.string,
@@ -87,6 +112,8 @@ ClaimFlag.defaultProps = {
     isEmbed: false,
     claimInfo: null,
     osId: null,
+    facilityName: null,
+    isClosed: false,
 };
 
 const mapStateToProps = ({ featureFlags: { flags } }) => {
@@ -97,6 +124,7 @@ const mapStateToProps = ({ featureFlags: { flags } }) => {
         isV1ClaimsFlowEnabled: activeFeatureFlags.includes(
             ENABLE_V1_CLAIMS_FLOW,
         ),
+        isClaimInviteEnabled: activeFeatureFlags.includes(CLAIM_INVITE),
     };
 };
 

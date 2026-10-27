@@ -1,0 +1,39 @@
+{% autoescape off %}{% block content %}
+Hello,
+
+{{ sender_name }} found your listing on Open Supply Hub (OS Hub), the free, open map of global
+supply chain locations, and invited you to claim your profile:
+
+- Name of Production Location: {{ production_location_name }}
+- Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
+- OS Hub Profile: {{ production_location_url }}
+{% if note %}
+A note from {{ sender_name }}:
+
+{{ note }}
+{% endif %}
+Claiming is free and takes a few minutes. Once your claim is approved, you can take ownership
+of your data, as well as add data points to help attract new customers, like contacts,
+certifications, production capabilities, MOQs and more. It’s a great way to build your business
+and reduce the number of times you send the same information to customers and partners over
+and over again.
+
+Start your claim here: {{ claim_url }}
+
+Tips for a quick approval:
+
+- Sign in or create a free OS Hub account. If you create a new account, confirm your email
+  address, then come back to the link above to continue your claim.
+- Have proof that you work at the location, such as an employee ID badge, employment
+  letter, job contract or business card.
+- Have proof of the location's name and address ready, such as a business registration,
+  business license or utility bill.
+
+Read the full guide to claiming a profile: https://info.opensupplyhub.org/resources/claim-a-facility
+
+If you don't work at this production location, you can ignore this email.
+
+Best Regards,
+
+{% include "mail/claims_team_signature_block.txt" %}
+{% endblock content %}{% endautoescape %}
