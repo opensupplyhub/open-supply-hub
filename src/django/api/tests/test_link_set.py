@@ -15,6 +15,7 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.models.identity_record_association import IdentityRecordAssociation
 from api.models.source import Source
 from api.models.user import User
+from api.views.v1.identity_resolver import UNTP_DFR_RELATION
 
 LINKSET = 'application/linkset+json'
 OS_ID = 'XX2000001AAAAA5'
@@ -89,13 +90,16 @@ class LinkSetTest(APITestCase):
         return response, json.loads(response.content)['linkset'][0]
 
     def test_carries_both_records_when_one_is_registered(self):
-        """Our location, and exactly one entry for the record."""
+        """
+        Our location, and the registered record under two relations: our
+        own term and the issuer's. Three keys, two distinct targets.
+        """
         self._register()
 
         _, entry = self._linkset()
         relations = [k for k in entry if k != 'anchor']
 
-        self.assertEqual(len(relations), 2)
+        self.assertEqual(len(relations), 3)
 
         registered = [
             k for k in relations if k.endswith('registeredRecord')
@@ -105,6 +109,37 @@ class LinkSetTest(APITestCase):
             entry[registered[0]][0]['href'], RESOLVER_URI
         )
         self.assertEqual(len(entry[registered[0]]), 1)
+
+    def test_the_record_is_also_offered_under_the_issuer_term(self):
+        """
+        A client written against the issuer's vocabulary looks for
+        `untp:dfr` and nothing else. Carrying the same target under both
+        terms is what stops it reading this link-set and finding no
+        record. The two must not drift apart.
+        """
+        self._register()
+
+        _, entry = self._linkset()
+
+        # The literal, not the constant. This string is matched
+        # character for character by a client we do not control and
+        # cannot ask to adapt, so a typo, a case slip, or a tidying
+        # refactor of the constant has to fail here rather than ship.
+        self.assertEqual(UNTP_DFR_RELATION, 'untp:dfr')
+        self.assertIn('untp:dfr', entry)
+
+        ours = next(k for k in entry if k.endswith('registeredRecord'))
+        self.assertEqual(entry[UNTP_DFR_RELATION], entry[ours])
+
+    def test_no_issuer_term_when_nothing_is_registered(self):
+        """
+        The alias is the record, not a permanent fixture. With no record
+        there is nothing for it to point at, and an empty entry would
+        tell a client one exists.
+        """
+        _, entry = self._linkset()
+
+        self.assertNotIn(UNTP_DFR_RELATION, entry)
 
     def test_the_registered_entry_is_the_resolver_not_a_version(self):
         """
@@ -129,11 +164,18 @@ class LinkSetTest(APITestCase):
         """
         The obligation that comes with minting our own terms: a stranger
         holding this link-set must be able to look up what the keys mean.
+
+        The issuer's `untp:dfr` is excluded by name rather than by
+        pattern, so a key that is neither ours nor that one still fails
+        here instead of being waved through.
         """
         self._register()
 
         _, entry = self._linkset()
-        relations = [k for k in entry if k != 'anchor']
+        relations = [
+            k for k in entry
+            if k != 'anchor' and k != UNTP_DFR_RELATION
+        ]
 
         vocab = self.client.get('/api/v1/voc/')
         self.assertEqual(vocab.status_code, status.HTTP_200_OK)
@@ -168,6 +210,22 @@ class LinkSetTest(APITestCase):
         )
         self.assertIn('show=linktypes', response.data['profileUrl'])
 
+    def test_description_lists_only_types_that_dereference(self):
+        """
+        The issuer's term belongs in link-sets, where a key is read, not
+        in the description, where every entry is a URL a client fetches.
+        A bare token there raises in the client rather than 404ing, so
+        it cannot be skipped by anyone who was not expecting it.
+        """
+        response = self.client.get('/.well-known/resolver')
+        supported = response.data['supportedLinkType']
+
+        self.assertNotIn(UNTP_DFR_RELATION, supported)
+        self.assertTrue(
+            all(t.startswith(response.data['namespaceURI'])
+                for t in supported)
+        )
+
     def test_links_are_served_in_the_header_too(self):
         """
         The issuer serves the link-set both in the body and
@@ -181,6 +239,16 @@ class LinkSetTest(APITestCase):
         self.assertIn(RESOLVER_URI, header)
         self.assertIn('rel=', header)
         self.assertIn(entry['anchor'], header)
+
+        # The commitment is that a header-reading client sees what a
+        # body-reading one sees. Without this, narrowing header
+        # generation to our own namespace would drop the alias from the
+        # header alone and every other test would still pass.
+        self.assertIn(
+            'rel="{}"'.format(UNTP_DFR_RELATION), header
+        )
+        ours = next(k for k in entry if k.endswith('registeredRecord'))
+        self.assertIn('rel="{}"'.format(ours), header)
 
     def test_no_registered_record_is_a_normal_response(self):
         """

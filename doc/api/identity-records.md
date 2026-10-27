@@ -268,8 +268,10 @@ Error bodies are always JSON, whatever the caller asked for.
 
 ### Link relation types
 
-Link-set keys are link relation types drawn from a vocabulary Open Supply
-Hub publishes itself.
+Link-set keys are link relation types. Most are drawn from a vocabulary
+Open Supply Hub publishes itself; one is the issuer's own term, carried so
+that a client written against their vocabulary finds the record. Both are
+described below.
 
 There is no central registry to take them from. The UNTP 0.7.0 context
 defines `linkType` as a plain string and enumerates no values, and the
@@ -281,6 +283,33 @@ its own vocabulary at a resolvable namespace. Two terms are published:
 | --- | --- |
 | `productionLocation` | The Open Supply Hub page for this location. Always present. |
 | `registeredRecord` | A record registered against this identifier by its issuer. Present only when one is live. |
+
+A third key appears alongside these when a record is registered:
+
+| Key | Meaning |
+| --- | --- |
+| `untp:dfr` | The same target as `registeredRecord`. |
+
+`untp:dfr` is the relation type the issuer's own resolver uses for a Digital
+Facility Record. It is carried so that a client written against that
+vocabulary finds the record without any change on its part. It is not an
+Open Supply Hub term, so it is **not** published at `/api/v1/voc/` and does
+not dereference there.
+
+A client that validates link-set keys against the Open Supply Hub vocabulary
+should therefore expect keys it will not find a definition for, and ignore
+them rather than reject the response. Keys beginning with the namespace in
+`namespaceURI` are the ones guaranteed to dereference.
+
+`untp:dfr` is emitted as a relation type wherever the link-set is served, in
+the response body and in the `Link` header alike. It is **not** listed in
+`supportedLinkType` in the resolver description: that field is the set of
+relation types Open Supply Hub publishes definitions for, and every entry in
+it dereferences under `namespaceURI`. The issuer's term is not one we define,
+so it is out of scope for that field.
+
+A client doing capability discovery should therefore read a link-set rather
+than infer the supported relations from `supportedLinkType` alone.
 
 The entry for a registered record carries the issuer's **Resolver URI**,
 never a link to one version, and there is never more than one. Which

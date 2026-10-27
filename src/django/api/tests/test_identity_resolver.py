@@ -18,6 +18,7 @@ from api.models.identity_record_association import (
 )
 from api.models.source import Source
 from api.models.user import User
+from api.views.v1.identity_resolver import UNTP_DFR_RELATION
 
 LINKSET = 'application/linkset+json'
 
@@ -408,10 +409,22 @@ class IdentityResolverTest(ResolverFixture, APITestCase):
         )
         self.assertEqual(len(response.data['supportedLinkType']), 2)
 
+        # The issuer's term is a link-set key, not a published type, and
+        # must not leak into a list whose every entry is fetchable.
+        self.assertNotIn(
+            UNTP_DFR_RELATION, response.data['supportedLinkType']
+        )
+
     def test_each_published_link_type_dereferences(self):
         """
         The link-set keys are these URIs. A key that 404s is not a
         vocabulary, which is the whole obligation of minting our own.
+
+        Every entry, with no exemptions: a client doing the obvious
+        thing with this list fetches each one, so a bare token here
+        raises on it rather than skipping it. The issuer's `untp:dfr`
+        is carried in link-sets instead, where keys are read and not
+        fetched.
         """
         description = self.client.get('/.well-known/resolver')
 

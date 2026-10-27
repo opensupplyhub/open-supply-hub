@@ -29,6 +29,10 @@ from api.constants import (
     ProcessingAction,
     APIErrorMessages,
 )
+from contricleaner.constants import (
+    SUPPORTED_FILE_EXTENSIONS,
+    UNSUPPORTED_FILE_TYPE_MESSAGE,
+)
 from api.exceptions import ServiceUnavailableException
 from ...facility_history import create_dissociate_match_change_reason
 from ...mail import (
@@ -110,6 +114,9 @@ class FacilityListViewSet(ModelViewSet):
             raise ValidationError(
                 'Uploaded file exceeds the maximum size of {:.1f}MB.'.format(
                     mb))
+        extension = os.path.splitext(uploaded_file.name)[1].lower()
+        if extension not in SUPPORTED_FILE_EXTENSIONS:
+            raise ValidationError(UNSUPPORTED_FILE_TYPE_MESSAGE)
 
         try:
             contributor = request.user.contributor

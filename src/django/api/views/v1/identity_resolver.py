@@ -25,6 +25,27 @@ from api.views.v1.link_type_vocabulary import (
 
 LINKSET_MEDIA_TYPE = 'application/linkset+json'
 
+# The relation type the issuer's resolver uses for a Digital Facility
+# Record, carried alongside our own term so a client written against
+# either vocabulary finds the registered record. Observed on the
+# issuer's live resolver in the `Link` header of a resolution response,
+# the same protocol position we emit it in. It is their term, not one we
+# publish, so it is a literal here rather than a vocabulary entry.
+#
+# Not the only spelling in circulation: another resolver in this
+# ecosystem advertises bare short names (`dfr`). We emit the prefixed
+# form because that is what the pilot counterparty serves.
+UNTP_DFR_RELATION = 'untp:dfr'
+
+# Which issuer relation, if any, a registered record is published under.
+# Keyed on record type rather than assumed, because the registration
+# allowlist (ACCEPTED_RECORD_TYPES) is written to grow: announcing a
+# conformity credential under `untp:dfr` would tell a verifier to parse
+# it against the wrong schema. An unmapped type gets no alias.
+ISSUER_RELATION_BY_RECORD_TYPE = {
+    'untp:DigitalFacilityRecord': UNTP_DFR_RELATION,
+}
+
 # The identifier scheme this resolver answers for, and the first segment
 # of its path. Ours rather than inherited: it is published as the
 # identifier id in the resolver description, so the constant, the route
@@ -270,13 +291,34 @@ class IdentityResolverView(APIView):
 
         association = get_live_association(os_id)
         if association is not None:
-            entries[link_type_uri(root, 'registeredRecord')] = [
+            registered_record = [
                 {
                     'href': association.resolver_uri,
                     'type': 'application/json',
                     'title': 'Registered record (current version)',
                 }
             ]
+            entries[link_type_uri(root, 'registeredRecord')] = (
+                registered_record
+            )
+            # The same target under the term the issuer's resolver uses.
+            # A client written against that vocabulary looks for its own
+            # relation and nothing else, and RFC 9264 does not limit how
+            # many relations carry a target, so offering both closes the
+            # case where such a client reads this link-set and finds no
+            # record. A copy, so a later per-relation edit cannot change
+            # both.
+            #
+            # Not applied to productionLocation: that vocabulary has no
+            # equivalent term, and inventing one would assert a meaning
+            # it has not defined.
+            issuer_relation = ISSUER_RELATION_BY_RECORD_TYPE.get(
+                association.record_type
+            )
+            if issuer_relation is not None:
+                entries[issuer_relation] = [
+                    dict(link) for link in registered_record
+                ]
 
         return {'linkset': [dict(anchor=anchor, **entries)]}
 
@@ -344,9 +386,17 @@ class ResolverDescriptionView(APIView):
                 'profileUrl': '{}?show=linktypes'.format(
                     vocabulary_namespace(root)
                 ),
-                # The relation types this resolver emits, which is what
-                # the field is for. The link-set media type is advertised
-                # through content negotiation, not here.
+                # The relation types we publish, every one of which
+                # dereferences to a definition under namespaceURI. That
+                # is what this field is defined to be here, and it is
+                # pinned by test_each_published_link_type_dereferences,
+                # so the issuer's relation is out of scope by that
+                # definition rather than by any property of the term.
+                # It is emitted as a link-set relation instead, in the
+                # body and the `Link` header alike.
+                #
+                # The link-set media type is advertised through content
+                # negotiation, not here.
                 'supportedLinkType': [
                     link_type_uri(root, entry['name'])
                     for entry in LINK_TYPES
