@@ -43,6 +43,33 @@ echo "Stop time: $(date +%T)"
 echo "Task stopped reason:"
 aws ecs describe-tasks --cluster ecsOpenSupplyHub${1}Cluster --tasks ${task_arn} --query 'tasks[0].[stoppedReason]'
 
+
+# Captured before the logs are fetched, so a failed log retrieval cannot mask
+# the container's own result. Selected by container name rather than by
+# position, because describe-tasks does not guarantee the order of containers[]
+# and a sidecar added later must not be able to answer for the django one.
+#
+# Retried because a transient describe-tasks failure produces no output, which
+# is otherwise indistinguishable from a container that never ran and would fail
+# a deploy whose command had in fact succeeded. Only an API failure is retried;
+# a reported null exit code is an answer, not an error.
+exit_code=""
+for describe_attempt in 1 2 3; do
+    if exit_code="$(aws ecs describe-tasks \
+        --cluster ecsOpenSupplyHub${1}Cluster \
+        --tasks ${task_arn} \
+        --query "tasks[0].containers[?name=='django'].exitCode | [0]" \
+        --output text)"; then
+        break
+    fi
+    echo "describe-tasks failed (attempt $describe_attempt of 3)." >&2
+    exit_code=""
+    if [ "$describe_attempt" -lt 3 ]; then
+        sleep 5
+    fi
+done
+echo "Container exit code: $exit_code"
+
 echo "----- Log Stream -----"
 echo ""
 echo ""
@@ -50,3 +77,21 @@ aws logs get-log-events --log-group-name "logOpenSupplyHub${1}AppCLI" --log-stre
 echo ""
 echo ""
 echo "----- Log Stream end -----"
+
+# A task killed before the container ran (OOM, ENI failure, image pull error)
+# reports a null exitCode, which the CLI renders as "None" - that is a failure,
+# not a success. An unreadable exit code is treated the same way.
+case "$exit_code" in
+    0)
+        exit 0
+        ;;
+    ''|None|null)
+        echo "ERROR: no container exit code reported - the container did not run to completion." >&2
+        echo "Check the stopped reason above and the Task URL." >&2
+        exit 1
+        ;;
+    *)
+        echo "ERROR: container exited with code $exit_code." >&2
+        exit "$exit_code"
+        ;;
+esac
