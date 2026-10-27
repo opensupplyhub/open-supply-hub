@@ -49,10 +49,10 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     def get_claim_invite(self, claim):
         # The invite whose claim link this claim was submitted from, so
         # moderators can see who referred the claimant.
-        
+
         if not switch_is_active(CLAIM_INVITE_SWITCH):
             return None
-        
+
         invite = claim.claim_invite
         if invite is None:
             return None

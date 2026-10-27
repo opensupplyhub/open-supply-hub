@@ -45,7 +45,7 @@ class FacilityClaimInvite(models.Model):
                   'email as plain text.'
     )
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     @property
     def sent_by_contributor(self):
         """

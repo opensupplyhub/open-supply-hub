@@ -2635,7 +2635,6 @@ class FacilitiesViewSet(ListModelMixin,
             # Lock the location so concurrent invites to it are checked
             # against the limits one at a time.
             facility = Facility.objects.select_for_update().get(pk=pk)
-            contributor = request.user.contributor
         except Facility.DoesNotExist as exc:
             raise NotFound(detail='Facility not found.') from exc
         except Contributor.DoesNotExist as exc:
