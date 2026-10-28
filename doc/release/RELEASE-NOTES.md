@@ -3,6 +3,24 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.33.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Code/API changes
+* [OSDEV-3660](https://opensupplyhub.atlassian.net/browse/OSDEV-3660) - Zone-set-backed Spotlight partners are now searchable, closing the gap OSDEV-3551 shipped with (zone sets were display-only, so a zone-set partner appeared in the Spotlight Partners dropdown but every search returned "No facilities matching this search" and its contributor profile listed no locations). `apply_partner_fields_or_filter` in `partner_contributor_filter.py` gains a zone-set branch: every requested field name linked to an active `ZoneSet` is matched by location, with a correlated `Exists` on `api_zone` using `geom__covers` so Postgres answers it from the GiST index and a point on a zone edge resolves exactly as the location page's `ZoneSet.resolve_zone` does. Zone-set names are excluded from the `ExtendedField` subquery so a name is never matched twice, and the branch ORs with the contributed, WageIndicator, MIT Living Wage and India Labour Line branches as before, so a partner holding both a zone-set field and a contributed field returns the union. This applies to `GET /api/facilities/` through both `facility_manager.py` and `facility_manager_index_new.py`; the v1 OpenSearch endpoint has no Spotlight Partners filter and is unchanged. `GET /user-profile/{id}/facilities/?spotlight=true` gets the same branch before its `ExtendedField` fallback, so the profile Spotlight list shows the covered locations (whoever contributed them) and unions them with contributed-field locations. Both surfaces share two helpers in `zone_set_provider.py`, `get_active_zone_sets_for_fields` and `build_zone_sets_covered_q` (the counterpart of the India Labour Line's `build_covered_locations_q`), so search, profile and the location page cannot drift apart; `ZONE_SETS_SWITCH` moves there and is re-exported from the registry. While the `enable_zone_sets` switch is off, or a zone set is inactive, the field matches nothing (never everything) and `api_zoneset` is not queried. Nothing is precomputed: a location whose coordinates are corrected into a zone appears on the next search with no backfill or reindex.
+
+### What's new
+* [OSDEV-3660](https://opensupplyhub.atlassian.net/browse/OSDEV-3660) - Selecting a Spotlight partner whose dataset is a zone set (such as WRI Aqueduct water stress) in the Spotlight Partners search filter now returns the production locations whose coordinates fall inside the partner's zones, and the partner's contributor profile lists those same locations under Spotlight, so a zone-set-backed partner behaves like every other Spotlight partner.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.32.0
 
 ## Introduction
