@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef, Q
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -15,6 +15,10 @@ from ...models.wage_indicator_country_data import WageIndicatorCountryData
 from ...partner_fields.india_labour_line_provider import (
     IndiaLabourLineProvider,
     get_covered_production_locations,
+)
+from ...partner_fields.zone_set_provider import (
+    build_zone_sets_covered_q,
+    get_active_zone_sets_for_fields,
 )
 from ...serializers.facility.facility_index_summary_serializer import (
     FacilityIndexSummarySerializer,
@@ -119,12 +123,43 @@ class UserProfileFacilities(ListAPIView):
                 self.__base_queryset()
             )
 
-        return queryset.filter(
-            Exists(
-                ExtendedField.objects.filter(
-                    facility_id=OuterRef("id"),
-                    contributor_id=contributor.id,
-                    field_name__in=partner_fields,
-                )
+        # A zone-set field is served by polygons, so its spotlight is
+        # every location a zone covers, whoever contributed it. The
+        # shared helpers keep this the same condition the search
+        # filter applies, and return no zone sets while the
+        # `enable_zone_sets` switch is off (or the set is inactive),
+        # in which case the field falls through to the contributed
+        # branch below and matches nothing. A contributor holding
+        # both a zone-set field and a contributed field gets the
+        # union of the two, with the contributed half still scoped to
+        # the contributor's own locations as it always was.
+        zone_sets = get_active_zone_sets_for_fields(partner_fields)
+        zone_set_field_names = {
+            zone_set.partner_field.name for zone_set in zone_sets
+        }
+        contributed_fields = [
+            field_name
+            for field_name in partner_fields
+            if field_name not in zone_set_field_names
+        ]
+
+        contributed_q = Exists(
+            ExtendedField.objects.filter(
+                facility_id=OuterRef("id"),
+                contributor_id=contributor.id,
+                field_name__in=contributed_fields,
             )
         )
+
+        if not zone_sets:
+            return queryset.filter(contributed_q)
+
+        covered_q = build_zone_sets_covered_q(zone_sets)
+        if contributed_fields:
+            own_contributed_q = (
+                Q(contributors_id__contains=[contributor.id]) & contributed_q
+            )
+            return self.__base_queryset().filter(
+                covered_q | own_contributed_q
+            )
+        return self.__base_queryset().filter(covered_q)
