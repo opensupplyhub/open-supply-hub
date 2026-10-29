@@ -47,6 +47,8 @@ codebuild_github_runner_enabled = true
 # One-off Fargate task that restores the anonymized dump into this
 # environment's database (deployment/terraform/database_restore.tf).
 database_restore_enabled = true
+# One-off restore source (db_snapshot_anonymize_to_test.yml, Oct 2026 snapshot).
+database_restore_dump_s3_key = "osh_prod_snapshot_20261001_anon.dump"
 
 app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"

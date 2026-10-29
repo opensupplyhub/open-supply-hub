@@ -1,0 +1,192 @@
+name: "DB - Snapshot to Anonymized Dump (Test)"
+
+# One-off: restore an automated Production RDS snapshot into a temporary
+# instance in the Production account, anonymize it there, dump the anonymized
+# copy and upload only that dump to the non-prod dumps bucket. The raw data
+# never leaves the Production account. Apply the uploaded dump to Test with
+# "DB - Apply Anonymized DB" after Terraform points the restore task at the
+# new key (deployment/environments/terraform-test.tfvars).
+
+on:
+  workflow_dispatch:
+    inputs:
+      snapshot-id:
+        description: "Production RDS snapshot identifier (automated, e.g. rds:opensupplyhub-enc-prd-2026-10-01-04-04)"
+        required: true
+        type: string
+        default: "rds:opensupplyhub-enc-prd-2026-10-01-04-04"
+      dump-key:
+        description: "Key of the anonymized dump in the dumps bucket (oshub-dumps-anonymized)"
+        required: true
+        type: string
+        default: "osh_prod_snapshot_20261001_anon.dump"
+
+env:
+  DUMP_BUCKET: oshub-dumps-anonymized
+  DB_NAME: opensupplyhub
+  TEMP_INSTANCE_ID: anon-snap-${{ github.run_id }}
+  SNAPSHOT_ID: ${{ inputs.snapshot-id }}
+  DUMP_KEY: ${{ inputs.dump-key }}
+
+jobs:
+  snapshot-to-anonymized-dump:
+    # Same ephemeral CodeBuild runner and Test environment (secrets) as
+    # db_save_anonymized.yml.
+    runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    environment: Test
+    timeout-minutes: 300
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Restore the snapshot into a temporary instance (Production account)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -euo pipefail
+
+          # Reuse the network and class of the instance the snapshot came from,
+          # so the temporary copy sits in the same VPC and security groups the
+          # bastion already reaches.
+          SOURCE_INSTANCE=$(aws rds describe-db-snapshots \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --query 'DBSnapshots[0].DBInstanceIdentifier' --output text)
+          CLASS=$(aws rds describe-db-instances --db-instance-identifier "$SOURCE_INSTANCE" \
+            --query 'DBInstances[0].DBInstanceClass' --output text)
+          SUBNET_GROUP=$(aws rds describe-db-instances --db-instance-identifier "$SOURCE_INSTANCE" \
+            --query 'DBInstances[0].DBSubnetGroup.DBSubnetGroupName' --output text)
+          SG_IDS=$(aws rds describe-db-instances --db-instance-identifier "$SOURCE_INSTANCE" \
+            --query 'DBInstances[0].VpcSecurityGroups[].VpcSecurityGroupId' --output text)
+          echo "Source instance: $SOURCE_INSTANCE ($CLASS, subnet group $SUBNET_GROUP)"
+
+          aws rds restore-db-instance-from-db-snapshot \
+            --db-instance-identifier "$TEMP_INSTANCE_ID" \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --db-instance-class "$CLASS" \
+            --db-subnet-group-name "$SUBNET_GROUP" \
+            --vpc-security-group-ids $SG_IDS \
+            --no-multi-az \
+            --no-publicly-accessible \
+            --no-auto-minor-version-upgrade \
+            --no-deletion-protection \
+            --output text
+
+      - name: Wait for the temporary instance to be available
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -uo pipefail
+          for attempt in $(seq 1 180); do
+            STATUS=$(aws rds describe-db-instances --db-instance-identifier "$TEMP_INSTANCE_ID" \
+              --query 'DBInstances[0].DBInstanceStatus' --output text)
+            echo "[$attempt] $TEMP_INSTANCE_ID status: $STATUS"
+            case "$STATUS" in
+              available) exit 0 ;;
+              failed | incompatible-* | storage-full | inaccessible-encryption-credentials*)
+                echo "Temporary instance is in state $STATUS" >&2
+                exit 1 ;;
+            esac
+            sleep 60
+          done
+          echo "Temporary instance was not available after 180 minutes" >&2
+          exit 1
+
+      - name: Open the tunnel to the temporary instance (Production bastion)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION: eu-west-1
+          ENVIRONMENT: Production
+        run: |
+          set -euo pipefail
+          ENDPOINT=$(aws rds describe-db-instances --db-instance-identifier "$TEMP_INSTANCE_ID" \
+            --query 'DBInstances[0].Endpoint.Address' --output text)
+          echo "TEMP_ENDPOINT=$ENDPOINT" >> "$GITHUB_ENV"
+          bash deployment/ssm/ssm_tunnel.sh start "$ENDPOINT" 5432 5433
+
+      - name: Anonymize the temporary instance (Production account)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -euo pipefail
+          SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "oshub/production/rds-master" \
+            --query SecretString --output text)
+          DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
+          DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
+
+          # Same script the weekly anonymizer runs (database_anonymizer.py).
+          docker run --rm --network host \
+            -e PGPASSWORD="$DB_PASS" \
+            -v "$GITHUB_WORKSPACE/deployment/terraform/database_anonymizer_scheduled_task/docker/anonymize_script.sql:/anonymize_script.sql:ro" \
+            postgis/postgis:16-3.4-alpine \
+            psql -h localhost -p 5433 -U "$DB_USER" -d "$DB_NAME" \
+              -v ON_ERROR_STOP=1 -w -f /anonymize_script.sql
+
+      - name: Dump the anonymized database
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -euo pipefail
+          SECRET_JSON=$(aws secretsmanager get-secret-value \
+            --secret-id "oshub/production/rds-master" \
+            --query SecretString --output text)
+          DB_USER=$(jq -r '.username' <<<"$SECRET_JSON")
+          DB_PASS=$(jq -r '.password' <<<"$SECRET_JSON")
+
+          mkdir -p "$RUNNER_TEMP/dumps"
+          docker run --rm --network host \
+            -e PGPASSWORD="$DB_PASS" \
+            -v "$RUNNER_TEMP/dumps:/dumps" \
+            postgis/postgis:16-3.4-alpine \
+            pg_dump --clean --no-owner --no-privileges -Fc \
+              -h localhost -p 5433 -U "$DB_USER" -d "$DB_NAME" \
+              -f /dumps/anonymized.dump -w --verbose
+
+          # Fail here, not in the restore, if the file is not a valid dump.
+          docker run --rm -v "$RUNNER_TEMP/dumps:/dumps:ro" \
+            postgis/postgis:16-3.4-alpine \
+            pg_restore -l /dumps/anonymized.dump > /dev/null
+          ls -la "$RUNNER_TEMP/dumps"
+
+      - name: Upload the anonymized dump to the dumps bucket (Test account)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -euo pipefail
+          aws s3 cp --only-show-errors "$RUNNER_TEMP/dumps/anonymized.dump" \
+            "s3://${DUMP_BUCKET}/${DUMP_KEY}"
+          echo "Uploaded s3://${DUMP_BUCKET}/${DUMP_KEY}"
+          rm -f "$RUNNER_TEMP/dumps/anonymized.dump"
+
+      - name: Close the tunnel
+        # Runs when the workflow is cancelled or a step fails.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: bash "$GITHUB_WORKSPACE/deployment/ssm/ssm_tunnel.sh" stop 5433
+
+      - name: Delete the temporary instance (Production account)
+        # Runs even if an earlier step failed, so no raw copy is left running.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_RPOD }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          aws rds delete-db-instance \
+            --db-instance-identifier "$TEMP_INSTANCE_ID" \
+            --skip-final-snapshot --delete-automated-backups \
+            --output text || echo "No temporary instance to delete"
