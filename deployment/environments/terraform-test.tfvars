@@ -120,7 +120,7 @@ memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvmXPN2tV5nf0j18Vaed5v"
 hubspot_subscription_id = "12847627"
 dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
-google_drive_shared_directory_id = "18ld9-YuqJZZE1GwBx47nih1lUJDM-3m4"
+google_drive_shared_directory_id = "12ZhHCXHJD25NbfrqGnp5AT39odskr1Si"
 aws_key_name = "osh-tst"
 
 rds_master_secret_name = "oshub/test/rds-master"
