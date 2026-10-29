@@ -52,6 +52,8 @@ jobs:
           # Reuse the network and class of the instance the snapshot came from,
           # so the temporary copy sits in the same VPC and security groups the
           # bastion already reaches.
+          aws sts get-caller-identity --query Account --output text
+          aws rds describe-db-snapshots --db-snapshot-identifier "$SNAPSHOT_ID" --output json
           SOURCE_INSTANCE=$(aws rds describe-db-snapshots \
             --db-snapshot-identifier "$SNAPSHOT_ID" \
             --query 'DBSnapshots[0].DBInstanceIdentifier' --output text)
