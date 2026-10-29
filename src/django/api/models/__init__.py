@@ -70,6 +70,7 @@ from .extended_field import (
   ExtendedField,
   HistoricalExtendedField
 )
+from .lei_mapping import LeiMapping
 from .nonstandard_field import NonstandardField
 from .partner_field import PartnerField
 from .isic_crosswalk_entry import IsicCrosswalkEntry
