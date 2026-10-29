@@ -6,8 +6,10 @@ name: "DB - Snapshot to Anonymized Dump (Test)"
 # never leaves the Production account. Apply the uploaded dump to Test with
 # "DB - Apply Anonymized DB" after Terraform points the restore task at the
 # new key (deployment/environments/terraform-test.tfvars).
-
 on:
+  push:
+    branches:
+      - OSDEV-3706-restore-missing-september-1-and-october-1-2026-monthly-bulk-data-downloads   # use your actual branch name
   workflow_dispatch:
     inputs:
       snapshot-id:
