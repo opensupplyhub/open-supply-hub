@@ -12,9 +12,10 @@ helper = MigrationHelper(connection)
 
 
 def seed_crosswalk(apps, schema_editor):
+    # Sector rows arrive in 0260, once the table has a sector column.
     replace_crosswalk_entries(
         apps.get_model('api', 'IsicCrosswalkEntry'),
-        load_crosswalk_rows(),
+        load_crosswalk_rows(sector_path=None),
     )
 
 
