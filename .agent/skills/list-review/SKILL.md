@@ -155,6 +155,12 @@ differ enough that guessing produces wrong tags.
   min 500 / max 500 — so letting the row through publishes a precise
   number the contributor never gave. Ask for an exact count or a real
   range; don't substitute one.
+  - **Exception — `>` between two numbers is a range separator, not an
+    open-ended count.** `1->50`, `1 >50` and `101->500` are ranges: the
+    platform reads them correctly as min 1 / max 50, so they are NOT
+    removals. This is common enough to check rather than assume — across
+    all list rows carrying a worker value, 2,777 use `>` as a separator
+    against 11,042 that are genuinely open-ended.
 - `spelling_name` / `spelling_address` → REMOVE. Spelling variants survive
   cleaning and won't auto-match, producing duplicate OS IDs. When unsure
   whether a variant is a typo or a legitimate local spelling, ask.
