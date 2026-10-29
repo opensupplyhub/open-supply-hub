@@ -27,8 +27,8 @@ env:
   DUMP_BUCKET: oshub-dumps-anonymized
   DB_NAME: opensupplyhub
   TEMP_INSTANCE_ID: anon-snap-${{ github.run_id }}
-  SNAPSHOT_ID: ${{ inputs.snapshot-id }}
-  DUMP_KEY: ${{ inputs.dump-key }}
+  SNAPSHOT_ID: ${{ inputs.snapshot-id || 'rds:opensupplyhub-enc-prd-2026-10-01-04-04' }}
+  DUMP_KEY: ${{ inputs.dump-key || 'osh_prod_snapshot_20261001_anon.dump' }}
 
 jobs:
   snapshot-to-anonymized-dump:
@@ -48,17 +48,13 @@ jobs:
           AWS_DEFAULT_REGION: eu-west-1
         run: |
           set -euo pipefail
-
+          echo "SNAPSHOT_ID=[$SNAPSHOT_ID]" : "${SNAPSHOT_ID:?SNAPSHOT_ID is empty}"
           # Reuse the network and class of the instance the snapshot came from,
           # so the temporary copy sits in the same VPC and security groups the
           # bastion already reaches.
-          aws sts get-caller-identity --query Account --output text
-          aws rds describe-db-snapshots --db-snapshot-identifier "$SNAPSHOT_ID" --output json
           SOURCE_INSTANCE=$(aws rds describe-db-snapshots \
             --db-snapshot-identifier "$SNAPSHOT_ID" \
             --query 'DBSnapshots[0].DBInstanceIdentifier' --output text)
-          printf 'SOURCE_INSTANCE=[%s]\n' "$SOURCE_INSTANCE"
-          printf '%s' "$SOURCE_INSTANCE" | od -c
           CLASS=$(aws rds describe-db-instances --db-instance-identifier "$SOURCE_INSTANCE" \
             --query 'DBInstances[0].DBInstanceClass' --output text)
           SUBNET_GROUP=$(aws rds describe-db-instances --db-instance-identifier "$SOURCE_INSTANCE" \
