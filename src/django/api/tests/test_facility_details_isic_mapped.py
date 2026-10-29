@@ -4,13 +4,14 @@ from django.test.utils import CaptureQueriesContext
 from waffle.testutils import override_switch
 
 from api.models import ExtendedField
+from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
 @override_switch('enable_isic_taxonomy', active=True)
 class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
     '''GET /api/facilities/{os_id}/ returns ISIC values mapped from the
-    location's Facility Type and Processing Type (OSDEV-3622).'''
+    location's Facility Type, Processing Type and Sector (OSDEV-3622).'''
 
     def setUp(self):
         super().setUp()
@@ -45,6 +46,7 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
         self._add_processing_type('Final Product Assembly', 'Cut & Sew')
 
         self.assertEqual(self._mapped(), [{
+            'sector': '',
             'facility_type': 'Final Product Assembly',
             'processing_type': 'Cut & Sew',
             'path': [
@@ -78,6 +80,37 @@ class FacilityDetailsIsicMappedTest(FacilityAPITestCaseBase):
         self.assertEqual(
             self._mapped()[0]['path'],
             [{'level': 'section', 'code': 'C', 'title': 'Manufacturing'}],
+        )
+
+    def _set_sectors(self, sectors):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            sector=sectors,
+        )
+
+    def test_returns_values_mapped_from_sector(self):
+        self._set_sectors(['Mining'])
+
+        self.assertEqual(self._mapped(), [{
+            'sector': 'Mining',
+            'facility_type': '',
+            'processing_type': '',
+            'path': [{
+                'level': 'section',
+                'code': 'B',
+                'title': 'Mining and quarrying',
+            }],
+        }])
+
+    def test_returns_sector_and_processing_type_values_together(self):
+        self._add_processing_type('Final Product Assembly', 'Cut & Sew')
+        self._set_sectors(['Warehousing'])
+
+        self.assertEqual(
+            [
+                (value['sector'], value['path'][-1]['code'])
+                for value in self._mapped()
+            ],
+            [('', '1410'), ('Warehousing', '5210')],
         )
 
     def test_omits_values_that_do_not_map(self):

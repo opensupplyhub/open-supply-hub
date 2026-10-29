@@ -37,10 +37,24 @@ const MAPPED_APPAREL = {
     ],
 };
 
-const data = ({ isic4 = [], isic5 = [], mapped = [], types = [] } = {}) => ({
+const MAPPED_MINING = {
+    sector: 'Mining',
+    facility_type: '',
+    processing_type: '',
+    path: [{ level: 'section', code: 'B', title: 'Mining and quarrying' }],
+};
+
+const data = ({
+    isic4 = [],
+    isic5 = [],
+    mapped = [],
+    types = [],
+    sectors = [],
+} = {}) => ({
     properties: {
         extended_fields: { isic_4: isic4, isic_5: isic5, processing_type: types },
         isic_4_mapped: mapped,
+        sector: sectors,
     },
 });
 
@@ -122,6 +136,32 @@ describe('Industry Classification fields', () => {
             userId: undefined,
             provenance: null,
         });
+    });
+
+    test('values mapped from a sector date from the latest sector or type', () => {
+        const date = input =>
+            fieldsByLabel(input)['ISIC Rev. 4'].drawerData.promotedContribution.date;
+
+        expect(
+            date(
+                data({
+                    mapped: [MAPPED_MINING],
+                    sectors: [
+                        { updated_at: '2026-03-01T00:00:00Z' },
+                        { updated_at: '2026-05-01T00:00:00Z' },
+                    ],
+                }),
+            ),
+        ).toBe('2026-05-01T00:00:00Z');
+        expect(
+            date(
+                data({
+                    mapped: [MAPPED_MINING, MAPPED_APPAREL],
+                    sectors: [{ updated_at: '2026-03-01T00:00:00Z' }],
+                    types: [{ created_at: '2026-07-09T00:00:00Z' }],
+                }),
+            ),
+        ).toBe('2026-07-09T00:00:00Z');
     });
 
     test('a location with only Open Supply Hub values shows them like any value', () => {
