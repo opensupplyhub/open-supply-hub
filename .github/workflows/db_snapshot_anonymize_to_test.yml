@@ -65,7 +65,6 @@ jobs:
             --source-db-snapshot-identifier "$SOURCE_SNAPSHOT" \
             --target-db-snapshot-identifier "$COPY_SNAPSHOT_ID" \
             --kms-key-id "$KMS_KEY" \
-            --copy-tags \
             --output text
 
           for attempt in $(seq 1 120); do
