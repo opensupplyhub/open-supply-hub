@@ -55,6 +55,8 @@ jobs:
           SOURCE_INSTANCE=$(aws rds describe-db-snapshots \
             --db-snapshot-identifier "$SNAPSHOT_ID" \
             --query 'DBSnapshots[0].DBInstanceIdentifier' --output text)
+          printf 'SOURCE_INSTANCE=[%s]\n' "$SOURCE_INSTANCE"
+          printf '%s' "$SOURCE_INSTANCE" | od -c
           CLASS=$(aws rds describe-db-instances --db-instance-identifier "$SOURCE_INSTANCE" \
             --query 'DBInstances[0].DBInstanceClass' --output text)
           SUBNET_GROUP=$(aws rds describe-db-instances --db-instance-identifier "$SOURCE_INSTANCE" \
