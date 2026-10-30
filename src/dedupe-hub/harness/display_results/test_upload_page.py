@@ -52,6 +52,29 @@ class PresetButtons(unittest.TestCase):
         self.assertEqual(up.preset_buttons([]), "")
 
 
+class CompactEncoding(unittest.TestCase):
+    """The packed format used by --compact."""
+
+    def decode(self, text, lengths):
+        """Decode a base64 string of little-endian uint16 values (x 10000) into per-upload lists, as the page script does."""
+        import base64
+        raw = base64.b64decode(text)
+        out, k = [], 0
+        for n in lengths:
+            out.append([(raw[k + 2 * j] | (raw[k + 2 * j + 1] << 8)) / 10000 for j in range(n)])
+            k += 2 * n
+        return out
+
+    def test_scores_round_trip_exactly(self):
+        """Scores rounded to four places survive packing and unpacking unchanged, including 0 and 1."""
+        rows = [[0.9744], [0.0, 1.0, 0.5], [], [0.0001, 0.9999]]
+        self.assertEqual(self.decode(up.encode_scores(rows), [len(r) for r in rows]), rows)
+
+    def test_ret_joins_the_strings(self):
+        """The retrieval flags of every upload become one string, which the page splits again by candidate count."""
+        self.assertEqual(up.encode_ret(["1", "01", "0"]), "1010")
+
+
 class ParseStart(unittest.TestCase):
     """--start values."""
 

@@ -67,6 +67,8 @@ Options that shape the page:
 |---|---|
 | `--preset "LABEL=AUTO/FLOOR[/GROUP[/TOLERANCE]]"` | a threshold button. With a group and a tolerance (`average`, `sd` or `worst`) it also picks the model and sets the regression test to that tolerance (the baseline's average, average plus one standard deviation, or worst run) |
 | `--start "GROUP=AUTO/FLOOR[/TOLERANCE]"` | opens the page on one model, pair and tolerance. The production presets are unchanged |
+| `--compact` | for sharing: packs the scores into a much smaller page (about a third of the size) and leaves out the score file names |
+| `--intro HTML_FILE` | an "About this page" panel under the title |
 | `--weights "LABEL=PATH"` (repeatable) | a checkbox that re-weights the overall rows so each country counts in proportion to its production volume (a CSV of country and count); with several it adds a menu to choose the period |
 
 The page says which test is judging the verdicts and dims the settings that test does not use. `analysis/` in the handback bundle has the scripts that read a page and print the numbers used in the write-up.

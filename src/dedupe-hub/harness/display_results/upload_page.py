@@ -32,6 +32,7 @@ the parity check in the build notes). Pure stdlib. Usage:
       [--scores "other=scores2.csv"] [--retrieval "baseline=retrieval.csv"] --out page.html [--min-uploads 300]
 """
 import argparse
+import base64
 import collections
 import csv
 import html
@@ -111,6 +112,29 @@ const D = __DATA__;
 const OUT = D.outcomes, CAUSE = D.causes;
 const DEF = {auto: D.defaults.auto, floor: D.defaults.floor};
 const EX = D.uploads.map(u => u[2].split('').map(c => c === '1'));
+// Compact runs (--compact): scores are base64 of unsigned 16-bit values (x 10000) and ret is one long 0/1 string, both split back
+// into one entry per upload by that upload's candidate count.
+{
+  const lens = D.uploads.map(u => u[2].length);
+  for (const r of D.runs) {
+    if (typeof r.scores === 'string') {
+      const bin = atob(r.scores), out = new Array(lens.length);
+      let k = 0;
+      for (let i = 0; i < lens.length; i++) {
+        const row = new Array(lens[i]);
+        for (let j = 0; j < lens[i]; j++, k += 2) row[j] = (bin.charCodeAt(k) | (bin.charCodeAt(k + 1) << 8)) / 10000;
+        out[i] = row;
+      }
+      r.scores = out;
+    }
+    if (typeof r.ret === 'string') {
+      const out = new Array(lens.length);
+      let k = 0;
+      for (let i = 0; i < lens.length; i++) { out[i] = r.ret.substr(k, lens[i]); k += lens[i]; }
+      r.ret = out;
+    }
+  }
+}
 for (const r of D.runs) if (r.ret) r.ret = r.ret.map(x => x.split('').map(c => c === '1'));
 
 // BEGIN classify
@@ -668,7 +692,7 @@ def load_ids(path):
 
 
 def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_specs=(), run_groups=None,
-               flags_path=None, exclude_ids=None, regions_path=None, weight_sets=None, start=None):
+               flags_path=None, exclude_ids=None, regions_path=None, weight_sets=None, start=None, compact=False):
     """Group pairs into uploads and assemble everything the page needs.
 
     retrieval_specs ("NAME=PATH", made with verify_retrain.py --retrieval-all) says,
@@ -781,9 +805,10 @@ def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_spec
         "countries": countries, "show": show, "mix": mix, "uploads": uploads, "hasFlags": bool(pick_one),
         "regionOf": region_of, "weightSets": [{"label": label, "weights": w} for label, w in (weight_sets or [])],
         "start": ({"group": start[0], "auto": start[1], "floor": start[2], "tol": start[3]} if start else None),
-        "runs": [dict({"id": name, "group": (run_groups or {}).get(name, "baseline"), "scores": upload_scores[i],
-                       "meta": os.path.basename(path) + ("" if name in retrievals else " (no retrieval check)")},
-                      **({"ret": upload_ret[i]} if name in retrievals else {}))
+        "runs": [dict({"id": name, "group": (run_groups or {}).get(name, "baseline"),
+                       "scores": encode_scores(upload_scores[i]) if compact else upload_scores[i],
+                       "meta": "" if compact else os.path.basename(path) + ("" if name in retrievals else " (no retrieval check)")},
+                      **({"ret": encode_ret(upload_ret[i]) if compact else upload_ret[i]} if name in retrievals else {}))
                  for i, (name, path, _) in enumerate(runs_scores)],
     }
     stats = {"pairs_used": used, "pairs_without_score": skipped,
@@ -803,6 +828,22 @@ def load_weights(path):
             if len(row) >= 2 and row[0].strip() and row[1].strip().isdigit():
                 out[row[0].strip().lower()] = int(row[1].strip())
     return out
+
+
+def encode_scores(rows):
+    """Pack per-upload candidate scores (lists of floats between 0 and 1, rounded to 4 places) into one base64 string of little-endian
+    unsigned 16-bit integers (score x 10000), the format the page decodes when built with --compact."""
+    raw = bytearray()
+    for row in rows:
+        for x in row:
+            v = int(round(x * 10000))
+            raw += bytes((v & 255, v >> 8))
+    return base64.b64encode(bytes(raw)).decode("ascii")
+
+
+def encode_ret(rows):
+    """Join per-upload retrieval flag strings ("1" or "0" per candidate) into one string, the format the page decodes with --compact."""
+    return "".join(rows)
 
 
 def parse_weight_specs(specs, default_label):
@@ -878,7 +919,7 @@ def weight_controls(data):
             f'the counts then read as list items</span></div>')
 
 
-def render_page(data, stats, pairs_path, presets=()):
+def render_page(data, stats, pairs_path, presets=(), intro_html=""):
     """Wrap the data in the page: controls, legend, caveats, and the script. `presets` is a list of
     (label, auto, floor) added as extra threshold buttons beside the built-in ones."""
     legend = "".join(f'<span title="{html.escape(o["meaning"])}"><i class="sw {o["css"]}"></i>'
@@ -907,7 +948,7 @@ def render_page(data, stats, pairs_path, presets=()):
         f'<!doctype html><html lang="en"><head><meta charset="utf-8">'
         f'<meta name="viewport" content="width=device-width, initial-scale=1">'
         f'<title>Upload outcomes by country</title><style>{BASE_CSS}{EXTRA_CSS}{PAGE_CSS}</style></head>'
-        f'<body><main><h1>What happens to uploads, one bar per run</h1>'
+        f'<body><main><h1>What happens to uploads, one bar per run</h1>{intro_html}'
         f'<div class="banner">{caveat}</div>'
         f'<div class="panel"><div class="note" id="thrWho"></div><div class="row">'
         f'<div class="ctl"><label for="auto">Auto-match bar (at or above links automatically)'
@@ -997,6 +1038,9 @@ def main():
                    help="the label for a --weights value given as a bare path")
     p.add_argument("--start", metavar="GROUP=AUTO/FLOOR",
                    help='open the page on one model, pair and tolerance, for example "chal6k=0.76/0.30/average" (the production presets are unchanged)')
+    p.add_argument("--compact", action="store_true",
+                   help="for sharing: pack the scores into a much smaller page and leave out the score file names")
+    p.add_argument("--intro", metavar="HTML_FILE", help="an HTML snippet shown under the title, for example what the page is and how to use it")
     p.add_argument("--preset", action="append", default=[], metavar="LABEL=AUTO/FLOOR",
                    help="add a threshold button to the page, for example \"6k best=0.76/0.30\" (repeatable)")
     args = p.parse_args()
@@ -1005,8 +1049,10 @@ def main():
     data, stats = build_data(args.pairs, args.scores, args.min_uploads, args.auto, args.floor, args.retrieval,
                              dict(g.partition("=")[::2] for g in args.group), args.flags,
                              load_ids(args.exclude_ids), args.regions,
-                             [(label, load_weights(path)) for label, path in parse_weight_specs(args.weights, args.weights_label)], start)
-    page = render_page(data, stats, args.pairs, presets)
+                             [(label, load_weights(path)) for label, path in parse_weight_specs(args.weights, args.weights_label)], start,
+                             args.compact)
+    intro_html = open(args.intro, encoding="utf-8").read() if args.intro else ""
+    page = render_page(data, stats, args.pairs, presets, intro_html)
     with open(args.out, "w") as f:
         f.write(page)
     print(f"wrote {args.out} ({len(page) / 1e6:.1f} MB)")
