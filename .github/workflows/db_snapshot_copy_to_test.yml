@@ -1,0 +1,275 @@
+name: "DB - Copy Anonymized Snapshot to Dumps Bucket (Test)"
+
+# One-off: the snapshot is already anonymized by the weekly anonymizer
+# (Production account), and a shared copy is visible to the Test account.
+# This workflow:
+#   1. copies that shared snapshot into the Test account,
+#   2. restores the copy to a temporary instance in the Test VPC,
+#   3. runs the Test anonymized-dump Fargate task inside the VPC, which
+#      streams pg_dump straight to S3 (no SSM tunnel, no local disk),
+#   4. keeps the temporary instance and the copied snapshot for reuse.
+#      Delete them by hand when finished: anon-restore-<run id> and anon-copy-<run id>.
+# Only Test credentials are used. Database credentials come from the
+# secrets of the Test anonymized-dump task definition.
+
+on:
+  workflow_dispatch:
+    inputs:
+      source-snapshot:
+        description: "Shared anonymized snapshot ARN (Production account, shared with Test)"
+        required: true
+        type: string
+        default: "arn:aws:rds:eu-west-1:249322298638:snapshot:opensupplyhub-enc-prd-2026-10-02-04-04-anonymized-shared"
+      dump-key:
+        description: "Key of the dump in oshub-dumps-anonymized"
+        required: true
+        type: string
+        default: "osh_prod_snapshot_20261002_anon.dump"
+
+env:
+  DUMP_BUCKET: oshub-dumps-anonymized
+  TEST_DB_IDENTIFIER: opensupplyhub-enc-tst
+  TEMP_CLASS: db.t3.2xlarge
+  # Upper bound for the streamed upload; only used to size the S3 parts.
+  DUMP_EXPECTED_SIZE: "400000000000"
+  COPY_SNAPSHOT_ID: anon-copy-${{ github.run_id }}
+  TEMP_INSTANCE_ID: anon-restore-${{ github.run_id }}
+  # Push runs have no inputs, so fall back to the same values as the defaults.
+  SOURCE_SNAPSHOT: ${{ inputs.source-snapshot || 'arn:aws:rds:eu-west-1:249322298638:snapshot:opensupplyhub-enc-prd-2026-10-02-04-04-anonymized-shared' }}
+  DUMP_KEY: ${{ inputs.dump-key || 'osh_prod_snapshot_20261002_anon.dump' }}
+
+jobs:
+  copy-snapshot-to-dump:
+    # Same ephemeral CodeBuild runner and Test environment (secrets) as
+    # db_save_anonymized.yml.
+    runs-on: codebuild-osh-github-actions-runner-${{ github.run_id }}-${{ github.run_attempt }}
+    environment: Test
+    timeout-minutes: 600
+    steps:
+      - name: Copy the shared snapshot into the Test account
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -euo pipefail
+          : "${SOURCE_SNAPSHOT:?source snapshot is empty}"
+          echo "Source snapshot: $SOURCE_SNAPSHOT"
+
+          KMS_KEY=$(aws secretsmanager get-secret-value \
+            --secret-id "oshub/test/anonymized-database-kms-key-id" \
+            --query SecretString --output text)
+
+          aws rds copy-db-snapshot \
+            --source-db-snapshot-identifier "$SOURCE_SNAPSHOT" \
+            --target-db-snapshot-identifier "$COPY_SNAPSHOT_ID" \
+            --kms-key-id "$KMS_KEY" \
+            --output text
+
+          for attempt in $(seq 1 120); do
+            STATUS=$(aws rds describe-db-snapshots \
+              --db-snapshot-identifier "$COPY_SNAPSHOT_ID" \
+              --query 'DBSnapshots[0].Status' --output text)
+            echo "[$attempt] $COPY_SNAPSHOT_ID status: $STATUS"
+            if [ "$STATUS" = "available" ]; then
+              exit 0
+            fi
+            sleep 60
+          done
+          echo "Snapshot copy was not available after 120 minutes" >&2
+          exit 1
+
+      - name: Restore the copy into a temporary instance (Test account)
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -euo pipefail
+
+          # Same subnet group as the Test database. No explicit security group:
+          # the VPC default group is the one the anonymized-dump task uses, so
+          # it can reach this instance.
+          SUBNET_GROUP=$(aws rds describe-db-instances \
+            --db-instance-identifier "$TEST_DB_IDENTIFIER" \
+            --query 'DBInstances[0].DBSubnetGroup.DBSubnetGroupName' --output text)
+          echo "Subnet group: $SUBNET_GROUP"
+
+          aws rds restore-db-instance-from-db-snapshot \
+            --db-instance-identifier "$TEMP_INSTANCE_ID" \
+            --db-snapshot-identifier "$COPY_SNAPSHOT_ID" \
+            --db-instance-class "$TEMP_CLASS" \
+            --db-subnet-group-name "$SUBNET_GROUP" \
+            --no-multi-az \
+            --no-publicly-accessible \
+            --no-auto-minor-version-upgrade \
+            --no-deletion-protection \
+            --output text
+
+      - name: Wait for the temporary instance to be available
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -uo pipefail
+          for attempt in $(seq 1 180); do
+            STATUS=$(aws rds describe-db-instances \
+              --db-instance-identifier "$TEMP_INSTANCE_ID" \
+              --query 'DBInstances[0].DBInstanceStatus' --output text)
+            echo "[$attempt] $TEMP_INSTANCE_ID status: $STATUS"
+            case "$STATUS" in
+              available) exit 0 ;;
+              failed | incompatible-* | storage-full | inaccessible-encryption-credentials*)
+                echo "Temporary instance is in state $STATUS" >&2
+                exit 1 ;;
+            esac
+            sleep 60
+          done
+          echo "Temporary instance was not available after 180 minutes" >&2
+          exit 1
+
+      - name: Start the dump task inside the Test VPC
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -euo pipefail
+
+          # Same network lookups as run_restore_task: Test VPC, private subnets,
+          # and the VPC default security group.
+          VPC_ID=$(aws ec2 describe-vpcs \
+            --filters "Name=tag:Name,Values=vpcOpenSupplyHubTest" \
+            --query 'Vpcs[0].VpcId' --output text)
+          SUBNETS=$(aws ec2 describe-subnets \
+            --filters "Name=vpc-id,Values=${VPC_ID}" "Name=tag:Name,Values=PrivateSubnet" \
+            --query 'Subnets[].SubnetId' --output text | tr '\t' ',')
+          SG=$(aws ec2 describe-security-groups \
+            --filters "Name=vpc-id,Values=${VPC_ID}" "Name=group-name,Values=default" \
+            --query 'SecurityGroups[0].GroupId' --output text)
+
+          # The weekly anonymized-dump task (deployment/terraform/anonymized_database_dump_scheduled_task)
+          # already has pg_dump 16, the AWS CLI, S3 write access and the database secrets.
+          # The weekly anonymized-dump scheduled task's target names the exact
+          # cluster and task definition revision that the weekly job runs.
+          RULE=$(aws events list-rules --name-prefix anonymized-database-dump \
+            --query 'Rules[0].Name' --output text)
+          if [ -z "$RULE" ] || [ "$RULE" = "None" ]; then
+            echo "No EventBridge rule starts with anonymized-database-dump. Rules in this account:" >&2
+            aws events list-rules --query 'Rules[].Name' --output text >&2
+            exit 1
+          fi
+          echo "Rule: $RULE"
+          TARGET_ARN=$(aws events list-targets-by-rule --rule "$RULE" \
+            --query 'Targets[0].Arn' --output text)
+          TASK_DEF=$(aws events list-targets-by-rule --rule "$RULE" \
+            --query 'Targets[0].EcsParameters.TaskDefinitionArn' --output text)
+          CLUSTER="${TARGET_ARN##*/}"
+          CONTAINER=$(aws ecs describe-task-definition --task-definition "$TASK_DEF" \
+            --query 'taskDefinition.containerDefinitions[0].name' --output text)
+          echo "Cluster: $CLUSTER"
+          echo "Task definition: $TASK_DEF (container $CONTAINER)"
+          echo "Subnets: $SUBNETS  Security group: $SG"
+
+          ENDPOINT=$(aws rds describe-db-instances \
+            --db-instance-identifier "$TEMP_INSTANCE_ID" \
+            --query 'DBInstances[0].Endpoint.Address' --output text)
+          echo "Temporary endpoint: $ENDPOINT"
+
+          # Runs inside the container. DATABASE_USERNAME, DATABASE_NAME and
+          # DATABASE_PASSWORD come from the task definition.
+          SCRIPT='set -euo pipefail
+          export PGPASSWORD="$DATABASE_PASSWORD"
+          pg_dump --clean --no-owner --no-privileges -Fc -h "$DUMP_SOURCE_HOST" -p 5432 -U "$DATABASE_USERNAME" -d "$DATABASE_NAME" -w \
+            | aws s3 cp --only-show-errors --expected-size "$DUMP_EXPECTED_SIZE" - "$DUMP_TARGET"
+          echo "Uploaded $DUMP_TARGET"'
+
+          OVERRIDES=$(jq -n \
+            --arg container "$CONTAINER" \
+            --arg script "$SCRIPT" \
+            --arg host "$ENDPOINT" \
+            --arg target "s3://${DUMP_BUCKET}/${DUMP_KEY}" \
+            --arg size "$DUMP_EXPECTED_SIZE" \
+            '{containerOverrides: [{
+                name: $container,
+                command: ["bash", "-c", $script],
+                environment: [
+                  {name: "DUMP_SOURCE_HOST", value: $host},
+                  {name: "DUMP_TARGET", value: $target},
+                  {name: "DUMP_EXPECTED_SIZE", value: $size}
+                ]
+            }]}')
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$CLUSTER" \
+            --task-definition "$TASK_DEF" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SG}],assignPublicIp=DISABLED}" \
+            --overrides "$OVERRIDES" \
+            --started-by "github-${GITHUB_RUN_ID}" \
+            --query 'tasks[0].taskArn' --output text)
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "run-task did not start a task" >&2
+            exit 1
+          fi
+
+          {
+            echo "DUMP_CLUSTER=$CLUSTER"
+            echo "DUMP_TASK_ARN=$TASK_ARN"
+            echo "TEMP_ENDPOINT=$ENDPOINT"
+          } >> "$GITHUB_ENV"
+          echo "Started $TASK_ARN"
+
+      - name: Wait for the dump task to finish
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          set -uo pipefail
+          STATUS=UNKNOWN
+          for attempt in $(seq 1 720); do   # up to 6 hours, polling every 30 seconds
+            STATUS=$(aws ecs describe-tasks --cluster "$DUMP_CLUSTER" --tasks "$DUMP_TASK_ARN" \
+              --query 'tasks[0].lastStatus' --output text)
+            if [ "$STATUS" = "STOPPED" ]; then
+              break
+            fi
+            if [ $((attempt % 10)) -eq 0 ]; then
+              echo "[$attempt] dump task status: $STATUS"
+            fi
+            sleep 30
+          done
+
+          if [ "$STATUS" != "STOPPED" ]; then
+            echo "Dump task did not stop within 6 hours" >&2
+            exit 1
+          fi
+
+          CODE=$(aws ecs describe-tasks --cluster "$DUMP_CLUSTER" --tasks "$DUMP_TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          REASON=$(aws ecs describe-tasks --cluster "$DUMP_CLUSTER" --tasks "$DUMP_TASK_ARN" \
+            --query 'tasks[0].stoppedReason' --output text)
+          echo "Dump task stopped: $REASON (exit code $CODE)"
+          echo "Container logs are in CloudWatch under the anonymized-database-dump log group."
+
+          if [ "$CODE" != "0" ]; then
+            # Remove any partial upload so the next run starts clean.
+            aws s3 rm "s3://${DUMP_BUCKET}/${DUMP_KEY}" >/dev/null 2>&1 || true
+            exit 1
+          fi
+          aws s3api head-object --bucket "$DUMP_BUCKET" --key "$DUMP_KEY" \
+            --query '{Size:ContentLength,Modified:LastModified}' --output table
+
+      - name: Stop the dump task if it is still running
+        # Runs when the workflow is cancelled or a step fails.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: eu-west-1
+        run: |
+          if [ -n "${DUMP_TASK_ARN:-}" ]; then
+            aws ecs stop-task --cluster "$DUMP_CLUSTER" --task "$DUMP_TASK_ARN" \
+              --reason "GitHub workflow cancelled or failed" >/dev/null 2>&1 || true
+          fi

@@ -47,6 +47,8 @@ codebuild_github_runner_enabled = true
 # One-off Fargate task that restores the anonymized dump into this
 # environment's database (deployment/terraform/database_restore.tf).
 database_restore_enabled = true
+# One-off restore source (db_snapshot_anonymize_to_test.yml, Oct 2026 snapshot).
+database_restore_dump_s3_key = "osh_prod_snapshot_20261002_anon.dump"
 
 app_ecs_desired_count = "2"
 app_ecs_deployment_min_percent = "100"
@@ -118,7 +120,7 @@ memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvmXPN2tV5nf0j18Vaed5v"
 hubspot_subscription_id = "12847627"
 dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
-google_drive_shared_directory_id = "18ld9-YuqJZZE1GwBx47nih1lUJDM-3m4"
+google_drive_shared_directory_id = "12ZhHCXHJD25NbfrqGnp5AT39odskr1Si"
 aws_key_name = "osh-tst"
 
 rds_master_secret_name = "oshub/test/rds-master"
