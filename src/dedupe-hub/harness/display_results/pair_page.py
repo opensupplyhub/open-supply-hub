@@ -28,7 +28,7 @@ from verify_retrain.py --retrieval-out, which indexes only the evaluation
 facilities, so absolute rates depend on that index size.
 
 Usage:
-  python3 pair_page.py --pairs pairs.csv --eval-set eval_set.csv \
+  python3 display_results/pair_page.py --pairs pairs.csv --eval-set eval_set.csv \
       --scores "seed_42=scores.csv" --retrieval "seed_42=retrieval.csv" \
       [--scores ...] [--retrieval ...] --out page.html [--min-pairs 300]
 """
@@ -39,7 +39,9 @@ import json
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from evaluate import load_pairs  # noqa: E402
 from run_history import CSS as BASE_CSS, sha256_of  # noqa: E402
 from slice_report import load_eval_set  # noqa: E402

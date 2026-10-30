@@ -7,7 +7,7 @@ additions. Pairs whose two records have the same text as a pair already present 
 that is in both files is not trained on twice.
 
 Usage:
-  python3 merge_training.py --base training_112.json --add training_600.json --out training_600_plus112.json
+  python3 training_sets/merge_training.py --base training_112.json --add training_600.json --out training_600_plus112.json
 """
 import argparse
 import json

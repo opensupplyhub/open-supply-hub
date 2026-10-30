@@ -1,8 +1,14 @@
 """Tests for make_style112: the new file copies the reference's class mix and similarity spread, and only uses training-half pairs."""
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 import random
 import unittest
 
-import make_style112 as ms
+import make_style112 as ms  # noqa: E402
 
 
 def rec(name, country="tr"):

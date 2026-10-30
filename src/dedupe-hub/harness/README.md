@@ -31,6 +31,26 @@ All three are stdlib-only — the `api-app` image carries neither pandas nor
 scikit-learn, and the harness has to run inside it to use the same dedupe build
 as production.
 
+## Layout
+
+The original retrain scripts (`make_training_json.py`, `verify_retrain.py`, `evaluate.py`,
+the lookalike and fan-out experiments, `extract_labels.sql`) stay at the top of this
+folder. The work added for OSDEV-3277 is in folders by what it does:
+
+| folder | what it does |
+|---|---|
+| `evaluation_set/` | `freeze_eval.py`: freeze the held-out half of the labeled pairs, with a checksummed manifest, so every model is graded on the same pairs |
+| `training_sets/` | build and combine the training files that were tried: `make_style112.py` (copies the 112's recipe at a larger size), `augment_training.py` (add real pairs), `merge_training.py`, `build_size_variants.sh` |
+| `upload_outcomes/` | `outcomes.py`: the rule that decides what finally happens to one upload (seven outcomes) |
+| `display_results/` | the interactive HTML pages and reports: `upload_page.py` (the main page), `upload_bars.py`, `run_history.py`, `slices.py`, and the pair-level `slice_report.py` and `pair_page.py` |
+| `traffic_replay/` | the offline traffic test: `traffic_pull.sql` samples real uploads, `traffic_test.py` replays them through a trained model, `traffic_compare.py` compares two models |
+
+Run any script by its path from this folder, for example
+`python3 display_results/upload_page.py --help`. Scripts find each other through
+the path line at the top of each file, so they also run from any other directory.
+Tests sit next to the code they test; run them all with
+`python3 -m unittest discover -p 'test_*.py'` from this folder.
+
 ## Inputs
 
 A labeled-pairs CSV, one row per adjudication:
@@ -101,7 +121,7 @@ python3 src/dedupe-hub/harness/evaluate.py \
 # 4b. Same comparison per slice (named countries, the lookalike class, and every
 #     other country with enough pairs). The slice list lives in slices.py. Add
 #     --csv to keep the numbers, e.g. to compare repeated runs.
-python3 src/dedupe-hub/harness/slice_report.py \
+python3 src/dedupe-hub/harness/display_results/slice_report.py \
     --pairs src/dedupe-hub/harness/.data/pairs.csv \
     --flags src/dedupe-hub/harness/.data/pick_one_flags.csv \
     --scores "candidate=src/dedupe-hub/harness/.data/candidate_scores.csv" \

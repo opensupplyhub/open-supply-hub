@@ -12,7 +12,7 @@ that against eval_set.csv anyway and refuses to write if any added pair is in it
 the added pairs, so a comparison can leave out uploads that contain them.
 
 Usage:
-  python3 augment_training.py --base training_112.json --pairs pairs.csv --eval-set eval_set.csv \
+  python3 training_sets/augment_training.py --base training_112.json --pairs pairs.csv --eval-set eval_set.csv \
       --add cn:10 --add us:10 --seed 0 --out training_aug10_s0.json --ids-out ids_aug10_s0.txt
 """
 import argparse
@@ -22,7 +22,9 @@ import os
 import random
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from make_training_json import load_pairs  # noqa: E402
 
 

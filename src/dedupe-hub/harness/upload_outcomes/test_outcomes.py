@@ -7,7 +7,9 @@ import os
 import sys
 import unittest
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from outcomes import OUTCOMES, classify_upload  # noqa: E402
 
 FLOOR, BAR = 0.5, 0.8

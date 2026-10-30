@@ -23,7 +23,7 @@ Only pairs from the training half (hash of match_id) are used. With --eval-set t
 real pair is in the frozen evaluation set.
 
 Usage:
-  python3 make_style112.py --pairs pairs.csv --reference training_112.json --eval-set eval_set.csv \
+  python3 training_sets/make_style112.py --pairs pairs.csv --reference training_112.json --eval-set eval_set.csv \
       --total 600 --out training_style112_600.json --ids-out ids_style112_600.txt
 """
 import argparse
@@ -33,7 +33,9 @@ import os
 import random
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from make_training_json import eval_overlap, load_pairs  # noqa: E402
 
 SEED = 42

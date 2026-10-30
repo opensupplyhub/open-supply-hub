@@ -46,7 +46,7 @@ LIMITS, read before quoting a number:
 Pure stdlib, like evaluate.py.
 
 Usage:
-  python3 slice_report.py --pairs pairs.csv --eval-set eval_set.csv \
+  python3 display_results/slice_report.py --pairs pairs.csv --eval-set eval_set.csv \
       --scores "base112=scores_base112.csv" --retrieval "base112=retrieval_base112.csv" \
       --run-label base112 \
       --training-file training_112.json --history runs.jsonl --html runs.html \
@@ -63,7 +63,9 @@ import math
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from evaluate import (  # noqa: E402
     PROD_AUTO, PROD_GAZ, attach_flags, attach_scores, auc, load_pairs)
 from run_history import (  # noqa: E402

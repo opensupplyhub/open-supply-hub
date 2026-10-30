@@ -28,7 +28,7 @@ LIMITS, shown on the page too:
 The rule in the page's JavaScript mirrors outcomes.classify_upload exactly (see
 the parity check in the build notes). Pure stdlib. Usage:
 
-  python3 upload_page.py --pairs pairs.csv --scores "baseline=scores.csv" \
+  python3 display_results/upload_page.py --pairs pairs.csv --scores "baseline=scores.csv" \
       [--scores "other=scores2.csv"] [--retrieval "baseline=retrieval.csv"] --out page.html [--min-uploads 300]
 """
 import argparse
@@ -39,7 +39,9 @@ import json
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from make_training_json import record  # noqa: E402
 from run_history import CSS as BASE_CSS, sha256_of  # noqa: E402
 from slices import is_lookalike  # noqa: E402

@@ -18,7 +18,7 @@ afterwards without re-running the model.
 
   docker run --rm -e PYTHONHASHSEED=0 -e PYTHONWARNINGS=ignore::FutureWarning \
     -v "$PWD/src/dedupe-hub":/dh -v "$HOME/osdev-3277/data":/data \
-    --entrypoint python api-app:latest /dh/harness/traffic_test.py \
+    --entrypoint python api-app:latest /dh/harness/traffic_replay/traffic_test.py \
     --pairs /data/pairs.csv --training /data/training_6000_clean.json \
     --sample /data/traffic_sample.csv --index /data/traffic_index.csv \
     --floor 0.3 --auto 0.75 --seed 0 --out /data/traffic_6k_seed0.csv
@@ -31,7 +31,9 @@ import random
 import sys
 import time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from make_training_json import record  # noqa: E402
 from outcomes import decide  # noqa: E402
 from verify_retrain import FIELDS, SAMPLE_SIZE, load, rss_mb  # noqa: E402

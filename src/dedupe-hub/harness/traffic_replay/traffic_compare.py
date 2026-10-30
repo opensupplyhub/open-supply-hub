@@ -10,7 +10,7 @@ plus an empty `right_answer` column.
 The decisions alone say nothing about who is right. Where both models auto-match the same facility, or both
 send the upload to review, nothing needs judging. Where they differ, someone has to say which was correct.
 
-  python3 traffic_compare.py --a traffic_112_seed0.csv --b traffic_6k_seed0.csv \
+  python3 traffic_replay/traffic_compare.py --a traffic_112_seed0.csv --b traffic_6k_seed0.csv \
       --sample traffic_sample.csv --index traffic_index.csv --out traffic_disagreements.csv
 """
 import argparse

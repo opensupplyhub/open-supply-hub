@@ -16,7 +16,9 @@ Country codes are lowercase ISO alpha-2, as in the `item_country` column.
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from make_training_json import prefix_len  # noqa: E402
 
 PROBE_PREFIX = 12   # same definition evaluate.py uses for the lookalike probe

@@ -1,11 +1,17 @@
 """Tests for the traffic-test scripts: the decision step and the comparison. Pure Python, no model needed."""
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 import csv
 import os
 import tempfile
 import unittest
 
-import traffic_compare as tc
-import traffic_test as tt
+import traffic_compare as tc  # noqa: E402
+import traffic_test as tt  # noqa: E402
 
 
 def upload(item_id="1", country="mx", name="acme", address="1 main st"):

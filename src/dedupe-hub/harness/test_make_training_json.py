@@ -1,4 +1,4 @@
-"""Tests for make_training_json.eval_overlap. Run: python3 -m unittest test_make_training_json"""
+"""Tests for make_training_json.eval_overlap. Run from the harness folder: python3 -m unittest discover -p 'test_make_training_json.py'"""
 import csv
 import os
 import tempfile

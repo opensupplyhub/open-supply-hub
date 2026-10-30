@@ -1,7 +1,13 @@
 """Tests for merge_training: the base stays whole, additions follow it, and a pair already present is not added twice."""
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 import unittest
 
-import merge_training as mt
+import merge_training as mt  # noqa: E402
 
 
 def ex(name, country="mx"):

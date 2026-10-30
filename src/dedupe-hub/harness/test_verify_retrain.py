@@ -1,4 +1,4 @@
-"""Tests for verify_retrain.cross_country_rows. Run: python3 -m unittest test_verify_retrain"""
+"""Tests for verify_retrain.cross_country_rows. Run from the harness folder: python3 -m unittest discover -p 'test_verify_retrain.py'"""
 import unittest
 
 import csv

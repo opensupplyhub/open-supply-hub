@@ -1,8 +1,14 @@
-"""Tests for augment_training.py. Run: python3 -m unittest test_augment_training"""
+"""Tests for augment_training.py. Run from the harness folder: python3 -m unittest discover -p 'test_augment_training.py'"""
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 import random
 import unittest
 
-from augment_training import as_example, parse_add, sample_pairs
+from augment_training import as_example, parse_add, sample_pairs  # noqa: E402
 
 
 def row(mid, country, label, train=True):

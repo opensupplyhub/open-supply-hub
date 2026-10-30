@@ -21,10 +21,16 @@ A run record looks like:
    "causes"}}}}
 Pure stdlib; reuses the page styling from run_history.py.
 """
+import os
+import sys
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 import html
 from collections import Counter, defaultdict
 
-from run_history import CSS as BASE_CSS, now_utc
+from run_history import CSS as BASE_CSS, now_utc  # noqa: E402
 
 # Left to right in a bar: (key, label, plain-language meaning, css class).
 OUTCOMES = [

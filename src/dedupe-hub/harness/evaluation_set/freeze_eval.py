@@ -26,7 +26,7 @@ The tag lets slice_report.py drop exact matches (--exclude-exact) as a VIEW of
 the same frozen set, not as a different dataset.
 
 Usage:
-  python3 freeze_eval.py --pairs pairs.csv --flags pick_one_flags.csv \
+  python3 evaluation_set/freeze_eval.py --pairs pairs.csv --flags pick_one_flags.csv \
       --out eval_set.csv
 Writes eval_set.csv and eval_set.csv.manifest.json. Freeze once; do not
 regenerate it between runs you intend to compare.
@@ -39,7 +39,9 @@ import json
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
+sys.path[:0] = [_ROOT] + [os.path.join(_ROOT, d) for d in sorted(os.listdir(_ROOT))
+                          if os.path.isdir(os.path.join(_ROOT, d)) and not d.startswith(("_", "."))]
 from make_training_json import can_score, record, stable_train_half  # noqa: E402
 
 
