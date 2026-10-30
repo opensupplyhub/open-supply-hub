@@ -32,13 +32,21 @@ const scoreTitle = (title, query) => {
     return text.includes(query) ? 500 : -1;
 };
 
-export function searchEntries(entries, query, selectedIds) {
+// With counts (location counts by entry id), entries without locations are
+// left out, so every suggestion returns results. Without counts (not loaded
+// yet, or the forms' value picker) every matching entry is returned.
+export function searchEntries(entries, query, selectedIds, counts = null) {
     const normalized = normalize(query);
     if (!normalized) return [];
 
     return entries
         .map(entry => ({ entry, score: scoreTitle(entry.title, normalized) }))
-        .filter(({ entry, score }) => score >= 0 && !selectedIds.has(entry.id))
+        .filter(
+            ({ entry, score }) =>
+                score >= 0 &&
+                !selectedIds.has(entry.id) &&
+                (!counts || counts[entry.id] > 0),
+        )
         .sort(
             (a, b) =>
                 b.score - a.score ||
