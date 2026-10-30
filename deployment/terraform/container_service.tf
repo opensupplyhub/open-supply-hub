@@ -264,7 +264,7 @@ data "template_file" "app_cli" {
     notification_email_to_arn                     = local.notification_email_to_arn
     google_server_side_api_key_arn                = local.google_server_side_api_key_arn
     google_client_side_api_key_arn                = local.google_client_side_api_key_arn
-    google_service_account_creds_base64           = local.google_service_account_creds_base64_arn
+    google_service_account_creds_base64_arn       = local.google_service_account_creds_base64_arn
     google_drive_shared_directory_id              = var.google_drive_shared_directory_id
   }
 }
