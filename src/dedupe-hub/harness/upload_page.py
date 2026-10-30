@@ -688,6 +688,7 @@ def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_spec
             m["match" if true_idx >= 0 else "new"] += 1
 
     def by_size(codes, prefix=""):
+        """The slice keys in `codes`, busiest first, so the page lists the countries with the most uploads at the top."""
         return sorted(codes, key=lambda c: -mix[prefix + c]["n"])
 
     show = [{"key": "ALL", "label": "All uploads", "group": "all"}]
