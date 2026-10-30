@@ -176,7 +176,7 @@ class FacilityClaim(models.Model):
         help_text='The website for the facility')
     facility_description = models.TextField(
         null=False,
-        blank=False,
+        blank=True,
         verbose_name='description',
         help_text='A description of the facility')
     linkedin_profile = models.URLField(
@@ -237,6 +237,7 @@ class FacilityClaim(models.Model):
         ))
     facility_location = gis_models.PointField(
         null=True,
+        blank=True,
         verbose_name='location',
         help_text='The lat/lng point location of the facility')
     facility_phone_number = models.CharField(
@@ -419,6 +420,7 @@ class FacilityClaim(models.Model):
         'Contributor',
         related_name='parent_company',
         null=True,
+        blank=True,
         default=None,
         on_delete=models.PROTECT,
         verbose_name='contributor parent company / supplier group',

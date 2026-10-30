@@ -3,6 +3,26 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.33.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 23, 2026
+
+### Database changes
+
+#### Migrations
+* `0261_claim_admin_form_blank_fields.py` - Marks `facility_description`, `facility_location` and `parent_company` on `api_facilityclaim`, and `facility_description` and `facility_location` on its history table, as `blank=True`. Form-level only: every column already accepts the empty value a claim submission gives it, so all five operations emit no SQL (`sqlmigrate` reports `(no-op)` for each) and no data changes. See [OSDEV-1065](https://opensupplyhub.atlassian.net/browse/OSDEV-1065).
+
+### Bugfix
+* [OSDEV-1065](https://opensupplyhub.atlassian.net/browse/OSDEV-1065) - Fixed the Django admin facility claim form refusing to save, reporting "No geometry value provided" on Location plus required-field errors on Contributor parent company / supplier group and Description. `FacilityClaimAdmin` builds a default ModelForm over every editable field and none of those three columns carried `blank=True`, so the form required values that a claim submission routinely leaves empty and a moderator could not correct a mis-filled claim before approving it.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* No Terraform or environment variable changes are required.
+
+
 ## Release 2.32.0
 
 ## Introduction
