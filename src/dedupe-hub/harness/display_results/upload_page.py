@@ -230,7 +230,16 @@ const groupIdx = g => D.runs.map((r, i) => (r.group || 'baseline') === g ? i : -
 // "improve" when it is below by more than the margin. A pairing is {ref, val}: ref picks the
 // baseline's reference (worst = its highest share, best = its lowest, or the average) and val
 // picks the challenger's (best = lowest, worst = highest, or the average).
-const stat = (vals, which, goodIsLow) => pick(vals, which === 'mean' ? 'mean' : (which === 'worst') === goodIsLow ? 'max' : 'min');
+const sdOf = a => { const m = pick(a, 'mean'); return Math.sqrt(a.reduce((t, x) => t + (x - m) ** 2, 0) / a.length); };
+// which: best, worst, mean, or (for the baseline side) sd1 = average plus one standard deviation of its runs, sdm1 = average minus one.
+const stat = (vals, which, goodIsLow) => which === 'sd1' ? pick(vals, 'mean') + sdOf(vals) : which === 'sdm1' ? pick(vals, 'mean') - sdOf(vals) :
+  pick(vals, which === 'mean' ? 'mean' : (which === 'worst') === goodIsLow ? 'max' : 'min');
+// The three tolerances the best-pair search used, as regression and improvement tests: a challenger regresses when its average is
+// above the baseline's average / average plus one sd / worst run, and improves when it is below the baseline's average / average
+// minus one sd / best run. A model button with a tolerance sets these.
+const TOL = {average: {reg: {val: 'mean', ref: 'mean'}, imp: {val: 'mean', ref: 'mean'}},
+             sd: {reg: {val: 'mean', ref: 'sd1'}, imp: {val: 'mean', ref: 'sdm1'}},
+             worst: {reg: {val: 'mean', ref: 'worst'}, imp: {val: 'mean', ref: 'best'}}};
 function verdict(baseVals, chalVals, reg, imp, margin) {
   const gap = p => stat(chalVals, p.val, true) - stat(baseVals, p.ref, true);
   const r = gap(reg), i = gap(imp);
@@ -399,6 +408,7 @@ const exclKey = () => Object.keys(state.excl).sort().join(',');
 for (const g of CHALS) state.thr[g] = {auto: DEF.auto, floor: DEF.floor};
 if (D.start && CHALS.includes(D.start.group)) {   // open on a chosen model and pair (--start)
   state.chal = D.start.group; state.auto = D.start.auto; state.floor = D.start.floor;
+  if (D.start.tol && TOL[D.start.tol]) { state.mode = 'range'; state.reg = {...TOL[D.start.tol].reg}; state.imp = {...TOL[D.start.tol].imp}; }
   for (const g of (state.link ? CHALS : [state.chal])) state.thr[g] = {auto: D.start.auto, floor: D.start.floor};
 }
 const baseCache = {};
@@ -547,7 +557,12 @@ if (typeof document !== 'undefined') {
   document.getElementById('bauto').value = DEF.auto; document.getElementById('bfloor').value = DEF.floor;
   document.getElementById('auto').addEventListener('input', e => setState(+e.target.value, state.floor, 'auto'));
   document.getElementById('floor').addEventListener('input', e => setState(state.auto, +e.target.value, 'floor'));
-  document.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => setState(+b.dataset.a, +b.dataset.f, 'auto')));
+  document.querySelectorAll('[data-a]').forEach(b => b.addEventListener('click', () => {
+    // a model button also picks the model and the tolerance, so the sliders and the regression test below match it
+    if (b.dataset.g && CHALS.includes(b.dataset.g)) { state.chal = b.dataset.g; chalsel.value = b.dataset.g; }
+    if (b.dataset.tol && TOL[b.dataset.tol]) { state.mode = 'range'; state.reg = {...TOL[b.dataset.tol].reg}; state.imp = {...TOL[b.dataset.tol].imp}; sync(); }
+    setState(+b.dataset.a, +b.dataset.f, 'auto');
+  }));
   document.querySelectorAll('input[name=labels]').forEach(r => r.addEventListener('change', e => { state.clean = e.target.value === 'clean'; render(); }));
   document.querySelectorAll('input[name=view]').forEach(r => r.addEventListener('change', e => { state.view = e.target.value; render(); }));
   RULES.forEach(r => document.getElementById('rule_' + r.key).addEventListener('change', e => { state.rules[r.key] = e.target.checked; render(); }));
@@ -749,7 +764,7 @@ def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_spec
         "causes": CAUSE_TEXT, "defaults": {"auto": auto, "floor": floor},
         "countries": countries, "show": show, "mix": mix, "uploads": uploads, "hasFlags": bool(pick_one),
         "regionOf": region_of, "weightSets": [{"label": label, "weights": w} for label, w in (weight_sets or [])],
-        "start": ({"group": start[0], "auto": start[1], "floor": start[2]} if start else None),
+        "start": ({"group": start[0], "auto": start[1], "floor": start[2], "tol": start[3]} if start else None),
         "runs": [dict({"id": name, "group": (run_groups or {}).get(name, "baseline"), "scores": upload_scores[i],
                        "meta": os.path.basename(path) + ("" if name in retrievals else " (no retrieval check)")},
                       **({"ret": upload_ret[i]} if name in retrievals else {}))
@@ -785,28 +800,50 @@ def parse_weight_specs(specs, default_label):
 
 
 def parse_presets(specs):
-    """Turn --preset values of the form "LABEL=AUTO/FLOOR" (for example "6k best=0.76/0.30") into a list of
-    (label, auto, floor). The auto bar comes first, as on the page's sliders. Exits with a plain message on a
-    value that does not match that form or is outside 0 to 1."""
+    """Turn --preset values of the form "LABEL=AUTO/FLOOR[/GROUP[/TOLERANCE]]" (for example "6k, average tolerance=0.76/0.30/chal6k/average")
+    into a list of (label, auto, floor, group, tolerance). The auto bar comes first, as on the page's sliders. GROUP picks the model
+    on the page, and TOLERANCE (average, sd or worst) sets the regression test to the same tolerance; both are None when left out.
+    Exits with a plain message on a value that does not match that form or has numbers outside 0 to 1."""
     out = []
     for spec in specs:
-        label, _, pair = spec.rpartition("=")
-        auto, _, floor = pair.partition("/")
+        label, _, rest = spec.rpartition("=")
+        parts = rest.split("/")
         try:
-            auto_v, floor_v = float(auto), float(floor)
-        except ValueError:
-            sys.exit(f'--preset "{spec}": expected LABEL=AUTO/FLOOR, for example "6k best=0.76/0.30"')
-        if not label or not (0 <= auto_v <= 1 and 0 <= floor_v <= 1):
-            sys.exit(f'--preset "{spec}": needs a label, and both numbers between 0 and 1')
-        out.append((label, auto_v, floor_v))
+            auto_v, floor_v = float(parts[0]), float(parts[1])
+        except (ValueError, IndexError):
+            sys.exit(f'--preset "{spec}": expected LABEL=AUTO/FLOOR[/GROUP[/TOLERANCE]], for example "6k best=0.76/0.30"')
+        group = parts[2] if len(parts) > 2 and parts[2] else None
+        tol = parts[3] if len(parts) > 3 and parts[3] else None
+        if not label or not (0 <= auto_v <= 1 and 0 <= floor_v <= 1) or len(parts) > 4 or tol not in (None, "average", "sd", "worst"):
+            sys.exit(f'--preset "{spec}": needs a label, both numbers between 0 and 1, and a tolerance of average, sd or worst')
+        out.append((label, auto_v, floor_v, group, tol))
     return out
 
 
 def preset_buttons(presets):
-    """The HTML for extra threshold preset buttons, one per (label, auto, floor), each showing "label (auto / floor)".
-    Clicking one sets the page's challenger sliders, the same as the built-in presets."""
-    return "".join(f'<button data-a="{a}" data-f="{f}">{html.escape(label)} ({a:.2f} / {f:.2f})</button>'
-                   for label, a, f in presets)
+    """The HTML for extra threshold preset buttons, one per (label, auto, floor, group, tolerance), each showing "label (auto / floor)".
+    Clicking one sets the page's challenger sliders, and when it has a group and a tolerance it also picks that model and sets the
+    regression test to that tolerance, the same as the built-in presets."""
+    out = ""
+    for label, a, f, group, tol in presets:
+        extra = (f' data-g="{html.escape(group)}"' if group else "") + (f' data-tol="{tol}"' if tol else "")
+        out += f'<button data-a="{a}" data-f="{f}"{extra}>{html.escape(label)} ({a:.2f} / {f:.2f})</button>'
+    return out
+
+
+def parse_start(spec):
+    """Turn --start "GROUP=AUTO/FLOOR[/TOLERANCE]" (for example "chal6k=0.76/0.30/average") into (group, auto, floor, tolerance); the
+    tolerance (average, sd or worst) is None when left out. Exits with a plain message on a value that does not match that form."""
+    group, _, rest = spec.rpartition("=")
+    parts = rest.split("/")
+    try:
+        auto_v, floor_v = float(parts[0]), float(parts[1])
+    except (ValueError, IndexError):
+        sys.exit(f'--start "{spec}": expected GROUP=AUTO/FLOOR[/TOLERANCE], for example "chal6k=0.76/0.30/average"')
+    tol = parts[2] if len(parts) > 2 and parts[2] else None
+    if not group or len(parts) > 3 or not (0 <= auto_v <= 1 and 0 <= floor_v <= 1) or tol not in (None, "average", "sd", "worst"):
+        sys.exit(f'--start "{spec}": needs a group, both numbers between 0 and 1, and a tolerance of average, sd or worst')
+    return group, auto_v, floor_v, tol
 
 
 def weight_controls(data):
@@ -886,12 +923,12 @@ def render_page(data, stats, pairs_path, presets=()):
         f'<b>Regression test</b>: it regresses if the challenger\'s '
         f'<select id="regval"><option value="best">best run</option><option value="mean">average</option><option value="worst">worst run</option></select> '
         f'is above the baseline\'s '
-        f'<select id="regref"><option value="worst">worst run</option><option value="mean">average</option><option value="best">best run</option></select> '
+        f'<select id="regref"><option value="worst">worst run</option><option value="sd1">average plus one sd</option><option value="mean">average</option><option value="best">best run</option></select> '
         f'by more than the margin.<br>'
         f'<b>Improvement test</b>: it improves if the challenger\'s '
         f'<select id="impval"><option value="worst">worst run</option><option value="mean">average</option><option value="best">best run</option></select> '
         f'is below the baseline\'s '
-        f'<select id="impref"><option value="best">best run</option><option value="mean">average</option><option value="worst">worst run</option></select> '
+        f'<select id="impref"><option value="best">best run</option><option value="sdm1">average minus one sd</option><option value="mean">average</option><option value="worst">worst run</option></select> '
         f'by more than the margin.<br>'
         f'Margin (points; in noise mode, the smallest gap worth caring about) <input type="number" id="margin" value="0" step="0.5" min="0"> '
         f'Fewest uploads to judge <input type="number" id="minev" value="30" min="0"><br>'
@@ -942,12 +979,12 @@ def main():
     p.add_argument("--weights-label", default="production volume",
                    help="the label for a --weights value given as a bare path")
     p.add_argument("--start", metavar="GROUP=AUTO/FLOOR",
-                   help='open the page on one model and pair, for example "chal6k=0.76/0.30" (the production presets are unchanged)')
+                   help='open the page on one model, pair and tolerance, for example "chal6k=0.76/0.30/average" (the production presets are unchanged)')
     p.add_argument("--preset", action="append", default=[], metavar="LABEL=AUTO/FLOOR",
                    help="add a threshold button to the page, for example \"6k best=0.76/0.30\" (repeatable)")
     args = p.parse_args()
     presets = parse_presets(args.preset)
-    start = parse_presets([args.start])[0] if args.start else None
+    start = parse_start(args.start) if args.start else None
     data, stats = build_data(args.pairs, args.scores, args.min_uploads, args.auto, args.floor, args.retrieval,
                              dict(g.partition("=")[::2] for g in args.group), args.flags,
                              load_ids(args.exclude_ids), args.regions,
