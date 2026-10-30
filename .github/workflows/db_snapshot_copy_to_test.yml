@@ -13,9 +13,6 @@ name: "DB - Copy Anonymized Snapshot to Dumps Bucket (Test)"
 # secrets of the Test anonymized-dump task definition.
 
 on:
-  push:
-    branches:
-      - OSDEV-3706-restore-missing-september-1-and-october-1-2026-monthly-bulk-data-downloads   # remove after the first run
   workflow_dispatch:
     inputs:
       source-snapshot:

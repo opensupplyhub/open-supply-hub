@@ -36,7 +36,8 @@
         { "name": "EARTH_INDEX_API_URL", "value": "${earth_index_api_url}" },
         { "name": "EARTH_INDEX_API_KEY", "value": "${earth_index_api_key}" },
         { "name": "EARTH_INDEX_PROJECT_ID", "value": "${earth_index_project_id}" },
-        { "name": "AWS_S3_EXPECTED_BUCKET_OWNER", "value": "${aws_s3_expected_bucket_owner}" }
+        { "name": "AWS_S3_EXPECTED_BUCKET_OWNER", "value": "${aws_s3_expected_bucket_owner}" },
+        { "name": "GOOGLE_DRIVE_SHARED_DIRECTORY_ID", "value": "${google_drive_shared_directory_id}" }
     ],
     "secrets": [
         { "name": "POSTGRES_USER", "valueFrom": "${rds_master_secret_arn}:username::" },
@@ -46,7 +47,8 @@
         { "name": "DATA_FROM_EMAIL", "valueFrom": "${data_from_email_arn}" },
         { "name": "NOTIFICATION_EMAIL_TO", "valueFrom": "${notification_email_to_arn}" },
         { "name": "GOOGLE_SERVER_SIDE_API_KEY", "valueFrom": "${google_server_side_api_key_arn}" },
-        { "name": "REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY", "valueFrom": "${google_client_side_api_key_arn}" }
+        { "name": "REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY", "valueFrom": "${google_client_side_api_key_arn}" },
+        { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64", "value": "${google_service_account_creds_base64_arn}" }
     ],
     "logConfiguration": {
         "logDriver": "awslogs",
