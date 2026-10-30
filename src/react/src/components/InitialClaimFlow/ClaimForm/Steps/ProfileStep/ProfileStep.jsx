@@ -863,6 +863,20 @@ const ProfileStep = ({
                                     handleChange('isic5', value[5]);
                                 }}
                             />
+                            {['isic4', 'isic5'].map(
+                                field =>
+                                    touched[field] &&
+                                    errors[field] && (
+                                        <div
+                                            key={field}
+                                            className={classes.errorWrapStyles}
+                                        >
+                                            <InputErrorText
+                                                text={errors[field]}
+                                            />
+                                        </div>
+                                    ),
+                            )}
                         </div>
                     </FeatureFlag>
                     <div className={classes.doubleFieldContainer}>
