@@ -175,15 +175,23 @@ export const useClaimFormSubmission = (
     const [dialogIsOpen, setDialogIsOpen] = useState(false);
 
     // Show success dialog and reset form when submission completes.
+    // submittingForm is cleared as soon as the request finishes, whether
+    // it succeeded or failed. Otherwise a failed submission leaves it set,
+    // and editing a field afterwards (which clears submissionError) would
+    // be mistaken for a successful submission: the form would reset and
+    // show the success dialog although no claim was created.
     useEffect(() => {
         if (submissionFetching) {
             setSubmittingForm(true);
+            return;
         }
-        if (submittingForm && !submissionFetching && !submissionError) {
+        if (submittingForm) {
             setSubmittingForm(false);
-            sessionStorage.removeItem(`claim-form-access-${osID}`);
-            resetForm();
-            setDialogIsOpen(true);
+            if (!submissionError) {
+                sessionStorage.removeItem(`claim-form-access-${osID}`);
+                resetForm();
+                setDialogIsOpen(true);
+            }
         }
     }, [submittingForm, submissionFetching, submissionError, osID, resetForm]);
 
