@@ -48,7 +48,7 @@
         { "name": "NOTIFICATION_EMAIL_TO", "valueFrom": "${notification_email_to_arn}" },
         { "name": "GOOGLE_SERVER_SIDE_API_KEY", "valueFrom": "${google_server_side_api_key_arn}" },
         { "name": "REACT_APP_GOOGLE_CLIENT_SIDE_API_KEY", "valueFrom": "${google_client_side_api_key_arn}" },
-        { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64", "value": "${google_service_account_creds_base64_arn}" }
+        { "name": "GOOGLE_SERVICE_ACCOUNT_CREDS_BASE64", "valueFrom": "${google_service_account_creds_base64_arn}" }
     ],
     "logConfiguration": {
         "logDriver": "awslogs",
