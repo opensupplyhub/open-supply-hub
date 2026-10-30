@@ -1,7 +1,7 @@
-"""Mark FacilityClaim location and parent company as form-optional.
+"""Mark the FacilityClaim fields a submission may leave empty as form-optional.
 
-Both columns were already nullable; without blank=True Django's admin
-ModelForm rendered them as required and blocked every save (OSDEV-1065).
+Each column already accepts the empty value it is given at submission; without
+blank=True the admin ModelForm rendered it as required (OSDEV-1065).
 """
 import django.contrib.gis.db.models.fields
 import django.db.models.deletion
@@ -15,6 +15,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='facility_description',
+            field=models.TextField(
+                blank=True,
+                help_text='A description of the facility',
+                verbose_name='description'),
+        ),
         migrations.AlterField(
             model_name='facilityclaim',
             name='facility_location',
@@ -38,6 +46,14 @@ class Migration(migrations.Migration):
                 related_name='parent_company',
                 to='api.contributor',
                 verbose_name='contributor parent company / supplier group'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='facility_description',
+            field=models.TextField(
+                blank=True,
+                help_text='A description of the facility',
+                verbose_name='description'),
         ),
         migrations.AlterField(
             model_name='historicalfacilityclaim',

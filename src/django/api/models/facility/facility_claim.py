@@ -176,7 +176,7 @@ class FacilityClaim(models.Model):
         help_text='The website for the facility')
     facility_description = models.TextField(
         null=False,
-        blank=False,
+        blank=True,
         verbose_name='description',
         help_text='A description of the facility')
     linkedin_profile = models.URLField(
