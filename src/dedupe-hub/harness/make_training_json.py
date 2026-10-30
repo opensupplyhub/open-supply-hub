@@ -182,13 +182,34 @@ def load_pairs(path):
                 "left": left,
                 "right": right,
                 "confidence": conf,
+                "country": (r.get("item_country") or r.get("fac_country") or "").strip().lower(),
                 "train": stable_train_half(mid),
             })
     return rows
 
 
-def curate(rows, per_class, hard_share):
-    """Oversample the hard classes; return the selected training pairs."""
+def parse_countries(text):
+    """Turn "cn,tw, HK" into {"cn", "tw", "hk"} (lowercase ISO codes), or None for no filter."""
+    if not text:
+        return None
+    return {c.strip().lower() for c in text.split(",") if c.strip()}
+
+
+def only_countries(rows, codes):
+    """Keep the rows whose country is in `codes`; with no codes, keep them all. Used to train
+    and test a model on one region's pairs only."""
+    if not codes:
+        return rows
+    return [r for r in rows if r.get("country") in codes]
+
+
+def curate(rows, per_class, hard_share, per_match=None, per_distinct=None, use_surprise=True):
+    """Oversample the hard classes; return the selected training pairs.
+
+    per_class is how many pairs to take of each class. per_match and per_distinct override it
+    for one class, which changes the mix of matches to non-matches (None keeps per_class).
+    use_surprise=False picks the hard pairs by lookalike names alone, without looking at the recorded
+    production score (a pair is otherwise also "hard" when that score and the human decision disagree)."""
     rng = random.Random(SEED)
     train = [r for r in rows if r["train"]]
     for r in train:
@@ -196,14 +217,18 @@ def curate(rows, per_class, hard_share):
                       and r["left"]["name"] != r["right"]["name"])
         r["surprise"] = abs(r["confidence"] - r["label"]) > SURPRISE_MARGIN
 
-    n_hard = int(round(per_class * hard_share))
-    n_easy = per_class - n_hard
+    want = {1: per_class if per_match is None else per_match,
+            0: per_class if per_distinct is None else per_distinct}
 
     selected = []
     for label in (0, 1):
+        per_class = want[label]            # this class's target size
+        n_hard = int(round(per_class * hard_share))
+        n_easy = per_class - n_hard
         lab = [r for r in train if r["label"] == label]
-        hard = [r for r in lab if r["probe"] or r["surprise"]]
-        easy = [r for r in lab if not (r["probe"] or r["surprise"])]
+        is_hard = (lambda r: r["probe"] or r["surprise"]) if use_surprise else (lambda r: r["probe"])
+        hard = [r for r in lab if is_hard(r)]
+        easy = [r for r in lab if not is_hard(r)]
         rng.shuffle(hard)
         rng.shuffle(easy)
         # Backfill in BOTH directions. The negative class is almost all hard
@@ -222,6 +247,18 @@ def curate(rows, per_class, hard_share):
     return train, selected
 
 
+def eval_overlap(selected, eval_set_path):
+    """How many of the selected training pairs are also in the frozen evaluation set.
+
+    Training on a pair and then scoring it makes a model look better than it is, so this
+    should be 0. The training half and the evaluation half come from opposite sides of the
+    same hash of match_id, so it is 0 by construction; this reads the real evaluation file
+    to show that rather than assume it."""
+    with open(eval_set_path, newline="") as f:
+        evaluated = {row["match_id"] for row in csv.DictReader(f)}
+    return sum(1 for r in selected if r["match_id"] in evaluated)
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__,
                                 formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -229,8 +266,24 @@ def main(argv=None):
     p.add_argument("--out", default=DEFAULT_OUT, help="training.json path")
     p.add_argument("--per-class", type=int, default=3000,
                    help="training pairs per class (default 3000)")
+    p.add_argument("--per-match", type=int,
+                   help="matches to take, instead of --per-class (changes the match to non-match mix)")
+    p.add_argument("--per-distinct", type=int,
+                   help="non-matches to take, instead of --per-class (changes the match to non-match mix)")
     p.add_argument("--hard-share", type=float, default=2.0 / 3.0,
                    help="share of each class drawn from the hard pool")
+    p.add_argument("--eval-set", help="frozen eval_set.csv: print how many selected pairs are in it "
+                                      "and refuse to write if any are")
+    p.add_argument("--countries", help="comma-separated country codes: use only these countries' pairs "
+                                       "(to train a regional model)")
+    p.add_argument("--auto-size", action="store_true",
+                   help="shrink --per-class to what the (filtered) pool can supply in BOTH classes, so a "
+                        "small region still gets balanced classes")
+    p.add_argument("--no-surprise", action="store_true",
+                   help="pick hard pairs by lookalike names only, not by whether the recorded production score "
+                        "disagreed with the human")
+    p.add_argument("--ids-out", help="also write the match_id of every selected pair here, one per line, so uploads "
+                                     "containing them can be left out of a comparison")
     p.add_argument("--dry-run", action="store_true",
                    help="report composition, write nothing")
     args = p.parse_args(argv)
@@ -238,7 +291,16 @@ def main(argv=None):
     rows = load_pairs(args.pairs)
     if not rows:
         sys.exit(f"no usable rows in {args.pairs}")
-    train, selected = curate(rows, args.per_class, args.hard_share)
+    rows = only_countries(rows, parse_countries(args.countries))
+    if not rows:
+        sys.exit(f"no pairs for countries {args.countries}")
+    per_class = args.per_class
+    if args.auto_size:
+        pool = [r for r in rows if r["train"]]
+        per_class = min(per_class, sum(r["label"] == 1 for r in pool), sum(r["label"] == 0 for r in pool))
+        print(f"auto size             : {per_class} per class")
+    train, selected = curate(rows, per_class, args.hard_share, args.per_match, args.per_distinct,
+                             use_surprise=not args.no_surprise)
 
     match = [r for r in selected if r["label"] == 1]
     distinct = [r for r in selected if r["label"] == 0]
@@ -248,6 +310,11 @@ def main(argv=None):
     print(f"selected              : {len(match)} match / {len(distinct)} distinct")
     print(f"  lookalike (probe)   : {sum(1 for r in selected if r['probe'])}")
     print(f"  model/human dispute : {sum(1 for r in selected if r['surprise'])}")
+    if args.eval_set:
+        overlap = eval_overlap(selected, args.eval_set)
+        print(f"overlap with eval set : {overlap} of {len(selected)} selected pairs")
+        if overlap:
+            sys.exit("refusing to write: training pairs are also in the evaluation set")
     if not match or not distinct:
         sys.exit("refusing to write: one class is empty")
 
@@ -265,6 +332,10 @@ def main(argv=None):
     with open(out, "w") as f:
         json.dump(training, f)
     print(f"wrote {out} ({os.path.getsize(out) / 1024:.0f} KB)")
+    if args.ids_out:
+        with open(args.ids_out, "w") as f:
+            f.write("\n".join(sorted(r["match_id"] for r in selected)) + "\n")
+        print(f"wrote {len(selected)} match_ids to {args.ids_out}")
 
 
 if __name__ == "__main__":
