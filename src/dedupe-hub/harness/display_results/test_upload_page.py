@@ -64,18 +64,34 @@ class LoadWeights(unittest.TestCase):
         self.assertEqual(up.load_weights(path), {"gb": 18904})
 
 
-class WeightCheckbox(unittest.TestCase):
-    """The checkbox for weighting the overall rows."""
+class ParseWeightSpecs(unittest.TestCase):
+    """--weights values."""
 
-    def test_no_weights_means_no_checkbox(self):
+    def test_label_and_bare_path(self):
+        """"LABEL=PATH" keeps its label; a bare path gets the default label."""
+        self.assertEqual(up.parse_weight_specs(["last 4 months=v4.csv", "v.csv"], "volume"),
+                         [("last 4 months", "v4.csv"), ("volume", "v.csv")])
+
+
+class WeightControls(unittest.TestCase):
+    """The controls for weighting the overall rows."""
+
+    def test_no_weights_means_no_controls(self):
         """A page built without --weights looks exactly as before."""
-        self.assertEqual(up.weight_checkbox({"weights": {}, "weightsLabel": "x"}), "")
+        self.assertEqual(up.weight_controls({"weightSets": []}), "")
 
-    def test_checkbox_names_the_weights(self):
-        """With weights, the checkbox has the id the page script looks for and says what the weights are."""
-        html = up.weight_checkbox({"weights": {"cn": 1}, "weightsLabel": "list items since 2026-01-01"})
+    def test_one_set_is_a_checkbox_that_names_it(self):
+        """With one set, the checkbox says what the weights are and there is no menu."""
+        html = up.weight_controls({"weightSets": [{"label": "list items since 2026-01-01", "weights": {"cn": 1}}]})
         self.assertIn('id="weighted"', html)
         self.assertIn("list items since 2026-01-01", html)
+        self.assertNotIn('id="wset"', html)
+
+    def test_two_sets_add_a_menu(self):
+        """With more than one set, a menu lets the viewer choose the period, each option holding its label."""
+        html = up.weight_controls({"weightSets": [{"label": "since Jan", "weights": {}}, {"label": "last 4 months", "weights": {}}]})
+        self.assertIn('id="wset"', html)
+        self.assertIn("last 4 months", html)
 
 
 if __name__ == "__main__":
