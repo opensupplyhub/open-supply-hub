@@ -11,7 +11,7 @@ import {
     fetchTaxonomyCountsIfNeeded,
 } from '../../../actions/filterOptions';
 import { updateIsic4Filter, updateIsic5Filter } from '../../../actions/filters';
-import { searchEntries, selectedEntries, withEntry } from './utils';
+import { isEmpty, searchEntries, selectedEntries, withEntry } from './utils';
 import styles from './styles';
 
 const LABEL = 'Industry Classification';
@@ -22,7 +22,9 @@ const LISTBOX_ROLE_PROPS = Object.freeze({ role: 'listbox' });
 Industry Classification (OSDEV-3340): one field over the titles of every
 ISIC revision OS Hub holds. A category picked here filters on its code in
 each revision it exists in; the API adds values uploaded under the other
-revision through the UN correspondence. Codes are never shown.
+revision through the UN correspondence. Codes are never shown. Once the
+counts load, categories without locations are grayed out, listed last and
+can't be picked; until then every category can be.
 */
 export function IsicSearch({
     entries,
@@ -51,14 +53,16 @@ export function IsicSearch({
                 entries,
                 query,
                 new Set(selected.map(entry => entry.id)),
+                counts,
             ),
-        [entries, query, selected],
+        [entries, query, selected, counts],
     );
 
     const trimmedQuery = query.trim();
     const showResultsPanel = isFocused && trimmedQuery.length > 0;
 
     const pick = entry => {
+        if (isEmpty(entry, counts)) return;
         onChange(withEntry(selections, entry, true));
         setQuery('');
         setActiveRowIndex(-1);
@@ -155,7 +159,8 @@ export function IsicSearch({
                                   key={entry.id}
                                   id={`${LISTBOX_ID}-option-${index}`}
                                   entry={entry}
-                                  count={counts?.[entry.id] ?? null}
+                                  count={counts ? counts[entry.id] ?? 0 : null}
+                                  empty={isEmpty(entry, counts)}
                                   highlightQuery={trimmedQuery}
                                   active={index === activeRowIndex}
                                   onSelect={() => pick(entry)}
@@ -166,7 +171,8 @@ export function IsicSearch({
                     {rows.length > 0 && (
                         <div className={classes.hint}>
                             Tags show which ISIC revisions a category belongs
-                            to. Counts include everything within the category.
+                            to. Counts include everything within the category;
+                            categories with no locations are grayed out.
                         </div>
                     )}
                 </div>

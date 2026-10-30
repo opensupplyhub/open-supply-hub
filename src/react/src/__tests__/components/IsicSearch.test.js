@@ -114,6 +114,44 @@ describe('IsicSearch', () => {
         expect(onChange).toHaveBeenCalledWith({ 4: [], 5: [] });
     });
 
+    test('a category with no locations is grayed out, shows 0 and cannot be picked', () => {
+        const { type, input, onChange } = renderSearch();
+
+        type('apparel');
+        const option = screen.getByRole('option');
+
+        expect(option.getAttribute('aria-disabled')).toBe('true');
+        expect(option.textContent).toContain('0');
+        fireEvent.click(option);
+        fireEvent.keyDown(input, { key: 'ArrowDown' });
+        fireEvent.keyDown(input, { key: 'Enter' });
+        expect(onChange).not.toHaveBeenCalled();
+    });
+
+    test('lists categories with locations before those without', () => {
+        const { type } = renderSearch({ counts: { '4:14': 3 } });
+
+        type('manufacture');
+
+        expect(
+            screen.getAllByRole('option').map(option => option.textContent),
+        ).toEqual([
+            expect.stringContaining('wearing apparel'),
+            expect.stringContaining('textiles'),
+        ]);
+    });
+
+    test('until the counts load, every category can be picked', () => {
+        const { type, onChange } = renderSearch({ counts: null });
+
+        type('apparel');
+        const option = screen.getByRole('option');
+
+        expect(option.getAttribute('aria-disabled')).toBeNull();
+        fireEvent.click(option);
+        expect(onChange).toHaveBeenCalled();
+    });
+
     test('says when nothing matches', () => {
         const { type } = renderSearch();
 
@@ -136,6 +174,14 @@ describe('IsicSearch utils', () => {
             ),
         ).toEqual(['4:14']);
         expect(searchEntries(ENTRIES, '  ', new Set())).toEqual([]);
+    });
+
+    test('with counts, ranks entries without locations last', () => {
+        expect(
+            searchEntries(ENTRIES, 'manufacture', new Set(), {
+                '4:14': 3,
+            }).map(e => e.id),
+        ).toEqual(['4:14', '4:13']);
     });
 
     test('reads picked entries back from either revision', () => {

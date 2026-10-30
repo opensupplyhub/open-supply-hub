@@ -32,7 +32,11 @@ const scoreTitle = (title, query) => {
     return text.includes(query) ? 500 : -1;
 };
 
-export function searchEntries(entries, query, selectedIds) {
+// Whether the location counts are loaded and have none for an entry.
+export const isEmpty = (entry, counts) => Boolean(counts) && !counts[entry.id];
+
+// With counts, entries without locations rank after the rest.
+export function searchEntries(entries, query, selectedIds, counts = null) {
     const normalized = normalize(query);
     if (!normalized) return [];
 
@@ -41,6 +45,7 @@ export function searchEntries(entries, query, selectedIds) {
         .filter(({ entry, score }) => score >= 0 && !selectedIds.has(entry.id))
         .sort(
             (a, b) =>
+                isEmpty(a.entry, counts) - isEmpty(b.entry, counts) ||
                 b.score - a.score ||
                 LEVEL_ORDER.indexOf(a.entry.level) -
                     LEVEL_ORDER.indexOf(b.entry.level) ||

@@ -11,6 +11,7 @@ function IsicResultRow({
     id,
     entry,
     count,
+    empty,
     highlightQuery,
     active,
     onSelect,
@@ -27,11 +28,14 @@ function IsicResultRow({
             id={id}
             {...OPTION_ROLE_PROPS}
             aria-selected={false}
+            aria-disabled={empty || undefined}
             className={`${classes.resultRow} ${
                 active ? classes.resultRowSelected : ''
+            } ${
+                empty ? `${classes.resultRowDim} ${classes.resultRowEmpty}` : ''
             }`}
             onMouseDown={event => event.preventDefault()}
-            onClick={onSelect}
+            onClick={empty ? undefined : onSelect}
             onMouseEnter={onMouseEnter}
         >
             <span className={classes.resultRowBody}>
@@ -78,6 +82,7 @@ function IsicResultRow({
 
 IsicResultRow.defaultProps = {
     count: null,
+    empty: false,
     highlightQuery: '',
     onMouseEnter: null,
 };
@@ -92,6 +97,7 @@ IsicResultRow.propTypes = {
         trail: string,
     }).isRequired,
     count: number,
+    empty: bool,
     highlightQuery: string,
     active: bool.isRequired,
     onSelect: func.isRequired,
