@@ -150,6 +150,17 @@ differ enough that guessing produces wrong tags.
 - PO Box in the address → remove, even if the rest is complete.
 - Backwards or invalid worker ranges (e.g. `2101-2100`) → remove, don't
   guess.
+- Open-ended worker counts (e.g. `500+`, `>500`, `approx 500`) → remove.
+  The platform stores these as an exact figure — `500+` is saved as
+  min 500 / max 500 — so letting the row through publishes a precise
+  number the contributor never gave. Ask for an exact count or a real
+  range; don't substitute one.
+  - **Exception — `>` between two numbers is a range separator, not an
+    open-ended count.** `1->50`, `1 >50` and `101->500` are ranges: the
+    platform reads them correctly as min 1 / max 50, so they are NOT
+    removals. This is common enough to check rather than assume — across
+    all list rows carrying a worker value, 2,777 use `>` as a separator
+    against 11,042 that are genuinely open-ended.
 - `spelling_name` / `spelling_address` → REMOVE. Spelling variants survive
   cleaning and won't auto-match, producing duplicate OS IDs. When unsure
   whether a variant is a typo or a legitimate local spelling, ask.
