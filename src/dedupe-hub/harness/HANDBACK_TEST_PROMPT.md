@@ -24,6 +24,21 @@ You are testing a finished piece of work for OSDEV-3277 (Open Supply Hub dedupe 
 ## What the harness is
 Evaluates retrained dedupe matchers on whole uploads using three measures: incorrect matches, duplicates (compared vs never compared), and human review. The files added for this ticket are in folders by what they do: `evaluation_set/`, `training_sets/`, `upload_outcomes/`, `display_results/`, `traffic_replay/`. The original retrain scripts (`make_training_json.py`, `verify_retrain.py`, `evaluate.py`, the experiments, `extract_labels.sql`) stay flat at the top. Each moved file finds its siblings through a path line at its top, so scripts should run from any directory.
 
+## Before you start: check what you have, and ask for what is missing
+Do this first. Work out which of the inputs below you actually have, then send the user ONE message that lists, for each missing item, what you need, which tests it blocks, and how they can give it to you (a path, or a command for them to run). Then run every test you can without waiting for an answer, and come back to the blocked ones when the user replies. Never substitute a guess, invent data, or fetch facility data from anywhere other than the paths the user gives you. For facility data ask for a path, never for pasted contents.
+
+| input | needed by | how to check it |
+|---|---|---|
+| `<worktree>`: a checkout of the branch, and read access to `origin` | 1, 2, 3, 6, 10 | `git -C <worktree> status` and `git ls-remote origin` |
+| `<handback>`: the handback bundle folder (and its zip) | 3, 7, 8, 9, 13 | the folder exists and has `README.md`, `HANDBACK.md`, `code/`, `scripts/`, `data/`, `pages/` |
+| `<data>`: `pairs.csv`, `eval_set.csv` and `eval_set.csv.manifest.json`, `pick_one_flags.csv`, `training_112.json`, `training_style112_600.json`, `ids_style112_600.txt`, `training_style112_600_plus112.json`, `scores_all_seed*.csv` and `retrieval_all_seed*.csv` (at least seeds 1 and 42), `scores_chal600sp112_seed0.csv` and its retrieval file | 5, 6, 7, 13 | list the folder; do not open the files |
+| the original `outcome_bars_UPLOADS_style112.html` and the script that built it | 5 (page bullet) | ask the user where they are |
+| `node` | 13 | `node --version` |
+| Docker permission and the `api-app:latest` image | the optional Docker run, and the Docker command in test 4 for `traffic_replay/traffic_test.py` | `docker version` |
+| a writable `$TMPDIR` | all | `touch "$TMPDIR/x"` |
+
+If something is missing, say so plainly, for example: "I don't have `<data>`, so tests 5, 6, 7 and 13 can't run. Please give me the path to the folder that holds `pairs.csv` and the score files." If a Docker command is blocked, give the user the exact command to run and say what output to paste back.
+
 ## Tests to run (report pass, fail or could not run, with evidence)
 
 1. **Unit tests.** From the harness folder run `python3 -B -m unittest discover -p 'test_*.py'`. Expect 74 passing. Also run it from a different directory with `-s` pointing at the harness.
@@ -50,4 +65,6 @@ Evaluates retrained dedupe matchers on whole uploads using three measures: incor
 - A saved `baseline112_slices.csv` from an earlier date may differ from a fresh run by one pair (a later commit skips one unscorable pair).
 
 ## Report format
-A table: test number, pass, fail or could not run, and one line of evidence. Then a short list of anything weird, stale, misleading or risky, ranked by how much it would bother the next owner of the ticket. Keep facility data out of the report.
+A table: test number, pass, fail or could not run (and the missing input if so), and one line of evidence. Then a short list of anything weird, stale, misleading or risky, ranked by how much it would bother the next owner of the ticket. Keep facility data out of the report.
+
+End the report with a section **What I still need**: every input from the checklist above that was missing, which tests it left unrun, and what to send you so you can finish them.
