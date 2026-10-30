@@ -3,6 +3,18 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.33.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 2, 2026
+
+### Bugfix
+* [OSDEV-3737](https://opensupplyhub.atlassian.net/browse/OSDEV-3737) - Fixed the claim form losing submissions after a validation error. `useClaimFormSubmission` only cleared its submitting flag on success, so after a failed submit, editing any field (which clears the server error) was mistaken for a successful submission: the form reset and showed the "Thank you for submitting your claim request!" dialog although no claim was created. The flag is now cleared whenever a request finishes, and the dialog shows only when the request succeeded; after an error the claimant keeps their data and must submit again. In the same flow, ISIC values were sent as their titles (e.g. "Manufacture of wearing apparel, except fur apparel") instead of their codes (`class:1410`), so every claim with an ISIC value was rejected by the API's 20-character limit or ISIC code check; the claim form now sends the codes. The form also now checks the API's limits of 15 ISIC codes per revision and 200 characters for the claimant's name and job title before submitting, so these errors show next to the field instead of after Submit.
+
+### Release instructions
+* No migration, Terraform or environment variable changes are required.
+
 ## Release 2.32.0
 
 ## Introduction
