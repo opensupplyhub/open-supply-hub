@@ -731,8 +731,34 @@ def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_spec
     return data, stats
 
 
-def render_page(data, stats, pairs_path):
-    """Wrap the data in the page: controls, legend, caveats, and the script."""
+def parse_presets(specs):
+    """Turn --preset values of the form "LABEL=AUTO/FLOOR" (for example "6k best=0.76/0.30") into a list of
+    (label, auto, floor). The auto bar comes first, as on the page's sliders. Exits with a plain message on a
+    value that does not match that form or is outside 0 to 1."""
+    out = []
+    for spec in specs:
+        label, _, pair = spec.rpartition("=")
+        auto, _, floor = pair.partition("/")
+        try:
+            auto_v, floor_v = float(auto), float(floor)
+        except ValueError:
+            sys.exit(f'--preset "{spec}": expected LABEL=AUTO/FLOOR, for example "6k best=0.76/0.30"')
+        if not label or not (0 <= auto_v <= 1 and 0 <= floor_v <= 1):
+            sys.exit(f'--preset "{spec}": needs a label, and both numbers between 0 and 1')
+        out.append((label, auto_v, floor_v))
+    return out
+
+
+def preset_buttons(presets):
+    """The HTML for extra threshold preset buttons, one per (label, auto, floor), each showing "label (auto / floor)".
+    Clicking one sets the page's challenger sliders, the same as the built-in presets."""
+    return "".join(f'<button data-a="{a}" data-f="{f}">{html.escape(label)} ({a:.2f} / {f:.2f})</button>'
+                   for label, a, f in presets)
+
+
+def render_page(data, stats, pairs_path, presets=()):
+    """Wrap the data in the page: controls, legend, caveats, and the script. `presets` is a list of
+    (label, auto, floor) added as extra threshold buttons beside the built-in ones."""
     legend = "".join(f'<span title="{html.escape(o["meaning"])}"><i class="sw {o["css"]}"></i>'
                      f'{html.escape(o["label"])}</span>' for o in data["outcomes"])
     meanings = "".join(f'<p><b>{html.escape(o["label"])}.</b> {html.escape(o["meaning"])}</p>'
@@ -768,7 +794,7 @@ def render_page(data, stats, pairs_path):
         f'<output id="floorOut"></output></label><input type="range" id="floor" min="0" max="0.99" step="0.01"></div>'
         f'<div class="presets"><button data-a="{d["auto"]}" data-f="{d["floor"]}">Production now '
         f'({d["auto"]:.2f} / {d["floor"]:.2f})</button><button data-a="0.8" data-f="0.3">Retrain branch (0.80 / 0.30)</button>'
-        f'<button data-a="0.75" data-f="0.3">0.75 / 0.30</button></div></div>'
+        f'<button data-a="0.75" data-f="0.3">0.75 / 0.30</button>{preset_buttons(presets)}</div></div>'
         f'<div class="row" id="baserow" hidden><div class="ctl"><label for="bauto">Baseline auto-match bar'
         f'<output id="bautoOut"></output></label><input type="range" id="bauto" min="0" max="1" step="0.01"></div>'
         f'<div class="ctl"><label for="bfloor">Baseline candidate floor<output id="bfloorOut"></output></label>'
@@ -839,11 +865,14 @@ def main():
                         "(default 1: every country in the data)")
     p.add_argument("--auto", type=float, default=0.8)
     p.add_argument("--floor", type=float, default=0.5)
+    p.add_argument("--preset", action="append", default=[], metavar="LABEL=AUTO/FLOOR",
+                   help="add a threshold button to the page, for example \"6k best=0.76/0.30\" (repeatable)")
     args = p.parse_args()
+    presets = parse_presets(args.preset)
     data, stats = build_data(args.pairs, args.scores, args.min_uploads, args.auto, args.floor, args.retrieval,
                              dict(g.partition("=")[::2] for g in args.group), args.flags,
                              load_ids(args.exclude_ids), args.regions)
-    page = render_page(data, stats, args.pairs)
+    page = render_page(data, stats, args.pairs, presets)
     with open(args.out, "w") as f:
         f.write(page)
     print(f"wrote {args.out} ({len(page) / 1e6:.1f} MB)")
