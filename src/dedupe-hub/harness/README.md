@@ -51,6 +51,26 @@ the path line at the top of each file, so they also run from any other directory
 Tests sit next to the code they test; run them all with
 `python3 -m unittest discover -p 'test_*.py'` from this folder.
 
+## Comparing models on one page
+
+The workflow behind the OSDEV-3277 comparisons, from a labeled-pairs CSV to an interactive page:
+
+1. **Check the pairs file.** `python3 evaluation_set/check_pairs.py --pairs pairs.csv --flags pick_one_flags.csv` checks the columns and how many whole uploads the file can carry. The page needs every candidate a moderator saw for an upload, not a sample of pairs.
+2. **Freeze the evaluation split, once.** `evaluation_set/freeze_eval.py` writes `eval_set.csv` and a checksummed manifest. Never regenerate it between runs you want to compare.
+3. **Build a training file.** `make_training_json.py`, or the builders in `training_sets/` (`make_style112.py`, `augment_training.py`, `merge_training.py`). Each refuses to write if a training pair is in the evaluation set, and `--ids-out` records the match ids it used.
+4. **Train and score it, several seeds,** with `verify_retrain.py` in the production image (`--retrieval-all` writes the retrieval check the page needs). Run two at a time: three run Docker out of memory.
+5. **Build the page** with `display_results/upload_page.py`: one `--scores NAME=PATH` (and `--retrieval`) per run, `--group NAME=GROUP` to put a run in a model group (runs with no group are the baseline), and `--exclude-ids` with the ids of every challenger so no model is scored on its own training pairs.
+
+Options that shape the page:
+
+| option | what it adds |
+|---|---|
+| `--preset "LABEL=AUTO/FLOOR[/GROUP[/TOLERANCE]]"` | a threshold button. With a group and a tolerance (`average`, `sd` or `worst`) it also picks the model and sets the regression test to that tolerance (the baseline's average, average plus one standard deviation, or worst run) |
+| `--start "GROUP=AUTO/FLOOR[/TOLERANCE]"` | opens the page on one model, pair and tolerance. The production presets are unchanged |
+| `--weights "LABEL=PATH"` (repeatable) | a checkbox that re-weights the overall rows so each country counts in proportion to its production volume (a CSV of country and count); with several it adds a menu to choose the period |
+
+The page says which test is judging the verdicts and dims the settings that test does not use. `analysis/` in the handback bundle has the scripts that read a page and print the numbers used in the write-up.
+
 ## Inputs
 
 A labeled-pairs CSV, one row per adjudication:
