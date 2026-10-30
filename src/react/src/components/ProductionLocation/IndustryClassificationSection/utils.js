@@ -30,6 +30,10 @@ export const parseIsicLevel = raw => {
         : { code: null, title: raw.trim() };
 };
 
+// { section: 'C - Manufacturing', class: '1410 - ...' } -> its levels, broadest first.
+export const isicEntryPath = entry =>
+    LEVELS.map(level => parseIsicLevel(entry?.[level])).filter(Boolean);
+
 const formatStep = ({ code, title }) => (code ? `${code} · ${title}` : title);
 export const formatLevel = path => formatStep(path[path.length - 1]);
 export const formatPath = path => path.map(formatStep).join(' › ');
@@ -38,9 +42,7 @@ const pathKey = path => path.map(formatStep).join('\u0000');
 const toSubmitted = item => {
     const raw = get(item, 'value.raw_value', item?.value);
     return (Array.isArray(raw) ? raw : [raw]).map(entry => ({
-        path: LEVELS.map(level => parseIsicLevel(entry?.[level])).filter(
-            Boolean,
-        ),
+        path: isicEntryPath(entry),
         sourceName: item.contributor_name || null,
         userId: item.contributor_id ?? undefined,
         date: item.created_at || null,

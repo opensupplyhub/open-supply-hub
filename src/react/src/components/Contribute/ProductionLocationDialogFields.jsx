@@ -3,6 +3,23 @@ import { object, number } from 'prop-types';
 import { map, toPairs, isArray, slice } from 'lodash';
 import Typography from '@material-ui/core/Typography';
 import { snakeToTitleCase } from '../../util/util';
+import { FIELD_CONFIG } from '../ProductionLocation/constants.jsx';
+import {
+    isicEntryPath,
+    formatLevel,
+} from '../ProductionLocation/IndustryClassificationSection/utils';
+
+// ISIC values ([{ class: '1410 - ...' }]) are shown and labelled as on the
+// production location profile: the most specific level's code and title.
+const ISIC_FIELDS = [FIELD_CONFIG.isic_4.key, FIELD_CONFIG.isic_5.key];
+
+const renderIsic = value => {
+    const levels = (isArray(value) ? value : [value])
+        .map(isicEntryPath)
+        .filter(path => path.length)
+        .map(formatLevel);
+    return levels.length ? levels.join(', ') : null;
+};
 
 const ProductionLocationDialogFields = ({
     filteredAdditionalFields,
@@ -19,7 +36,10 @@ const ProductionLocationDialogFields = ({
                 return key;
         }
     };
-    const formatLabel = key => snakeToTitleCase(key);
+    const formatLabel = key =>
+        ISIC_FIELDS.includes(key)
+            ? FIELD_CONFIG[key].label
+            : snakeToTitleCase(key);
 
     const hasMinMaxEqual = value =>
         'min' in value && 'max' in value && value.min === value.max;
@@ -68,7 +88,9 @@ const ProductionLocationDialogFields = ({
         <>
             {map(filteredEntries, ([key, value]) => {
                 const title = transformLabel(key);
-                const renderedValue = renderValue(value);
+                const renderedValue = ISIC_FIELDS.includes(key)
+                    ? renderIsic(value)
+                    : renderValue(value);
                 if (!renderedValue) {
                     return null;
                 }

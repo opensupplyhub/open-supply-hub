@@ -123,6 +123,40 @@ describe('ProductionLocationDialog', () => {
         expect(getByText(/Shirts, Pants/i)).toBeInTheDocument();
     });
 
+    test('renders ISIC values as the production location profile does', () => {
+        const data = {
+            raw_json: {
+                ...defaultProps.data.raw_json,
+                isic_4: [
+                    { class: '1410 - Manufacture of wearing apparel, except fur apparel' },
+                    { section: 'C - Manufacturing', division: '13 - Manufacture of textiles' },
+                ],
+                isic_5: [{ group: '141 - Manufacture of wearing apparel' }],
+            },
+        };
+
+        const { getByText, queryByText } = renderWithProviders(
+            <Router>
+                <ProductionLocationDialog
+                    classes={{}}
+                    data={data}
+                    osID={defaultProps.osID}
+                    moderationStatus={defaultProps.moderationStatus}
+                />
+            </Router>
+        );
+
+        expect(getByText('ISIC Rev. 4')).toBeInTheDocument();
+        expect(
+            getByText(
+                '1410 · Manufacture of wearing apparel, except fur apparel, 13 · Manufacture of textiles',
+            ),
+        ).toBeInTheDocument();
+        expect(getByText('ISIC Rev. 5')).toBeInTheDocument();
+        expect(getByText('141 · Manufacture of wearing apparel')).toBeInTheDocument();
+        expect(queryByText(/\[object Object\]/i)).not.toBeInTheDocument();
+    });
+
     test.each([
         ['PENDING', 'unclaimed', false],
         ['PENDING', 'pending', true],
