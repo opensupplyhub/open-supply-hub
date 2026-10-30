@@ -39,7 +39,7 @@ folder. The work added for OSDEV-3277 is in folders by what it does:
 
 | folder | what it does |
 |---|---|
-| `evaluation_set/` | `freeze_eval.py`: freeze the held-out half of the labeled pairs, with a checksummed manifest, so every model is graded on the same pairs |
+| `evaluation_set/` | `check_pairs.py`: check a pairs file before using it (columns, statuses, how many whole uploads it can carry, pick-one flag coverage); `freeze_eval.py`: freeze the held-out half of the labeled pairs, with a checksummed manifest, so every model is graded on the same pairs |
 | `training_sets/` | build and combine the training files that were tried: `make_style112.py` (copies the 112's recipe at a larger size), `augment_training.py` (add real pairs), `merge_training.py`, `build_size_variants.sh` |
 | `upload_outcomes/` | `outcomes.py`: the rule that decides what finally happens to one upload (seven outcomes) |
 | `display_results/` | the interactive HTML pages and reports: `upload_page.py` (the main page), `upload_bars.py`, `run_history.py`, `slices.py`, and the pair-level `slice_report.py` and `pair_page.py` |

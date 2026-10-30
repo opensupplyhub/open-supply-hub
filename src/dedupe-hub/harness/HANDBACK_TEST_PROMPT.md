@@ -41,7 +41,7 @@ If something is missing, say so plainly, for example: "I don't have `<data>`, so
 
 ## Tests to run (report pass, fail or could not run, with evidence)
 
-1. **Unit tests.** From the harness folder run `python3 -B -m unittest discover -p 'test_*.py'`. Expect 74 passing. Also run it from a different directory with `-s` pointing at the harness.
+1. **Unit tests.** From the harness folder run `python3 -B -m unittest discover -p 'test_*.py'`. Expect 84 passing. Also run it from a different directory with `-s` pointing at the harness.
 2. **Fresh checkout.** Clone or `git worktree add` the pushed branch `origin/osdev-3277-slice-eval` into `$TMPDIR` (do not touch the existing worktree) and rerun test 1 there. Confirm `git status` is clean and no untracked files are needed.
 3. **Patch application** (needs `<handback>`). In a scratch worktree of `origin/worktree-osdev-3277-handoff`, apply `<handback>/code/commits/*.patch` with `git am`. Confirm the result has the same tree as the pushed branch (`git diff` empty). Extract `<handback>/code/harness-snapshot.tgz` and diff it against the branch's harness folder.
 4. **Every moved script starts.** Run `--help` for each `.py` under `evaluation_set/`, `training_sets/`, `display_results/` and `traffic_replay/` from `/tmp` (not the harness folder). Any traceback is a failure.
@@ -57,6 +57,9 @@ If something is missing, say so plainly, for example: "I don't have `<data>`, so
 11. **Docstring coverage.** Every module, class and function in the `.py` files under `evaluation_set/`, `training_sets/`, `upload_outcomes/`, `display_results/` and `traffic_replay/`, plus `test_make_training_json.py` and `test_verify_retrain.py`, must have a docstring. Use `ast`.
 12. **Dead or unused code.** Report any `.py` in the harness that nothing imports or runs. Do not delete.
 13. **Fresh-eyes review** (needs `<handback>` for the numbers). Read `display_results/upload_page.py`'s outcome logic and `upload_outcomes/outcomes.py` against the seven outcomes described in `FINDINGS.md`. Do the docs describe what the code does? Spot-check three numbers in `FINDINGS.md` section 4 using `<handback>/analysis/look.js`, `never.js` and `global_thr.js` against `<handback>/pages/outcome_bars_UPLOADS_1200.html` (run with `node`; read the scripts for their arguments).
+
+14. **Pairs-file checker.** Run `evaluation_set/check_pairs.py --pairs <data>/pairs.csv --flags <data>/pick_one_flags.csv` from `/tmp`. Expect 78,357 rows, 54,279 uploads grouped, 50,045 usable (37,637 with an existing match, 12,408 new), 4,234 left out for two or more confirmed candidates, 77% single-candidate uploads, and the verdict "looks usable" with no warnings. Then try to break it: a copy of `pairs.csv` with a column deleted (exit code 1 and the column named), and a copy with only a small random sample of rows (should warn about thin or fragmented uploads). Check that its counts agree with what a page build prints for `uploads_usable` and `uploads_ambiguous_left_out` (the page also drops uploads containing excluded training pairs and unscored pairs, so expect small differences that those explain).
+15. **A different pairs file.** Read the "Using a different pairs file" section of `<handback>/HOWTO-PAGES.md`. Following only the handback docs, could someone with a new pairs file find every step, including `check_pairs.py`, the pick-one flags source, and the baseline retraining? Report anything missing or unclear.
 
 ## Known limits (not failures)
 - The traffic test (`traffic_replay/`) has never run end to end: its SQL pull needs database access.
