@@ -1,5 +1,5 @@
 from django.contrib.admin.sites import AdminSite
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 
 from api.admin import FacilityClaimAdmin
 from api.models import (
@@ -13,6 +13,15 @@ from api.models import (
 )
 
 from django.contrib.gis.geos import Point
+
+# The admin templates reference hashed static files, which are not built
+# in the test environment.
+PLAIN_STATIC_STORAGE = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+}
 
 
 class FacilityClaimAdminFormTest(TestCase):
@@ -69,33 +78,46 @@ class FacilityClaimAdminFormTest(TestCase):
             parent_company=None,
         )
 
-    def _resave_unchanged(self, claim):
-        """Bind the change form to what it renders for an existing claim.
+        User.objects.create_superuser('moderator@example.com', 'example123')
+        self.client.login(
+            email='moderator@example.com', password='example123')
 
-        This is a moderator opening the claim and pressing Save without
-        editing anything, which is the action OSDEV-1065 reported as
-        impossible.
-        """
+    def _unchanged_post_data(self):
+        """What the change page submits when nothing is edited."""
         form_class = self.admin.get_form(
-            self.request, obj=claim, change=True)
-        rendered = form_class(instance=claim)
+            self.request, obj=self.claim, change=True)
+        rendered = form_class(instance=self.claim)
         data = {}
         for name in rendered.fields:
             value = rendered[name].value()
             data[name] = '' if value is None else value
-        return form_class(data, instance=claim)
+        return data
 
-    def test_a_claim_with_every_optional_field_empty_can_be_saved(self):
+    @override_settings(STORAGES=PLAIN_STATIC_STORAGE)
+    def test_saving_an_unedited_claim_succeeds(self):
         """The regression test for the reported bug.
 
-        Asserting the form validates, rather than asserting individual
-        required flags, is what catches a field the audit missed.
+        A moderator opens a claim that left the optional fields empty and
+        presses Save without editing anything. Before the fix this came
+        back as a 200 carrying "No geometry value provided." on Location,
+        plus required-field errors on parent company and description.
         """
-        form = self._resave_unchanged(self.claim)
-        self.assertTrue(
-            form.is_valid(),
-            'claim admin form rejected an unedited claim: {}'.format(
-                form.errors.as_data()))
+        url = '/admin/api/facilityclaim/{}/change/'.format(self.claim.id)
+        data = self._unchanged_post_data()
+        data['_save'] = 'Save'
+
+        response = self.client.post(url, data)
+
+        if response.status_code == 200:
+            errors = response.context_data['adminform'].form.errors.as_data()
+            self.fail('the claim could not be saved: {}'.format(errors))
+        self.assertEqual(response.status_code, 302)
+
+        # Saving must not invent values for the empty fields.
+        self.claim.refresh_from_db()
+        self.assertEqual(self.claim.facility_description, '')
+        self.assertIsNone(self.claim.facility_location)
+        self.assertIsNone(self.claim.parent_company)
 
     def test_location_is_optional(self):
         """A claim with no stored point must still be saveable."""
