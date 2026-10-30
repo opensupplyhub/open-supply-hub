@@ -31,6 +31,48 @@ All three are stdlib-only — the `api-app` image carries neither pandas nor
 scikit-learn, and the harness has to run inside it to use the same dedupe build
 as production.
 
+## Layout
+
+The original retrain scripts (`make_training_json.py`, `verify_retrain.py`, `evaluate.py`,
+the lookalike and fan-out experiments, `extract_labels.sql`) stay at the top of this
+folder. The work added for OSDEV-3277 is in folders by what it does:
+
+| folder | what it does |
+|---|---|
+| `evaluation_set/` | `check_pairs.py`: check a pairs file before using it (columns, statuses, how many whole uploads it can carry, pick-one flag coverage); `freeze_eval.py`: freeze the held-out half of the labeled pairs, with a checksummed manifest, so every model is graded on the same pairs |
+| `training_sets/` | build and combine the training files that were tried: `make_style112.py` (copies the 112's recipe at a larger size), `augment_training.py` (add real pairs), `merge_training.py`, `build_size_variants.sh` |
+| `upload_outcomes/` | `outcomes.py`: the rule that decides what finally happens to one upload (seven outcomes) |
+| `display_results/` | the interactive HTML pages and reports: `upload_page.py` (the main page), `upload_bars.py`, `run_history.py`, `slices.py`, and the pair-level `slice_report.py` and `pair_page.py` |
+| `traffic_replay/` | the offline traffic test: `traffic_pull.sql` samples real uploads, `traffic_test.py` replays them through a trained model, `traffic_compare.py` compares two models |
+
+Run any script by its path from this folder, for example
+`python3 display_results/upload_page.py --help`. Scripts find each other through
+the path line at the top of each file, so they also run from any other directory.
+Tests sit next to the code they test; run them all with
+`python3 -m unittest discover -p 'test_*.py'` from this folder.
+
+## Comparing models on one page
+
+The workflow behind the OSDEV-3277 comparisons, from a labeled-pairs CSV to an interactive page:
+
+1. **Check the pairs file.** `python3 evaluation_set/check_pairs.py --pairs pairs.csv --flags pick_one_flags.csv` checks the columns and how many whole uploads the file can carry. The page needs every candidate a moderator saw for an upload, not a sample of pairs.
+2. **Freeze the evaluation split, once.** `evaluation_set/freeze_eval.py` writes `eval_set.csv` and a checksummed manifest. Never regenerate it between runs you want to compare.
+3. **Build a training file.** `make_training_json.py`, or the builders in `training_sets/` (`make_style112.py`, `augment_training.py`, `merge_training.py`). Each refuses to write if a training pair is in the evaluation set, and `--ids-out` records the match ids it used.
+4. **Train and score it, several seeds,** with `verify_retrain.py` in the production image (`--retrieval-all` writes the retrieval check the page needs). Run two at a time: three run Docker out of memory.
+5. **Build the page** with `display_results/upload_page.py`: one `--scores NAME=PATH` (and `--retrieval`) per run, `--group NAME=GROUP` to put a run in a model group (runs with no group are the baseline), and `--exclude-ids` with the ids of every challenger so no model is scored on its own training pairs.
+
+Options that shape the page:
+
+| option | what it adds |
+|---|---|
+| `--preset "LABEL=AUTO/FLOOR[/GROUP[/TOLERANCE]]"` | a threshold button. With a group and a tolerance (`average`, `sd` or `worst`) it also picks the model and sets the regression test to that tolerance (the baseline's average, average plus one standard deviation, or worst run) |
+| `--start "GROUP=AUTO/FLOOR[/TOLERANCE]"` | opens the page on one model, pair and tolerance. The production presets are unchanged |
+| `--compact` | for sharing: packs the scores into a much smaller page (about a third of the size) and leaves out the score file names |
+| `--intro HTML_FILE` | an "About this page" panel under the title |
+| `--weights "LABEL=PATH"` (repeatable) | a checkbox that re-weights the overall rows so each country counts in proportion to its production volume (a CSV of country and count); with several it adds a menu to choose the period |
+
+The page says which test is judging the verdicts and dims the settings that test does not use. `analysis/` in the handback bundle has the scripts that read a page and print the numbers used in the write-up.
+
 ## Inputs
 
 A labeled-pairs CSV, one row per adjudication:
@@ -97,6 +139,15 @@ python3 src/dedupe-hub/harness/evaluate.py \
     --pairs src/dedupe-hub/harness/.data/pairs.csv \
     --flags src/dedupe-hub/harness/.data/pick_one_flags.csv \
     --scores "candidate=src/dedupe-hub/harness/.data/candidate_scores.csv"
+
+# 4b. Same comparison per slice (named countries, the lookalike class, and every
+#     other country with enough pairs). The slice list lives in slices.py. Add
+#     --csv to keep the numbers, e.g. to compare repeated runs.
+python3 src/dedupe-hub/harness/display_results/slice_report.py \
+    --pairs src/dedupe-hub/harness/.data/pairs.csv \
+    --flags src/dedupe-hub/harness/.data/pick_one_flags.csv \
+    --scores "candidate=src/dedupe-hub/harness/.data/candidate_scores.csv" \
+    --csv src/dedupe-hub/harness/.data/slices_candidate.csv
 
 # 5. Compare against the committed operating point (0.8 / 0.3) in
 #    gazetteer_match_defaults.py, then shadow-run on Test with
