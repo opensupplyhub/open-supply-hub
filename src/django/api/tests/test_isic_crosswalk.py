@@ -23,6 +23,7 @@ from api.facility_type_processing_type import (
 )
 from api.isic_taxonomy.crosswalk import (
     CROSSWALK_CSV_PATH,
+    SECTOR_CROSSWALK_CSV_PATH,
     CrosswalkError,
     load_crosswalk_rows,
 )
@@ -31,12 +32,12 @@ from api.models.facility.facility_index import FacilityIndex
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
-def mapped_codes(facility_types, processing_types):
+def mapped_codes(facility_types, processing_types, sectors=None):
     with connection.cursor() as cursor:
         cursor.execute(
-            'SELECT isic_level, isic_code '
-            'FROM isic_mapped_codes(%s::varchar[], %s::varchar[])',
-            [facility_types, processing_types],
+            'SELECT isic_level, isic_code FROM isic_mapped_codes('
+            '%s::varchar[], %s::varchar[], %s::varchar[])',
+            [facility_types, processing_types, sectors or []],
         )
         rows = cursor.fetchall()
     codes = {'section': [], 'division': [], 'group': [], 'class': []}
@@ -68,6 +69,8 @@ class CrosswalkFileTest(SimpleTestCase):
                 pairs.add((facility_type.lower(), processing_type.lower()))
 
         for row in load_crosswalk_rows():
+            if row['sector']:
+                continue
             facility_type = row['facility_type'].lower()
             processing_type = row['processing_type'].lower()
             with self.subTest(row=row):
@@ -86,12 +89,25 @@ class CrosswalkFileTest(SimpleTestCase):
                         self.assertEqual(titles.setdefault(code, title), title)
 
     def test_unmapped_rows_carry_no_codes(self):
-        with open(CROSSWALK_CSV_PATH, newline='') as csv_file:
-            rows = list(csv.DictReader(csv_file))
+        rows = []
+        for path in (CROSSWALK_CSV_PATH, SECTOR_CROSSWALK_CSV_PATH):
+            with open(path, newline='') as csv_file:
+                rows.extend(csv.DictReader(csv_file))
         for row in rows:
-            if row['match_type'] == 'Does not map':
+            if row['match_type'] in ('Does not map', 'Out of scope'):
                 with self.subTest(row=row):
                     self.assertEqual(row['isic_section'], '')
+
+    def test_every_row_names_either_a_sector_or_a_facility_type(self):
+        rows = load_crosswalk_rows()
+        self.assertTrue(any(row['sector'] for row in rows))
+        for row in rows:
+            with self.subTest(row=row):
+                self.assertNotEqual(
+                    bool(row['sector']), bool(row['facility_type']),
+                )
+                if row['sector']:
+                    self.assertEqual(row['processing_type'], '')
 
     def _write_csv(self, content):
         handle = tempfile.NamedTemporaryFile(
@@ -114,7 +130,9 @@ class CrosswalkFileTest(SimpleTestCase):
             + 'Final Product Assembly,Sewing,C,Manufacturing,14,Apparel,'
             '141,Apparel,1410,Apparel,Exact\n'
         )
-        self.assertEqual(len(load_crosswalk_rows(path)), 1)
+        self.assertEqual(
+            len(load_crosswalk_rows(path, sector_path=None)), 1,
+        )
 
     def test_rejects_class_outside_its_group(self):
         path = self._write_csv(
@@ -148,6 +166,50 @@ class CrosswalkFileTest(SimpleTestCase):
         )
         with self.assertRaisesRegex(CrosswalkError, 'without gaps'):
             load_crosswalk_rows(path)
+
+    SECTOR_HEADER = (
+        'sector,isic_section,isic_section_title,isic_division,'
+        'isic_division_title,isic_group,isic_group_title,isic_class,'
+        'isic_class_title,match_type\n'
+    )
+
+    def test_accepts_a_valid_sector_row(self):
+        path = self._write_csv(self.HEADER)
+        sector_path = self._write_csv(
+            self.SECTOR_HEADER + 'Mining,B,Mining and quarrying,,,,,,,Exact\n'
+        )
+        self.assertEqual(
+            load_crosswalk_rows(path, sector_path),
+            [{
+                'sector': 'Mining',
+                'facility_type': '',
+                'processing_type': '',
+                'isic_section': 'B',
+                'isic_section_title': 'Mining and quarrying',
+                'isic_division': '',
+                'isic_division_title': '',
+                'isic_group': '',
+                'isic_group_title': '',
+                'isic_class': '',
+                'isic_class_title': '',
+            }],
+        )
+
+    def test_rejects_duplicate_sector_rows_ignoring_case(self):
+        sector_path = self._write_csv(
+            self.SECTOR_HEADER
+            + 'Mining,B,Mining and quarrying,,,,,,,Exact\n'
+            'MINING,B,Mining and quarrying,,,,,,,Exact\n'
+        )
+        with self.assertRaisesRegex(CrosswalkError, 'duplicate'):
+            load_crosswalk_rows(sector_path=sector_path)
+
+    def test_rejects_sector_row_without_sector(self):
+        sector_path = self._write_csv(
+            self.SECTOR_HEADER + ',B,Mining and quarrying,,,,,,,Exact\n'
+        )
+        with self.assertRaisesRegex(CrosswalkError, 'sector is empty'):
+            load_crosswalk_rows(sector_path=sector_path)
 
     def test_rejects_missing_columns(self):
         path = self._write_csv('facility_type,processing_type\nA,B\n')
@@ -250,6 +312,67 @@ class IsicMappedCodesTest(TestCase):
             },
         )
 
+    def test_sector_maps_to_its_section(self):
+        # Mining -> B Mining and quarrying.
+        self.assertEqual(
+            mapped_codes([], [], ['Mining']),
+            {'section': ['B'], 'division': [], 'group': [], 'class': []},
+        )
+
+    def test_sector_maps_to_class(self):
+        self.assertEqual(
+            mapped_codes([], [], ['Trucking']),
+            {
+                'section': ['H'],
+                'division': ['49'],
+                'group': ['492'],
+                'class': ['4923'],
+            },
+        )
+
+    def test_unmappable_sector_maps_to_nothing(self):
+        self.assertEqual(mapped_codes([], [], ['Agriculture']), NO_CODES)
+        self.assertEqual(mapped_codes([], [], ['Apparel']), NO_CODES)
+
+    def test_sector_matching_ignores_case_and_whitespace(self):
+        self.assertEqual(
+            mapped_codes([], [], [' mining ']),
+            mapped_codes([], [], ['Mining']),
+        )
+
+    def test_sector_and_processing_type_both_apply(self):
+        # The sector adds its value even when the processing type maps to
+        # something else, and even when one is broader than the other.
+        self.assertEqual(
+            mapped_codes(
+                ['Final Product Assembly'], ['Cut & Sew'], ['Warehousing'],
+            ),
+            {
+                'section': ['C', 'H'],
+                'division': ['14', '52'],
+                'group': ['141', '521'],
+                'class': ['1410', '5210'],
+            },
+        )
+        self.assertEqual(
+            mapped_codes(
+                ['Final Product Assembly'], ['Cut & Sew'], ['Manufacturing'],
+            ),
+            mapped_codes(['Final Product Assembly'], ['Cut & Sew']),
+        )
+
+    def test_sector_does_not_lift_a_processing_type_that_maps_to_nothing(
+        self,
+    ):
+        # Tailoring still maps to nothing; the sector's value is added on
+        # its own.
+        self.assertEqual(
+            mapped_codes(
+                ['Final Product Assembly'], ['Tailoring'], ['Mining'],
+            ),
+            mapped_codes([], [], ['Mining']),
+        )
+
     def test_processing_type_needs_its_facility_type(self):
         # Pairs only apply when the processing type's own facility type is
         # on the location.
@@ -283,6 +406,26 @@ class IsicMappedIndexingTest(FacilityAPITestCaseBase):
 
     def _index(self):
         return FacilityIndex.objects.get(id=self.facility.id)
+
+    def test_sector_populates_mapped_columns(self):
+        self.list_item.sector = ['Mining']
+        self.list_item.save()
+        self.facility.save()
+
+        index = self._index()
+        self.assertEqual(index.sector, ['Mining'])
+        self.assertEqual(index.isic_mapped_section, ['B'])
+
+    def test_changing_sector_updates_mapped_columns(self):
+        self.list_item.sector = ['Mining']
+        self.list_item.save()
+        self.facility.save()
+        self.assertEqual(self._index().isic_mapped_section, ['B'])
+
+        self.list_item.sector = ['Apparel']
+        self.list_item.save()
+        self.facility.save()
+        self.assertEqual(self._index().isic_mapped_section, [])
 
     def test_new_processing_type_populates_mapped_columns(self):
         self._add_processing_type(
@@ -395,6 +538,30 @@ class IsicMappedIndexingTest(FacilityAPITestCaseBase):
 
         self.assertEqual(updated_ids, [self.facility.id])
         self.assertEqual(self._index().isic_mapped_class, ['1410'])
+
+    def test_backfill_spec_maps_sectors(self):
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            sector=['Mining'],
+        )
+        # The update above fires the trigger; clear the result to simulate a
+        # row indexed before 0260.
+        FacilityIndex.objects.filter(id=self.facility.id).update(
+            isic_mapped_section=[],
+        )
+        self.assertEqual(self._index().isic_mapped_section, [])
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                build_update_sql(get_field_spec('isic_4_mapped')),
+                {
+                    'workers': 1,
+                    'worker_id': 0,
+                    'last_id': '',
+                    'batch_size': 100,
+                },
+            )
+
+        self.assertEqual(self._index().isic_mapped_section, ['B'])
 
     def test_backfill_filter_respects_batch_cursor(self):
         # The filter is appended after AND; an unparenthesized OR would let
