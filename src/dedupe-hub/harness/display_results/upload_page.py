@@ -184,6 +184,26 @@ function tally(run, floor, auto, clean, ovr, rule, excl) {
       const cc = t.causes[o] || (t.causes[o] = {}); cc[c] = (cc[c] || 0) + 1;
     }
   }
+  return state.weighted ? reweight(res, excl) : res;
+}
+
+// The overall row, re-weighted: each country counts in proportion to its production volume (D.weights, list items) instead of
+// its number of uploads here. A country's counts are scaled by weight / uploads, so the shares are the weighted average of the
+// countries' shares and the counts read as list items. Countries without a weight, and ones ticked off, are left out.
+function reweight(res, excl) {
+  const W = D.weights;
+  if (!W || !res.ALL) return res;
+  const out = {n: 0, counts: {}, causes: {}};
+  for (const cc of D.countries) {
+    const w = W[cc], t = res[cc];
+    if (!w || !t || !t.n || (excl && excl[cc])) continue;
+    const f = w / t.n;
+    for (const [k, v] of Object.entries(t.counts)) out.counts[k] = (out.counts[k] || 0) + v * f;
+    for (const [k, cs] of Object.entries(t.causes)) { const c2 = out.causes[k] || (out.causes[k] = {}); for (const [kk, v] of Object.entries(cs)) c2[kk] = (c2[kk] || 0) + v * f; }
+  }
+  for (const k of Object.keys(out.counts)) { out.counts[k] = Math.round(out.counts[k]); out.n += out.counts[k]; }
+  for (const cs of Object.values(out.causes)) for (const kk of Object.keys(cs)) cs[kk] = Math.round(cs[kk]);
+  res.ALL = out;
   return res;
 }
 
@@ -252,9 +272,10 @@ function thrCell(s, g0) {
 // How many countries are ticked off, and the heading text for an overall section.
 const nExcl = () => Object.keys(state.excl).length;
 function allNote(s, tallies) {
-  if (!nExcl() || (s.key !== 'ALL' && s.key !== 'LOOK')) return '';
+  const wnote = state.weighted && s.key === 'ALL' ? ' [weighted by ' + (D.weightsLabel || 'production volume') + '; counts are list items]' : '';
+  if (!nExcl() || (s.key !== 'ALL' && s.key !== 'LOOK')) return wnote;
   const t = tallies[0][s.key];
-  return ' (' + nExcl() + ' countr' + (nExcl() === 1 ? 'y' : 'ies') + ' left out' + (t ? '; ' + t.n + ' uploads left' : '') + ')';
+  return ' (' + nExcl() + ' countr' + (nExcl() === 1 ? 'y' : 'ies') + ' left out' + (t && !(state.weighted && s.key === 'ALL') ? '; ' + t.n + ' uploads left' : '') + ')' + wnote;
 }
 
 // The verdict for one slice: its own rule if it has one, else the page-wide setting.
@@ -329,7 +350,7 @@ function bandSection(s, tallies) {
       '<div class="bar">' + segs + '</div><table class="band"><tr><th>Outcome</th><th>Average %</th><th>Lowest %</th><th>Highest %</th></tr>' +
       rows + '</table></div></div>';
   }
-  const cut = nExcl() && (s.key === 'ALL' || s.key === 'LOOK');
+  const cut = (nExcl() && (s.key === 'ALL' || s.key === 'LOOK')) || (state.weighted && s.key === 'ALL');
   return '<section><h2>' + esc(s.label) + '<small>' + (cut ? esc(allNote(s, tallies)) : mix ? mix.n + ' uploads' : '') + '</small></h2>' +
     '<div class="mix">' + (mix && !cut ? mix.match + ' have an existing facility, ' + mix.new + ' are genuinely new' : '') + '</div>' + body + '</section>';
 }
@@ -373,11 +394,15 @@ const RULESETS = {
 };
 let state = {auto: DEF.auto, floor: DEF.floor, bauto: DEF.auto, bfloor: DEF.floor, view: D.runs.length > 8 ? 'band' : 'run',
   rules: {dup: true, wrong: true, review: true}, reg: {ref: 'worst', val: 'best'}, imp: {ref: 'best', val: 'worst'},
-  margin: 0, minEvents: 30, mode: 'range', k: 2, clean: false, chal: CHAL, thr: {}, link: true, ovr: {}, promote: 0, hold: 0, excl: {}, ruleBy: {}};
+  margin: 0, minEvents: 30, mode: 'range', k: 2, clean: false, chal: CHAL, thr: {}, link: true, ovr: {}, promote: 0, hold: 0, excl: {}, ruleBy: {}, weighted: false};
 const exclKey = () => Object.keys(state.excl).sort().join(',');
 for (const g of CHALS) state.thr[g] = {auto: DEF.auto, floor: DEF.floor};
+if (D.start && CHALS.includes(D.start.group)) {   // open on a chosen model and pair (--start)
+  state.chal = D.start.group; state.auto = D.start.auto; state.floor = D.start.floor;
+  for (const g of (state.link ? CHALS : [state.chal])) state.thr[g] = {auto: D.start.auto, floor: D.start.floor};
+}
 const baseCache = {};
-function baseTallies(clean) { const k = clean + '|' + exclKey(); return baseCache[k] || (baseCache[k] = D.runs.map(r => tally(r, DEF.floor, DEF.auto, clean, undefined, undefined, state.excl))); }
+function baseTallies(clean) { const k = clean + '|' + exclKey() + '|' + state.weighted; return baseCache[k] || (baseCache[k] = D.runs.map(r => tally(r, DEF.floor, DEF.auto, clean, undefined, undefined, state.excl))); }
 
 const GROUP_TITLE = {all: 'All uploads together', region: 'By region (the groups of countries used for regional models)', country: 'By country', look: 'Lookalike uploads (any candidate is a near-identical sibling), overall and by country'};
 // Give one country its own challenger bar or floor (the other one starts at the current default).
@@ -406,7 +431,7 @@ function render() {
   const tallies = D.runs.map((r, i) => {
     const [f, a, ov, rule] = thr(r);
     if (!CHALS.length || ov) return tally(r, f, a, state.clean, ov, rule, state.excl);
-    const key = f + '|' + a + '|' + state.clean + '|' + exclKey(), c = baseTallyCache[i];   // baseline runs only change with their own sliders
+    const key = f + '|' + a + '|' + state.clean + '|' + exclKey() + '|' + state.weighted, c = baseTallyCache[i];   // baseline runs only change with their own sliders
     if (c && c.key === key) return c.t;
     const t = tally(r, f, a, state.clean, undefined, undefined, state.excl); baseTallyCache[i] = {key, t}; return t;
   });
@@ -433,7 +458,7 @@ function render() {
       spread = '<div class="spread">Spread across ' + D.runs.length + ' runs (highest minus lowest, in percentage points): ' +
         parts.join(' &middot; ') + '</div>';
     }
-    const cut = nExcl() && (s.key === 'ALL' || s.key === 'LOOK');
+    const cut = (nExcl() && (s.key === 'ALL' || s.key === 'LOOK')) || (state.weighted && s.key === 'ALL');
     out.push('<section><h2>' + esc(s.label) + '<small>' + (cut ? esc(allNote(s, tallies)) : mix ? mix.n + ' uploads' : '') + '</small></h2>' +
       '<div class="mix">' + (mix && !cut ? mix.match + ' have an existing facility, ' + mix.new + ' are genuinely new' : '') +
       '</div>' + rows + spread + '</section>');
@@ -499,6 +524,8 @@ if (typeof document !== 'undefined') {
     if (e.target.checked) delete state.excl[cc]; else state.excl[cc] = true;
     render();
   });
+  const wt = document.getElementById('weighted');
+  if (wt) wt.addEventListener('change', e => { state.weighted = e.target.checked; render(); });
   document.getElementById('clearovr').addEventListener('click', () => { state.ovr = {}; render(); });
   document.getElementById('promote').addEventListener('input', e => { state.promote = +e.target.value || 0; render(); });
   document.getElementById('hold').addEventListener('input', e => { state.hold = +e.target.value || 0; render(); });
@@ -533,7 +560,7 @@ if (typeof document !== 'undefined') {
     const [rr, rv, ir, iv] = b.dataset.p.split(',');
     state.mode = 'range'; state.reg = {ref: rr, val: rv}; state.imp = {ref: ir, val: iv}; sync(); render(); }));
   document.getElementById('kz').addEventListener('input', e => { state.k = +e.target.value || 0; state.mode = 'noise'; render(); });
-  document.getElementById('auto').value = DEF.auto; document.getElementById('floor').value = DEF.floor;
+  document.getElementById('auto').value = state.auto; document.getElementById('floor').value = state.floor;
   sync();
   document.querySelectorAll('input[name=view]').forEach(r => { r.checked = r.value === state.view; });
   render();
@@ -608,7 +635,7 @@ def load_ids(path):
 
 
 def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_specs=(), run_groups=None,
-               flags_path=None, exclude_ids=None, regions_path=None):
+               flags_path=None, exclude_ids=None, regions_path=None, weights=None, weights_label=None, start=None):
     """Group pairs into uploads and assemble everything the page needs.
 
     retrieval_specs ("NAME=PATH", made with verify_retrain.py --retrieval-all) says,
@@ -719,7 +746,8 @@ def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_spec
                      for k, lab, m, css in OUTCOMES],
         "causes": CAUSE_TEXT, "defaults": {"auto": auto, "floor": floor},
         "countries": countries, "show": show, "mix": mix, "uploads": uploads, "hasFlags": bool(pick_one),
-        "regionOf": region_of,
+        "regionOf": region_of, "weights": weights or {}, "weightsLabel": weights_label or "production volume",
+        "start": ({"group": start[0], "auto": start[1], "floor": start[2]} if start else None),
         "runs": [dict({"id": name, "group": (run_groups or {}).get(name, "baseline"), "scores": upload_scores[i],
                        "meta": os.path.basename(path) + ("" if name in retrievals else " (no retrieval check)")},
                       **({"ret": upload_ret[i]} if name in retrievals else {}))
@@ -729,6 +757,19 @@ def build_data(pairs_path, score_specs, min_uploads, auto, floor, retrieval_spec
              "uploads_usable": len(uploads), "uploads_ambiguous_left_out": ambiguous,
              "with_match": mix["ALL"]["match"], "new": mix["ALL"]["new"], "uploads_excluded_trained_on": excluded}
     return data, stats
+
+
+def load_weights(path):
+    """Read a production-volume CSV (a country column, then one count column) into {lowercase country code: count}.
+    Rows with a blank country or a count that is not a whole number are skipped."""
+    out = {}
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        rows = csv.reader(f)
+        next(rows, None)
+        for row in rows:
+            if len(row) >= 2 and row[0].strip() and row[1].strip().isdigit():
+                out[row[0].strip().lower()] = int(row[1].strip())
+    return out
 
 
 def parse_presets(specs):
@@ -754,6 +795,15 @@ def preset_buttons(presets):
     Clicking one sets the page's challenger sliders, the same as the built-in presets."""
     return "".join(f'<button data-a="{a}" data-f="{f}">{html.escape(label)} ({a:.2f} / {f:.2f})</button>'
                    for label, a, f in presets)
+
+
+def weight_checkbox(data):
+    """The HTML for the "weight the overall rows" checkbox, or nothing when the page was built without --weights."""
+    if not data.get("weights"):
+        return ""
+    return (f'<div class="opt"><label><input type="checkbox" id="weighted"> Weight the overall rows by '
+            f'{html.escape(data["weightsLabel"])}: each country counts in proportion to its share, not to its number of uploads '
+            f'here (the counts then read as list items)</label></div>')
 
 
 def render_page(data, stats, pairs_path, presets=()):
@@ -806,6 +856,7 @@ def render_page(data, stats, pairs_path, presets=()):
         f'<label><input type="radio" name="labels" value="clean"> without sibling picks (clean)</label></div>'
         f'<div class="opt">View: <label><input type="radio" name="view" value="band"> Average and range across runs</label>'
         f'<label><input type="radio" name="view" value="run"> One bar per run</label></div>'
+        f'{weight_checkbox(data)}'
         f'<div class="note" id="changed"></div></div>'
         f'<div class="reg" id="regpanel" hidden><b>Regression rules</b> (challenger against baseline; lower is better for all three) '
         f'<label>Compare the baseline with <select id="chalsel"></select></label> '
@@ -865,13 +916,21 @@ def main():
                         "(default 1: every country in the data)")
     p.add_argument("--auto", type=float, default=0.8)
     p.add_argument("--floor", type=float, default=0.5)
+    p.add_argument("--weights", help="production-volume CSV (country, count): adds a checkbox that re-weights the overall rows "
+                                     "so each country counts in proportion to its production volume")
+    p.add_argument("--weights-label", default="production volume",
+                   help='what the weights are, shown on the page, for example "list items since 2026-01-01"')
+    p.add_argument("--start", metavar="GROUP=AUTO/FLOOR",
+                   help='open the page on one model and pair, for example "chal6k=0.76/0.30" (the production presets are unchanged)')
     p.add_argument("--preset", action="append", default=[], metavar="LABEL=AUTO/FLOOR",
                    help="add a threshold button to the page, for example \"6k best=0.76/0.30\" (repeatable)")
     args = p.parse_args()
     presets = parse_presets(args.preset)
+    start = parse_presets([args.start])[0] if args.start else None
     data, stats = build_data(args.pairs, args.scores, args.min_uploads, args.auto, args.floor, args.retrieval,
                              dict(g.partition("=")[::2] for g in args.group), args.flags,
-                             load_ids(args.exclude_ids), args.regions)
+                             load_ids(args.exclude_ids), args.regions, load_weights(args.weights) if args.weights else None,
+                             args.weights_label, start)
     page = render_page(data, stats, args.pairs, presets)
     with open(args.out, "w") as f:
         f.write(page)

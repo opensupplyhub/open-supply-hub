@@ -1,6 +1,7 @@
 """Tests for the threshold preset helpers in upload_page: parsing --preset values and building their buttons."""
 import os
 import sys
+import tempfile
 import unittest
 
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))   # the harness folder
@@ -40,6 +41,41 @@ class PresetButtons(unittest.TestCase):
     def test_no_presets_gives_nothing(self):
         """Without presets the page is exactly what it was."""
         self.assertEqual(up.preset_buttons([]), "")
+
+
+class LoadWeights(unittest.TestCase):
+    """The production-volume CSV the weighting checkbox reads."""
+
+    def write(self, text):
+        """Write text to a temporary CSV and return its path."""
+        f = tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False, newline="")
+        f.write(text)
+        f.close()
+        return f.name
+
+    def test_codes_are_lowercased_and_counts_are_ints(self):
+        """Country codes become lowercase, matching the page's country codes, and counts become whole numbers."""
+        path = self.write("country,list_items\nCN,80388\nbr,76741\n")
+        self.assertEqual(up.load_weights(path), {"cn": 80388, "br": 76741})
+
+    def test_blank_and_non_numeric_rows_are_skipped(self):
+        """A row with no country, or a count that is not a whole number, is left out instead of breaking the page."""
+        path = self.write("country,n\n,5\nUS,many\nGB,18904\n")
+        self.assertEqual(up.load_weights(path), {"gb": 18904})
+
+
+class WeightCheckbox(unittest.TestCase):
+    """The checkbox for weighting the overall rows."""
+
+    def test_no_weights_means_no_checkbox(self):
+        """A page built without --weights looks exactly as before."""
+        self.assertEqual(up.weight_checkbox({"weights": {}, "weightsLabel": "x"}), "")
+
+    def test_checkbox_names_the_weights(self):
+        """With weights, the checkbox has the id the page script looks for and says what the weights are."""
+        html = up.weight_checkbox({"weights": {"cn": 1}, "weightsLabel": "list items since 2026-01-01"})
+        self.assertIn('id="weighted"', html)
+        self.assertIn("list items since 2026-01-01", html)
 
 
 if __name__ == "__main__":
