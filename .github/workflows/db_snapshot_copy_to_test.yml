@@ -7,14 +7,15 @@ name: "DB - Copy Anonymized Snapshot to Dumps Bucket (Test)"
 #   2. restores the copy to a temporary instance in the Test VPC,
 #   3. runs the Test anonymized-dump Fargate task inside the VPC, which
 #      streams pg_dump straight to S3 (no SSM tunnel, no local disk),
-#   4. deletes the temporary instance and the copied snapshot.
+#   4. keeps the temporary instance and the copied snapshot for reuse.
+#      Delete them by hand when finished: anon-restore-<run id> and anon-copy-<run id>.
 # Only Test credentials are used. Database credentials come from the
 # secrets of the Test anonymized-dump task definition.
 
 on:
   push:
     branches:
-      - OSDEV-3706-restore-missing-september-1-and-october-1-2026-monthly-bulk-data-downloads   # your branch name; remove after the first run
+      - OSDEV-3706-restore-missing-september-1-and-october-1-2026-monthly-bulk-data-downloads   # remove after the first run
   workflow_dispatch:
     inputs:
       source-snapshot:
@@ -153,11 +154,21 @@ jobs:
 
           # The weekly anonymized-dump task (deployment/terraform/anonymized_database_dump_scheduled_task)
           # already has pg_dump 16, the AWS CLI, S3 write access and the database secrets.
-          CLUSTER=$(aws ecs list-clusters --query 'clusterArns[]' --output text \
-            | tr '\t' '\n' | grep -i 'AnonymizedDatabaseDump' | head -n1 | awk -F/ '{print $NF}')
-          TASK_DEF=$(aws ecs list-task-definitions --family-prefix anonymized-database-dump \
-            --status ACTIVE --sort DESC --max-items 1 \
-            --query 'taskDefinitionArns[0]' --output text)
+          # The weekly anonymized-dump scheduled task's target names the exact
+          # cluster and task definition revision that the weekly job runs.
+          RULE=$(aws events list-rules --name-prefix anonymized-database-dump \
+            --query 'Rules[0].Name' --output text)
+          if [ -z "$RULE" ] || [ "$RULE" = "None" ]; then
+            echo "No EventBridge rule starts with anonymized-database-dump. Rules in this account:" >&2
+            aws events list-rules --query 'Rules[].Name' --output text >&2
+            exit 1
+          fi
+          echo "Rule: $RULE"
+          TARGET_ARN=$(aws events list-targets-by-rule --rule "$RULE" \
+            --query 'Targets[0].Arn' --output text)
+          TASK_DEF=$(aws events list-targets-by-rule --rule "$RULE" \
+            --query 'Targets[0].EcsParameters.TaskDefinitionArn' --output text)
+          CLUSTER="${TARGET_ARN##*/}"
           CONTAINER=$(aws ecs describe-task-definition --task-definition "$TASK_DEF" \
             --query 'taskDefinition.containerDefinitions[0].name' --output text)
           echo "Cluster: $CLUSTER"
@@ -265,19 +276,3 @@ jobs:
             aws ecs stop-task --cluster "$DUMP_CLUSTER" --task "$DUMP_TASK_ARN" \
               --reason "GitHub workflow cancelled or failed" >/dev/null 2>&1 || true
           fi
-
-      - name: Delete the temporary instance and the copied snapshot (Test account)
-        # Runs even if an earlier step failed, so no copy is left behind.
-        if: always()
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: eu-west-1
-        run: |
-          aws rds delete-db-instance \
-            --db-instance-identifier "$TEMP_INSTANCE_ID" \
-            --skip-final-snapshot --delete-automated-backups \
-            --output text || echo "No temporary instance to delete"
-          aws rds delete-db-snapshot \
-            --db-snapshot-identifier "$COPY_SNAPSHOT_ID" \
-            --output text || echo "No copied snapshot to delete"
