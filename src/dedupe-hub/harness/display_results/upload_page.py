@@ -76,6 +76,7 @@ SHORT = {"correctly_matched": "Correctly matched", "correctly_new": "Correctly n
          "incorrect_match": "Incorrect match"}
 
 PAGE_CSS = """
+.unused{opacity:.4}
 .o-dupnever{background:#8b4a9c;color:#fff}
 .panel{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);
 padding:10px 0 12px;margin:0 0 8px}
@@ -426,7 +427,22 @@ function setOvr(cc, which, value) {
 }
 
 const baseTallyCache = {};
+// Say which test judges the verdicts and dim the settings it does not use: Noise units belongs to the Noise-based test, the
+// regression and improvement menus to the tolerance tests (the model buttons set these).
+const TESTLABEL = {mean: 'average', best: 'best run', worst: 'worst run', sd1: 'average plus one sd', sdm1: 'average minus one sd'};
+function markTest() {
+  const noise = state.mode === 'noise';
+  const dim = (id, on) => { const el = document.getElementById(id); if (el && el.classList) el.classList.toggle('unused', on); };
+  dim('kzwrap', !noise);
+  for (const id of ['regval', 'regref', 'impval', 'impref']) dim(id, noise);
+  const note = document.getElementById('testnote');
+  if (note) note.textContent = noise
+    ? 'Judging with the Noise-based test: a change counts when the gap between the averages is more than ' + state.k + ' standard errors (and more than the margin). The regression and improvement menus are not used.'
+    : "Judging with the regression and improvement tests: worse when the challenger's " + TESTLABEL[state.reg.val] + " is above the baseline's " + TESTLABEL[state.reg.ref] +
+      "; better when its " + TESTLABEL[state.imp.val] + " is below the baseline's " + TESTLABEL[state.imp.ref] + ". Noise units is not used.";
+}
 function render() {
+  markTest();
   // The sliders move every challenger together (link on) or only the selected one (link off).
   if (CHALS.length) for (const g of (state.link ? CHALS : [state.chal])) state.thr[g] = {auto: state.auto, floor: state.floor};
   const changed = state.auto !== DEF.auto || state.floor !== DEF.floor || (CHALS.length && (state.bauto !== DEF.auto || state.bfloor !== DEF.floor)) ||
@@ -932,7 +948,8 @@ def render_page(data, stats, pairs_path, presets=()):
         f'by more than the margin.<br>'
         f'Margin (points; in noise mode, the smallest gap worth caring about) <input type="number" id="margin" value="0" step="0.5" min="0"> '
         f'Fewest uploads to judge <input type="number" id="minev" value="30" min="0"><br>'
-        f'Noise units <input type="number" id="kz" value="2" step="0.5" min="0"> (used by the Noise-based preset)<br>'
+        f'<span id="kzwrap">Noise units <input type="number" id="kz" value="2" step="0.5" min="0"> (used by the Noise-based preset)</span><br>'
+        f'<span class="note" id="testnote"></span><br>'
         f'<b>Decision rule for the challengers</b> (the baseline keeps production\'s): when several candidates clear the bar, auto-match the top one if it leads by at least '
         f'<input type="number" id="promote" value="0" step="0.01" min="0" max="1"> (0 = production: send to review); '
         f'send to review when the single winner leads the next candidate by less than '
