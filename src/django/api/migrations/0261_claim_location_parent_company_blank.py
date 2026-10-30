@@ -11,7 +11,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0259_facility_claim_invite'),
+        ('api', '0260_isic_sector_crosswalk'),
     ]
 
     operations = [

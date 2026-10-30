@@ -1,6 +1,8 @@
 """
-The OS Hub Facility Type / Processing Type to ISIC Rev 4 crosswalk, kept as
-a CSV next to this module so changes to it are reviewed like code.
+The OS Hub to ISIC Rev 4 crosswalk, kept as CSVs next to this module so
+changes to it are reviewed like code: one for Facility Type / Processing
+Type and one for Sector. Both load into api_isiccrosswalkentry; a row names
+either a facility type (and maybe a processing type) or a sector.
 """
 
 import csv
@@ -12,6 +14,9 @@ from django.db import transaction
 CROSSWALK_CSV_PATH = os.path.join(
     os.path.dirname(__file__), 'data', 'os_hub_to_isic4_crosswalk.csv',
 )
+SECTOR_CROSSWALK_CSV_PATH = os.path.join(
+    os.path.dirname(__file__), 'data', 'os_hub_sector_to_isic4_crosswalk.csv',
+)
 
 LEVEL_PATTERNS = {
     'isic_section': re.compile(r'^[A-U]$'),
@@ -20,20 +25,23 @@ LEVEL_PATTERNS = {
     'isic_class': re.compile(r'^\d{4}$'),
 }
 
-MODEL_COLUMNS = ('facility_type', 'processing_type') + tuple(
+CODE_COLUMNS = tuple(
     column
     for level in LEVEL_PATTERNS
     for column in (level, f'{level}_title')
 )
+TYPE_KEY_COLUMNS = ('facility_type', 'processing_type')
+SECTOR_KEY_COLUMNS = ('sector',)
+MODEL_COLUMNS = SECTOR_KEY_COLUMNS + TYPE_KEY_COLUMNS + CODE_COLUMNS
 
 
 class CrosswalkError(ValueError):
     pass
 
 
-def _check_row(row):
-    if not row['facility_type']:
-        return 'facility_type is empty'
+def _check_row(row, key_columns):
+    if not row[key_columns[0]]:
+        return f'{key_columns[0]} is empty'
     codes = [row[level] for level in LEVEL_PATTERNS]
     for (level, pattern), code in zip(LEVEL_PATTERNS.items(), codes):
         if code and not pattern.match(code):
@@ -54,39 +62,66 @@ def _check_row(row):
     return None
 
 
-def load_crosswalk_rows(path=CROSSWALK_CSV_PATH):
+def _read_csv(path, key_columns):
+    columns = key_columns + CODE_COLUMNS
     with open(path, newline='', encoding='utf-8') as csv_file:
         reader = csv.DictReader(csv_file)
-        missing = set(MODEL_COLUMNS) - set(reader.fieldnames or [])
+        missing = set(columns) - set(reader.fieldnames or [])
         if missing:
             raise CrosswalkError(
-                f'Missing columns: {", ".join(sorted(missing))}.'
+                f'{os.path.basename(path)}: Missing columns: '
+                f'{", ".join(sorted(missing))}.'
             )
 
         rows, seen = [], set()
         for line, raw in enumerate(reader, start=2):
-            row = {col: (raw[col] or '').strip() for col in MODEL_COLUMNS}
-            key = (
-                row['facility_type'].lower(),
-                row['processing_type'].lower(),
+            row = dict.fromkeys(MODEL_COLUMNS, '')
+            row.update({col: (raw[col] or '').strip() for col in columns})
+            key = tuple(row[col].lower() for col in key_columns)
+            problem = (
+                _check_row(row, key_columns)
+                or (key in seen and 'duplicate row')
             )
-            problem = _check_row(row) or (key in seen and 'duplicate row')
             if problem:
-                raise CrosswalkError(f'Line {line}: {problem}.')
+                raise CrosswalkError(
+                    f'{os.path.basename(path)} line {line}: {problem}.'
+                )
             seen.add(key)
             rows.append(row)
     return rows
 
 
+def load_crosswalk_rows(
+    path=CROSSWALK_CSV_PATH,
+    sector_path=SECTOR_CROSSWALK_CSV_PATH,
+):
+    '''sector_path=None loads only the Facility Type / Processing Type rows.'''
+    rows = _read_csv(path, TYPE_KEY_COLUMNS)
+    if sector_path:
+        rows += _read_csv(sector_path, SECTOR_KEY_COLUMNS)
+    return rows
+
+
 def replace_crosswalk_entries(entry_model, rows):
-    '''entry_model is passed in so migrations can use their historical one.'''
+    '''
+    entry_model is passed in so migrations can use their historical one;
+    columns that model does not have yet are left out.
+    '''
+    fields = {field.name for field in entry_model._meta.get_fields()}
     with transaction.atomic():
         entry_model.objects.all().delete()
-        entry_model.objects.bulk_create(entry_model(**row) for row in rows)
+        entry_model.objects.bulk_create(
+            entry_model(**{
+                column: value
+                for column, value in row.items()
+                if column in fields
+            })
+            for row in rows
+        )
     return len(rows)
 
 
-def get_mapped_isic_values(facility_types, processing_types):
+def get_mapped_isic_values(facility_types, processing_types, sectors):
     '''
     The crosswalk rows that apply to a location, for its profile: what each
     came from and its ISIC path (level, code and title). Reads the same SQL
@@ -96,9 +131,14 @@ def get_mapped_isic_values(facility_types, processing_types):
     from api.models import IsicCrosswalkEntry
 
     entries = IsicCrosswalkEntry.objects.raw(
-        'SELECT * FROM isic_mapped_entries(%s::varchar[], %s::varchar[]) '
-        'ORDER BY facility_type, processing_type',
-        [list(facility_types or []), list(processing_types or [])],
+        'SELECT * FROM isic_mapped_entries('
+        '%s::varchar[], %s::varchar[], %s::varchar[]) '
+        'ORDER BY sector, facility_type, processing_type',
+        [
+            list(facility_types or []),
+            list(processing_types or []),
+            list(sectors or []),
+        ],
     )
     values = []
     for entry in entries:
@@ -113,6 +153,7 @@ def get_mapped_isic_values(facility_types, processing_types):
         ]
         if path:
             values.append({
+                'sector': entry.sector,
                 'facility_type': entry.facility_type,
                 'processing_type': entry.processing_type,
                 'path': path,
