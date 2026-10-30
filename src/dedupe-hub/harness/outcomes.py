@@ -57,8 +57,19 @@ def _best_per_facility(candidates):
     return list(best.values())
 
 
-def decide(candidates, floor, auto):
-    """What production does with an upload's candidates.
+def _lead(candidates):
+    """How far the best candidate's score is ahead of the next-best (0 if there is only one)."""
+    ranked = sorted((c["score"] for c in candidates), reverse=True)
+    return ranked[0] - ranked[1] if len(ranked) > 1 else 0.0
+
+
+def decide(candidates, floor, auto, promote=0.0, hold=0.0):
+    """What production does with an upload's candidates, plus two optional margin rules (both off by default).
+
+    promote: when several candidates clear the auto bar, auto-match the top one anyway if it leads the
+             next-best by at least this much (production sends those to review unless one is an exact match).
+    hold:    when exactly one candidate clears the bar but the next-best is within this much of it,
+             send the upload to review instead of auto-matching (production would auto-match it).
 
     Returns (action, chosen, above_floor, above_bar) where action is
     'new_facility', 'auto_match' or 'review', `chosen` is the facility that is
@@ -74,16 +85,22 @@ def decide(candidates, floor, auto):
         if only["score"] >= auto:
             return "auto_match", only["facility"], above_floor, above_bar
         return "review", None, above_floor, above_bar
+    ranked = sorted(above_floor, key=lambda c: -c["score"])
+    lead = ranked[0]["score"] - ranked[1]["score"]          # how far the best candidate is ahead of the next
     if len(above_bar) == 1:
+        if hold and lead < hold:
+            return "review", None, above_floor, above_bar
         return "auto_match", above_bar[0]["facility"], above_floor, above_bar
     if len(above_bar) > 1:
+        if promote and lead >= promote:
+            return "auto_match", ranked[0]["facility"], above_floor, above_bar
         exact = [c for c in above_floor if c["exact"]]
         if len(exact) == 1:
             return "auto_match", exact[0]["facility"], above_floor, above_bar
     return "review", None, above_floor, above_bar
 
 
-def classify_upload(candidates, true_facility, floor, auto):
+def classify_upload(candidates, true_facility, floor, auto, promote=0.0, hold=0.0):
     """Classify one upload into one of the six outcomes.
 
     `candidates` is a list of {"facility": id, "score": float, "exact": bool}
@@ -92,7 +109,7 @@ def classify_upload(candidates, true_facility, floor, auto):
     upload truly belongs to, or None for a genuinely new upload. Returns
     Result(outcome, cause).
     """
-    action, chosen, above_floor, above_bar = decide(candidates, floor, auto)
+    action, chosen, above_floor, above_bar = decide(candidates, floor, auto, promote, hold)
     on_list = {c["facility"] for c in above_floor}
     retrieved = {c["facility"] for c in candidates}
 
@@ -104,9 +121,13 @@ def classify_upload(candidates, true_facility, floor, auto):
         if true_facility is None:
             return Result("incorrect_match", "no_true_match_exists")
         if chosen == true_facility:
-            return Result("correctly_matched",
-                          "alone_above_bar" if len(above_bar) == 1 or len(above_floor) == 1
-                          else "exact_string_tie_break")
+            if len(above_bar) == 1 or len(above_floor) == 1:
+                cause = "alone_above_bar"
+            elif promote and _lead(above_floor) >= promote and not any(c["exact"] for c in above_bar):
+                cause = "margin_win"
+            else:
+                cause = "exact_string_tie_break"
+            return Result("correctly_matched", cause)
         if true_facility in on_list:
             return Result("incorrect_match", "true_match_not_chosen")
         return Result("incorrect_match", "true_match_" + why_missing())

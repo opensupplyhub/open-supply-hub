@@ -147,6 +147,54 @@ class ProductionEdgeCases(unittest.TestCase):
         self.assertEqual(got.outcome, "correctly_matched")
 
 
+class MarginRules(unittest.TestCase):
+    """The optional margin rules: promote (auto-match a clear winner among several above the bar) and hold
+    (send a narrow winner to review). Both are off by default, which keeps production's behavior."""
+
+    BAR, FLOOR = 0.8, 0.5
+
+    def outcome_of(self, cands, true, **rule):
+        """The outcome name for an upload at the standard bar and floor, with the given margin rule."""
+        return classify_upload(cands, true, self.FLOOR, self.BAR, **rule).outcome
+
+    def test_promote_auto_matches_a_clear_winner_among_several_above_the_bar(self):
+        """Two candidates clear the bar and the best leads by 0.10: production reviews, promote(0.05) matches."""
+        cands = [cand("A", 0.95), cand("B", 0.85)]
+        self.assertEqual(self.outcome_of(cands, "A"), "review_above_bar")
+        self.assertEqual(self.outcome_of(cands, "A", promote=0.05), "correctly_matched")
+
+    def test_promote_can_pick_the_wrong_winner(self):
+        """If the clear winner is not the true match, promote turns a review into an incorrect match."""
+        cands = [cand("A", 0.95), cand("B", 0.85)]
+        self.assertEqual(self.outcome_of(cands, "B", promote=0.05), "incorrect_match")
+
+    def test_promote_needs_the_margin(self):
+        """A lead smaller than the margin leaves the upload in review."""
+        cands = [cand("A", 0.90), cand("B", 0.88)]
+        self.assertEqual(self.outcome_of(cands, "A", promote=0.05), "review_above_bar")
+
+    def test_hold_sends_a_narrow_winner_to_review(self):
+        """One candidate clears the bar but the next is only 0.03 behind: production matches, hold(0.05) reviews."""
+        cands = [cand("A", 0.82), cand("B", 0.79)]
+        self.assertEqual(self.outcome_of(cands, "A"), "correctly_matched")
+        self.assertEqual(self.outcome_of(cands, "A", hold=0.05), "review_below_bar")
+
+    def test_hold_keeps_a_clear_winner(self):
+        """A winner well ahead of the next candidate is still auto-matched."""
+        cands = [cand("A", 0.90), cand("B", 0.50)]
+        self.assertEqual(self.outcome_of(cands, "A", hold=0.05), "correctly_matched")
+
+    def test_hold_does_not_touch_a_lone_candidate(self):
+        """With a single candidate there is no runner-up, so hold changes nothing."""
+        self.assertEqual(self.outcome_of([cand("A", 0.85)], "A", hold=0.5), "correctly_matched")
+
+    def test_defaults_are_production(self):
+        """With no rule given the result equals production's for a case where both rules would act."""
+        cands = [cand("A", 0.82), cand("B", 0.79)]
+        self.assertEqual(classify_upload(cands, "A", self.FLOOR, self.BAR),
+                         classify_upload(cands, "A", self.FLOOR, self.BAR, promote=0.0, hold=0.0))
+
+
 class OutcomeList(unittest.TestCase):
     """The six outcomes are a fixed list."""
 

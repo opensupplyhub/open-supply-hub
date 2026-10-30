@@ -49,6 +49,7 @@ OUTCOMES = [
 CAUSE_TEXT = {
     "alone_above_bar": "alone above the bar",
     "exact_string_tie_break": "won on an exact text match",
+    "margin_win": "won by a clear margin over the next candidate",
     "nothing_reached_floor": "nothing reached the floor",
     "never_retrieved": "true match never retrieved",
     "scored_below_floor": "true match scored below the floor",

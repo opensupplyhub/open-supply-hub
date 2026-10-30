@@ -33,7 +33,7 @@ Runs inside the api-app image (dedupe 1.9.4, no pandas/sklearn):
     /dh/harness/verify_retrain.py --pairs /data/pairs.csv \
       --training /dh/api/app/data/training.json --out /data/scores.csv \
       [--eval-set /data/eval_set.csv --retrieval-out /data/retrieval.csv \
-       --retrieval-limit 3000]
+       --retrieval-limit 3000 | --retrieval-all]
 """
 import argparse
 import csv
@@ -44,7 +44,8 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_training_json import can_score, record, stable_train_half  # noqa: E402
+from make_training_json import (can_score, only_countries, parse_countries, record,  # noqa: E402
+                                stable_train_half)
 
 # The production field config. Do not edit here -- OSDEV-3277 is label-only;
 # if these drift from gazetteer_train.py the verification is meaningless.
@@ -88,6 +89,7 @@ def load(path):
             rows.append({"match_id": mid,
                          "label": 1 if r["status"] == "CONFIRMED" else 0,
                          "left": left, "right": right,
+                         "country": (r.get("item_country") or r.get("fac_country") or "").strip().lower(),
                          "train": stable_train_half(mid)})
     if skipped:
         print(f"skipped {skipped} pair(s) that cannot be scored (a name is empty, "
@@ -101,9 +103,12 @@ def rss_mb():
     return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0
 
 
-def eval_rows_for(rows, eval_set_path):
-    """The rows the retrieval check runs on: the pairs in the frozen eval set
-    if one is given, otherwise the held-out half chosen by the match_id hash."""
+def eval_rows_for(rows, eval_set_path, all_pairs=False):
+    """The rows the retrieval check runs on: every pair if all_pairs is set (the
+    per-upload page needs this), else the pairs in the frozen eval set if one is
+    given, otherwise the held-out half chosen by the match_id hash."""
+    if all_pairs:
+        return list(rows)
     if eval_set_path:
         with open(eval_set_path, newline="") as f:
             ids = {r["match_id"] for r in csv.DictReader(f)}
@@ -145,6 +150,39 @@ def retrieval_rows(eval_rows, found):
     return out
 
 
+def read_extra_pairs(path):
+    """Read a CSV of pairs to score after training (columns: row, label, country_left, name_left, address_left,
+    country_right, name_right, address_right), cleaned the way training pairs are. Pairs that cannot be scored
+    (an empty name, say) are skipped. Returns a list of dicts with row, label, left and right."""
+    out = []
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        for r in csv.DictReader(f):
+            left = record(r["name_left"], r["address_left"], r["country_left"])
+            right = record(r["name_right"], r["address_right"], r["country_right"])
+            if can_score(left, right):
+                out.append({"row": r["row"], "label": r["label"], "left": left, "right": right})
+    return out
+
+
+def cross_country_rows(ev_rows, found, floor=0.5, bar=0.8):
+    """For each upload in the retrieval check, how many candidates came from a DIFFERENT country than the upload.
+
+    Production's search is not filtered by country, so whether another country's facilities are offered depends on
+    the learned search rules and on how the model scores them. Returns (match_id, cross_retrieved, cross_at_floor,
+    cross_at_bar, top_cross_score, same_country_retrieved) per upload: counts of other-country candidates returned
+    at all, scoring at or above `floor`, and scoring above `bar`, the best such score (blank if none), and the
+    number of same-country candidates returned, for scale."""
+    canon_country = {CANON_PREFIX + r["match_id"]: r["right"]["country"] for r in ev_rows}
+    out = []
+    for r in ev_rows:
+        cands = found.get(MESSY_PREFIX + r["match_id"], {})
+        cross = [sc for cid, sc in cands.items() if canon_country.get(cid) != r["left"]["country"]]
+        same = len(cands) - len(cross)
+        out.append((r["match_id"], len(cross), sum(sc >= floor for sc in cross), sum(sc > bar for sc in cross),
+                    "" if not cross else "%.6f" % max(cross), same))
+    return out
+
+
 def main():
     """Train the model on --training, score every pair, and optionally run the
     retrieval check on the evaluation pairs."""
@@ -164,8 +202,17 @@ def main():
                                        "so two runs can be compared with diff")
     p.add_argument("--eval-set", help="frozen eval_set.csv: run the retrieval check "
                                       "on exactly these pairs (default: held-out half)")
+    p.add_argument("--countries", help="comma-separated country codes: train, score and test on only "
+                                       "these countries' pairs (a regional model)")
+    p.add_argument("--retrieval-all", action="store_true",
+                   help="run the retrieval check on EVERY pair in --pairs instead of the "
+                        "evaluation pairs (needed by upload_page.py, which uses all uploads)")
     p.add_argument("--retrieval-out", help="write the retrieval check here "
                                            "(match_id, retrieved, score)")
+    p.add_argument("--extra-pairs-csv", help="a CSV of extra pairs to score with the trained model (see read_extra_pairs)")
+    p.add_argument("--extra-out", help="where to write the extra pairs' scores (row, label, score)")
+    p.add_argument("--cross-country-out", help="with --retrieval-out: also write, per upload, how many candidates "
+                                               "came from another country (and how high they scored)")
     p.add_argument("--retrieval-limit", type=int, default=0,
                    help="check only this many pairs, chosen by a fixed hash of "
                         "match_id (0 = all). For a quick trial; the report only "
@@ -180,7 +227,9 @@ def main():
         print("note: PYTHONHASHSEED is not set; pass -e PYTHONHASHSEED=0 to docker run "
               "for fully repeatable rule learning", flush=True)
 
-    rows = load(args.pairs)
+    rows = only_countries(load(args.pairs), parse_countries(args.countries))
+    if not rows:
+        sys.exit(f"no pairs for countries {args.countries}")
     train = [r for r in rows if r["train"]]
     print(f"pairs {len(rows)}  train-half {len(train)}  seed {args.seed}", flush=True)
 
@@ -255,8 +304,22 @@ def main():
             w.writerow([r["match_id"], float(s)])
     print(f"wrote {args.out} ({len(rows)} rows)", flush=True)
 
+    if args.extra_pairs_csv and args.extra_out:
+        extra = read_extra_pairs(args.extra_pairs_csv)
+        eprobs = gaz.classifier.predict_proba(gaz.data_model.distances([(e["left"], e["right"]) for e in extra]))
+        try:
+            eprobs = eprobs[:, -1]
+        except (IndexError, TypeError):
+            pass
+        with open(args.extra_out, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["row", "label", "score"])
+            for e, sc in zip(extra, eprobs):
+                w.writerow([e["row"], e["label"], "%.6f" % float(sc)])
+        print(f"wrote {args.extra_out} ({len(extra)} extra pairs scored)", flush=True)
+
     if args.retrieval_out:
-        ev = eval_rows_for(rows, args.eval_set)
+        ev = eval_rows_for(rows, args.eval_set, args.retrieval_all)
         if args.retrieval_limit:
             # A seeded random sample. Do NOT take the smallest md5 hashes: the
             # pairs file was itself pulled by keeping the smallest md5 per
@@ -270,6 +333,16 @@ def main():
             gaz,
             {MESSY_PREFIX + r["match_id"]: r["left"] for r in ev},
             {CANON_PREFIX + r["match_id"]: r["right"] for r in ev})
+        if args.cross_country_out:
+            cc = cross_country_rows(ev, found)
+            with open(args.cross_country_out, "w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow(["match_id", "cross_retrieved", "cross_at_floor", "cross_above_bar", "top_cross_score", "same_retrieved"])
+                w.writerows(cc)
+            up = len(cc)
+            print(f"  uploads offered a candidate from another country: {sum(1 for r in cc if r[1])} of {up} "
+                  f"({sum(1 for r in cc if r[1]) / up:.1%}); scoring >= 0.5: {sum(1 for r in cc if r[2])}; > 0.8: {sum(1 for r in cc if r[3])}",
+                  flush=True)
         out_rows = retrieval_rows(ev, found)
         with open(args.retrieval_out, "w", newline="") as f:
             w = csv.writer(f)
