@@ -121,6 +121,8 @@ public_apis = [
     path('api/workers-ranges/', views.number_of_workers_ranges,
          name='number_of_workers_ranges'),
     path('api/claim-statuses/', views.claim_statuses, name='claim_statuses'),
+    path('api/claim-profile-options/', views.claim_profile_options,
+         name='claim_profile_options'),
     path('api/facility-processing-types/', views.facility_processing_types,
          name='facility_processing_types'),
     path('api/taxonomy-counts/', views.TaxonomyCountsView.as_view(),
