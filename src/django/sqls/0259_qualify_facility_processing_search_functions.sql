@@ -11,14 +11,18 @@ restore that Preprod is rebuilt from never finishes. A plain migrate has
 public on the search path, which is why this only ever surfaced on restore.
 
 Replacing the bodies does not invalidate the indexes: the signatures and the
-results are unchanged, so no reindex is needed.
+results are unchanged, so no reindex is needed. The CREATE targets are
+qualified too, so the replacement cannot land in another schema if the
+migrating role's search path ever differs. lower_varchar_array, the third
+0233 helper, needs no change: its body only names pg_catalog objects, which
+even an empty search path resolves.
 
 SET search_path on the functions would fix the lookup too, but it would also
 make them uninlinable, and inlining is what lets the planner use these
 indexes at all.
 */
 CREATE OR REPLACE
-FUNCTION immutable_unaccent(txt TEXT)
+FUNCTION public.immutable_unaccent(txt TEXT)
 RETURNS TEXT
 LANGUAGE SQL
 IMMUTABLE
@@ -29,7 +33,7 @@ SELECT public.unaccent('public.unaccent'::regdictionary, txt);
 $body$;
 
 CREATE OR REPLACE
-FUNCTION facility_processing_search_text(
+FUNCTION public.facility_processing_search_text(
 	facility_types VARCHAR[],
 	processing_types VARCHAR[]
 )

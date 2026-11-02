@@ -18,8 +18,12 @@ def qualify_facility_processing_search_functions(apps, schema_editor):
 
 
 def revert_qualify_facility_processing_search_functions(apps, schema_editor):
+    """
+    Re-run 0233's SQL file to restore the unqualified bodies, which
+    reintroduces the restore failure the forward SQL file describes.
+    """
     helper.run_sql_files([
-        '0259_revert_qualify_facility_processing_search_functions.sql',
+        '0233_facility_processing_search_functions.sql',
     ])
 
 
