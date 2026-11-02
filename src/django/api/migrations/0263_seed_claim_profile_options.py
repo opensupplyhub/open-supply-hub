@@ -140,7 +140,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0248_add_claim_profile_options'),
+        ('api', '0262_add_claim_profile_options'),
     ]
 
     operations = [

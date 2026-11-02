@@ -47,7 +47,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0247_add_zone_set_and_zone'),
+        ('api', '0261_claim_admin_form_blank_fields'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

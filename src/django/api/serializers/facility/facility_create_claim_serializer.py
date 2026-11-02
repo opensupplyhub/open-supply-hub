@@ -13,7 +13,6 @@ from api.models import (
     FacilityClaim,
 )
 from api.isic_taxonomy.isic_lookup import entries_from_filter_values
-from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
 from api.constants import JS_MAX_SAFE_INTEGER
 from api.helpers.claim_attachments import validate_attachment_files
