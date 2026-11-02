@@ -1199,6 +1199,17 @@ variable "identity_record_allowlist" {
   type        = list(string)
   default     = []
   description = "OS IDs that may have a record registered against them while enable_identity_record_allowlist is true. Matched case-insensitively."
+  validation {
+    # An empty list with the flag on refuses every registration, at the
+    # edge, with no origin request and nothing in the application log.
+    # Catch that at plan time rather than in production.
+    condition     = !var.enable_identity_record_allowlist || length(var.identity_record_allowlist) > 0
+    error_message = "identity_record_allowlist must list at least one OS ID when enable_identity_record_allowlist is true."
+  }
+  validation {
+    condition     = length([for id in var.identity_record_allowlist : id if trimspace(id) != id]) == 0
+    error_message = "identity_record_allowlist entries must not carry leading or trailing whitespace; such an entry can never match."
+  }
 }
 
 variable "craft_cms_origin_domain" {

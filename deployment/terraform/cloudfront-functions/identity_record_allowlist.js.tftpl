@@ -10,13 +10,82 @@
 // moderation event. This bounds which identifiers an issuer can register
 // against while that remains true.
 //
-// Only that write path is guarded. Reading a registration's status, and
-// every other production location request, passes through untouched.
+// The hard part is that this has to agree with how Django routes, not
+// with how the path looks. Two ways it can disagree, both of which let a
+// registration through unguarded if ignored:
+//
+//   * The v1 router is a DefaultRouter, so every action route has a
+//     `.{format}` twin. `identity-records.json` reaches the same view.
+//   * CloudFront forwards the URI still percent-encoded, and gunicorn
+//     decodes it before Django resolves it, so `identity%2Drecords`
+//     arrives at the application as `identity-records`.
+//
+// Both are handled by decoding first and matching the decoded path,
+// allowing for an optional format suffix. Anything that cannot be
+// decoded to a stable value is refused rather than passed on, since a
+// path this function cannot read is one it cannot vouch for.
+
+// Known limitation. This bounds the identifier that was *submitted*, not
+// the facility it resolves to. The application accepts a superseded OS ID
+// and follows FacilityAlias to the surviving record, which the edge cannot
+// do. So a merge can move an allowlisted identifier onto a facility that
+// was never allowlisted, and can leave a facility whose new canonical
+// identifier is refused here. Acceptable for a short, fixed pilot set that
+// nobody is merging; not a general-purpose control.
 
 var ALLOWED = ${allowed_os_ids};
 
+// `[^\/.]` for the identifier matches the router's own `[^/.]+` for pk,
+// so a dot can only begin the format suffix.
 var REGISTER_PATH =
-    /^\/api\/v1\/production-locations\/([^\/]+)\/identity-records\/?$/;
+    /^\/api\/v1\/production-locations\/([^\/.]+)\/identity-records(\.[a-z0-9]+)?\/?$/;
+
+var PRODUCTION_LOCATIONS_PREFIX = '/api/v1/production-locations/';
+
+var MAX_DECODE_PASSES = 3;
+
+// Decode until the value stops changing, so a doubly-encoded path cannot
+// hide a segment behind two passes. Returns null when the value is
+// malformed or still encoded after the cap, and the caller refuses those.
+function fullyDecode(uri) {
+    var current = uri;
+    for (var i = 0; i < MAX_DECODE_PASSES; i++) {
+        if (current.indexOf('%') === -1) {
+            return current;
+        }
+        var next;
+        try {
+            next = decodeURIComponent(current);
+        } catch (e) {
+            return null;
+        }
+        if (next === current) {
+            return null;
+        }
+        current = next;
+    }
+    return null;
+}
+
+function refuse(detail) {
+    return {
+        statusCode: 403,
+        statusDescription: 'Forbidden',
+        headers: {
+            'content-type': { value: 'application/json' },
+            'cache-control': { value: 'no-store' }
+        },
+        // Same envelope the endpoint's own rejections use, so a client
+        // reading errors[0].field does not have to special-case this one.
+        body: '{"detail":"' + detail + '",' +
+              '"errors":[{"field":"os_id","detail":"' + detail + '"}]}'
+    };
+}
+
+var NOT_OPEN = 'This identifier is not open for registration here. ' +
+               'Contact Open Supply Hub.';
+var UNREADABLE = 'The request path could not be read. ' +
+                 'Contact Open Supply Hub.';
 
 function handler(event) {
     var request = event.request;
@@ -25,7 +94,18 @@ function handler(event) {
         return request;
     }
 
-    var match = request.uri.match(REGISTER_PATH);
+    var decoded = fullyDecode(request.uri);
+
+    if (decoded === null) {
+        // Only refuse the undecodable where it could be a registration.
+        // Elsewhere this function has no opinion.
+        if (request.uri.indexOf(PRODUCTION_LOCATIONS_PREFIX) === 0) {
+            return refuse(UNREADABLE);
+        }
+        return request;
+    }
+
+    var match = decoded.match(REGISTER_PATH);
     if (match === null) {
         return request;
     }
@@ -34,14 +114,5 @@ function handler(event) {
         return request;
     }
 
-    return {
-        statusCode: 403,
-        statusDescription: 'Forbidden',
-        headers: {
-            'content-type': { value: 'application/json' },
-            'cache-control': { value: 'no-store' }
-        },
-        body: '{"detail":"This identifier is not open for registration ' +
-              'here. Contact Open Supply Hub."}'
-    };
+    return refuse(NOT_OPEN);
 }
