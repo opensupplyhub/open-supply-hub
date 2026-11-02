@@ -1,3 +1,5 @@
+from api.models.transactions.index_facilities_new import index_facilities_new
+
 """
 Rewrite a claim-profile option's stored value across existing claims.
 
@@ -87,5 +89,7 @@ def rename_claim_option_value(connection, column, old_value, new_value):
                 'WHERE id = ANY(%s)',
                 [sorted(facility_ids)],
             )
+    if facility_ids:
+        index_facilities_new(sorted(facility_ids))
 
     return live_claims_updated
