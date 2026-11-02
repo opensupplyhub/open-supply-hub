@@ -74,6 +74,17 @@ class EditPendingClaimSerializer(FacilityCreateClaimSerializer):
         for field_name in self.NULLABLE_ON_EDIT:
             self.fields[field_name].allow_null = True
 
+    # The edit form sends both ISIC lists on every save, empty when the
+    # claimant has none. An empty list is stored as None, the value of a
+    # claim submitted without ISIC (and what the claimed-details PUT
+    # stores), so saving such a claim does not count as an ISIC change
+    # that stamps claimant_updated_at and emails the Claims team.
+    def validate_isic_4(self, value):
+        return super().validate_isic_4(value) or None
+
+    def validate_isic_5(self, value):
+        return super().validate_isic_5(value) or None
+
     def validate(self, data):
         # The parent validate() rejects facilities that already have a
         # PENDING or APPROVED claim — that is create-time protection
@@ -163,6 +174,11 @@ class PendingClaimSerializer(serializers.Serializer):
     facility_type = serializers.CharField()
     facility_name_english = serializers.CharField()
     facility_address = serializers.CharField()
+    # Stored ISIC entries ({'section': 'C - ...', 'class': '1410 - ...'}),
+    # as the claimed-details GET returns them; the edit form reads them
+    # back as picker options.
+    isic_4 = serializers.ListField()
+    isic_5 = serializers.ListField()
 
     attachments = serializers.SerializerMethodField()
 
