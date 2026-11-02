@@ -786,10 +786,13 @@ class ContriBot:
                 }
             )
         else:
-            try:
+            if column_name in self.mapping and row != "":
                 cell = f"{self.mapping[column_name]}{row}"
-            except:
-                cell = f"@{row}"
+            else:
+                # No source cell exists to point at (e.g. C0002 when the
+                # country column is absent). NaN is the no-cell sentinel the
+                # Summary writers already skip.
+                cell = float("nan")
             self.diagnostics_column.append(
                 {
                     "level": "column",
@@ -932,7 +935,10 @@ class ContriBot:
     def _add_comments_to_excel_sheets(self):
         """Attach finding and fix comments to the Findings and Fixes sheets."""
         if len(self.diagnostics_column) > 0:
-            df = pd.DataFrame(self.diagnostics_column).sort_values(
+            df = pd.DataFrame(self.diagnostics_column)
+            # Findings with no source cell still reach the Summary sheet;
+            # there is just nothing to annotate here.
+            df = df[df.cell.notna()].sort_values(
                 ["severity", "name", "row"], ascending=[False, True, False]
             )
             for cell in df.cell.unique():

@@ -166,10 +166,14 @@ class TestAddDiagnosis:
         assert rec["cell"] == "A2"
         assert rec["error"] == "country 'neverland' is not recognised"
 
-    def test_unknown_column_name_uses_at_fallback(self, contribution):
+    def test_unmapped_column_name_records_no_cell(self, contribution):
         contribution._add_diagnosis(code="C0001", column_name="not_a_column", row=7,
                                     country="x")
-        assert contribution.diagnostics_column[-1]["cell"] == "@7"
+        assert pd.isna(contribution.diagnostics_column[-1]["cell"])
+
+    def test_column_code_without_row_records_no_cell(self, contribution):
+        contribution._add_diagnosis(code="C0002", column_name="country")
+        assert pd.isna(contribution.diagnostics_column[-1]["cell"])
 
     def test_unknown_code_reports_tool_error(self, contribution):
         contribution._add_diagnosis(code="C9999", column_name="country", row=2)
@@ -642,6 +646,39 @@ class TestProcess:
         assert any(d["code"] == "C0001" for d in osh.diagnostics_column)
         assert osh.wb["Findings"]["A2"].comment is not None
         assert "neverland" in osh.wb["Findings"]["A2"].comment.text.lower()
+
+    def test_process_survives_missing_country_column(self, make_contribution):
+        # Regression: C0002 used to get the placeholder cell "@", which
+        # openpyxl rejected when comments were attached, failing the upload.
+        df = pd.DataFrame(
+            {
+                "name": ["Acme Textiles Ltd", "Globex Manufacturing GmbH"],
+                "address": ["123 Road City", "45 Fabrikstrasse Berlin"],
+            }
+        )
+        osh = make_contribution(df=df)
+        osh.process()
+        osh.populate_summary()
+
+        recs = [d for d in osh.diagnostics_column if d["code"] == "C0002"]
+        assert len(recs) == 1
+        assert pd.isna(recs[0]["cell"])
+
+    def test_process_survives_file_with_no_recognised_columns(self, make_contribution):
+        # A contributor file whose first rows are a title banner reads as all
+        # "Unnamed: N" headers; no column-level finding has a cell to anchor to.
+        df = pd.DataFrame(
+            {
+                "Unnamed: 0": ["Acme Textiles Ltd"],
+                "Unnamed: 1": ["123 Road City"],
+                "Unnamed: 2": ["Bangladesh"],
+            }
+        )
+        osh = make_contribution(df=df)
+        osh.process()
+        osh.populate_summary()
+
+        assert any(d["code"] == "C0002" for d in osh.diagnostics_column)
 
 
 # --------------------------------------------------------------------------- #
