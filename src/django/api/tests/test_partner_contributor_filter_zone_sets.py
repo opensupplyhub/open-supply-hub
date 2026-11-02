@@ -1,6 +1,6 @@
 from django.contrib.gis.geos import Point
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from waffle.testutils import override_switch
 
@@ -24,6 +24,10 @@ from api.models.partner_field import PartnerField
 from api.models.partner_field_group import PartnerFieldGroup
 from api.partner_fields.registry import ZONE_SETS_SWITCH
 from api.tests.test_zone_set_provider import EAST, WEST, feature, zone_records
+
+# A band far from WEST and EAST, around the `outside` facility.
+FAR = [[[74.5, 19.5], [74.5, 20.5], [75.5, 20.5], [75.5, 19.5],
+        [74.5, 19.5]]]
 
 
 def make_facility(contributor, lon, lat, country_code='IN'):
@@ -214,6 +218,58 @@ class ZoneSetPartnerFilterTest(TestCase):
             for query in queries.captured_queries
         ))
 
+    def test_index_rows_hold_the_covering_zone_set_ids(self):
+        """`index_facilities_by` fills `zone_set_ids` when the facility
+        is saved: the id of the set for covered locations, an empty
+        array outside every zone."""
+        rows = {
+            row.id: row.zone_set_ids
+            for row in FacilityIndex.objects.filter(id__in=[
+                self.inside_west.id, self.inside_east.id,
+                self.on_edge.id, self.outside.id,
+            ])
+        }
+        self.assertEqual(rows, {
+            self.inside_west.id: [self.zone_set.id],
+            self.inside_east.id: [self.zone_set.id],
+            self.on_edge.id: [self.zone_set.id],
+            self.outside.id: [],
+        })
+
+    def test_filter_runs_from_zone_set_ids_not_a_polygon_test(self):
+        """The search condition is an array overlap on `zone_set_ids`
+        (the GIN-indexed column), with no point-in-polygon test
+        against `api_zone` in the facility query (AC #1)."""
+        with CaptureQueriesContext(connection) as queries:
+            self._filtered_ids()
+
+        facility_queries = [
+            query['sql'] for query in queries.captured_queries
+            if 'api_facilityindex' in query['sql']
+        ]
+        self.assertTrue(facility_queries)
+        for sql in facility_queries:
+            self.assertIn('zone_set_ids', sql)
+            self.assertIn('&&', sql)
+            self.assertNotIn('"api_zone"', sql)
+            self.assertNotIn('ST_Covers', sql)
+
+    def test_inactive_zone_set_stays_in_the_index_but_matches_nothing(self):
+        """`zone_set_ids` lists inactive sets too, so retiring or
+        reviving a set needs no recompute: "active" is applied when the
+        ids to search for are resolved, and the search still returns
+        nothing for a retired set."""
+        self.zone_set.active = False
+        self.zone_set.save()
+
+        row = FacilityIndex.objects.get(id=self.inside_west.id)
+        self.assertEqual(row.zone_set_ids, [self.zone_set.id])
+        self.assertEqual(self._filtered_ids(), set())
+
+        self.zone_set.active = True
+        self.zone_set.save()
+        self.assertIn(self.inside_west.id, self._filtered_ids())
+
     def test_filter_matches_nothing_when_zone_set_is_inactive(self):
         """A retired zone set matches nothing, never everything."""
         self.zone_set.active = False
@@ -258,8 +314,45 @@ class ZoneSetPartnerFilterTest(TestCase):
 
     def test_corrected_coordinates_match_without_reindex(self):
         """A location whose coordinates are corrected to fall inside a
-        zone appears on the next search; nothing is precomputed."""
+        zone appears on the next search (AC #2): the facility save
+        runs `index_facilities_by`, which refreshes `zone_set_ids`, so
+        no manual reindex or backfill is needed."""
         self.assertNotIn(self.outside.id, self._filtered_ids())
         self.outside.location = Point(77.0, 28.5, srid=4326)
         self.outside.save()
         self.assertIn(self.outside.id, self._filtered_ids())
+        self.assertEqual(
+            FacilityIndex.objects.get(id=self.outside.id).zone_set_ids,
+            [self.zone_set.id],
+        )
+
+    @override_settings(ENVIRONMENT='Local')
+    def test_replacing_zones_recomputes_membership_for_every_row(self):
+        """Replacing a set's zones changes which locations it covers
+        without touching any facility row, so `replace_zones` starts a
+        recompute of `zone_set_ids` once it commits (run in-process
+        here, as in local development). After it, the search and the
+        location page agree for every location (AC #3).
+        """
+        with self.captureOnCommitCallbacks(execute=True):
+            self.zone_set.replace_zones(zone_records(
+                feature(FAR, {'bws_label': 'Medium'}),
+            ))
+
+        ids = self._filtered_ids()
+        self.assertEqual(ids, {self.outside.id})
+        for row in FacilityIndex.objects.filter(id__in=[
+            self.inside_west.id, self.inside_east.id,
+            self.on_edge.id, self.outside.id,
+        ]):
+            covered_on_page = (
+                self.zone_set.resolve_zone(row.location) is not None
+            )
+            self.assertEqual(
+                row.id in ids, covered_on_page, row.id
+            )
+            self.assertEqual(
+                row.zone_set_ids,
+                [self.zone_set.id] if covered_on_page else [],
+                row.id,
+            )
