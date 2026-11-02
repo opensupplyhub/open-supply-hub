@@ -118,3 +118,6 @@ dumps
 
 # Mocks
 src/react/src/mocks/
+
+# Local test harness env, never committed.
+.idr-test.env

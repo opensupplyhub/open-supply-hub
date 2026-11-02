@@ -227,6 +227,36 @@ data "aws_secretsmanager_secret" "contribot_google_drive_service_key" {
   name  = var.contribot_google_drive_service_key_secret_name
 }
 
+data "aws_secretsmanager_secret" "earth_index_api_key" {
+  count = var.earth_index_api_key_secret_name != "" ? 1 : 0
+  name  = var.earth_index_api_key_secret_name
+}
+
+data "aws_secretsmanager_secret_version" "earth_index_api_key" {
+  count     = var.earth_index_api_key_secret_name != "" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.earth_index_api_key[0].id
+}
+
+data "aws_secretsmanager_secret" "earth_index_project_id" {
+  count = var.earth_index_project_id_secret_name != "" ? 1 : 0
+  name  = var.earth_index_project_id_secret_name
+}
+
+data "aws_secretsmanager_secret_version" "earth_index_project_id" {
+  count     = var.earth_index_project_id_secret_name != "" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.earth_index_project_id[0].id
+}
+
+data "aws_secretsmanager_secret" "earth_genome_contributor_id" {
+  count = var.earth_genome_contributor_id_secret_name != "" ? 1 : 0
+  name  = var.earth_genome_contributor_id_secret_name
+}
+
+data "aws_secretsmanager_secret_version" "earth_genome_contributor_id" {
+  count     = var.earth_genome_contributor_id_secret_name != "" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.earth_genome_contributor_id[0].id
+}
+
 # ---------------------------------------------------------------------------
 # Optional / env-specific secrets
 # ---------------------------------------------------------------------------
@@ -269,6 +299,16 @@ data "aws_secretsmanager_secret" "ip_whitelist" {
 data "aws_secretsmanager_secret_version" "ip_whitelist" {
   count     = var.ip_whitelist_secret_name != "" ? 1 : 0
   secret_id = data.aws_secretsmanager_secret.ip_whitelist[0].id
+}
+
+data "aws_secretsmanager_secret" "waf_rate_limit_exempt_ips" {
+  count = var.waf_rate_limit_exempt_ips_secret_name != "" ? 1 : 0
+  name  = var.waf_rate_limit_exempt_ips_secret_name
+}
+
+data "aws_secretsmanager_secret_version" "waf_rate_limit_exempt_ips" {
+  count     = var.waf_rate_limit_exempt_ips_secret_name != "" ? 1 : 0
+  secret_id = data.aws_secretsmanager_secret.waf_rate_limit_exempt_ips[0].id
 }
 
 data "aws_secretsmanager_secret" "anonymized_database_name" {
@@ -516,6 +556,8 @@ locals {
   ip_denylist  = var.ip_denylist_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.ip_denylist[0].secret_string) : var.ip_denylist
   ip_whitelist = var.ip_whitelist_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.ip_whitelist[0].secret_string) : var.ip_whitelist
 
+  waf_rate_limit_exempt_ips = var.waf_rate_limit_exempt_ips_secret_name != "" ? jsondecode(data.aws_secretsmanager_secret_version.waf_rate_limit_exempt_ips[0].secret_string) : var.waf_rate_limit_exempt_ips
+
   anonymized_database_name         = var.anonymized_database_name_secret_name != "" ? data.aws_secretsmanager_secret_version.anonymized_database_name[0].secret_string : var.anonymized_database_name
   anonymized_database_name_arn     = var.anonymized_database_name_secret_name != "" ? data.aws_secretsmanager_secret.anonymized_database_name[0].arn : ""
   anonymized_database_username     = var.anonymized_database_username_secret_name != "" ? data.aws_secretsmanager_secret_version.anonymized_database_username[0].secret_string : var.anonymized_database_username
@@ -554,6 +596,12 @@ locals {
   contribot_slack_api_url_arn            = var.contribot_slack_api_url_secret_name != "" ? data.aws_secretsmanager_secret.contribot_slack_api_url[0].arn : ""
   contribot_slack_failures_api_url_arn   = var.contribot_slack_failures_api_url_secret_name != "" ? data.aws_secretsmanager_secret.contribot_slack_failures_api_url[0].arn : ""
   contribot_google_drive_service_key_arn = var.contribot_google_drive_service_key_secret_name != "" ? data.aws_secretsmanager_secret.contribot_google_drive_service_key[0].arn : ""
+
+  # No plaintext fallback variables exist for these (only *_secret_name), so an
+  # empty secret name yields an empty value, as the variable defaults did.
+  earth_index_api_key         = var.earth_index_api_key_secret_name != "" ? data.aws_secretsmanager_secret_version.earth_index_api_key[0].secret_string : ""
+  earth_index_project_id      = var.earth_index_project_id_secret_name != "" ? data.aws_secretsmanager_secret_version.earth_index_project_id[0].secret_string : ""
+  earth_genome_contributor_id = var.earth_genome_contributor_id_secret_name != "" ? data.aws_secretsmanager_secret_version.earth_genome_contributor_id[0].secret_string : ""
 
   # ARNs granted to ECS/Batch execution roles for valueFrom injection.
   ecs_secretsmanager_secret_arns = compact([

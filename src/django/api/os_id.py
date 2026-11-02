@@ -72,6 +72,16 @@ def validate_os_id(raw_id, raise_on_invalid=True):
             raise ValueError('Not 15 characters')
         else:
             return False
+    # Everything after the country code is read as Crockford base 32, which
+    # omits I, L, O and U. Without this guard symbols.index below raises a
+    # bare ValueError on such a character even when raise_on_invalid is
+    # False, which contradicts the contract above and turns a bad
+    # identifier from a caller into a 500.
+    if any(c not in base32_crockford.symbols for c in id[2:]):
+        if raise_on_invalid:
+            raise ValueError('Contains a character outside base 32')
+        else:
+            return False
     if checksum(id[:len(id)-1]) != id[-1]:
         if raise_on_invalid:
             raise ValueError('Checksum invalid')

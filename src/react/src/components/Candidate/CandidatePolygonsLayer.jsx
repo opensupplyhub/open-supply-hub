@@ -1,0 +1,217 @@
+import React, { useEffect, useRef, useState } from 'react';
+import PropTypes from 'prop-types';
+import { GeoJSON, withLeaflet } from 'react-leaflet';
+import L from 'leaflet';
+import axios from 'axios';
+import debounce from 'lodash/debounce';
+
+import apiRequest from '../../util/apiRequest';
+import {
+    CANDIDATE_LAYER_DEBOUNCE_MS,
+    CANDIDATE_LAYER_LIMIT,
+    formatBbox,
+    getCandidateStyle,
+    makeCandidatesBboxURL,
+    shouldFetchCandidates,
+} from '../../util/candidates';
+import {
+    CANDIDATE_COPY,
+    CANDIDATE_STATE_LABELS,
+} from '../../util/candidateCopy';
+
+const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
+
+/**
+ * Builds the bbox request for the map's current viewport, or null when the
+ * map is zoomed out past CANDIDATE_LAYER_MIN_ZOOM.
+ */
+export const buildCandidatesRequestURL = map => {
+    if (!map || !shouldFetchCandidates(map.getZoom())) return null;
+    return makeCandidatesBboxURL(
+        formatBbox(map.getBounds()),
+        CANDIDATE_LAYER_LIMIT,
+    );
+};
+
+/**
+ * Satellite-detected candidate footprints for the current viewport
+ * (OSDEV-3247). Fetches GET /api/v1/production-locations/candidates/?bbox=
+ * on load and after each (debounced) moveend, cancelling any in-flight
+ * request, and renders polygons/points styled by validation state:
+ * unverified dashed, disputed dotted purple, confirmed solid green,
+ * retirement_pending as disputed plus a label. Interim visuals, OSDEV-3192.
+ *
+ * A moveend that resolves to the bbox already on screen is skipped (the
+ * data would be identical); a bump of `refreshKey` forces a refetch. When a
+ * request fails (incl. 429) nothing new is drawn, and footprints from a
+ * different viewport are cleared rather than left in place.
+ */
+// A sticky hover tooltip cannot hold a clickable link (it follows the
+// cursor and closes on mouseout), so it identifies the footprint and points
+// at the click; the overlay panel carries the link to the candidate's page.
+// Built from DOM nodes rather than an HTML string so the OS ID is text.
+const makeTooltip = (label, osId) => {
+    const root = document.createElement('div');
+    root.className = 'candidate-tooltip';
+    const title = document.createElement('strong');
+    title.textContent = label;
+    root.appendChild(title);
+    if (osId) {
+        root.appendChild(document.createElement('br'));
+        root.appendChild(document.createTextNode(osId));
+    }
+    root.appendChild(document.createElement('br'));
+    const hint = document.createElement('em');
+    hint.textContent = CANDIDATE_COPY.tooltipHint;
+    root.appendChild(hint);
+    return root;
+};
+
+const CandidatePolygonsLayer = ({
+    leaflet,
+    onCandidateClick,
+    selectedOsId,
+    refreshKey,
+}) => {
+    const map = leaflet ? leaflet.map : null;
+    const [collection, setCollection] = useState(EMPTY);
+    const [version, setVersion] = useState(0);
+    const controllerRef = useRef(null);
+    // URL whose features are currently rendered (null when nothing is).
+    const loadedUrlRef = useRef(null);
+    const clickRef = useRef(onCandidateClick);
+    clickRef.current = onCandidateClick;
+
+    useEffect(() => {
+        if (!map) return undefined;
+
+        const clear = () => {
+            loadedUrlRef.current = null;
+            setCollection(EMPTY);
+        };
+
+        const load = ({ force = false } = {}) => {
+            const url = buildCandidatesRequestURL(map);
+            if (!url) {
+                if (controllerRef.current) {
+                    controllerRef.current.abort();
+                    controllerRef.current = null;
+                }
+                clear();
+                return;
+            }
+            if (!force && url === loadedUrlRef.current) {
+                return;
+            }
+            if (controllerRef.current) {
+                controllerRef.current.abort();
+                controllerRef.current = null;
+            }
+            const controller = new AbortController();
+            controllerRef.current = controller;
+            apiRequest
+                .get(url, { signal: controller.signal })
+                .then(({ data }) => {
+                    if (controller.signal.aborted) return;
+                    controllerRef.current = null;
+                    loadedUrlRef.current = url;
+                    setCollection(
+                        data && Array.isArray(data.features) ? data : EMPTY,
+                    );
+                    setVersion(current => current + 1);
+                })
+                .catch(err => {
+                    if (axios.isCancel(err) || controller.signal.aborted) {
+                        return;
+                    }
+                    controllerRef.current = null;
+                    // Keep what is on screen only if it is for this bbox.
+                    if (url !== loadedUrlRef.current) {
+                        clear();
+                    }
+                    // eslint-disable-next-line no-console
+                    console.error('Candidate layer fetch failed:', err);
+                });
+        };
+
+        const debouncedLoad = debounce(
+            () => load(),
+            CANDIDATE_LAYER_DEBOUNCE_MS,
+        );
+        load({ force: true });
+        map.on('moveend', debouncedLoad);
+
+        return () => {
+            map.off('moveend', debouncedLoad);
+            debouncedLoad.cancel();
+            if (controllerRef.current) {
+                controllerRef.current.abort();
+                controllerRef.current = null;
+            }
+        };
+    }, [map, refreshKey]);
+
+    if (!collection.features.length) return null;
+
+    const styleFor = feature =>
+        getCandidateStyle(feature.properties.state, {
+            selected:
+                !!selectedOsId && feature.properties.os_id === selectedOsId,
+        });
+
+    const onEachFeature = (feature, layer) => {
+        const base = styleFor(feature);
+        const hover = getCandidateStyle(feature.properties.state, {
+            hover: true,
+            selected:
+                !!selectedOsId && feature.properties.os_id === selectedOsId,
+        });
+        if (layer.setStyle) layer.setStyle(base);
+        const label = CANDIDATE_STATE_LABELS[feature.properties.state];
+        if (label && layer.bindTooltip) {
+            layer.bindTooltip(makeTooltip(label, feature.properties.os_id), {
+                sticky: true,
+                direction: 'top',
+            });
+        }
+        layer.on('mouseover', () => layer.setStyle && layer.setStyle(hover));
+        layer.on('mouseout', () => layer.setStyle && layer.setStyle(base));
+        layer.on('click', event => {
+            if (event && event.originalEvent && L.DomEvent) {
+                L.DomEvent.stopPropagation(event);
+            }
+            if (clickRef.current) clickRef.current(feature.properties);
+        });
+    };
+
+    const pointToLayer = (feature, latlng) =>
+        L.circleMarker(latlng, { radius: 8, ...styleFor(feature) });
+
+    return (
+        <GeoJSON
+            key={`candidates-${version}-${selectedOsId || ''}`}
+            data={collection}
+            style={styleFor}
+            onEachFeature={onEachFeature}
+            pointToLayer={pointToLayer}
+        />
+    );
+};
+
+CandidatePolygonsLayer.propTypes = {
+    leaflet: PropTypes.shape({ map: PropTypes.object }),
+    onCandidateClick: PropTypes.func,
+    selectedOsId: PropTypes.string,
+    refreshKey: PropTypes.number,
+};
+
+CandidatePolygonsLayer.defaultProps = {
+    leaflet: null,
+    onCandidateClick: null,
+    selectedOsId: null,
+    refreshKey: 0,
+};
+
+export { CandidatePolygonsLayer as UnwrappedCandidatePolygonsLayer };
+
+export default withLeaflet(CandidatePolygonsLayer);

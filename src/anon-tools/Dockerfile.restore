@@ -1,21 +1,24 @@
-FROM postgis/postgis:16-3.4-alpine
+# One-off database restore task (deployment/terraform/database_restore.tf,
+# started by deployment/run_restore_task).
+#
+# do_restore.sh only needs the PostgreSQL client tools (psql, pg_isready,
+# pg_restore) and the AWS CLI: the target database is RDS, so the image
+# carries no PostgreSQL server, PostGIS or gosu. Keep the client major version
+# equal to the RDS engine version (rds_engine_version) and to the pg_dump that
+# produces the anonymized dump.
+FROM alpine:3.24
+
+# Alpine installs the versioned client tools under /usr/libexec; put the v16
+# ones first on PATH so the restore always uses them.
+ENV PATH="/usr/libexec/postgresql16:${PATH}"
 
 WORKDIR /opt/
 
-RUN set -ex && apk update && apk add --no-cache --upgrade libexpat aws-cli
-ENV POSTGRES_PASSWORD=anondb
-ENV POSTGRES_USER=anondb
-ENV POSTGRES_DB=anondb
-
-ARG AWS_ACCESS_KEY_ID
-ARG AWS_SECRET_ACCESS_KEY
-ARG AWS_DEFAULT_REGION
-ARG ENVIRONMENT
-ARG DATABASE_NAME
-ARG DATABASE_USERNAME
-ARG DATABASE_PASSWORD
-
-RUN mkdir -p /dumps/
+# apk upgrade picks up security fixes released after the base image was built.
+RUN set -ex \
+    && apk upgrade --no-cache \
+    && apk add --no-cache postgresql16-client aws-cli \
+    && mkdir -p /dumps/
 
 COPY ./do_restore.sh ./
 

@@ -15,6 +15,8 @@ import {
     makeGetGroupedSectorsURL,
     makeGetParentCompaniesURL,
     makeGetFacilitiesTypeProcessingTypeURL,
+    makeGetTaxonomyCountsURL,
+    makeGetIsicTaxonomyURL,
     makeGetProcessingTypeSuggestionsURL,
     makeGetNumberOfWorkersURL,
     mapDjangoChoiceTuplesToSelectOptions,
@@ -99,6 +101,16 @@ export const completeFetchFacilityProcessingTypeOptions = createAction(
     'COMPLETE_FETCH_FACILITY_PROCESSING_TYPE_OPTIONS',
 );
 
+export const startFetchTaxonomyCounts = createAction(
+    'START_FETCH_TAXONOMY_COUNTS',
+);
+export const failFetchTaxonomyCounts = createAction(
+    'FAIL_FETCH_TAXONOMY_COUNTS',
+);
+export const completeFetchTaxonomyCounts = createAction(
+    'COMPLETE_FETCH_TAXONOMY_COUNTS',
+);
+
 export const startFetchProcessingTypeSuggestions = createAction(
     'START_FETCH_PROCESSING_TYPE_SUGGESTIONS',
 );
@@ -126,6 +138,12 @@ export const failFetchClaimStatusOption = createAction(
 );
 export const completeFetchClaimStatusOption = createAction(
     'COMPLETE_FETCH_CLAIM_STATUS_OPTIONS',
+);
+
+export const startFetchIsicTaxonomy = createAction('START_FETCH_ISIC_TAXONOMY');
+export const failFetchIsicTaxonomy = createAction('FAIL_FETCH_ISIC_TAXONOMY');
+export const completeFetchIsicTaxonomy = createAction(
+    'COMPLETE_FETCH_ISIC_TAXONOMY',
 );
 
 export const resetFilterOptions = createAction('RESET_FILTER_OPTIONS');
@@ -313,6 +331,31 @@ export function fetchFacilityProcessingTypeOptions() {
     };
 }
 
+export function fetchTaxonomyCounts(kind) {
+    return dispatch => {
+        dispatch(startFetchTaxonomyCounts(kind));
+
+        return apiRequest
+            .get(makeGetTaxonomyCountsURL(kind))
+            .then(({ data }) =>
+                dispatch(completeFetchTaxonomyCounts({ kind, data })),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching taxonomy counts',
+                        messages =>
+                            failFetchTaxonomyCounts({
+                                kind,
+                                error: messages,
+                            }),
+                    ),
+                ),
+            );
+    };
+}
+
 export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
     return dispatch => {
         const requestIdentity = makeGetProcessingTypeSuggestionsURL(
@@ -350,6 +393,14 @@ export function fetchProcessingTypeSuggestions(query = '', facilityTypes = []) {
             );
     };
 }
+
+export const fetchTaxonomyCountsIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.taxonomyCounts.isic;
+
+    if (data === null && !fetching) {
+        dispatch(fetchTaxonomyCounts('isic'));
+    }
+};
 
 export function fetchNumberOfWorkersOptions() {
     return dispatch => {
@@ -426,4 +477,33 @@ export const fetchAllPrimaryFilterOptionsIfNeeded = () => dispatch => {
     dispatch(fetchContributorOptionsIfNeeded());
     dispatch(fetchCountryOptionsIfNeeded());
     dispatch(fetchListOptionsIfNeeded());
+};
+
+export function fetchIsicTaxonomy() {
+    return dispatch => {
+        dispatch(startFetchIsicTaxonomy());
+
+        return apiRequest
+            .get(makeGetIsicTaxonomyURL())
+            .then(({ data }) =>
+                dispatch(completeFetchIsicTaxonomy(data.entries)),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented fetching ISIC categories',
+                        failFetchIsicTaxonomy,
+                    ),
+                ),
+            );
+    };
+}
+
+export const fetchIsicTaxonomyIfNeeded = () => (dispatch, getState) => {
+    const { data, fetching } = getState().filterOptions.isicTaxonomy;
+
+    if (data === null && !fetching) {
+        dispatch(fetchIsicTaxonomy());
+    }
 };

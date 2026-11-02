@@ -36,6 +36,10 @@ from .facility.facility_alias import (
   FacilityAlias,
   HistoricalFacilityAlias,
 )
+from .facility.facility_candidate_vote import FacilityCandidateVote
+from .facility.facility_candidate_retirement_request import (
+  FacilityCandidateRetirementRequest,
+)
 from .facility.facility_claim import (
   FacilityClaim,
   HistoricalFacilityClaim,
@@ -47,6 +51,7 @@ from .facility.facility_claim_review_note import (
 from .facility.facility_claim_attachments import (
     FacilityClaimAttachments
 )
+from .facility.facility_claim_invite import FacilityClaimInvite
 from .facility.facility_list import FacilityList
 from .facility.facility_list_item import FacilityListItem
 from .facility.facility_list_item_temp import FacilityListItemTemp
@@ -71,6 +76,7 @@ from .extended_field import (
 )
 from .nonstandard_field import NonstandardField
 from .partner_field import PartnerField
+from .isic_crosswalk_entry import IsicCrosswalkEntry
 from .partner_data_file_upload import PartnerDataFileUpload
 from .partner_field_group import PartnerFieldGroup
 from .product_type import ProductType
@@ -93,3 +99,7 @@ from .download_location_payment import DownloadLocationPayment
 from .wage_indicator_country_data import WageIndicatorCountryData
 from .wage_indicator_link_text_config import WageIndicatorLinkTextConfig
 from .us_county_tigerline import USCountyTigerline
+from .identity_record_association import (
+  IdentityRecordAssociation,
+  HistoricalIdentityRecordAssociation,
+)

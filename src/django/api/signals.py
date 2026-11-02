@@ -38,19 +38,57 @@ def signal_error_notifier(error_log_message, response):
 
 @receiver(post_delete, sender=Facility)
 def location_post_delete_handler_for_opensearch(instance, **kwargs):
+    """
+    Remove the facility's production-locations document.
+
+    Candidates (OSDEV-3243) are kept out of that index, so for them the
+    document is normally missing. The delete is still attempted so that
+    a document left behind by any future confirmed-to-candidate
+    transition can never be orphaned; a 404 is then the expected outcome
+    and is not an inconsistency. Candidate deletes happen inside the
+    retirement transaction (OSDEV-3246), so an OpenSearch outage is
+    logged and swallowed for them instead of rolling the retirement
+    back; for confirmed facilities it still propagates.
+    """
     opensearch = OpenSearchServiceConnection()
     try:
         response = opensearch.client.delete(
             index=OpenSearchIndexNames.PRODUCTION_LOCATIONS_INDEX,
             id=instance.id,
         )
+    except NotFoundError:
+        if instance.is_candidate:
+            log.debug(
+                '[Location Deletion] Candidate %s had no OpenSearch '
+                'document, as expected.',
+                instance.id,
+            )
+            return
+        # opensearch-py raises on a 404 rather than returning
+        # result='not_found'; same inconsistency as reported below.
+        signal_error_notifier(
+            '[Location Deletion] Facility not found in OpenSearch, '
+            'indicating data inconsistency.',
+            {'result': 'not_found', 'id': instance.id},
+        )
+        return
     except ConnectionError:
+        if instance.is_candidate:
+            log.error(
+                '[Location Deletion] Lost connection to OpenSearch while '
+                'deleting candidate %s; continuing, the document is not '
+                'expected to exist.',
+                instance.id,
+            )
+            return
         log.error(
             '[Location Deletion] Lost connection to OpenSearch cluster.'
         )
         raise
 
     if response and response.get('result') == 'not_found':
+        if instance.is_candidate:
+            return
         error_log_message = (
             "[Location Deletion] Facility not found "
             "in OpenSearch, indicating "

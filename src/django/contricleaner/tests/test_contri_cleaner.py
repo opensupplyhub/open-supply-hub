@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.base import File
 from openpyxl import Workbook
 
+from contricleaner.constants import UNSUPPORTED_FILE_TYPE_MESSAGE
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
@@ -164,10 +165,7 @@ class ContriCleanerTest(TestCase):
         os.remove('test.csv')
 
     def test_submit_unsupported_file_type_throws_exception(self):
-        expected_error_message = (
-            'We cannot accept the type of file you submitted. Please change '
-            'your file to an Excel or UTF-8 CSV and reupload.'
-        )
+        expected_error_message = UNSUPPORTED_FILE_TYPE_MESSAGE
         expected_error_type = 'ParsingError'
         expected_error_field = 'non_field_errors'
 

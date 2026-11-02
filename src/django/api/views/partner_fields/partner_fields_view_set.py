@@ -26,6 +26,9 @@ class PartnerFieldsViewSet(ReadOnlyModelViewSet):
     """
     Allows listing of the partner fields with pagination. Available
     for superusers only. Allows client to control page size via ?limit=.
+
+    By default only active fields are returned. Pass ?include_inactive=true
+    (exact lowercase value) to include inactive fields in the response.
     """
 
     queryset = PartnerField.objects.all()
@@ -33,3 +36,16 @@ class PartnerFieldsViewSet(ReadOnlyModelViewSet):
     permission_classes = [IsSuperuser]
     throttle_classes = []
     pagination_class = PartnerFieldCursorPagination
+
+    def get_queryset(self):
+        """
+        Return active fields by default, or all fields (including inactive)
+        when ?include_inactive=true is passed.
+
+        The ?include_inactive parameter is superuser-only in practice because
+        the viewset already had permission_classes = [IsSuperuser] before this
+        method was added — that gate was not added by this change.
+        """
+        if self.request.query_params.get('include_inactive') == 'true':
+            return PartnerField.objects.get_all_including_inactive()
+        return PartnerField.objects.all()

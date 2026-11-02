@@ -1,0 +1,302 @@
+"""
+Community validation of candidate facilities (OSDEV-3245, design
+decisions D4 and D6).
+
+A candidate's validation state is never stored: it is derived from the
+live tally of ``FacilityCandidateVote`` rows each time it is needed.
+
+    state        tally condition                      behavior
+    -----------  -----------------------------------  ----------------------
+    unverified   total < CANDIDATE_VOTE_THRESHOLD     voting open
+    disputed     threshold reached, no consensus      voting open, labeled
+    confirmed    confirmed share >= CONFIRM_MARGIN    voting open, labeled
+    retired      not_a_facility share >= RETIRE_MARGIN hard delete + tombstone
+
+"confirmed" is therefore "consensus-yes right now". Voting never closes
+while the candidate row exists: every vote is stored and the state keeps
+following the live tally, so later votes can move a confirmed candidate
+back to disputed, or on to consensus-no and the retirement gate. The only
+thing that stops voting is retirement, which removes the row (the vote
+endpoint then answers 410). Nothing about the state is stored.
+
+"retired" is the only irreversible edge and is moderator-gated during the
+pilot: with ``CANDIDATE_AUTO_RETIRE`` off (default) a vote that reaches
+consensus-no opens a ``FacilityCandidateRetirementRequest`` instead of
+deleting anything, voting stays open, and the API reports the candidate
+as ``retirement_pending`` (an API-only label: the D6 state is "retired",
+but the OS ID still resolves). A moderator executes the retirement via
+``POST /api/v1/candidate-retirement-requests/{id}/approve/``. With the
+toggle on, the vote that reaches consensus-no retires the candidate on
+the spot through ``retire_candidate``.
+
+The thresholds come from Django settings (env-backed, see
+``oar/settings.py``); ``derive_state`` also takes them as keyword
+arguments so it can be unit-tested as a pure function without a database.
+"""
+from dataclasses import dataclass
+from typing import Optional
+
+from django.conf import settings
+from django.db import transaction
+from django.db.models import Count
+
+from api.models.facility.facility import Facility
+from api.models.facility.facility_candidate_retirement_request import (
+    FacilityCandidateRetirementRequest,
+)
+from api.models.facility.facility_candidate_vote import FacilityCandidateVote
+from api.services.candidate_retirement import retire_candidate
+
+UNVERIFIED = 'unverified'
+DISPUTED = 'disputed'
+CONFIRMED = 'confirmed'
+RETIRED = 'retired'
+# API-only label for a candidate at consensus-no that the moderation gate
+# has not yet retired. Never returned by derive_state.
+RETIREMENT_PENDING = 'retirement_pending'
+
+CONFIRMED_VOTE = FacilityCandidateVote.Vote.CONFIRMED.value
+NOT_A_FACILITY_VOTE = FacilityCandidateVote.Vote.NOT_A_FACILITY.value
+
+
+def tally(facility):
+    """The live vote tally: ``{"confirmed": n, "not_a_facility": m}``."""
+    counts = {CONFIRMED_VOTE: 0, NOT_A_FACILITY_VOTE: 0}
+    rows = (
+        FacilityCandidateVote.objects
+        .filter(facility=facility)
+        .values('vote')
+        .annotate(count=Count('id'))
+    )
+    for row in rows:
+        counts[row['vote']] = row['count']
+    return counts
+
+
+def tallies(os_ids):
+    """
+    Live tallies for many candidates in one query:
+    ``{os_id: {"confirmed": n, "not_a_facility": m}}``, with a zero tally
+    for every requested id that has no votes.
+    """
+    os_ids = list(os_ids)
+    result = {
+        os_id: {CONFIRMED_VOTE: 0, NOT_A_FACILITY_VOTE: 0}
+        for os_id in os_ids
+    }
+    rows = (
+        FacilityCandidateVote.objects
+        .filter(facility_id__in=os_ids)
+        .values('facility_id', 'vote')
+        .annotate(count=Count('id'))
+    )
+    for row in rows:
+        result[row['facility_id']][row['vote']] = row['count']
+    return result
+
+
+def derive_state(
+    vote_tally,
+    *,
+    threshold=None,
+    confirm_margin=None,
+    retire_margin=None,
+):
+    """
+    Map a tally to one of UNVERIFIED / DISPUTED / CONFIRMED / RETIRED.
+
+    Pure: no database access. The three knobs default to the Django
+    settings (``CANDIDATE_VOTE_THRESHOLD``, ``CANDIDATE_CONFIRM_MARGIN``,
+    ``CANDIDATE_RETIRE_MARGIN``). A share is that side's votes divided by
+    the total, compared with ``>=`` against its margin. If a
+    misconfiguration (both margins <= 0.5) lets both sides reach their
+    margin at once, there is no consensus and the state is DISPUTED.
+    """
+    if threshold is None:
+        threshold = settings.CANDIDATE_VOTE_THRESHOLD
+    if confirm_margin is None:
+        confirm_margin = settings.CANDIDATE_CONFIRM_MARGIN
+    if retire_margin is None:
+        retire_margin = settings.CANDIDATE_RETIRE_MARGIN
+
+    confirmed = vote_tally.get(CONFIRMED_VOTE, 0)
+    not_a_facility = vote_tally.get(NOT_A_FACILITY_VOTE, 0)
+    total = confirmed + not_a_facility
+
+    if total == 0 or total < threshold:
+        return UNVERIFIED
+
+    is_confirmed = confirmed / total >= confirm_margin
+    is_retired = not_a_facility / total >= retire_margin
+    if is_confirmed and not is_retired:
+        return CONFIRMED
+    if is_retired and not is_confirmed:
+        return RETIRED
+    return DISPUTED
+
+
+def voting_is_closed(state):
+    """
+    Existence voting never closes for a live candidate: every vote is
+    stored and the derived state keeps following the tally, including
+    away from ``confirmed``. Kept as a function so the API's
+    ``voting_open`` field has one definition; retirement (the row is
+    gone) is the only end of voting and is reported as 410, not here.
+    """
+    return False
+
+
+def public_state(state, retired=False):
+    """
+    The ``state`` value the API reports. Equal to the derived state
+    except at consensus-no under the moderation gate: the candidate is
+    not gone, so it is reported as ``retirement_pending``.
+    """
+    if state == RETIRED and not retired:
+        return RETIREMENT_PENDING
+    return state
+
+
+@dataclass
+class VoteOutcome:
+    created: bool
+    vote: str
+    tally: dict
+    state: str
+    retired: bool = False
+    tombstone: Optional[object] = None
+
+    @property
+    def reported_state(self):
+        return public_state(self.state, retired=self.retired)
+
+
+class CandidateGoneError(Exception):
+    """The candidate row no longer exists (retired or deleted) by the time
+    the vote takes its row lock."""
+
+
+class RetirementRequestClosedError(Exception):
+    """The retirement request is no longer open: its candidate is gone or
+    the request row was dissolved before the moderator's lock."""
+
+
+class ConsensusBrokenError(Exception):
+    """The live tally no longer reaches consensus-no, so the request must
+    not be executed; it is closed instead."""
+
+    def __init__(self, os_id, live_tally):
+        super().__init__(os_id)
+        self.os_id = os_id
+        self.live_tally = live_tally
+
+
+@transaction.atomic
+def cast_vote(facility, user, vote):
+    """
+    Record ``user``'s ``vote`` on candidate ``facility`` and apply the
+    consequences of the new tally.
+
+    * One row per (facility, user): a repeat vote updates in place
+      (``created`` tells the API 201 from 200).
+    * The candidate row is locked for the duration, so concurrent votes
+      on the same candidate serialize and the retirement decision is
+      made on a consistent tally.
+    * Never refuses a vote for state reasons: a confirmed candidate keeps
+      accepting votes and may move back to disputed.
+    * At consensus-no: retires the candidate when
+      ``CANDIDATE_AUTO_RETIRE`` is on, otherwise opens or refreshes the
+      candidate's ``FacilityCandidateRetirementRequest``. Any other state
+      dissolves an open request, since there is no longer anything to
+      retire.
+    """
+    try:
+        facility = (
+            Facility.including_candidates
+            .select_for_update()
+            .get(pk=facility.pk)
+        )
+    except Facility.DoesNotExist:
+        raise CandidateGoneError(facility.pk)
+
+    _, created = FacilityCandidateVote.objects.update_or_create(
+        facility=facility,
+        user=user,
+        defaults={'vote': vote},
+    )
+
+    new_tally = tally(facility)
+    state = derive_state(new_tally)
+    outcome = VoteOutcome(
+        created=created, vote=vote, tally=new_tally, state=state
+    )
+
+    if state != RETIRED:
+        FacilityCandidateRetirementRequest.objects.filter(
+            facility=facility
+        ).delete()
+        return outcome
+
+    if settings.CANDIDATE_AUTO_RETIRE:
+        # Deleting the facility CASCADEs the votes and any open request;
+        # the tombstone keeps the final tally.
+        outcome.tombstone = retire_candidate(
+            facility, new_tally, retired_by=user
+        )
+        outcome.retired = True
+        return outcome
+
+    FacilityCandidateRetirementRequest.objects.update_or_create(
+        facility=facility,
+        defaults={'tally': new_tally},
+    )
+    return outcome
+
+
+def approve_retirement(request, moderator):
+    """
+    Execute an open retirement request: retire the candidate with the
+    live tally (not the snapshot, in case votes arrived since) and credit
+    ``moderator`` as ``retired_by``. The request row CASCADEs away with
+    the facility. Returns the tombstone.
+
+    Everything is re-checked under the candidate's row lock, because the
+    request the caller read may be stale by the time the lock is taken:
+
+    * the candidate is gone (a concurrent approval or auto-retire)
+      -> ``RetirementRequestClosedError``;
+    * the request row has been dissolved (a vote broke the consensus)
+      -> ``RetirementRequestClosedError``;
+    * the request row still exists but the live tally no longer reaches
+      consensus-no (votes changed without going through ``cast_vote``)
+      -> the request is closed and ``ConsensusBrokenError`` is raised.
+      A moderator must never hard-delete a candidate the community
+      currently disputes.
+    """
+    with transaction.atomic():
+        try:
+            facility = (
+                Facility.including_candidates
+                .select_for_update()
+                .get(pk=request.facility_id)
+            )
+        except Facility.DoesNotExist:
+            raise RetirementRequestClosedError(request.facility_id)
+
+        still_open = FacilityCandidateRetirementRequest.objects.filter(
+            pk=request.pk, facility=facility
+        ).exists()
+        if not still_open:
+            raise RetirementRequestClosedError(facility.id)
+
+        live_tally = tally(facility)
+        if derive_state(live_tally) == RETIRED:
+            return retire_candidate(
+                facility, live_tally, retired_by=moderator
+            )
+        # Close the stale request in its own transaction: raising inside
+        # the block above would roll the delete back with it.
+        FacilityCandidateRetirementRequest.objects.filter(
+            pk=request.pk
+        ).delete()
+    raise ConsensusBrokenError(facility.id, live_tally)

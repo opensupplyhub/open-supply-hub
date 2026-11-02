@@ -26,6 +26,8 @@ export const ClaimFacilityInfoLink =
 
 export const EMPTY_PLACEHOLDER = 'N/A';
 
+export const externalOSHubLink = 'https://www.opensupplyhub.org/';
+
 export const InfoPaths = {
     storiesResources: 'stories-resources',
     privacyPolicy: 'privacy-policy',
@@ -353,6 +355,9 @@ export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
 export const facilityDetailsRoute = '/facilities/:osID';
+// Scope doc 2.6: the registered record gets its own page rather than
+// being merged into the facility profile, so it is a sibling route.
+export const identityRecordRoute = '/facilities/:osID/identity-record';
 export const productionLocationsRoute = '/production-locations';
 export const productionLocationDetailsRoute = '/production-locations/:osID';
 export const claimFacilityRoute = '/facilities/:osID/claim';
@@ -596,9 +601,18 @@ export const EXTENDED_PROFILE_FLAG = 'extended_profile';
 export const DEFAULT_SEARCH_TEXT = 'Facility Name or OS ID';
 export const DISABLE_LIST_UPLOADING = 'disable_list_uploading';
 export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
+
+// The read side of the UNTP identity record pilot: the resolver, the
+// identity record page and the entry point to it from a production
+// location profile. Off until the pilot is announced; see
+// api/identity_record_switches.py for why registration has its own switch.
+export const ENABLE_IDENTITY_RESOLVER = 'enable_identity_resolver';
 export const PRIVATE_INSTANCE = 'private_instance';
 export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
 export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
+// Earth Genome candidate pilot kill switch (OSDEV-3627): off hides the
+// candidate footprint layer; the API answers 404 for candidates anyway.
+export const EARTH_GENOME_CANDIDATES = 'earth_genome_candidates';
 // Relaxed claim eligibility (employees may claim) — swaps the
 // owner/manager wording across claimant- and moderator-facing copy.
 export const RELAXED_CLAIM_ELIGIBILITY = 'relaxed_claim_eligibility';
@@ -607,6 +621,10 @@ export const ENABLE_PRODUCTION_LOCATION_PAGE =
 export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
 export const ENABLE_CLAIMS_V2_DASHBOARD = 'enable_claims_v2_dashboard';
 export const ENABLE_CLAIM_NAME_ADDRESS_EDIT = 'enable_claim_name_address_edit';
+// "Send them a link to claim" on unclaimed production location profiles.
+export const CLAIM_INVITE = 'claim_invite';
+// Industry Classification (ISIC) on search and profiles (OSDEV-3340).
+export const ENABLE_ISIC_TAXONOMY = 'enable_isic_taxonomy';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
@@ -748,6 +766,8 @@ export const GRID_COLOR_RAMP = Object.freeze([
 export const OARFont = "'Darker Grotesque',sans-serif";
 export const OARColor = '#8428FA';
 export const SelectedMarkerColor = '#FFCF3F';
+// Marker for a suggested nearby match shown next to a candidate footprint.
+export const SuggestedMatchMarkerColor = '#1E88E5';
 export const OARActionColor = '#FFCF3F';
 export const OARSecondaryColor = '#FFA6D0';
 
@@ -777,7 +797,7 @@ export const NavbarItems = [
                         {
                             type: 'button',
                             label: 'Introduction',
-                            href: InfoLink,
+                            href: externalOSHubLink,
                         },
                         {
                             type: 'button',
@@ -1438,7 +1458,14 @@ export const componentsWithErrorMessage = Object.freeze({
     ),
     mustConsistOfLetters: 'Facility List Name must also consist of letters.',
     missingFile: 'Missing required Facility List File.',
+    unsupportedFileType:
+        'We cannot accept the type of file you submitted. Please change ' +
+        'your file to an Excel (.xlsx) or UTF-8 CSV and reupload.',
 });
+
+// Mirrors contricleaner/constants.py, which the upload endpoint also reads.
+// JavaScript cannot import it, so this copy must be updated alongside it.
+export const facilityListFileExtensions = Object.freeze(['.csv', '.xlsx']);
 
 export const OS_ID_LENGTH = 15;
 
@@ -1675,5 +1702,3 @@ export const API_V1_ERROR_REQUEST_SOURCE_ENUM = {
     CLIENT: 'CLIENT',
     SERVER: 'SERVER',
 };
-
-export const externalOSHubLink = 'https://www.opensupplyhub.org/';

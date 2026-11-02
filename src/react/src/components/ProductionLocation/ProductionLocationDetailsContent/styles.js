@@ -1,29 +1,8 @@
-import COLOURS from '../../../util/COLOURS';
-
 export default theme =>
     Object.freeze({
         container: Object.freeze({
             [theme.breakpoints.up('md')]: {
                 paddingLeft: '20px',
-            },
-        }),
-        /*
-        OS ID takes two thirds of the row and the data labels legend one third,
-        so the legend reads as a footnote to the ID instead of a page section
-        of its own (OSDEV-3239). Stacks below md.
-        */
-        identityRow: Object.freeze({
-            display: 'grid',
-            gridTemplateColumns: '1fr',
-            marginBottom: '16px',
-            /*
-            The row owns the outer border so the two panels inside it share one
-            colour. Each contributes only its fill, and the legend adds the
-            divider between them.
-            */
-            border: `1px solid ${COLOURS.LIGHT_BORDER_GREY}`,
-            [theme.breakpoints.up('md')]: {
-                gridTemplateColumns: '2fr 1fr',
             },
         }),
         containerItem: Object.freeze({
@@ -34,6 +13,27 @@ export default theme =>
         }),
         containerItemInner: Object.freeze({
             paddingBottom: `0px !important`,
+            [theme.breakpoints.down('sm')]: {
+                maxWidth: '100%',
+            },
+        }),
+        /*
+        The OS ID and the data labels legend share a row (OSDEV-3239). It is
+        laid out with the same Grid container, spacing and breakpoints as the
+        General Information / map row below, so the two panels line up with the
+        columns under them at every width rather than only looking close.
+
+        Each panel is its own card here, so the item stretches its child to the
+        full height of the row: side by side, two cards of different heights
+        would leave a ragged bottom edge.
+        */
+        identityRowItem: Object.freeze({
+            display: 'flex',
+            paddingBottom: `0px !important`,
+            '& > *': Object.freeze({
+                flex: 1,
+                minWidth: 0,
+            }),
             [theme.breakpoints.down('sm')]: {
                 maxWidth: '100%',
             },

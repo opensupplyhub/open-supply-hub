@@ -108,7 +108,7 @@ class FacilityClaim(models.Model):
         help_text='The website for the facility')
     facility_description = models.TextField(
         null=False,
-        blank=False,
+        blank=True,
         verbose_name='description',
         help_text='A description of the facility')
     linkedin_profile = models.URLField(
@@ -169,6 +169,7 @@ class FacilityClaim(models.Model):
         ))
     facility_location = gis_models.PointField(
         null=True,
+        blank=True,
         verbose_name='location',
         help_text='The lat/lng point location of the facility')
     facility_phone_number = models.CharField(
@@ -284,6 +285,24 @@ class FacilityClaim(models.Model):
         help_text='The processing types associated with the facility',
         verbose_name='processing types',
     )
+    isic_4 = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'ISIC Rev 4 values the claimant submitted, each with every '
+            'level filled in.'
+        ),
+        verbose_name='ISIC Rev. 4',
+    )
+    isic_5 = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'ISIC Rev 5 values the claimant submitted, each with every '
+            'level filled in.'
+        ),
+        verbose_name='ISIC Rev. 5',
+    )
     point_of_contact_person_name = models.CharField(
         max_length=200,
         null=True,
@@ -334,6 +353,7 @@ class FacilityClaim(models.Model):
         'Contributor',
         related_name='parent_company',
         null=True,
+        blank=True,
         default=None,
         on_delete=models.PROTECT,
         verbose_name='contributor parent company / supplier group',
@@ -351,6 +371,15 @@ class FacilityClaim(models.Model):
         null=True,
         blank=True,
         help_text='The sector(s) for goods made at the facility',
+    )
+    claim_invite = models.ForeignKey(
+        'FacilityClaimInvite',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='claims',
+        help_text='The invite whose claim link this claim was submitted '
+                  'from, if any.'
     )
     origin_source = models.CharField(
         choices=OriginSource.CHOICES,

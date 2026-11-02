@@ -89,6 +89,8 @@ craft_cms_origin_domain = "open-supply.staging.servd.dev"
 aws_chatbot_manage_channel_configuration = false
 
 waf_enabled = true
+waf_rate_limit_enabled = true
+waf_rate_limit_action = "count"
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1RdvkaPS96l6wwhPDf12NSxe"
 hubspot_subscription_id = "12847627"
@@ -127,3 +129,7 @@ contribot_google_drive_service_key_secret_name = "oshub/staging/contribot-google
 # OSDEV-3374: automated-claims pipeline Lambda execution role, allowed to
 # read claim attachments directly (s3:GetObject on claim_attachments/* only).
 claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]
+
+earth_genome_contributor_id_secret_name = "oshub/staging/earth-genome-contributor-id"
+earth_index_api_key_secret_name = "oshub/staging/earth-index-api-key"
+earth_index_project_id_secret_name = "oshub/staging/earth-index-project-id"

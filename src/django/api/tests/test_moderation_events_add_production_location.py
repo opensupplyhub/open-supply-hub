@@ -510,3 +510,112 @@ class ModerationEventsAddProductionLocationTest(
         index_row = FacilityIndex.objects.get(id=response.data["os_id"])
         self.assertNotEqual([], index_row.facility_type)
         self.assertNotEqual([], index_row.processing_type)
+
+    def test_isic_index_columns_populated_after_approval(self):
+        """
+        OSDEV-3340: the isic_4 value a location is approved with (v1 API /
+        SLC, the path RBA uses) must reach ISIC search, end to end. The
+        OSDEV-3428 class of bug (columns computed before the FacilityMatch
+        exists) is covered for ISIC by the source, match and claim tests
+        in test_facility_index_isic.py.
+        """
+        from api.models.facility.facility_index import FacilityIndex
+
+        self.add_extended_fields_data()
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+
+        index_row = FacilityIndex.objects.get(id=response.data["os_id"])
+        self.assertEqual(['C'], index_row.isic_section)
+        self.assertEqual(['28'], index_row.isic_division)
+        self.assertEqual(['282'], index_row.isic_group)
+        self.assertEqual(['2818'], index_row.isic_class)
+
+        search = self.client.get(
+            "/api/facilities/", {"isic_4": "division:28"}
+        )
+        self.assertEqual(
+            [response.data["os_id"]],
+            [feature["id"] for feature in search.json()["features"]],
+        )
+
+    def test_isic_5_after_approval_is_searchable_in_both_revisions(self):
+        """
+        OSDEV-3442: an isic_5 value approved through the v1 API is stored
+        with every level and indexed in its own columns; ISIC 4 search
+        reaches it through the UN correspondence (ISIC 5 malt, 1104, is
+        ISIC 4 1103).
+        """
+        from api.models.facility.facility_index import FacilityIndex
+
+        self.moderation_event.cleaned_data["fields"]["isic_5"] = [
+            {"class": "1104 - Manufacture of malt"},
+        ]
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+        os_id = response.data["os_id"]
+
+        index_row = FacilityIndex.objects.get(id=os_id)
+        self.assertEqual(["C"], index_row.isic5_section)
+        self.assertEqual(["1104"], index_row.isic5_class)
+        self.assertNotIn("1104", index_row.isic_class)
+
+        search = self.client.get("/api/facilities/", {"isic_4": "class:1103"})
+        self.assertEqual(
+            [os_id], [feature["id"] for feature in search.json()["features"]]
+        )
+
+    def test_mapped_isic_after_approval_with_a_taxonomy_processing_type(
+        self,
+    ):
+        """
+        OSDEV-3382: a location approved with an OS Hub processing type
+        gets the crosswalk's ISIC (Cut & Sew -> 1410), kept apart from
+        submitted ISIC and always searched.
+        """
+        from api.models.facility.facility_index import FacilityIndex
+
+        # ContriCleaner fills facility_type from processing_type when a
+        # submission names only the latter, so approved events carry both.
+        for field in ("facility_type", "processing_type"):
+            self.moderation_event.cleaned_data["fields"][field] = {
+                "raw_values": "Cut & Sew",
+                "processed_values": ["Cut & Sew"],
+            }
+        self.moderation_event.save()
+
+        self.login_as_superuser()
+        response = self.client.post(
+            self.get_url(),
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(201, response.status_code)
+        os_id = response.data["os_id"]
+
+        index_row = FacilityIndex.objects.get(id=os_id)
+        self.assertEqual(["1410"], index_row.isic_mapped_class)
+        self.assertEqual([], index_row.isic_class)
+
+        def search(**params):
+            result = self.client.get(
+                "/api/facilities/", {"isic_4": "class:1410", **params}
+            )
+            return [feature["id"] for feature in result.json()["features"]]
+
+        # Open Supply Hub's mapped values are always searched.
+        self.assertEqual([os_id], search())

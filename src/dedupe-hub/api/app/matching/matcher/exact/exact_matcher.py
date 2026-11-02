@@ -2,6 +2,7 @@ import logging
 
 from typing import Any, Dict, List
 
+from app.database.models.facility import Facility
 from app.database.models.facility_list_item import FacilityListItem
 from app.matching.DTOs.match_dto import MatchDTO
 from app.matching.DTOs.facility_list_item_dto import FacilityListItemDict
@@ -68,14 +69,24 @@ class ExactMatcher(BaseMatcher):
 
     @staticmethod
     def get_matched_items(facility_list_item):
+        # Joined to api_facility so that list items attached to a candidate
+        # facility (OSDEV-3243) are never returned as exact matches: a
+        # candidate's own synthetic list item has the same cleaned values
+        # as the candidate, which would otherwise make it an exact match
+        # for any upload with an empty name and address.
         with get_session() as session:
             return (session.query(FacilityListItem). \
+                join(
+                    Facility,
+                    Facility.id == FacilityListItem.facility_id
+                ). \
                 filter(
                     FacilityListItem.status.in_([FacilityListItem.MATCHED, FacilityListItem.CONFIRMED_MATCH]),
                     FacilityListItem.facility_id != None,
                     FacilityListItem.clean_name == facility_list_item.get('name', ''),
                     FacilityListItem.clean_address == facility_list_item.get('address', ''),
-                    FacilityListItem.country_code == facility_list_item.get('country', '').upper()
+                    FacilityListItem.country_code == facility_list_item.get('country', '').upper(),
+                    Facility.is_candidate.is_(False)
                 ). \
                 all()
             )

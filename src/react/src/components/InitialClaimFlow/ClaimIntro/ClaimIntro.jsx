@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
@@ -18,10 +18,12 @@ import {
     facilityDetailsRoute,
 } from '../../../util/constants';
 import useClaimIntroOsIdTracking from './hooks';
+import { rememberClaimInviteCode } from '../../../util/claimInvite';
 
 const ClaimIntro = ({
     classes,
     history,
+    location,
     osID,
     userHasSignedIn,
     resetForm,
@@ -30,6 +32,13 @@ const ClaimIntro = ({
 }) => {
     // Track OS ID changes and reset form when switching between locations.
     useClaimIntroOsIdTracking(osID, osIdToClaim, updateOsId, resetForm);
+
+    // A claim invite link carries ?invite=<code>. Remember it before the
+    // sign-in check: the query string doesn't survive logging in or
+    // registering, and the code goes out with the claim.
+    useEffect(() => {
+        rememberClaimInviteCode(osID, location.search);
+    }, [osID, location.search]);
 
     if (!userHasSignedIn) {
         return (
@@ -102,6 +111,9 @@ ClaimIntro.propTypes = {
     history: PropTypes.shape({
         goBack: PropTypes.func.isRequired,
         push: PropTypes.func.isRequired,
+    }).isRequired,
+    location: PropTypes.shape({
+        search: PropTypes.string,
     }).isRequired,
     resetForm: PropTypes.func.isRequired,
     updateOsId: PropTypes.func.isRequired,

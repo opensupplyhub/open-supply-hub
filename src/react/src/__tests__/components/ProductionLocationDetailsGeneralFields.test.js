@@ -91,6 +91,53 @@ describe('ProductionLocationDetailsGeneralFields component', () => {
             { preloadedState },
         );
 
+    /*
+     * The same record has to announce itself on whichever profile the
+     * visitor lands on. This page and the legacy one are both reachable
+     * for one location depending on the production location page switch.
+     */
+    const withRecord = {
+        ...mockDataWithVisibleFields,
+        properties: {
+            ...mockDataWithVisibleFields.properties,
+            has_identity_record: true,
+        },
+    };
+
+    const resolverOn = {
+        featureFlags: {
+            fetching: false,
+            flags: { enable_identity_resolver: true },
+        },
+    };
+
+    test('links to the registered record when one is live', () => {
+        renderComponent({ data: withRecord }, resolverOn);
+
+        const link = screen.getByText('View the registered record');
+        expect(link).toBeInTheDocument();
+        expect(link.closest('a')).toHaveAttribute(
+            'href',
+            `/facilities/${withRecord.id}/identity-record`,
+        );
+    });
+
+    test('shows no entry point while the resolver is off', () => {
+        renderComponent({ data: withRecord });
+
+        expect(
+            screen.queryByText('View the registered record'),
+        ).not.toBeInTheDocument();
+    });
+
+    test('shows no entry point when no record is registered', () => {
+        renderComponent({}, resolverOn);
+
+        expect(
+            screen.queryByText('View the registered record'),
+        ).not.toBeInTheDocument();
+    });
+
     test('renders the general fields section', () => {
         renderComponent();
         expect(

@@ -26,6 +26,12 @@ import {
     startFetchFacilityProcessingTypeOptions,
     failFetchFacilityProcessingTypeOptions,
     completeFetchFacilityProcessingTypeOptions,
+    startFetchTaxonomyCounts,
+    failFetchTaxonomyCounts,
+    completeFetchTaxonomyCounts,
+    startFetchIsicTaxonomy,
+    failFetchIsicTaxonomy,
+    completeFetchIsicTaxonomy,
     startFetchProcessingTypeSuggestions,
     failFetchProcessingTypeSuggestions,
     completeFetchProcessingTypeSuggestions,
@@ -75,6 +81,18 @@ const initialState = Object.freeze({
         error: null,
     }),
     facilityProcessingType: Object.freeze({
+        data: null,
+        fetching: false,
+        error: null,
+    }),
+    taxonomyCounts: Object.freeze({
+        isic: Object.freeze({
+            data: null,
+            fetching: false,
+            error: null,
+        }),
+    }),
+    isicTaxonomy: Object.freeze({
         data: null,
         fetching: false,
         error: null,
@@ -282,6 +300,56 @@ export default createReducer(
                     fetching: { $set: false },
                     error: { $set: null },
                     data: { $set: payload },
+                },
+            }),
+        [startFetchTaxonomyCounts]: state =>
+            update(state, {
+                taxonomyCounts: {
+                    isic: {
+                        fetching: { $set: true },
+                        error: { $set: null },
+                    },
+                },
+            }),
+        [failFetchTaxonomyCounts]: (state, { error }) =>
+            update(state, {
+                taxonomyCounts: {
+                    isic: {
+                        fetching: { $set: false },
+                        error: { $set: error },
+                    },
+                },
+            }),
+        [completeFetchTaxonomyCounts]: (state, { data }) =>
+            update(state, {
+                taxonomyCounts: {
+                    isic: {
+                        fetching: { $set: false },
+                        error: { $set: null },
+                        data: { $set: data },
+                    },
+                },
+            }),
+        [startFetchIsicTaxonomy]: state =>
+            update(state, {
+                isicTaxonomy: {
+                    fetching: { $set: true },
+                    error: { $set: null },
+                },
+            }),
+        [failFetchIsicTaxonomy]: (state, payload) =>
+            update(state, {
+                isicTaxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: payload },
+                },
+            }),
+        [completeFetchIsicTaxonomy]: (state, entries) =>
+            update(state, {
+                isicTaxonomy: {
+                    fetching: { $set: false },
+                    error: { $set: null },
+                    data: { $set: entries },
                 },
             }),
         [startFetchProcessingTypeSuggestions]: (

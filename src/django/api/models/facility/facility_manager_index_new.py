@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Q
 
 from api.constants import FacilitiesQueryParams
+from api.isic import build_isic_filter, parse_isic_filter_values
 from api.helpers.helpers import (
     clean,
     format_custom_text,)
@@ -112,6 +113,11 @@ class FacilityIndexNewManager(models.Manager):
 
         sectors = params.getlist(FacilitiesQueryParams.SECTOR)
 
+        isic_params = {
+            '4': params.getlist(FacilitiesQueryParams.ISIC_4),
+            '5': params.getlist(FacilitiesQueryParams.ISIC_5),
+        }
+
         from .facility_index import FacilityIndex
         # Not ``self``: test_facility_search_accented_characters calls this
         # method unbound with the TestCase as ``self``.
@@ -125,6 +131,9 @@ class FacilityIndexNewManager(models.Manager):
             from .facility_alias import FacilityAlias
 
             try:
+                # A NOT_A_FACILITY tombstone has facility_id None, so a
+                # retired OS ID rewrites to id=None and matches nothing
+                # rather than redirecting (OSDEV-3246).
                 id = FacilityAlias.objects.get(pk=id).facility_id
             except FacilityAlias.DoesNotExist:
                 pass
@@ -203,6 +212,18 @@ class FacilityIndexNewManager(models.Manager):
         )
         if has_fp_filter:
             facilities_qs = facilities_qs.filter(_fp_match=True)
+
+        isic_filter = build_isic_filter({
+            revision: parse_isic_filter_values(values)
+            for revision, values in isic_params.items()
+        })
+        if isic_filter:
+            facilities_qs = facilities_qs.filter(isic_filter)
+        elif any(any(values) for values in isic_params.values()):
+            # ISIC was asked for but nothing in it is a level:code value.
+            # Ignoring it would present every location as a match
+            # (OSDEV-3340 AC4).
+            facilities_qs = facilities_qs.none()
 
         if len(product_types):
             clean_product_types = []

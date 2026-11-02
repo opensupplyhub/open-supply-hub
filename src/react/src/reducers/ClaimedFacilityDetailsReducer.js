@@ -16,6 +16,7 @@ import {
     updateClaimedFacilityNameEnglish,
     updateClaimedFacilityAddress,
     updateClaimedSector,
+    updateClaimedIsic,
     updateClaimedFacilityPhone,
     updateClaimedFacilityPhoneVisibility,
     updateClaimedFacilityWebsite,
@@ -60,6 +61,7 @@ import {
     updateClaimedEnergyElectricityEnabled,
     updateClaimedEnergyOtherEnabled,
 } from '../actions/claimedFacilityDetails';
+import { isicObjects } from '../components/Filters/IsicSearch/utils';
 
 const initialState = Object.freeze({
     data: null,
@@ -342,6 +344,16 @@ export default createReducer(
                     sector: {
                         $set: orderBy(sectors, identity),
                     },
+                },
+            }),
+        [updateClaimedIsic]: (state, isic) =>
+            update(state, {
+                updateData: {
+                    error: { $set: initialState.updateData.error },
+                },
+                data: {
+                    isic_4: { $set: isicObjects(isic[4]) },
+                    isic_5: { $set: isicObjects(isic[5]) },
                 },
             }),
         [updateClaimedFacilityPhone]: (state, phone) =>

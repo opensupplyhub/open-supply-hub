@@ -67,7 +67,8 @@ class GazetteerMatcher(BaseMatcher):
     def gazetter_match(self, messy):
         if len(messy.keys()) == 0:
             with get_session() as session:
-                self.no_gazetteer_matches = session.query(Facility).count() == 0
+                self.no_gazetteer_matches = session.query(Facility.id). \
+                    filter(Facility.is_candidate.is_(False)).count() == 0
                 self.no_geocoded_items = len(messy.keys()) == 0
                 return []
 
@@ -98,7 +99,8 @@ class GazetteerMatcher(BaseMatcher):
         have encountered an exception raised by Dedupe while
         unindexing records and could therefore return matches
         for facility IDs that no longer exist due to merging or
-        deleting.
+        deleting, or that have since become candidates (OSDEV-3243):
+        `facility_exists` drops both.
         """
         item_matches = DefaultDict(list)
 
@@ -123,8 +125,18 @@ class GazetteerMatcher(BaseMatcher):
         return gazetteer
 
     def facility_exists(self, canon_id: str) -> bool:
+        """
+        True only for a live, non-candidate facility. Candidates are never
+        proposed as matches (OSDEV-3243), even if a stale index entry
+        still points at one.
+        """
         with get_session() as session:
-            return session.query(exists().where(Facility.id==normalize_extended_facility_id(canon_id))).scalar()
+            return session.query(
+                exists().where(
+                    Facility.id == normalize_extended_facility_id(canon_id),
+                    Facility.is_candidate.is_(False),
+                )
+            ).scalar()
 
     def get_results(self) -> ResultsDTO:
         return {

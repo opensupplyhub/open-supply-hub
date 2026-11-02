@@ -1,6 +1,7 @@
 import json
 import logging
 
+from django import forms
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.urls import path
@@ -270,13 +271,82 @@ class FacilityMatchAdmin(SimpleHistoryAdmin):
     pretty_results.short_description = 'Results'
 
 
+class ContributorAdminForm(forms.ModelForm):
+    """
+    Custom form for ContributorAdmin that includes inactive partner fields in
+    the pick list and pre-populates the "chosen" box with any inactive fields
+    already assigned to the contributor.
+    """
+
+    class Meta:
+        model = models.Contributor
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        """Pre-populate partner_fields to include inactive ones."""
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.initial['partner_fields'] = list(
+                self.instance
+                .all_partner_fields_including_inactive
+                .values_list('pk', flat=True)
+            )
+
+
 class ContributorAdmin(SimpleHistoryAdmin):
+    form = ContributorAdminForm
     history_list_display = ('is_verified', 'verification_notes')
     search_fields = ('name', 'admin__email')
     filter_horizontal = ('partner_fields',)
 
     def get_ordering(self, request):
+        """Return contributors ordered by name."""
         return ['name']
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        """Include inactive partner fields in the pick list."""
+        if db_field.name == 'partner_fields':
+            kwargs['queryset'] = (
+                PartnerField.objects.get_all_including_inactive()
+            )
+            field = super().formfield_for_manytomany(
+                db_field, request, **kwargs
+            )
+            field.label_from_instance = (
+                lambda obj: obj.name if obj.active
+                else f'{obj.name} (inactive)'
+            )
+            return field
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+    def save_related(self, request, form, formsets, change):
+        """
+        Save related objects, then reconcile inactive partner fields.
+
+        Django's default set() uses the active-only manager, so it never sees
+        inactive fields in the "current" set and won't remove them when the
+        admin un-assigns them. We fix this by computing the diff ourselves
+        against the full (including inactive) queryset.
+        """
+        super().save_related(request, form, formsets, change)
+        if 'partner_fields' not in form.cleaned_data:
+            return
+        contributor = form.instance
+        desired_pks = {obj.pk for obj in form.cleaned_data['partner_fields']}
+        current_pks = set(
+            PartnerField.objects.get_all_including_inactive()
+            .filter(contributor=contributor)
+            .values_list('pk', flat=True)
+        )
+        to_remove = current_pks - desired_pks
+        if to_remove:
+            # contributor.partner_fields.remove() filters through the
+            # active-only manager and silently skips inactive fields, so
+            # delete from the junction table directly instead.
+            models.Contributor.partner_fields.through.objects.filter(
+                contributor_id=contributor.pk,
+                partnerfield_id__in=to_remove,
+            ).delete()
 
 
 class FacilityClaimAdmin(SimpleHistoryAdmin):
@@ -292,8 +362,49 @@ class FacilityClaimReviewNoteAdmin(SimpleHistoryAdmin):
 
 
 class FacilityAliasAdmin(SimpleHistoryAdmin):
+    # A NOT_A_FACILITY tombstone has facility=None; every field here is
+    # read-only so the change form renders it as "-" rather than offering
+    # a required FK select (OSDEV-3246).
     history_list_display = ('os_id', 'facility')
-    readonly_fields = ('os_id', 'facility', 'reason')
+    list_display = ('os_id', 'facility', 'reason', 'created_at')
+    list_filter = ('reason',)
+    search_fields = ('os_id', 'retired_external_id')
+    readonly_fields = (
+        'os_id',
+        'facility',
+        'reason',
+        'retired_source',
+        'retired_external_id',
+        'retirement_tally',
+    )
+
+
+class FacilityCandidateVoteAdmin(admin.ModelAdmin):
+    # Read-only (OSDEV-3245): votes are written through the API only.
+    list_display = ('facility', 'user', 'vote', 'created_at', 'updated_at')
+    list_filter = ('vote',)
+    search_fields = ('facility__id', 'user__email')
+    readonly_fields = ('facility', 'user', 'vote', 'created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+class FacilityCandidateRetirementRequestAdmin(admin.ModelAdmin):
+    # Read-only (OSDEV-3245): opened and dissolved by vote writes, closed
+    # by POST /api/v1/candidate-retirement-requests/{id}/approve/.
+    list_display = ('facility', 'tally', 'created_at', 'updated_at')
+    search_fields = ('facility__id',)
+    readonly_fields = ('facility', 'tally', 'created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class SourceAdmin(admin.ModelAdmin):
@@ -528,6 +639,11 @@ admin_site.register(models.FacilityClaimReviewNote,
 admin_site.register(models.FacilityAlias, FacilityAliasAdmin)
 admin_site.register(ClaimAffiliation, ClaimAffiliationAdmin)
 admin_site.register(ClaimCertification, ClaimCertificationAdmin)
+admin_site.register(models.FacilityCandidateVote, FacilityCandidateVoteAdmin)
+admin_site.register(
+    models.FacilityCandidateRetirementRequest,
+    FacilityCandidateRetirementRequestAdmin,
+)
 admin_site.register(Flag, FlagAdmin)
 admin_site.register(Sample, SampleAdmin)
 admin_site.register(Switch, SwitchAdmin)

@@ -81,6 +81,7 @@ import {
     DEFAULT_SORT_OPTION_INDEX,
     optionsForSortingResults,
     componentsWithErrorMessage,
+    facilityListFileExtensions,
     listParsingErrorMappings,
     MODERATION_QUEUE,
     MODERATION_STATUS_COLORS,
@@ -90,6 +91,7 @@ import {
     ENABLE_PRODUCTION_LOCATION_PAGE,
 } from './constants';
 import { freeEmissionsEstimateFormConfig } from '../components/FreeEmissionsEstimate/constants';
+import { isicObjects } from '../components/Filters/IsicSearch/utils';
 
 import renderUniqueListItems from './renderUtils';
 import { createListItemCSV } from './util.listItemCSV';
@@ -213,6 +215,9 @@ export const makeGetGroupedSectorsURL = () => '/api/sectors/?grouped=true';
 export const makeGetParentCompaniesURL = () => '/api/parent-companies/';
 export const makeGetFacilitiesTypeProcessingTypeURL = () =>
     '/api/facility-processing-types/';
+export const makeGetTaxonomyCountsURL = kind =>
+    `/api/taxonomy-counts/?kind=${encodeURIComponent(kind)}`;
+export const makeGetIsicTaxonomyURL = () => '/api/taxonomy/isic/';
 export const makeGetProcessingTypeSuggestionsURL = (
     query = '',
     facilityTypes = [],
@@ -228,6 +233,8 @@ export const makeGetClaimProfileOptionsURL = () =>
     '/api/claim-profile-options/';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
+export const makeGetIdentityRecordURL = osId =>
+    `/api/v1/production-locations/${osId}/identity-record-content/`;
 export const makeGetFacilityByOSIdURL = (
     osId,
     useCreatedAtForDataPoints = false,
@@ -249,6 +256,8 @@ export const makeGetDownloadLocationsCheckoutSessionURL = () =>
 export const makeClaimFacilityAPIURL = osId => `/api/facilities/${osId}/claim/`;
 export const makeClaimQualityCheckURL = osId =>
     `/api/facilities/${osId}/claim/quality-check/`;
+export const makeClaimInviteURL = osId =>
+    `/api/facilities/${osId}/claim-invite/`;
 export const makeSplitFacilityAPIURL = osID => `/api/facilities/${osID}/split/`;
 export const makeTransferFacilityAPIURL = osID =>
     `/api/facilities/${osID}/move/`;
@@ -441,6 +450,8 @@ export const createQueryStringFromSearchFilters = (
         parentCompany = [],
         facilityType = [],
         processingType = [],
+        isic4 = [],
+        isic5 = [],
         productType = [],
         numberOfWorkers = [],
         nativeLanguageName = '',
@@ -476,6 +487,8 @@ export const createQueryStringFromSearchFilters = (
         processing_type: createCompactSortedQuerystringInputObject(
             processingType,
         ),
+        isic_4: createCompactSortedQuerystringInputObject(isic4),
+        isic_5: createCompactSortedQuerystringInputObject(isic5),
         processing_type_exact: createCompactSortedQuerystringInputObject(
             processingType.filter(option => option.isExact),
         ),
@@ -563,6 +576,8 @@ export const createFiltersFromQueryString = qs => {
         parent_company: parentCompany = [],
         facility_type: facilityType = [],
         processing_type: processingType = [],
+        isic_4: isic4 = [],
+        isic_5: isic5 = [],
         processing_type_exact: exactProcessingTypes = [],
         product_type: productType = [],
         number_of_workers: numberOfWorkers = [],
@@ -613,6 +628,8 @@ export const createFiltersFromQueryString = qs => {
         parentCompany: createSelectOptionsFromParams(parentCompany),
         facilityType: createSelectOptionsFromParams(facilityType),
         processingType: hydratedProcessingTypes,
+        isic4: createSelectOptionsFromParams(isic4),
+        isic5: createSelectOptionsFromParams(isic5),
         productType: createSelectOptionsFromParams(productType),
         numberOfWorkers: createSelectOptionsFromParams(numberOfWorkers),
         nativeLanguageName,
@@ -952,6 +969,16 @@ export function createUploadFormErrorMessages(name, file) {
 
     if (!file) {
         errorMessages.push(componentsWithErrorMessage.missingFile);
+    } else if (typeof file.name === 'string') {
+        // Matches os.path.splitext, which the endpoint uses: a name that is
+        // only a dotted suffix (".csv") has no extension, it is a bare name.
+        const dotIndex = file.name.lastIndexOf('.');
+        const extension =
+            dotIndex <= 0 ? '' : file.name.slice(dotIndex).toLowerCase();
+
+        if (!facilityListFileExtensions.includes(extension)) {
+            errorMessages.push(componentsWithErrorMessage.unsupportedFileType);
+        }
     }
 
     return errorMessages;
@@ -1841,13 +1868,15 @@ const filterNonEmptyFields = fields =>
     );
 
 export const parseContribData = contribData => {
-    const { numberOfWorkers, country, ...fields } = contribData;
+    const { numberOfWorkers, country, isic, ...fields } = contribData;
     const countryValue = country?.value;
 
     const parsedFields = convertToSnakeFields(filterNonEmptyFields(fields));
 
     return {
         ...parsedFields,
+        ...(!isEmpty(isic?.[4]) && { isic_4: isicObjects(isic[4]) }),
+        ...(!isEmpty(isic?.[5]) && { isic_5: isicObjects(isic[5]) }),
         ...(numberOfWorkers && {
             number_of_workers: generateRangeField(numberOfWorkers),
         }),
@@ -2243,7 +2272,11 @@ export const processDromoResults = (
     const csvContent = [headers.join(','), ...csvRows].join('\n');
 
     const csvBlob = new Blob([csvContent], { type: 'text/csv' });
-    const csvFile = new File([csvBlob], filename.replace(/\.[^/.]+$/, '.csv'), {
+    // Dromo reports no extension when the data was entered by hand rather than
+    // picked from a file, so build the name instead of substituting into it.
+    const baseName =
+        (filename || '').replace(/\.[^/.]+$/, '') || 'facility-list';
+    const csvFile = new File([csvBlob], `${baseName}.csv`, {
         type: 'text/csv',
     });
 

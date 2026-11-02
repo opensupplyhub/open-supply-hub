@@ -21,9 +21,11 @@ from math import ceil
 from pathlib import Path
 
 import cleanco
+import numpy as np
 import openpyxl
 import pandas as pd
 import rapidfuzz
+import rapidfuzz.process
 from jinja2.nativetypes import NativeEnvironment
 from jinja2.nodes import TemplateData
 from openpyxl.comments import Comment
@@ -60,6 +62,13 @@ class ContriBot:
         diagnostics_column: Cell-level findings (``C*`` codes).
         summary: Run statistics populated by :meth:`populate_summary`.
     """
+
+    # Rows per similarity-scoring block. Each block holds a few
+    # block x row_count float64 matrices, so this bounds peak memory
+    # independently of list length (~60 MB at 5k rows). float64 rather than a
+    # narrower dtype because the scores are reported to 6 decimal places and
+    # compared against 0.75/0.8 cutoffs, where rounding could flip a pair.
+    SIMILARITY_BLOCK_ROWS = 512
 
     def __init__(self, filename, config_file="0000.error_codes.xlsx"):
         """Load a workbook and prepare report sheets.
@@ -237,8 +246,10 @@ class ContriBot:
         ws = self.wb[self.fixessheet]
         wrap_alignment = Alignment(wrap_text=True, vertical="top")
 
+        cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
+        rows = list(ws.rows)
+
         for i in range(0, ws.max_row):
-            cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for j in range(0, ws.max_column):
                 col = cols[j]
                 font_name = ws_source[f"{col}{i + 1}"].font.name
@@ -248,7 +259,9 @@ class ContriBot:
                 ws[f"{col}{i + 1}"].font = font
                 ws[f"{col}{i + 1}"].alignment = wrap_alignment
             # [i + 1] - because the lines are numbered starting at 1
-            ws.row_dimensions[i + 1].height = self._get_height_for_row(ws, i)
+            ws.row_dimensions[i + 1].height = self._get_height_for_row(
+                ws, i, rows=rows
+            )
 
     def populate_summary(self):
         """Fill the Summary sheet with findings grouped by severity.
@@ -556,17 +569,19 @@ class ContriBot:
         wrap_alignment = Alignment(wrap_text=True, vertical="top")
         font = Font(size=10)
 
+        cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
+        rows = list(ws.rows)
+
         for i in range(0, ws.max_row):
             if i + 1 in skip_rows:
                 continue
             # [i + 1] - because the lines are numbered starting at 1
-            cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for j in range(0, ws.max_column):
                 col = cols[j]
                 ws[f"{col}{i + 1}"].font = font
                 ws[f"{col}{i + 1}"].alignment = wrap_alignment
             ws.row_dimensions[i + 1].height = self._get_height_for_row(
-                ws, i, font_size=10
+                ws, i, font_size=10, rows=rows
             )
 
         return self.summary
@@ -957,15 +972,16 @@ class ContriBot:
         wrap_alignment = Alignment(wrap_text=True, vertical="top")
         font = Font(size=10)
         ws = self.wb["Findings"]
+        cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
+        rows = list(ws.rows)
         for i in range(0, ws.max_row):
             # [i + 1] - because the lines are numbered starting at 1
-            cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for j in range(0, ws.max_column):
                 col = cols[j]
                 ws[f"{col}{i + 1}"].font = font
                 ws[f"{col}{i + 1}"].alignment = wrap_alignment
             ws.row_dimensions[i + 1].height = self._get_height_for_row(
-                ws, i, font_size=10
+                ws, i, font_size=10, rows=rows
             )
 
     def check_columns(self):
@@ -1734,13 +1750,16 @@ class ContriBot:
 
         return self.comments
 
-    def _get_height_for_row(self, sheet, row_number, font_size=12):
+    def _get_height_for_row(self, sheet, row_number, font_size=12, rows=None):
         """Estimate row height from wrapped cell content and column width.
 
         Args:
             sheet: openpyxl worksheet.
             row_number: Zero-based row index.
             font_size: Font size used to pick height heuristics.
+            rows: Optional pre-materialised ``list(sheet.rows)``. Callers that
+                loop over every row should pass it, otherwise each call walks
+                the whole sheet again and the loop becomes quadratic.
 
         Returns:
             float: Row height in Excel units.
@@ -1764,7 +1783,9 @@ class ContriBot:
             font_params = factor_of_font_size_to_width[font_size]
         except:
             font_params = {"factor": 0.8, "height": 16}
-        row = list(sheet.rows)[row_number]
+        if rows is None:
+            rows = list(sheet.rows)
+        row = rows[row_number]
         height = font_params["height"]
 
         for cell in row:
@@ -1834,27 +1855,55 @@ class ContriBot:
 
         alldata = []
 
-        for i in tqdm(range(len(self.df))):
-            for j in range(i + 1, len(self.df)):
-                names_diff_contains_numbers = any(
-                    c.isdigit()
-                    for c in set(names_cleaned[i]).difference(names_cleaned[j])
+        # Scoring every row pair in Python costs O(n^2) interpreted iterations,
+        # which is what pushes large lists past the Lambda timeout. rapidfuzz
+        # computes the same token_set_ratio matrix in C across all cores, so the
+        # Python loop only has to visit pairs that already cleared the
+        # thresholds. Rows are scored in blocks to keep the matrices small.
+        row_count = len(self.df)
+        addresses_uni = [unidecode(a) for a in addresses_lc]
+        names_uni = [unidecode(n) for n in names_cleaned]
+        unit_no = df.unit_no.values
+
+        for start in tqdm(range(0, row_count, self.SIMILARITY_BLOCK_ROWS)):
+            stop = min(start + self.SIMILARITY_BLOCK_ROWS, row_count)
+            addresses_block = (
+                rapidfuzz.process.cdist(
+                    addresses_uni[start:stop],
+                    addresses_uni,
+                    scorer=rapidfuzz.fuzz.token_set_ratio,
+                    dtype=np.float64,
+                    workers=-1,
                 )
-                addresses_ratio = (
-                    rapidfuzz.fuzz.token_set_ratio(
-                        unidecode(addresses_lc[i]), unidecode(addresses_lc[j])
+                / 100
+            )
+            names_block = (
+                rapidfuzz.process.cdist(
+                    names_uni[start:stop],
+                    names_uni,
+                    scorer=rapidfuzz.fuzz.token_set_ratio,
+                    dtype=np.float64,
+                    workers=-1,
+                )
+                / 100
+            )
+            ratio_block = addresses_block * names_block
+            candidates = (
+                (addresses_block > 0.8) | (names_block > 0.8)
+            ) & (ratio_block > 0.75)
+
+            for offset in range(stop - start):
+                i = start + offset
+                # Only the upper triangle: the original compared j > i.
+                for j in np.nonzero(candidates[offset])[0].tolist():
+                    if j <= i:
+                        continue
+                    addresses_ratio = float(addresses_block[offset, j])
+                    names_ratio = float(names_block[offset, j])
+                    names_diff_contains_numbers = any(
+                        c.isdigit()
+                        for c in set(names_cleaned[i]).difference(names_cleaned[j])
                     )
-                    / 100
-                )
-                names_ratio = (
-                    rapidfuzz.fuzz.token_set_ratio(
-                        unidecode(names_cleaned[i]), unidecode(names_cleaned[j])
-                    )
-                    / 100
-                )
-                if ((addresses_ratio > 0.8) | (names_ratio > 0.8)) & (
-                    addresses_ratio * names_ratio > 0.75
-                ):
                     alldata.append(
                         {
                             "i": i + 2,
@@ -1863,11 +1912,11 @@ class ContriBot:
                             "address_2": addresses[j],
                             "name_1": names[i],
                             "name_2": names[j],
-                            "unit_no_in_name_1": df.unit_no.values[i],
-                            "unit_no_in_name_2": df.unit_no.values[j],
+                            "unit_no_in_name_1": unit_no[i],
+                            "unit_no_in_name_2": unit_no[j],
                             "addresses_ratio": addresses_ratio,
                             "names_ratio": names_ratio,
-                            "ratio": addresses_ratio * names_ratio,
+                            "ratio": float(ratio_block[offset, j]),
                             "names_diff_contains_numbers": names_diff_contains_numbers,
                         }
                     )
@@ -2003,16 +2052,17 @@ class ContriBot:
 
         wrap_alignment = Alignment(wrap_text=True, vertical="top")
         font = Font(size=10)
+        cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
+        rows = list(ws.rows)
 
         for i in range(0, ws.max_row):
             # [i + 1] - because the lines are numbered starting at 1
-            cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for j in range(0, ws.max_column):
                 col = cols[j]
                 ws[f"{col}{i + 1}"].font = font
                 ws[f"{col}{i + 1}"].alignment = wrap_alignment
             ws.row_dimensions[i + 1].height = self._get_height_for_row(
-                ws, i, font_size=10
+                ws, i, font_size=10, rows=rows
             )
 
         self.num_identical = num_identical

@@ -6,6 +6,8 @@ from rest_framework.serializers import (
 from drf_yasg.utils import swagger_serializer_method
 from waffle import switch_is_active
 
+from api.identity_record_switches import IDENTITY_RESOLVER_SWITCH
+
 from api.constants import FacilityClaimStatuses, MASKED_CONTRIBUTOR_LABEL
 from api.partner_fields.registry import system_partner_field_registry
 from api.models.partner_field import PartnerField
@@ -40,6 +42,9 @@ from .utils import (
 )
 from .partner_field_entry_serializer import PartnerFieldEntrySerializer
 from api.helpers.data_center import is_data_center
+from api.services.identity_record_retrieval import has_live_record
+from api.isic_taxonomy.crosswalk import get_mapped_isic_values
+from api.isic_taxonomy.constants import ISIC_TAXONOMY_SWITCH
 
 
 class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
@@ -57,6 +62,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     is_claimed = SerializerMethodField()
     partner_fields = SerializerMethodField()
     is_data_center = SerializerMethodField()
+    isic_4_mapped = SerializerMethodField()
+    has_identity_record = SerializerMethodField()
 
     class Meta:
         model = FacilityIndex
@@ -84,6 +91,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             'is_claimed',
             'partner_fields',
             'is_data_center',
+            'isic_4_mapped',
+            'has_identity_record',
         )
         geo_field = 'location'
 
@@ -528,3 +537,32 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
 
     def get_is_data_center(self, facility):
         return is_data_center(facility=facility.id)
+
+    def get_has_identity_record(self, facility):
+        """
+        Whether an externally issued record is registered against this
+        location, as a boolean rather than the record itself, since
+        reading the record means a live call out to the issuer on every
+        profile view. False while the resolver is off, because the
+        profile is public and a true would announce the record before
+        the pilot is.
+        """
+        if not switch_is_active(IDENTITY_RESOLVER_SWITCH):
+            return False
+
+        return has_live_record(facility.id)
+
+    def get_isic_4_mapped(self, facility):
+        '''
+        The ISIC Rev 4 values Open Supply Hub contributes for the location,
+        mapped from its Facility Type, Processing Type and Sector through
+        the crosswalk (OSDEV-3382/OSDEV-3622). Empty while the ISIC switch is
+        off, so the profile and the search filter go live together.
+        '''
+        if not switch_is_active(ISIC_TAXONOMY_SWITCH):
+            return []
+        return get_mapped_isic_values(
+            facility.facility_type,
+            facility.processing_type,
+            facility.sector,
+        )

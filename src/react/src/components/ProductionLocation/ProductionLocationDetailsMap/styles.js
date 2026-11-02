@@ -50,6 +50,7 @@ export default theme => {
             },
         }),
         mapInner: Object.freeze({
+            position: 'relative',
             height: '100%',
             width: '100%',
         }),

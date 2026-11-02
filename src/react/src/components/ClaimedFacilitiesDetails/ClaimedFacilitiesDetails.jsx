@@ -27,6 +27,7 @@ import {
     ErrorsList,
 } from '../CheckComponentStatus';
 import InputSection from '../InputSection';
+import IsicInputSection from '../Filters/IsicSearch/IsicInputSection';
 import InputErrorText from '../Contribute/InputErrorText';
 import ContributionWarningDialog from '../Contribute/ContributionWarningDialog';
 import {
@@ -51,6 +52,7 @@ import {
     updateClaimedFacilityProductTypes,
     updateClaimedFacilityProductionTypes,
     updateClaimedSector,
+    updateClaimedIsic,
     updateClaimedFacilityPhone,
     updateClaimedFacilityPhoneVisibility,
     updateClaimedFacilityParentCompany,
@@ -106,6 +108,7 @@ import {
 import {
     mockedSectors,
     ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+    ENABLE_ISIC_TAXONOMY,
     contributeProductionLocationRoute,
 } from '../../util/constants';
 import freeEmissionsEstimateValidationSchema from '../FreeEmissionsEstimate/utils';
@@ -152,6 +155,7 @@ function ClaimedFacilitiesDetails({
     updateFacilityNameEnglish,
     updateFacilityAddress,
     updateSector,
+    updateIsic,
     updateFacilityPhone,
     updateFacilityWebsite,
     updateFacilityWebsiteVisibility,
@@ -183,6 +187,7 @@ function ClaimedFacilitiesDetails({
     energyEnabledUpdaters,
     userHasSignedIn,
     isNameAddressEditable,
+    isIsicEnabled,
     loadedNameAddress,
     classes,
 }) {
@@ -607,6 +612,14 @@ function ClaimedFacilitiesDetails({
                             selectOptions={sectorSelectOptions}
                             selectPlaceholder="Select..."
                         />
+                        {isIsicEnabled && (
+                            <IsicInputSection
+                                isic4={data.isic_4}
+                                isic5={data.isic_5}
+                                onChange={updateIsic}
+                                disabled={updating}
+                            />
+                        )}
                         <InputSection
                             label="Phone Number"
                             value={data.facility_phone_number}
@@ -1039,6 +1052,7 @@ ClaimedFacilitiesDetails.defaultProps = {
     data: null,
     errorUpdating: null,
     isNameAddressEditable: false,
+    isIsicEnabled: false,
     loadedNameAddress: null,
 };
 
@@ -1052,6 +1066,7 @@ ClaimedFacilitiesDetails.propTypes = {
     updateFacilityNameEnglish: func.isRequired,
     updateFacilityAddress: func.isRequired,
     updateSector: func.isRequired,
+    updateIsic: func.isRequired,
     updateFacilityWorkersCount: func.isRequired,
     updateFacilityFemaleWorkersPercentage: func.isRequired,
     updateFacilityPhone: func.isRequired,
@@ -1083,6 +1098,7 @@ ClaimedFacilitiesDetails.propTypes = {
     energyEnabledUpdaters: object.isRequired,
     userHasSignedIn: bool.isRequired,
     isNameAddressEditable: bool,
+    isIsicEnabled: bool,
     loadedNameAddress: object,
     classes: object.isRequired,
 };
@@ -1107,6 +1123,7 @@ function mapStateToProps({
         errorUpdating,
         userHasSignedIn: !user.isAnon,
         isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
+        isIsicEnabled: !!flags[ENABLE_ISIC_TAXONOMY],
         loadedNameAddress,
     };
 }
@@ -1141,6 +1158,7 @@ function mapDispatchToProps(
             updateClaimedFacilityAddress,
         ),
         updateSector: makeDispatchMultiSelectFn(updateClaimedSector),
+        updateIsic: isic => dispatch(updateClaimedIsic(isic)),
         updateFacilityPhone: makeDispatchValueFn(updateClaimedFacilityPhone),
         updateFacilityPhoneVisibility: makeDispatchCheckedFn(
             updateClaimedFacilityPhoneVisibility,

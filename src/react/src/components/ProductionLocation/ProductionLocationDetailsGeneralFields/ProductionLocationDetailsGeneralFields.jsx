@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { arrayOf, bool, object } from 'prop-types';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import Divider from '@material-ui/core/Divider';
@@ -15,7 +16,15 @@ import ContributionsDrawer from '../ContributionsDrawer/ContributionsDrawer';
 import getSelectedDrawerField from '../utils';
 import getVisibleFields, { getDataCenterFieldGroups } from './utils';
 import useDrawerState from '../hooks';
-import { SHOW_ADDITIONAL_IDENTIFIERS } from '../../../util/constants';
+import {
+    ENABLE_IDENTITY_RESOLVER,
+    SHOW_ADDITIONAL_IDENTIFIERS,
+} from '../../../util/constants';
+import {
+    IDENTITY_RECORD_ENTRY_LINK_LABEL,
+    IDENTITY_RECORD_ENTRY_TEXT,
+    IDENTITY_RECORD_ENTRY_TITLE,
+} from '../../IdentityRecord/entryPointCopy';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../../util/util';
 import { featureFlagPropType } from '../../../util/propTypes';
 
@@ -47,6 +56,22 @@ const ProductionLocationDetailsGeneralFields = ({
     const showAdditionalIdentifiers =
         !featureFlagsFetching &&
         activeFeatureFlags.includes(SHOW_ADDITIONAL_IDENTIFIERS);
+    /*
+     * The same entry point the legacy profile carries. Both pages are
+     * reachable for the same location depending on the production
+     * location page switch, so a record that is announced on one and
+     * not the other is invisible to whoever happens to land on the
+     * other one.
+     *
+     * Gated on the resolver switch as well as the flag the serializer
+     * already honours, so the link cannot appear from a cached payload
+     * that predates the switch.
+     */
+    const hasIdentityRecord =
+        !featureFlagsFetching &&
+        activeFeatureFlags.includes(ENABLE_IDENTITY_RESOLVER) &&
+        !!data?.properties?.has_identity_record;
+    const osId = data?.id ?? null;
     const visibleFields = useMemo(
         () => getVisibleFields(data, showAdditionalIdentifiers),
         [data, showAdditionalIdentifiers],
@@ -155,6 +180,27 @@ const ProductionLocationDetailsGeneralFields = ({
                     </Grid>
                 </React.Fragment>
             ))}
+            {hasIdentityRecord && osId ? (
+                <Grid item xs={12}>
+                    <div className={classes.identityRecord}>
+                        <Typography
+                            component="h3"
+                            className={classes.identityRecordTitle}
+                        >
+                            {IDENTITY_RECORD_ENTRY_TITLE}
+                        </Typography>
+                        <Typography className={classes.identityRecordText}>
+                            {IDENTITY_RECORD_ENTRY_TEXT}
+                        </Typography>
+                        <Link
+                            to={`/facilities/${osId}/identity-record`}
+                            className={classes.identityRecordLink}
+                        >
+                            {IDENTITY_RECORD_ENTRY_LINK_LABEL}
+                        </Link>
+                    </div>
+                </Grid>
+            ) : null}
             <ContributionsDrawer
                 open={isDrawerOpen}
                 onClose={closeDrawer}

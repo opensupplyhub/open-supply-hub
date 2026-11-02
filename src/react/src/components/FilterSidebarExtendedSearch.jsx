@@ -6,6 +6,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import ShowOnly from './ShowOnly';
 import StyledSelect from './Filters/StyledSelect';
 import ProcessingTypeSearch from './Filters/ProcessingTypeSearch';
+import IsicSearch from './Filters/IsicSearch';
 import {
     updateContributorTypeFilter,
     updateParentCompanyFilter,
@@ -38,6 +39,7 @@ import {
     mapFacilityTypeOptions,
     restoreExactProcessingTypeLabels,
 } from '../util/util';
+import { ENABLE_ISIC_TAXONOMY } from '../util/constants';
 
 const CONTRIBUTOR_TYPES = 'CONTRIBUTOR_TYPES';
 const PARENT_COMPANY = 'PARENT_COMPANY';
@@ -76,6 +78,7 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
         fetchSuggestionsForProcessingType,
         fetchNumberOfWorkers,
         isSideBarSearch,
+        isicEnabled,
     } = props;
 
     useEffect(() => {
@@ -202,6 +205,11 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
                     />
                 </div>
             </ShowOnly>
+            <ShowOnly when={!embed && isicEnabled}>
+                <div className="form__field">
+                    <IsicSearch disabled={fetchingFacilities} />
+                </div>
+            </ShowOnly>
             <ShowOnly
                 when={
                     !embed ||
@@ -250,6 +258,7 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
 });
 
 FilterSidebarExtendedSearch.defaultProps = {
+    isicEnabled: false,
     contributorTypeOptions: null,
     facilityProcessingTypeOptions: null,
     processingTypeSuggestions: Object.freeze({
@@ -262,6 +271,7 @@ FilterSidebarExtendedSearch.defaultProps = {
 };
 
 FilterSidebarExtendedSearch.propTypes = {
+    isicEnabled: bool,
     contributorTypeOptions: contributorTypeOptionsPropType,
     facilityProcessingTypeOptions: facilityProcessingTypeOptionsPropType,
     processingTypeSuggestions: object,
@@ -306,8 +316,10 @@ function mapStateToProps({
         facilities: { data: facilities, fetching: fetchingFacilities },
     },
     embeddedMap: { embed, config },
+    featureFlags: { flags },
 }) {
     return {
+        isicEnabled: !!flags[ENABLE_ISIC_TAXONOMY],
         contributorTypeOptions,
         facilityProcessingTypeOptions,
         processingTypeSuggestions,

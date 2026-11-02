@@ -213,3 +213,69 @@ class PartnerFieldsViewSetTest(APITestCase):
             response.status_code,
             status.HTTP_405_METHOD_NOT_ALLOWED,
         )
+
+    def test_include_inactive_true_returns_inactive_fields(self):
+        """Verify ?include_inactive=true returns active and inactive fields."""
+        active_field = self._create_partner_field("inc_active", active=True)
+        inactive_field = self._create_partner_field(
+            "inc_inactive", active=False
+        )
+
+        self._login_superuser()
+        response = self.client.get(self.url, {"include_inactive": "true"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        result_uuids = self._get_field_uuids(response)
+
+        self.assertIn(str(active_field.uuid), result_uuids)
+        self.assertIn(str(inactive_field.uuid), result_uuids)
+
+    def test_include_inactive_false_excludes_inactive_fields(self):
+        """Verify ?include_inactive=false returns only active fields."""
+        active_field = self._create_partner_field("excl_active", active=True)
+        inactive_field = self._create_partner_field(
+            "excl_inactive", active=False
+        )
+
+        self._login_superuser()
+        response = self.client.get(self.url, {"include_inactive": "false"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        result_uuids = self._get_field_uuids(response)
+
+        self.assertIn(str(active_field.uuid), result_uuids)
+        self.assertNotIn(str(inactive_field.uuid), result_uuids)
+
+    def test_include_inactive_non_true_value_excludes_inactive_fields(self):
+        """Verify ?include_inactive=yes (non-true) returns only active."""
+        active_field = self._create_partner_field("yes_active", active=True)
+        inactive_field = self._create_partner_field(
+            "yes_inactive", active=False
+        )
+
+        self._login_superuser()
+        response = self.client.get(self.url, {"include_inactive": "yes"})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        result_uuids = self._get_field_uuids(response)
+
+        self.assertIn(str(active_field.uuid), result_uuids)
+        self.assertNotIn(str(inactive_field.uuid), result_uuids)
+
+    def test_include_inactive_true_non_superuser_returns_403(self):
+        """Verify ?include_inactive=true returns 403 for non-superusers."""
+        self._login_user()
+        response = self.client.get(self.url, {"include_inactive": "true"})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_response_includes_active_field_in_results(self):
+        """Verify the active field is present in each result."""
+        self._create_partner_field("active_field_check", active=True)
+
+        self._login_superuser()
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreater(len(response.data["results"]), 0)
+        first_result = response.data["results"][0]
+        self.assertIn("active", first_result)

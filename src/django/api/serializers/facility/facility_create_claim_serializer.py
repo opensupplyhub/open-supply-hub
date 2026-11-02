@@ -12,6 +12,8 @@ from api.models import (
     ClaimCertification,
     FacilityClaim,
 )
+from api.isic_taxonomy.isic_lookup import entries_from_filter_values
+from api.models import FacilityClaim
 from api.constants import FacilityClaimStatuses
 from api.constants import JS_MAX_SAFE_INTEGER
 from api.helpers.claim_attachments import validate_attachment_files
@@ -96,6 +98,16 @@ def validate_claimed_name_or_address(field_name, value):
             'whitespace.'
         )
     return value
+
+
+def _isic_entries(values, revision):
+    entries = entries_from_filter_values(values, revision)
+    if entries is None:
+        raise serializers.ValidationError(
+            f'Each value must be an ISIC Rev. {revision} code, '
+            'e.g. class:1410.'
+        )
+    return entries
 
 
 class FacilityCreateClaimSerializer(serializers.Serializer):
@@ -315,6 +327,23 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         allow_blank=True,
         max_length=300
     )
+    # ISIC values as "level:code" (e.g. class:1410), one list per revision.
+    isic_4 = serializers.ListField(
+        child=serializers.CharField(max_length=20),
+        required=False,
+        max_length=15,
+    )
+    isic_5 = serializers.ListField(
+        child=serializers.CharField(max_length=20),
+        required=False,
+        max_length=15,
+    )
+
+    def validate_isic_4(self, value):
+        return _isic_entries(value, '4')
+
+    def validate_isic_5(self, value):
+        return _isic_entries(value, '5')
     # The name and address the claimant asserts for the production
     # location. Optional so the form can omit them while the
     # enable_claim_name_address_edit switch is off. Validated with the
@@ -335,6 +364,13 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
     # note for the moderator. Posted as a JSON string, since the claim
     # form submits multipart form data.
     dismissed_warnings = DismissedWarningsField(required=False)
+    # The ?invite= code from a claim invite link (FacilityClaimInvite
+    # uuid). Unknown or malformed codes are ignored, never rejected.
+    claim_invite = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=64,
+    )
 
     def validate_your_business_website(self, value):
         return validate_url_field("your_business_website", value)

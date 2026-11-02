@@ -1,0 +1,129 @@
+sector,isic_section,isic_section_title,isic_division,isic_division_title,isic_group,isic_group_title,isic_class,isic_class_title,match_type
+Accommodation,,,,,,,,,Out of scope
+Aerospace,,,,,,,,,Does not map
+Agriculture,,,,,,,,,Does not map
+Air Transportation,H,Transportation and storage,51,Air transport,,,,,Exact
+Allied Products,,,,,,,,,Does not map
+Animal Production,A,"Agriculture, forestry and fishing",01,"Crop and animal production, hunting and related service activities",014,Animal production,,,Exact
+Apparel,,,,,,,,,Does not map
+Apparel Accessories,,,,,,,,,Does not map
+Appliances,,,,,,,,,Does not map
+Aquaculture,A,"Agriculture, forestry and fishing",03,Fishing and aquaculture,032,Aquaculture,,,Exact
+Archives,,,,,,,,,Out of scope
+Arts,,,,,,,,,Does not map
+Arts & Entertainment,,,,,,,,,Does not map
+Automotive,,,,,,,,,Does not map
+Automotive Parts,,,,,,,,,Does not map
+Banking,,,,,,,,,Out of scope
+Beauty Products,,,,,,,,,Does not map
+Beverages,,,,,,,,,Does not map
+Biotechnology,,,,,,,,,Does not map
+Books,,,,,,,,,Does not map
+Building Construction,F,Construction,41,Construction of buildings,,,,,Exact
+Building Materials,,,,,,,,,Does not map
+Chemicals,,,,,,,,,Does not map
+Civics,,,,,,,,,Out of scope
+Civil Engineering Construction,F,Construction,42,Civil engineering,,,,,Exact
+Coal,,,,,,,,,Does not map
+Commodities,,,,,,,,,Does not map
+Components,,,,,,,,,Does not map
+Computers,,,,,,,,,Does not map
+Computing Infrastructure,,,,,,,,,Does not map
+Construction,F,Construction,,,,,,,Exact
+Consumer Electronics,,,,,,,,,Does not map
+Consumer Products,,,,,,,,,Does not map
+Crop Production,A,"Agriculture, forestry and fishing",01,"Crop and animal production, hunting and related service activities",,,,,Exact
+Durable Goods,,,,,,,,,Does not map
+Educational Services,,,,,,,,,Out of scope
+Electrical Devices,,,,,,,,,Does not map
+Electricity,,,,,,,,,Does not map
+Electronic Product Manufacturing,C,Manufacturing,26,"Manufacture of computer, electronic and optical products",,,,,Exact
+Electronics,,,,,,,,,Does not map
+Energy,,,,,,,,,Does not map
+Energy Production & Utilities,,,,,,,,,Does not map
+Entertainment,,,,,,,,,Does not map
+Equipment,,,,,,,,,Does not map
+Farming,A,"Agriculture, forestry and fishing",01,"Crop and animal production, hunting and related service activities",,,,,Exact
+Finance,,,,,,,,,Out of scope
+Financial Services,,,,,,,,,Out of scope
+Fishing,A,"Agriculture, forestry and fishing",03,Fishing and aquaculture,031,Fishing,,,Exact
+Food,,,,,,,,,Does not map
+Food & Beverage,,,,,,,,,Does not map
+Food Industry,,,,,,,,,Does not map
+Food Manufacturing,C,Manufacturing,10,Manufacture of food products,,,,,Exact
+Footwear,,,,,,,,,Does not map
+Forestry,A,"Agriculture, forestry and fishing",02,Forestry and logging,,,,,Exact
+Furniture,,,,,,,,,Does not map
+Garden Tools,,,,,,,,,Does not map
+Gas,,,,,,,,,Does not map
+General Merchandise,,,,,,,,,Does not map
+Ground Passenger Transportation,,,,,,,,,Out of scope
+Hard Goods,,,,,,,,,Does not map
+Health,,,,,,,,,Does not map
+Healthcare,,,,,,,,,Does not map
+Hobby,,,,,,,,,Does not map
+Home,,,,,,,,,Does not map
+Home Accessories,,,,,,,,,Does not map
+Home Furnishings,,,,,,,,,Does not map
+Home Textiles,,,,,,,,,Does not map
+Hospitals,,,,,,,,,Out of scope
+Hunting,A,"Agriculture, forestry and fishing",01,"Crop and animal production, hunting and related service activities",017,"Hunting, trapping and related service activities",0170,"Hunting, trapping and related service activities",Exact
+Information,J,Information and communication,,,,,,,Exact
+International Affairs,,,,,,,,,Out of scope
+Jewelry,,,,,,,,,Does not map
+Leather,,,,,,,,,Does not map
+Logging,A,"Agriculture, forestry and fishing",02,Forestry and logging,022,Logging,0220,Logging,Exact
+Machinery Manufacturing,C,Manufacturing,,,,,,,Partial / broader level
+Maintenance,,,,,,,,,Does not map
+Manufacturing,C,Manufacturing,,,,,,,Exact
+Maritime Transportation,H,Transportation and storage,50,Water transport,,,,,Description-based
+Material Production,,,,,,,,,Does not map
+Medical Equipment & Services,,,,,,,,,Does not map
+Merchant Wholesalers,G,Wholesale and retail trade; repair of motor vehicles and motorcycles,46,"Wholesale trade, except of motor vehicles and motorcycles",,,,,Description-based
+Metal Manufacturing,C,Manufacturing,,,,,,,Partial / broader level
+Mining,B,Mining and quarrying,,,,,,,Exact
+Multi-Category,,,,,,,,,Does not map
+Musical Instruments,,,,,,,,,Does not map
+Nondurable Goods,,,,,,,,,Does not map
+Nursing,,,,,,,,,Out of scope
+Oil & Gas,,,,,,,,,Does not map
+Packaging,,,,,,,,,Does not map
+Paper Products,,,,,,,,,Does not map
+Parts Dealers,,,,,,,,,Does not map
+Personal Care Products,,,,,,,,,Does not map
+Pets,,,,,,,,,Does not map
+Pharmaceuticals,,,,,,,,,Does not map
+Pipeline Transportation,H,Transportation and storage,49,Land transport and transport via pipelines,493,Transport via pipeline,4930,Transport via pipeline,Exact
+Plastics,,,,,,,,,Does not map
+Printing,C,Manufacturing,18,Printing and reproduction of recorded media,181,Printing and service activities related to printing,1811,Printing,Exact
+Professional Services,M,"Professional, scientific and technical activities",,,,,,,Exact
+Quarrying,B,Mining and quarrying,,,,,,,Exact
+Rail Transportation,H,Transportation and storage,49,Land transport and transport via pipelines,491,Transport via railways,,,Exact
+Recreation,,,,,,,,,Does not map
+Recycling,E,"Water supply; sewerage, waste management and remediation activities",,,,,,,Description-based
+Renewable Energy,,,,,,,,,Does not map
+Renting,,,,,,,,,Out of scope
+Repair,,,,,,,,,Does not map
+Research,M,"Professional, scientific and technical activities",72,Scientific research and development,,,,,Exact
+Rubber Products,,,,,,,,,Does not map
+Solar Energy,,,,,,,,,Does not map
+Specialty Trade Contractors,,,,,,,,,Does not map
+Sporting Goods,,,,,,,,,Does not map
+Sports Equipment,,,,,,,,,Does not map
+Storage,H,Transportation and storage,52,Warehousing and support activities for transportation,521,Warehousing and storage,5210,Warehousing and storage,Exact
+Supplies Dealers,,,,,,,,,Does not map
+Technical and Scientific Activities,M,"Professional, scientific and technical activities",,,,,,,Exact
+Technical Services,M,"Professional, scientific and technical activities",,,,,,,Partial / broader level
+Technology,,,,,,,,,Does not map
+Telecommunications,J,Information and communication,61,Telecommunications,,,,,Exact
+Textiles,,,,,,,,,Does not map
+Tobacco Products,,,,,,,,,Does not map
+Toys,,,,,,,,,Does not map
+Transportation Equipment,,,,,,,,,Does not map
+Trucking,H,Transportation and storage,49,Land transport and transport via pipelines,492,Other land transport,4923,Freight transport by road,Exact
+Utilities,,,,,,,,,Does not map
+Warehousing,H,Transportation and storage,52,Warehousing and support activities for transportation,521,Warehousing and storage,5210,Warehousing and storage,Exact
+Waste Management,E,"Water supply; sewerage, waste management and remediation activities",,,,,,,Exact
+Water Utilities,,,,,,,,,Does not map
+Wholesale Trade,G,Wholesale and retail trade; repair of motor vehicles and motorcycles,,,,,,,Exact
+Wood Products,,,,,,,,,Does not map

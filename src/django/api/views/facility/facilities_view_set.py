@@ -8,6 +8,13 @@ from api.facility_actions.processing_facility_executor import (
 from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.serializers.facility.facility_candidate_details_serializer import (
+    FacilityCandidateDetailsSerializer,
+    NOINDEX_HEADER,
+    NOINDEX_VALUE,
+)
+from api.services.candidate_retirement import tombstone_payload
+from api.services.candidate_switch import candidates_enabled
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 from contricleaner.lib.contri_cleaner import ContriCleaner
@@ -40,6 +47,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.cache import patch_cache_control
 from drf_yasg.openapi import Schema, TYPE_OBJECT
 from drf_yasg.utils import no_body, swagger_auto_schema
 from django.conf import settings
@@ -55,6 +63,7 @@ from api.models import (
     FacilityActivityReport,
     FacilityAlias,
     FacilityClaim,
+    FacilityClaimInvite,
     FacilityClaimReviewNote,
     FacilityListItem,
     FacilityLocation,
@@ -76,7 +85,10 @@ from api.facility_history import (
     create_dissociate_match_change_reason,
     create_facility_history_list,
 )
-from api.mail import send_claim_facility_confirmation_email
+from api.mail import (
+    send_claim_facility_confirmation_email,
+    send_claim_invite_email,
+)
 
 from api.pagination import FacilitiesGeoJSONPagination
 from api.permissions import IsRegisteredAndConfirmed, IsSuperuser
@@ -95,7 +107,11 @@ from api.serializers import (
 )
 from api.serializers.facility.facility_list_page_parameter_serializer \
     import FacilityListPageParameterSerializer
-from api.throttles import DataUploadThrottle, DuplicateThrottle
+from api.throttles import (
+    ClaimInviteThrottle,
+    DataUploadThrottle,
+    DuplicateThrottle,
+)
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
@@ -106,6 +122,14 @@ from api.services.claim_quality_check_service import (
 )
 from api.serializers.facility.claim_quality_check_serializer import (
     ClaimQualityCheckSerializer,
+)
+from api.serializers.facility.facility_claim_invite_serializer import (
+    FacilityClaimInviteSerializer,
+)
+from api.services.facility_claim_invite_service import (
+    CLAIM_INVITE_SWITCH,
+    find_invite_for_claim,
+    validate_can_invite,
 )
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
@@ -177,6 +201,8 @@ class FacilitiesViewSet(ListModelMixin,
                 # which DuplicateThrottle collapses so each only reaches
                 # the model once; the SLC check it mirrors does the same.
                 throttles.append(DuplicateThrottle())
+            if self.action == 'claim_invite':
+                throttles.append(ClaimInviteThrottle())
             return throttles
 
         return super().get_throttles()
@@ -642,6 +668,18 @@ class FacilitiesViewSet(ListModelMixin,
     def retrieve(self, request, pk=None):
         """
         Returns the facility specified by a given OS ID in GeoJSON format (contains Spotlight data under `partner_fields` property).
+
+        ### Candidate production locations
+        Candidates (unconfirmed Earth Genome satellite detections) are reachable only by direct OS ID lookup here and
+        through `GET /api/v1/production-locations/candidates/?bbox=`; they are excluded from `/api/facilities/` search,
+        `/api/facilities-downloads/`, the vector tiles and the v1 `/api/v1/production-locations/` search, so no download
+        or search contract ever receives them. A candidate answers 200 with this same Feature shape, `name` and `address`
+        empty, `properties.is_candidate: true` and `properties.candidate` carrying `source`, `external_id`, `confidence`,
+        `polygon` (GeoJSON or null), the validation `state` (`unverified` | `disputed` | `confirmed` |
+        `retirement_pending`), `tally` (`confirmed` / `not_a_facility` counts), `your_vote`, `voting_open` and
+        `suggested_matches` (nearby confirmed facilities: `os_id`, `name`, `address`, `distance_m`). Confirmed facilities
+        carry no `is_candidate` key. A retired candidate answers 410 Gone. Candidate responses are sent with
+        `X-Robots-Tag: noindex` and `Cache-Control: private`.
 
         ### Sample Response
             {
@@ -1571,12 +1609,41 @@ class FacilitiesViewSet(ListModelMixin,
                 queryset, context=context).data
             return Response(response_data)
         except FacilityIndex.DoesNotExist as exc:
+            # Candidates never get an index row (OSDEV-3243); serve them
+            # labeled from api_facility instead (OSDEV-3249). The payload
+            # carries the caller's own vote, so it is kept out of the two
+            # shared response caches wrapping this method (both honor
+            # Cache-Control: private) and marked noindex for crawlers.
+            # While the pilot switch is off (OSDEV-3627) a candidate OS
+            # ID is simply not found, as before the pilot.
+            candidate = (
+                Facility.including_candidates
+                .filter(pk=pk, is_candidate=True)
+                .select_related('created_from__source__contributor')
+                .first()
+            ) if candidates_enabled() else None
+            if candidate is not None:
+                response = Response(
+                    FacilityCandidateDetailsSerializer(
+                        candidate, context={'request': request}
+                    ).data
+                )
+                patch_cache_control(response, private=True)
+                response[NOINDEX_HEADER] = NOINDEX_VALUE
+                return response
             # If the facility is not found but an alias is available,
-            # redirect to the alias
-            aliases = FacilityAlias.objects.filter(os_id=pk)
-            if len(aliases) == 0:
+            # redirect to the alias. A NOT_A_FACILITY tombstone has no
+            # target facility: the OS ID was retired, so answer 410 Gone
+            # instead of redirecting (OSDEV-3246).
+            alias = FacilityAlias.objects.filter(os_id=pk).first()
+            if alias is None:
                 raise NotFound() from exc
-            os_id = aliases.first().facility.id
+            if alias.facility_id is None:
+                return Response(
+                    tombstone_payload(alias),
+                    status=status.HTTP_410_GONE,
+                )
+            os_id = alias.facility_id
 
             redirect_url = f'/api/facilities/{os_id}/'
             query_string = request.META.get('QUERY_STRING', '')
@@ -2437,6 +2504,8 @@ class FacilitiesViewSet(ListModelMixin,
                     "facility_production_types"
                 ),
                 facility_type=validated_data.get("facility_type"),
+                isic_4=validated_data.get("isic_4"),
+                isic_5=validated_data.get("isic_5"),
                 # The claim form sends these two fields as empty strings
                 # while the enable_claim_name_address_edit switch is off;
                 # the serializer normalizes blank to None, which is also
@@ -2454,6 +2523,11 @@ class FacilitiesViewSet(ListModelMixin,
 
             if sectors and len(sectors) > 0:
                 facility_claim.sector = sectors
+
+            facility_claim.claim_invite = find_invite_for_claim(
+                validated_data.get("claim_invite"),
+                facility,
+            )
 
             facility_claim.save()
 
@@ -2537,6 +2611,54 @@ class FacilitiesViewSet(ListModelMixin,
             contributor.id,
         )
         return Response({'warnings': warnings})
+
+    @swagger_auto_schema(auto_schema=None, methods=['POST'])
+    @action(detail=True, methods=['POST'],
+            url_path='claim-invite',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    @transaction.atomic
+    def claim_invite(self, request, pk=None):
+        """
+        Email someone at an unclaimed production location a link to
+        claim its profile, naming the sender's organization as the
+        reference. Records a FacilityClaimInvite whose uuid is carried
+        in the claim link, so a claim submitted from it can be traced
+        back. Rejected with 400 when the location is closed, already
+        claimed or pending, or has been invited too recently (see
+        facility_claim_invite_service); per-sender volume is bounded by
+        ClaimInviteThrottle.
+        """
+        if not switch_is_active(CLAIM_INVITE_SWITCH):
+            raise NotFound()
+
+        try:
+            # Lock the location so concurrent invites to it are checked
+            # against the limits one at a time.
+            facility = Facility.objects.select_for_update().get(pk=pk)
+        except Facility.DoesNotExist as exc:
+            raise NotFound(detail='Facility not found.') from exc
+        except Contributor.DoesNotExist as exc:
+            raise NotFound(detail='Contributor not found.') from exc
+
+        serializer = FacilityClaimInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        recipient_email = serializer.validated_data['recipient_email']
+
+        validate_can_invite(facility, recipient_email)
+
+        claim_invite = FacilityClaimInvite.objects.create(
+            facility=facility,
+            sent_by_user=request.user,
+            recipient_email=recipient_email,
+            note=serializer.validated_data['note'],
+        )
+        send_claim_invite_email(request, claim_invite)
+        ClaimInviteThrottle().record_invite(request, self)
+
+        return Response(
+            {'recipient_email': recipient_email},
+            status=status.HTTP_201_CREATED,
+        )
 
     def __handle_file_upload(self, file, facility_claim):
         # Storage and naming are shared with the pending-claim edit

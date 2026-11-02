@@ -27,6 +27,8 @@ const documentEmploymentVerificationBasedLabels = new Set(
 );
 
 const WEBSITE_MAX_LENGTH = 200;
+// Matches BE CharField(max_length=200) on your_name and your_title.
+const CLAIMANT_TEXT_MAX_LENGTH = 200;
 
 const getClaimantUrlValidationSchema = label =>
     Yup.string().when('claimantEmploymentVerificationMethod', {
@@ -45,9 +47,19 @@ const getClaimantUrlValidationSchema = label =>
 
 export const contactStepSchema = Yup.object().shape({
     // Always required (claimant fields).
-    yourName: Yup.string().trim().required('Your full name is required field!'),
+    yourName: Yup.string()
+        .trim()
+        .max(
+            CLAIMANT_TEXT_MAX_LENGTH,
+            `Your full name must be ${CLAIMANT_TEXT_MAX_LENGTH} characters or fewer`,
+        )
+        .required('Your full name is required field!'),
     yourTitle: Yup.string()
         .trim()
+        .max(
+            CLAIMANT_TEXT_MAX_LENGTH,
+            `Your job title must be ${CLAIMANT_TEXT_MAX_LENGTH} characters or fewer`,
+        )
         .required('Your job title is required field!'),
 
     claimantEmploymentVerificationMethod: Yup.string().required(
@@ -181,6 +193,7 @@ const SELECT_OPTION_MAX_LENGTH = 50;
 const FACILITY_TYPE_JOINED_MAX_LENGTH = 300;
 const TEXT_FIELD_MAX_LENGTH = 200;
 const DESCRIPTION_MAX_LENGTH = 1000;
+const ISIC_MAX_SELECTIONS = 15;
 
 const maxLengthTextField = (fieldLabel, baseSchema = Yup.string()) =>
     baseSchema.max(
@@ -259,6 +272,15 @@ export const profileStepSchema = Yup.object().shape({
     facilityType: facilityTypeJoinedMaxLengthSchema,
     facilityProductionTypes: selectOptionsMaxLengthSchema('processing type'),
     facilityProductTypes: selectOptionsMaxLengthSchema('product type'),
+    // Matches BE ListField(max_length=15) on isic_4 and isic_5.
+    isic4: Yup.array().max(
+        ISIC_MAX_SELECTIONS,
+        `Select up to ${ISIC_MAX_SELECTIONS} ISIC Rev. 4 codes`,
+    ),
+    isic5: Yup.array().max(
+        ISIC_MAX_SELECTIONS,
+        `Select up to ${ISIC_MAX_SELECTIONS} ISIC Rev. 5 codes`,
+    ),
     numberOfWorkers: Yup.string()
         .nullable()
         .test(

@@ -60,6 +60,8 @@ const initialState = Object.freeze({
         facilityType: [],
         facilityProductionTypes: [],
         facilityProductTypes: [],
+        isic4: [],
+        isic5: [],
         numberOfWorkers: '',
         facilityFemaleWorkersPercentage: '',
         facilityMinimumOrderQuantity: '',

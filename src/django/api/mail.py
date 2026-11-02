@@ -210,6 +210,34 @@ def send_claim_facility_approval_email(request, facility_claim):
     )
 
 
+def send_claim_invite_email(request, claim_invite):
+    subj_template = get_template('mail/claim_invite_subject.txt')
+    text_template = get_template('mail/claim_invite_body.txt')
+    html_template = get_template('mail/claim_invite_body.html')
+
+    facility = claim_invite.facility
+    invite_dictionary = {
+        'sender_name': claim_invite.sent_by_contributor.name,
+        'note': claim_invite.note,
+        'production_location_name': facility.name,
+        'production_location_address': facility.address,
+        'production_location_country': COUNTRY_NAMES[facility.country_code],
+        'production_location_url': make_facility_url(request, facility),
+        'claim_url': '{}?invite={}'.format(
+            make_claim_url(request, facility),
+            claim_invite.uuid,
+        ),
+    }
+
+    send_mail(
+        subj_template.render(invite_dictionary).rstrip(),
+        text_template.render(invite_dictionary),
+        settings.CLAIM_FROM_EMAIL,
+        [claim_invite.recipient_email],
+        html_message=html_template.render(invite_dictionary)
+    )
+
+
 def send_claim_facility_denial_email(request, facility_claim):
     subj_template = get_template('mail/claim_facility_denial_subject.txt')
     text_template = get_template('mail/claim_facility_denial_body.txt')

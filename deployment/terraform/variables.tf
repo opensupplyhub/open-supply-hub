@@ -1121,6 +1121,63 @@ variable "waf_enabled" {
   default = false
 }
 
+variable "waf_rate_limit_enabled" {
+  type        = bool
+  default     = false
+  description = "Add the API rate-based rules to the WAF web ACL (requires waf_enabled)"
+}
+
+variable "waf_rate_limit_action" {
+  type        = string
+  default     = "count"
+  description = "Action of the API rate-based rules: count (only record matches) or block (respond with 429)"
+
+  validation {
+    condition     = contains(["count", "block"], var.waf_rate_limit_action)
+    error_message = "waf_rate_limit_action must be either \"count\" or \"block\"."
+  }
+}
+
+variable "waf_rate_limit_evaluation_window_sec" {
+  type        = number
+  default     = 300
+  description = "Time window, in seconds, over which the API rate-based rules count requests per IP"
+
+  validation {
+    condition     = contains([60, 120, 300, 600], var.waf_rate_limit_evaluation_window_sec)
+    error_message = "waf_rate_limit_evaluation_window_sec must be one of 60, 120, 300 or 600."
+  }
+}
+
+variable "waf_api_rate_limit_per_ip" {
+  type        = number
+  default     = 2000
+  description = "Maximum /api/ requests per IP within the evaluation window, for all requests"
+
+  validation {
+    condition     = var.waf_api_rate_limit_per_ip >= 10 && var.waf_api_rate_limit_per_ip <= 2000000000
+    error_message = "waf_api_rate_limit_per_ip must be between 10 and 2000000000."
+  }
+}
+
+variable "waf_api_anon_rate_limit_per_ip" {
+  type        = number
+  default     = 500
+  description = "Maximum /api/ requests per IP within the evaluation window, for requests without an API token"
+
+  validation {
+    condition     = var.waf_api_anon_rate_limit_per_ip >= 10 && var.waf_api_anon_rate_limit_per_ip <= 2000000000
+    error_message = "waf_api_anon_rate_limit_per_ip must be between 10 and 2000000000."
+  }
+}
+
+variable "waf_rate_limit_exempt_ips" {
+  type        = list(string)
+  default     = []
+  description = "CIDR blocks (IPv4 or IPv6) exempt from the API rate-based rules"
+  sensitive   = true
+}
+
 variable "enable_legacy_info_site_redirect" {
   type    = bool
   default = false
@@ -1194,10 +1251,29 @@ variable "dromo_schema_id" {
   description = "Dromo schema ID for data management"
 }
 
-variable "earth_genome_contributor_id" {
+variable "earth_genome_contributor_id_secret_name" {
   type        = string
   default     = ""
-  description = "EARTH_GENOME_CONTRIBUTOR_ID: id of the api_contributor row the Earth Genome candidate ingest writes under. Only this contributor may create candidate (nameless) facilities (OSDEV-3248). Empty means nobody may; set per environment before the ingest runs."
+  description = "ID of the api_contributor row the Earth Genome candidate ingest writes under. Only this contributor may create candidate (nameless) facilities (OSDEV-3248). Empty means nobody may; set per environment before the ingest runs."
+}
+
+variable "earth_index_api_url" {
+  type        = string
+  default     = "https://api.earthindex.ai"
+  description = "URL for the CLI task: base URL of the Earth Index API that `ingest_satellite_detections --project` exports deep-search results from (OSDEV-3244)."
+}
+
+variable "earth_index_api_key_secret_name" {
+  type        = string
+  default     = ""
+  sensitive   = true
+  description = "API KEY for the CLI task: an Earth Index API key (bearer token). Empty means the ingest can only read from a file (OSDEV-3244)."
+}
+
+variable "earth_index_project_id_secret_name" {
+  type        = string
+  default     = ""
+  description = "Project ID for the CLI task: the Earth Index project `ingest_satellite_detections --project` uses when given no value (OSDEV-3244)."
 }
 
 # VPN EC2 variables
@@ -1400,6 +1476,12 @@ variable "bedrock_cost_budget_monthly_limit_usd" {
   default     = "25"
 }
 
+variable "resolver_throttled_alarm_threshold" {
+  type        = number
+  description = "Number of throttled identity-resolver requests in an hour above which the alarm pages Slack. Deliberately not zero: occasional throttling is the limiter working, and one caller behind a corporate address can reach the burst rate legitimately. Sustained throttling is the signal, meaning either abuse or a real integrator who needs a higher allowance and is being refused."
+  default     = 100
+}
+
 variable "lambda_errors_alarm_threshold" {
   type        = number
   description = "Sum of AWS/Lambda Errors over 5 minutes, across all functions in the environment's region, above which the alarm pages Slack. Defaults to 0 so any single Lambda error is surfaced; raise it per environment only if a known-noisy function makes that impractical."
@@ -1525,6 +1607,12 @@ variable "ip_denylist_secret_name" {
 variable "ip_whitelist_secret_name" {
   type    = string
   default = ""
+}
+
+variable "waf_rate_limit_exempt_ips_secret_name" {
+  type        = string
+  default     = ""
+  description = "Secrets Manager secret holding a JSON list of CIDR blocks exempt from the API rate-based rules"
 }
 
 variable "anonymized_database_name_secret_name" {
