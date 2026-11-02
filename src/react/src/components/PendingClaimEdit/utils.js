@@ -2,6 +2,7 @@ import camelCase from 'lodash/camelCase';
 import snakeCase from 'lodash/snakeCase';
 
 import { extractSelectValue } from '../../util/util';
+import { isicOptions } from '../Filters/IsicSearch/utils';
 
 /*
  * The single place the API <-> form field mapping lives for the
@@ -67,6 +68,12 @@ const SELECT_OPTION_ARRAY_FIELDS = [
     'facilityCertifications',
 ];
 
+// ISIC fields: the API returns stored entries ({ section: 'C - ...',
+// class: '1410 - ...' }) and accepts "level:code" values, while the
+// form's IsicValuePicker works with { value: 'class:1410', label }
+// options — the same values the create flow sends (actions/claimForm.js).
+const ISIC_FIELDS = ['isic4', 'isic5'];
+
 const ENERGY_VALUE_TO_ENABLED = Object.freeze({
     energyCoal: 'energyCoalEnabled',
     energyNaturalGas: 'energyNaturalGasEnabled',
@@ -122,6 +129,12 @@ export const pendingClaimApiToFormData = apiData => {
         formData[field] = toSelectOptions(formData[field]);
     });
 
+    // Stored ISIC entries become picker options, by their most specific
+    // level.
+    ISIC_FIELDS.forEach(field => {
+        formData[field] = isicOptions(formData[field]);
+    });
+
     // Numeric inputs are controlled text fields holding strings.
     NUMERIC_STRING_FIELDS.forEach(field => {
         if (formData[field] !== '' && formData[field] !== undefined) {
@@ -153,8 +166,9 @@ export const pendingClaimApiToFormData = apiData => {
  * unchecked emissions sections (in a partial PATCH, omitted means
  * "unchanged" — null is how a claimant actually clears a stored value),
  * unwrap select option objects to plain strings (extractSelectValue,
- * exactly like the create flow's appendArrayField), pipe-join
- * facilityType, and snake_case every key.
+ * exactly like the create flow's appendArrayField), send ISIC options
+ * as their "level:code" values, pipe-join facilityType, and snake_case
+ * every key.
  */
 export const buildPendingClaimPatchPayload = formData => {
     const payload = {};
@@ -192,6 +206,12 @@ export const buildPendingClaimPatchPayload = formData => {
         } else if (SELECT_OPTION_ARRAY_FIELDS.includes(key)) {
             outValue = (Array.isArray(outValue) ? outValue : []).map(
                 extractSelectValue,
+            );
+        } else if (ISIC_FIELDS.includes(key)) {
+            // An empty list is sent rather than omitted, so removing every
+            // value clears the stored ones.
+            outValue = (Array.isArray(outValue) ? outValue : []).map(option =>
+                typeof option === 'object' ? option.value : option,
             );
         }
 
