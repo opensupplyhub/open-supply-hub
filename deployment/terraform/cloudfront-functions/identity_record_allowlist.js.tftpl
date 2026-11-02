@@ -1,0 +1,47 @@
+// Restricts identity record registration to an allowlist of OS IDs.
+//
+// The OS ID is in the URL path, so the check needs no access to the
+// request body:
+//
+//     POST /api/v1/production-locations/{os_id}/identity-records/
+//
+// A registration goes live the moment it is accepted, with no review
+// behind it, unlike a production location submission which becomes a
+// moderation event. This bounds which identifiers an issuer can register
+// against while that remains true.
+//
+// Only that write path is guarded. Reading a registration's status, and
+// every other production location request, passes through untouched.
+
+var ALLOWED = ${allowed_os_ids};
+
+var REGISTER_PATH =
+    /^\/api\/v1\/production-locations\/([^\/]+)\/identity-records\/?$/;
+
+function handler(event) {
+    var request = event.request;
+
+    if (request.method !== 'POST') {
+        return request;
+    }
+
+    var match = request.uri.match(REGISTER_PATH);
+    if (match === null) {
+        return request;
+    }
+
+    if (ALLOWED.indexOf(match[1].toUpperCase()) !== -1) {
+        return request;
+    }
+
+    return {
+        statusCode: 403,
+        statusDescription: 'Forbidden',
+        headers: {
+            'content-type': { value: 'application/json' },
+            'cache-control': { value: 'no-store' }
+        },
+        body: '{"detail":"This identifier is not open for registration ' +
+              'here. Contact Open Supply Hub."}'
+    };
+}

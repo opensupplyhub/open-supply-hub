@@ -1189,6 +1189,18 @@ variable "enable_homepage_proxy" {
   description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage."
 }
 
+variable "enable_identity_record_allowlist" {
+  type        = bool
+  default     = false
+  description = "When true, CloudFront refuses identity record registration for any OS ID outside identity_record_allowlist. Registrations go live with no review behind them, so this bounds which identifiers an issuer can register against."
+}
+
+variable "identity_record_allowlist" {
+  type        = list(string)
+  default     = []
+  description = "OS IDs that may have a record registered against them while enable_identity_record_allowlist is true. Matched case-insensitively."
+}
+
 variable "craft_cms_origin_domain" {
   type        = string
   default     = ""
