@@ -14,7 +14,7 @@ locals {
       # Identity record registration lives under this prefix. Guarded
       # here rather than in its own behavior so the ordering of the
       # api_cache_behaviors list, which decides precedence, is unchanged.
-      viewer_request_function_arn = var.enable_identity_record_allowlist ? aws_cloudfront_function.identity_record_allowlist[0].arn : null
+      viewer_request_function_arn = length(var.identity_record_allowlist) > 0 ? aws_cloudfront_function.identity_record_allowlist[0].arn : null
     },
     {
       path_pattern                = "api/partner-field-groups/*"
@@ -175,7 +175,7 @@ resource "aws_cloudfront_function" "homepage_uri_rewrite" {
 # neither the request body nor an application change.
 #
 resource "aws_cloudfront_function" "identity_record_allowlist" {
-  count   = var.enable_identity_record_allowlist ? 1 : 0
+  count   = length(var.identity_record_allowlist) > 0 ? 1 : 0
   name    = "func${local.short}IdentityRecordAllowlist"
   runtime = "cloudfront-js-1.0"
   publish = true
