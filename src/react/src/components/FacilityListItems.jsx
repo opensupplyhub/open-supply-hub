@@ -18,6 +18,7 @@ import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
 import ListUploadErrors from './ListUploadErrors';
+import FacilityListCleaningPanel from './FacilityListCleaningPanel';
 import RequireAuthNotice from './RequireAuthNotice';
 
 import {
@@ -38,6 +39,7 @@ import {
     listsRoute,
     facilityListItemsRoute,
     facilityListItemStatusChoicesEnum,
+    facilityListStatusChoicesEnum,
     dashboardListsRoute,
     matchResponsibilityEnum,
 } from '../util/constants';
@@ -341,6 +343,15 @@ const FacilityListItems = ({
                 will receive an email when your list has finished processing.
                 {awaitingModerationMessage}
             </div>
+
+            <FacilityListCleaningPanel
+                listID={list.id}
+                isAdminUser={isAdminUser}
+                canAct={
+                    list.status === facilityListStatusChoicesEnum.PENDING &&
+                    (isListOwner || isAdminUser)
+                }
+            />
 
             {list.item_count ? (
                 <Route

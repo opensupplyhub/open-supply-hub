@@ -11,6 +11,7 @@ import ProfileReducer from './ProfileReducer';
 import UploadReducer from './UploadReducer';
 import FacilityListsReducer from './FacilityListsReducer';
 import FacilityListDetailsReducer from './FacilityListDetailsReducer';
+import FacilityListCleaningReducer from './FacilityListCleaningReducer';
 import FilterOptionsReducer from './FilterOptionsReducer';
 import FiltersReducer from './FiltersReducer';
 import UIReducer from './UIReducer';
@@ -49,6 +50,7 @@ export default combineReducers({
     upload: UploadReducer,
     facilityLists: FacilityListsReducer,
     facilityListDetails: FacilityListDetailsReducer,
+    facilityListCleaning: FacilityListCleaningReducer,
     filterOptions: FilterOptionsReducer,
     filters: FiltersReducer,
     ui: UIReducer,

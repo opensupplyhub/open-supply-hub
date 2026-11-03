@@ -43,8 +43,13 @@ from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_list import FacilityList
 from ...models.facility.facility_list_item import FacilityListItem
 from ...models.facility.facility_match import FacilityMatch
+from ...models.facility.list_cleaning_run import ListCleaningRun
 from ...models.source import Source
 from ...models.user import User
+from ...serializers.facility.list_cleaning_serializer import (
+    serialize_run,
+)
+from ...services import list_cleaning
 from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
@@ -437,6 +442,97 @@ class FacilityListViewSet(ModelViewSet):
 
         serializer = FacilityListItemSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    # ------------------------------------------------------------------
+    # OSDEV-3726: contributor-facing list-cleaning feedback
+    # ------------------------------------------------------------------
+
+    def _get_list_for_user(self, request, pk):
+        if request.user.is_superuser:
+            facility_lists = FacilityList.objects.all()
+        else:
+            facility_lists = FacilityList.objects.filter(
+                source__contributor=request.user.contributor)
+        try:
+            return facility_lists.get(pk=pk)
+        except FacilityList.DoesNotExist as exc:
+            raise NotFound() from exc
+
+    @action(detail=True, methods=['get'], url_path='cleaning')
+    def cleaning(self, request, pk=None):
+        """
+        The latest list-cleaning run for the list, its summary and its
+        per-row suggestions. internal_note issues are only returned to
+        superusers. `run` is null when no run has been started.
+        """
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None:
+            return Response({
+                'enabled': list_cleaning.feature_enabled(),
+                'run': None, 'summary': None, 'rows': [],
+            })
+        run = list_cleaning.refresh_run(run)
+        data = serialize_run(
+            run, include_internal=request.user.is_superuser)
+        data['enabled'] = list_cleaning.feature_enabled()
+        return Response(data)
+
+    @action(detail=True, methods=['post'], url_path='cleaning/start',
+            permission_classes=(IsSuperuser,))
+    def cleaning_start(self, request, pk=None):
+        """Start (or re-start) a run regardless of the feature switch."""
+        facility_list = self._get_list_for_user(request, pk)
+        run = list_cleaning.start_run(
+            facility_list,
+            runner_name=request.data.get('runner'),
+            force=True)
+        return Response(serialize_run(run, include_internal=True))
+
+    @action(detail=True, methods=['post'], url_path='cleaning/decisions')
+    def cleaning_decisions(self, request, pk=None):
+        """
+        Record accept / reject / edit decisions.
+
+        ## Request Body
+            {"decisions": [{"id": 12, "decision": "ACCEPTED"},
+                           {"id": 13, "decision": "EDITED",
+                            "value": "1200"}]}
+        """
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None or run.status != ListCleaningRun.COMPLETE:
+            raise ValidationError('There is no completed run for this list.')
+        if facility_list.status != FacilityList.PENDING:
+            raise ValidationError(
+                'Suggestions can only be acted on while the list is '
+                'pending moderation.')
+        decisions = request.data.get('decisions')
+        if not isinstance(decisions, list) or not decisions:
+            raise ValidationError('"decisions" must be a non-empty list.')
+        try:
+            list_cleaning.record_decisions(run, decisions, request.user)
+        except list_cleaning.DecisionError as e:
+            raise ValidationError(str(e))
+        return Response(serialize_run(
+            run, include_internal=request.user.is_superuser))
+
+    @action(detail=True, methods=['post'], url_path='cleaning/apply')
+    def cleaning_apply(self, request, pk=None):
+        """Write the accepted corrections onto the list's items."""
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None or run.status != ListCleaningRun.COMPLETE:
+            raise ValidationError('There is no completed run for this list.')
+        if facility_list.status != FacilityList.PENDING:
+            raise ValidationError(
+                'Changes can only be applied while the list is pending '
+                'moderation.')
+        counts = list_cleaning.apply_run(run)
+        data = serialize_run(
+            run, include_internal=request.user.is_superuser)
+        data['applied'] = counts
+        return Response(data)
 
     @transaction.atomic
     @action(detail=True, methods=['post'],
