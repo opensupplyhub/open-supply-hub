@@ -3,6 +3,9 @@ import uuid
 from django.contrib.gis.db import models as gis_models
 from django.db import models, transaction
 
+from api.facility_index_backfill.zone_set_ids_recompute import (
+    schedule_zone_set_ids_recompute,
+)
 from api.models.polygon import variable_style_name_validator
 
 
@@ -15,8 +18,11 @@ class ZoneSet(models.Model):
     A zone set feeds one Spotlight partner field. When a production
     location's coordinates fall inside one of the set's zones, that
     zone's value is shown on the location page under the linked
-    field, resolved at request time with a point-in-polygon query —
-    there is no backfill and no reindex. The field's title,
+    field, resolved at request time with a point-in-polygon query.
+    Search is served differently: `FacilityIndex.zone_set_ids` holds
+    the ids of the sets covering each location, refreshed on every
+    facility save and recomputed for the whole table after
+    `replace_zones` (OSDEV-3743). The field's title,
     attribution text and source link are the linked partner field's
     `label`, `source_by` and `base_url`/`display_text`, so they are
     edited where every other Spotlight field's presentation lives.
@@ -133,6 +139,15 @@ class ZoneSet(models.Model):
         delete and the inserts commit together: readers either see the
         complete old set or the complete new set, never a mix or a gap.
 
+        New zones change which locations the set covers without
+        touching any facility row, so once the transaction commits a
+        recompute of `FacilityIndex.zone_set_ids` for the whole table
+        is started (see
+        `api.facility_index_backfill.zone_set_ids_recompute`). Until it
+        finishes, search results for the set reflect the previous
+        zones; the location page, which resolves zones live, reflects
+        the new ones at once.
+
         Args:
             zone_records: Dicts with `geom`, `label` and `properties`
                 keys, in file order (the order defines
@@ -154,6 +169,7 @@ class ZoneSet(models.Model):
             ],
             batch_size=500,
         )
+        schedule_zone_set_ids_recompute()
 
 
 class Zone(models.Model):

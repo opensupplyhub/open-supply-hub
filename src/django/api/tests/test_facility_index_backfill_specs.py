@@ -47,6 +47,26 @@ class FacilityIndexBackfillTest(SimpleTestCase):
     def test_list_field_names_includes_claim_info(self):
         self.assertIn('claim_info', list_field_names())
 
+    def test_zone_set_ids_spec_recomputes_only_changed_rows(self):
+        """The zone_set_ids group fills the column from
+        index_zone_set_ids(location) and skips rows whose membership
+        is unchanged, so a recompute after a zone upload writes only
+        the rows the new zones moved in or out."""
+        spec = get_field_spec('zone_set_ids')
+
+        update_sql = build_update_sql(spec)
+        self.assertIn(
+            'zone_set_ids = index_zone_set_ids(afi.location)', update_sql
+        )
+        self.assertIn('updated_at = now()', update_sql)
+
+        count_sql = build_count_sql(spec)
+        self.assertIn(
+            'afi.zone_set_ids IS DISTINCT FROM '
+            'index_zone_set_ids(afi.location)',
+            count_sql,
+        )
+
     def test_build_update_sql_includes_claim_info_column(self):
         spec = get_field_spec('claim_info')
         sql = build_update_sql(spec)

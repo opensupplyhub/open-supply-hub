@@ -13,11 +13,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command('migrate')
-        # One-time ISIC backfill for Release 2.33.0; remove once it has run
-        # in every environment.
+        # One-time ISIC and zone_set_ids backfills for Release 2.33.0;
+        # remove once they have run in every environment.
         call_command(
             'backfill_facility_index',
-            fields='isic_4,isic_5,isic_4_mapped',
+            fields='isic_4,isic_5,isic_4_mapped,zone_set_ids',
             parallel=backfill_parallel_worker_count(),
             batch_size=10000,
         )
