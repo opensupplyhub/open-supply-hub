@@ -47,9 +47,12 @@ const appendFormField = (postData, key, value) => {
         'facility_product_types',
         'facility_affiliations',
         'facility_certifications',
-        'isic_4',
-        'isic_5',
     ];
+
+    // ISIC options are { value: 'class:1410', label: <title> }. The API
+    // takes the code, so these send the value rather than the label that
+    // appendArrayField sends for the other select fields.
+    const isicFieldsKeys = ['isic_4', 'isic_5'];
 
     const fileFieldsKeys = [
         'company_address_verification_documents',
@@ -60,6 +63,13 @@ const appendFormField = (postData, key, value) => {
 
     if (fileFieldsKeys.includes(formattedKey)) {
         appendFiles(postData, 'files', value);
+    } else if (isicFieldsKeys.includes(formattedKey)) {
+        (value || []).forEach(item => {
+            postData.append(
+                formattedKey,
+                typeof item === 'object' ? item.value : item,
+            );
+        });
     } else if (arrayFieldsKeys.includes(formattedKey)) {
         appendArrayField(postData, formattedKey, value);
     } else if (formattedKey === 'facility_type') {

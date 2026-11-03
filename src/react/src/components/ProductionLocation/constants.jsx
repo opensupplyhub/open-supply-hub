@@ -119,7 +119,7 @@ export const FIELD_CONFIG = Object.freeze({
 export const INDUSTRY_CLASSIFICATION_SECTION = Object.freeze({
     label: 'Industry Classification',
     description:
-        'Industry classification schemes classify a production location by its economic activity. Values come from contributors, including Open Supply Hub, which classifies locations from their Location Type and Processing Type.',
+        'Industry classification schemes classify a production location by its economic activity. Values come from contributors, including Open Supply Hub, which classifies locations from their Location Type, Processing Type and Sector.',
 });
 
 /** Display order for General Information section fields. */

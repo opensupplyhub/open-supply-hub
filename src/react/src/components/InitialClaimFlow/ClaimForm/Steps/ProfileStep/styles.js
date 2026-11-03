@@ -81,6 +81,18 @@ export const profileStepStyles = theme =>
         betaBadgeColumnWithHint: Object.freeze({
             top: '105px',
         }),
+        missingOptionHint: Object.freeze({
+            fontSize: '14px',
+            color: theme.palette.text.secondary,
+            marginTop: '8px',
+            '& a': Object.freeze({
+                color: COLOURS.PURPLE,
+                textDecoration: 'none',
+                '&:hover': Object.freeze({
+                    textDecoration: 'underline',
+                }),
+            }),
+        }),
         textareaFieldContainer: Object.freeze({
             position: 'relative',
             maxWidth: '1071px',

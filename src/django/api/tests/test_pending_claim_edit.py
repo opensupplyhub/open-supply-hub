@@ -3,6 +3,7 @@ from datetime import date
 from unittest.mock import patch
 
 from api.constants import FacilityClaimStatuses
+from api.isic_taxonomy.revisions import isic_entry
 from api.models import (
     Contributor,
     Facility,
@@ -276,6 +277,98 @@ class PendingClaimEditTest(APITestCase):
         self.assertIn('file_name', attachment)
         # No storage URL anywhere in the payload.
         self.assertNotIn('claim_attachment', attachment)
+
+    # ------------------------------------------------------------------
+    # ISIC values (OSDEV-3740)
+    # ------------------------------------------------------------------
+
+    @override_switch('claim_a_facility', active=True)
+    def test_get_pending_claim_returns_stored_isic(self):
+        self.claim.isic_4 = [isic_entry('1410', '4')]
+        self.claim.save()
+
+        self.login()
+        response = self.client.get(self.pending_url)
+
+        self.assertEqual(200, response.status_code)
+        data = json.loads(response.content)
+        self.assertEqual([isic_entry('1410', '4')], data['isic_4'])
+        self.assertIsNone(data['isic_5'])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_patch_saves_isic_codes(self):
+        self.login()
+        response = self.client.patch(
+            self.pending_url,
+            {'isic_4': ['class:1410'], 'isic_5': ['class:1104']},
+            format='json',
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.claim.refresh_from_db()
+        self.assertEqual([isic_entry('1410', '4')], self.claim.isic_4)
+        self.assertEqual([isic_entry('1104', '5')], self.claim.isic_5)
+        self.assertEqual([isic_entry('1410', '4')], response.data['isic_4'])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_patch_rejects_isic_values_that_are_not_codes(self):
+        self.login()
+        for value in (
+            ['class:9999'],
+            [{'value': 'class:1410', 'label': 'Manufacture of apparel'}],
+        ):
+            with self.subTest(value=value):
+                response = self.client.patch(
+                    self.pending_url, {'isic_4': value}, format='json'
+                )
+                self.assertEqual(400, response.status_code)
+                self.assertIn('isic_4', response.json())
+
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.isic_4)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_patch_empty_isic_list_clears_and_omitted_list_keeps(self):
+        self.claim.isic_4 = [isic_entry('1410', '4')]
+        self.claim.isic_5 = [isic_entry('1104', '5')]
+        self.claim.save()
+
+        self.login()
+        response = self.client.patch(
+            self.pending_url, {'isic_4': []}, format='json'
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.isic_4)
+        self.assertEqual([isic_entry('1104', '5')], self.claim.isic_5)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_unchanged_isic_is_not_a_change(self):
+        from django.core import mail as django_mail
+
+        # The edit form sends both lists on every save: empty for a claim
+        # without ISIC, the stored codes for a claim with them.
+        self.claim.isic_5 = [isic_entry('1104', '5')]
+        self.claim.save()
+
+        self.login()
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                self.pending_url,
+                {
+                    'your_name': 'Original Name',
+                    'isic_4': [],
+                    'isic_5': ['class:1104'],
+                },
+                format='json',
+            )
+
+        self.assertEqual(200, response.status_code)
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.isic_4)
+        self.assertIsNone(self.claim.claimant_updated_at)
+        self.assertEqual(0, len(django_mail.outbox))
 
     # ------------------------------------------------------------------
     # POST /attachments/

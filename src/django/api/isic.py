@@ -5,8 +5,8 @@ from api.isic_taxonomy.constants import LEVELS
 
 # api_facilityindex columns per revision; {level} is section..class. ISIC 4
 # also searches the values Open Supply Hub contributes, mapped from each
-# location's Facility Type / Processing Type through the crosswalk
-# (OSDEV-3382).
+# location's Facility Type / Processing Type and Sector through the
+# crosswalk (OSDEV-3382).
 ISIC_COLUMNS = {
     '4': ('isic_{level}', 'isic_mapped_{level}'),
     '5': ('isic5_{level}',),

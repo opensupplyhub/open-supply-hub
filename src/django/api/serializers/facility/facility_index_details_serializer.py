@@ -555,8 +555,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
     def get_isic_4_mapped(self, facility):
         '''
         The ISIC Rev 4 values Open Supply Hub contributes for the location,
-        mapped from its Facility Type and Processing Type through the
-        crosswalk (OSDEV-3382/OSDEV-3622). Empty while the ISIC switch is
+        mapped from its Facility Type, Processing Type and Sector through
+        the crosswalk (OSDEV-3382/OSDEV-3622). Empty while the ISIC switch is
         off, so the profile and the search filter go live together.
         '''
         if not switch_is_active(ISIC_TAXONOMY_SWITCH):
@@ -564,4 +564,5 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         return get_mapped_isic_values(
             facility.facility_type,
             facility.processing_type,
+            facility.sector,
         )

@@ -86,3 +86,49 @@ describe('Business step schema: company name and address', () => {
         );
     });
 });
+
+describe('Profile step schema: ISIC selections', () => {
+    const profile = getValidationSchemaForStep(CLAIM_FORM_STEPS.PROFILE);
+    const codes = n =>
+        Array.from({ length: n }, (_, i) => ({
+            value: `class:${1000 + i}`,
+            label: `Class ${i}`,
+        }));
+
+    it('accepts up to 15 codes per revision', async () => {
+        await expect(
+            profile.validate({ isic4: codes(15), isic5: codes(15) }),
+        ).resolves.toBeTruthy();
+    });
+
+    it('rejects more than 15 codes, matching the API limit', async () => {
+        await expect(profile.validate({ isic4: codes(16) })).rejects.toThrow(
+            'Select up to 15 ISIC Rev. 4 codes',
+        );
+        await expect(profile.validate({ isic5: codes(16) })).rejects.toThrow(
+            'Select up to 15 ISIC Rev. 5 codes',
+        );
+    });
+});
+
+describe('Contact step schema: claimant name and title length', () => {
+    const contact = getValidationSchemaForStep(CLAIM_FORM_STEPS.CONTACT);
+
+    it('rejects a name or title over 200 characters, matching the API limit', async () => {
+        await expect(
+            contact.validateAt('yourName', { yourName: 'a'.repeat(201) }),
+        ).rejects.toThrow('Your full name must be 200 characters or fewer');
+        await expect(
+            contact.validateAt('yourTitle', { yourTitle: 'a'.repeat(201) }),
+        ).rejects.toThrow('Your job title must be 200 characters or fewer');
+    });
+
+    it('accepts a name and title of 200 characters', async () => {
+        await expect(
+            contact.validateAt('yourName', { yourName: 'a'.repeat(200) }),
+        ).resolves.toBeTruthy();
+        await expect(
+            contact.validateAt('yourTitle', { yourTitle: 'a'.repeat(200) }),
+        ).resolves.toBeTruthy();
+    });
+});
