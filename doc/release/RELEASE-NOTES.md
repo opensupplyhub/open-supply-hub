@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-2219](https://opensupplyhub.atlassian.net/browse/OSDEV-2219) - New `ClaimAffiliation` and `ClaimCertification` models (`name` unique and case-insensitively unique, max 50 characters; `is_active`; `sort_order`; timestamps; history tables). `FacilityClaim.facility_affiliations` and `facility_certifications` stay string arrays and lose their `choices`.
 
 ### Bugfix
+* [OSDEV-3745](https://opensupplyhub.atlassian.net/browse/OSDEV-3745) - Fixed ContriBot failing an entire upload with `@ is not a valid coordinate or range` when the file has no recognizable `country` column (for example a title row above the headers); such lists now produce a `~PROCESSED` report with the missing-column findings and reach the approval queue.
 * [OSDEV-1065](https://opensupplyhub.atlassian.net/browse/OSDEV-1065) - Fixed the Django admin facility claim form refusing to save, reporting "No geometry value provided" on Location plus required-field errors on Contributor parent company / supplier group and Description. `FacilityClaimAdmin` builds a default ModelForm over every editable field and none of those three columns carried `blank=True`, so the form required values that a claim submission routinely leaves empty and a moderator could not correct a mis-filled claim before approving it.
 
 ### Code/API Changes
