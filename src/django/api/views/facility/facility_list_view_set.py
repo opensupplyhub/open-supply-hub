@@ -193,9 +193,25 @@ class FacilityListViewSet(ModelViewSet):
 
         if not DEBUG:
             submit_parse_job(new_list)
+        elif list_cleaning.feature_enabled():
+            # Local development has no AWS Batch. Parse inline so the
+            # upload-time review step has something to show; the
+            # cleaning run itself starts from the end of the parse.
+            self.__parse_inline(new_list)
 
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)
+
+    @staticmethod
+    def __parse_inline(facility_list):
+        from ...processing import parse_production_location_list
+        try:
+            parse_production_location_list(facility_list)
+        except Exception as exc:  # noqa: BLE001
+            log.exception(
+                f'[List Upload] Inline parse failed for list '
+                f'{facility_list.id}: {exc}'
+            )
 
     def list(self, request):
         """
