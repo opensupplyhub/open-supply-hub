@@ -680,7 +680,8 @@ const groupTitle = group => {
     return `${fieldLabel(group.field)}: ${describeCode(group.code)}`;
 };
 
-const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const plural = (n, word, words = `${word}s`) =>
+    `${n} ${n === 1 ? word : words}`;
 
 const groupStatus = group => {
     const parts = [];
@@ -964,10 +965,10 @@ export const GroupTabs = ({
                 <div style={autoStyles.box}>
                     <div style={autoStyles.head}>
                         <span>
-                            <b>{plural(autoFixes, 'fix')}</b> made automatically
-                            on {plural(autoRows, 'row')}: formatting that needs
-                            no judgment, already applied. You can undo any of
-                            them by type.
+                            <b>{plural(autoFixes, 'fix', 'fixes')}</b> made
+                            automatically on {plural(autoRows, 'row')}:
+                            formatting that needs no judgment, already applied.
+                            You can undo any of them by type.
                         </span>
                         <Button
                             size="small"
