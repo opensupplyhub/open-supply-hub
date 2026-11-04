@@ -362,10 +362,25 @@ class FacilityClaimReviewNoteAdmin(SimpleHistoryAdmin):
     readonly_fields = ('claim', 'author')
 
 
+class ClaimCampaignSupplierInline(admin.TabularInline):
+    # A campaign with no rows here uses the contributor's active lists
+    # as its roster (v1 behaviour).
+    model = models.ClaimCampaignSupplier
+    raw_id_fields = ('facility',)
+    readonly_fields = ('created_at',)
+    extra = 0
+    verbose_name = 'supplier (OS ID)'
+    verbose_name_plural = (
+        'suppliers (leave empty to use the contributor\'s active lists)'
+    )
+
+
 class ClaimCampaignAdmin(admin.ModelAdmin):
     list_display = ('name', 'code', 'contributor', 'status')
     search_fields = ('name', 'code')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
+    raw_id_fields = ('contributor',)
+    inlines = (ClaimCampaignSupplierInline,)
 
     def get_readonly_fields(self, request, obj=None):
         # The code is used in live campaign links; lock it after creation.
