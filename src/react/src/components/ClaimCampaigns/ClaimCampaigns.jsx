@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { arrayOf, bool, func, number, object, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import moment from 'moment';
@@ -20,7 +21,12 @@ import Typography from '@material-ui/core/Typography';
 import AppOverflow from '../AppOverflow';
 import RequireAuthNotice from '../RequireAuthNotice';
 import { fetchClaimCampaigns } from '../../actions/claimCampaigns';
-import { claimIntroRoute } from '../../util/constants';
+import apiRequest from '../../util/apiRequest';
+import {
+    claimIntroRoute,
+    makeClaimCampaignCandidatesURL,
+    newClaimCampaignRoute,
+} from '../../util/constants';
 import { DownloadCSV, joinDataIntoCSVString } from '../../util/util';
 import COLOURS from '../../util/COLOURS';
 import { claimCampaignsStyles } from './styles';
@@ -313,12 +319,29 @@ const ClaimCampaigns = ({
     campaigns,
     error,
     fetchCampaigns,
+    location,
 }) => {
+    // Brands enabled for self-serve can reach the candidates endpoint;
+    // everyone else gets a 404 and sees no "New campaign" button.
+    const [canCreate, setCanCreate] = useState(false);
+
     useEffect(() => {
         if (userHasSignedIn) {
             fetchCampaigns();
+            apiRequest
+                .get(makeClaimCampaignCandidatesURL())
+                .then(() => setCanCreate(true))
+                .catch(() => setCanCreate(false));
         }
     }, [userHasSignedIn, fetchCampaigns]);
+
+    const newCampaignID = Number(
+        new URLSearchParams((location && location.search) || '').get('new'),
+    );
+    const newCampaign =
+        newCampaignID && campaigns
+            ? campaigns.find(c => c.id === newCampaignID)
+            : null;
 
     if (!userHasSignedIn) {
         return (
@@ -348,23 +371,49 @@ const ClaimCampaigns = ({
     return (
         <AppOverflow>
             <div className={classes.container}>
-                <Typography
-                    variant="title"
-                    component="h1"
-                    className={classes.title}
-                >
-                    Claims Campaigns
-                </Typography>
-                <Typography className={classes.subtitle}>
-                    Track which of your suppliers have claimed their production
-                    location profiles.
-                </Typography>
+                <div className={classes.pageHeader}>
+                    <div>
+                        <Typography
+                            variant="title"
+                            component="h1"
+                            className={classes.title}
+                        >
+                            Claims Campaigns
+                        </Typography>
+                        <Typography className={classes.subtitle}>
+                            Track which of your suppliers have claimed their
+                            production location profiles.
+                        </Typography>
+                    </div>
+                    {canCreate && (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            component={Link}
+                            to={newClaimCampaignRoute}
+                        >
+                            New campaign
+                        </Button>
+                    )}
+                </div>
+
+                {newCampaign && (
+                    <Paper className={classes.createdBanner} role="status">
+                        <Typography>
+                            Campaign <strong>{newCampaign.name}</strong> created
+                            with {newCampaign.suppliers.length} supplier
+                            {newCampaign.suppliers.length === 1 ? '' : 's'}.
+                            Copy each claim link below, or download the CSV to
+                            send them from your own email.
+                        </Typography>
+                    </Paper>
+                )}
 
                 {!campaigns || campaigns.length === 0 ? (
                     <Typography className={classes.emptyMessage}>
-                        Your account has no claims campaigns yet. Campaigns are
-                        created for you by the OS Hub team — contact your
-                        account manager to get started.
+                        {canCreate
+                            ? 'Your account has no claims campaigns yet. Use "New campaign" to invite suppliers from one of your lists.'
+                            : 'Your account has no claims campaigns yet. Campaigns are created for you by the OS Hub team — contact your account manager to get started.'}
                     </Typography>
                 ) : (
                     campaigns.map(campaign => (
@@ -383,6 +432,7 @@ const ClaimCampaigns = ({
 ClaimCampaigns.defaultProps = {
     campaigns: null,
     error: null,
+    location: null,
 };
 
 ClaimCampaigns.propTypes = {
@@ -392,6 +442,7 @@ ClaimCampaigns.propTypes = {
     campaigns: arrayOf(campaignPropType),
     error: arrayOf(string),
     fetchCampaigns: func.isRequired,
+    location: shape({ search: string }),
 };
 
 const mapStateToProps = ({

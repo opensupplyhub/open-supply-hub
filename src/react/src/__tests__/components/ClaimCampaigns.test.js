@@ -49,7 +49,7 @@ const mockCampaigns = [
     },
 ];
 
-const renderComponent = (userHasSignedIn = true) => {
+const renderComponent = (userHasSignedIn = true, props = {}) => {
     const preloadedState = {
         auth: {
             user: {
@@ -60,7 +60,7 @@ const renderComponent = (userHasSignedIn = true) => {
 
     return renderWithProviders(
         <Router history={history}>
-            <ClaimCampaigns />
+            <ClaimCampaigns {...props} />
         </Router>,
         { preloadedState },
     );
@@ -131,5 +131,49 @@ describe('ClaimCampaigns component', () => {
                 getByText(/Your account has no claims campaigns yet/),
             ).toBeInTheDocument();
         });
+    });
+
+    const mockGetByURL = ({ selfServe }) =>
+        apiRequest.get.mockImplementation(url => {
+            if (url.startsWith('/api/claim-campaigns/candidates/')) {
+                return selfServe
+                    ? Promise.resolve({ data: [] })
+                    : Promise.reject(new Error('404'));
+            }
+            return Promise.resolve({ data: mockCampaigns });
+        });
+
+    test('shows "New campaign" to brands enabled for self-serve', async () => {
+        mockGetByURL({ selfServe: true });
+
+        const { findByText } = renderComponent();
+
+        const button = await findByText('New campaign');
+        expect(button.closest('a')).toHaveAttribute(
+            'href',
+            '/claim-campaigns/new',
+        );
+    });
+
+    test('hides "New campaign" from other brands', async () => {
+        mockGetByURL({ selfServe: false });
+
+        const { findByText, queryByText } = renderComponent();
+
+        await findByText('Fresh Produce Suppliers 2026');
+        expect(queryByText('New campaign')).not.toBeInTheDocument();
+    });
+
+    test('confirms a campaign that was just created', async () => {
+        mockGetByURL({ selfServe: true });
+
+        const { findByRole } = renderComponent(true, {
+            location: { search: '?new=1' },
+        });
+
+        const banner = await findByRole('status');
+        expect(banner).toHaveTextContent(
+            'Campaign Fresh Produce Suppliers 2026 created with 2 suppliers.',
+        );
     });
 });

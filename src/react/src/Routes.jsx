@@ -40,6 +40,7 @@ import ProductionLocationInfo from './components/Contribute/ProductionLocationIn
 import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
 import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 import ClaimCampaigns from './components/ClaimCampaigns/ClaimCampaigns';
+import NewClaimCampaign from './components/ClaimCampaigns/NewClaimCampaign';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags, refreshFeatureFlags } from './actions/featureFlags';
@@ -70,6 +71,7 @@ import {
     claimIntroRoute,
     claimDetailsRoute,
     claimCampaignsRoute,
+    newClaimCampaignRoute,
     claimedFacilitiesRoute,
     CLAIM_A_FACILITY,
     CLAIM_CAMPAIGNS,
@@ -171,6 +173,20 @@ class Routes extends Component {
                                     exact
                                     path={claimIntroRoute}
                                     component={ClaimIntro}
+                                />
+                                <Route
+                                    exact
+                                    path={newClaimCampaignRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route
+                                                component={NewClaimCampaign}
+                                            />
+                                        </FeatureFlag>
+                                    )}
                                 />
                                 <Route
                                     exact

@@ -15,6 +15,18 @@ export const claimCampaignsStyles = theme =>
             color: COLOURS.DARK_GREY,
             marginBottom: '24px',
         }),
+        pageHeader: Object.freeze({
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '16px',
+        }),
+        createdBanner: Object.freeze({
+            padding: '12px 16px',
+            marginBottom: '16px',
+            borderLeft: `4px solid ${COLOURS.MATERIAL_GREEN}`,
+        }),
         campaignCard: Object.freeze({
             padding: '20px 24px',
             marginBottom: '16px',
@@ -164,6 +176,89 @@ export const claimCampaignsStyles = theme =>
             padding: '48px 16px',
             textAlign: 'center',
             color: COLOURS.DARK_GREY,
+        }),
+    });
+
+export const newClaimCampaignStyles = theme =>
+    Object.freeze({
+        container: Object.freeze({
+            maxWidth: '1072px',
+            margin: '0 auto',
+            padding: '24px 16px 64px',
+        }),
+        title: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            marginBottom: '4px',
+        }),
+        subtitle: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            marginBottom: '24px',
+        }),
+        message: Object.freeze({
+            padding: '48px 16px',
+            textAlign: 'center',
+        }),
+        stepHeading: Object.freeze({
+            fontWeight: theme.typography.fontWeightBold,
+            fontSize: '18px',
+            margin: '24px 0 8px',
+        }),
+        panel: Object.freeze({
+            padding: '16px 24px',
+        }),
+        listOption: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+        }),
+        listName: Object.freeze({
+            fontWeight: theme.typography.fontWeightMedium,
+        }),
+        publicChip: Object.freeze({
+            height: '24px',
+        }),
+        privateChip: Object.freeze({
+            height: '24px',
+            backgroundColor: COLOURS.PURPLE_TINT,
+            color: COLOURS.MATERIAL_PURPLE,
+        }),
+        toolbar: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+            marginBottom: '8px',
+        }),
+        grow: Object.freeze({
+            flexGrow: 1,
+        }),
+        tableWrap: Object.freeze({
+            overflowX: 'auto',
+            maxHeight: '480px',
+            overflowY: 'auto',
+        }),
+        country: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            marginLeft: '8px',
+        }),
+        fine: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            fontSize: '14px',
+            marginTop: '8px',
+        }),
+        createRow: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+        }),
+        nameField: Object.freeze({
+            minWidth: '320px',
+            flexGrow: 1,
+        }),
+        error: Object.freeze({
+            color: COLOURS.MATERIAL_RED,
+            marginTop: '8px',
         }),
     });
 
