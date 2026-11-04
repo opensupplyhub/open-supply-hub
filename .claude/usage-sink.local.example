@@ -1,0 +1,16 @@
+# Central usage-sink config for the skill/command/sub-agent logger.
+#
+# Easiest setup: in Claude Code run  /setup-usage-logging <link>  and it writes
+# this file for you. To do it by hand instead:
+#
+#   cp .claude/usage-sink.local.example .claude/usage-sink.local
+#   # then paste your link into OSHUB_USAGE_LOG_URL below
+#
+# This file is gitignored — the URL never reaches the (public) repo. Without it,
+# logging stays local-only; nothing breaks. The env var of the same name wins
+# over this file.
+
+# Google Apps Script web-app URL that appends to the usage Sheet. Treat it like a
+# password (never commit the real value). The link is the ONLY thing you need —
+# each user's logging identity is a random token generated automatically.
+OSHUB_USAGE_LOG_URL=
