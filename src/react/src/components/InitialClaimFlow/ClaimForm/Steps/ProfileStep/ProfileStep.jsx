@@ -137,9 +137,8 @@ const ProfileStep = ({
         certifications: certificationOptions,
     } = useClaimProfileOptions();
 
-    const isWebsiteFromAddressVerification = isAddressVerificationWebsite(
-        formData,
-    );
+    const isWebsiteFromAddressVerification =
+        isAddressVerificationWebsite(formData);
 
     useEffect(() => {
         if (onEmissionsValidationChange) {
@@ -156,10 +155,8 @@ const ProfileStep = ({
     }, [formData.sectors]);
 
     const [isOverviewVisible, setIsOverviewVisible] = useState(true);
-    const [
-        isCompanyInformationVisible,
-        setIsCompanyInformationVisible,
-    ] = useState(true);
+    const [isCompanyInformationVisible, setIsCompanyInformationVisible] =
+        useState(true);
     const [
         isOperationsCapabilitiesVisible,
         setIsOperationsCapabilitiesVisible,
@@ -176,10 +173,8 @@ const ProfileStep = ({
         }),
     });
 
-    const [
-        isFreeEmissionsEstimateVisible,
-        setIsFreeEmissionsEstimateVisible,
-    ] = useState(true);
+    const [isFreeEmissionsEstimateVisible, setIsFreeEmissionsEstimateVisible] =
+        useState(true);
 
     return (
         <div>
@@ -252,13 +247,14 @@ const ProfileStep = ({
                                 },
                             }}
                         />
-                        {touched.localLanguageName && errors.localLanguageName && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors.localLanguageName}
-                                />
-                            </div>
-                        )}
+                        {touched.localLanguageName &&
+                            errors.localLanguageName && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.localLanguageName}
+                                    />
+                                </div>
+                            )}
                     </div>
                     <div className={classes.doubleFieldContainer}>
                         <div className={classes.fieldContainer}>
@@ -525,13 +521,14 @@ const ProfileStep = ({
                                 },
                             }}
                         />
-                        {touched.parentCompanyName && errors.parentCompanyName && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors.parentCompanyName}
-                                />
-                            </div>
-                        )}
+                        {touched.parentCompanyName &&
+                            errors.parentCompanyName && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.parentCompanyName}
+                                    />
+                                </div>
+                            )}
                     </div>
                     <div className={classes.doubleFieldContainer}>
                         <div className={classes.fieldContainer}>
@@ -657,13 +654,14 @@ const ProfileStep = ({
                                 selectStyles,
                             )}
                         />
-                        {touched.officeCountryCode && errors.officeCountryCode && (
-                            <div className={classes.errorWrapStyles}>
-                                <InputErrorText
-                                    text={errors.officeCountryCode}
-                                />
-                            </div>
-                        )}
+                        {touched.officeCountryCode &&
+                            errors.officeCountryCode && (
+                                <div className={classes.errorWrapStyles}>
+                                    <InputErrorText
+                                        text={errors.officeCountryCode}
+                                    />
+                                </div>
+                            )}
                     </div>
                 </section>
             )}
@@ -1000,13 +998,14 @@ const ProfileStep = ({
                                     },
                                 }}
                             />
-                            {touched.numberOfWorkers && errors.numberOfWorkers && (
-                                <div className={classes.errorWrapStyles}>
-                                    <InputErrorText
-                                        text={errors.numberOfWorkers}
-                                    />
-                                </div>
-                            )}
+                            {touched.numberOfWorkers &&
+                                errors.numberOfWorkers && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors.numberOfWorkers}
+                                        />
+                                    </div>
+                                )}
                         </div>
                         <div className={classes.fieldContainer}>
                             <FormFieldTitle
