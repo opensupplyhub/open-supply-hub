@@ -318,36 +318,38 @@ const ListCleaningReviewDialog = ({
         activeStep = STEP.REVIEW;
         content = (
             <>
-                <Typography style={styles.heading}>
-                    A few changes would make your list more likely to be
-                    approved
-                </Typography>
-                <Typography>
-                    We checked every row. Formatting that needs no judgment was
-                    fixed automatically and is listed first, where you can undo
-                    any of it. What is left is grouped by type because the same
-                    problem usually repeats through a file. Pick a type to see
-                    its rows and accept, keep or remove them all at once, or
-                    decide row by row. Nothing changes on your list until you
-                    press Apply.
-                </Typography>
-                <div style={cardStyles.statRow}>
-                    <Stat
-                        value={summary.must_fix_pending}
-                        label="rows that need your attention"
-                    />
-                    <Stat
-                        value={summary.corrections_total}
-                        label={`suggested fixes (${summary.corrections_pending} to review)`}
-                    />
-                    <Stat
-                        value={summary.auto_fixes}
-                        label="fixes made automatically"
-                    />
-                    <Stat
-                        value={summary.list_findings}
-                        label="findings about the whole file"
-                    />
+                <div data-tour="intro">
+                    <Typography style={styles.heading}>
+                        A few changes would make your list more likely to be
+                        approved
+                    </Typography>
+                    <Typography>
+                        We checked every row. Formatting that needs no judgment
+                        was fixed automatically and is listed first, where you
+                        can undo any of it. What is left is grouped by type
+                        because the same problem usually repeats through a file.
+                        Pick a type to see its rows and accept, keep or remove
+                        them all at once, or decide row by row. Nothing changes
+                        on your list until you press Apply.
+                    </Typography>
+                    <div style={cardStyles.statRow}>
+                        <Stat
+                            value={summary.must_fix_pending}
+                            label="rows that need your attention"
+                        />
+                        <Stat
+                            value={summary.corrections_total}
+                            label={`suggested fixes (${summary.corrections_pending} to review)`}
+                        />
+                        <Stat
+                            value={summary.auto_fixes}
+                            label="fixes made automatically"
+                        />
+                        <Stat
+                            value={summary.list_findings}
+                            label="findings about the whole file"
+                        />
+                    </div>
                 </div>
                 <div style={cardStyles.disclaimer}>
                     These are automated suggestions, not decisions. You are

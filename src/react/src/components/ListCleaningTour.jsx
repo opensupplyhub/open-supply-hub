@@ -18,6 +18,16 @@ import COLOURS from '../util/COLOURS';
  */
 export const REVIEW_TOUR_STEPS = Object.freeze([
     Object.freeze({
+        anchor: 'intro',
+        scroll: 'nearest',
+        title: 'What we found in your file',
+        text:
+            'We checked every row before anyone else sees it. These ' +
+            'numbers are the short version: rows that need you, fixes ' +
+            'we suggest, and what was fixed on its own. The next few ' +
+            'steps show how to act on them without re-uploading.',
+    }),
+    Object.freeze({
         anchor: 'automatic',
         title: 'Fixed for you already',
         text:
@@ -152,7 +162,7 @@ const ListCleaningTour = ({ steps, onDone }) => {
         if (!step) return undefined;
         const el = findTarget(step.anchor);
         if (el && el.scrollIntoView) {
-            el.scrollIntoView({ block: 'center' });
+            el.scrollIntoView({ block: step.scroll || 'center' });
         }
         remeasure();
         window.addEventListener('resize', remeasure);
@@ -266,6 +276,7 @@ ListCleaningTour.propTypes = {
             anchor: string.isRequired,
             title: string.isRequired,
             text: string.isRequired,
+            scroll: string,
         }),
     ),
     onDone: func.isRequired,
