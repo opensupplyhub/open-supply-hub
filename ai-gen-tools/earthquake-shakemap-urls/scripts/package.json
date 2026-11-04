@@ -1,0 +1,8 @@
+{
+  "name": "earthquake-shakemap-urls-scripts",
+  "private": true,
+  "description": "jsdom is only needed to run verify_interactive.js against a generated page.",
+  "dependencies": {
+    "jsdom": "^25.0.0"
+  }
+}
