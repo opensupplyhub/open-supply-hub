@@ -56,14 +56,19 @@ Content-Type: application/json
 202 Accepted
 ```
 
-A repeat of a registration that already exists returns `200` with the
-existing registration rather than creating a second one. Retry safety is
-the reason: if a registration commits but the response is lost in transit,
-the issuer's only sensible move is to retry, and a conflict on that retry
-would be indistinguishable from someone else having registered a different
-resolver. `200` rather than `202` because nothing was created; a caller
-that cares can tell the two apart, and one that does not can treat both as
-success.
+An **identical** repeat of a registration that already exists returns `200`
+with the existing registration rather than creating a second one. Retry
+safety is the reason: if a registration commits but the response is lost in
+transit, the issuer's only sensible move is to retry, and a conflict on that
+retry would be indistinguishable from someone else having registered a
+different resolver. `200` rather than `202` because nothing was created; a
+caller that cares can tell the two apart, and one that does not can treat
+both as success.
+
+Identical means every field, not just `os_id` and `resolver_uri`. A repeat
+that changes `record_type`, `issuer` or `registrant_reference` is an
+attempted update, which this endpoint does not perform, and is refused with
+`409` rather than answered `200`. See the second conflict case below.
 
 ```json
 {
@@ -91,10 +96,33 @@ keeps its name so the envelope matches the established one.
 | `400` | Malformed body, or `resolver_uri` is not an absolute HTTPS URI, or it looks like a Credential URL rather than a Resolver URI |
 | `401` | Token missing or invalid |
 | `404` | Identifier not found on this instance |
-| `409` | This identifier already has a live association with a **different** Resolver URI |
+| `409` | A conflict. Either this identifier already has a live association with a **different** Resolver URI, or the same association exists with **different details**. The two cases are distinguished by the field named in `errors`; see below |
 
 Every failure leaves the member's record itself issued and gives something
 specific to retry.
+
+#### The two conflict cases
+
+`409` covers two distinct situations. Both name the offending field in
+`errors`, so a caller can tell them apart without parsing prose.
+
+**A different resolver for the same identifier.** The identifier already
+resolves somewhere else. `errors` names `resolver_uri`. An identifier
+resolves to one resolver at a time, and changing it is not self-service
+during the pilot.
+
+**The same association, with different details.** The `os_id` and
+`resolver_uri` pair is already registered, but `record_type`, `issuer` or
+`registrant_reference` differs from what is stored. `errors` names every
+field that differs. This is an attempted update; the endpoint only creates,
+so it refuses rather than reporting a change it did not make.
+
+The second case is the one worth handling deliberately. It is reached by an
+ordinary-looking retry after the registrant alters one of its own values,
+for example rotating or correcting its `issuer` identifier, and it is easy
+to mistake for the first case and tell a member their identifier was claimed
+by somebody else. It is not: nothing about their registration has changed,
+and the stored association is still live and still resolving.
 
 #### One difference from the specification worth knowing about
 
