@@ -320,11 +320,14 @@ def group_key(suggestion):
 def record_group_decisions(run, groups, user):
     """
     groups: [{'key': '<kind>:<code>:<field>', 'decision': ACCEPTED|
-              REJECTED|REMOVED|PENDING}]
+              REJECTED|REMOVED|PENDING}
+             or {'key': ..., 'reset': True}]
     One decision for every suggestion of that error type, so a contributor
     with thousands of rows can act on a pattern instead of a row. Each
     affected suggestion still gets its own logged decision. Rows the
-    contributor already decided one by one keep that decision.
+    contributor already decided one by one keep that decision; a `reset`
+    entry puts those rows back to undecided (or back to the automatic
+    fix, for an auto-applied type) so the group buttons cover them again.
     """
     allowed = {c for c, _ in ListCleaningSuggestion.DECISION_CHOICES}
     allowed.discard(ListCleaningSuggestion.EDITED)  # values differ per row
@@ -337,6 +340,16 @@ def record_group_decisions(run, groups, user):
         key = entry.get('key')
         if key not in by_key:
             raise DecisionError(f'Group {key!r} is not part of this run.')
+        if entry.get('reset'):
+            S = ListCleaningSuggestion
+            for suggestion in by_key[key]:
+                extra = suggestion.extra or {}
+                if not extra.get('by_row'):
+                    continue
+                back_to = S.ACCEPTED if extra.get('auto') else S.PENDING
+                updated.append(_apply_decision(
+                    suggestion, back_to, '', user, now, by_row=False))
+            continue
         decision = entry.get('decision')
         if decision not in allowed:
             raise DecisionError(

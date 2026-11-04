@@ -16,6 +16,7 @@ import {
 } from '../actions/facilityListCleaning';
 
 import {
+    RESET,
     RUN_STATUS,
     styles,
     Stat,
@@ -325,12 +326,19 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
     clearCleaning: () => dispatch(resetFacilityListCleaning()),
     decide: decisions =>
         dispatch(submitFacilityListCleaningDecisions(listID, decisions)),
-    // One key or a list of keys; one request either way.
+    // One key or a list of keys; one request either way. RESET is not a
+    // decision: it clears that type's row-by-row decisions.
     decideGroup: (keys, decision) =>
         dispatch(
             submitFacilityListCleaningGroupDecisions(
                 listID,
-                [].concat(keys).map(key => ({ key, decision })),
+                []
+                    .concat(keys)
+                    .map(key =>
+                        decision === RESET
+                            ? { key, reset: true }
+                            : { key, decision },
+                    ),
             ),
         ),
     apply: () => dispatch(applyFacilityListCleaning(listID)),

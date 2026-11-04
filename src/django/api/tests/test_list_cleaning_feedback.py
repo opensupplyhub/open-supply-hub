@@ -379,6 +379,20 @@ class ListCleaningFeedbackTest(APITestCase):
         # ...but a group decision can be overridden by a later one.
         country.refresh_from_db()
         self.assertFalse(country.extra.get('by_row'))
+        # A reset puts the row-by-row rows back to undecided, after which
+        # the group buttons cover them again.
+        response = self.client.post(self.url('decisions/'), {
+            'groups': [{'key': name_key, 'reset': True},
+                       {'key': name_key, 'decision': 'REJECTED'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        name.refresh_from_db()
+        self.assertEqual(name.decision, ListCleaningSuggestion.REJECTED)
+        self.assertEqual(name.decided_value, '')
+        self.assertFalse(name.extra.get('by_row'))
+        groups = {g['key']: g for g in response.data['groups']}
+        self.assertEqual(groups[name_key]['by_row'], 0)
 
         for bad in ({'key': 'nope', 'decision': 'ACCEPTED'},
                     {'key': key, 'decision': 'EDITED'}):

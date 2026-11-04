@@ -29,6 +29,10 @@ export const DECISION = Object.freeze({
     REMOVED: 'REMOVED',
 });
 
+// Not a decision: a group action that clears the row-by-row decisions
+// of that type so the ordinary group buttons cover every row again.
+export const RESET = 'RESET';
+
 export const SEVERITY = Object.freeze({
     MUST_FIX: 'must_fix',
     INTERNAL_NOTE: 'internal_note',
@@ -886,7 +890,12 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                 <div style={styles.muted}>
                     {plural(byRow, 'row')} you decided one by one{' '}
                     {byRow === 1 ? 'keeps' : 'keep'} that decision; use the
-                    row&rsquo;s own buttons to change it.
+                    row&rsquo;s own buttons to change it, or{' '}
+                    <ResetLink
+                        count={byRow}
+                        busy={busy}
+                        onClick={() => onGroup(RESET)}
+                    />
                 </div>
             )}
         </div>
@@ -898,6 +907,24 @@ GroupHeader.propTypes = {
     canAct: bool.isRequired,
     busy: bool.isRequired,
     decideGroup: func.isRequired,
+};
+
+const ResetLink = ({ count, busy, onClick }) => (
+    <Button
+        size="small"
+        color="primary"
+        disabled={busy}
+        onClick={onClick}
+        style={{ margin: '-6px 0', textTransform: 'none' }}
+    >
+        reset {count === 1 ? 'that' : `those ${count}`} and start over
+    </Button>
+);
+
+ResetLink.propTypes = {
+    count: number.isRequired,
+    busy: bool.isRequired,
+    onClick: func.isRequired,
 };
 
 /*
@@ -956,6 +983,22 @@ const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
                     Or pick a type above.
                 </span>
             </div>
+            {byRow > 0 && (
+                <div style={styles.muted}>
+                    {plural(byRow, 'row')} you decided one by one{' '}
+                    {byRow === 1 ? 'keeps' : 'keep'} that decision, or{' '}
+                    <ResetLink
+                        count={byRow}
+                        busy={busy}
+                        onClick={() =>
+                            decideGroup(
+                                groups.filter(g => g.by_row).map(g => g.key),
+                                RESET,
+                            )
+                        }
+                    />
+                </div>
+            )}
         </div>
     );
 };
