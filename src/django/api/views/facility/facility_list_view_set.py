@@ -20,6 +20,7 @@ from django.core.files.uploadedfile import (
     TemporaryUploadedFile
 )
 from django.db import transaction
+from django.http import HttpResponse
 from django.db.models import F, Q
 from django.utils import timezone
 
@@ -513,7 +514,10 @@ class FacilityListViewSet(ModelViewSet):
         ## Request Body
             {"decisions": [{"id": 12, "decision": "ACCEPTED"},
                            {"id": 13, "decision": "EDITED",
-                            "value": "1200"}]}
+                            "value": "1200"},
+                           {"id": 14, "decision": "REMOVED"}],
+             "groups": [{"key": "CORRECTION:country_code:country",
+                         "decision": "ACCEPTED"}]}
         """
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
@@ -523,11 +527,21 @@ class FacilityListViewSet(ModelViewSet):
             raise ValidationError(
                 'Suggestions can only be acted on while the list is '
                 'pending moderation.')
-        decisions = request.data.get('decisions')
-        if not isinstance(decisions, list) or not decisions:
-            raise ValidationError('"decisions" must be a non-empty list.')
+        decisions = request.data.get('decisions') or []
+        groups = request.data.get('groups') or []
+        if not isinstance(decisions, list) or not isinstance(groups, list):
+            raise ValidationError('"decisions" and "groups" must be lists.')
+        if not decisions and not groups:
+            raise ValidationError(
+                'Send "decisions" (per suggestion) or "groups" (per error '
+                'type), or both.')
         try:
-            list_cleaning.record_decisions(run, decisions, request.user)
+            if decisions:
+                list_cleaning.record_decisions(
+                    run, decisions, request.user)
+            if groups:
+                list_cleaning.record_group_decisions(
+                    run, groups, request.user)
         except list_cleaning.DecisionError as e:
             raise ValidationError(str(e))
         return Response(serialize_run(
@@ -549,6 +563,23 @@ class FacilityListViewSet(ModelViewSet):
             run, include_internal=request.user.is_superuser)
         data['applied'] = counts
         return Response(data)
+
+    @action(detail=True, methods=['get'], url_path='cleaning/download')
+    def cleaning_download(self, request, pk=None):
+        """
+        The list as it now stands, as CSV: original columns, current
+        values, removed rows at the end tagged with the reason.
+        """
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None or run.status != ListCleaningRun.COMPLETE:
+            raise ValidationError('There is no completed run for this list.')
+        body = list_cleaning.build_fixed_csv(run)
+        stem = os.path.splitext(facility_list.file_name or 'list')[0]
+        response = HttpResponse(body, content_type='text/csv')
+        response['Content-Disposition'] = (
+            f'attachment; filename="{stem}-fixed.csv"')
+        return response
 
     @transaction.atomic
     @action(detail=True, methods=['post'],

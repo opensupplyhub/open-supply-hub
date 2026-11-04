@@ -23,11 +23,82 @@ class ListCleaningRunSerializer(ModelSerializer):
                   'completed_at', 'applied_at')
 
 
+GROUP_EXAMPLES = 3
+
+
+def _group_key(s):
+    return f'{s.kind}:{s.code}:{s.field}'
+
+
+def _group_order(group):
+    """Must-fix flags first, then removals, then corrections; within
+    those, groups with pending decisions before settled ones."""
+    S = ListCleaningSuggestion
+    kind_rank = {S.ISSUE: 0, S.REMOVAL: 1, S.CORRECTION: 2}
+    if group['severity'] == S.INTERNAL_NOTE:
+        return (9, 0, -group['count'])
+    return (kind_rank.get(group['kind'], 3), 0 if group['pending'] else 1,
+            -group['count'])
+
+
+def serialize_groups(suggestions):
+    """
+    One entry per error type (kind + code + field) across the whole list,
+    with counts per decision and a few example rows, so a contributor
+    can act on a pattern instead of scrolling every row.
+    """
+    S = ListCleaningSuggestion
+    groups = {}
+    for s in suggestions:
+        key = _group_key(s)
+        g = groups.get(key)
+        if g is None:
+            g = groups[key] = {
+                'key': key,
+                'kind': s.kind,
+                'code': s.code,
+                'field': s.field,
+                'severity': s.severity,
+                'count': 0,
+                'pending': 0,
+                'accepted': 0,
+                'rejected': 0,
+                'edited': 0,
+                'removed': 0,
+                'applied': 0,
+                'rows': [],
+                'examples': [],
+            }
+        g['count'] += 1
+        g['rows'].append(s.row_number)
+        if s.decision == S.PENDING:
+            g['pending'] += 1
+        elif s.decision == S.ACCEPTED:
+            g['accepted'] += 1
+        elif s.decision == S.REJECTED:
+            g['rejected'] += 1
+        elif s.decision == S.EDITED:
+            g['edited'] += 1
+        elif s.decision == S.REMOVED:
+            g['removed'] += 1
+        if s.applied or (s.extra or {}).get('removal_applied'):
+            g['applied'] += 1
+        if len(g['examples']) < GROUP_EXAMPLES:
+            g['examples'].append({
+                'row_number': s.row_number,
+                'original_value': s.original_value,
+                'corrected_value': s.corrected_value,
+                'note': s.note,
+            })
+    return sorted(groups.values(), key=_group_order)
+
+
 def serialize_run(run, include_internal=False):
     """
-    The payload the list items page renders: the run, a summary, and the
-    suggestions grouped by row. internal_note issues are only included for
-    moderators (include_internal=True); contributors never see them.
+    The payload the list items page renders: the run, a summary, the
+    suggestions grouped by error type, and the suggestions grouped by row.
+    internal_note issues are only included for moderators
+    (include_internal=True); contributors never see them.
     """
     suggestions = list(
         run.suggestions.select_related('facility_list_item').all())
@@ -54,10 +125,26 @@ def serialize_run(run, include_internal=False):
             rows[s.row_number] = row
         row['suggestions'].append(ListCleaningSuggestionSerializer(s).data)
 
-    corrections = [s for s in suggestions
-                   if s.kind == ListCleaningSuggestion.CORRECTION]
-    must_fix_rows = {s.row_number for s in suggestions
-                     if s.severity == ListCleaningSuggestion.MUST_FIX}
+    S = ListCleaningSuggestion
+    corrections = [s for s in suggestions if s.kind == S.CORRECTION]
+    must_fix = [s for s in suggestions if s.severity == S.MUST_FIX]
+    must_fix_rows = {s.row_number for s in must_fix}
+    removed_rows = {
+        s.row_number for s in suggestions
+        if s.decision == S.REMOVED
+        or (s.kind == S.REMOVAL and s.decision == S.ACCEPTED)}
+    # Everything the contributor has decided that is not yet on the list.
+    changes_unapplied = len([
+        s for s in suggestions
+        if (s.decision in (S.ACCEPTED, S.EDITED) and s.kind != S.ISSUE
+            and not s.applied)
+        or (s.decision == S.EDITED and s.kind == S.ISSUE and not s.applied)
+        or ((s.decision == S.REMOVED
+             or (s.kind == S.REMOVAL and s.decision == S.ACCEPTED))
+            and not (s.extra or {}).get('removal_applied'))
+        or (s.decision in (S.REJECTED, S.PENDING) and (
+            s.applied or (s.extra or {}).get('removal_applied')))
+    ])
     file_pass = run.file_pass or {}
     summary = {
         'rows_must_fix': len(must_fix_rows),
@@ -78,8 +165,17 @@ def serialize_run(run, include_internal=False):
              if s.decision in (ListCleaningSuggestion.ACCEPTED,
                                ListCleaningSuggestion.EDITED)
              and not s.applied]),
+        'must_fix_total': len(must_fix),
+        # A flag on a row the contributor removed no longer needs fixing.
+        'must_fix_pending': len(
+            [s for s in must_fix if s.decision == S.PENDING
+             and s.row_number not in removed_rows]),
+        'must_fix_resolved': len(
+            [s for s in must_fix if s.decision in (S.EDITED, S.REMOVED)]),
         'removals': len([s for s in suggestions
                          if s.kind == ListCleaningSuggestion.REMOVAL]),
+        'rows_removed': len(removed_rows),
+        'changes_unapplied': changes_unapplied,
         'internal_notes': len(
             [s for s in suggestions
              if s.severity == ListCleaningSuggestion.INTERNAL_NOTE]),
@@ -93,5 +189,6 @@ def serialize_run(run, include_internal=False):
     return {
         'run': ListCleaningRunSerializer(run).data,
         'summary': summary,
+        'groups': serialize_groups(suggestions),
         'rows': sorted(rows.values(), key=lambda r: r['row_number']),
     }

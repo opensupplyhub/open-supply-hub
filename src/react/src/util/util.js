@@ -190,6 +190,8 @@ export const makeFacilityListCleaningDecisionsURL = listID =>
     `/api/facility-lists/${listID}/cleaning/decisions/`;
 export const makeFacilityListCleaningApplyURL = listID =>
     `/api/facility-lists/${listID}/cleaning/apply/`;
+export const makeFacilityListCleaningDownloadURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/download/`;
 export const makeDashboardFacilityListsURL = () => '/api/admin-facility-lists/';
 
 export const makeDashboardApiBlocksURL = () => '/api/api-blocks/';

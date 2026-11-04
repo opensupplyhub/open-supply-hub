@@ -1,11 +1,15 @@
 from .service import (  # noqa: F401
+    REMOVAL_TAG_COLUMN,
     SWITCH_NAME,
     DecisionError,
     apply_run,
+    build_fixed_csv,
     build_payload,
     feature_enabled,
+    group_key,
     ingest_result,
     record_decisions,
+    record_group_decisions,
     refresh_run,
     start_run,
 )

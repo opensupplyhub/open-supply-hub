@@ -279,15 +279,104 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(first.address,
                          '36 Tay Thanh Street, Ho Chi Minh City, Vietnam')
 
-    def test_issue_cannot_be_decided(self):
+    def test_flagged_row_cannot_be_accepted_but_can_be_fixed_or_removed(
+            self):
         run = self._ingested_run()
-        issue = run.suggestions.filter(kind=ListCleaningSuggestion.ISSUE,
-                                       severity='must_fix').first()
+        issue = run.suggestions.get(kind=ListCleaningSuggestion.ISSUE,
+                                    severity='must_fix')
         self.client.force_login(self.user)
         response = self.client.post(self.url('decisions/'), {
             'decisions': [{'id': issue.id, 'decision': 'ACCEPTED'}]},
             format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # fix the flagged address in place, without re-uploading
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': issue.id, 'decision': 'EDITED',
+                           'value': '41 Mirpur Road, Dhaka'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        self.assertEqual(response.data['summary']['must_fix_resolved'], 1)
+        self.assertEqual(response.data['summary']['must_fix_pending'], 0)
+        apply_run(run)
+        second = FacilityListItem.objects.get(pk=self.items[1].id)
+        self.assertEqual(second.address, '41 Mirpur Road, Dhaka')
+        self.assertEqual(second.raw_json['address'], '41 Mirpur Road, Dhaka')
+
+        # change of mind: drop the row instead
+        self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': issue.id, 'decision': 'REMOVED'}]},
+            format='json')
+        counts = apply_run(run)
+        second.refresh_from_db()
+        self.assertEqual(second.status, FacilityListItem.ITEM_REMOVED)
+        # the edit was undone and the row dropped
+        self.assertEqual(second.address, 'PO Box 41, Dhaka')
+        self.assertEqual(counts, {'applied': 1, 'reverted': 1})
+
+        # and back again: leave the row as it was uploaded
+        self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': issue.id, 'decision': 'REJECTED'}]},
+            format='json')
+        counts = apply_run(run)
+        second.refresh_from_db()
+        self.assertEqual(second.status, FacilityListItem.PARSED)
+        self.assertEqual(counts, {'applied': 0, 'reverted': 1})
+
+    def test_group_decisions_cover_every_row_of_that_error_type(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.get(self.url())
+        groups = {g['key']: g for g in response.data['groups']}
+        key = 'CORRECTION:country_code:country'
+        self.assertIn(key, groups)
+        self.assertEqual(groups[key]['count'], 1)
+        self.assertEqual(groups[key]['accepted'], 1)  # silent code
+        self.assertEqual(groups[key]['examples'][0]['corrected_value'],
+                         'VN')
+        # must-fix flags sort first so the contributor sees them first
+        self.assertEqual(response.data['groups'][0]['kind'],
+                         ListCleaningSuggestion.ISSUE)
+
+        response = self.client.post(self.url('decisions/'), {
+            'groups': [{'key': key, 'decision': 'REJECTED'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        country = run.suggestions.get(field='country')
+        self.assertEqual(country.decision, ListCleaningSuggestion.REJECTED)
+        self.assertEqual(country.decided_by, self.user)
+
+        for bad in ({'key': 'nope', 'decision': 'ACCEPTED'},
+                    {'key': key, 'decision': 'EDITED'}):
+            response = self.client.post(self.url('decisions/'), {
+                'groups': [bad]}, format='json')
+            self.assertEqual(response.status_code,
+                             status.HTTP_400_BAD_REQUEST, bad)
+
+    def test_fixed_list_download_puts_removed_rows_last_with_a_tag(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        removal = run.suggestions.get(kind=ListCleaningSuggestion.REMOVAL)
+        self.client.post(self.url('decisions/'), {'decisions': [
+            {'id': removal.id, 'decision': 'ACCEPTED'}]}, format='json')
+        self.client.post(self.url('apply/'), {}, format='json')
+
+        response = self.client.get(self.url('download/'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'text/csv')
+        self.assertIn('-fixed.csv', response['Content-Disposition'])
+        lines = response.content.decode('utf-8').splitlines()
+        self.assertEqual(
+            lines[0],
+            'country,name,address,number_of_workers,os_hub_cleaning')
+        self.assertEqual(len(lines), 4)
+        # the accepted worker-count fix is in the file, the row order kept
+        self.assertTrue(lines[1].startswith('VN,Thanh Cong Textile,'))
+        self.assertIn(',1200,', lines[1])
+        self.assertTrue(lines[2].startswith('Bangladesh,'))
+        self.assertTrue(lines[3].endswith(',removed: duplicate of row 2'))
 
     def test_decisions_blocked_once_list_is_not_pending(self):
         run = self._ingested_run()

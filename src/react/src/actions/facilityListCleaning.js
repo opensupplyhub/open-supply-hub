@@ -51,7 +51,9 @@ export function fetchFacilityListCleaning(listID, { silent = false } = {}) {
 
         return apiRequest
             .get(makeFacilityListCleaningURL(listID))
-            .then(({ data }) => dispatch(completeFetchFacilityListCleaning(data)))
+            .then(({ data }) =>
+                dispatch(completeFetchFacilityListCleaning(data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
@@ -70,7 +72,9 @@ export function startFacilityListCleaningRun(listID) {
 
         return apiRequest
             .post(makeFacilityListCleaningStartURL(listID), {})
-            .then(({ data }) => dispatch(completeFetchFacilityListCleaning(data)))
+            .then(({ data }) =>
+                dispatch(completeFetchFacilityListCleaning(data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
@@ -110,13 +114,36 @@ export function applyFacilityListCleaning(listID) {
 
         return apiRequest
             .post(makeFacilityListCleaningApplyURL(listID), {})
-            .then(({ data }) => dispatch(completeApplyFacilityListCleaning(data)))
+            .then(({ data }) =>
+                dispatch(completeApplyFacilityListCleaning(data)),
+            )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented applying the changes to your list',
                         failApplyFacilityListCleaning,
+                    ),
+                ),
+            );
+    };
+}
+
+export function submitFacilityListCleaningGroupDecisions(listID, groups) {
+    return dispatch => {
+        dispatch(startSubmitFacilityListCleaningDecisions());
+
+        return apiRequest
+            .post(makeFacilityListCleaningDecisionsURL(listID), { groups })
+            .then(({ data }) =>
+                dispatch(completeSubmitFacilityListCleaningDecisions(data)),
+            )
+            .catch(err =>
+                dispatch(
+                    logErrorAndDispatchFailure(
+                        err,
+                        'An error prevented saving your decisions',
+                        failSubmitFacilityListCleaningDecisions,
                     ),
                 ),
             );

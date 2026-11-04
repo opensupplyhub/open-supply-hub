@@ -16,6 +16,7 @@ import {
     fetchFacilityListCleaning,
     resetFacilityListCleaning,
     submitFacilityListCleaningDecisions,
+    submitFacilityListCleaningGroupDecisions,
     applyFacilityListCleaning,
 } from '../actions/facilityListCleaning';
 
@@ -24,7 +25,8 @@ import {
     styles as cardStyles,
     Stat,
     ListFindings,
-    SuggestionRows,
+    GroupList,
+    DownloadFixedList,
 } from './FacilityListCleaningSuggestions';
 
 import COLOURS from '../util/COLOURS';
@@ -164,16 +166,23 @@ const Clean = ({ onContinue }) => (
 
 Clean.propTypes = { onContinue: func.isRequired };
 
-const Done = ({ summary, lastApplied, skipped, onContinue }) => (
+const Done = ({ listID, summary, lastApplied, skipped, onContinue }) => (
     <div style={styles.centred}>
         <Typography style={styles.heading}>
-            {skipped ? 'No fixes applied' : 'Fixes applied to your list'}
+            {skipped ? 'No changes applied' : 'Your list has been updated'}
         </Typography>
         {!skipped && lastApplied && (
             <Typography>
                 {lastApplied.applied}{' '}
-                {lastApplied.applied === 1 ? 'fix was' : 'fixes were'} applied
-                to your list. The original values are kept with your file.
+                {lastApplied.applied === 1 ? 'change was' : 'changes were'}{' '}
+                applied to your list
+                {summary.rows_removed
+                    ? `, including ${summary.rows_removed} ${
+                          summary.rows_removed === 1 ? 'row' : 'rows'
+                      } removed`
+                    : ''}
+                . The original values are kept with your uploaded file, and a
+                moderator will review the list as usual.
             </Typography>
         )}
         {skipped && (
@@ -182,25 +191,29 @@ const Done = ({ summary, lastApplied, skipped, onContinue }) => (
                 suggestions on your list page.
             </Typography>
         )}
-        {summary.rows_must_fix > 0 && (
+        {summary.must_fix_pending > 0 && (
             <Typography>
-                {summary.rows_must_fix}{' '}
-                {summary.rows_must_fix === 1
+                {summary.must_fix_pending}{' '}
+                {summary.must_fix_pending === 1
                     ? 'row still needs'
                     : 'rows still need'}{' '}
-                your attention. Fix those in your file and upload it again, or
-                wait for the moderator to get in touch.
+                your attention. You can fix or remove them from your list page
+                at any time before a moderator reviews the list.
             </Typography>
         )}
-        <Button variant="contained" color="primary" onClick={onContinue}>
-            Go to my list
-        </Button>
+        <div style={styles.actions}>
+            <DownloadFixedList listID={listID} applied={!skipped} />
+            <Button variant="contained" color="primary" onClick={onContinue}>
+                Go to my list
+            </Button>
+        </div>
     </div>
 );
 
 Done.defaultProps = { lastApplied: null };
 
 Done.propTypes = {
+    listID: number.isRequired,
     summary: object.isRequired,
     lastApplied: object,
     skipped: bool.isRequired,
@@ -220,6 +233,7 @@ const ListCleaningReviewDialog = ({
     fetchCleaning,
     clearCleaning,
     decide,
+    decideGroup,
     apply,
 }) => {
     const [openedAt, setOpenedAt] = useState(null);
@@ -281,6 +295,7 @@ const ListCleaningReviewDialog = ({
         activeStep = STEP.DONE;
         content = (
             <Done
+                listID={listID}
                 summary={summary}
                 lastApplied={lastApplied}
                 skipped={finished === 'skipped'}
@@ -295,12 +310,19 @@ const ListCleaningReviewDialog = ({
         content = (
             <>
                 <Typography style={styles.heading}>
-                    We found some things to check before your list goes to a
-                    moderator
+                    A few changes would make your list more likely to be
+                    approved
+                </Typography>
+                <Typography>
+                    We checked every row. The findings are grouped by type
+                    because the same problem usually repeats through a file:
+                    accept or reject a whole group, or open its rows to decide
+                    one by one. Rows we could not fix can be corrected or
+                    removed right here, with no need to upload again.
                 </Typography>
                 <div style={cardStyles.statRow}>
                     <Stat
-                        value={summary.rows_must_fix}
+                        value={summary.must_fix_pending}
                         label="rows that need your attention"
                     />
                     <Stat
@@ -320,17 +342,18 @@ const ListCleaningReviewDialog = ({
                     These are automated suggestions, not decisions. You are
                     responsible for the data you submit: accept a fix only if it
                     is correct for that facility. Facility names and addresses
-                    are never changed automatically. Rows that need your
-                    attention cannot be fixed here; correct them in your file
-                    and upload it again. A moderator will still review the list
-                    before anything is published.
+                    are never changed automatically. A moderator will still
+                    review the list before anything is published, and applying
+                    these changes makes approval more likely.
                 </div>
                 <ListFindings filePass={run.file_pass || {}} />
-                <SuggestionRows
+                <GroupList
+                    groups={data.groups || []}
                     rows={rows}
                     canAct
                     busy={busy}
                     decide={decide}
+                    decideGroup={decideGroup}
                 />
                 <div style={styles.actions}>
                     {(submitError || applyError) && (
@@ -339,6 +362,10 @@ const ListCleaningReviewDialog = ({
                         </Typography>
                     )}
                     {busy && <CircularProgress size={22} />}
+                    <DownloadFixedList
+                        listID={listID}
+                        applied={!!run.applied_at}
+                    />
                     <Button
                         color="primary"
                         disabled={busy}
@@ -349,11 +376,11 @@ const ListCleaningReviewDialog = ({
                     <Button
                         variant="contained"
                         color="primary"
-                        disabled={busy || summary.corrections_unapplied === 0}
+                        disabled={busy || summary.changes_unapplied === 0}
                         onClick={apply}
                     >
-                        Apply {summary.corrections_unapplied} accepted{' '}
-                        {summary.corrections_unapplied === 1 ? 'fix' : 'fixes'}{' '}
+                        Apply {summary.changes_unapplied}{' '}
+                        {summary.changes_unapplied === 1 ? 'change' : 'changes'}{' '}
                         and continue
                     </Button>
                 </div>
@@ -410,6 +437,7 @@ ListCleaningReviewDialog.propTypes = {
     fetchCleaning: func.isRequired,
     clearCleaning: func.isRequired,
     decide: func.isRequired,
+    decideGroup: func.isRequired,
     apply: func.isRequired,
 };
 
@@ -437,6 +465,12 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
     clearCleaning: () => dispatch(resetFacilityListCleaning()),
     decide: decisions =>
         dispatch(submitFacilityListCleaningDecisions(listID, decisions)),
+    decideGroup: (key, decision) =>
+        dispatch(
+            submitFacilityListCleaningGroupDecisions(listID, [
+                { key, decision },
+            ]),
+        ),
     apply: () => dispatch(applyFacilityListCleaning(listID)),
 });
 

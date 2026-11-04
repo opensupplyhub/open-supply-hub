@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { bool, func, object, shape } from 'prop-types';
+import { bool, func, number, object, shape } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -10,6 +10,7 @@ import {
     fetchFacilityListCleaning,
     resetFacilityListCleaning,
     submitFacilityListCleaningDecisions,
+    submitFacilityListCleaningGroupDecisions,
     applyFacilityListCleaning,
     startFacilityListCleaningRun,
 } from '../actions/facilityListCleaning';
@@ -19,12 +20,14 @@ import {
     styles,
     Stat,
     ListFindings,
-    SuggestionRows,
+    GroupList,
+    DownloadFixedList,
 } from './FacilityListCleaningSuggestions';
 
 const POLL_INTERVAL_MS = 15000;
 
 const FacilityListCleaningPanel = ({
+    listID,
     isAdminUser,
     canAct,
     data,
@@ -39,6 +42,7 @@ const FacilityListCleaningPanel = ({
     pollCleaning,
     clearCleaning,
     decide,
+    decideGroup,
     apply,
     startRun,
 }) => {
@@ -169,7 +173,7 @@ const FacilityListCleaningPanel = ({
                 <>
                     <div style={styles.statRow}>
                         <Stat
-                            value={summary.rows_must_fix}
+                            value={summary.must_fix_pending}
                             label="rows that need your attention"
                         />
                         <Stat
@@ -194,17 +198,21 @@ const FacilityListCleaningPanel = ({
                     <div style={styles.disclaimer}>
                         These are automated suggestions, not decisions. You are
                         responsible for the data you submit: accept a fix only
-                        if it is correct for that facility, and fix rows that
-                        need your attention in your file. Facility names and
-                        addresses are never changed automatically. A moderator
-                        will still review the list before anything is published.
+                        if it is correct for that facility. Rows we could not
+                        fix can be corrected or removed here, with no need to
+                        upload again. Facility names and addresses are never
+                        changed automatically. A moderator will still review the
+                        list before anything is published, and applying these
+                        changes makes approval more likely.
                     </div>
                     <ListFindings filePass={run.file_pass || {}} />
-                    <SuggestionRows
+                    <GroupList
+                        groups={data.groups || []}
                         rows={rows}
                         canAct={canAct}
                         busy={busy}
                         decide={decide}
+                        decideGroup={decideGroup}
                     />
                     <div style={styles.footer}>
                         {canAct && (
@@ -212,17 +220,21 @@ const FacilityListCleaningPanel = ({
                                 variant="contained"
                                 color="primary"
                                 disabled={
-                                    busy || summary.corrections_unapplied === 0
+                                    busy || summary.changes_unapplied === 0
                                 }
                                 onClick={apply}
                             >
-                                Apply {summary.corrections_unapplied} accepted{' '}
-                                {summary.corrections_unapplied === 1
-                                    ? 'fix'
-                                    : 'fixes'}{' '}
+                                Apply {summary.changes_unapplied}{' '}
+                                {summary.changes_unapplied === 1
+                                    ? 'change'
+                                    : 'changes'}{' '}
                                 to my list
                             </Button>
                         )}
+                        <DownloadFixedList
+                            listID={listID}
+                            applied={!!run.applied_at}
+                        />
                         {busy && <CircularProgress size={22} />}
                         {run.applied_at && (
                             <Typography style={styles.muted}>
@@ -260,6 +272,7 @@ FacilityListCleaningPanel.defaultProps = {
 };
 
 FacilityListCleaningPanel.propTypes = {
+    listID: number.isRequired,
     isAdminUser: bool.isRequired,
     canAct: bool.isRequired,
     data: shape({
@@ -278,6 +291,7 @@ FacilityListCleaningPanel.propTypes = {
     pollCleaning: func.isRequired,
     clearCleaning: func.isRequired,
     decide: func.isRequired,
+    decideGroup: func.isRequired,
     apply: func.isRequired,
     startRun: func.isRequired,
 };
@@ -311,6 +325,12 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
     clearCleaning: () => dispatch(resetFacilityListCleaning()),
     decide: decisions =>
         dispatch(submitFacilityListCleaningDecisions(listID, decisions)),
+    decideGroup: (key, decision) =>
+        dispatch(
+            submitFacilityListCleaningGroupDecisions(listID, [
+                { key, decision },
+            ]),
+        ),
     apply: () => dispatch(applyFacilityListCleaning(listID)),
     startRun: () => dispatch(startFacilityListCleaningRun(listID)),
 });

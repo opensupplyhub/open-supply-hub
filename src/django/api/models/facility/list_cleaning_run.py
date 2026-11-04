@@ -106,11 +106,13 @@ class ListCleaningSuggestion(models.Model):
     ACCEPTED = 'ACCEPTED'
     REJECTED = 'REJECTED'
     EDITED = 'EDITED'
+    REMOVED = 'REMOVED'  # contributor chose to drop the row instead
     DECISION_CHOICES = (
         (PENDING, PENDING),
         (ACCEPTED, ACCEPTED),
         (REJECTED, REJECTED),
         (EDITED, EDITED),
+        (REMOVED, REMOVED),
     )
 
     # Fields the pipeline may flag but must never change (handoff §2,
