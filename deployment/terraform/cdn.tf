@@ -14,7 +14,7 @@ locals {
       # Identity record registration lives under this prefix. Guarded
       # here rather than in its own behavior so the ordering of the
       # api_cache_behaviors list, which decides precedence, is unchanged.
-      viewer_request_function_arn = length(var.identity_record_allowlist) > 0 ? aws_cloudfront_function.identity_record_allowlist[0].arn : null
+      viewer_request_function_arn = length(var.identity_record_allowlist) > 0 ? aws_cloudfront_function.identity_record_allowlist.arn : null
     },
     {
       path_pattern                = "api/partner-field-groups/*"
@@ -174,8 +174,13 @@ resource "aws_cloudfront_function" "homepage_uri_rewrite" {
 # register against. The OS ID is in the URL path, so the check needs
 # neither the request body nor an application change.
 #
+# Created unconditionally rather than alongside the allowlist. CloudFront
+# refuses to delete a function still associated with a distribution, and
+# terraform does not order the detach before the delete, so emptying the
+# allowlist used to fail the apply with FunctionInUse and leave the
+# environment half-changed. A published function attached to nothing costs
+# nothing and runs on no request, so only the association is conditional.
 resource "aws_cloudfront_function" "identity_record_allowlist" {
-  count   = length(var.identity_record_allowlist) > 0 ? 1 : 0
   name    = "func${local.short}IdentityRecordAllowlist"
   runtime = "cloudfront-js-1.0"
   publish = true
