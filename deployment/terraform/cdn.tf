@@ -174,12 +174,10 @@ resource "aws_cloudfront_function" "homepage_uri_rewrite" {
 # register against. The OS ID is in the URL path, so the check needs
 # neither the request body nor an application change.
 #
-# Created unconditionally rather than alongside the allowlist. CloudFront
-# refuses to delete a function still associated with a distribution, and
-# terraform does not order the detach before the delete, so emptying the
-# allowlist used to fail the apply with FunctionInUse and leave the
-# environment half-changed. A published function attached to nothing costs
-# nothing and runs on no request, so only the association is conditional.
+# Created unconditionally because CloudFront refuses to delete a function
+# still attached to a distribution, and terraform does not order the
+# detach first. Only the association is conditional; a function attached
+# to nothing is inert.
 resource "aws_cloudfront_function" "identity_record_allowlist" {
   name    = "func${local.short}IdentityRecordAllowlist"
   runtime = "cloudfront-js-1.0"
