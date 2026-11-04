@@ -37,10 +37,24 @@ const MAPPED_APPAREL = {
     ],
 };
 
-const data = ({ isic4 = [], isic5 = [], mapped = [], types = [] } = {}) => ({
+const MAPPED_MINING = {
+    sector: 'Mining',
+    facility_type: '',
+    processing_type: '',
+    path: [{ level: 'section', code: 'B', title: 'Mining and quarrying' }],
+};
+
+const data = ({
+    isic4 = [],
+    isic5 = [],
+    mapped = [],
+    types = [],
+    sectors = [],
+} = {}) => ({
     properties: {
         extended_fields: { isic_4: isic4, isic_5: isic5, processing_type: types },
         isic_4_mapped: mapped,
+        sector: sectors,
     },
 });
 
@@ -124,6 +138,32 @@ describe('Industry Classification fields', () => {
         });
     });
 
+    test('values mapped from a sector date from the latest sector or type', () => {
+        const date = input =>
+            fieldsByLabel(input)['ISIC Rev. 4'].drawerData.promotedContribution.date;
+
+        expect(
+            date(
+                data({
+                    mapped: [MAPPED_MINING],
+                    sectors: [
+                        { updated_at: '2026-03-01T00:00:00Z' },
+                        { updated_at: '2026-05-01T00:00:00Z' },
+                    ],
+                }),
+            ),
+        ).toBe('2026-05-01T00:00:00Z');
+        expect(
+            date(
+                data({
+                    mapped: [MAPPED_MINING, MAPPED_APPAREL],
+                    sectors: [{ updated_at: '2026-03-01T00:00:00Z' }],
+                    types: [{ created_at: '2026-07-09T00:00:00Z' }],
+                }),
+            ),
+        ).toBe('2026-07-09T00:00:00Z');
+    });
+
     test('a location with only Open Supply Hub values shows them like any value', () => {
         const isic4 = fieldsByLabel(data({ mapped: [MAPPED_APPAREL, MAPPED_APPAREL] }))[
             'ISIC Rev. 4'
@@ -132,6 +172,76 @@ describe('Industry Classification fields', () => {
         expect(isic4.value).toBe('14 · Manufacture of wearing apparel');
         expect(isic4.contributorName).toBe('Open Supply Hub');
         expect(isic4.drawerData.contributions).toEqual([]);
+    });
+
+    test('among values that tie, the more specific one is shown', () => {
+        const shown = input => fieldsByLabel(input)['ISIC Rev. 4'].value;
+        const manufacturing = { section: 'C - Manufacturing' };
+
+        expect(shown(data({ isic4: [submitted([manufacturing, KNITTED])] }))).toBe(
+            '1430 · Manufacture of knitted and crocheted apparel',
+        );
+        expect(
+            shown(
+                data({
+                    isic4: [
+                        submitted(manufacturing),
+                        submitted(KNITTED, { contributor_name: 'Contributor B' }),
+                    ],
+                }),
+            ),
+        ).toBe('1430 · Manufacture of knitted and crocheted apparel');
+        expect(shown(data({ mapped: [MAPPED_MINING, MAPPED_APPAREL] }))).toBe(
+            '14 · Manufacture of wearing apparel',
+        );
+    });
+
+    test('specificity only breaks ties: claim, agreement and date come first', () => {
+        const shown = input => fieldsByLabel(input)['ISIC Rev. 4'].value;
+        const manufacturing = { section: 'C - Manufacturing' };
+        const precise = overrides =>
+            submitted(KNITTED, { contributor_name: 'Contributor B', ...overrides });
+
+        expect(
+            shown(
+                data({
+                    isic4: [
+                        submitted(manufacturing, { is_from_claim: true }),
+                        precise(),
+                    ],
+                }),
+            ),
+        ).toBe('C · Manufacturing');
+        expect(
+            shown(
+                data({
+                    isic4: [
+                        submitted(manufacturing, { value_count: 2 }),
+                        precise(),
+                    ],
+                }),
+            ),
+        ).toBe('C · Manufacturing');
+        expect(
+            shown(
+                data({
+                    isic4: [
+                        submitted(manufacturing, {
+                            created_at: '2026-05-01T00:00:00Z',
+                        }),
+                        precise(),
+                    ],
+                }),
+            ),
+        ).toBe('C · Manufacturing');
+        expect(
+            shown(
+                data({
+                    isic4: [submitted(manufacturing)],
+                    mapped: [MAPPED_APPAREL],
+                }),
+            ),
+        ).toBe('C · Manufacturing');
     });
 
     test('a path joins codes and titles with ›', () => {

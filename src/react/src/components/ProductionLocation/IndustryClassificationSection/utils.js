@@ -1,5 +1,6 @@
 import get from 'lodash/get';
 import maxBy from 'lodash/maxBy';
+import sortBy from 'lodash/sortBy';
 import uniqBy from 'lodash/uniqBy';
 
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from '../DataPoint/constants';
@@ -11,8 +12,10 @@ location has data under. Codes are shown, always inside their revision's
 field, since the same code can mean different things in ISIC 4 and ISIC 5.
 The profile shows the code and title of the level reported; the side panel
 shows the full path. Open Supply Hub contributes ISIC 4 values mapped from
-the location's Location Type and Processing Type (OSDEV-3382); they rank
-after values organizations submitted.
+the location's Location Type, Processing Type and Sector (OSDEV-3382); they
+rank after values organizations submitted. Values keep the API's order
+(claim, agreement, most recent); among values that tie on it, the more
+specific one (more levels) ranks first. Other fields don't use this rule.
 */
 
 export const OPEN_SUPPLY_HUB = 'Open Supply Hub';
@@ -46,25 +49,65 @@ const toSubmitted = item => {
     }));
 };
 
-const submittedValues = (data, fieldName) =>
-    uniqBy(
-        get(data, `properties.extended_fields.${fieldName}`, [])
-            .flatMap(toSubmitted)
-            .filter(value => value.path.length),
+// The API's sort key for a contribution; contributions with the same key tie.
+const sortKey = item =>
+    [
+        item.verified_count ?? 0,
+        Boolean(item.is_from_claim),
+        item.value_count ?? 1,
+        item.created_at ?? item.updated_at ?? '',
+    ].join('\u0000');
+
+const depth = value => -value.path.length;
+
+const submittedValues = (data, fieldName) => {
+    let rank = -1;
+    let previousKey;
+    const values = get(
+        data,
+        `properties.extended_fields.${fieldName}`,
+        [],
+    ).flatMap(item => {
+        const key = sortKey(item);
+        if (key !== previousKey) {
+            rank += 1;
+            previousKey = key;
+        }
+        return toSubmitted(item).map(value => ({ ...value, rank }));
+    });
+    return uniqBy(
+        sortBy(
+            values.filter(value => value.path.length),
+            ['rank', depth],
+        ),
         value => `${pathKey(value.path)}\u0000${value.sourceName}`,
     );
+};
 
-// Open Supply Hub's values date from the latest Location Type or Processing
-// Type they were mapped from.
+// Open Supply Hub's values date from the latest Location Type, Processing
+// Type or Sector they were mapped from.
 const mappedValues = data => {
-    const sources = ['facility_type', 'processing_type'].flatMap(field =>
-        get(data, `properties.extended_fields.${field}`, []),
-    );
-    const date = maxBy(sources, 'created_at')?.created_at ?? null;
+    const dates = [
+        ...['facility_type', 'processing_type'].flatMap(field =>
+            get(data, `properties.extended_fields.${field}`, []).map(
+                item => item.created_at,
+            ),
+        ),
+        ...get(data, 'properties.sector', []).map(item => item.updated_at),
+    ].filter(Boolean);
+    const date = maxBy(dates, value => new Date(value).getTime()) ?? null;
+    // All share one date, so only specificity orders them.
     return uniqBy(
-        get(data, 'properties.isic_4_mapped', [])
-            .map(({ path }) => ({ path, sourceName: OPEN_SUPPLY_HUB, date }))
-            .filter(value => value.path.length),
+        sortBy(
+            get(data, 'properties.isic_4_mapped', [])
+                .map(({ path }) => ({
+                    path,
+                    sourceName: OPEN_SUPPLY_HUB,
+                    date,
+                }))
+                .filter(value => value.path.length),
+            depth,
+        ),
         value => pathKey(value.path),
     );
 };

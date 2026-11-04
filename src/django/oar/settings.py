@@ -257,6 +257,7 @@ REST_FRAMEWORK = {
         'burst': '100/minute',
         'sustained': '10000/day',
         'data_upload': '30/minute',
+        'claim_invite': '20/day',
         'tiles': '300/minute',
     },
     # By default, the value of NON_FIELD_ERRORS_KEY is 'non_field_errors'.

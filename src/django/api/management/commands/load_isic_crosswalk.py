@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from api.isic_taxonomy.crosswalk import (
     CROSSWALK_CSV_PATH,
+    SECTOR_CROSSWALK_CSV_PATH,
     CrosswalkError,
     load_crosswalk_rows,
     replace_crosswalk_entries,
@@ -12,16 +13,22 @@ from api.models import IsicCrosswalkEntry
 
 class Command(BaseCommand):
     help = (
-        'Replace the OS Hub to ISIC Rev 4 crosswalk with the rows of a CSV '
-        'file (default: the crosswalk shipped with the code), then refresh '
-        'the mapped ISIC values of existing locations.'
+        'Replace the OS Hub to ISIC Rev 4 crosswalk with the rows of its '
+        'Facility Type / Processing Type and Sector CSV files (default: the '
+        'crosswalk shipped with the code), then refresh the mapped ISIC '
+        'values of existing locations.'
     )
 
     def add_arguments(self, parser):
         parser.add_argument(
             '--file',
             default=CROSSWALK_CSV_PATH,
-            help='Path to the crosswalk CSV.',
+            help='Path to the Facility Type / Processing Type CSV.',
+        )
+        parser.add_argument(
+            '--sector-file',
+            default=SECTOR_CROSSWALK_CSV_PATH,
+            help='Path to the Sector CSV.',
         )
         parser.add_argument(
             '--dry-run',
@@ -31,7 +38,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            rows = load_crosswalk_rows(options['file'])
+            rows = load_crosswalk_rows(
+                options['file'], options['sector_file'],
+            )
         except (CrosswalkError, OSError) as error:
             raise CommandError(str(error)) from error
 

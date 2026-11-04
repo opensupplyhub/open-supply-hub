@@ -229,6 +229,8 @@ export const makeGetProcessingTypeSuggestionsURL = (
 export const makeGetNumberOfWorkersURL = () => '/api/workers-ranges/';
 export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
+export const makeGetClaimProfileOptionsURL = () =>
+    '/api/claim-profile-options/';
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetIdentityRecordURL = osId =>
@@ -254,6 +256,8 @@ export const makeGetDownloadLocationsCheckoutSessionURL = () =>
 export const makeClaimFacilityAPIURL = osId => `/api/facilities/${osId}/claim/`;
 export const makeClaimQualityCheckURL = osId =>
     `/api/facilities/${osId}/claim/quality-check/`;
+export const makeClaimInviteURL = osId =>
+    `/api/facilities/${osId}/claim-invite/`;
 export const makeSplitFacilityAPIURL = osID => `/api/facilities/${osID}/split/`;
 export const makeTransferFacilityAPIURL = osID =>
     `/api/facilities/${osID}/move/`;

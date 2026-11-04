@@ -443,6 +443,17 @@ export const facilityClaimPropType = shape({
     }).isRequired,
     notes: arrayOf(facilityClaimNotePropType).isRequired,
     attachments: facilityClaimAttachmentsPropType.isRequired,
+    claim_invite: shape({
+        sent_by_contributor: shape({
+            id: number.isRequired,
+            name: string.isRequired,
+        }).isRequired,
+        sent_by_user_id: number.isRequired,
+        sent_by_email: string.isRequired,
+        recipient_email: string.isRequired,
+        note: string.isRequired,
+        created_at: string.isRequired,
+    }),
 });
 
 export const approvedFacilityClaimPropType = shape({

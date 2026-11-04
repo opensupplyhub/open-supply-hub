@@ -13,7 +13,7 @@ def qualify_facility_processing_search_functions(apps, schema_editor):
     under the empty search path every dump sets.
     """
     helper.run_sql_files([
-        '0259_qualify_facility_processing_search_functions.sql',
+        '0264_qualify_facility_processing_search_functions.sql',
     ])
 
 
@@ -30,7 +30,7 @@ def revert_qualify_facility_processing_search_functions(apps, schema_editor):
 class Migration(Migration):
 
     dependencies = [
-        ('api', '0258_facility_claim_isic'),
+        ('api', '0263_seed_claim_profile_options'),
     ]
 
     operations = [
