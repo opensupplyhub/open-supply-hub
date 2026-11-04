@@ -865,7 +865,7 @@ const autoStyles = Object.freeze({
         borderRadius: '4px',
         background: COLOURS.LIGHT_GREY,
         padding: '10px 14px',
-        margin: '4px 0 12px 0',
+        margin: '4px 0 16px 0',
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
@@ -941,26 +941,6 @@ export const GroupTabs = ({
 
     return (
         <div>
-            <div style={chipStyles.bar} role="tablist">
-                <Chip
-                    label={`Needs you (${plural(attentionRows, 'row')})`}
-                    onClick={() => select(ALL)}
-                    {...chipProps(ALL, active)}
-                />
-                {attention.map(group => (
-                    <Chip
-                        key={group.key}
-                        label={chipLabel(group)}
-                        onClick={() => select(group.key)}
-                        {...chipProps(group.key, active)}
-                    />
-                ))}
-                {!attention.length && (
-                    <span style={styles.muted}>
-                        Nothing needs your decision.
-                    </span>
-                )}
-            </div>
             {automatic.length > 0 && (
                 <div style={autoStyles.box}>
                     <div style={autoStyles.head}>
@@ -1010,6 +990,26 @@ export const GroupTabs = ({
                     )}
                 </div>
             )}
+            <div style={chipStyles.bar} role="tablist">
+                <Chip
+                    label={`Needs you (${plural(attentionRows, 'row')})`}
+                    onClick={() => select(ALL)}
+                    {...chipProps(ALL, active)}
+                />
+                {attention.map(group => (
+                    <Chip
+                        key={group.key}
+                        label={chipLabel(group)}
+                        onClick={() => select(group.key)}
+                        {...chipProps(group.key, active)}
+                    />
+                ))}
+                {!attention.length && (
+                    <span style={styles.muted}>
+                        Nothing needs your decision.
+                    </span>
+                )}
+            </div>
             {current && (
                 <GroupHeader
                     group={current}

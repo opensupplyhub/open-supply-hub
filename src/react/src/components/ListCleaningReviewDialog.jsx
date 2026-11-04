@@ -315,11 +315,11 @@ const ListCleaningReviewDialog = ({
                 </Typography>
                 <Typography>
                     We checked every row. Formatting that needs no judgment was
-                    fixed automatically and is listed further down, where you
-                    can undo any of it. What is left is grouped by type because
-                    the same problem usually repeats through a file. Pick a type
-                    to see its rows and accept, keep or remove them all at once,
-                    or decide row by row. A value you type is saved to the row
+                    fixed automatically and is listed first, where you can undo
+                    any of it. What is left is grouped by type because the same
+                    problem usually repeats through a file. Pick a type to see
+                    its rows and accept, keep or remove them all at once, or
+                    decide row by row. A value you type is saved to the row
                     straight away.
                 </Typography>
                 <div style={cardStyles.statRow}>
