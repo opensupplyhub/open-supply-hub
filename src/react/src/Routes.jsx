@@ -42,6 +42,7 @@ import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags, refreshFeatureFlags } from './actions/featureFlags';
+import { fetchAnnouncementBanner } from './actions/announcementBanner';
 import { reportWindowResize } from './actions/ui';
 
 import { setFacilityGridRamp } from './actions/vectorTileLayer';
@@ -97,6 +98,7 @@ class Routes extends Component {
 
         window.setGridColorRamp = this.props.setRamp;
         this.props.getFeatureFlags();
+        this.props.getAnnouncementBanner();
         this.unlistenHistory = history.listen(() =>
             this.props.refreshFeatureFlags(),
         );
@@ -356,6 +358,7 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch) {
     return {
         getFeatureFlags: () => dispatch(fetchFeatureFlags()),
+        getAnnouncementBanner: () => dispatch(fetchAnnouncementBanner()),
         refreshFeatureFlags: () => dispatch(refreshFeatureFlags()),
         logIn: () => dispatch(sessionLogin()),
         handleWindowResize: data => dispatch(reportWindowResize(data)),

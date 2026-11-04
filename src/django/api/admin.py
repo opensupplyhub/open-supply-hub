@@ -29,6 +29,7 @@ from api.models.zone_set import Zone, ZoneSet
 from api.models.zone_set_admin import ZoneAdmin, ZoneSetAdmin
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
+from api.models.announcement_banner import AnnouncementBanner
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.models.wage_indicator_link_text_config import (
     WageIndicatorLinkTextConfig
@@ -540,6 +541,19 @@ class WageIndicatorLinkTextConfigAdmin(admin.ModelAdmin):
     search_fields = ('link_type', 'display_text')
 
 
+class AnnouncementBannerAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'is_active', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        # The single row is seeded by migration; edit it instead of
+        # adding more.
+        return not AnnouncementBanner.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 class USCountyTigerlineAdmin(admin.ModelAdmin):
     list_display = ('geoid', 'name')
     search_fields = ('geoid', 'name')
@@ -660,6 +674,7 @@ admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)
 admin_site.register(
     WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
 )
+admin_site.register(AnnouncementBanner, AnnouncementBannerAdmin)
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
 admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(ZoneSet, ZoneSetAdmin)
