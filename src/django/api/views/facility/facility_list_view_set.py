@@ -44,7 +44,10 @@ from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_list import FacilityList
 from ...models.facility.facility_list_item import FacilityListItem
 from ...models.facility.facility_match import FacilityMatch
-from ...models.facility.list_cleaning_run import ListCleaningRun
+from ...models.facility.list_cleaning_run import (
+    ListCleaningRun,
+    ListCleaningSuggestion,
+)
 from ...models.source import Source
 from ...models.user import User
 from ...serializers.facility.list_cleaning_serializer import (
@@ -536,14 +539,21 @@ class FacilityListViewSet(ModelViewSet):
                 'Send "decisions" (per suggestion) or "groups" (per error '
                 'type), or both.')
         try:
+            updated = []
             if decisions:
-                list_cleaning.record_decisions(
+                updated += list_cleaning.record_decisions(
                     run, decisions, request.user)
             if groups:
-                list_cleaning.record_group_decisions(
+                updated += list_cleaning.record_group_decisions(
                     run, groups, request.user)
         except list_cleaning.DecisionError as e:
             raise ValidationError(str(e))
+        # A value the contributor typed goes onto the row straight away;
+        # accept / keep decisions wait for the apply button.
+        edited = {s.id for s in updated
+                  if s.decision == ListCleaningSuggestion.EDITED}
+        if edited:
+            list_cleaning.apply_run(run, only=edited)
         return Response(serialize_run(
             run, include_internal=request.user.is_superuser))
 

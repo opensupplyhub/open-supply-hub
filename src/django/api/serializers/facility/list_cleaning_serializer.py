@@ -66,11 +66,14 @@ def serialize_groups(suggestions):
                 'edited': 0,
                 'removed': 0,
                 'applied': 0,
+                'auto': True,
                 'rows': [],
                 'examples': [],
             }
         g['count'] += 1
         g['rows'].append(s.row_number)
+        if not (s.extra or {}).get('auto'):
+            g['auto'] = False
         if s.decision == S.PENDING:
             g['pending'] += 1
         elif s.decision == S.ACCEPTED:
@@ -175,6 +178,11 @@ def serialize_run(run, include_internal=False):
         'removals': len([s for s in suggestions
                          if s.kind == ListCleaningSuggestion.REMOVAL]),
         'rows_removed': len(removed_rows),
+        'auto_fixes': len(
+            [s for s in suggestions if (s.extra or {}).get('auto')]),
+        'auto_rows': len(
+            {s.row_number for s in suggestions
+             if (s.extra or {}).get('auto')}),
         'changes_unapplied': changes_unapplied,
         'internal_notes': len(
             [s for s in suggestions

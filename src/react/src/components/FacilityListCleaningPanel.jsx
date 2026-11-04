@@ -181,8 +181,8 @@ const FacilityListCleaningPanel = ({
                             label={`suggested fixes (${summary.corrections_pending} to review)`}
                         />
                         <Stat
-                            value={summary.removals}
-                            label="rows suggested for removal"
+                            value={summary.auto_fixes}
+                            label="fixes made automatically"
                         />
                         <Stat
                             value={summary.list_findings}

@@ -170,6 +170,7 @@ def ingest_result(run, result):
             field = change.get('field', '')
             code = change.get('reason', '')
             decision = _default_decision(field, code)
+            auto = decision == ListCleaningSuggestion.ACCEPTED
             suggestions.append(ListCleaningSuggestion(
                 kind=ListCleaningSuggestion.CORRECTION,
                 field=field,
@@ -178,8 +179,8 @@ def ingest_result(run, result):
                 corrected_value=_corrected_value(change),
                 note=change.get('note', '') or '',
                 decision=decision,
-                decided_at=(now if decision != ListCleaningSuggestion.PENDING
-                            else None),
+                decided_at=now if auto else None,
+                extra={'auto': True} if auto else {},
                 **common,
             ))
 
@@ -198,17 +199,23 @@ def ingest_result(run, result):
         if record.get('status') == 'removed':
             reason = record.get('removed_reason', '') or ''
             duplicate_of = record.get('duplicate_of')
+            # Exact duplicates and blank rows are removed automatically:
+            # the parser already drops exact duplicates before the
+            # pipeline runs, and neither needs judgment. The contributor
+            # can still put a row back.
             if reason == 'duplicate' and duplicate_of:
-                note = (f'This row repeats row {duplicate_of}, so it would '
-                        'be removed.')
+                note = (f'This row repeats row {duplicate_of}, so it was '
+                        'removed.')
             else:
-                note = 'This row is blank, so it would be removed.'
+                note = 'This row is blank, so it was removed.'
             suggestions.append(ListCleaningSuggestion(
                 kind=ListCleaningSuggestion.REMOVAL,
                 field='row',
                 code=reason,
                 note=note,
-                extra={'duplicate_of': duplicate_of},
+                decision=ListCleaningSuggestion.ACCEPTED,
+                decided_at=now,
+                extra={'duplicate_of': duplicate_of, 'auto': True},
                 **common,
             ))
 
@@ -221,9 +228,18 @@ def ingest_result(run, result):
     run.error = ''
     run.completed_at = now
     run.save()
+
+    # Silent formatting fixes and automatic removals go onto the list
+    # straight away, so a contributor who does nothing still gets them.
+    auto_ids = {
+        s.id for s in run.suggestions.all() if (s.extra or {}).get('auto')}
+    if auto_ids:
+        apply_run(run, only=auto_ids)
+
     log.info(
         f'[List Cleaning] Run {run.id} complete: {len(suggestions)} '
-        f'suggestions for list {run.facility_list_id}')
+        f'suggestions ({len(auto_ids)} applied automatically) for list '
+        f'{run.facility_list_id}')
     return run
 
 
@@ -371,13 +387,18 @@ def _removal_reason(suggestions):
 
 
 @transaction.atomic
-def apply_run(run):
+def apply_run(run, only=None):
     """
     Write every accepted or edited correction (and every edited flag) onto
     its list item, undo any previously applied change that has since been
     rejected, and remove or restore rows. Items keep raw_data (the
     original CSV line) and the list keeps its uploaded file, so the
     original upload stays recoverable.
+
+    `only` restricts the pass to those suggestion ids (used to apply a
+    contributor's typed fix the moment they save it, and the automatic
+    fixes at ingest); the row-removal state of a touched item is still
+    worked out from all of that item's suggestions.
 
     Extended fields (sector, number of workers, parent company ...) were
     created at parse time from the original values; re-deriving them from
@@ -395,6 +416,13 @@ def apply_run(run):
     for s in run.suggestions.all():
         if s.facility_list_item_id in items:
             by_item.setdefault(s.facility_list_item_id, []).append(s)
+    if only is not None:
+        only = set(only)
+        by_item = {
+            item_id: suggestions
+            for item_id, suggestions in by_item.items()
+            if any(s.id in only for s in suggestions)
+        }
 
     touched = set()
     applied = 0
@@ -422,7 +450,7 @@ def apply_run(run):
 
         # 1. Value changes: accepted corrections and edited values.
         for s in suggestions:
-            if s.kind == S.REMOVAL:
+            if s.kind == S.REMOVAL or (only is not None and s.id not in only):
                 continue
             accepted = s.decision in (S.ACCEPTED, S.EDITED)
             if s.kind == S.ISSUE and s.decision != S.EDITED:
@@ -431,7 +459,9 @@ def apply_run(run):
                 _write_field(item, s.field, s.final_value)
                 s.applied = True
                 applied += 1
-            elif accepted and s.applied and s.decision == S.EDITED:
+            elif (accepted and s.applied and s.decision == S.EDITED
+                  and (item.raw_json or {}).get(s.field) != s.final_value):
+                # re-edited after an earlier apply
                 _write_field(item, s.field, s.final_value)
                 applied += 1
             elif not accepted and s.applied:
@@ -473,8 +503,9 @@ def apply_run(run):
     for item_id in touched:
         items[item_id].save()
 
-    run.applied_at = timezone.now()
-    run.save(update_fields=['applied_at'])
+    if only is None:
+        run.applied_at = timezone.now()
+        run.save(update_fields=['applied_at'])
     return {'applied': applied, 'reverted': reverted}
 
 

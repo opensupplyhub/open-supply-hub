@@ -389,7 +389,7 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
     const decisionLabel = (() => {
         switch (suggestion.decision) {
             case DECISION.EDITED:
-                return suggestion.applied ? 'Fixed' : 'Fixed (not yet applied)';
+                return suggestion.applied ? 'Fixed' : 'Fixed (saving)';
             case DECISION.REMOVED:
                 return 'Row will be removed';
             case DECISION.REJECTED:
@@ -605,16 +605,13 @@ ListFindings.propTypes = { filePass: object.isRequired };
 
 export const suggestionKey = s => `${s.kind}:${s.code}:${s.field}`;
 
-export const SuggestionRows = ({ rows, canAct, busy, decide, groupKey }) =>
+export const isAuto = s => !!(s.extra && s.extra.auto);
+
+export const SuggestionRows = ({ rows, canAct, busy, decide, filter }) =>
     rows
         .map(row =>
-            groupKey
-                ? {
-                      ...row,
-                      suggestions: row.suggestions.filter(
-                          s => suggestionKey(s) === groupKey,
-                      ),
-                  }
+            filter
+                ? { ...row, suggestions: row.suggestions.filter(filter) }
                 : row,
         )
         .filter(row => row.suggestions.length)
@@ -666,14 +663,14 @@ export const SuggestionRows = ({ rows, canAct, busy, decide, groupKey }) =>
             </div>
         ));
 
-SuggestionRows.defaultProps = { groupKey: null };
+SuggestionRows.defaultProps = { filter: null };
 
 SuggestionRows.propTypes = {
     rows: arrayOf(object).isRequired,
     canAct: bool.isRequired,
     busy: bool.isRequired,
     decide: func.isRequired,
-    groupKey: string,
+    filter: func,
 };
 
 const groupTitle = group => {
@@ -735,7 +732,9 @@ const chipStyles = Object.freeze({
 });
 
 const groupKindColour = group => {
-    if (group.severity === SEVERITY.INTERNAL_NOTE) return COLOURS.DARK_GREY;
+    if (group.severity === SEVERITY.INTERNAL_NOTE || group.auto) {
+        return COLOURS.DARK_GREY;
+    }
     if (group.kind === KIND.ISSUE) return '#d32f2f';
     if (group.kind === KIND.REMOVAL) return '#ef6c00';
     return '#2e7d32';
@@ -770,6 +769,13 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
             )}
             {group.examples[0] && group.examples[0].note && (
                 <div style={styles.muted}>{group.examples[0].note}</div>
+            )}
+            {group.auto && (
+                <div style={styles.muted}>
+                    Applied automatically. Keep all originals undoes it for
+                    every row of this type; use a row&rsquo;s own buttons for
+                    one.
+                </div>
             )}
             <div style={styles.decisionText}>{groupStatus(group)}</div>
             {canAct && !internal && (
@@ -850,10 +856,47 @@ GroupHeader.propTypes = {
     decideGroup: func.isRequired,
 };
 
+const AUTO = 'auto';
+
+const autoStyles = Object.freeze({
+    box: Object.freeze({
+        border: `1px solid ${COLOURS.GREY}`,
+        borderRadius: '4px',
+        background: COLOURS.LIGHT_GREY,
+        padding: '10px 14px',
+        margin: '4px 0 12px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+    }),
+    head: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '8px',
+    }),
+    bar: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px',
+    }),
+});
+
+const chipProps = (key, active) => ({
+    clickable: true,
+    color: active === key ? 'primary' : 'default',
+    variant: active === key ? 'default' : 'outlined',
+    role: 'tab',
+    'aria-selected': active === key,
+});
+
 /*
- * A chip bar with one chip per error type (plus All), and the rows for
- * the selected type straight underneath. Lists run to thousands of rows;
- * the errors do not come in thousands of kinds, so the bar is the map.
+ * Two tiers of chips. The top bar is what needs the contributor: flags,
+ * removals and fixes with judgment in them, one chip per error type plus
+ * "Needs you". Below it, folded by default, the fixes made automatically
+ * at ingest, which they can open to inspect and undo by type. Lists run
+ * to thousands of rows; the errors do not come in thousands of kinds.
  */
 export const GroupTabs = ({
     groups,
@@ -864,34 +907,108 @@ export const GroupTabs = ({
     decideGroup,
 }) => {
     const [selected, setSelected] = useState(ALL);
+    const [showAuto, setShowAuto] = useState(false);
+    const attention = groups.filter(g => !g.auto);
+    const automatic = groups.filter(g => g.auto);
     const current = groups.find(g => g.key === selected);
-    const active = current ? selected : ALL;
-    const rowCount = rows.length;
+    let active = ALL;
+    if (current) {
+        active = selected;
+    } else if (selected === AUTO) {
+        active = AUTO;
+    }
+    const autoFixes = automatic.reduce((n, g) => n + g.count, 0);
+    const autoRows = new Set(
+        automatic.reduce((acc, g) => acc.concat(g.rows), []),
+    ).size;
+    const attentionRows = new Set(
+        attention.reduce((acc, g) => acc.concat(g.rows), []),
+    ).size;
+
+    const filter = (() => {
+        if (current) return s => suggestionKey(s) === current.key;
+        if (active === AUTO) return isAuto;
+        return s => !isAuto(s);
+    })();
+
+    const select = key => {
+        setSelected(key);
+        if (key === AUTO || automatic.some(g => g.key === key)) {
+            setShowAuto(true);
+        }
+    };
+
     return (
         <div>
             <div style={chipStyles.bar} role="tablist">
                 <Chip
-                    label={`All (${plural(rowCount, 'row')})`}
-                    clickable
-                    color={active === ALL ? 'primary' : 'default'}
-                    variant={active === ALL ? 'default' : 'outlined'}
-                    onClick={() => setSelected(ALL)}
-                    role="tab"
-                    aria-selected={active === ALL}
+                    label={`Needs you (${plural(attentionRows, 'row')})`}
+                    onClick={() => select(ALL)}
+                    {...chipProps(ALL, active)}
                 />
-                {groups.map(group => (
+                {attention.map(group => (
                     <Chip
                         key={group.key}
                         label={chipLabel(group)}
-                        clickable
-                        color={active === group.key ? 'primary' : 'default'}
-                        variant={active === group.key ? 'default' : 'outlined'}
-                        onClick={() => setSelected(group.key)}
-                        role="tab"
-                        aria-selected={active === group.key}
+                        onClick={() => select(group.key)}
+                        {...chipProps(group.key, active)}
                     />
                 ))}
+                {!attention.length && (
+                    <span style={styles.muted}>
+                        Nothing needs your decision.
+                    </span>
+                )}
             </div>
+            {automatic.length > 0 && (
+                <div style={autoStyles.box}>
+                    <div style={autoStyles.head}>
+                        <span>
+                            <b>{plural(autoFixes, 'fix')}</b> made automatically
+                            on {plural(autoRows, 'row')}: formatting that needs
+                            no judgment, already applied. You can undo any of
+                            them by type.
+                        </span>
+                        <Button
+                            size="small"
+                            onClick={() => {
+                                setShowAuto(!showAuto);
+                                if (
+                                    showAuto &&
+                                    (active === AUTO ||
+                                        (current && current.auto))
+                                ) {
+                                    setSelected(ALL);
+                                }
+                            }}
+                        >
+                            {showAuto
+                                ? 'Hide automatic fixes'
+                                : 'Show automatic fixes'}
+                        </Button>
+                    </div>
+                    {showAuto && (
+                        <div style={autoStyles.bar} role="tablist">
+                            <Chip
+                                label={`All automatic (${plural(
+                                    autoRows,
+                                    'row',
+                                )})`}
+                                onClick={() => select(AUTO)}
+                                {...chipProps(AUTO, active)}
+                            />
+                            {automatic.map(group => (
+                                <Chip
+                                    key={group.key}
+                                    label={chipLabel(group)}
+                                    onClick={() => select(group.key)}
+                                    {...chipProps(group.key, active)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
             {current && (
                 <GroupHeader
                     group={current}
@@ -905,7 +1022,7 @@ export const GroupTabs = ({
                 canAct={canAct}
                 busy={busy}
                 decide={decide}
-                groupKey={current ? current.key : null}
+                filter={filter}
             />
         </div>
     );

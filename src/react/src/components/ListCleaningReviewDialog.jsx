@@ -314,12 +314,13 @@ const ListCleaningReviewDialog = ({
                     approved
                 </Typography>
                 <Typography>
-                    We checked every row. The findings are grouped by type
-                    because the same problem usually repeats through a file.
-                    Pick a type to see its rows and accept, keep or remove them
-                    all at once, or decide row by row. Rows we could not fix can
-                    be corrected or removed right here, with no need to upload
-                    again.
+                    We checked every row. Formatting that needs no judgment was
+                    fixed automatically and is listed further down, where you
+                    can undo any of it. What is left is grouped by type because
+                    the same problem usually repeats through a file. Pick a type
+                    to see its rows and accept, keep or remove them all at once,
+                    or decide row by row. A value you type is saved to the row
+                    straight away.
                 </Typography>
                 <div style={cardStyles.statRow}>
                     <Stat
@@ -331,8 +332,8 @@ const ListCleaningReviewDialog = ({
                         label={`suggested fixes (${summary.corrections_pending} to review)`}
                     />
                     <Stat
-                        value={summary.removals}
-                        label="rows suggested for removal"
+                        value={summary.auto_fixes}
+                        label="fixes made automatically"
                     />
                     <Stat
                         value={summary.list_findings}
