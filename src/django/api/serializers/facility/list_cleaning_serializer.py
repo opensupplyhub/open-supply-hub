@@ -136,12 +136,24 @@ def serialize_run(run, include_internal=False):
         s.row_number for s in suggestions
         if s.decision == S.REMOVED
         or (s.kind == S.REMOVAL and s.decision == S.ACCEPTED)}
+
+    def value_pending(s):
+        """An accepted or typed value that is not on the row yet. An edit
+        over an automatic fix is pending even though the row was already
+        touched once."""
+        if s.kind == S.REMOVAL:
+            return False
+        if s.decision == S.EDITED:
+            item = s.facility_list_item
+            current = (item.raw_json or {}).get(s.field) if item else None
+            return not s.applied or current != s.final_value
+        return (s.kind == S.CORRECTION and s.decision == S.ACCEPTED
+                and not s.applied)
+
     # Everything the contributor has decided that is not yet on the list.
     changes_unapplied = len([
         s for s in suggestions
-        if (s.decision in (S.ACCEPTED, S.EDITED) and s.kind != S.ISSUE
-            and not s.applied)
-        or (s.decision == S.EDITED and s.kind == S.ISSUE and not s.applied)
+        if value_pending(s)
         or ((s.decision == S.REMOVED
              or (s.kind == S.REMOVAL and s.decision == S.ACCEPTED))
             and not (s.extra or {}).get('removal_applied'))
@@ -164,10 +176,7 @@ def serialize_run(run, include_internal=False):
             [s for s in corrections
              if s.decision == ListCleaningSuggestion.REJECTED]),
         'corrections_unapplied': len(
-            [s for s in corrections
-             if s.decision in (ListCleaningSuggestion.ACCEPTED,
-                               ListCleaningSuggestion.EDITED)
-             and not s.applied]),
+            [s for s in corrections if value_pending(s)]),
         'must_fix_total': len(must_fix),
         # A flag on a row the contributor removed no longer needs fixing.
         'must_fix_pending': len(

@@ -319,8 +319,8 @@ const ListCleaningReviewDialog = ({
                     any of it. What is left is grouped by type because the same
                     problem usually repeats through a file. Pick a type to see
                     its rows and accept, keep or remove them all at once, or
-                    decide row by row. A value you type is saved to the row
-                    straight away.
+                    decide row by row. Nothing changes on your list until you
+                    press Apply.
                 </Typography>
                 <div style={cardStyles.statRow}>
                     <Stat

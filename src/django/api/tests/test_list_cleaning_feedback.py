@@ -244,20 +244,21 @@ class ListCleaningFeedbackTest(APITestCase):
             pk=corrections['country'].id)
         self.assertEqual(country.decision, ListCleaningSuggestion.REJECTED)
         self.assertEqual(country.decided_by, self.user)
-        # the typed value is on the row already; the accepted address
-        # fix and the undo of the automatic country fix wait for apply
+        # nothing touches the list until apply: the typed value, the
+        # accepted address fix and the undo of the automatic country fix
+        # all wait for one call
         first = FacilityListItem.objects.get(pk=self.items[0].id)
-        self.assertEqual(first.raw_json['number_of_workers'], '1250')
+        self.assertEqual(first.raw_json['number_of_workers'], '1200')
         self.assertEqual(first.raw_json['country'], 'VN')
         self.assertEqual(response.data['summary']['corrections_unapplied'],
-                         1)
-        self.assertEqual(response.data['summary']['changes_unapplied'], 2)
+                         2)
+        self.assertEqual(response.data['summary']['changes_unapplied'], 3)
 
         response = self.client.post(self.url('apply/'), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK,
                          response.data)
         self.assertEqual(response.data['applied'],
-                         {'applied': 1, 'reverted': 1})
+                         {'applied': 2, 'reverted': 1})
 
         first.refresh_from_db()
         self.assertEqual(first.raw_json['country'], 'Viet Nam')

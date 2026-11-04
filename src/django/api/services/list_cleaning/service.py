@@ -395,10 +395,9 @@ def apply_run(run, only=None):
     original CSV line) and the list keeps its uploaded file, so the
     original upload stays recoverable.
 
-    `only` restricts the pass to those suggestion ids (used to apply a
-    contributor's typed fix the moment they save it, and the automatic
-    fixes at ingest); the row-removal state of a touched item is still
-    worked out from all of that item's suggestions.
+    `only` restricts the pass to those suggestion ids (used for the
+    automatic fixes at ingest); the row-removal state of a touched item
+    is still worked out from all of that item's suggestions.
 
     Extended fields (sector, number of workers, parent company ...) were
     created at parse time from the original values; re-deriving them from

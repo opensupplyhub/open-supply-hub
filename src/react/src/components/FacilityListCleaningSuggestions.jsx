@@ -389,7 +389,7 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
     const decisionLabel = (() => {
         switch (suggestion.decision) {
             case DECISION.EDITED:
-                return suggestion.applied ? 'Fixed' : 'Fixed (saving)';
+                return suggestion.applied ? 'Fixed' : 'Fixed (not yet applied)';
             case DECISION.REMOVED:
                 return 'Row will be removed';
             case DECISION.REJECTED:
