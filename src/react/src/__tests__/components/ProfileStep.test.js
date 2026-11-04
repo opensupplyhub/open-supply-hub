@@ -1,5 +1,5 @@
 import React from 'react';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import apiRequest from '../../util/apiRequest';
 import ProfileStep from '../../components/InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep';
@@ -284,18 +284,107 @@ describe('ProfileStep component', () => {
         expect(betaLabels.length).toBeGreaterThan(0);
     });
 
-    test('hides business website field when already provided', () => {
+    const WEBSITE_PLACEHOLDER = 'https://company.com (max 200 characters)';
+    const WEBSITE_VERIFICATION_LABEL =
+        'Company website showing the production location address (e.g., Contact Us, Locations page)';
+
+    test('shows the address verification website read-only', () => {
         renderComponent({
             formData: {
                 ...defaultProps.formData,
+                locationAddressVerificationMethod: WEBSITE_VERIFICATION_LABEL,
+                businessWebsite: 'https://company.com/contact-us',
+            },
+        });
+
+        const websiteInput = screen.getByPlaceholderText(WEBSITE_PLACEHOLDER);
+        expect(websiteInput).toHaveValue('https://company.com/contact-us');
+        expect(websiteInput).toHaveAttribute('readonly');
+        expect(
+            screen.getByText(
+                /This is the website you gave to verify the company address/,
+            ),
+        ).toBeInTheDocument();
+    });
+
+    test('keeps a prefilled website editable when it is not address verification', () => {
+        renderComponent({
+            formData: {
+                ...defaultProps.formData,
+                locationAddressVerificationMethod:
+                    'Utility bill showing company name and address',
                 businessWebsite: 'https://company.com',
             },
         });
 
-        const websiteInputs = screen.queryAllByPlaceholderText(
-            'https://company.com (max 200 characters)',
+        const websiteInput = screen.getByPlaceholderText(WEBSITE_PLACEHOLDER);
+        expect(websiteInput).toHaveValue('https://company.com');
+        expect(websiteInput).not.toHaveAttribute('readonly');
+        expect(
+            screen.queryByText(
+                /This is the website you gave to verify the company address/,
+            ),
+        ).not.toBeInTheDocument();
+    });
+
+    test('shows the phone and website "show on profile" switches off by default', () => {
+        renderComponent();
+
+        expect(
+            screen.getByRole('checkbox', {
+                name: 'Show company phone on profile',
+            }),
+        ).not.toBeChecked();
+        expect(
+            screen.getByRole('checkbox', {
+                name: 'Show company website on profile',
+            }),
+        ).not.toBeChecked();
+    });
+
+    test('reflects stored "show on profile" choices', () => {
+        renderComponent({
+            formData: {
+                ...defaultProps.formData,
+                facilityPhoneNumberPubliclyVisible: true,
+                facilityWebsitePubliclyVisible: true,
+            },
+        });
+
+        expect(
+            screen.getByRole('checkbox', {
+                name: 'Show company phone on profile',
+            }),
+        ).toBeChecked();
+        expect(
+            screen.getByRole('checkbox', {
+                name: 'Show company website on profile',
+            }),
+        ).toBeChecked();
+    });
+
+    test('reports "show on profile" changes to the form', () => {
+        renderComponent();
+
+        fireEvent.click(
+            screen.getByRole('checkbox', {
+                name: 'Show company website on profile',
+            }),
         );
-        expect(websiteInputs.length).toBe(0);
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'facilityWebsitePubliclyVisible',
+            true,
+        );
+
+        fireEvent.click(
+            screen.getByRole('checkbox', {
+                name: 'Show company phone on profile',
+            }),
+        );
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'facilityPhoneNumberPubliclyVisible',
+            true,
+        );
     });
 
     test('shows business website field when persisted value is invalid', () => {

@@ -41,6 +41,11 @@ const dashboardClaimsDetailsStyles = Object.freeze({
     notesHeaderStyles: Object.freeze({
         margin: '50px 0 0',
     }),
+    visibilityNoteStyles: Object.freeze({
+        display: 'block',
+        fontSize: '14px',
+        color: 'rgba(0, 0, 0, 0.54)',
+    }),
 });
 
 const defaultInfoSectionValueStyle = Object.freeze({
@@ -65,6 +70,22 @@ InfoSection.defaultProps = {
 InfoSection.propTypes = {
     label: string.isRequired,
     value: node,
+};
+
+// The claimant's choice of whether a value is shown on the production
+// location profile (OSDEV-2680).
+const ProfileVisibilityNote = ({ isPubliclyVisible }) => (
+    <span style={dashboardClaimsDetailsStyles.visibilityNoteStyles}>
+        {isPubliclyVisible ? 'Shown on profile' : 'Not shown on profile'}
+    </span>
+);
+
+ProfileVisibilityNote.propTypes = {
+    isPubliclyVisible: bool,
+};
+
+ProfileVisibilityNote.defaultProps = {
+    isPubliclyVisible: false,
 };
 
 const createLink = (url, text) => (
@@ -111,6 +132,11 @@ function DashboardClaimsDetails({
         return null;
     }
 
+    const {
+        facility_website_publicly_visible: websiteIsPublic,
+        facility_phone_number_publicly_visible: phoneIsPublic,
+    } = data;
+
     return (
         <>
             <DashboardClaimDetailsControls data={data} />
@@ -152,8 +178,27 @@ function DashboardClaimsDetails({
                 <InfoSection
                     label="Production Location's Website"
                     value={
-                        data.facility_website &&
-                        createExternalLink(data.facility_website)
+                        data.facility_website && (
+                            <>
+                                {createExternalLink(data.facility_website)}
+                                <ProfileVisibilityNote
+                                    isPubliclyVisible={websiteIsPublic}
+                                />
+                            </>
+                        )
+                    }
+                />
+                <InfoSection
+                    label="Production Location's Phone"
+                    value={
+                        data.facility_phone_number && (
+                            <>
+                                {data.facility_phone_number}
+                                <ProfileVisibilityNote
+                                    isPubliclyVisible={phoneIsPublic}
+                                />
+                            </>
+                        )
                     }
                 />
                 <InfoSection

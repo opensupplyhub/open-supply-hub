@@ -229,6 +229,32 @@ def validate_claimed_name_address(data, claim):
     return normalized
 
 
+# Readable lines for the claimant-update notice (OSDEV-2680). The
+# "shown on profile" choices are what decide whether a value goes public,
+# so the Claims team sees the direction of the change rather than a raw
+# field name. A changed boolean can only have flipped, so the previous
+# value is the opposite of the current one.
+PUBLIC_VISIBILITY_CHANGE_LABELS = {
+    'facility_phone_number_publicly_visible': 'Phone number shown on profile',
+    'facility_website_publicly_visible': 'Website shown on profile',
+    'point_of_contact_publicly_visible': 'Contact person shown on profile',
+}
+
+
+def describe_pending_claim_changes(claim, changed_fields):
+    """Turn the model field names a pending-claim edit changed into the
+    lines of the claimant-update notice and review note."""
+    descriptions = []
+    for field in sorted(changed_fields):
+        label = PUBLIC_VISIBILITY_CHANGE_LABELS.get(field)
+        if label is None:
+            descriptions.append('Updated {}'.format(field))
+            continue
+        transition = 'No → Yes' if getattr(claim, field) else 'Yes → No'
+        descriptions.append('{}: {}'.format(label, transition))
+    return descriptions
+
+
 def get_tracked_claim_value(claim, field_name):
     """Return the claim field value normalized through the model field's
     to_python, so raw request values (e.g. the string "False" from a form
@@ -912,8 +938,7 @@ class FacilityClaimViewSet(ModelViewSet):
             self.__notify_claims_team_of_update(
                 request,
                 claim,
-                ['Updated {}'.format(field)
-                 for field in sorted(changed_fields)],
+                describe_pending_claim_changes(claim, changed_fields),
             )
 
         return Response(PendingClaimSerializer(claim).data)

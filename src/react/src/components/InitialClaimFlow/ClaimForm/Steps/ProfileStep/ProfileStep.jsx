@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { array, func, object, string } from 'prop-types';
+import { array, bool, func, object, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
@@ -9,6 +9,7 @@ import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import Spa from '@material-ui/icons/Spa';
 
 import Switch from '@material-ui/core/Switch';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import FormFieldHint from '../../../Shared/FormFieldHint/FormFieldHint';
 import IconComponent from '../../../../Shared/IconComponent/IconComponent';
@@ -43,16 +44,51 @@ import {
     PRODUCT_TYPE_SELECT_PLACEHOLDER,
 } from './constants';
 import { profileStepStyles } from './styles';
+import { COMPANY_ADDRESS_VERIFICATION_OPTIONS } from '../BusinessStep/constants';
 import useClaimProfileOptions from './useClaimProfileOptions';
 import { selectStyles } from '../../styles';
-import { profileStepSchema } from '../../validationSchemas';
 
-const isValidPersistedBusinessWebsite = website => {
-    if (!website) {
-        return false;
-    }
+// The Business Information step stores the chosen option's label.
+const websiteVerificationOption = COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(
+    option => option.value === 'company-website-address',
+);
 
-    return profileStepSchema.fields.businessWebsite.isValidSync(website);
+// A website given as company address verification is stored in the same
+// claim field as the profile website, so editing it here would replace
+// the verification evidence. It is shown read-only instead, and edited
+// (and validated) with the address verification in Business Information
+// (OSDEV-2680). Checked on every render: the pending claim edit view
+// shows both steps on one page, so the method can change while this
+// step is open.
+const isAddressVerificationWebsite = formData =>
+    formData.locationAddressVerificationMethod ===
+    websiteVerificationOption.label;
+
+const ADDRESS_VERIFICATION_WEBSITE_HINT =
+    'This is the website you gave to verify the company address. To change it, edit your address verification in Business Information.';
+
+const ShowOnProfileSwitch = ({ checked, onChange, ariaLabel }) => (
+    <FormControlLabel
+        control={
+            <Switch
+                color="primary"
+                checked={Boolean(checked)}
+                onChange={(_, isChecked) => onChange(isChecked)}
+                inputProps={{ 'aria-label': ariaLabel }}
+            />
+        }
+        label="Show on profile"
+    />
+);
+
+ShowOnProfileSwitch.propTypes = {
+    checked: bool,
+    onChange: func.isRequired,
+    ariaLabel: string.isRequired,
+};
+
+ShowOnProfileSwitch.defaultProps = {
+    checked: false,
 };
 
 const MissingOptionHint = ({ subject, className }) => (
@@ -101,10 +137,8 @@ const ProfileStep = ({
         certifications: certificationOptions,
     } = useClaimProfileOptions();
 
-    // Only hide a prefilled website when it already passes client validation,
-    // so invalid persisted values remain editable.
-    const [shouldHideBusinessWebsite] = useState(() =>
-        isValidPersistedBusinessWebsite(formData.businessWebsite),
+    const isWebsiteFromAddressVerification = isAddressVerificationWebsite(
+        formData,
     );
 
     useEffect(() => {
@@ -272,6 +306,18 @@ const ProfileStep = ({
                                         />
                                     </div>
                                 )}
+                            <ShowOnProfileSwitch
+                                checked={
+                                    formData.facilityPhoneNumberPubliclyVisible
+                                }
+                                onChange={checked =>
+                                    handleChange(
+                                        'facilityPhoneNumberPubliclyVisible',
+                                        checked,
+                                    )
+                                }
+                                ariaLabel="Show company phone on profile"
+                            />
                             <DialogTooltip
                                 text={BETA_TOOLTIP_TEXT}
                                 childComponent={
@@ -283,67 +329,81 @@ const ProfileStep = ({
                                 }
                             />
                         </div>
-                        {!shouldHideBusinessWebsite && (
-                            <div className={classes.fieldContainer}>
-                                <FormFieldTitle
-                                    label={
-                                        <>
-                                            Company Website
-                                            <IconComponent
-                                                className={classes.helpTooltip}
-                                                title={COMPANY_WEBSITE_TOOLTIP}
-                                            />
-                                        </>
-                                    }
-                                    classes={{ title: classes.formLabel }}
+                        <div className={classes.fieldContainer}>
+                            <FormFieldTitle
+                                label={
+                                    <>
+                                        Company Website
+                                        <IconComponent
+                                            className={classes.helpTooltip}
+                                            title={COMPANY_WEBSITE_TOOLTIP}
+                                        />
+                                    </>
+                                }
+                                classes={{ title: classes.formLabel }}
+                            />
+                            <TextField
+                                fullWidth
+                                type="url"
+                                variant="outlined"
+                                value={formData.businessWebsite || ''}
+                                onChange={e =>
+                                    handleChange(
+                                        'businessWebsite',
+                                        e.target.value,
+                                    )
+                                }
+                                onBlur={handleBlur}
+                                placeholder="https://company.com (max 200 characters)"
+                                error={
+                                    touched.businessWebsite &&
+                                    !!errors.businessWebsite
+                                }
+                                InputProps={{
+                                    readOnly: isWebsiteFromAddressVerification,
+                                    classes: {
+                                        input: classes.inputStyles,
+                                        notchedOutline:
+                                            classes.notchedOutlineStyles,
+                                    },
+                                }}
+                            />
+                            {isWebsiteFromAddressVerification && (
+                                <FormFieldHint
+                                    text={ADDRESS_VERIFICATION_WEBSITE_HINT}
                                 />
-                                <TextField
-                                    fullWidth
-                                    type="url"
-                                    variant="outlined"
-                                    value={formData.businessWebsite || ''}
-                                    onChange={e =>
-                                        handleChange(
-                                            'businessWebsite',
-                                            e.target.value,
-                                        )
-                                    }
-                                    onBlur={handleBlur}
-                                    placeholder="https://company.com (max 200 characters)"
-                                    error={
-                                        touched.businessWebsite &&
-                                        !!errors.businessWebsite
-                                    }
-                                    InputProps={{
-                                        classes: {
-                                            input: classes.inputStyles,
-                                            notchedOutline:
-                                                classes.notchedOutlineStyles,
-                                        },
-                                    }}
-                                />
-                                {touched.businessWebsite &&
-                                    errors.businessWebsite && (
-                                        <div
-                                            className={classes.errorWrapStyles}
-                                        >
-                                            <InputErrorText
-                                                text={errors.businessWebsite}
-                                            />
-                                        </div>
-                                    )}
-                                <DialogTooltip
-                                    text={BETA_TOOLTIP_TEXT}
-                                    childComponent={
-                                        <span
-                                            className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
-                                        >
-                                            BETA
-                                        </span>
-                                    }
-                                />
-                            </div>
-                        )}
+                            )}
+                            {touched.businessWebsite &&
+                                errors.businessWebsite && (
+                                    <div className={classes.errorWrapStyles}>
+                                        <InputErrorText
+                                            text={errors.businessWebsite}
+                                        />
+                                    </div>
+                                )}
+                            <ShowOnProfileSwitch
+                                checked={
+                                    formData.facilityWebsitePubliclyVisible
+                                }
+                                onChange={checked =>
+                                    handleChange(
+                                        'facilityWebsitePubliclyVisible',
+                                        checked,
+                                    )
+                                }
+                                ariaLabel="Show company website on profile"
+                            />
+                            <DialogTooltip
+                                text={BETA_TOOLTIP_TEXT}
+                                childComponent={
+                                    <span
+                                        className={`${classes.betaBadge} ${classes.betaBadgeColumn}`}
+                                    >
+                                        BETA
+                                    </span>
+                                }
+                            />
+                        </div>
                     </div>
                     <div className={classes.textareaFieldContainer}>
                         <FormFieldTitle

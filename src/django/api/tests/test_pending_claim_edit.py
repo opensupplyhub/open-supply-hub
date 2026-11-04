@@ -2,13 +2,17 @@ import json
 from datetime import date
 from unittest.mock import patch
 
-from api.constants import FacilityClaimStatuses
+from api.constants import (
+    FacilityClaimReviewNoteTypes,
+    FacilityClaimStatuses,
+)
 from api.isic_taxonomy.revisions import isic_entry
 from api.models import (
     Contributor,
     Facility,
     FacilityClaim,
     FacilityClaimAttachments,
+    FacilityClaimReviewNote,
     FacilityList,
     FacilityListItem,
     FacilityMatch,
@@ -592,6 +596,77 @@ class PendingClaimEditTest(APITestCase):
         )
 
     # ------------------------------------------------------------------
+    # "Shown on profile" choices for website and phone (OSDEV-2680)
+    # ------------------------------------------------------------------
+
+    @override_switch('claim_a_facility', active=True)
+    def test_get_pending_claim_returns_profile_visibility_choices(self):
+        self.claim.facility_website_publicly_visible = True
+        self.claim.save()
+
+        self.login()
+        response = self.client.get(self.pending_url)
+
+        self.assertEqual(200, response.status_code)
+        data = json.loads(response.content)
+        self.assertTrue(data['facility_website_publicly_visible'])
+        self.assertFalse(data['facility_phone_number_publicly_visible'])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_patch_saves_profile_visibility_choices(self):
+        self.login()
+        response = self.client.patch(
+            self.pending_url,
+            {
+                'facility_website_publicly_visible': True,
+                'facility_phone_number_publicly_visible': True,
+            },
+            format='json',
+        )
+        self.assertEqual(200, response.status_code, response.content)
+
+        self.claim.refresh_from_db()
+        self.assertTrue(self.claim.facility_website_publicly_visible)
+        self.assertTrue(self.claim.facility_phone_number_publicly_visible)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_patch_without_visibility_choices_keeps_them(self):
+        # A partial PATCH must not reset an omitted choice to the create
+        # serializer's default of False.
+        self.claim.facility_website_publicly_visible = True
+        self.claim.facility_phone_number_publicly_visible = True
+        self.claim.save()
+
+        self.login()
+        response = self.client.patch(
+            self.pending_url, {'your_name': 'Only Name'}, format='json'
+        )
+        self.assertEqual(200, response.status_code, response.content)
+
+        self.claim.refresh_from_db()
+        self.assertTrue(self.claim.facility_website_publicly_visible)
+        self.assertTrue(self.claim.facility_phone_number_publicly_visible)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_claim_details_payload_has_profile_visibility_choices(self):
+        self.claim.facility_website = 'https://facility.com'
+        self.claim.facility_website_publicly_visible = True
+        self.claim.facility_phone_number = '+1-555-1234'
+        self.claim.save()
+
+        self.login(self.superuser_email)
+        response = self.client.get(
+            f'/api/facility-claims/{self.claim.id}/'
+        )
+
+        self.assertEqual(200, response.status_code)
+        data = json.loads(response.content)
+        self.assertEqual('https://facility.com', data['facility_website'])
+        self.assertTrue(data['facility_website_publicly_visible'])
+        self.assertEqual('+1-555-1234', data['facility_phone_number'])
+        self.assertFalse(data['facility_phone_number_publicly_visible'])
+
+    # ------------------------------------------------------------------
     # Cascade fix (previously on_delete=PROTECT)
     # ------------------------------------------------------------------
 
@@ -737,6 +812,39 @@ class PendingClaimNotificationAndListTest(APITestCase):
         self.claim.refresh_from_db()
         self.assertIsNone(self.claim.claimant_updated_at)
         self.assertEqual(0, len(django_mail.outbox))
+
+    @override_switch('claim_a_facility', active=True)
+    def test_visibility_change_is_described_in_the_notice(self):
+        from django.core import mail as django_mail
+
+        self.claim.facility_phone_number_publicly_visible = True
+        self.claim.save()
+
+        self.login()
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.patch(
+                self.pending_url,
+                {
+                    'facility_website_publicly_visible': True,
+                    'facility_phone_number_publicly_visible': False,
+                },
+                format='json',
+            )
+        self.assertEqual(200, response.status_code, response.content)
+
+        self.assertEqual(1, len(django_mail.outbox))
+        body = django_mail.outbox[0].body
+        self.assertIn('Website shown on profile: No → Yes', body)
+        self.assertIn('Phone number shown on profile: Yes → No', body)
+        self.assertNotIn('facility_website_publicly_visible', body)
+
+        # Moderators read the same lines in the claim review timeline.
+        note = FacilityClaimReviewNote.objects.get(
+            claim=self.claim,
+            note_type=FacilityClaimReviewNoteTypes.CLAIMANT_UPDATE,
+        )
+        self.assertIn('Website shown on profile: No → Yes', note.note)
+        self.assertIn('Phone number shown on profile: Yes → No', note.note)
 
     @override_switch('claim_a_facility', active=True)
     def test_attachment_add_stamps_and_notifies(self):

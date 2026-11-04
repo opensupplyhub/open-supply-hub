@@ -10,7 +10,18 @@ import styles from './styles';
  * compactly and only when present.
  */
 
-function DetailRow({ label, value }) {
+// The claimant's choice of whether a value is shown on the production
+// location profile (OSDEV-2680), as a secondary line under the value.
+const visibilityNoteStyle = Object.freeze({
+    display: 'block',
+    fontSize: '14px',
+    color: styles.detailKey.color,
+});
+
+const profileVisibilityNote = isPubliclyVisible =>
+    isPubliclyVisible ? 'Shown on profile' : 'Not shown on profile';
+
+function DetailRow({ label, value, note }) {
     return (
         <div style={styles.matchRow}>
             <span style={styles.detailKey}>{label}</span>
@@ -22,6 +33,7 @@ function DetailRow({ label, value }) {
                 ) : (
                     value
                 )}
+                {note && <span style={visibilityNoteStyle}>{note}</span>}
             </span>
         </div>
     );
@@ -34,7 +46,18 @@ export default function ClaimantDetailsPanel({ detail }) {
         ['LinkedIn', detail.linkedin_profile],
         ['Claimant LinkedIn', detail.claimant_linkedin_profile_url],
         ['Website', detail.website],
-        ['Production location website', detail.facility_website],
+        [
+            'Production location website',
+            detail.facility_website,
+            profileVisibilityNote(detail.facility_website_publicly_visible),
+        ],
+        [
+            'Production location phone',
+            detail.facility_phone_number,
+            profileVisibilityNote(
+                detail.facility_phone_number_publicly_visible,
+            ),
+        ],
         ['Sector(s)', (detail.sector || []).join(', ')],
         [
             'Workers',
@@ -65,8 +88,13 @@ export default function ClaimantDetailsPanel({ detail }) {
                 </span>
             </button>
             {!collapsed &&
-                rows.map(([label, value]) => (
-                    <DetailRow key={label} label={label} value={value} />
+                rows.map(([label, value, note]) => (
+                    <DetailRow
+                        key={label}
+                        label={label}
+                        value={value}
+                        note={note}
+                    />
                 ))}
         </div>
     );
