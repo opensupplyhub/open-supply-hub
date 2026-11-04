@@ -298,7 +298,8 @@ class FacilityClaimViewSet(ModelViewSet):
             'facility',
             'contributor',
             'contributor__admin',
-            'status_change_by'
+            'status_change_by',
+            'campaign',
         ).prefetch_related(
             # select_related('author'): notes_meta reports is_automated
             # from note.author.email — without this it is an N+1 per note.
@@ -308,8 +309,6 @@ class FacilityClaimViewSet(ModelViewSet):
                     'author'
                 ),
             )
-            'status_change_by',
-            'campaign'
         ).all().order_by('-id')
         if statuses:
             queryset = queryset.filter(status__in=statuses)

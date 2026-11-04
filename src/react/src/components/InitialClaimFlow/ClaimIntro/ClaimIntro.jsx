@@ -132,7 +132,6 @@ ClaimIntro.propTypes = {
     }).isRequired,
     location: PropTypes.shape({
         search: PropTypes.string,
-        search: PropTypes.string.isRequired,
     }).isRequired,
     resetForm: PropTypes.func.isRequired,
     updateOsId: PropTypes.func.isRequired,

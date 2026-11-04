@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0217_add_contribution_dates_to_index_contributors'),
+        ('api', '0266_announcement_banner'),
     ]
 
     operations = [
