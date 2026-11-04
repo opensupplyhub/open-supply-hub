@@ -566,13 +566,27 @@ Removal.propTypes = {
     onDecide: func.isRequired,
 };
 
+const plural = (n, word, words = `${word}s`) =>
+    `${n} ${n === 1 ? word : words}`;
+
+const FINDINGS_PREVIEW = 5;
+
+/*
+ * Whole-file findings, kept short: exact duplicates are already handled
+ * in the automatic tier, so they get one line; repeated names are a note
+ * for the moderator more than a task for the contributor, so they get a
+ * count with the detail folded unless the list is short.
+ */
 export const ListFindings = ({ filePass }) => {
+    const [open, setOpen] = useState(false);
     const headerIssues = filePass.header_issues || [];
     const duplicates = filePass.exact_duplicates || [];
     const repeated = filePass.repeated_names || [];
     if (!headerIssues.length && !duplicates.length && !repeated.length) {
         return null;
     }
+    const fold = repeated.length > FINDINGS_PREVIEW;
+    const shown = fold && !open ? [] : repeated;
     return (
         <div>
             <Typography variant="subheading">
@@ -584,16 +598,35 @@ export const ListFindings = ({ filePass }) => {
                         {issue.note || `Header problem: ${issue.column}`}
                     </li>
                 ))}
-                {duplicates.map(pair => (
-                    <li key={`dup-${pair.remove}`}>
-                        Row {pair.remove} repeats row {pair.keep} ({pair.match}{' '}
-                        match).
+                {duplicates.length > 0 && (
+                    <li>
+                        {plural(duplicates.length, 'row')}{' '}
+                        {duplicates.length === 1 ? 'is' : 'are'} an exact repeat
+                        of an earlier row and{' '}
+                        {duplicates.length === 1 ? 'was' : 'were'} removed
+                        (listed under automatic fixes).
                     </li>
-                ))}
-                {repeated.map(group => (
-                    <li key={`rep-${group.name}-${group.rows.join('-')}`}>
-                        &ldquo;{group.name}&rdquo; appears on rows{' '}
-                        {group.rows.join(', ')} with different addresses.
+                )}
+                {repeated.length > 0 && (
+                    <li>
+                        {plural(repeated.length, 'name')}{' '}
+                        {repeated.length === 1 ? 'appears' : 'appear'} at more
+                        than one address. That can be right (several sites of
+                        one company); check the ones that are not.
+                        {fold && (
+                            <Button size="small" onClick={() => setOpen(!open)}>
+                                {open ? 'Hide' : 'Show'} the {repeated.length}
+                            </Button>
+                        )}
+                    </li>
+                )}
+                {shown.map(group => (
+                    <li
+                        key={`rep-${group.name}-${group.rows.join('-')}`}
+                        style={styles.muted}
+                    >
+                        &ldquo;{group.name}&rdquo; on rows{' '}
+                        {group.rows.join(', ')}.
                     </li>
                 ))}
             </ul>
@@ -679,9 +712,6 @@ const groupTitle = group => {
     }
     return `${fieldLabel(group.field)}: ${describeCode(group.code)}`;
 };
-
-const plural = (n, word, words = `${word}s`) =>
-    `${n} ${n === 1 ? word : words}`;
 
 const groupStatus = group => {
     const parts = [];
