@@ -485,11 +485,13 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
     clearCleaning: () => dispatch(resetFacilityListCleaning()),
     decide: decisions =>
         dispatch(submitFacilityListCleaningDecisions(listID, decisions)),
-    decideGroup: (key, decision) =>
+    // One key or a list of keys; one request either way.
+    decideGroup: (keys, decision) =>
         dispatch(
-            submitFacilityListCleaningGroupDecisions(listID, [
-                { key, decision },
-            ]),
+            submitFacilityListCleaningGroupDecisions(
+                listID,
+                [].concat(keys).map(key => ({ key, decision })),
+            ),
         ),
     apply: () => dispatch(applyFacilityListCleaning(listID)),
 });

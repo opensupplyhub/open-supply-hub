@@ -793,7 +793,19 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
     const isIssue = group.kind === KIND.ISSUE;
     const isRemoval = group.kind === KIND.REMOVAL;
     const onGroup = decision => decideGroup(group.key, decision);
-    const undecided = group.count - group.rejected;
+    // Rows the contributor decided one by one keep that decision; the
+    // group buttons act on the others.
+    const byRow = group.by_row || 0;
+    const rest = group.count - byRow;
+    const others = byRow ? `the other ${rest}` : `all ${group.count}`;
+    const otherRows = byRow
+        ? `the other ${plural(rest, 'row')}`
+        : plural(group.count, 'row');
+    // Nothing left for the button to do once every row outside the
+    // one-by-one set already carries that decision.
+    const allAccepted = group.accepted >= rest;
+    const allRejected = group.rejected >= rest;
+    const allRemoved = group.removed + group.accepted >= rest;
     return (
         <div style={chipStyles.header}>
             <Typography variant="subheading">
@@ -821,22 +833,18 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                                 size="small"
                                 variant="outlined"
                                 color="primary"
-                                disabled={
-                                    busy || group.accepted === group.count
-                                }
+                                disabled={busy || !rest || allAccepted}
                                 onClick={() => onGroup(DECISION.ACCEPTED)}
                             >
-                                Accept all {group.count}
+                                Accept {others}
                             </Button>
                             <Button
                                 size="small"
                                 variant="outlined"
-                                disabled={
-                                    busy || group.rejected === group.count
-                                }
+                                disabled={busy || !rest || allRejected}
                                 onClick={() => onGroup(DECISION.REJECTED)}
                             >
-                                Keep all originals
+                                Keep {others} originals
                             </Button>
                         </>
                     )}
@@ -846,11 +854,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                                 size="small"
                                 variant="outlined"
                                 color={isRemoval ? 'primary' : 'secondary'}
-                                disabled={
-                                    busy ||
-                                    group.removed + group.accepted ===
-                                        group.count
-                                }
+                                disabled={busy || !rest || allRemoved}
                                 onClick={() =>
                                     onGroup(
                                         isRemoval
@@ -859,19 +863,17 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                                     )
                                 }
                             >
-                                Remove {plural(undecided || group.count, 'row')}
+                                Remove {otherRows}
                             </Button>
                             <Button
                                 size="small"
                                 variant="outlined"
-                                disabled={
-                                    busy || group.rejected === group.count
-                                }
+                                disabled={busy || !rest || allRejected}
                                 onClick={() => onGroup(DECISION.REJECTED)}
                             >
                                 {isRemoval
-                                    ? 'Keep all rows'
-                                    : 'Leave all as uploaded'}
+                                    ? `Keep ${otherRows}`
+                                    : `Leave ${others} as uploaded`}
                             </Button>
                         </>
                     )}
@@ -880,12 +882,86 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                     )}
                 </div>
             )}
+            {byRow > 0 && (
+                <div style={styles.muted}>
+                    {plural(byRow, 'row')} you decided one by one{' '}
+                    {byRow === 1 ? 'keeps' : 'keep'} that decision; use the
+                    row&rsquo;s own buttons to change it.
+                </div>
+            )}
         </div>
     );
 };
 
 GroupHeader.propTypes = {
     group: object.isRequired,
+    canAct: bool.isRequired,
+    busy: bool.isRequired,
+    decideGroup: func.isRequired,
+};
+
+/*
+ * The Needs-you tab's own actions: every suggested fix at once, or
+ * everything left as uploaded. Flags have no value to accept, so Accept
+ * all only covers the corrections; rows decided one by one are left
+ * alone, as with any group action.
+ */
+const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
+    const corrections = groups.filter(g => g.kind === KIND.CORRECTION);
+    const fixes = corrections.reduce(
+        (n, g) => n + g.count - (g.by_row || 0),
+        0,
+    );
+    const everything = groups.reduce(
+        (n, g) => n + g.count - (g.by_row || 0),
+        0,
+    );
+    const byRow = groups.reduce((n, g) => n + (g.by_row || 0), 0);
+    const flagged = groups.length - corrections.length;
+    if (!canAct || !groups.length) return null;
+    return (
+        <div style={chipStyles.header}>
+            <div style={chipStyles.headerActions}>
+                <Button
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    disabled={busy || !fixes}
+                    onClick={() =>
+                        decideGroup(
+                            corrections.map(g => g.key),
+                            DECISION.ACCEPTED,
+                        )
+                    }
+                >
+                    Accept {byRow ? 'the other' : 'all'}{' '}
+                    {plural(fixes, 'suggested fix', 'suggested fixes')}
+                </Button>
+                <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={busy || !everything}
+                    onClick={() =>
+                        decideGroup(
+                            groups.map(g => g.key),
+                            DECISION.REJECTED,
+                        )
+                    }
+                >
+                    Keep {byRow ? 'the rest' : 'everything'} as uploaded
+                </Button>
+                <span style={styles.muted}>
+                    {flagged > 0 &&
+                        'Flagged rows have nothing to accept: fix or remove them by type or by row. '}
+                    Or pick a type above.
+                </span>
+            </div>
+        </div>
+    );
+};
+
+AllHeader.propTypes = {
+    groups: arrayOf(object).isRequired,
     canAct: bool.isRequired,
     busy: bool.isRequired,
     decideGroup: func.isRequired,
@@ -1047,6 +1123,14 @@ export const GroupTabs = ({
             {current && (
                 <GroupHeader
                     group={current}
+                    canAct={canAct}
+                    busy={busy}
+                    decideGroup={decideGroup}
+                />
+            )}
+            {active === ALL && (
+                <AllHeader
+                    groups={attention}
                     canAct={canAct}
                     busy={busy}
                     decideGroup={decideGroup}

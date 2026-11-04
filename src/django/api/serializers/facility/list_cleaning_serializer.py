@@ -65,6 +65,7 @@ def serialize_groups(suggestions):
                 'rejected': 0,
                 'edited': 0,
                 'removed': 0,
+                'by_row': 0,
                 'applied': 0,
                 'auto': True,
                 'rows': [],
@@ -74,6 +75,8 @@ def serialize_groups(suggestions):
         g['rows'].append(s.row_number)
         if not (s.extra or {}).get('auto'):
             g['auto'] = False
+        if (s.extra or {}).get('by_row'):
+            g['by_row'] += 1
         if s.decision == S.PENDING:
             g['pending'] += 1
         elif s.decision == S.ACCEPTED:

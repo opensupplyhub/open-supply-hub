@@ -247,8 +247,13 @@ class DecisionError(ValueError):
     pass
 
 
-def _apply_decision(suggestion, decision, value, user, now):
-    """Validate one decision against one suggestion and set it."""
+def _apply_decision(suggestion, decision, value, user, now, by_row):
+    """
+    Validate one decision against one suggestion and set it. `by_row`
+    records whether the contributor decided this row on its own; group
+    actions leave such rows alone, so fixing two rows and then removing
+    "the rest" of that error type does what it says.
+    """
     S = ListCleaningSuggestion
     if suggestion.kind == S.ISSUE:
         # A flagged row can be fixed in place (EDITED), dropped (REMOVED)
@@ -273,8 +278,11 @@ def _apply_decision(suggestion, decision, value, user, now):
     suggestion.decided_value = str(value) if decision == S.EDITED else ''
     suggestion.decided_by = user
     suggestion.decided_at = now
+    extra = dict(suggestion.extra or {})
+    extra['by_row'] = by_row
+    suggestion.extra = extra
     suggestion.save(update_fields=[
-        'decision', 'decided_value', 'decided_by', 'decided_at'])
+        'decision', 'decided_value', 'decided_by', 'decided_at', 'extra'])
     return suggestion
 
 
@@ -299,7 +307,8 @@ def record_decisions(run, decisions, user):
         if decision not in allowed:
             raise DecisionError(f'Unknown decision {decision!r}.')
         updated.append(_apply_decision(
-            suggestion, decision, entry.get('value', ''), user, now))
+            suggestion, decision, entry.get('value', ''), user, now,
+            by_row=True))
     return updated
 
 
@@ -314,7 +323,8 @@ def record_group_decisions(run, groups, user):
               REJECTED|REMOVED|PENDING}]
     One decision for every suggestion of that error type, so a contributor
     with thousands of rows can act on a pattern instead of a row. Each
-    affected suggestion still gets its own logged decision.
+    affected suggestion still gets its own logged decision. Rows the
+    contributor already decided one by one keep that decision.
     """
     allowed = {c for c, _ in ListCleaningSuggestion.DECISION_CHOICES}
     allowed.discard(ListCleaningSuggestion.EDITED)  # values differ per row
@@ -332,8 +342,10 @@ def record_group_decisions(run, groups, user):
             raise DecisionError(
                 f'Decision {decision!r} cannot be made for a whole group.')
         for suggestion in by_key[key]:
-            updated.append(
-                _apply_decision(suggestion, decision, '', user, now))
+            if (suggestion.extra or {}).get('by_row'):
+                continue
+            updated.append(_apply_decision(
+                suggestion, decision, '', user, now, by_row=False))
     return updated
 
 

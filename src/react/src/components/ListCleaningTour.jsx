@@ -37,9 +37,9 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
         anchor: 'rows',
         title: 'Decide by type or row by row',
         text:
-            'With a type selected you can accept, keep or remove all of ' +
-            'its rows in one go. Or use the buttons on a row to fix a ' +
-            'value or remove just that row.',
+            'Accept or keep every suggested fix at once, or pick a type ' +
+            'to accept, keep or remove all of its rows in one go. Rows ' +
+            'you fix or remove one by one keep your decision.',
     }),
     Object.freeze({
         anchor: 'apply',

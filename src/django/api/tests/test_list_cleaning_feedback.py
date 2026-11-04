@@ -355,6 +355,31 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(country.decision, ListCleaningSuggestion.REJECTED)
         self.assertEqual(country.decided_by, self.user)
 
+        # A row the contributor decided on its own keeps that decision
+        # when the rest of its error type is decided as a group.
+        name_key = 'CORRECTION:country_in_address:address'
+        self.assertIn(name_key, groups)
+        name = run.suggestions.get(code='country_in_address')
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': name.id, 'decision': 'EDITED',
+                           'value': 'Hand-typed name'}]}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        response = self.client.post(self.url('decisions/'), {
+            'groups': [{'key': name_key, 'decision': 'REJECTED'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        name.refresh_from_db()
+        self.assertEqual(name.decision, ListCleaningSuggestion.EDITED)
+        self.assertEqual(name.decided_value, 'Hand-typed name')
+        groups = {g['key']: g for g in response.data['groups']}
+        self.assertEqual(groups[name_key]['by_row'], 1)
+        self.assertEqual(groups[name_key]['edited'], 1)
+        # ...but a group decision can be overridden by a later one.
+        country.refresh_from_db()
+        self.assertFalse(country.extra.get('by_row'))
+
         for bad in ({'key': 'nope', 'decision': 'ACCEPTED'},
                     {'key': key, 'decision': 'EDITED'}):
             response = self.client.post(self.url('decisions/'), {
