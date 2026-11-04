@@ -30,6 +30,7 @@ import {
 } from './FacilityListCleaningSuggestions';
 
 import COLOURS from '../util/COLOURS';
+import ListCleaningTour from './ListCleaningTour';
 
 // The contributor is waiting on this screen, so poll faster than the
 // list-page panel does, and stop pretending after a while.
@@ -60,6 +61,10 @@ const styles = Object.freeze({
         fontSize: '20px',
         fontWeight: 700,
         flex: 1,
+    }),
+    tourButton: Object.freeze({
+        color: COLOURS.WHITE,
+        border: '1px solid rgba(255, 255, 255, 0.6)',
     }),
     stepper: Object.freeze({
         padding: '16px 0 8px 0',
@@ -279,6 +284,9 @@ const ListCleaningReviewDialog = ({
         }
     }, [lastApplied]);
 
+    // Prototype: the walkthrough opens with every review so demos need no
+    // reset. Production would remember dismissal per user.
+    const [tour, setTour] = useState(true);
     const busy = submitting || applying;
     const summary = data ? data.summary : null;
     const rows = data ? data.rows : [];
@@ -357,7 +365,7 @@ const ListCleaningReviewDialog = ({
                     decide={decide}
                     decideGroup={decideGroup}
                 />
-                <div style={styles.actions}>
+                <div style={styles.actions} data-tour="apply">
                     {(submitError || applyError) && (
                         <Typography style={styles.error}>
                             {(submitError || applyError).join(' ')}
@@ -386,6 +394,7 @@ const ListCleaningReviewDialog = ({
                         and continue
                     </Button>
                 </div>
+                {tour && <ListCleaningTour onDone={() => setTour(false)} />}
             </>
         );
     }
@@ -397,6 +406,15 @@ const ListCleaningReviewDialog = ({
                     <Typography id="list-cleaning-review" style={styles.title}>
                         Review your list before it goes to a moderator
                     </Typography>
+                    {activeStep === STEP.REVIEW && !tour && (
+                        <Button
+                            size="small"
+                            style={styles.tourButton}
+                            onClick={() => setTour(true)}
+                        >
+                            Show me around
+                        </Button>
+                    )}
                 </Toolbar>
             </AppBar>
             <DialogContent>

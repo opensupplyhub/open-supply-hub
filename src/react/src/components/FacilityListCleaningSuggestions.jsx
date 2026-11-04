@@ -648,8 +648,12 @@ export const SuggestionRows = ({ rows, canAct, busy, decide, filter }) =>
                 : row,
         )
         .filter(row => row.suggestions.length)
-        .map(row => (
-            <div key={row.row_number} style={styles.rowCard}>
+        .map((row, i) => (
+            <div
+                key={row.row_number}
+                style={styles.rowCard}
+                data-tour={i === 0 ? 'rows' : undefined}
+            >
                 <div style={styles.rowHeader}>
                     <span style={styles.rowNumber}>Row {row.row_number}</span>
                     <span style={styles.rowIdentity}>
@@ -972,7 +976,7 @@ export const GroupTabs = ({
     return (
         <div>
             {automatic.length > 0 && (
-                <div style={autoStyles.box}>
+                <div style={autoStyles.box} data-tour="automatic">
                     <div style={autoStyles.head}>
                         <span>
                             <b>{plural(autoFixes, 'fix', 'fixes')}</b> made
@@ -1020,7 +1024,7 @@ export const GroupTabs = ({
                     )}
                 </div>
             )}
-            <div style={chipStyles.bar} role="tablist">
+            <div style={chipStyles.bar} role="tablist" data-tour="chips">
                 <Chip
                     label={`Needs you (${plural(attentionRows, 'row')})`}
                     onClick={() => select(ALL)}
