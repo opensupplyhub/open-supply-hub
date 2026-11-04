@@ -20,7 +20,7 @@ import {
     styles,
     Stat,
     ListFindings,
-    GroupList,
+    GroupTabs,
     DownloadFixedList,
 } from './FacilityListCleaningSuggestions';
 
@@ -206,7 +206,7 @@ const FacilityListCleaningPanel = ({
                         changes makes approval more likely.
                     </div>
                     <ListFindings filePass={run.file_pass || {}} />
-                    <GroupList
+                    <GroupTabs
                         groups={data.groups || []}
                         rows={rows}
                         canAct={canAct}

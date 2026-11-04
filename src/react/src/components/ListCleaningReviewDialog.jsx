@@ -25,7 +25,7 @@ import {
     styles as cardStyles,
     Stat,
     ListFindings,
-    GroupList,
+    GroupTabs,
     DownloadFixedList,
 } from './FacilityListCleaningSuggestions';
 
@@ -315,10 +315,11 @@ const ListCleaningReviewDialog = ({
                 </Typography>
                 <Typography>
                     We checked every row. The findings are grouped by type
-                    because the same problem usually repeats through a file:
-                    accept or reject a whole group, or open its rows to decide
-                    one by one. Rows we could not fix can be corrected or
-                    removed right here, with no need to upload again.
+                    because the same problem usually repeats through a file.
+                    Pick a type to see its rows and accept, keep or remove them
+                    all at once, or decide row by row. Rows we could not fix can
+                    be corrected or removed right here, with no need to upload
+                    again.
                 </Typography>
                 <div style={cardStyles.statRow}>
                     <Stat
@@ -347,7 +348,7 @@ const ListCleaningReviewDialog = ({
                     these changes makes approval more likely.
                 </div>
                 <ListFindings filePass={run.file_pass || {}} />
-                <GroupList
+                <GroupTabs
                     groups={data.groups || []}
                     rows={rows}
                     canAct

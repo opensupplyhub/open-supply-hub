@@ -31,14 +31,14 @@ def _group_key(s):
 
 
 def _group_order(group):
-    """Must-fix flags first, then removals, then corrections; within
-    those, groups with pending decisions before settled ones."""
+    """Must-fix flags first, then removals, then corrections, largest
+    first. Deliberately not by decision state: the UI shows these as
+    tabs, and tabs must not move while the contributor works."""
     S = ListCleaningSuggestion
     kind_rank = {S.ISSUE: 0, S.REMOVAL: 1, S.CORRECTION: 2}
     if group['severity'] == S.INTERNAL_NOTE:
-        return (9, 0, -group['count'])
-    return (kind_rank.get(group['kind'], 3), 0 if group['pending'] else 1,
-            -group['count'])
+        return (9, -group['count'], group['key'])
+    return (kind_rank.get(group['kind'], 3), -group['count'], group['key'])
 
 
 def serialize_groups(suggestions):

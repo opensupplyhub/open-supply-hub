@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { arrayOf, bool, func, number, object, string } from 'prop-types';
 import Button from '@material-ui/core/Button';
+import Chip from '@material-ui/core/Chip';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 
@@ -701,83 +702,83 @@ const groupStatus = group => {
     return parts.join(' · ');
 };
 
+const ALL = 'all';
+
+const chipStyles = Object.freeze({
+    bar: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px',
+        padding: '4px 0 12px 0',
+        borderBottom: `1px solid ${COLOURS.GREY}`,
+        marginBottom: '12px',
+    }),
+    dot: Object.freeze({
+        display: 'inline-block',
+        width: '8px',
+        height: '8px',
+        borderRadius: '50%',
+        marginRight: '6px',
+    }),
+    header: Object.freeze({
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        padding: '0 0 12px 0',
+    }),
+    headerActions: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px',
+        alignItems: 'center',
+    }),
+});
+
+const groupKindColour = group => {
+    if (group.severity === SEVERITY.INTERNAL_NOTE) return COLOURS.DARK_GREY;
+    if (group.kind === KIND.ISSUE) return '#d32f2f';
+    if (group.kind === KIND.REMOVAL) return '#ef6c00';
+    return '#2e7d32';
+};
+
+const chipLabel = group => (
+    <span>
+        <span
+            style={{ ...chipStyles.dot, background: groupKindColour(group) }}
+        />
+        {groupTitle(group)} ({group.count})
+    </span>
+);
+
 /*
- * One card per error type across the whole list. The contributor acts on
- * the pattern (accept all, keep all, remove all) and only opens the rows
- * when a type needs a closer look. Lists run to thousands of rows; the
- * errors do not come in thousands of kinds.
+ * The group-level actions for the selected error type: act on the
+ * pattern once, then look at the rows underneath only if needed.
  */
-export const GroupCard = ({
-    group,
-    rows,
-    canAct,
-    busy,
-    decide,
-    decideGroup,
-}) => {
-    const [open, setOpen] = useState(false);
+const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
     const internal = group.severity === SEVERITY.INTERNAL_NOTE;
     const isIssue = group.kind === KIND.ISSUE;
     const isRemoval = group.kind === KIND.REMOVAL;
-    const tagStyle = (() => {
-        if (internal) return styles.internalTag;
-        if (isIssue) return styles.mustFixTag;
-        if (isRemoval) return styles.removalTag;
-        return styles.correctionTag;
-    })();
-    const tagText = (() => {
-        if (internal) return 'Moderator note';
-        if (isIssue) return 'Needs your attention';
-        if (isRemoval) return 'Suggested removal';
-        return 'Suggested fix';
-    })();
     const onGroup = decision => decideGroup(group.key, decision);
     const undecided = group.count - group.rejected;
-
     return (
-        <div style={styles.rowCard}>
-            <div style={styles.rowHeader}>
-                <Tag style={tagStyle}>{tagText}</Tag>
-                <span style={styles.rowNumber}>{groupTitle(group)}</span>
-                <span style={styles.rowIdentity}>
-                    {plural(group.count, 'row')}
-                </span>
-            </div>
-            <div style={styles.valueBlock}>
-                {isIssue && !internal && codeHelp(group.code) && (
-                    <div>{codeHelp(group.code)}</div>
-                )}
-                {group.examples.map(example => (
-                    <div key={example.row_number} style={styles.muted}>
-                        Row {example.row_number}:{' '}
-                        {group.kind === KIND.CORRECTION ? (
-                            <>
-                                <span style={styles.original}>
-                                    {example.original_value || '(blank)'}
-                                </span>
-                                <span style={styles.arrow}>&rarr;</span>
-                                <span style={styles.corrected}>
-                                    {example.corrected_value || '(blank)'}
-                                </span>
-                            </>
-                        ) : (
-                            example.note || example.original_value
-                        )}
-                    </div>
-                ))}
-                {group.count > group.examples.length && (
-                    <div style={styles.muted}>
-                        and {group.count - group.examples.length} more
-                    </div>
-                )}
-                <div style={styles.decisionText}>{groupStatus(group)}</div>
-            </div>
-            {!internal && (
-                <div style={styles.decisionBlock}>
-                    {canAct && group.kind === KIND.CORRECTION && (
+        <div style={chipStyles.header}>
+            <Typography variant="subheading">
+                {groupTitle(group)}: {plural(group.count, 'row')}
+            </Typography>
+            {isIssue && !internal && codeHelp(group.code) && (
+                <div>{codeHelp(group.code)}</div>
+            )}
+            {group.examples[0] && group.examples[0].note && (
+                <div style={styles.muted}>{group.examples[0].note}</div>
+            )}
+            <div style={styles.decisionText}>{groupStatus(group)}</div>
+            {canAct && !internal && (
+                <div style={chipStyles.headerActions}>
+                    {group.kind === KIND.CORRECTION && (
                         <>
                             <Button
                                 size="small"
+                                variant="outlined"
                                 color="primary"
                                 disabled={
                                     busy || group.accepted === group.count
@@ -788,6 +789,7 @@ export const GroupCard = ({
                             </Button>
                             <Button
                                 size="small"
+                                variant="outlined"
                                 disabled={
                                     busy || group.rejected === group.count
                                 }
@@ -797,10 +799,11 @@ export const GroupCard = ({
                             </Button>
                         </>
                     )}
-                    {canAct && (isRemoval || isIssue) && (
+                    {(isRemoval || isIssue) && (
                         <>
                             <Button
                                 size="small"
+                                variant="outlined"
                                 color={isRemoval ? 'primary' : 'secondary'}
                                 disabled={
                                     busy ||
@@ -819,6 +822,7 @@ export const GroupCard = ({
                             </Button>
                             <Button
                                 size="small"
+                                variant="outlined"
                                 disabled={
                                     busy || group.rejected === group.count
                                 }
@@ -830,56 +834,84 @@ export const GroupCard = ({
                             </Button>
                         </>
                     )}
-                    <Button size="small" onClick={() => setOpen(!open)}>
-                        {open
-                            ? 'Hide rows'
-                            : `Review rows${isIssue ? ' and fix' : ''}`}
-                    </Button>
+                    {isIssue && (
+                        <span style={styles.muted}>or fix each row below</span>
+                    )}
                 </div>
-            )}
-            {open && (
-                <SuggestionRows
-                    rows={rows}
-                    canAct={canAct}
-                    busy={busy}
-                    decide={decide}
-                    groupKey={group.key}
-                />
             )}
         </div>
     );
 };
 
-GroupCard.propTypes = {
+GroupHeader.propTypes = {
     group: object.isRequired,
-    rows: arrayOf(object).isRequired,
     canAct: bool.isRequired,
     busy: bool.isRequired,
-    decide: func.isRequired,
     decideGroup: func.isRequired,
 };
 
-export const GroupList = ({
+/*
+ * A chip bar with one chip per error type (plus All), and the rows for
+ * the selected type straight underneath. Lists run to thousands of rows;
+ * the errors do not come in thousands of kinds, so the bar is the map.
+ */
+export const GroupTabs = ({
     groups,
     rows,
     canAct,
     busy,
     decide,
     decideGroup,
-}) =>
-    groups.map(group => (
-        <GroupCard
-            key={group.key}
-            group={group}
-            rows={rows}
-            canAct={canAct}
-            busy={busy}
-            decide={decide}
-            decideGroup={decideGroup}
-        />
-    ));
+}) => {
+    const [selected, setSelected] = useState(ALL);
+    const current = groups.find(g => g.key === selected);
+    const active = current ? selected : ALL;
+    const rowCount = rows.length;
+    return (
+        <div>
+            <div style={chipStyles.bar} role="tablist">
+                <Chip
+                    label={`All (${plural(rowCount, 'row')})`}
+                    clickable
+                    color={active === ALL ? 'primary' : 'default'}
+                    variant={active === ALL ? 'default' : 'outlined'}
+                    onClick={() => setSelected(ALL)}
+                    role="tab"
+                    aria-selected={active === ALL}
+                />
+                {groups.map(group => (
+                    <Chip
+                        key={group.key}
+                        label={chipLabel(group)}
+                        clickable
+                        color={active === group.key ? 'primary' : 'default'}
+                        variant={active === group.key ? 'default' : 'outlined'}
+                        onClick={() => setSelected(group.key)}
+                        role="tab"
+                        aria-selected={active === group.key}
+                    />
+                ))}
+            </div>
+            {current && (
+                <GroupHeader
+                    group={current}
+                    canAct={canAct}
+                    busy={busy}
+                    decideGroup={decideGroup}
+                />
+            )}
+            <SuggestionRows
+                rows={rows}
+                canAct={canAct}
+                busy={busy}
+                decide={decide}
+                groupKey={current ? current.key : null}
+            />
+        </div>
+    );
+};
 
-GroupList.propTypes = {
+GroupTabs.propTypes = {
     groups: arrayOf(object).isRequired,
     rows: arrayOf(object).isRequired,
     canAct: bool.isRequired,
