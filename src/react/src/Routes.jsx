@@ -368,8 +368,7 @@ function mapDispatchToProps(dispatch) {
     return {
         getFeatureFlags: () => dispatch(fetchFeatureFlags()),
         getAnnouncementBanner: () => dispatch(fetchAnnouncementBanner()),
-        refreshAnnouncementBanner: () =>
-            dispatch(refreshAnnouncementBanner()),
+        refreshAnnouncementBanner: () => dispatch(refreshAnnouncementBanner()),
         refreshFeatureFlags: () => dispatch(refreshFeatureFlags()),
         logIn: () => dispatch(sessionLogin()),
         handleWindowResize: data => dispatch(reportWindowResize(data)),
