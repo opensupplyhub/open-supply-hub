@@ -493,10 +493,7 @@ export const ReadinessTracker = ({ summary, applied }) => {
                 <Milestone
                     done={flagsDone}
                     total={flagsTotal}
-                    label={`${plural(
-                        flagsTotal,
-                        'row',
-                    )} needing attention resolved`}
+                    label={`${plural(flagsTotal, 'flagged problem')} resolved`}
                 />
                 {summary.list_findings > 0 && (
                     <Milestone
@@ -1237,41 +1234,43 @@ const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
     if (!canAct || !groups.length) return null;
     return (
         <div style={chipStyles.header}>
-            <div style={chipStyles.headerActions}>
-                <Button
-                    size="small"
-                    variant="outlined"
-                    color="primary"
-                    disabled={busy || !fixes}
-                    onClick={() =>
-                        decideGroup(
-                            corrections.map(g => g.key),
-                            DECISION.ACCEPTED,
-                        )
-                    }
-                >
-                    Accept {byRow ? 'the other' : 'all'}{' '}
-                    {plural(fixes, 'suggested fix', 'suggested fixes')}
-                </Button>
-                <Button
-                    size="small"
-                    variant="outlined"
-                    disabled={busy || !everything}
-                    onClick={() =>
-                        decideGroup(
-                            groups.map(g => g.key),
-                            DECISION.REJECTED,
-                        )
-                    }
-                >
-                    Keep {byRow ? 'the rest' : 'everything'} as uploaded
-                </Button>
-                <span style={styles.muted}>
-                    {flagged > 0 &&
-                        'Flagged rows have nothing to accept: fix or remove them by type or by row. '}
-                    Or pick a type above.
-                </span>
-            </div>
+            {everything > 0 && (
+                <div style={chipStyles.headerActions}>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        disabled={busy || !fixes}
+                        onClick={() =>
+                            decideGroup(
+                                corrections.map(g => g.key),
+                                DECISION.ACCEPTED,
+                            )
+                        }
+                    >
+                        Accept {byRow ? 'the other' : 'all'}{' '}
+                        {plural(fixes, 'suggested fix', 'suggested fixes')}
+                    </Button>
+                    <Button
+                        size="small"
+                        variant="outlined"
+                        disabled={busy || !everything}
+                        onClick={() =>
+                            decideGroup(
+                                groups.map(g => g.key),
+                                DECISION.REJECTED,
+                            )
+                        }
+                    >
+                        Keep {byRow ? 'the rest' : 'everything'} as uploaded
+                    </Button>
+                    <span style={styles.muted}>
+                        {flagged > 0 &&
+                            'Flagged rows have nothing to accept: fix or remove them by type or by row. '}
+                        Or pick a type above.
+                    </span>
+                </div>
+            )}
             {byRow > 0 && (
                 <div style={styles.muted}>
                     {plural(byRow, 'row')} you decided one by one{' '}
