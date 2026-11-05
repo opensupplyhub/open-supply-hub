@@ -7,10 +7,10 @@ import Business from '@material-ui/icons/Business';
 import Build from '@material-ui/icons/Build';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import Spa from '@material-ui/icons/Spa';
-import findSelectedOption from '../utils';
 
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import findSelectedOption from '../utils';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import FormFieldHint from '../../../Shared/FormFieldHint/FormFieldHint';
 import IconComponent from '../../../../Shared/IconComponent/IconComponent';
