@@ -45,6 +45,7 @@ const FacilityListCleaningPanel = ({
     decide,
     decideGroup,
     apply,
+    onApplied,
     startRun,
 }) => {
     useEffect(() => {
@@ -223,7 +224,9 @@ const FacilityListCleaningPanel = ({
                                 disabled={
                                     busy || summary.changes_unapplied === 0
                                 }
-                                onClick={apply}
+                                onClick={() =>
+                                    apply().then(() => onApplied && onApplied())
+                                }
                             >
                                 Apply {summary.changes_unapplied}{' '}
                                 {summary.changes_unapplied === 1
@@ -265,6 +268,7 @@ const FacilityListCleaningPanel = ({
 };
 
 FacilityListCleaningPanel.defaultProps = {
+    onApplied: null,
     data: null,
     error: null,
     submitError: null,
@@ -294,6 +298,7 @@ FacilityListCleaningPanel.propTypes = {
     decide: func.isRequired,
     decideGroup: func.isRequired,
     apply: func.isRequired,
+    onApplied: func,
     startRun: func.isRequired,
 };
 

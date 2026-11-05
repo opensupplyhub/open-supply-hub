@@ -351,6 +351,12 @@ const FacilityListItems = ({
                     list.status === facilityListStatusChoicesEnum.PENDING &&
                     (isListOwner || isAdminUser)
                 }
+                onApplied={() => {
+                    // The rows below reflect the applied changes straight
+                    // away; the contributor should not have to reload.
+                    fetchList();
+                    fetchListItems();
+                }}
             />
 
             {list.item_count ? (

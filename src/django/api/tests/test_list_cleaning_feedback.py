@@ -414,14 +414,19 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response['Content-Type'], 'text/csv')
         self.assertIn('-fixed.csv', response['Content-Disposition'])
         lines = response.content.decode('utf-8').splitlines()
+        # every column is followed by the value as it was uploaded
         self.assertEqual(
             lines[0],
-            'country,name,address,number_of_workers,os_hub_cleaning')
+            'country,country (as uploaded),name,name (as uploaded),'
+            'address,address (as uploaded),number_of_workers,'
+            'number_of_workers (as uploaded),os_hub_cleaning')
         self.assertEqual(len(lines), 4)
-        # the accepted worker-count fix is in the file, the row order kept
-        self.assertTrue(lines[1].startswith('VN,Thanh Cong Textile,'))
-        self.assertIn(',1200,', lines[1])
-        self.assertTrue(lines[2].startswith('Bangladesh,'))
+        # the accepted worker-count fix is in the file beside the
+        # uploaded value, the row order kept
+        self.assertTrue(lines[1].startswith(
+            'VN,Viet Nam,Thanh Cong Textile,Thanh Cong Textile,'))
+        self.assertIn(',1200,"1,200",', lines[1])
+        self.assertTrue(lines[2].startswith('Bangladesh,Bangladesh,'))
         self.assertTrue(lines[3].endswith(',removed: duplicate of row 2'))
 
     def test_decisions_blocked_once_list_is_not_pending(self):

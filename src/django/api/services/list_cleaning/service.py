@@ -536,13 +536,17 @@ def apply_run(run, only=None):
 REMOVAL_TAG_COLUMN = 'os_hub_cleaning'
 
 
+UPLOADED_SUFFIX = ' (as uploaded)'
+
+
 def build_fixed_csv(run):
     """
     The list as it stands after the contributor's changes: the original
-    columns in the original order with the current values, kept rows
-    first in file order, then every removed row with a tag saying why it
-    was dropped. Rows the parser rejected outright are included untouched
-    with their own tag, so nothing from the upload is lost.
+    columns in the original order with the current values, each followed
+    by the value as it was uploaded, kept rows first in file order, then
+    every removed row with a tag saying why it was dropped. Rows the
+    parser rejected outright are included untouched with their own tag,
+    so nothing from the upload is lost.
     """
     facility_list = run.facility_list
     header = next(csv.reader([facility_list.header or ''])) \
@@ -563,14 +567,25 @@ def build_fixed_csv(run):
         value = raw.get(column, raw.get(key, ''))
         return '' if value is None else str(value)
 
+    def uploaded(item):
+        # raw_data is the row exactly as it came in, in header order.
+        values = next(csv.reader([item.raw_data or '']), [])
+        return (values + [''] * len(header))[:len(header)]
+
+    def paired(current, original):
+        row = []
+        for now, then in zip(current, original):
+            row += [now, then]
+        return row
+
     kept, dropped = [], []
     for item in items:
+        original = uploaded(item)
         if item.status == FacilityListItem.ERROR_PARSING:
-            values = next(csv.reader([item.raw_data or '']), [])
-            values = (values + [''] * len(header))[:len(header)]
-            dropped.append(values + ['not read: fix the row and re-upload'])
+            dropped.append(paired(original, original)
+                           + ['not read: fix the row and re-upload'])
             continue
-        values = [cell(item, column) for column in header]
+        values = paired([cell(item, column) for column in header], original)
         if item.status in REMOVED_STATUSES:
             reason = _removal_reason(by_item.get(item.id, []))
             if not reason and item.status == FacilityListItem.DUPLICATE:
@@ -581,7 +596,9 @@ def build_fixed_csv(run):
 
     out = io.StringIO()
     writer = csv.writer(out)
-    writer.writerow(header + [REMOVAL_TAG_COLUMN])
+    writer.writerow(
+        [h for column in header for h in (column, column + UPLOADED_SUFFIX)]
+        + [REMOVAL_TAG_COLUMN])
     writer.writerows(kept)
     writer.writerows(dropped)
     return out.getvalue()
