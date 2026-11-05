@@ -132,3 +132,82 @@ class CompositeRowSerializerTest(TestCase):
         }
 
         self.assertEqual(serialized_row, expected_row)
+
+    @staticmethod
+    def __build_value(prefix: str, length: int) -> str:
+        # Commas without a following space: cleanup adds one after each.
+        value = prefix + ',Block A,Unit 7'
+        return value + 'x' * (length - len(value))
+
+    def __length_errors(self, serialized_row):
+        return [
+            error for error in serialized_row['errors']
+            if error['type'] == 'ValidationError'
+        ]
+
+    def test_length_limit_checks_submitted_value_not_cleaned(self):
+        name = self.__build_value('Pants Hut', 200)
+        address = self.__build_value('123 Main St', 200)
+
+        serialized_row = self.composite_row_serializer.validate({
+            'country': 'United States',
+            'name': name,
+            'address': address,
+            'sector': 'Apparel',
+        })
+
+        self.assertEqual(self.__length_errors(serialized_row), [])
+        # The stored values are still the cleaned ones, which are longer
+        # than what was submitted.
+        self.assertEqual(serialized_row['name'], name.replace(',', ', '))
+        self.assertEqual(
+            serialized_row['address'], address.replace(',', ', ')
+        )
+        self.assertEqual(len(serialized_row['name']), 202)
+        self.assertEqual(len(serialized_row['address']), 202)
+
+    def test_length_limit_rejects_submitted_value_over_limit(self):
+        serialized_row = self.composite_row_serializer.validate({
+            'country': 'United States',
+            'name': self.__build_value('Pants Hut', 201),
+            'address': self.__build_value('123 Main St', 201),
+            'sector': 'Apparel',
+        })
+
+        self.assertEqual(
+            self.__length_errors(serialized_row),
+            [
+                {
+                    'message': ('There is a problem with the name: Ensure '
+                                'this value has at most 200 characters. '
+                                '(it has 201)'),
+                    'field': 'name',
+                    'type': 'ValidationError',
+                },
+                {
+                    'message': ('There is a problem with the address: Ensure '
+                                'this value has at most 200 characters. '
+                                '(it has 201)'),
+                    'field': 'address',
+                    'type': 'ValidationError',
+                },
+            ],
+        )
+
+    def test_length_limit_rejects_over_limit_value_cleanup_shortens(self):
+        # Cleanup collapses the repeated spaces to a value under the limit,
+        # but the limit applies to what the contributor submitted.
+        address = '123 Main St' + ' ' * 100 + 'x' * 100
+
+        serialized_row = self.composite_row_serializer.validate({
+            'country': 'United States',
+            'name': 'Pants Hut',
+            'address': address,
+            'sector': 'Apparel',
+        })
+
+        self.assertEqual(len(serialized_row['address']), 112)
+        self.assertEqual(
+            [e['field'] for e in self.__length_errors(serialized_row)],
+            ['address'],
+        )
