@@ -399,7 +399,20 @@ CACHES = {
         'LOCATION': MEMCACHED_LOCATION,
         'KEY_PREFIX': 'facility_downloads',
     },
+    'waffle': {
+        # Waffle switch and flag state must be visible to every Django
+        # process, so toggling a switch in admin takes effect everywhere
+        # without a restart (OSDEV-3742).
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'waffle',
+    },
 }
+
+WAFFLE_CACHE_NAME = 'waffle'
+# Switches are runtime controls, so bound staleness well below the
+# django-waffle default of 30 days.
+WAFFLE_MAX_AGE = 300
 
 # Logging
 # https://docs.djangoproject.com/en/2.1/topics/logging/
@@ -692,6 +705,11 @@ TESTING = "test" in sys.argv
 if TESTING:
     CACHES["view_cache"] = {
         "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+    }
+    # Keep waffle state per process in tests so parallel runs can't leak
+    # switch overrides through a shared memcached.
+    CACHES["waffle"] = {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 
 # Use filesystem for "default" when running tests (so tests never use S3/MinIO) or
