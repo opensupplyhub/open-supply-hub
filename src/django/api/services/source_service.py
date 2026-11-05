@@ -1,15 +1,9 @@
 import logging
-import uuid
 
-import boto3
 from django.conf import settings
 from django.db import transaction
 
-from api.aws_batch import (
-    fetch_batch_queue_arn,
-    fetch_latest_active_batch_job_definition_arn,
-)
-from api.constants import ProcessingAction
+from api.aws_batch import submit_reassignment_job
 from api.models.extended_field import ExtendedField
 from api.models.source import Source
 
@@ -21,35 +15,6 @@ log = logging.getLogger(__name__)
 # transaction holds locks on api_extendedfield or FacilityIndex rows for
 # long.
 REASSIGNMENT_CHUNK_SIZE = 500
-
-
-def _submit_reassignment_batch_job(facility_list_id: int) -> str:
-    """
-    Submit an AWS Batch job that runs the extended field reassignment
-    for the source of the given facility list.
-
-    Reuses the standard list-processing job definition, whose container
-    command is parameterized on `listid` and `action` (see
-    deployment/terraform/job-definitions/default.json), so no new
-    infrastructure is required.
-    """
-    client = boto3.client('batch')
-    job_name = 'source-reassign-{0}-{1}'.format(
-        facility_list_id, uuid.uuid4().hex[:8])
-    response = client.submit_job(
-        jobName=job_name,
-        jobQueue=fetch_batch_queue_arn(client),
-        jobDefinition=fetch_latest_active_batch_job_definition_arn(client),
-        parameters={
-            'listid': str(facility_list_id),
-            'action': ProcessingAction.REASSIGN_EXTENDED_FIELDS,
-        },
-    )
-    job_id = response.get('jobId')
-    if not job_id:
-        raise RuntimeError(
-            'Batch submit response missing jobId: {0}'.format(response))
-    return job_id
 
 
 class SourceService:
@@ -90,8 +55,9 @@ class SourceService:
         )
         if source['facility_list_id'] is not None and batch_is_configured:
             try:
-                job_id = _submit_reassignment_batch_job(
-                    source['facility_list_id'])
+                job_id = submit_reassignment_job(
+                    source['facility_list_id']
+                )
                 log.info(
                     'Queued extended field reassignment for source %s '
                     'as Batch job %s.',

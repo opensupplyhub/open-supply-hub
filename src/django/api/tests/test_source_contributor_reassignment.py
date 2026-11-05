@@ -2,6 +2,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from api.admin import SourceAdmin, admin_site
+from api.aws_batch import submit_reassignment_job
 from api.models import (
     Contributor,
     ExtendedField,
@@ -19,7 +20,7 @@ from django.contrib.messages import get_messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.management import call_command
 from django.db.models import F
-from django.test import RequestFactory, override_settings
+from django.test import RequestFactory, SimpleTestCase, override_settings
 
 
 class SourceReassignmentTestBase(FacilityAPITestCaseBase):
@@ -487,7 +488,7 @@ class SourceReassignmentDispatchTest(SourceReassignmentTestBase):
     as before. See OSDEV-3758.
     """
 
-    SUBMIT = 'api.services.source_service._submit_reassignment_batch_job'
+    SUBMIT = 'api.services.source_service.submit_reassignment_job'
 
     @override_settings(
         BATCH_JOB_QUEUE_NAME='queue', BATCH_JOB_DEF_NAME='job-def')
@@ -613,10 +614,68 @@ class SourceAdminReassignmentMessageTest(SourceReassignmentTestBase):
         sent = self.save_model(changed_data=['contributor'])
 
         self.assertEqual(1, len(sent))
-        self.assertIn('scheduled', sent[0])
+        self.assertIn('re-attributed', sent[0])
 
     def test_other_changes_do_not_message(self):
         self.source.is_active = False
         sent = self.save_model(changed_data=['is_active'])
 
         self.assertEqual([], sent)
+
+
+class ReassignmentJobSubmissionTest(SimpleTestCase):
+    """
+    Every dispatch test above mocks the submission helper, so the
+    submit_job call itself is only covered here: the parameter names the
+    job definition substitutes into its container command, and the
+    bounded client config that keeps a slow Batch control plane from
+    holding the admin request open. See OSDEV-3758.
+    """
+
+    @patch('api.aws_batch.fetch_latest_active_batch_job_definition_arn')
+    @patch('api.aws_batch.fetch_batch_queue_arn')
+    @patch('api.aws_batch.boto3.client')
+    def test_submits_the_list_id_and_action_the_job_definition_reads(
+            self, client_factory, fetch_queue, fetch_job_def):
+        fetch_queue.return_value = 'queue-arn'
+        fetch_job_def.return_value = 'job-def-arn'
+        client = client_factory.return_value
+        client.submit_job.return_value = {'jobId': 'job-1'}
+
+        job_id = submit_reassignment_job(17)
+
+        self.assertEqual('job-1', job_id)
+        kwargs = client.submit_job.call_args.kwargs
+        self.assertEqual('queue-arn', kwargs['jobQueue'])
+        self.assertEqual('job-def-arn', kwargs['jobDefinition'])
+        # These keys are what `Ref::listid` and `Ref::action` resolve to
+        # in deployment/terraform/job-definitions/default.json.
+        self.assertEqual(
+            {'listid': '17', 'action': 'reassign_extended_fields'},
+            kwargs['parameters'],
+        )
+        self.assertTrue(kwargs['jobName'].startswith('source-reassign-17-'))
+
+    @patch('api.aws_batch.fetch_latest_active_batch_job_definition_arn')
+    @patch('api.aws_batch.fetch_batch_queue_arn')
+    @patch('api.aws_batch.boto3.client')
+    def test_client_timeouts_are_bounded(
+            self, client_factory, fetch_queue, fetch_job_def):
+        client_factory.return_value.submit_job.return_value = {'jobId': 'j'}
+
+        submit_reassignment_job(17)
+
+        config = client_factory.call_args.kwargs['config']
+        self.assertEqual(5, config.connect_timeout)
+        self.assertEqual(15, config.read_timeout)
+        self.assertEqual(2, config.retries['max_attempts'])
+
+    @patch('api.aws_batch.fetch_latest_active_batch_job_definition_arn')
+    @patch('api.aws_batch.fetch_batch_queue_arn')
+    @patch('api.aws_batch.boto3.client')
+    def test_a_response_without_a_job_id_raises(
+            self, client_factory, fetch_queue, fetch_job_def):
+        client_factory.return_value.submit_job.return_value = {}
+
+        with self.assertRaises(RuntimeError):
+            submit_reassignment_job(17)
