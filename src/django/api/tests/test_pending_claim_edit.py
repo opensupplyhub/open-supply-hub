@@ -856,8 +856,8 @@ class PendingClaimNotificationAndListTest(APITestCase):
 
         self.assertEqual(
             [
+                'Updated Not_a_model_field',
                 "Updated Contact person's job title",
-                'Updated not_a_model_field',
                 'Contact person shown on profile: No → Yes',
             ],
             describe_pending_claim_changes(
