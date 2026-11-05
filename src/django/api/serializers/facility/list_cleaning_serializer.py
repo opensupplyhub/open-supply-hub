@@ -192,6 +192,14 @@ def serialize_run(run, include_internal=False):
         'rows_removed': len(removed_rows),
         'auto_fixes': len(
             [s for s in suggestions if (s.extra or {}).get('auto')]),
+        # Suggested fixes that wait for the contributor (auto ones are
+        # already done) and how many of those have been decided: the
+        # readiness tracker's middle milestone.
+        'fixes_to_review_total': len(
+            [s for s in corrections if not (s.extra or {}).get('auto')]),
+        'fixes_to_review_decided': len(
+            [s for s in corrections if not (s.extra or {}).get('auto')
+             and s.decision != S.PENDING]),
         'auto_rows': len(
             {s.row_number for s in suggestions
              if (s.extra or {}).get('auto')}),

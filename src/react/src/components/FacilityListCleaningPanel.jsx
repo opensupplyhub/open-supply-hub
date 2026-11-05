@@ -20,6 +20,7 @@ import {
     RUN_STATUS,
     styles,
     Stat,
+    ReadinessTracker,
     ListFindings,
     GroupTabs,
     DownloadFixedList,
@@ -173,30 +174,18 @@ const FacilityListCleaningPanel = ({
                 </Typography>
             ) : (
                 <>
-                    <div style={styles.statRow}>
-                        <Stat
-                            value={summary.must_fix_pending}
-                            label="rows that need your attention"
-                        />
-                        <Stat
-                            value={summary.corrections_total}
-                            label={`suggested fixes (${summary.corrections_pending} to review)`}
-                        />
-                        <Stat
-                            value={summary.auto_fixes}
-                            label="fixes made automatically"
-                        />
-                        <Stat
-                            value={summary.list_findings}
-                            label="findings about the whole file"
-                        />
-                        {isAdminUser && (
+                    <ReadinessTracker
+                        summary={summary}
+                        applied={!!run.applied_at}
+                    />
+                    {isAdminUser && (
+                        <div style={styles.statRow}>
                             <Stat
                                 value={summary.internal_notes}
                                 label="moderator notes (not shown to contributor)"
                             />
-                        )}
-                    </div>
+                        </div>
+                    )}
                     <div style={styles.disclaimer}>
                         These are automated suggestions, not decisions. You are
                         responsible for the data you submit: accept a fix only

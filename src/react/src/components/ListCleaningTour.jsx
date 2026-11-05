@@ -20,12 +20,13 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
     Object.freeze({
         anchor: 'intro',
         scroll: 'nearest',
-        title: 'What we found in your file',
+        title: 'How ready your list is',
         text:
-            'We checked every row before anyone else sees it. These ' +
-            'numbers are the short version: rows that need you, fixes ' +
-            'we suggest, and what was fixed on its own. The next few ' +
-            'steps show how to act on them without re-uploading.',
+            'We checked every row before anyone else sees it. This bar ' +
+            'fills as you work through what we found: formatting we ' +
+            'fixed already counts, and every decision you make moves it. ' +
+            'The next steps show how to make those decisions here, with ' +
+            'no need to re-upload.',
     }),
     Object.freeze({
         anchor: 'automatic',

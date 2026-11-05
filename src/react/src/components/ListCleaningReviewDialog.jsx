@@ -24,7 +24,7 @@ import {
     RESET,
     RUN_STATUS,
     styles as cardStyles,
-    Stat,
+    ReadinessTracker,
     ListFindings,
     GroupTabs,
     DownloadFixedList,
@@ -318,7 +318,7 @@ const ListCleaningReviewDialog = ({
         activeStep = STEP.REVIEW;
         content = (
             <>
-                <div data-tour="intro">
+                <div>
                     <Typography style={styles.heading}>
                         A few changes would make your list more likely to be
                         approved
@@ -332,24 +332,10 @@ const ListCleaningReviewDialog = ({
                         them all at once, or decide row by row. Nothing changes
                         on your list until you press Apply.
                     </Typography>
-                    <div style={cardStyles.statRow}>
-                        <Stat
-                            value={summary.must_fix_pending}
-                            label="rows that need your attention"
-                        />
-                        <Stat
-                            value={summary.corrections_total}
-                            label={`suggested fixes (${summary.corrections_pending} to review)`}
-                        />
-                        <Stat
-                            value={summary.auto_fixes}
-                            label="fixes made automatically"
-                        />
-                        <Stat
-                            value={summary.list_findings}
-                            label="findings about the whole file"
-                        />
-                    </div>
+                    <ReadinessTracker
+                        summary={summary}
+                        applied={!!run.applied_at}
+                    />
                 </div>
                 <div style={cardStyles.disclaimer}>
                     These are automated suggestions, not decisions. You are

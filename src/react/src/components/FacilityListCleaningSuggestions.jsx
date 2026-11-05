@@ -293,6 +293,234 @@ export const Stat = ({ value, label }) => (
 
 Stat.propTypes = { value: number.isRequired, label: string.isRequired };
 
+const plural = (n, word, words = `${word}s`) =>
+    `${n} ${n === 1 ? word : words}`;
+
+const trackerStyles = Object.freeze({
+    box: Object.freeze({
+        margin: '16px 0',
+        padding: '16px 20px',
+        borderRadius: '6px',
+        background: '#F5F0FF',
+        border: '1px solid #E2D1F0',
+    }),
+    headline: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: '8px',
+        marginBottom: '8px',
+    }),
+    title: Object.freeze({
+        fontSize: '1.15rem',
+        fontWeight: 700,
+    }),
+    percent: Object.freeze({
+        fontSize: '1.6rem',
+        fontWeight: 800,
+        lineHeight: 1,
+    }),
+    track: Object.freeze({
+        height: '12px',
+        borderRadius: '6px',
+        background: '#E2D9F3',
+        overflow: 'hidden',
+    }),
+    fill: Object.freeze({
+        height: '100%',
+        borderRadius: '6px',
+        transition: 'width .5s ease, background .5s ease',
+    }),
+    milestones: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: '8px 24px',
+        margin: '12px 0 0 0',
+        padding: 0,
+        listStyle: 'none',
+    }),
+    milestone: Object.freeze({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontSize: '0.95rem',
+    }),
+    badge: Object.freeze({
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '22px',
+        height: '22px',
+        padding: '0 6px',
+        borderRadius: '11px',
+        fontSize: '0.75rem',
+        fontWeight: 700,
+        color: COLOURS.WHITE,
+    }),
+    hint: Object.freeze({
+        marginTop: '8px',
+        fontSize: '0.9rem',
+        color: 'rgba(0, 0, 0, 0.65)',
+    }),
+});
+
+const PURPLE = '#8428FA';
+const GREEN = COLOURS.MATERIAL_GREEN;
+
+const Milestone = ({ done, total, label, info }) => {
+    const complete = !info && done >= total;
+    let badge;
+    if (info) {
+        badge = (
+            <span
+                style={{
+                    ...trackerStyles.badge,
+                    background: COLOURS.DARK_GREY,
+                }}
+            >
+                i
+            </span>
+        );
+    } else if (complete) {
+        badge = (
+            <span style={{ ...trackerStyles.badge, background: GREEN }}>
+                &#10003;
+            </span>
+        );
+    } else {
+        badge = (
+            <span style={{ ...trackerStyles.badge, background: PURPLE }}>
+                {done}/{total}
+            </span>
+        );
+    }
+    return (
+        <li style={trackerStyles.milestone}>
+            {badge}
+            <span style={complete ? { color: 'rgba(0, 0, 0, 0.6)' } : null}>
+                {label}
+            </span>
+        </li>
+    );
+};
+
+Milestone.defaultProps = { done: 0, total: 0, info: false };
+Milestone.propTypes = {
+    done: number,
+    total: number,
+    label: string.isRequired,
+    info: bool,
+};
+
+/*
+ * One bar instead of four numbers: how far the list is from being ready
+ * for the moderator. Automatic fixes count as done from the start, so
+ * the bar never opens at zero, and every decision moves it. "Ready"
+ * means every suggestion has an answer, not that the list will be
+ * approved.
+ */
+export const ReadinessTracker = ({ summary, applied }) => {
+    const auto = summary.auto_fixes || 0;
+    const fixesTotal = summary.fixes_to_review_total || 0;
+    const fixesDone = summary.fixes_to_review_decided || 0;
+    const flagsTotal = summary.must_fix_total || 0;
+    const flagsDone = flagsTotal - (summary.must_fix_pending || 0);
+    const total = auto + fixesTotal + flagsTotal;
+    const done = auto + fixesDone + flagsDone;
+    const percent = total ? Math.round((100 * done) / total) : 100;
+    const ready = percent === 100;
+    const remaining = total - done;
+
+    let title;
+    if (ready && summary.changes_unapplied > 0) {
+        title = 'Ready for the moderator: press Apply to finish';
+    } else if (ready) {
+        title = applied
+            ? 'Your changes are applied and the list is ready for the moderator'
+            : 'Your list is ready for the moderator';
+    } else {
+        title = `Your list is ${percent}% ready for the moderator`;
+    }
+
+    return (
+        <div style={trackerStyles.box} data-tour="intro">
+            <div style={trackerStyles.headline}>
+                <span style={trackerStyles.title}>{title}</span>
+                <span
+                    style={{
+                        ...trackerStyles.percent,
+                        color: ready ? GREEN : PURPLE,
+                    }}
+                >
+                    {percent}%
+                </span>
+            </div>
+            <div
+                style={trackerStyles.track}
+                role="progressbar"
+                aria-valuenow={percent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+            >
+                <div
+                    style={{
+                        ...trackerStyles.fill,
+                        width: `${percent}%`,
+                        background: ready ? GREEN : PURPLE,
+                    }}
+                />
+            </div>
+            <ul style={trackerStyles.milestones}>
+                <Milestone
+                    done={auto}
+                    total={auto}
+                    label={`${plural(
+                        auto,
+                        'formatting fix',
+                        'formatting fixes',
+                    )} made automatically`}
+                />
+                <Milestone
+                    done={fixesDone}
+                    total={fixesTotal}
+                    label={`${plural(
+                        fixesTotal,
+                        'suggested fix',
+                        'suggested fixes',
+                    )} reviewed`}
+                />
+                <Milestone
+                    done={flagsDone}
+                    total={flagsTotal}
+                    label={`${plural(
+                        flagsTotal,
+                        'row',
+                    )} needing attention resolved`}
+                />
+                {summary.list_findings > 0 && (
+                    <Milestone
+                        info
+                        label={`${plural(
+                            summary.list_findings,
+                            'finding',
+                        )} about the whole file to read`}
+                    />
+                )}
+            </ul>
+            {!ready && (
+                <div style={trackerStyles.hint}>
+                    {plural(remaining, 'decision')} to go. Every one you make
+                    here makes the list more likely to be approved.
+                </div>
+            )}
+        </div>
+    );
+};
+
+ReadinessTracker.defaultProps = { applied: false };
+ReadinessTracker.propTypes = { summary: object.isRequired, applied: bool };
+
 export const Correction = ({ suggestion, canAct, busy, onDecide }) => {
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(
@@ -605,9 +833,6 @@ Removal.propTypes = {
     busy: bool.isRequired,
     onDecide: func.isRequired,
 };
-
-const plural = (n, word, words = `${word}s`) =>
-    `${n} ${n === 1 ? word : words}`;
 
 const FINDINGS_PREVIEW = 5;
 

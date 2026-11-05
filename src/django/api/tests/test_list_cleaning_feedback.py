@@ -206,6 +206,14 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response.data['summary']['corrections_total'], 3)
         self.assertEqual(response.data['summary']['removals'], 1)
         self.assertEqual(response.data['summary']['internal_notes'], 0)
+        # the readiness tracker: two silent fixes done, the address fix
+        # and the PO Box flag still waiting
+        self.assertEqual(response.data['summary']['auto_fixes'], 3)
+        self.assertEqual(
+            response.data['summary']['fixes_to_review_total'], 1)
+        self.assertEqual(
+            response.data['summary']['fixes_to_review_decided'], 0)
+        self.assertEqual(response.data['summary']['must_fix_total'], 1)
 
     def test_superuser_sees_internal_notes(self):
         self._ingested_run()
