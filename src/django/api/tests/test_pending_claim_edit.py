@@ -865,7 +865,7 @@ class PendingClaimNotificationAndListTest(APITestCase):
                 [
                     'point_of_contact_publicly_visible',
                     'job_title',
-                    'not_a_model_field',
+                    'Not_a_model_field',
                 ],
             ),
         )
