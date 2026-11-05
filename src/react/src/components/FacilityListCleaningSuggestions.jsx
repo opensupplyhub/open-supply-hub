@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { arrayOf, bool, func, number, object, string } from 'prop-types';
 import Button from '@material-ui/core/Button';
+import Checkbox from '@material-ui/core/Checkbox';
 import Chip from '@material-ui/core/Chip';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
@@ -150,6 +151,37 @@ export const styles = Object.freeze({
         gap: '12px',
         marginBottom: '8px',
     }),
+    rowCheckbox: Object.freeze({
+        padding: '0 4px 0 0',
+        margin: '-4px 0 -4px -8px',
+        alignSelf: 'center',
+    }),
+    bulkBar: Object.freeze({
+        position: 'sticky',
+        top: 0,
+        zIndex: 2,
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '8px 12px',
+        margin: '0 0 12px 0',
+        background: '#F5F0FF',
+        border: '1px solid #CBB4F5',
+        borderRadius: '4px',
+    }),
+    bulkCount: Object.freeze({
+        fontWeight: 700,
+        marginRight: '4px',
+    }),
+    selectAll: Object.freeze({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '2px',
+        margin: '0 0 4px -8px',
+        fontSize: '0.9rem',
+        color: 'rgba(0, 0, 0, 0.7)',
+    }),
     rowNumber: Object.freeze({
         fontWeight: 700,
         whiteSpace: 'nowrap',
@@ -279,6 +311,8 @@ export const Correction = ({ suggestion, canAct, busy, onDecide }) => {
                 return suggestion.applied ? 'Applied (edited)' : 'Edited';
             case DECISION.REJECTED:
                 return 'Kept original';
+            case DECISION.REMOVED:
+                return 'Row will be removed';
             default:
                 return 'Needs your decision';
         }
@@ -524,6 +558,8 @@ export const Removal = ({ suggestion, canAct, busy, onDecide }) => {
                 return suggestion.applied ? 'Removed' : 'Will be removed';
             case DECISION.REJECTED:
                 return 'Kept';
+            case DECISION.REMOVED:
+                return 'Will be removed';
             default:
                 return 'Needs your decision';
         }
@@ -644,55 +680,56 @@ export const suggestionKey = s => `${s.kind}:${s.code}:${s.field}`;
 
 export const isAuto = s => !!(s.extra && s.extra.auto);
 
-export const SuggestionRows = ({ rows, canAct, busy, decide, filter }) =>
+export const visibleRows = (rows, filter) =>
     rows
         .map(row =>
             filter
                 ? { ...row, suggestions: row.suggestions.filter(filter) }
                 : row,
         )
-        .filter(row => row.suggestions.length)
-        .map((row, i) => (
-            <div
-                key={row.row_number}
-                style={styles.rowCard}
-                data-tour={i === 0 ? 'rows' : undefined}
-            >
-                <div style={styles.rowHeader}>
-                    <span style={styles.rowNumber}>Row {row.row_number}</span>
-                    <span style={styles.rowIdentity}>
-                        {row.name}
-                        {row.address ? ` — ${row.address}` : ''}
-                        {row.country_code ? ` (${row.country_code})` : ''}
-                    </span>
-                </div>
-                {row.suggestions.map(suggestion => {
-                    const onDecide = (decision, value) =>
-                        decide([{ id: suggestion.id, decision, value }]);
-                    if (suggestion.kind === KIND.CORRECTION) {
-                        return (
-                            <Correction
-                                key={suggestion.id}
-                                suggestion={suggestion}
-                                canAct={canAct}
-                                busy={busy}
-                                onDecide={onDecide}
-                            />
-                        );
-                    }
-                    if (suggestion.kind === KIND.REMOVAL) {
-                        return (
-                            <Removal
-                                key={suggestion.id}
-                                suggestion={suggestion}
-                                canAct={canAct}
-                                busy={busy}
-                                onDecide={onDecide}
-                            />
-                        );
-                    }
+        .filter(row => row.suggestions.length);
+
+export const SuggestionRows = ({
+    rows,
+    canAct,
+    busy,
+    decide,
+    filter,
+    selected,
+    onToggle,
+}) =>
+    visibleRows(rows, filter).map((row, i) => (
+        <div
+            key={row.row_number}
+            style={styles.rowCard}
+            data-tour={i === 0 ? 'rows' : undefined}
+        >
+            <div style={styles.rowHeader}>
+                {canAct && onToggle && (
+                    <Checkbox
+                        checked={selected.has(row.row_number)}
+                        onChange={() => onToggle(row.row_number)}
+                        disabled={busy}
+                        color="primary"
+                        style={styles.rowCheckbox}
+                        inputProps={{
+                            'aria-label': `Select row ${row.row_number}`,
+                        }}
+                    />
+                )}
+                <span style={styles.rowNumber}>Row {row.row_number}</span>
+                <span style={styles.rowIdentity}>
+                    {row.name}
+                    {row.address ? ` — ${row.address}` : ''}
+                    {row.country_code ? ` (${row.country_code})` : ''}
+                </span>
+            </div>
+            {row.suggestions.map(suggestion => {
+                const onDecide = (decision, value) =>
+                    decide([{ id: suggestion.id, decision, value }]);
+                if (suggestion.kind === KIND.CORRECTION) {
                     return (
-                        <Issue
+                        <Correction
                             key={suggestion.id}
                             suggestion={suggestion}
                             canAct={canAct}
@@ -700,11 +737,36 @@ export const SuggestionRows = ({ rows, canAct, busy, decide, filter }) =>
                             onDecide={onDecide}
                         />
                     );
-                })}
-            </div>
-        ));
+                }
+                if (suggestion.kind === KIND.REMOVAL) {
+                    return (
+                        <Removal
+                            key={suggestion.id}
+                            suggestion={suggestion}
+                            canAct={canAct}
+                            busy={busy}
+                            onDecide={onDecide}
+                        />
+                    );
+                }
+                return (
+                    <Issue
+                        key={suggestion.id}
+                        suggestion={suggestion}
+                        canAct={canAct}
+                        busy={busy}
+                        onDecide={onDecide}
+                    />
+                );
+            })}
+        </div>
+    ));
 
-SuggestionRows.defaultProps = { filter: null };
+SuggestionRows.defaultProps = {
+    filter: null,
+    selected: new Set(),
+    onToggle: null,
+};
 
 SuggestionRows.propTypes = {
     rows: arrayOf(object).isRequired,
@@ -712,6 +774,8 @@ SuggestionRows.propTypes = {
     busy: bool.isRequired,
     decide: func.isRequired,
     filter: func,
+    selected: object,
+    onToggle: func,
 };
 
 const groupTitle = group => {
@@ -829,7 +893,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                 </div>
             )}
             <div style={styles.decisionText}>{groupStatus(group)}</div>
-            {canAct && !internal && (
+            {canAct && !internal && rest > 0 && (
                 <div style={chipStyles.headerActions}>
                     {group.kind === KIND.CORRECTION && (
                         <>
@@ -1046,6 +1110,77 @@ const chipProps = (key, active) => ({
 });
 
 /*
+ * Actions on the rows the contributor ticked. They touch only the
+ * suggestions shown on the current tab, go out as one request, and
+ * count as row-by-row decisions so a later group action leaves them be.
+ */
+const BulkBar = ({ rows, selected, busy, decide, onClear }) => {
+    const picked = rows.filter(r => selected.has(r.row_number));
+    const suggestions = picked.reduce(
+        (acc, r) =>
+            acc.concat(
+                r.suggestions.filter(
+                    s => s.severity !== SEVERITY.INTERNAL_NOTE,
+                ),
+            ),
+        [],
+    );
+    const fixes = suggestions.filter(s => s.kind === KIND.CORRECTION);
+    if (!picked.length) return null;
+    const send = (list, decision) => {
+        decide(list.map(s => ({ id: s.id, decision })));
+        onClear();
+    };
+    return (
+        <div style={styles.bulkBar} data-tour="bulk">
+            <span style={styles.bulkCount}>
+                {plural(picked.length, 'row')} selected:
+            </span>
+            {fixes.length > 0 && (
+                <Button
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    disabled={busy}
+                    onClick={() => send(fixes, DECISION.ACCEPTED)}
+                >
+                    Accept{' '}
+                    {plural(fixes.length, 'suggested fix', 'suggested fixes')}
+                </Button>
+            )}
+            <Button
+                size="small"
+                variant="outlined"
+                disabled={busy}
+                onClick={() => send(suggestions, DECISION.REJECTED)}
+            >
+                Keep as uploaded
+            </Button>
+            <Button
+                size="small"
+                variant="outlined"
+                color="secondary"
+                disabled={busy}
+                onClick={() => send(suggestions, DECISION.REMOVED)}
+            >
+                Remove {plural(picked.length, 'row')}
+            </Button>
+            <Button size="small" disabled={busy} onClick={onClear}>
+                Clear selection
+            </Button>
+        </div>
+    );
+};
+
+BulkBar.propTypes = {
+    rows: arrayOf(object).isRequired,
+    selected: object.isRequired,
+    busy: bool.isRequired,
+    decide: func.isRequired,
+    onClear: func.isRequired,
+};
+
+/*
  * Two tiers of chips. The top bar is what needs the contributor: flags,
  * removals and fixes with judgment in them, one chip per error type plus
  * "Needs you". Below it, folded by default, the fixes made automatically
@@ -1062,6 +1197,7 @@ export const GroupTabs = ({
 }) => {
     const [selected, setSelected] = useState(ALL);
     const [showAuto, setShowAuto] = useState(false);
+    const [picked, setPicked] = useState(new Set());
     const attention = groups.filter(g => !g.auto);
     const automatic = groups.filter(g => g.auto);
     const current = groups.find(g => g.key === selected);
@@ -1087,10 +1223,20 @@ export const GroupTabs = ({
 
     const select = key => {
         setSelected(key);
+        setPicked(new Set());
         if (key === AUTO || automatic.some(g => g.key === key)) {
             setShowAuto(true);
         }
     };
+    const shown = visibleRows(rows, filter);
+    const toggle = rowNumber => {
+        const next = new Set(picked);
+        if (next.has(rowNumber)) next.delete(rowNumber);
+        else next.add(rowNumber);
+        setPicked(next);
+    };
+    const allPicked =
+        shown.length > 0 && shown.every(r => picked.has(r.row_number));
 
     return (
         <div>
@@ -1179,12 +1325,46 @@ export const GroupTabs = ({
                     decideGroup={decideGroup}
                 />
             )}
+            {canAct && shown.length > 1 && (
+                <label
+                    style={styles.selectAll}
+                    htmlFor="list-cleaning-select-all"
+                >
+                    <Checkbox
+                        checked={allPicked}
+                        indeterminate={!allPicked && picked.size > 0}
+                        onChange={() =>
+                            setPicked(
+                                allPicked
+                                    ? new Set()
+                                    : new Set(shown.map(r => r.row_number)),
+                            )
+                        }
+                        disabled={busy}
+                        color="primary"
+                        id="list-cleaning-select-all"
+                        inputProps={{ 'aria-label': 'Select all rows shown' }}
+                    />
+                    Select all {plural(shown.length, 'row')} on this tab
+                </label>
+            )}
+            {canAct && (
+                <BulkBar
+                    rows={shown}
+                    selected={picked}
+                    busy={busy}
+                    decide={decide}
+                    onClear={() => setPicked(new Set())}
+                />
+            )}
             <SuggestionRows
                 rows={rows}
                 canAct={canAct}
                 busy={busy}
                 decide={decide}
                 filter={filter}
+                selected={picked}
+                onToggle={canAct ? toggle : null}
             />
         </div>
     );
