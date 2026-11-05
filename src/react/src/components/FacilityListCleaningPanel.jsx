@@ -177,6 +177,7 @@ const FacilityListCleaningPanel = ({
                     <ReadinessTracker
                         summary={summary}
                         applied={!!run.applied_at}
+                        fixed
                     />
                     {isAdminUser && (
                         <div style={styles.statRow}>

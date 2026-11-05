@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { arrayOf, bool, func, number, object, string } from 'prop-types';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
@@ -158,7 +159,7 @@ export const styles = Object.freeze({
     }),
     bulkBar: Object.freeze({
         position: 'sticky',
-        top: 0,
+        top: '48px', // below the compact readiness bar
         zIndex: 2,
         display: 'flex',
         flexWrap: 'wrap',
@@ -363,6 +364,47 @@ const trackerStyles = Object.freeze({
         fontSize: '0.9rem',
         color: 'rgba(0, 0, 0, 0.65)',
     }),
+    // A zero-height sticky anchor: it takes no room in the flow, sticks
+    // to the top of the scrolling area, and the compact bar hangs off it
+    // so nothing jumps when the bar appears.
+    stickyAnchor: Object.freeze({
+        position: 'sticky',
+        top: 0,
+        height: 0,
+        zIndex: 3,
+        overflow: 'visible',
+    }),
+    compact: Object.freeze({
+        position: 'absolute',
+        left: '-16px',
+        right: '-16px',
+        top: 0,
+        height: '44px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '14px',
+        padding: '0 16px',
+        background: 'rgba(255, 255, 255, 0.97)',
+        borderBottom: '1px solid #E2D1F0',
+        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
+        fontSize: '0.9rem',
+        transition: 'opacity .2s',
+    }),
+    compactTitle: Object.freeze({
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+    }),
+    compactTrack: Object.freeze({
+        flex: '1 1 120px',
+        height: '8px',
+        borderRadius: '4px',
+        background: '#E2D9F3',
+        overflow: 'hidden',
+    }),
+    compactMeta: Object.freeze({
+        whiteSpace: 'nowrap',
+        color: 'rgba(0, 0, 0, 0.65)',
+    }),
 });
 
 const PURPLE = '#8428FA';
@@ -420,7 +462,7 @@ Milestone.propTypes = {
  * means every suggestion has an answer, not that the list will be
  * approved.
  */
-export const ReadinessTracker = ({ summary, applied }) => {
+export const ReadinessTracker = ({ summary, applied, fixed }) => {
     const auto = summary.auto_fixes || 0;
     const fixesTotal = summary.fixes_to_review_total || 0;
     const fixesDone = summary.fixes_to_review_decided || 0;
@@ -431,6 +473,59 @@ export const ReadinessTracker = ({ summary, applied }) => {
     const percent = total ? Math.round((100 * done) / total) : 100;
     const ready = percent === 100;
     const remaining = total - done;
+
+    // Once the full box scrolls out of view a one-line version of it
+    // sticks to the top, so the bar is always in sight.
+    const boxRef = useRef(null);
+    const [compact, setCompact] = useState(false);
+    // On the list page an ancestor has overflow:auto without scrolling,
+    // which defeats position:sticky, so there the bar is fixed instead:
+    // pinned under the site header and sized to the panel.
+    const [pinned, setPinned] = useState(null);
+    useEffect(() => {
+        if (!boxRef.current || typeof IntersectionObserver === 'undefined') {
+            return undefined;
+        }
+        const measure = () => {
+            if (!fixed || !boxRef.current) return;
+            const r = boxRef.current.getBoundingClientRect();
+            const header = document.querySelector('header');
+            const headerBottom = header
+                ? header.getBoundingClientRect().bottom
+                : 0;
+            setPinned({
+                left: r.left,
+                width: r.width,
+                top: Math.max(0, headerBottom),
+            });
+        };
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                const hidden =
+                    !entry.isIntersecting && entry.boundingClientRect.top < 0;
+                if (hidden) measure();
+                setCompact(hidden);
+            },
+            { threshold: 0 },
+        );
+        observer.observe(boxRef.current);
+        window.addEventListener('resize', measure);
+        return () => {
+            observer.disconnect();
+            window.removeEventListener('resize', measure);
+        };
+    }, [fixed]);
+    const anchorStyle =
+        fixed && pinned
+            ? {
+                  ...trackerStyles.stickyAnchor,
+                  position: 'fixed',
+                  top: `${pinned.top}px`,
+                  left: `${pinned.left}px`,
+                  width: `${pinned.width}px`,
+              }
+            : trackerStyles.stickyAnchor;
+    const compactEdges = fixed ? { left: 0, right: 0 } : {};
 
     let title;
     if (ready && summary.changes_unapplied > 0) {
@@ -443,80 +538,137 @@ export const ReadinessTracker = ({ summary, applied }) => {
         title = `Your list is ${percent}% ready for the moderator`;
     }
 
-    return (
-        <div style={trackerStyles.box} data-tour="intro">
-            <div style={trackerStyles.headline}>
-                <span style={trackerStyles.title}>{title}</span>
-                <span
-                    style={{
-                        ...trackerStyles.percent,
-                        color: ready ? GREEN : PURPLE,
-                    }}
-                >
-                    {percent}%
+    const colour = ready ? GREEN : PURPLE;
+    let shortTitle = `${percent}% ready for the moderator`;
+    if (ready) {
+        shortTitle =
+            summary.changes_unapplied > 0
+                ? 'Ready: press Apply to finish'
+                : 'Ready for the moderator';
+    }
+
+    const anchor = (
+        <div style={anchorStyle} aria-hidden={!compact}>
+            <div
+                style={{
+                    ...trackerStyles.compact,
+                    ...compactEdges,
+                    opacity: compact ? 1 : 0,
+                    pointerEvents: compact ? 'auto' : 'none',
+                }}
+                data-tour="compact"
+            >
+                <span style={{ ...trackerStyles.compactTitle, color: colour }}>
+                    {shortTitle}
+                </span>
+                <div style={trackerStyles.compactTrack}>
+                    <div
+                        style={{
+                            ...trackerStyles.fill,
+                            width: `${percent}%`,
+                            background: colour,
+                        }}
+                    />
+                </div>
+                <span style={trackerStyles.compactMeta}>
+                    {fixesDone}/{fixesTotal} fixes · {flagsDone}/{flagsTotal}{' '}
+                    flagged
+                    {!ready && ` · ${plural(remaining, 'decision')} to go`}
                 </span>
             </div>
-            <div
-                style={trackerStyles.track}
-                role="progressbar"
-                aria-valuenow={percent}
-                aria-valuemin={0}
-                aria-valuemax={100}
-            >
-                <div
-                    style={{
-                        ...trackerStyles.fill,
-                        width: `${percent}%`,
-                        background: ready ? GREEN : PURPLE,
-                    }}
-                />
-            </div>
-            <ul style={trackerStyles.milestones}>
-                <Milestone
-                    done={auto}
-                    total={auto}
-                    label={`${plural(
-                        auto,
-                        'formatting fix',
-                        'formatting fixes',
-                    )} made automatically`}
-                />
-                <Milestone
-                    done={fixesDone}
-                    total={fixesTotal}
-                    label={`${plural(
-                        fixesTotal,
-                        'suggested fix',
-                        'suggested fixes',
-                    )} reviewed`}
-                />
-                <Milestone
-                    done={flagsDone}
-                    total={flagsTotal}
-                    label={`${plural(flagsTotal, 'flagged problem')} resolved`}
-                />
-                {summary.list_findings > 0 && (
-                    <Milestone
-                        info
-                        label={`${plural(
-                            summary.list_findings,
-                            'finding',
-                        )} about the whole file to read`}
-                    />
-                )}
-            </ul>
-            {!ready && (
-                <div style={trackerStyles.hint}>
-                    {plural(remaining, 'decision')} to go. Every one you make
-                    here makes the list more likely to be approved.
-                </div>
-            )}
         </div>
+    );
+    // An ancestor of the list-page panel has a transform, which makes
+    // position:fixed relative to it; a portal onto the body avoids that.
+    const bar =
+        fixed && pinned && typeof document !== 'undefined'
+            ? ReactDOM.createPortal(anchor, document.body)
+            : anchor;
+
+    return (
+        <>
+            <div style={trackerStyles.box} data-tour="intro" ref={boxRef}>
+                <div style={trackerStyles.headline}>
+                    <span style={trackerStyles.title}>{title}</span>
+                    <span
+                        style={{
+                            ...trackerStyles.percent,
+                            color: ready ? GREEN : PURPLE,
+                        }}
+                    >
+                        {percent}%
+                    </span>
+                </div>
+                <div
+                    style={trackerStyles.track}
+                    role="progressbar"
+                    aria-valuenow={percent}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                >
+                    <div
+                        style={{
+                            ...trackerStyles.fill,
+                            width: `${percent}%`,
+                            background: ready ? GREEN : PURPLE,
+                        }}
+                    />
+                </div>
+                <ul style={trackerStyles.milestones}>
+                    <Milestone
+                        done={auto}
+                        total={auto}
+                        label={`${plural(
+                            auto,
+                            'formatting fix',
+                            'formatting fixes',
+                        )} made automatically`}
+                    />
+                    <Milestone
+                        done={fixesDone}
+                        total={fixesTotal}
+                        label={`${plural(
+                            fixesTotal,
+                            'suggested fix',
+                            'suggested fixes',
+                        )} reviewed`}
+                    />
+                    <Milestone
+                        done={flagsDone}
+                        total={flagsTotal}
+                        label={`${plural(
+                            flagsTotal,
+                            'flagged problem',
+                        )} resolved`}
+                    />
+                    {summary.list_findings > 0 && (
+                        <Milestone
+                            info
+                            label={`${plural(
+                                summary.list_findings,
+                                'finding',
+                            )} about the whole file to read`}
+                        />
+                    )}
+                </ul>
+                {!ready && (
+                    <div style={trackerStyles.hint}>
+                        {plural(remaining, 'decision')} to go. Every one you
+                        make here makes the list more likely to be approved.
+                    </div>
+                )}
+            </div>
+            {bar}
+        </>
     );
 };
 
-ReadinessTracker.defaultProps = { applied: false };
-ReadinessTracker.propTypes = { summary: object.isRequired, applied: bool };
+ReadinessTracker.defaultProps = { applied: false, fixed: false };
+ReadinessTracker.propTypes = {
+    summary: object.isRequired,
+    applied: bool,
+    fixed: bool,
+};
 
 export const Correction = ({ suggestion, canAct, busy, onDecide }) => {
     const [editing, setEditing] = useState(false);
