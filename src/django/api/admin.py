@@ -545,10 +545,9 @@ class AnnouncementBannerAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'is_active', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
 
+    # The single row is seeded by migration and edited in place.
     def has_add_permission(self, request):
-        # The single row is seeded by migration; edit it instead of
-        # adding more.
-        return not AnnouncementBanner.objects.exists()
+        return False
 
     def has_delete_permission(self, request, obj=None):
         return False

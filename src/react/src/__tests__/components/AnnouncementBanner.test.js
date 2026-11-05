@@ -9,10 +9,7 @@ const CONTENT_HTML =
 const renderBanner = banner =>
     renderWithProviders(<AnnouncementBanner />, {
         preloadedState: {
-            announcementBanner: {
-                fetching: false,
-                banner,
-            },
+            announcementBanner: { banner },
             embeddedMap: { embed: false },
         },
     });

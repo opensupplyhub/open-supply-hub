@@ -11,12 +11,43 @@ class AnnouncementBannerModelTest(TestCase):
         self.assertFalse(banner.is_active)
         self.assertEqual(banner.content, '')
 
-    def test_save_clears_ckeditor_empty_placeholder(self):
+    def test_save_clears_visually_empty_content(self):
         banner = AnnouncementBanner.objects.get()
-        banner.content = '<p>&nbsp;</p>'
+        for empty in (
+            '<p>&nbsp;</p>',
+            '<p>&nbsp;</p><p>&nbsp;</p>',
+            '<p><strong>&nbsp;</strong></p>',
+            '<p></p>',
+            '<p><br></p>',
+            '   ',
+        ):
+            with self.subTest(content=empty):
+                banner.content = empty
+                banner.save()
+                banner.refresh_from_db()
+                self.assertEqual(banner.content, '')
+
+    def test_save_keeps_allowed_formatting_and_links(self):
+        banner = AnnouncementBanner.objects.get()
+        banner.content = (
+            '<p><strong>Give today</strong> '
+            '<a href="https://example.test">here</a></p>'
+        )
         banner.save()
         banner.refresh_from_db()
-        self.assertEqual(banner.content, '')
+        self.assertIn('<strong>Give today</strong>', banner.content)
+        self.assertIn('href="https://example.test"', banner.content)
+
+    def test_save_strips_disallowed_markup(self):
+        banner = AnnouncementBanner.objects.get()
+        banner.content = (
+            '<p>Give <img src="x" onerror="alert(1)">today</p>'
+        )
+        banner.save()
+        banner.refresh_from_db()
+        self.assertNotIn('onerror', banner.content)
+        self.assertNotIn('<img', banner.content)
+        self.assertIn('Give', banner.content)
 
 
 class AnnouncementBannerViewTest(TestCase):

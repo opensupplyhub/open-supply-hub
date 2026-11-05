@@ -29,7 +29,12 @@ const AnnouncementBanner = ({ isActive, content, classes }) => {
     }
 
     return (
-        <div className={classes.banner} data-testid="announcement-banner">
+        <div
+            // The map and sidebar derive their height by subtracting every
+            // header-height-contributor, so the banner must be counted.
+            className={`header-height-contributor ${classes.banner}`}
+            data-testid="announcement-banner"
+        >
             <Typography
                 component="div"
                 variant="body1"

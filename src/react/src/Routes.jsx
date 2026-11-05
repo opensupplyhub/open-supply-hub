@@ -98,10 +98,16 @@ class Routes extends Component {
 
         window.setGridColorRamp = this.props.setRamp;
         this.props.getFeatureFlags();
-        this.props.getAnnouncementBanner();
-        this.unlistenHistory = history.listen(() =>
-            this.props.refreshFeatureFlags(),
-        );
+        // The banner only renders inside the Navbar, which embeds omit.
+        if (!this.props.embed) {
+            this.props.getAnnouncementBanner();
+        }
+        this.unlistenHistory = history.listen(() => {
+            this.props.refreshFeatureFlags();
+            if (!this.props.embed) {
+                this.props.getAnnouncementBanner();
+            }
+        });
 
         return this.props.logIn();
     }

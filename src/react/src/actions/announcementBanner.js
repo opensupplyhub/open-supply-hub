@@ -7,9 +7,6 @@ import {
     logErrorAndDispatchFailure,
 } from '../util/util';
 
-export const startFetchAnnouncementBanner = createAction(
-    'START_FETCH_ANNOUNCEMENT_BANNER',
-);
 export const failFetchAnnouncementBanner = createAction(
     'FAIL_FETCH_ANNOUNCEMENT_BANNER',
 );
@@ -18,10 +15,8 @@ export const completeFetchAnnouncementBanner = createAction(
 );
 
 export function fetchAnnouncementBanner() {
-    return dispatch => {
-        dispatch(startFetchAnnouncementBanner());
-
-        return apiRequest
+    return dispatch =>
+        apiRequest
             .get(makeGetAnnouncementBannerURL())
             .then(({ data }) => dispatch(completeFetchAnnouncementBanner(data)))
             .catch(err =>
@@ -33,5 +28,4 @@ export function fetchAnnouncementBanner() {
                     ),
                 ),
             );
-    };
 }

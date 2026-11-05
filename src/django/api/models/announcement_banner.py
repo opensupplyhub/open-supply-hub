@@ -1,6 +1,8 @@
 from django.db.models import BooleanField, DateTimeField, Model
 from django_ckeditor_5.fields import CKEditor5Field
 
+from api.helpers.rich_text import clean_rich_text
+
 
 class AnnouncementBanner(Model):
     '''
@@ -36,10 +38,7 @@ class AnnouncementBanner(Model):
         return f'Announcement banner ({state})'
 
     def clean(self):
-        if self.content:
-            cleaned = self.content.strip()
-            # Treat the CKEditor empty-document placeholder as no content.
-            self.content = '' if cleaned == '<p>&nbsp;</p>' else cleaned
+        self.content = clean_rich_text(self.content)
 
     def save(self, *args, **kwargs):
         self.clean()
