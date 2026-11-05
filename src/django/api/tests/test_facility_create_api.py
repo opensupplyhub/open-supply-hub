@@ -176,3 +176,73 @@ class FacilityCreateAPITest(APITestCase):
             self.list_item_four.id, result_obj_four, None, True
         )
         self.assertEqual(result_four['status'], 'NEW_FACILITY')
+
+    def test_duplicate_automatic_matches_return_the_item_facility(self):
+        """
+        Only one automatic match is ever written per item. If an item has
+        been matched twice, the answer uses the automatic match the item
+        points at instead of MATCHED without an os_id (OSDEV-3149).
+        """
+        other_item = FacilityListItem.objects.create(
+            name="Other",
+            address="Other Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(1, 1),
+            status=FacilityListItem.MATCHED,
+            source=self.source_one,
+        )
+        facility_two = Facility.objects.create(
+            name="Other",
+            address="Other Address",
+            country_code="US",
+            location=Point(1, 1),
+            created_from=other_item,
+        )
+        source_five = Source.objects.create(
+            source_type=Source.SINGLE,
+            is_active=True,
+            is_public=True,
+            contributor=self.contributor,
+        )
+        list_item_five = FacilityListItem.objects.create(
+            name="Item",
+            address="Address",
+            country_code="US",
+            sector=["Apparel"],
+            row_index=1,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.MATCHED,
+            source=source_five,
+            facility=self.facility_one,
+        )
+        for facility, status, confidence in (
+            (facility_two, FacilityMatch.PENDING, 0.54),
+            (facility_two, FacilityMatch.AUTOMATIC, 0.9),
+            (self.facility_one, FacilityMatch.AUTOMATIC, 0.89),
+        ):
+            FacilityMatch.objects.create(
+                status=status,
+                facility=facility,
+                facility_list_item=list_item_five,
+                confidence=confidence,
+                results="",
+            )
+
+        result = handle_external_match_process_result(
+            list_item_five.id,
+            {
+                'matches': [],
+                'item_id': list_item_five.id,
+                'geocoded_geometry': None,
+                'geocoded_address': None,
+                'status': list_item_five.status,
+            },
+            None,
+            True,
+        )
+
+        self.assertEqual(result['status'], 'MATCHED')
+        self.assertEqual(result['os_id'], self.facility_one.id)
+        self.assertEqual(len(result['matches']), 1)

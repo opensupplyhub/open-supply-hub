@@ -2,14 +2,13 @@ from datetime import datetime
 from typing import Dict, List
 
 from app.config import settings
-from app.database.models.facility import Facility
-from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.database.models.source import Source
 from app.database.sqlalchemy import get_session
 from app.matching.DTOs.facility_list_item_dto import FacilityListItemDict
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
+from app.matching.DTOs.item_update_dto import ItemUpdateDTO
 from app.matching.DTOs.match_dto import MatchDTO
 from app.matching.matcher.base_matcher import BaseMatcher
 from app.matching.matcher.exact.exact_matcher import ExactMatcher
@@ -22,9 +21,15 @@ class CumulativeMatcher(BaseMatcher):
     matchers = (ExactMatcher, GazetteerMatcher)
 
     def __init__(self) -> None:
-        pass
+        self.item_updates: Dict[int, ItemUpdateDTO] = {}
 
     def process(self, messy: FacilityListItemDict) -> List[FacilityMatchDTO]:
+        """
+        Returns the match rows for every item. Nothing is written here: the
+        final state of each item is staged in `self.item_updates` for the
+        Writer, which writes it together with the match rows.
+        """
+        self.item_updates = {}
         results: List[FacilityMatchDTO] = []
         originMessy = messy
         for matcher in self.matchers:
@@ -36,8 +41,6 @@ class CumulativeMatcher(BaseMatcher):
 
         unmatched_processed = self.process_unmatched_items(originMessy, results)
         results.extend(unmatched_processed)
-        if settings.dedupe_hub_live:
-            self.update_extended_fields(originMessy)
 
         return results
 
@@ -70,18 +73,24 @@ class CumulativeMatcher(BaseMatcher):
         if isinstance(matched, list) and len(matched) == 0:
             return []
 
-        return [
-            item
-            for item_id, matches in matched.items()
-            for item in matcher.item_match(
+        results: List[FacilityMatchDTO] = []
+        for item_id, matches in matched.items():
+            item_match = matcher.item_match(
                 item_id=item_id,
                 matches=matches,
                 started=matcher.get_started(),
                 finished=matcher.get_finished(),
                 results=matcher.get_results(),
                 automatic_threshold=matcher.automatic_threshold
-            ).process()
-        ]
+            )
+            results.extend(item_match.process())
+            if item_match.pending_item_update is not None:
+                update = item_match.pending_item_update
+                self.item_updates[
+                    int(update['facility_list_item_id'])
+                ] = update
+
+        return results
 
     def process_unmatched_items(self, messy, matched):
         results: List[FacilityMatchDTO] = []
@@ -99,25 +108,23 @@ class CumulativeMatcher(BaseMatcher):
                     FacilityListItemTemp.id.not_in(matched_ids)
                 ). \
                 all()
-            
+
             for unmatched_list_item in unmatched_list_items:
                 facility_id = None
+                new_facility = None
                 if session.query(Source.create).filter(Source.id==unmatched_list_item.source_id).scalar():
                     if settings.dedupe_hub_live:
-                        facility = Facility()
-                        facility.id = make_os_id(unmatched_list_item.country_code)
-                        facility.name = unmatched_list_item.name
-                        facility.address = unmatched_list_item.address
-                        facility.country_code = unmatched_list_item.country_code
-                        facility.location = unmatched_list_item.geocoded_point
-                        facility.created_from_id = unmatched_list_item.id
-                        facility.created_at = datetime.now()
-                        facility.updated_at = datetime.now()
-
-                        session.add(facility)
-                        session.commit()
-
-                        facility_id = facility.id
+                        # Created by the Writer, in the same transaction
+                        # as the item's match row and status.
+                        facility_id = make_os_id(unmatched_list_item.country_code)
+                        new_facility = {
+                            'id': facility_id,
+                            'name': unmatched_list_item.name,
+                            'address': unmatched_list_item.address,
+                            'country_code': unmatched_list_item.country_code,
+                            'location': unmatched_list_item.geocoded_point,
+                            'created_from_id': unmatched_list_item.id,
+                        }
                     else:
                         facility_id = "AB_Test_" + make_os_id(unmatched_list_item.country_code)
 
@@ -127,35 +134,19 @@ class CumulativeMatcher(BaseMatcher):
                     'started_at': str(datetime.now()),
                     'finished_at': str(datetime.now())
                 }
-                processing_results_data = unmatched_list_item.processing_results
+                processing_results_data = list(
+                    unmatched_list_item.processing_results or []
+                )
                 processing_results_data.append(json_data)
 
-                # Update the JSON column data
-                session.query(FacilityListItemTemp).\
-                    filter(FacilityListItemTemp.id == unmatched_list_item.id).update({"processing_results": processing_results_data})
-
-                unmatched_list_item.status = FacilityListItemTemp.MATCHED
-                unmatched_list_item.facility_id = facility_id
-                unmatched_list_item.version = settings.dedupe_hub_version
-
-                session.commit()
-
-                if session.query(Source.create).filter(Source.id==unmatched_list_item.source_id).scalar():
-                    if settings.dedupe_hub_live:
-                        origin_list_item = session.query(FacilityListItem). \
-                            filter(
-                                FacilityListItem.id == unmatched_list_item.id,
-                            ). \
-                            one()
-                        
-                        # Update the JSON column data
-                        session.query(FacilityListItem).\
-                            filter(FacilityListItem.id == unmatched_list_item.id).update({"processing_results": processing_results_data})
-                        
-                        origin_list_item.status = FacilityListItem.MATCHED
-                        origin_list_item.facility_id = facility_id
-
-                        session.commit()
+                self.item_updates[int(unmatched_list_item.id)] = {
+                    'facility_list_item_id': unmatched_list_item.id,
+                    'source_id': unmatched_list_item.source_id,
+                    'status': FacilityListItemTemp.MATCHED,
+                    'facility_id': facility_id,
+                    'processing_results': processing_results_data,
+                    'new_facility': new_facility,
+                }
 
                 results.append({
                     "facility_list_item_id": unmatched_list_item.id,
@@ -164,7 +155,5 @@ class CumulativeMatcher(BaseMatcher):
                     "results": {'match_type': 'no_gazetteer_match'},
                     "confidence": 1,
                 })
-
-            session.close()
 
             return results

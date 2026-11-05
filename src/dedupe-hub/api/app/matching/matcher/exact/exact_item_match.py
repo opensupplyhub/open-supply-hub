@@ -49,7 +49,7 @@ class ExactItemMatch(BaseItemMatch):
         else:
             matches[0]["results"]["match_type"] = "multiple_exact_matches"
 
-        self.item_save(exact_match=True)
+        self.stage_item_update(exact_match=True)
 
         return matches[:1]
 
