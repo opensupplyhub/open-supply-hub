@@ -2430,10 +2430,7 @@ class FacilitiesViewSet(ListModelMixin,
                 ),
                 website=validated_data.get("your_business_website"),
                 facility_website=validated_data.get("business_website"),
-                facility_website_publicly_visible=validated_data.get(
-                    "facility_website_publicly_visible",
-                    False,
-                ),
+                facility_website_publicly_visible=validated_data.get("facility_website_publicly_visible"),
                 linkedin_profile=validated_data.get(
                     "business_linkedin_profile"
                 ),
@@ -2471,10 +2468,7 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_phone_number=validated_data.get(
                     "facility_phone_number"
                 ),
-                facility_phone_number_publicly_visible=validated_data.get(
-                    "facility_phone_number_publicly_visible",
-                    False,
-                ),
+                facility_phone_number_publicly_visible=validated_data.get("facility_phone_number_publicly_visible"),
                 facility_description=validated_data.get(
                     "facility_description", ""
                 ),

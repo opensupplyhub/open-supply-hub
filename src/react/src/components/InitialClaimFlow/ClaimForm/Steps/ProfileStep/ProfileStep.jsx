@@ -7,6 +7,7 @@ import Business from '@material-ui/icons/Business';
 import Build from '@material-ui/icons/Build';
 import VerifiedUser from '@material-ui/icons/VerifiedUser';
 import Spa from '@material-ui/icons/Spa';
+import findSelectedOption from '../utils';
 
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
@@ -48,26 +49,25 @@ import { COMPANY_ADDRESS_VERIFICATION_OPTIONS } from '../BusinessStep/constants'
 import useClaimProfileOptions from './useClaimProfileOptions';
 import { selectStyles } from '../../styles';
 
-// The Business Information step stores the chosen option's label.
-const websiteVerificationOption = COMPANY_ADDRESS_VERIFICATION_OPTIONS.find(
-    option => option.value === 'company-website-address',
-);
-
 // A website given as company address verification is stored in the same
 // claim field as the profile website, so editing it here would replace
 // the verification evidence. It is shown read-only instead, and edited
 // (and validated) with the address verification in Business Information
-// (OSDEV-2680). Checked on every render: the pending claim edit view
-// shows both steps on one page, so the method can change while this
-// step is open.
+// (OSDEV-2680). The stored method is resolved to its option exactly as
+// Business Information does, so both steps agree on which URL is the
+// evidence. Checked on every render: the pending claim edit view shows
+// both steps on one page, so the method can change while this step is
+// open.
 const isAddressVerificationWebsite = formData =>
-    formData.locationAddressVerificationMethod ===
-    websiteVerificationOption.label;
+    findSelectedOption(
+        COMPANY_ADDRESS_VERIFICATION_OPTIONS,
+        formData.locationAddressVerificationMethod,
+    )?.value === 'company-website-address';
 
 const ADDRESS_VERIFICATION_WEBSITE_HINT =
     'This is the website you gave to verify the company address. To change it, edit your address verification in Business Information.';
 
-const ShowOnProfileSwitch = ({ checked, onChange, ariaLabel }) => (
+const ShowOnProfileSwitch = ({ checked, onChange, ariaLabel, label }) => (
     <FormControlLabel
         control={
             <Switch
@@ -77,7 +77,7 @@ const ShowOnProfileSwitch = ({ checked, onChange, ariaLabel }) => (
                 inputProps={{ 'aria-label': ariaLabel }}
             />
         }
-        label="Show on profile"
+        label={label}
     />
 );
 
@@ -85,6 +85,7 @@ ShowOnProfileSwitch.propTypes = {
     checked: bool,
     onChange: func.isRequired,
     ariaLabel: string.isRequired,
+    label: string.isRequired,
 };
 
 ShowOnProfileSwitch.defaultProps = {
@@ -317,6 +318,7 @@ const ProfileStep = ({
                                     )
                                 }
                                 ariaLabel="Show company phone on profile"
+                                label="Show on profile: company phone"
                             />
                             <DialogTooltip
                                 text={BETA_TOOLTIP_TEXT}
@@ -391,6 +393,7 @@ const ProfileStep = ({
                                     )
                                 }
                                 ariaLabel="Show company website on profile"
+                                label="Show on profile: company website"
                             />
                             <DialogTooltip
                                 text={BETA_TOOLTIP_TEXT}

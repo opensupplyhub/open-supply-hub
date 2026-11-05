@@ -305,6 +305,12 @@ describe('ProfileStep component', () => {
                 /This is the website you gave to verify the company address/,
             ),
         ).toBeInTheDocument();
+        // The claimant can still choose to show the verification website.
+        expect(
+            screen.getByRole('checkbox', {
+                name: 'Show company website on profile',
+            }),
+        ).toBeEnabled();
     });
 
     test('keeps a prefilled website editable when it is not address verification', () => {
@@ -387,29 +393,12 @@ describe('ProfileStep component', () => {
         );
     });
 
-    test('shows business website field when persisted value is invalid', () => {
-        renderComponent({
-            formData: {
-                ...defaultProps.formData,
-                businessWebsite: 'not-a-valid-url',
-            },
-        });
-
-        expect(
-            screen.getByPlaceholderText(
-                'https://company.com (max 200 characters)',
-            ),
-        ).toBeInTheDocument();
-    });
-
-    test('shows business website field when not provided', () => {
+    test('shows an empty, editable website field when none was given', () => {
         renderComponent();
 
-        expect(
-            screen.getByPlaceholderText(
-                'https://company.com (max 200 characters)',
-            ),
-        ).toBeInTheDocument();
+        const websiteInput = screen.getByPlaceholderText(WEBSITE_PLACEHOLDER);
+        expect(websiteInput).toHaveValue('');
+        expect(websiteInput).not.toHaveAttribute('readonly');
     });
 
     test('offers the affiliation and certification options from the API', async () => {

@@ -18,6 +18,7 @@ const useVerificationMethodChange = (
             // Clear verification URLs and documents when switching methods.
             updateField('businessLinkedinProfile', '');
             updateField('businessWebsite', '');
+            updateField('facilityWebsitePubliclyVisible', false);
             updateField('companyAddressVerificationDocuments', []);
         }
     }, [verificationMethod, prevVerificationMethod, updateField]);

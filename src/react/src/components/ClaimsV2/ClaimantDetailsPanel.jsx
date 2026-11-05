@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import isURL from 'validator/lib/isURL';
 
 import styles from './styles';
+import ProfileVisibilityNote from '../Shared/ProfileVisibilityNote/ProfileVisibilityNote';
 
 /*
  * Claimant-submitted details (OSDEV-3356): everything else the
@@ -10,18 +11,9 @@ import styles from './styles';
  * compactly and only when present.
  */
 
-// The claimant's choice of whether a value is shown on the production
-// location profile (OSDEV-2680), as a secondary line under the value.
-const visibilityNoteStyle = Object.freeze({
-    display: 'block',
-    fontSize: '14px',
-    color: styles.detailKey.color,
-});
-
-const profileVisibilityNote = isPubliclyVisible =>
-    isPubliclyVisible ? 'Shown on profile' : 'Not shown on profile';
-
-function DetailRow({ label, value, note }) {
+// isPubliclyVisible is set only on the rows whose value the claimant can
+// choose to show on the production location profile (OSDEV-2680).
+function DetailRow({ label, value, isPubliclyVisible }) {
     return (
         <div style={styles.matchRow}>
             <span style={styles.detailKey}>{label}</span>
@@ -33,7 +25,11 @@ function DetailRow({ label, value, note }) {
                 ) : (
                     value
                 )}
-                {note && <span style={visibilityNoteStyle}>{note}</span>}
+                {isPubliclyVisible !== undefined && (
+                    <ProfileVisibilityNote
+                        isPubliclyVisible={isPubliclyVisible}
+                    />
+                )}
             </span>
         </div>
     );
@@ -49,14 +45,12 @@ export default function ClaimantDetailsPanel({ detail }) {
         [
             'Production location website',
             detail.facility_website,
-            profileVisibilityNote(detail.facility_website_publicly_visible),
+            Boolean(detail.facility_website_publicly_visible),
         ],
         [
             'Production location phone',
             detail.facility_phone_number,
-            profileVisibilityNote(
-                detail.facility_phone_number_publicly_visible,
-            ),
+            Boolean(detail.facility_phone_number_publicly_visible),
         ],
         ['Sector(s)', (detail.sector || []).join(', ')],
         [
@@ -88,12 +82,12 @@ export default function ClaimantDetailsPanel({ detail }) {
                 </span>
             </button>
             {!collapsed &&
-                rows.map(([label, value, note]) => (
+                rows.map(([label, value, isPubliclyVisible]) => (
                     <DetailRow
                         key={label}
                         label={label}
                         value={value}
-                        note={note}
+                        isPubliclyVisible={isPubliclyVisible}
                     />
                 ))}
         </div>

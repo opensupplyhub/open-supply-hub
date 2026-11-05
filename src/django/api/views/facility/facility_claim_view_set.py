@@ -39,6 +39,7 @@ from ...services.facility_claim_review_note_service import (
     create_review_note,
 )
 from ...mail import (
+    describe_pending_claim_changes,
     send_approved_claim_notice_to_list_contributors,
     send_claim_facility_approval_email,
     send_claim_facility_denial_email,
@@ -227,32 +228,6 @@ def validate_claimed_name_address(data, claim):
             value = None
         normalized[field_name] = value
     return normalized
-
-
-# Readable lines for the claimant-update notice (OSDEV-2680). The
-# "shown on profile" choices are what decide whether a value goes public,
-# so the Claims team sees the direction of the change rather than a raw
-# field name. A changed boolean can only have flipped, so the previous
-# value is the opposite of the current one.
-PUBLIC_VISIBILITY_CHANGE_LABELS = {
-    'facility_phone_number_publicly_visible': 'Phone number shown on profile',
-    'facility_website_publicly_visible': 'Website shown on profile',
-    'point_of_contact_publicly_visible': 'Contact person shown on profile',
-}
-
-
-def describe_pending_claim_changes(claim, changed_fields):
-    """Turn the model field names a pending-claim edit changed into the
-    lines of the claimant-update notice and review note."""
-    descriptions = []
-    for field in sorted(changed_fields):
-        label = PUBLIC_VISIBILITY_CHANGE_LABELS.get(field)
-        if label is None:
-            descriptions.append('Updated {}'.format(field))
-            continue
-        transition = 'No → Yes' if getattr(claim, field) else 'Yes → No'
-        descriptions.append('{}: {}'.format(label, transition))
-    return descriptions
 
 
 def get_tracked_claim_value(claim, field_name):

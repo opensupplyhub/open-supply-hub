@@ -10,6 +10,7 @@ import DashboardClaimDetailsControls from './DashboardClaimDetailsControls';
 import DashboardClaimsDetailsNote from './DashboardClaimsDetailsNote';
 import DashboardClaimsDetailsAddNote from './DashboardClaimsDetailsAddNote';
 import DashboardClaimsDetailsAttachments from './DashboardClaimsDetailsAttachments';
+import ProfileVisibilityNote from './Shared/ProfileVisibilityNote/ProfileVisibilityNote';
 
 import {
     fetchSingleFacilityClaim,
@@ -41,11 +42,6 @@ const dashboardClaimsDetailsStyles = Object.freeze({
     notesHeaderStyles: Object.freeze({
         margin: '50px 0 0',
     }),
-    visibilityNoteStyles: Object.freeze({
-        display: 'block',
-        fontSize: '14px',
-        color: 'rgba(0, 0, 0, 0.54)',
-    }),
 });
 
 const defaultInfoSectionValueStyle = Object.freeze({
@@ -70,22 +66,6 @@ InfoSection.defaultProps = {
 InfoSection.propTypes = {
     label: string.isRequired,
     value: node,
-};
-
-// The claimant's choice of whether a value is shown on the production
-// location profile (OSDEV-2680).
-const ProfileVisibilityNote = ({ isPubliclyVisible }) => (
-    <span style={dashboardClaimsDetailsStyles.visibilityNoteStyles}>
-        {isPubliclyVisible ? 'Shown on profile' : 'Not shown on profile'}
-    </span>
-);
-
-ProfileVisibilityNote.propTypes = {
-    isPubliclyVisible: bool,
-};
-
-ProfileVisibilityNote.defaultProps = {
-    isPubliclyVisible: false,
 };
 
 const createLink = (url, text) => (

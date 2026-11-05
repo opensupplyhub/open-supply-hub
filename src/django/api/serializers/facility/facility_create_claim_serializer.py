@@ -150,9 +150,7 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
     # same field also holds the URL a claimant may submit as address
     # verification evidence, which is not necessarily meant to be public.
     facility_website_publicly_visible = serializers.BooleanField(
-        required=False,
         default=False,
-        allow_null=False,
     )
     business_linkedin_profile = serializers.CharField(
         max_length=200,
@@ -260,9 +258,7 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         max_length=200
     )
     facility_phone_number_publicly_visible = serializers.BooleanField(
-        required=False,
         default=False,
-        allow_null=False,
     )
     office_phone_number = serializers.CharField(
         required=False,

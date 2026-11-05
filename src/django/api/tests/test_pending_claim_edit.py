@@ -792,7 +792,10 @@ class PendingClaimNotificationAndListTest(APITestCase):
         self.assertEqual(1, len(django_mail.outbox))
         message = django_mail.outbox[0]
         self.assertIn(str(self.claim.id), message.subject)
-        self.assertIn('contact_person', message.body)
+        # Changed fields are named by their readable label, not the
+        # model field name.
+        self.assertIn('Updated Contact person', message.body)
+        self.assertNotIn('contact_person', message.body)
         self.assertIn(
             f'/dashboard/claims/{self.claim.id}', message.body
         )
@@ -845,6 +848,27 @@ class PendingClaimNotificationAndListTest(APITestCase):
         )
         self.assertIn('Website shown on profile: No → Yes', note.note)
         self.assertIn('Phone number shown on profile: Yes → No', note.note)
+
+    def test_notice_lines_use_the_claim_change_labels(self):
+        from api.mail import describe_pending_claim_changes
+
+        self.claim.point_of_contact_publicly_visible = True
+
+        self.assertEqual(
+            [
+                "Updated Contact person's job title",
+                'Updated not_a_model_field',
+                'Contact person shown on profile: No → Yes',
+            ],
+            describe_pending_claim_changes(
+                self.claim,
+                [
+                    'point_of_contact_publicly_visible',
+                    'job_title',
+                    'not_a_model_field',
+                ],
+            ),
+        )
 
     @override_switch('claim_a_facility', active=True)
     def test_attachment_add_stamps_and_notifies(self):
