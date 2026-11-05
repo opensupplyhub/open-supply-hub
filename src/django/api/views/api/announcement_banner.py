@@ -11,6 +11,8 @@ from api.models.announcement_banner import AnnouncementBanner
 @api_view(['GET'])
 @permission_classes((AllowAny,))
 def announcement_banner(_):
+    # Singleton: one row seeded by migration, with the admin blocking
+    # adds and deletes, so first() is always that row.
     banner = AnnouncementBanner.objects.first()
     is_active = bool(banner and banner.is_active and banner.content)
     return Response({
