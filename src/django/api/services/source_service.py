@@ -1,7 +1,15 @@
 import logging
+import uuid
 
+import boto3
+from django.conf import settings
 from django.db import transaction
 
+from api.aws_batch import (
+    fetch_batch_queue_arn,
+    fetch_latest_active_batch_job_definition_arn,
+)
+from api.constants import ProcessingAction
 from api.models.extended_field import ExtendedField
 from api.models.source import Source
 
@@ -15,8 +23,90 @@ log = logging.getLogger(__name__)
 REASSIGNMENT_CHUNK_SIZE = 500
 
 
+def _submit_reassignment_batch_job(facility_list_id: int) -> str:
+    """
+    Submit an AWS Batch job that runs the extended field reassignment
+    for the source of the given facility list.
+
+    Reuses the standard list-processing job definition, whose container
+    command is parameterized on `listid` and `action` (see
+    deployment/terraform/job-definitions/default.json), so no new
+    infrastructure is required.
+    """
+    client = boto3.client('batch')
+    job_name = 'source-reassign-{0}-{1}'.format(
+        facility_list_id, uuid.uuid4().hex[:8])
+    response = client.submit_job(
+        jobName=job_name,
+        jobQueue=fetch_batch_queue_arn(client),
+        jobDefinition=fetch_latest_active_batch_job_definition_arn(client),
+        parameters={
+            'listid': str(facility_list_id),
+            'action': ProcessingAction.REASSIGN_EXTENDED_FIELDS,
+        },
+    )
+    job_id = response.get('jobId')
+    if not job_id:
+        raise RuntimeError(
+            'Batch submit response missing jobId: {0}'.format(response))
+    return job_id
+
+
 class SourceService:
     """Operations that span a Source and the records derived from it."""
+
+    @staticmethod
+    def schedule_reassignment(source_pk: int) -> None:
+        """
+        Run the extended field reassignment for this source, deferring
+        to AWS Batch when possible.
+
+        Reassigning a large list re-attributes thousands of extended
+        fields, and every updated row triggers a FacilityIndex rebuild,
+        which takes minutes. Running that inside a web request outlives
+        the CDN's origin timeout, so Django admin shows a 504 even
+        though the work succeeds. See OSDEV-3758.
+
+        The work is dispatched to Batch when the source belongs to a
+        facility list and the Batch settings are configured (always
+        true in deployed environments). Otherwise — SINGLE sources
+        (one item, re-attribution is immediate), local development and
+        tests, or a failed Batch submission — it falls back to running
+        `reassign_extended_fields` inline, which preserves correctness
+        at the cost of blocking the caller.
+        """
+        source = (
+            Source.objects
+            .filter(pk=source_pk)
+            .values('facility_list_id')
+            .first()
+        )
+        if source is None:
+            return
+
+        batch_is_configured = bool(
+            (settings.BATCH_JOB_QUEUE_NAME or '').strip()
+            and (settings.BATCH_JOB_DEF_NAME or '').strip()
+        )
+        if source['facility_list_id'] is not None and batch_is_configured:
+            try:
+                job_id = _submit_reassignment_batch_job(
+                    source['facility_list_id'])
+                log.info(
+                    'Queued extended field reassignment for source %s '
+                    'as Batch job %s.',
+                    source_pk,
+                    job_id,
+                )
+                return
+            except Exception:
+                log.exception(
+                    'Batch submission failed for source %s; running the '
+                    'extended field reassignment inline instead.',
+                    source_pk,
+                )
+
+        SourceService.reassign_extended_fields(source_pk)
 
     @staticmethod
     def reassign_extended_fields(source_pk: int) -> int:

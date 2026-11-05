@@ -412,6 +412,16 @@ class SourceAdmin(admin.ModelAdmin):
     readonly_fields = ('source_type', 'facility_list', 'create')
     list_filter = ('source_type', 'contributor')
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if change and 'contributor' in form.changed_data:
+            messages.info(
+                request,
+                'Contributor updated. Re-attributing the extended fields '
+                'contributed through this source has been scheduled and '
+                'can take a few minutes for large lists.',
+            )
+
 
 class RequestLogAdmin(admin.ModelAdmin):
     readonly_fields = ('user', 'token', 'method', 'path', 'response_code',
