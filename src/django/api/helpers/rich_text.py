@@ -1,3 +1,5 @@
+import html
+
 import bleach
 from django.utils.html import strip_tags
 from django_bleach.utils import get_bleach_default_options
@@ -6,6 +8,7 @@ from django_bleach.utils import get_bleach_default_options
 # (`<p>&nbsp;</p>`, `<p><br></p>`, formatted but blank runs). Treat all of
 # them as no content so an empty editor never renders an empty element.
 NON_BREAKING_SPACE = '\xa0'
+ZERO_WIDTH_SPACE = '\u200b'
 
 
 def clean_rich_text(value):
@@ -18,8 +21,10 @@ def clean_rich_text(value):
 
     cleaned = bleach.clean(value, **get_bleach_default_options()).strip()
 
-    visible_text = strip_tags(cleaned).replace(
+    # Entities survive bleach.clean in encoded form, so decode before
+    # deciding whether anything visible is left.
+    visible_text = html.unescape(strip_tags(cleaned)).replace(
         NON_BREAKING_SPACE, ' '
-    ).replace('&nbsp;', ' ').strip()
+    ).replace(ZERO_WIDTH_SPACE, '').strip()
 
     return cleaned if visible_text else ''

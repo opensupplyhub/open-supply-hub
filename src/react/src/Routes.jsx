@@ -42,7 +42,10 @@ import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags, refreshFeatureFlags } from './actions/featureFlags';
-import { fetchAnnouncementBanner } from './actions/announcementBanner';
+import {
+    fetchAnnouncementBanner,
+    refreshAnnouncementBanner,
+} from './actions/announcementBanner';
 import { reportWindowResize } from './actions/ui';
 
 import { setFacilityGridRamp } from './actions/vectorTileLayer';
@@ -105,7 +108,7 @@ class Routes extends Component {
         this.unlistenHistory = history.listen(() => {
             this.props.refreshFeatureFlags();
             if (!this.props.embed) {
-                this.props.getAnnouncementBanner();
+                this.props.refreshAnnouncementBanner();
             }
         });
 
@@ -365,6 +368,8 @@ function mapDispatchToProps(dispatch) {
     return {
         getFeatureFlags: () => dispatch(fetchFeatureFlags()),
         getAnnouncementBanner: () => dispatch(fetchAnnouncementBanner()),
+        refreshAnnouncementBanner: () =>
+            dispatch(refreshAnnouncementBanner()),
         refreshFeatureFlags: () => dispatch(refreshFeatureFlags()),
         logIn: () => dispatch(sessionLogin()),
         handleWindowResize: data => dispatch(reportWindowResize(data)),

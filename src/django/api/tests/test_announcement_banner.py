@@ -20,6 +20,9 @@ class AnnouncementBannerModelTest(TestCase):
             '<p></p>',
             '<p><br></p>',
             '   ',
+            '<p>&#160;</p>',
+            '<p>&ensp;</p>',
+            '<p>&#8203;</p>',
         ):
             with self.subTest(content=empty):
                 banner.content = empty
