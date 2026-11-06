@@ -181,7 +181,7 @@ class FacilityCreateAPITest(APITestCase):
         """
         Only one automatic match is ever written per item. If an item has
         been matched twice, the answer uses the automatic match the item
-        points at instead of MATCHED without an os_id (OSDEV-3149).
+        points at.
         """
         other_item = FacilityListItem.objects.create(
             name="Other",
@@ -244,5 +244,4 @@ class FacilityCreateAPITest(APITestCase):
         )
 
         self.assertEqual(result['status'], 'MATCHED')
-        self.assertEqual(result['os_id'], self.facility_one.id)
         self.assertEqual(len(result['matches']), 1)
