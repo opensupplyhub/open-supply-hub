@@ -128,6 +128,7 @@ class PendingClaimSerializer(serializers.Serializer):
     your_title = serializers.CharField(source='job_title')
     your_business_website = serializers.CharField(source='website')
     business_website = serializers.CharField(source='facility_website')
+    facility_website_publicly_visible = serializers.BooleanField()
     business_linkedin_profile = serializers.CharField(
         source='linkedin_profile'
     )
@@ -158,6 +159,7 @@ class PendingClaimSerializer(serializers.Serializer):
     location_address_verification_method = serializers.CharField()
     claimant_linkedin_profile_url = serializers.URLField()
     facility_phone_number = serializers.CharField()
+    facility_phone_number_publicly_visible = serializers.BooleanField()
     office_phone_number = serializers.CharField()
     facility_description = serializers.CharField()
     office_official_name = serializers.CharField()

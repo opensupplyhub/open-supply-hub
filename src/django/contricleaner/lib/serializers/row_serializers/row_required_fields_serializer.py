@@ -1,4 +1,4 @@
-from typing import List, Set, Dict
+from typing import Iterable, List, Set, Dict
 
 
 from contricleaner.lib.serializers.row_serializers.row_serializer \
@@ -13,6 +13,19 @@ class RowRequiredFieldsSerializer(RowSerializer):
         'country'
     }
     __valid_field_value_lengths = {'name': 200, 'address': 200}
+    # The limits apply to what the contributor submitted, not to the
+    # cleaned value: cleanup can add characters (e.g. a space after each
+    # comma), which must not push a valid submission over the limit. The
+    # name and address columns are wider than these limits to hold that
+    # growth (OSDEV-1085).
+    validates_raw_row = True
+
+    def __init__(self, skip_length_check_fields: Iterable[str] = ()) -> None:
+        # Fields whose value was not submitted by the contributor but copied
+        # from what is already stored for the location (e.g. backfilled on a
+        # partial update). Stored values are cleaned, so they may exceed the
+        # submission limit and are not checked against it.
+        self.__skip_length_check_fields = frozenset(skip_length_check_fields)
 
     def validate(self, row: dict, current: dict) -> dict:
         missing_fields = self.__required_fields.difference(row.keys())
@@ -40,7 +53,8 @@ class RowRequiredFieldsSerializer(RowSerializer):
         errors = []
 
         for field, max_length in self.__valid_field_value_lengths.items():
-            if (field not in missing_fields):
+            if (field not in missing_fields
+                    and field not in self.__skip_length_check_fields):
                 value_len = len(input_row[field])
 
                 if value_len > max_length:

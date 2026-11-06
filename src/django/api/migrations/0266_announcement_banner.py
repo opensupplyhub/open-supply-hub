@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0264_qualify_facility_processing_search_functions'),
+        ('api', '0265_widen_facility_name_and_address'),
     ]
 
     operations = [
