@@ -6,14 +6,14 @@ SWITCH_NAME = 'enable_list_cleaning_feedback'
 
 
 def create_switch(apps, schema_editor):
-    Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.get_or_create(name=SWITCH_NAME,
-                                 defaults={'active': False})
+    switch_model = apps.get_model('waffle', 'Switch')
+    switch_model.objects.get_or_create(name=SWITCH_NAME,
+                                       defaults={'active': False})
 
 
 def delete_switch(apps, schema_editor):
-    Switch = apps.get_model('waffle', 'Switch')
-    Switch.objects.filter(name=SWITCH_NAME).delete()
+    switch_model = apps.get_model('waffle', 'Switch')
+    switch_model.objects.filter(name=SWITCH_NAME).delete()
 
 
 class Migration(migrations.Migration):

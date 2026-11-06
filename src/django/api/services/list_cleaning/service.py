@@ -432,7 +432,7 @@ def metrics_summary():
         'median_changes_applied': None,
         'median_auto_applied': None,
         'median_reviewed_changes': None,
-        'totals': {key: 0 for key in BREAKDOWN_TOTALS},
+        'totals': dict.fromkeys(BREAKDOWN_TOTALS, 0),
     }
     minutes, applied, auto_applied, reviewed = [], [], [], []
     for run in runs:
@@ -615,8 +615,8 @@ def _write_field(item, field, value):
     elif field == 'address':
         item.address = value[:200]
         item.clean_address = clean(value)[:200]
-    elif field == 'sector_product_type' and not value:
-        pass
+    # Every other field lives only in raw_json until the item is
+    # re-parsed.
 
 
 REMOVED_STATUSES = (FacilityListItem.DUPLICATE,

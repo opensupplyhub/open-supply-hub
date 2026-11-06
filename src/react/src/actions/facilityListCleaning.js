@@ -175,7 +175,7 @@ export function beaconFacilityListCleaningEvent(listID, kind, meta = {}) {
                 'X-OAR-Client-Key': window.ENVIRONMENT.OAR_CLIENT_KEY,
             },
             body: JSON.stringify({ kind, meta }),
-        });
+        }).catch(() => null);
     } catch (e) {
         // best effort only
     }

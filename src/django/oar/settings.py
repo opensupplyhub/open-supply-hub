@@ -101,6 +101,9 @@ LIST_CLEANING_RUNNER = os.getenv(
 LIST_CLEANING_STATE_MACHINE_ARN = os.getenv(
     'LIST_CLEANING_STATE_MACHINE_ARN', '')
 LIST_CLEANING_AWS_REGION = os.getenv('LIST_CLEANING_AWS_REGION', 'us-east-1')
+# AWS account id that owns the bucket pipeline results are read from.
+LIST_CLEANING_RESULTS_BUCKET_OWNER = os.getenv(
+    'LIST_CLEANING_RESULTS_BUCKET_OWNER', '')
 # How long after upload a contributor may submit changes from the review
 # screen before the list goes through as uploaded.
 LIST_CLEANING_REVIEW_MINUTES = int(

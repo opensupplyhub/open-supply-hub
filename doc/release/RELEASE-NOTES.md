@@ -38,7 +38,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
     * `migrate`
-* OSDEV-3726 is a prototype and ships switched off: leave the `enable_list_cleaning_feedback` switch inactive. Turning it on in a deployed environment also needs `LIST_CLEANING_STATE_MACHINE_ARN` (and the Django task role allowed to start and describe executions of that state machine); `LIST_CLEANING_RUNNER`, `LIST_CLEANING_AWS_REGION` and `LIST_CLEANING_REVIEW_MINUTES` have defaults. No Terraform changes are included in this release.
+* OSDEV-3726 is a prototype and ships switched off: leave the `enable_list_cleaning_feedback` switch inactive. Turning it on in a deployed environment also needs `LIST_CLEANING_STATE_MACHINE_ARN` and `LIST_CLEANING_RESULTS_BUCKET_OWNER` (the account id that owns the results bucket; the Django task role must be allowed to start and describe executions of that state machine and read that bucket); `LIST_CLEANING_RUNNER`, `LIST_CLEANING_AWS_REGION` and `LIST_CLEANING_REVIEW_MINUTES` have defaults. No Terraform changes are included in this release.
 
 
 ## Release 2.32.0

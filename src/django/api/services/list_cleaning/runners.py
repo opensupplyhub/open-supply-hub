@@ -33,7 +33,7 @@ class StubRunner:
         run.save(update_fields=['status', 'started_at'])
         ingest_result(run, run_rules(payload))
 
-    def fetch_result(self, run):
+    def fetch_result(self, _run):
         return None
 
 
@@ -82,10 +82,18 @@ class StepFunctionsRunner:
         output = json.loads(description.get('output') or '{}')
         pointer = output.get('result_s3')
         if pointer:
+            # The bucket must belong to the account we expect, so a
+            # pointer to a bucket someone else owns is refused.
+            owner = (pointer.get('owner')
+                     or settings.LIST_CLEANING_RESULTS_BUCKET_OWNER)
+            if not owner:
+                raise ImproperlyConfigured(
+                    'LIST_CLEANING_RESULTS_BUCKET_OWNER is not set')
             s3 = boto3.client(
                 's3', region_name=settings.LIST_CLEANING_AWS_REGION)
             body = s3.get_object(
-                Bucket=pointer['bucket'], Key=pointer['key'])['Body'].read()
+                Bucket=pointer['bucket'], Key=pointer['key'],
+                ExpectedBucketOwner=owner)['Body'].read()
             output = json.loads(body)
         return output
 

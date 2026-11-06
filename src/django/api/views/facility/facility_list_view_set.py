@@ -68,6 +68,9 @@ from ...serializers import (
 log = logging.getLogger(__name__)
 
 
+NO_COMPLETED_RUN = 'There is no completed run for this list.'
+
+
 class FacilityListViewSet(ModelViewSet):
     """
     Upload and update facility lists for an authenticated Contributor.
@@ -542,7 +545,7 @@ class FacilityListViewSet(ModelViewSet):
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
         if run is None or run.status != ListCleaningRun.COMPLETE:
-            raise ValidationError('There is no completed run for this list.')
+            raise ValidationError(NO_COMPLETED_RUN)
         if facility_list.status != FacilityList.PENDING:
             raise ValidationError(
                 'Suggestions can only be acted on while the list is '
@@ -577,7 +580,7 @@ class FacilityListViewSet(ModelViewSet):
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
         if run is None or run.status != ListCleaningRun.COMPLETE:
-            raise ValidationError('There is no completed run for this list.')
+            raise ValidationError(NO_COMPLETED_RUN)
         if facility_list.status != FacilityList.PENDING:
             raise ValidationError(
                 'A list can only be submitted while it is pending '
@@ -629,7 +632,7 @@ class FacilityListViewSet(ModelViewSet):
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
         if run is None or run.status != ListCleaningRun.COMPLETE:
-            raise ValidationError('There is no completed run for this list.')
+            raise ValidationError(NO_COMPLETED_RUN)
         body = list_cleaning.build_fixed_csv(run)
         stem = os.path.splitext(facility_list.file_name or 'list')[0]
         response = HttpResponse(body, content_type='text/csv')
