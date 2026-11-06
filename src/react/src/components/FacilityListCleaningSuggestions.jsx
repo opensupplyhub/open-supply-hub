@@ -1330,20 +1330,6 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                     )}
                 </div>
             )}
-            {byRow > 0 && (
-                <div style={styles.muted}>
-                    {everyRow
-                        ? `You decided all ${group.count} one by one; the buttons above now change all of them, or `
-                        : `${plural(byRow, 'row')} you decided one by one ${
-                              byRow === 1 ? 'keeps' : 'keep'
-                          } that decision; use the row's own buttons to change it, or `}
-                    <ResetLink
-                        count={byRow}
-                        busy={busy}
-                        onClick={() => onGroup(RESET)}
-                    />
-                </div>
-            )}
         </div>
     );
 };
@@ -1353,24 +1339,6 @@ GroupHeader.propTypes = {
     canAct: bool.isRequired,
     busy: bool.isRequired,
     decideGroup: func.isRequired,
-};
-
-const ResetLink = ({ count, busy, onClick }) => (
-    <Button
-        size="small"
-        color="primary"
-        disabled={busy}
-        onClick={onClick}
-        style={{ margin: '-6px 0', textTransform: 'none' }}
-    >
-        reset {count === 1 ? 'that' : `those ${count}`} and start over
-    </Button>
-);
-
-ResetLink.propTypes = {
-    count: number.isRequired,
-    busy: bool.isRequired,
-    onClick: func.isRequired,
 };
 
 /*
@@ -1434,27 +1402,6 @@ const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
                     Or pick a type above.
                 </span>
             </div>
-            {byRow > 0 && (
-                <div style={styles.muted}>
-                    {everyRow
-                        ? `You decided all ${sumAll(
-                              groups,
-                          )} one by one; the buttons above now change all of them, or `
-                        : `${plural(byRow, 'row')} you decided one by one ${
-                              byRow === 1 ? 'keeps' : 'keep'
-                          } that decision, or `}
-                    <ResetLink
-                        count={byRow}
-                        busy={busy}
-                        onClick={() =>
-                            decideGroup(
-                                groups.filter(g => g.by_row).map(g => g.key),
-                                RESET,
-                            )
-                        }
-                    />
-                </div>
-            )}
         </div>
     );
 };
