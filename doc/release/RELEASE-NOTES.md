@@ -37,6 +37,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Architecture/Environment changes
 * [OSDEV-3039](https://opensupplyhub.atlassian.net/browse/OSDEV-3039) - Adds an optional CloudFront function that refuses identity record registration for any OS ID outside an allowlist, driven by `identity_record_allowlist` (empty by default, so the function is attached to nothing and no request reaches it where it is not set). Registration is a write that goes live with no moderation behind it, unlike a production location submission; the OS ID is in the URL path, so the bound is applied at the edge rather than in the application.
+* [OSDEV-3747](https://opensupplyhub.atlassian.net/browse/OSDEV-3747) - Sets `identity_record_allowlist` on production to the three head-office production locations taking part in the identity-resolver pilot, which attaches the CloudFront function added for OSDEV-3039. Registration against any other OS ID is refused at the edge with `403`. Every other environment leaves the list empty, so the function stays attached to nothing and no request reaches it.
 * [OSDEV-3722](https://opensupplyhub.atlassian.net/browse/OSDEV-3722) - Bump dependency version of backend service: `dj-rest-auth`, `djangorestframework-gis`, `djangorestframework`.
 
 ### Code/API Changes
