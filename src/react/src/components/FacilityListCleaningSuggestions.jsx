@@ -99,6 +99,274 @@ const CODE_HELP = Object.freeze({
 });
 
 export const codeHelp = code => CODE_HELP[(code || '').split('+')[0]] || '';
+/*
+ * The guidance shown under a selected error type: what is wrong, why it
+ * matters for everyone's data, and how to fix it. Wording follows the
+ * data team's templated error messages.
+ */
+const GEOCODE_WHY =
+    'OS Hub places every facility on a map and matches it against facilities other contributors have shared. A clear street address lets that happen accurately, so your facility is found, matched and counted correctly.';
+const NAME_WHY =
+    'Names are how OS Hub matches your facility with the same facility shared by others. A precise, unique name means your data merges with theirs instead of creating a duplicate or a wrong match.';
+const CODE_GUIDE = Object.freeze({
+    address_po_box: {
+        title: 'PO Box in the address',
+        problem:
+            'The address appears to be a PO Box rather than the place where the facility is.',
+        why: GEOCODE_WHY,
+        fix: [
+            'Replace the PO Box with the street address of the facility: street number (or cross streets, neighbourhood or industrial zone), town or city, state or province, and postal code if there is one.',
+            'If you only have a PO Box, remove the row rather than publish a location that cannot be mapped.',
+        ],
+    },
+    address_too_few: {
+        title: 'Too little detail in the address',
+        problem:
+            'The address field contains too few details to locate the facility.',
+        why: GEOCODE_WHY,
+        fix: [
+            'Make sure the address has a street number (or cross streets, neighbourhood or industrial zone) if available, town or city, state or province, and postal code where applicable.',
+        ],
+    },
+    address_too_many: {
+        title: 'Too much in the address',
+        problem:
+            'The address field contains details that are not part of the address.',
+        why: GEOCODE_WHY,
+        fix: [
+            'Remove business names from the address field; they belong in the name or parent company column.',
+            'Remove notes like "formerly located at" or "courtesy of", and local landmarks such as a police station.',
+        ],
+    },
+    multiple_addresses: {
+        title: 'More than one address in a row',
+        problem:
+            'The address field appears to hold the addresses of more than one location.',
+        why: GEOCODE_WHY,
+        fix: [
+            'Give each location its own row, for example "Example Location - Building 1" and "Example Location - Building 3", each with its own address.',
+            'Or, if you meant to include only one of them, remove the other address.',
+        ],
+    },
+    address_split: {
+        title: 'Address split across columns',
+        problem: 'Parts of the address are in separate columns.',
+        why: GEOCODE_WHY,
+        fix: [
+            'Put the whole address in one cell: street number, town or city, state or province and postal code together.',
+        ],
+    },
+    country_mismatch: {
+        title: 'Country does not match the address',
+        problem: 'The country column and the country in the address disagree.',
+        why:
+            'The country decides which map region the facility is searched and matched in. A mismatch puts it in the wrong place or stops it matching at all.',
+        fix: [
+            'Change the country value to match the address, using the ISO country name or two-letter code. Hong Kong and Taiwan are listed as their own country values.',
+        ],
+    },
+    unknown_country: {
+        title: 'Country not recognised',
+        problem: 'We could not match this value to a country.',
+        why:
+            'The country decides which map region the facility is searched and matched in, so every row needs one we can read.',
+        fix: [
+            'Type the country name as it appears in the ISO standard, or its two-letter code (for example VN or Viet Nam).',
+        ],
+    },
+    missing_country: {
+        title: 'Country is missing',
+        problem: 'The country cell is empty.',
+        why:
+            'The country decides which map region the facility is searched and matched in; OS Hub cannot publish a facility without one.',
+        fix: ['Type the country the facility is in, or remove the row.'],
+    },
+    missing_name: {
+        title: 'Facility name is missing',
+        problem: 'The name cell is empty.',
+        why: NAME_WHY,
+        fix: ['Type the facility name, or remove the row.'],
+    },
+    missing_address: {
+        title: 'Address is missing',
+        problem: 'The address cell is empty.',
+        why: GEOCODE_WHY,
+        fix: ['Type the street address of the facility, or remove the row.'],
+    },
+    name_incomplete: {
+        title: 'Incomplete or generic name',
+        problem:
+            'The name is missing important details or is too general to identify one facility.',
+        why: NAME_WHY,
+        fix: [
+            'Include the company name, the branch name if there is one, and the location if it helps tell sites apart.',
+            'Avoid generic names like "Factory 1" or "China Office", or a city name with no company in it.',
+        ],
+    },
+    name_too_many: {
+        title: 'Too much in the name',
+        problem:
+            'The name field includes details that are not the facility name.',
+        why: NAME_WHY,
+        fix: [
+            'Keep the company name, branch and location; remove "trading as", "t/a" and similar.',
+            'If you want to record a company beyond the location name, put it in the parent company column.',
+        ],
+    },
+    multiple_names: {
+        title: 'More than one name in a row',
+        problem: 'The name field appears to contain two names instead of one.',
+        why: NAME_WHY,
+        fix: [
+            'If the second name is the parent company, move it to the parent company column.',
+            'If they are two businesses at the same address, give each its own row with the same address.',
+        ],
+    },
+    repeated_names: {
+        title: 'Same name used for several locations',
+        problem: 'Several rows share the same name at different addresses.',
+        why:
+            'When other contributors upload these facilities later, identical names lead to wrong matches between your sites. A distinguishing detail keeps each site separate.',
+        fix: [
+            'Give each site a unique name: the company name plus one distinguishing feature, such as "Example Factory - Weaving Unit", "Example Factory - Branch X" or "Example Factory - Name of Town".',
+        ],
+    },
+    pii: {
+        title: 'Personal information',
+        problem:
+            "This looks like an individual's name or personal contact details rather than a business.",
+        why:
+            "OS Hub does not publish individual people's names, email addresses or phone numbers, because doing so risks violating their privacy. Rows that contain them cannot be approved.",
+        fix: [
+            'Replace the personal details with the business name, or remove them from the row.',
+            'If the value really is the business name, keep it and send confirming documentation to data@opensupplyhub.org.',
+        ],
+    },
+    too_long: {
+        title: 'Value is too long',
+        problem: 'The value is over 200 characters.',
+        why:
+            'OS Hub stores names and addresses up to 200 characters; longer values are cut off, which can leave the facility unidentifiable.',
+        fix: [
+            'Shorten the value, keeping the parts that identify the facility.',
+        ],
+    },
+    duplicate: {
+        title: 'Duplicate rows',
+        problem: 'Two rows have the same name and address.',
+        why:
+            'Only one version of a facility can exist on OS Hub; a duplicate would be matched to the first and discarded anyway.',
+        fix: [
+            'If they really are the same facility, nothing more is needed: the repeat is removed and the first row kept.',
+            'If they are different facilities, keep the row and give it a unique unit number or address detail.',
+        ],
+    },
+    empty: {
+        title: 'Blank rows',
+        problem: 'Every cell in the row is empty.',
+        why: 'A blank row has nothing to publish.',
+        fix: ['Nothing to do: the row is removed.'],
+    },
+    encoding: {
+        title: 'Encoding or non-Roman characters',
+        problem:
+            'The value contains characters that are not in the Roman alphabet, or were mis-encoded (for example "OrlÃ©ans").',
+        why:
+            "Non-Roman and mis-encoded text does not match other contributors' spelling of the same facility, so it creates duplicates and fails searches.",
+        fix: [
+            'Use the Roman or English equivalent, for example Hyderabad; keep accents only where your file encodes them correctly, otherwise drop them (Orleans).',
+        ],
+    },
+    separators: {
+        title: 'Separators standardised',
+        problem:
+            'Several values in one cell were separated by something other than a vertical bar or a comma.',
+        why:
+            'OS Hub reads "Apparel|Shirts|Jackets" as three values; "Apparel / Shirts / Jackets" would be read as one unknown value.',
+        fix: [
+            'Separate values with a vertical bar (|) or a comma in the sector, product type, facility type and parent company columns.',
+        ],
+    },
+    sector_values: {
+        title: 'Values in the wrong column',
+        problem:
+            'Facility or processing types appear under sector or product type, or the other way round, or do not match the supported values.',
+        why:
+            'These columns feed the filters on OS Hub; values in the wrong column or outside the supported list cannot be searched.',
+        fix: [
+            'Put products and sectors under sector_product_type and activities under facility_type_processing_type.',
+            'Choose from the supported sector values.',
+        ],
+    },
+    spelling: {
+        title: 'Spelling',
+        problem: 'A value is misspelt, for example "Manufactoring".',
+        why:
+            "Misspelt values do not match the supported taxonomy or other contributors' entries.",
+        fix: ['Correct the spelling.'],
+    },
+    filler_text: {
+        title: 'Placeholder text removed',
+        problem:
+            'A cell held filler such as "N/A", "None" or "-" instead of being left empty.',
+        why:
+            'Only country, name and address are required; everything else should be blank when unknown, or the placeholder is published as if it were data.',
+        fix: [
+            'Leave the cell empty; the placeholder has been removed for you.',
+        ],
+    },
+    workers_format: {
+        title: 'Worker count formatted as a number',
+        problem: 'The number of workers contained symbols or commas.',
+        why:
+            'OS Hub reads "2,100" as two numbers (2 and 100). Only plain numbers and ranges like 200-500 are understood.',
+        fix: [
+            'Use a plain number or a range with a dash; the value has been reformatted for you.',
+        ],
+    },
+    country_code: {
+        title: 'Country converted to its code',
+        problem: 'The country was written as a name.',
+        why:
+            "OS Hub stores the ISO two-letter code so every contributor's facilities line up by country.",
+        fix: ['Nothing to do; the code has been filled in for you.'],
+    },
+    whitespace: {
+        title: 'Extra spaces removed',
+        problem: 'The value had leading, trailing or doubled spaces.',
+        why:
+            "Stray spaces stop values matching other contributors' spelling of the same name or address.",
+        fix: ['Nothing to do; the spaces have been trimmed for you.'],
+    },
+    casing: {
+        title: 'Capitalisation fixed',
+        problem: 'The name was in all capitals.',
+        why:
+            "Names are published as written; consistent capitalisation reads better and matches other contributors' entries.",
+        fix: [
+            'Nothing to do; the name has been recased for you. Keep the original if the company writes it in capitals.',
+        ],
+    },
+    quotes: {
+        title: 'Stray quotes removed',
+        problem: 'The value was wrapped in or contained stray quotation marks.',
+        why:
+            'Quotation marks become part of the published value and break matching.',
+        fix: ['Nothing to do; they have been removed for you.'],
+    },
+    country_in_address: {
+        title: 'Country removed from the end of the address',
+        problem:
+            'The address ended with the country name, which is already in the country column.',
+        why:
+            'The geocoder works best with the address alone; the country is supplied separately.',
+        fix: [
+            'Accept the trimmed address, or keep the original if the country is part of a place name.',
+        ],
+    },
+});
+
+export const codeGuide = code => CODE_GUIDE[(code || '').split('+')[0]] || null;
 
 export const styles = Object.freeze({
     panel: Object.freeze({
@@ -531,22 +799,22 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
 
     let title;
     if (ready && summary.changes_unapplied > 0) {
-        title = 'Ready for the moderator: press Submit to finish';
+        title = 'Review done: press Submit to send your list to the moderators';
     } else if (ready) {
         title = applied
-            ? 'Your changes are applied and the list is ready for the moderator'
-            : 'Your list is ready for the moderator';
+            ? 'Submitted: your list is now with the OS Hub moderators'
+            : 'Review done';
     } else {
-        title = `Your list is ${percent}% ready for the moderator`;
+        title = `Your review is ${percent}% done`;
     }
 
     const colour = ready ? GREEN : PURPLE;
-    let shortTitle = `${percent}% ready for the moderator`;
+    let shortTitle = `${percent}% of your review done`;
     if (ready) {
         shortTitle =
             summary.changes_unapplied > 0
-                ? 'Ready: press Submit to finish'
-                : 'Ready for the moderator';
+                ? 'Review done: press Submit'
+                : 'Review done';
     }
 
     const anchor = (
@@ -656,7 +924,8 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
                 {!ready && (
                     <div style={trackerStyles.hint}>
                         {plural(remaining, 'decision')} to go. Every one you
-                        make here makes the list more likely to be approved.
+                        make here makes the list more likely to be approved when
+                        an OS Hub moderator reviews it after you submit.
                     </div>
                 )}
             </div>
@@ -1227,6 +1496,93 @@ const chipLabel = group => (
     </span>
 );
 
+const guideStyles = Object.freeze({
+    box: Object.freeze({
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gap: '8px 24px',
+        padding: '14px 18px',
+        margin: '4px 0 8px 0',
+        borderRadius: '6px',
+        background: '#FFF8E6',
+        borderLeft: '4px solid #f57c00',
+    }),
+    boxAuto: Object.freeze({
+        background: COLOURS.LIGHT_GREY,
+        borderLeftColor: COLOURS.DARK_GREY,
+    }),
+    boxFix: Object.freeze({
+        background: '#F1F8F1',
+        borderLeftColor: '#2e7d32',
+    }),
+    title: Object.freeze({
+        gridColumn: '1 / -1',
+        fontSize: '1.05rem',
+        fontWeight: 700,
+    }),
+    label: Object.freeze({
+        fontSize: '0.75rem',
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+        color: 'rgba(0, 0, 0, 0.6)',
+        margin: '0 0 2px 0',
+    }),
+    list: Object.freeze({
+        margin: '0',
+        padding: '0 0 0 18px',
+    }),
+    example: Object.freeze({
+        gridColumn: '1 / -1',
+        fontSize: '0.9rem',
+        color: 'rgba(0, 0, 0, 0.7)',
+    }),
+});
+
+/*
+ * Why this type of problem matters and what to do about it, in the
+ * data team's words, shown whenever a type is selected.
+ */
+const ErrorGuide = ({ group }) => {
+    const guide = codeGuide(group.code);
+    if (!guide) return null;
+    let tone = {};
+    if (group.auto) tone = guideStyles.boxAuto;
+    else if (group.kind === KIND.CORRECTION) tone = guideStyles.boxFix;
+    const examples = group.examples.filter(e => e.original_value).slice(0, 2);
+    return (
+        <div style={{ ...guideStyles.box, ...tone }} data-tour="guide">
+            <div style={guideStyles.title}>
+                {guide.title}: {guide.problem}
+            </div>
+            <div>
+                <div style={guideStyles.label}>Why it matters</div>
+                <div>{guide.why}</div>
+            </div>
+            <div>
+                <div style={guideStyles.label}>
+                    {group.auto ? 'What was done' : 'How to fix it'}
+                </div>
+                <ul style={guideStyles.list}>
+                    {guide.fix.map(line => (
+                        <li key={line}>{line}</li>
+                    ))}
+                </ul>
+            </div>
+            {examples.length > 0 && (
+                <div style={guideStyles.example}>
+                    In your list:{' '}
+                    {examples
+                        .map(e => `row ${e.row_number}: "${e.original_value}"`)
+                        .join(' · ')}
+                </div>
+            )}
+        </div>
+    );
+};
+
+ErrorGuide.propTypes = { group: object.isRequired };
+
 /*
  * The group-level actions for the selected error type: act on the
  * pattern once, then look at the rows underneath only if needed.
@@ -1259,12 +1615,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
             <Typography variant="subheading">
                 {groupTitle(group)}: {plural(group.count, 'row')}
             </Typography>
-            {isIssue && !internal && codeHelp(group.code) && (
-                <div>{codeHelp(group.code)}</div>
-            )}
-            {group.examples[0] && group.examples[0].note && (
-                <div style={styles.muted}>{group.examples[0].note}</div>
-            )}
+            {!internal && <ErrorGuide group={group} />}
             {group.auto && (
                 <div style={styles.muted}>
                     Will be applied automatically when you submit. Keep all

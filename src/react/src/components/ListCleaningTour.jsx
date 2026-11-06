@@ -20,13 +20,13 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
     Object.freeze({
         anchor: 'intro',
         scroll: 'nearest',
-        title: 'How ready your list is',
+        title: 'Where you are in the upload',
         text:
-            'We checked every row before anyone else sees it. This bar ' +
-            'fills as you work through what we found: formatting we ' +
-            'fixed already counts, and every decision you make moves it. ' +
-            'The next steps show how to make those decisions here, with ' +
-            'no need to re-upload.',
+            'Your review is one step of the upload: after you submit, OS ' +
+            'Hub moderators still check the list before it goes live. ' +
+            'This bar tracks the review only. It fills as you work ' +
+            'through what we found, and the next steps show how to make ' +
+            'those decisions here, with no need to re-upload.',
     }),
     Object.freeze({
         anchor: 'automatic',

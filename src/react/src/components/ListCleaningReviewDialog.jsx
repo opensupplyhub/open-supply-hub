@@ -5,6 +5,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
@@ -63,19 +64,31 @@ const countdown = seconds => {
 const POLL_INTERVAL_MS = 3000;
 const MAX_WAIT_MS = 3 * 60 * 1000;
 
+// The whole journey, so the review reads as one step of it: after the
+// contributor submits, OS Hub moderators still check the list before
+// it goes live.
 const STEPS = Object.freeze([
     'Upload file',
     'Automatic checks',
-    'Review suggestions',
-    'Done',
+    'Your review',
+    'Submit',
+    'OS Hub moderation',
+    'Live on OS Hub',
 ]);
 
 const STEP = Object.freeze({
     UPLOAD: 0,
     CHECKS: 1,
     REVIEW: 2,
-    DONE: 3,
+    SUBMIT: 3,
+    MODERATION: 4,
+    LIVE: 5,
 });
+
+// Warn before a submission that leaves many rows a moderator would have
+// to remove: more than this many, or more than this share of the list.
+const REMOVABLE_ROWS_WARN_COUNT = 25;
+const REMOVABLE_ROWS_WARN_SHARE = 0.15;
 
 const styles = Object.freeze({
     appBar: Object.freeze({
@@ -103,6 +116,26 @@ const styles = Object.freeze({
     }),
     clockUrgent: Object.freeze({
         background: '#d32f2f',
+    }),
+    next: Object.freeze({
+        textAlign: 'left',
+        maxWidth: '560px',
+        padding: '12px 20px',
+        borderRadius: '6px',
+        background: '#F0F4FF',
+    }),
+    nextTitle: Object.freeze({
+        fontWeight: 700,
+        marginBottom: '4px',
+    }),
+    nextList: Object.freeze({
+        margin: 0,
+        padding: '0 0 0 20px',
+    }),
+    warnTitle: Object.freeze({
+        fontSize: '1.2rem',
+        fontWeight: 700,
+        marginBottom: '8px',
     }),
     finalNote: Object.freeze({
         flex: '1 1 100%',
@@ -214,21 +247,39 @@ const Clean = ({ onContinue }) => (
         <Button variant="contained" color="primary" onClick={onContinue}>
             Go to my list
         </Button>
+        <WhatHappensNext />
     </div>
 );
 
 Clean.propTypes = { onContinue: func.isRequired };
 
+const WhatHappensNext = () => (
+    <div style={styles.next}>
+        <Typography style={styles.nextTitle}>What happens next</Typography>
+        <ol style={styles.nextList}>
+            <li>
+                An OS Hub moderator reviews your list. This usually takes a few
+                working days.
+            </li>
+            <li>
+                You get an email with the outcome: approved, approved with some
+                rows removed, or sent back with what to change.
+            </li>
+            <li>Approved facilities go live on the OS Hub map.</li>
+        </ol>
+    </div>
+);
+
 const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => (
     <div style={styles.centred}>
         <Typography style={styles.heading}>
-            Your list has been submitted
+            Submitted: your list is now with the OS Hub moderators
         </Typography>
         {!asUploaded && lastApplied && (
             <Typography>
                 {lastApplied.applied}{' '}
                 {lastApplied.applied === 1 ? 'change was' : 'changes were'}{' '}
-                applied to your list
+                applied before it went
                 {summary.rows_removed
                     ? `, including ${summary.rows_removed} ${
                           summary.rows_removed === 1 ? 'row' : 'rows'
@@ -239,8 +290,8 @@ const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => (
         )}
         {asUploaded && (
             <Typography>
-                Your list was submitted exactly as uploaded; none of the
-                suggested changes were made.
+                It went exactly as uploaded; none of the suggested changes were
+                made.
             </Typography>
         )}
         {summary.must_fix_pending > 0 && (
@@ -249,13 +300,10 @@ const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => (
                 {summary.must_fix_pending === 1
                     ? 'flagged row went'
                     : 'flagged rows went'}{' '}
-                through as uploaded; the moderator will see them.
+                through as uploaded; the moderator will decide on them.
             </Typography>
         )}
-        <Typography>
-            This was your one submission. A moderator will now review the list
-            and you will hear by email.
-        </Typography>
+        <WhatHappensNext />
         <div style={styles.actions}>
             <DownloadFixedList listID={listID} applied={!asUploaded} />
             <Button variant="contained" color="primary" onClick={onContinue}>
@@ -332,6 +380,7 @@ const ListCleaningReviewDialog = ({
     const [timedOut, setTimedOut] = useState(false);
     const [finished, setFinished] = useState(null); // 'submitted' | 'uploaded'
     const [confirmUploaded, setConfirmUploaded] = useState(false);
+    const [warn, setWarn] = useState(null); // { asUploaded } while shown
     // The deadline as this browser sees it, from the server's count.
     const [deadline, setDeadline] = useState(null);
     const [now, setNow] = useState(Date.now());
@@ -430,6 +479,29 @@ const ListCleaningReviewDialog = ({
         window.addEventListener('pagehide', onHide);
         return () => window.removeEventListener('pagehide', onHide);
     }, [reviewing, listID, openedAt]);
+    const doSubmit = asUploaded => {
+        if (asUploaded) {
+            setFinished('uploaded');
+            apply({ asUploaded: true });
+        } else {
+            apply();
+        }
+    };
+    // A list that still has many rows a moderator would remove is much
+    // less likely to be approved as a whole: say so before it goes.
+    const trySubmit = asUploaded => {
+        const current = data ? data.summary : null;
+        const pendingRows = current ? current.rows_must_fix_pending || 0 : 0;
+        const total = current ? current.rows_total || 0 : 0;
+        const risky =
+            pendingRows > REMOVABLE_ROWS_WARN_COUNT ||
+            (total > 0 && pendingRows / total > REMOVABLE_ROWS_WARN_SHARE);
+        if (risky) {
+            setWarn({ asUploaded });
+            return;
+        }
+        doSubmit(asUploaded);
+    };
     const leave = () => {
         recordFacilityListCleaningEvent(listID, 'left', {
             via: 'button',
@@ -456,7 +528,7 @@ const ListCleaningReviewDialog = ({
     } else if (runStatus === RUN_STATUS.FAILED || !data || !run) {
         content = <Unavailable onContinue={onContinue} />;
     } else if (finished) {
-        activeStep = STEP.DONE;
+        activeStep = STEP.MODERATION;
         content = (
             <Done
                 listID={listID}
@@ -467,12 +539,12 @@ const ListCleaningReviewDialog = ({
             />
         );
     } else if (!windowOpen) {
-        activeStep = STEP.DONE;
+        activeStep = STEP.MODERATION;
         content = (
             <Closed run={run} summary={summary} onContinue={onContinue} />
         );
     } else if (nothingFound) {
-        activeStep = STEP.DONE;
+        activeStep = STEP.MODERATION;
         content = <Clean onContinue={onContinue} />;
     } else {
         activeStep = STEP.REVIEW;
@@ -534,8 +606,7 @@ const ListCleaningReviewDialog = ({
                                     setConfirmUploaded(true);
                                     return;
                                 }
-                                setFinished('uploaded');
-                                apply({ asUploaded: true });
+                                trySubmit(true);
                             }}
                         >
                             {confirmUploaded
@@ -547,14 +618,9 @@ const ListCleaningReviewDialog = ({
                         variant="contained"
                         color="primary"
                         disabled={busy}
-                        onClick={() => {
-                            if (summary.changes_unapplied === 0) {
-                                setFinished('uploaded');
-                                apply({ asUploaded: true });
-                            } else {
-                                apply();
-                            }
-                        }}
+                        onClick={() =>
+                            trySubmit(summary.changes_unapplied === 0)
+                        }
                     >
                         {summary.changes_unapplied > 0
                             ? `Submit list with ${summary.changes_unapplied} ${
@@ -572,6 +638,56 @@ const ListCleaningReviewDialog = ({
                     </span>
                 </div>
                 {tour && <ListCleaningTour onDone={() => setTour(false)} />}
+                <Dialog
+                    open={!!warn}
+                    onClose={() => setWarn(null)}
+                    aria-labelledby="list-cleaning-submit-warning"
+                >
+                    <DialogContent>
+                        <Typography
+                            id="list-cleaning-submit-warning"
+                            style={styles.warnTitle}
+                        >
+                            {summary.rows_must_fix_pending}{' '}
+                            {summary.rows_must_fix_pending === 1
+                                ? 'row still has'
+                                : 'rows still have'}{' '}
+                            a problem a moderator would remove
+                        </Typography>
+                        <Typography>
+                            That is{' '}
+                            {Math.round(
+                                (100 * summary.rows_must_fix_pending) /
+                                    Math.max(1, summary.rows_total),
+                            )}
+                            % of your list: personal information, PO Box
+                            addresses, missing or unreadable details. Lists with
+                            this many are much less likely to be approved as a
+                            whole. Fixing or removing those rows here first
+                            takes a minute per type and makes approval far more
+                            likely.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            disabled={busy}
+                            onClick={() => {
+                                const choice = warn;
+                                setWarn(null);
+                                doSubmit(choice.asUploaded);
+                            }}
+                        >
+                            Submit anyway
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => setWarn(null)}
+                        >
+                            Go back and fix them
+                        </Button>
+                    </DialogActions>
+                </Dialog>
             </>
         );
     }

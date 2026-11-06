@@ -166,7 +166,14 @@ def serialize_run(run, include_internal=False):
             s.applied or (s.extra or {}).get('removal_applied')))
     ])
     file_pass = run.file_pass or {}
+    pending_flag_rows = {
+        s.row_number for s in must_fix
+        if s.decision == S.PENDING and s.row_number not in removed_rows}
     summary = {
+        'rows_total': run.facility_list.source.facilitylistitem_set.count(),
+        # rows a moderator would still have to remove, for the warning
+        # before a submission that leaves many of them
+        'rows_must_fix_pending': len(pending_flag_rows),
         'rows_must_fix': len(must_fix_rows),
         'rows_with_corrections': len({s.row_number for s in corrections}),
         'corrections_total': len(corrections),
