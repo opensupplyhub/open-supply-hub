@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import isURL from 'validator/lib/isURL';
 
 import styles from './styles';
+import ProfileVisibilityNote from '../Shared/ProfileVisibilityNote/ProfileVisibilityNote';
 
 /*
  * Claimant-submitted details (OSDEV-3356): everything else the
@@ -10,7 +11,9 @@ import styles from './styles';
  * compactly and only when present.
  */
 
-function DetailRow({ label, value }) {
+// isPubliclyVisible is set only on the rows whose value the claimant can
+// choose to show on the production location profile (OSDEV-2680).
+function DetailRow({ label, value, isPubliclyVisible }) {
     return (
         <div style={styles.matchRow}>
             <span style={styles.detailKey}>{label}</span>
@@ -21,6 +24,11 @@ function DetailRow({ label, value }) {
                     </a>
                 ) : (
                     value
+                )}
+                {isPubliclyVisible !== undefined && (
+                    <ProfileVisibilityNote
+                        isPubliclyVisible={isPubliclyVisible}
+                    />
                 )}
             </span>
         </div>
@@ -34,7 +42,16 @@ export default function ClaimantDetailsPanel({ detail }) {
         ['LinkedIn', detail.linkedin_profile],
         ['Claimant LinkedIn', detail.claimant_linkedin_profile_url],
         ['Website', detail.website],
-        ['Production location website', detail.facility_website],
+        [
+            'Production location website',
+            detail.facility_website,
+            Boolean(detail.facility_website_publicly_visible),
+        ],
+        [
+            'Production location phone',
+            detail.facility_phone_number,
+            Boolean(detail.facility_phone_number_publicly_visible),
+        ],
         ['Sector(s)', (detail.sector || []).join(', ')],
         [
             'Workers',
@@ -65,8 +82,13 @@ export default function ClaimantDetailsPanel({ detail }) {
                 </span>
             </button>
             {!collapsed &&
-                rows.map(([label, value]) => (
-                    <DetailRow key={label} label={label} value={value} />
+                rows.map(([label, value, isPubliclyVisible]) => (
+                    <DetailRow
+                        key={label}
+                        label={label}
+                        value={value}
+                        isPubliclyVisible={isPubliclyVisible}
+                    />
                 ))}
         </div>
     );
