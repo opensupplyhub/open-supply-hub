@@ -71,3 +71,19 @@ class RowRequiredFieldsSerializerTest(TestCase):
 
         self.assertEqual(len(result['errors']), 2)
         self.assertEqual(result['errors'], expected_errors)
+
+    def test_skips_length_check_for_given_fields(self):
+        serializer = RowRequiredFieldsSerializer(
+            skip_length_check_fields=['address']
+        )
+        facility_source = {
+            'country': 'United States',
+            'name': 'n' * 201,
+            'address': 'a' * 300,
+        }
+
+        result = serializer.validate(facility_source, self.current)
+
+        self.assertEqual(
+            [error['field'] for error in result['errors']], ['name']
+        )

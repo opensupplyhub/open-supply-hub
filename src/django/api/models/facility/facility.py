@@ -75,12 +75,12 @@ class Facility(models.Model):
         help_text='Unique identifier for the facility.'
     )
     name = models.CharField(
-        max_length=200,
+        max_length=300,
         null=False,
         blank=False,
         help_text='The name of the facility.')
     address = models.CharField(
-        max_length=200,
+        max_length=300,
         null=False,
         blank=False,
         help_text='The full street address of the facility.')

@@ -145,6 +145,13 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
     )
+    # Whether the claimant chose to show the company website on the
+    # production location profile (OSDEV-2680). Off unless opted in: the
+    # same field also holds the URL a claimant may submit as address
+    # verification evidence, which is not necessarily meant to be public.
+    facility_website_publicly_visible = serializers.BooleanField(
+        default=False,
+    )
     business_linkedin_profile = serializers.CharField(
         max_length=200,
         required=True,
@@ -249,6 +256,9 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
         max_length=200
+    )
+    facility_phone_number_publicly_visible = serializers.BooleanField(
+        default=False,
     )
     office_phone_number = serializers.CharField(
         required=False,
