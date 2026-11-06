@@ -39,7 +39,35 @@ export const isAuto = s => !!(s.extra && s.extra.auto);
 
 export const SEVERITY = Object.freeze({
     MUST_FIX: 'must_fix',
+    ADVISORY: 'advisory',
     INTERNAL_NOTE: 'internal_note',
+});
+
+/*
+ * Which problems block approval and which are good to have. A flag a
+ * human moderator would have to remove or send back (personal
+ * information, a PO Box, a missing country) blocks; a suggested fix
+ * (spacing, capitalisation) or something worth a look (one name at
+ * several addresses) does not, and the contributor can prioritise.
+ */
+export const TIER = Object.freeze({
+    BLOCKS: 'blocks',
+    RECOMMENDED: 'recommended',
+    AUTO: 'auto',
+});
+
+export const tierOf = group => {
+    if (group.auto) return TIER.AUTO;
+    if (group.severity === SEVERITY.MUST_FIX || group.kind === KIND.REMOVAL) {
+        return TIER.BLOCKS;
+    }
+    return TIER.RECOMMENDED;
+};
+
+export const TIER_LABELS = Object.freeze({
+    [TIER.BLOCKS]: 'Blocks approval',
+    [TIER.RECOMMENDED]: 'Recommended',
+    [TIER.AUTO]: 'Done automatically',
 });
 
 export const FIELD_LABELS = Object.freeze({
@@ -535,9 +563,11 @@ export const styles = Object.freeze({
     error: Object.freeze({
         color: 'red',
     }),
-    findingList: Object.freeze({
+    headerIssues: Object.freeze({
         margin: '4px 0 12px 0',
-        paddingLeft: '20px',
+        padding: '8px 12px',
+        borderLeft: '4px solid #d32f2f',
+        background: '#FFF4F2',
     }),
 });
 
@@ -603,36 +633,23 @@ const trackerStyles = Object.freeze({
         borderRadius: '6px',
         transition: 'width .5s ease, background .5s ease',
     }),
-    milestones: Object.freeze({
+    figures: Object.freeze({
         display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px 24px',
+        flexDirection: 'column',
+        gap: '4px',
         margin: '12px 0 0 0',
-        padding: 0,
-        listStyle: 'none',
-    }),
-    milestone: Object.freeze({
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
         fontSize: '0.95rem',
     }),
-    badge: Object.freeze({
-        display: 'inline-flex',
+    figure: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
         alignItems: 'center',
-        justifyContent: 'center',
-        minWidth: '22px',
-        height: '22px',
-        padding: '0 6px',
-        borderRadius: '11px',
-        fontSize: '0.75rem',
-        fontWeight: 700,
-        color: COLOURS.WHITE,
+        gap: '4px 12px',
     }),
-    hint: Object.freeze({
-        marginTop: '8px',
-        fontSize: '0.9rem',
-        color: 'rgba(0, 0, 0, 0.65)',
+    viewFixes: Object.freeze({
+        padding: '2px 8px',
+        minHeight: 0,
+        fontSize: '0.8rem',
     }),
     // A zero-height sticky anchor: it takes no room in the flow, sticks
     // to the top of the scrolling area, and the compact bar hangs off it
@@ -680,69 +697,29 @@ const trackerStyles = Object.freeze({
 const PURPLE = '#8428FA';
 const GREEN = COLOURS.MATERIAL_GREEN;
 
-const Milestone = ({ done, total, label, info }) => {
-    const complete = !info && done >= total;
-    let badge;
-    if (info) {
-        badge = (
-            <span
-                style={{
-                    ...trackerStyles.badge,
-                    background: COLOURS.DARK_GREY,
-                }}
-            >
-                i
-            </span>
-        );
-    } else if (complete) {
-        badge = (
-            <span style={{ ...trackerStyles.badge, background: GREEN }}>
-                &#10003;
-            </span>
-        );
-    } else {
-        badge = (
-            <span style={{ ...trackerStyles.badge, background: PURPLE }}>
-                {done}/{total}
-            </span>
-        );
-    }
-    return (
-        <li style={trackerStyles.milestone}>
-            {badge}
-            <span style={complete ? { color: 'rgba(0, 0, 0, 0.6)' } : null}>
-                {label}
-            </span>
-        </li>
-    );
-};
-
-Milestone.defaultProps = { done: 0, total: 0, info: false };
-Milestone.propTypes = {
-    done: number,
-    total: number,
-    label: string.isRequired,
-    info: bool,
-};
-
 /*
- * One bar instead of four numbers: how far the list is from being ready
- * for the moderator. Automatic fixes count as done from the start, so
- * the bar never opens at zero, and every decision moves it. "Ready"
- * means every suggestion has an answer, not that the list will be
- * approved.
+ * One bar and one number: how many rows still wait for the contributor
+ * before the list is ready to submit for human review. Rows are the
+ * unit everywhere on the screen, so this agrees with the chips. The
+ * automatic fixes are already decided, so the bar never opens at zero;
+ * they get one line here with a way to open them, and nowhere else.
  */
-export const ReadinessTracker = ({ summary, applied, fixed }) => {
-    const auto = summary.auto_fixes || 0;
-    const fixesTotal = summary.fixes_to_review_total || 0;
-    const fixesDone = summary.fixes_to_review_decided || 0;
-    const flagsTotal = summary.must_fix_total || 0;
-    const flagsDone = flagsTotal - (summary.must_fix_pending || 0);
-    const total = auto + fixesTotal + flagsTotal;
-    const done = auto + fixesDone + flagsDone;
+export const ReadinessTracker = ({
+    summary,
+    applied,
+    fixed,
+    showingAuto,
+    onViewFixes,
+}) => {
+    const total = summary.rows_to_review || 0;
+    const pending = summary.rows_pending_review || 0;
+    const done = total - pending;
     const percent = total ? Math.round((100 * done) / total) : 100;
-    const ready = percent === 100;
-    const remaining = total - done;
+    const ready = pending === 0;
+    const blocking = summary.rows_blocking_pending || 0;
+    const recommended = summary.rows_recommended_pending || 0;
+    const auto = summary.auto_fixes || 0;
+    const autoRows = summary.auto_rows || 0;
 
     // Once the full box scrolls out of view a one-line version of it
     // sticks to the top, so the bar is always in sight.
@@ -799,11 +776,9 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
 
     let title;
     if (ready && summary.changes_unapplied > 0) {
-        title = 'Review done: press Submit to send your list to the moderators';
+        title = 'Review done: submit your list for human review';
     } else if (ready) {
-        title = applied
-            ? 'Submitted: your list is now with the OS Hub moderators'
-            : 'Review done';
+        title = applied ? 'Submitted for human review' : 'Review done';
     } else {
         title = `Your review is ${percent}% done`;
     }
@@ -815,6 +790,17 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
             summary.changes_unapplied > 0
                 ? 'Review done: press Submit'
                 : 'Review done';
+    }
+    const split = [];
+    if (blocking > 0) {
+        split.push(`${plural(blocking, 'row')} block approval`);
+    }
+    if (recommended > 0) {
+        split.push(
+            `${recommended} with recommended fixes${
+                blocking > 0 ? ' only' : ''
+            }`,
+        );
     }
 
     const anchor = (
@@ -841,9 +827,13 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
                     />
                 </div>
                 <span style={trackerStyles.compactMeta}>
-                    {fixesDone}/{fixesTotal} fixes · {flagsDone}/{flagsTotal}{' '}
-                    flagged
-                    {!ready && ` · ${plural(remaining, 'decision')} to go`}
+                    {ready
+                        ? `${plural(total, 'row')} reviewed`
+                        : `${plural(pending, 'row')} to go${
+                              blocking > 0
+                                  ? ` · ${blocking} block approval`
+                                  : ''
+                          }`}
                 </span>
             </div>
         </div>
@@ -884,61 +874,66 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
                         }}
                     />
                 </div>
-                <ul style={trackerStyles.milestones}>
-                    <Milestone
-                        done={auto}
-                        total={auto}
-                        label={`${plural(
-                            auto,
-                            'formatting fix',
-                            'formatting fixes',
-                        )} made automatically`}
-                    />
-                    <Milestone
-                        done={fixesDone}
-                        total={fixesTotal}
-                        label={`${plural(
-                            fixesTotal,
-                            'suggested fix',
-                            'suggested fixes',
-                        )} reviewed`}
-                    />
-                    <Milestone
-                        done={flagsDone}
-                        total={flagsTotal}
-                        label={`${plural(
-                            flagsTotal,
-                            'flagged problem',
-                        )} resolved`}
-                    />
-                    {summary.list_findings > 0 && (
-                        <Milestone
-                            info
-                            label={`${plural(
-                                summary.list_findings,
-                                'finding',
-                            )} about the whole file to read`}
-                        />
-                    )}
-                </ul>
-                {!ready && (
-                    <div style={trackerStyles.hint}>
-                        {plural(remaining, 'decision')} to go. Every one you
-                        make here makes the list more likely to be approved when
-                        an OS Hub moderator reviews it after you submit.
+                <div style={trackerStyles.figures}>
+                    <div style={trackerStyles.figure}>
+                        {ready ? (
+                            <span>
+                                <b>{plural(total, 'row')}</b> reviewed. Nothing
+                                else needs your decision.
+                            </span>
+                        ) : (
+                            <span>
+                                <b>{plural(pending, 'row')}</b>{' '}
+                                {pending === 1 ? 'still needs' : 'still need'}{' '}
+                                your review
+                                {split.length > 0 && `: ${split.join(' · ')}`}.
+                            </span>
+                        )}
                     </div>
-                )}
+                    {auto > 0 && (
+                        <div style={trackerStyles.figure} data-tour="automatic">
+                            <span>
+                                <b>
+                                    {plural(
+                                        auto,
+                                        'formatting fix',
+                                        'formatting fixes',
+                                    )}
+                                </b>{' '}
+                                will be made automatically on{' '}
+                                {plural(autoRows, 'row')} when you submit.
+                            </span>
+                            {onViewFixes && (
+                                <Button
+                                    size="small"
+                                    color="primary"
+                                    style={trackerStyles.viewFixes}
+                                    onClick={onViewFixes}
+                                >
+                                    {showingAuto ? 'Hide fixes' : 'View fixes'}
+                                </Button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
             {bar}
         </>
     );
 };
 
-ReadinessTracker.defaultProps = { applied: false, fixed: false };
+ReadinessTracker.defaultProps = {
+    applied: false,
+    fixed: false,
+    showingAuto: false,
+    onViewFixes: null,
+};
 ReadinessTracker.propTypes = {
     summary: object.isRequired,
     applied: bool,
     fixed: bool,
+    showingAuto: bool,
+    onViewFixes: func,
 };
 
 export const Correction = ({ suggestion, canAct, busy, onDecide }) => {
@@ -1255,67 +1250,21 @@ Removal.propTypes = {
     onDecide: func.isRequired,
 };
 
-const FINDINGS_PREVIEW = 5;
-
 /*
- * Whole-file findings, kept short: exact duplicates are already handled
- * in the automatic tier, so they get one line; repeated names are a note
- * for the moderator more than a task for the contributor, so they get a
- * count with the detail folded unless the list is short.
+ * Whole-file findings. Exact duplicates are an automatic group and
+ * repeated names an advisory one, so both live in the chips; only a
+ * header problem, which has no rows to act on, is left to say here.
  */
 export const ListFindings = ({ filePass }) => {
-    const [open, setOpen] = useState(false);
     const headerIssues = filePass.header_issues || [];
-    const duplicates = filePass.exact_duplicates || [];
-    const repeated = filePass.repeated_names || [];
-    if (!headerIssues.length && !duplicates.length && !repeated.length) {
-        return null;
-    }
-    const fold = repeated.length > FINDINGS_PREVIEW;
-    const shown = fold && !open ? [] : repeated;
+    if (!headerIssues.length) return null;
     return (
-        <div>
-            <Typography variant="subheading">
-                Findings about the whole file
-            </Typography>
-            <ul style={styles.findingList}>
-                {headerIssues.map(issue => (
-                    <li key={`header-${issue.column || issue.note}`}>
-                        {issue.note || `Header problem: ${issue.column}`}
-                    </li>
-                ))}
-                {duplicates.length > 0 && (
-                    <li>
-                        {plural(duplicates.length, 'row')}{' '}
-                        {duplicates.length === 1 ? 'is' : 'are'} an exact repeat
-                        of an earlier row and{' '}
-                        {duplicates.length === 1 ? 'was' : 'were'} removed
-                        (listed under automatic fixes).
-                    </li>
-                )}
-                {repeated.length > 0 && (
-                    <li>
-                        {plural(repeated.length, 'name')}{' '}
-                        {repeated.length === 1 ? 'appears' : 'appear'} at more
-                        than one address. That can be right (several sites of
-                        one company); check the ones that are not.
-                        {fold && (
-                            <Button size="small" onClick={() => setOpen(!open)}>
-                                {open ? 'Hide' : 'Show'} the {repeated.length}
-                            </Button>
-                        )}
-                    </li>
-                )}
-                {shown.map(group => (
-                    <li
-                        key={`rep-${group.name}-${group.rows.join('-')}`}
-                        style={styles.muted}
-                    >
-                        &ldquo;{group.name}&rdquo; on rows{' '}
-                        {group.rows.join(', ')}.
-                    </li>
-                ))}
-            </ul>
+        <div style={styles.headerIssues}>
+            {headerIssues.map(issue => (
+                <div key={`header-${issue.column || issue.note}`}>
+                    {issue.note || `Header problem: ${issue.column}`}
+                </div>
+            ))}
         </div>
     );
 };
@@ -1449,13 +1398,33 @@ const groupStatus = group => {
 const ALL = 'all';
 
 const chipStyles = Object.freeze({
-    bar: Object.freeze({
+    tiers: Object.freeze({
         display: 'flex',
-        flexWrap: 'wrap',
+        flexDirection: 'column',
         gap: '8px',
         padding: '4px 0 12px 0',
         borderBottom: `1px solid ${COLOURS.GREY}`,
         marginBottom: '12px',
+    }),
+    tier: Object.freeze({
+        display: 'grid',
+        gridTemplateColumns: '118px 1fr',
+        alignItems: 'center',
+        gap: '8px',
+    }),
+    tierChips: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: '8px',
+        minWidth: 0,
+    }),
+    tierLabel: Object.freeze({
+        fontSize: '0.75rem',
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+        textAlign: 'right',
     }),
     dot: Object.freeze({
         display: 'inline-block',
@@ -1478,10 +1447,13 @@ const chipStyles = Object.freeze({
     }),
 });
 
+const ADVISORY_COLOUR = '#f9a825';
+
 const groupKindColour = group => {
     if (group.severity === SEVERITY.INTERNAL_NOTE || group.auto) {
         return COLOURS.DARK_GREY;
     }
+    if (group.severity === SEVERITY.ADVISORY) return ADVISORY_COLOUR;
     if (group.kind === KIND.ISSUE) return '#d32f2f';
     if (group.kind === KIND.REMOVAL) return '#ef6c00';
     return '#2e7d32';
@@ -1505,7 +1477,9 @@ const guideStyles = Object.freeze({
         margin: '4px 0 8px 0',
         borderRadius: '6px',
         background: '#FFF8E6',
-        borderLeft: '4px solid #f57c00',
+        borderLeftWidth: '4px',
+        borderLeftStyle: 'solid',
+        borderLeftColor: '#f57c00',
     }),
     boxAuto: Object.freeze({
         background: COLOURS.LIGHT_GREY,
@@ -1519,6 +1493,21 @@ const guideStyles = Object.freeze({
         gridColumn: '1 / -1',
         fontSize: '1.05rem',
         fontWeight: 700,
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: '6px 10px',
+    }),
+    badge: Object.freeze({
+        display: 'inline-block',
+        padding: '2px 8px',
+        borderRadius: '10px',
+        fontSize: '0.7rem',
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        textTransform: 'uppercase',
+        color: COLOURS.WHITE,
+        whiteSpace: 'nowrap',
     }),
     label: Object.freeze({
         fontSize: '0.75rem',
@@ -1539,6 +1528,27 @@ const guideStyles = Object.freeze({
     }),
 });
 
+const TIER_COLOURS = Object.freeze({
+    [TIER.BLOCKS]: '#d32f2f',
+    [TIER.RECOMMENDED]: '#2e7d32',
+    [TIER.AUTO]: COLOURS.DARK_GREY,
+});
+
+const TierBadge = ({ tier, advisory }) => (
+    <span
+        style={{
+            ...guideStyles.badge,
+            background: advisory ? ADVISORY_COLOUR : TIER_COLOURS[tier],
+        }}
+        data-tier={tier}
+    >
+        {advisory ? 'Worth a look' : TIER_LABELS[tier]}
+    </span>
+);
+
+TierBadge.defaultProps = { advisory: false };
+TierBadge.propTypes = { tier: string.isRequired, advisory: bool };
+
 /*
  * Why this type of problem matters and what to do about it, in the
  * data team's words, shown whenever a type is selected.
@@ -1550,10 +1560,17 @@ const ErrorGuide = ({ group }) => {
     if (group.auto) tone = guideStyles.boxAuto;
     else if (group.kind === KIND.CORRECTION) tone = guideStyles.boxFix;
     const examples = group.examples.filter(e => e.original_value).slice(0, 2);
+    const tier = tierOf(group);
     return (
         <div style={{ ...guideStyles.box, ...tone }} data-tour="guide">
             <div style={guideStyles.title}>
-                {guide.title}: {guide.problem}
+                <TierBadge
+                    tier={tier}
+                    advisory={group.severity === SEVERITY.ADVISORY}
+                />
+                <span>
+                    {guide.title}: {guide.problem}
+                </span>
             </div>
             <div>
                 <div style={guideStyles.label}>Why it matters</div>
@@ -1679,6 +1696,12 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                     {isIssue && (
                         <span style={styles.muted}>or fix each row below</span>
                     )}
+                    {isIssue && group.severity === SEVERITY.MUST_FIX && (
+                        <span style={styles.muted}>
+                            Left as uploaded, a human moderator will remove
+                            these rows.
+                        </span>
+                    )}
                 </div>
             )}
         </div>
@@ -1766,31 +1789,6 @@ AllHeader.propTypes = {
 
 const AUTO = 'auto';
 
-const autoStyles = Object.freeze({
-    box: Object.freeze({
-        border: `1px solid ${COLOURS.GREY}`,
-        borderRadius: '4px',
-        background: COLOURS.LIGHT_GREY,
-        padding: '10px 14px',
-        margin: '4px 0 16px 0',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-    }),
-    head: Object.freeze({
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '8px',
-    }),
-    bar: Object.freeze({
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '8px',
-    }),
-});
-
 const chipProps = (key, active) => ({
     clickable: true,
     color: active === key ? 'primary' : 'default',
@@ -1871,11 +1869,12 @@ BulkBar.propTypes = {
 };
 
 /*
- * Two tiers of chips. The top bar is what needs the contributor: flags,
- * removals and fixes with judgment in them, one chip per error type plus
- * "Needs you". Below it, folded by default, the fixes made automatically
- * at ingest, which they can open to inspect and undo by type. Lists run
- * to thousands of rows; the errors do not come in thousands of kinds.
+ * The chips, in tiers: what needs the contributor, split into problems
+ * that block approval and fixes that are recommended, one chip per
+ * error type plus "Needs you". The automatic fixes open from the
+ * tracker's "View fixes" into a row of their own, to inspect and turn
+ * off by type. Lists run to thousands of rows; the errors do not come
+ * in thousands of kinds.
  */
 export const GroupTabs = ({
     groups,
@@ -1884,12 +1883,15 @@ export const GroupTabs = ({
     busy,
     decide,
     decideGroup,
+    showAuto,
+    onShowAuto,
 }) => {
     const [selected, setSelected] = useState(ALL);
-    const [showAuto, setShowAuto] = useState(false);
     const [picked, setPicked] = useState(new Set());
     const attention = groups.filter(g => !g.auto);
     const automatic = groups.filter(g => g.auto);
+    const blockers = attention.filter(g => tierOf(g) === TIER.BLOCKS);
+    const recommended = attention.filter(g => tierOf(g) !== TIER.BLOCKS);
     const current = groups.find(g => g.key === selected);
     let active = ALL;
     if (current) {
@@ -1897,13 +1899,19 @@ export const GroupTabs = ({
     } else if (selected === AUTO) {
         active = AUTO;
     }
-    const autoFixes = automatic.reduce((n, g) => n + g.count, 0);
     const autoRows = new Set(
         automatic.reduce((acc, g) => acc.concat(g.rows), []),
     ).size;
     const attentionRows = new Set(
         attention.reduce((acc, g) => acc.concat(g.rows), []),
     ).size;
+
+    // Closing the automatic row while one of its chips is selected
+    // drops back to Needs you.
+    const onAutoTab = current && current.auto;
+    useEffect(() => {
+        if (!showAuto && (active === AUTO || onAutoTab)) setSelected(ALL);
+    }, [showAuto, active, onAutoTab]);
 
     const filter = (() => {
         if (current) return s => suggestionKey(s) === current.key;
@@ -1914,9 +1922,6 @@ export const GroupTabs = ({
     const select = key => {
         setSelected(key);
         setPicked(new Set());
-        if (key === AUTO || automatic.some(g => g.key === key)) {
-            setShowAuto(true);
-        }
     };
     const shown = visibleRows(rows, filter);
     const toggle = rowNumber => {
@@ -1927,38 +1932,70 @@ export const GroupTabs = ({
     };
     const allPicked =
         shown.length > 0 && shown.every(r => picked.has(r.row_number));
+    const chip = group => (
+        <Chip
+            key={group.key}
+            label={chipLabel(group)}
+            onClick={() => select(group.key)}
+            {...chipProps(group.key, active)}
+        />
+    );
 
     return (
         <div>
-            {automatic.length > 0 && (
-                <div style={autoStyles.box} data-tour="automatic">
-                    <div style={autoStyles.head}>
-                        <span>
-                            <b>{plural(autoFixes, 'fix', 'fixes')}</b> will be
-                            made automatically on {plural(autoRows, 'row')} when
-                            you submit: formatting that needs no judgment. You
-                            can turn any of them off by type.
-                        </span>
-                        <Button
-                            size="small"
-                            onClick={() => {
-                                setShowAuto(!showAuto);
-                                if (
-                                    showAuto &&
-                                    (active === AUTO ||
-                                        (current && current.auto))
-                                ) {
-                                    setSelected(ALL);
-                                }
+            <div style={chipStyles.tiers} role="tablist" data-tour="chips">
+                <div style={chipStyles.tier}>
+                    <span style={chipStyles.tierLabel} />
+                    <div style={chipStyles.tierChips}>
+                        <Chip
+                            label={`Needs you (${plural(
+                                attentionRows,
+                                'row',
+                            )})`}
+                            onClick={() => select(ALL)}
+                            {...chipProps(ALL, active)}
+                        />
+                        {!attention.length && (
+                            <span style={styles.muted}>
+                                Nothing needs your decision.
+                            </span>
+                        )}
+                    </div>
+                </div>
+                {blockers.length > 0 && (
+                    <div style={chipStyles.tier}>
+                        <span
+                            style={{
+                                ...chipStyles.tierLabel,
+                                color: TIER_COLOURS[TIER.BLOCKS],
                             }}
                         >
-                            {showAuto
-                                ? 'Hide automatic fixes'
-                                : 'Show automatic fixes'}
-                        </Button>
+                            {TIER_LABELS[TIER.BLOCKS]}
+                        </span>
+                        <div style={chipStyles.tierChips}>
+                            {blockers.map(chip)}
+                        </div>
                     </div>
-                    {showAuto && (
-                        <div style={autoStyles.bar} role="tablist">
+                )}
+                {recommended.length > 0 && (
+                    <div style={chipStyles.tier}>
+                        <span
+                            style={{
+                                ...chipStyles.tierLabel,
+                                color: TIER_COLOURS[TIER.RECOMMENDED],
+                            }}
+                        >
+                            {TIER_LABELS[TIER.RECOMMENDED]}
+                        </span>
+                        <div style={chipStyles.tierChips}>
+                            {recommended.map(chip)}
+                        </div>
+                    </div>
+                )}
+                {showAuto && automatic.length > 0 && (
+                    <div style={chipStyles.tier} data-tour="automatic-row">
+                        <span style={chipStyles.tierLabel}>Automatic</span>
+                        <div style={chipStyles.tierChips}>
                             <Chip
                                 label={`All automatic (${plural(
                                     autoRows,
@@ -1967,36 +2004,17 @@ export const GroupTabs = ({
                                 onClick={() => select(AUTO)}
                                 {...chipProps(AUTO, active)}
                             />
-                            {automatic.map(group => (
-                                <Chip
-                                    key={group.key}
-                                    label={chipLabel(group)}
-                                    onClick={() => select(group.key)}
-                                    {...chipProps(group.key, active)}
-                                />
-                            ))}
+                            {automatic.map(chip)}
+                            {onShowAuto && (
+                                <Button
+                                    size="small"
+                                    onClick={() => onShowAuto(false)}
+                                >
+                                    Hide
+                                </Button>
+                            )}
                         </div>
-                    )}
-                </div>
-            )}
-            <div style={chipStyles.bar} role="tablist" data-tour="chips">
-                <Chip
-                    label={`Needs you (${plural(attentionRows, 'row')})`}
-                    onClick={() => select(ALL)}
-                    {...chipProps(ALL, active)}
-                />
-                {attention.map(group => (
-                    <Chip
-                        key={group.key}
-                        label={chipLabel(group)}
-                        onClick={() => select(group.key)}
-                        {...chipProps(group.key, active)}
-                    />
-                ))}
-                {!attention.length && (
-                    <span style={styles.muted}>
-                        Nothing needs your decision.
-                    </span>
+                    </div>
                 )}
             </div>
             {current && (
@@ -2060,6 +2078,7 @@ export const GroupTabs = ({
     );
 };
 
+GroupTabs.defaultProps = { showAuto: false, onShowAuto: null };
 GroupTabs.propTypes = {
     groups: arrayOf(object).isRequired,
     rows: arrayOf(object).isRequired,
@@ -2067,6 +2086,8 @@ GroupTabs.propTypes = {
     busy: bool.isRequired,
     decide: func.isRequired,
     decideGroup: func.isRequired,
+    showAuto: bool,
+    onShowAuto: func,
 };
 
 export const DownloadFixedList = ({ listID, applied }) => (

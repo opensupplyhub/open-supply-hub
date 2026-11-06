@@ -22,10 +22,10 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
         scroll: 'nearest',
         title: 'Where you are in the upload',
         text:
-            'Your review is one step of the upload: after you submit, OS ' +
-            'Hub moderators still check the list before it goes live. ' +
-            'This bar tracks the review only. It fills as you work ' +
-            'through what we found, and the next steps show how to make ' +
+            'Your review is one step of the upload: after you submit, a ' +
+            'human moderator still checks the list before it goes live. ' +
+            'This bar counts the rows that still need you. It fills as ' +
+            'you work through them, and the next steps show how to make ' +
             'those decisions here, with no need to re-upload.',
     }),
     Object.freeze({
@@ -33,16 +33,19 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
         title: 'Fixed for you',
         text:
             'Formatting that needs no judgment, like country names and ' +
-            'worker counts, is ready to go on when you submit. Open this ' +
-            'box to see each type and turn it off if we got one wrong.',
+            'worker counts, is ready to go on when you submit. View ' +
+            'fixes shows each type, and you can turn one off if we got ' +
+            'it wrong.',
     }),
     Object.freeze({
         anchor: 'chips',
-        title: 'One chip per kind of problem',
+        title: 'Blockers first, then the rest',
         text:
             'The same mistake usually repeats through a file, so rows are ' +
-            'grouped by type. Pick a chip to see just those rows, or stay ' +
-            'on Needs you to see everything at once.',
+            'grouped by type. The top row is what blocks approval, such ' +
+            'as personal information or a PO Box; the next is recommended ' +
+            'fixes that help but will not stop the list. Pick a chip to ' +
+            'see why it matters and just those rows.',
     }),
     Object.freeze({
         anchor: 'rows',
@@ -59,7 +62,7 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
             'One click submits the list with every decision you made ' +
             'here, and you can download the fixed list first. This is ' +
             'the one submission: after it, or once the hour is up, ' +
-            'nothing changes and a moderator takes over.',
+            'nothing changes and a human moderator takes over.',
     }),
 ]);
 

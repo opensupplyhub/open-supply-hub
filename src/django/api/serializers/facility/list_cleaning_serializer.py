@@ -40,6 +40,8 @@ def _group_order(group):
     kind_rank = {S.ISSUE: 0, S.REMOVAL: 1, S.CORRECTION: 2}
     if group['severity'] == S.INTERNAL_NOTE:
         return (9, -group['count'], group['key'])
+    if group['severity'] == S.ADVISORY:
+        return (3, -group['count'], group['key'])
     return (kind_rank.get(group['kind'], 3), -group['count'], group['key'])
 
 
@@ -169,8 +171,28 @@ def serialize_run(run, include_internal=False):
     pending_flag_rows = {
         s.row_number for s in must_fix
         if s.decision == S.PENDING and s.row_number not in removed_rows}
+    # The one number the screen leads with: rows that still wait for
+    # the contributor. A row counts once however many suggestions it
+    # carries; automatic fixes are already decided, and a removed row
+    # has nothing left to decide.
+    to_review = [s for s in suggestions if not (s.extra or {}).get('auto')]
+    rows_to_review = {s.row_number for s in to_review}
+    rows_pending_review = {
+        s.row_number for s in to_review
+        if s.decision == S.PENDING and s.row_number not in removed_rows}
+    recommended = [s for s in to_review if s.severity != S.MUST_FIX]
+    rows_recommended_pending = {
+        s.row_number for s in recommended
+        if s.decision == S.PENDING and s.row_number not in removed_rows}
     summary = {
         'rows_total': run.facility_list.source.facilitylistitem_set.count(),
+        'rows_to_review': len(rows_to_review),
+        'rows_pending_review': len(rows_pending_review),
+        # of those, rows with a problem that blocks approval versus
+        # rows with only recommended fixes or things worth a look
+        'rows_blocking_pending': len(pending_flag_rows),
+        'rows_recommended_pending': len(
+            rows_recommended_pending - pending_flag_rows),
         # rows a moderator would still have to remove, for the warning
         # before a submission that leaves many of them
         'rows_must_fix_pending': len(pending_flag_rows),
@@ -221,11 +243,10 @@ def serialize_run(run, include_internal=False):
         'internal_notes': len(
             [s for s in suggestions
              if s.severity == ListCleaningSuggestion.INTERNAL_NOTE]),
-        'list_findings': (
-            len(file_pass.get('header_issues') or [])
-            + len(file_pass.get('exact_duplicates') or [])
-            + len(file_pass.get('repeated_names') or [])
-        ),
+        # Only header problems are left as whole-file findings: exact
+        # duplicates are an automatic group and repeated names an
+        # advisory group, so both sit in the chips.
+        'list_findings': len(file_pass.get('header_issues') or []),
     }
 
     from api.services.list_cleaning import seconds_left, window_open

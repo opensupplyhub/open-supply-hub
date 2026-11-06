@@ -26,7 +26,6 @@ import {
 import {
     RESET,
     RUN_STATUS,
-    styles as cardStyles,
     ReadinessTracker,
     ListFindings,
     GroupTabs,
@@ -65,16 +64,20 @@ const POLL_INTERVAL_MS = 3000;
 const MAX_WAIT_MS = 3 * 60 * 1000;
 
 // The whole journey, so the review reads as one step of it: after the
-// contributor submits, OS Hub moderators still check the list before
+// contributor submits, a human moderator still checks the list before
 // it goes live.
 const STEPS = Object.freeze([
     'Upload file',
     'Automatic checks',
     'Your review',
-    'Submit',
-    'OS Hub moderation',
+    'Submitted for review',
+    'Human moderation',
     'Live on OS Hub',
 ]);
+
+// Published processing times, quoted on the done screen.
+const PROCESSING_DAYS = 15;
+const PROCESSING_DAYS_PAID = 5;
 
 const STEP = Object.freeze({
     UPLOAD: 0,
@@ -85,8 +88,10 @@ const STEP = Object.freeze({
     LIVE: 5,
 });
 
-// Warn before a submission that leaves many rows a moderator would have
-// to remove: more than this many, or more than this share of the list.
+// Warn before a submission that leaves many rows a human moderator would
+// have to remove: more than this many, or more than this share of the
+// list. A submission as uploaded always gets a warning while anything is
+// still flagged.
 const REMOVABLE_ROWS_WARN_COUNT = 25;
 const REMOVABLE_ROWS_WARN_SHARE = 0.15;
 
@@ -129,6 +134,12 @@ const styles = Object.freeze({
         marginBottom: '4px',
     }),
     nextList: Object.freeze({
+        margin: 0,
+        padding: '0 0 0 20px',
+    }),
+    doneList: Object.freeze({
+        textAlign: 'left',
+        maxWidth: '560px',
         margin: 0,
         padding: '0 0 0 20px',
     }),
@@ -200,8 +211,8 @@ const Checking = ({ timedOut, onContinue }) => (
         </Typography>
         <Typography>
             Your file has been uploaded. We are looking for formatting fixes and
-            rows that need your attention before a moderator reviews it. This
-            usually takes a few minutes.
+            rows that need your attention before a human moderator reviews it.
+            This usually takes a few minutes.
         </Typography>
         {timedOut && (
             <Typography>
@@ -228,7 +239,7 @@ const Unavailable = ({ onContinue }) => (
         </Typography>
         <Typography>
             We could not check this list automatically. Your list has been
-            uploaded and a moderator will review it as usual.
+            uploaded and a human moderator will review it as usual.
         </Typography>
         <Button variant="contained" color="primary" onClick={onContinue}>
             Go to my list
@@ -242,7 +253,8 @@ const Clean = ({ onContinue }) => (
     <div style={styles.centred}>
         <Typography style={styles.heading}>Your list looks good</Typography>
         <Typography>
-            We found nothing to fix. A moderator will review your list as usual.
+            We found nothing to fix. A human moderator will review your list as
+            usual.
         </Typography>
         <Button variant="contained" color="primary" onClick={onContinue}>
             Go to my list
@@ -258,60 +270,79 @@ const WhatHappensNext = () => (
         <Typography style={styles.nextTitle}>What happens next</Typography>
         <ol style={styles.nextList}>
             <li>
-                An OS Hub moderator reviews your list. This usually takes a few
-                working days.
+                A member of our moderation team reviews your list by hand. Our
+                standard processing time is {PROCESSING_DAYS} business days, or{' '}
+                {PROCESSING_DAYS_PAID} business days for paid accounts.
             </li>
             <li>
-                You get an email with the outcome: approved, approved with some
-                rows removed, or sent back with what to change.
+                If anything needs further changes, we will contact you at the
+                email address registered to this account and ask for a corrected
+                upload.
             </li>
             <li>Approved facilities go live on the OS Hub map.</li>
         </ol>
     </div>
 );
 
-const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => (
-    <div style={styles.centred}>
-        <Typography style={styles.heading}>
-            Submitted: your list is now with the OS Hub moderators
-        </Typography>
-        {!asUploaded && lastApplied && (
-            <Typography>
-                {lastApplied.applied}{' '}
-                {lastApplied.applied === 1 ? 'change was' : 'changes were'}{' '}
-                applied before it went
-                {summary.rows_removed
-                    ? `, including ${summary.rows_removed} ${
-                          summary.rows_removed === 1 ? 'row' : 'rows'
-                      } removed`
-                    : ''}
-                . The original values are kept with your uploaded file.
+const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => {
+    const flagged = summary.rows_blocking_pending || 0;
+    return (
+        <div style={styles.centred}>
+            <Typography style={styles.heading}>
+                Your list has been submitted for human review
             </Typography>
-        )}
-        {asUploaded && (
-            <Typography>
-                It went exactly as uploaded; none of the suggested changes were
-                made.
-            </Typography>
-        )}
-        {summary.must_fix_pending > 0 && (
-            <Typography>
-                {summary.must_fix_pending}{' '}
-                {summary.must_fix_pending === 1
-                    ? 'flagged row went'
-                    : 'flagged rows went'}{' '}
-                through as uploaded; the moderator will decide on them.
-            </Typography>
-        )}
-        <WhatHappensNext />
-        <div style={styles.actions}>
-            <DownloadFixedList listID={listID} applied={!asUploaded} />
-            <Button variant="contained" color="primary" onClick={onContinue}>
-                Go to my list
-            </Button>
+            <ul style={styles.doneList}>
+                {!asUploaded && lastApplied && (
+                    <li>
+                        {lastApplied.applied}{' '}
+                        {lastApplied.applied === 1
+                            ? 'change was'
+                            : 'changes were'}{' '}
+                        applied to your list
+                        {summary.rows_removed
+                            ? `, including ${summary.rows_removed} ${
+                                  summary.rows_removed === 1 ? 'row' : 'rows'
+                              } removed`
+                            : ''}
+                        . The original values are kept with your uploaded file.
+                    </li>
+                )}
+                {asUploaded && (
+                    <li>
+                        It went exactly as uploaded; none of the suggested
+                        changes were made.
+                    </li>
+                )}
+                {flagged > 0 && (
+                    <li>
+                        {flagged}{' '}
+                        {flagged === 1
+                            ? 'row still has a flagged problem'
+                            : 'rows still have flagged problems'}{' '}
+                        and went through as uploaded. The moderator will decide
+                        on {flagged === 1 ? 'it' : 'them'}, and may ask you for
+                        a corrected upload.
+                    </li>
+                )}
+                <li>
+                    No further changes can be made here. To see the status of
+                    your list, go to your list page.
+                </li>
+            </ul>
+            <WhatHappensNext />
+            <div style={styles.actions}>
+                <DownloadFixedList listID={listID} applied={!asUploaded} />
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={onContinue}
+                >
+                    Go to my list
+                </Button>
+            </div>
         </div>
-    </div>
-);
+    );
+};
 
 Done.defaultProps = { lastApplied: null };
 
@@ -344,7 +375,7 @@ const Closed = ({ run, summary, onContinue }) => (
                   }. No further changes are possible.`
                 : `The hour for changes ended at ${timeOfDay(
                       run.closed_at,
-                  )}, so the list went to the moderator exactly as uploaded.`}
+                  )}, so the list went to a human moderator exactly as uploaded.`}
         </Typography>
         <Button variant="contained" color="primary" onClick={onContinue}>
             Go to my list
@@ -379,8 +410,8 @@ const ListCleaningReviewDialog = ({
     const [openedAt, setOpenedAt] = useState(null);
     const [timedOut, setTimedOut] = useState(false);
     const [finished, setFinished] = useState(null); // 'submitted' | 'uploaded'
-    const [confirmUploaded, setConfirmUploaded] = useState(false);
     const [warn, setWarn] = useState(null); // { asUploaded } while shown
+    const [showAuto, setShowAuto] = useState(false);
     // The deadline as this browser sees it, from the server's count.
     const [deadline, setDeadline] = useState(null);
     const [now, setNow] = useState(Date.now());
@@ -487,16 +518,18 @@ const ListCleaningReviewDialog = ({
             apply();
         }
     };
-    // A list that still has many rows a moderator would remove is much
-    // less likely to be approved as a whole: say so before it goes.
+    // A list that still has many rows a human moderator would remove is
+    // much less likely to be approved as a whole: say so before it goes.
+    // Submitting as uploaded while anything is flagged gets a warning
+    // whatever the count.
     const trySubmit = asUploaded => {
         const current = data ? data.summary : null;
-        const pendingRows = current ? current.rows_must_fix_pending || 0 : 0;
+        const pendingRows = current ? current.rows_blocking_pending || 0 : 0;
         const total = current ? current.rows_total || 0 : 0;
         const risky =
             pendingRows > REMOVABLE_ROWS_WARN_COUNT ||
             (total > 0 && pendingRows / total > REMOVABLE_ROWS_WARN_SHARE);
-        if (risky) {
+        if (risky || (asUploaded && pendingRows > 0)) {
             setWarn({ asUploaded });
             return;
         }
@@ -555,28 +588,16 @@ const ListCleaningReviewDialog = ({
                     approved
                 </Typography>
                 <Typography>
-                    We checked every row. Formatting that needs no judgment is
-                    ticked already and will go on when you submit; you can turn
-                    any of it off. What is left is grouped by type because the
-                    same problem usually repeats through a file. Pick a type to
-                    see its rows and accept, keep or remove them all at once, or
-                    decide row by row. Nothing changes on your list until you
-                    press Submit, and you can submit once: by{' '}
-                    {timeOfDay(run.review_until)} at the latest, or the list
-                    goes to the moderator exactly as uploaded.
+                    Pick a type below to see its rows, then accept, fix or
+                    remove them. Problems that block approval come first. You
+                    can submit once, by {timeOfDay(run.review_until)}.
                 </Typography>
                 <ReadinessTracker
                     summary={summary}
                     applied={!!run.applied_at}
+                    showingAuto={showAuto}
+                    onViewFixes={() => setShowAuto(s => !s)}
                 />
-                <div style={cardStyles.disclaimer}>
-                    These are automated suggestions, not decisions. You are
-                    responsible for the data you submit: accept a fix only if it
-                    is correct for that facility. Facility names and addresses
-                    are never changed automatically. A moderator will still
-                    review the list before anything is published, and applying
-                    these changes makes approval more likely.
-                </div>
                 <ListFindings filePass={run.file_pass || {}} />
                 <GroupTabs
                     groups={data.groups || []}
@@ -585,6 +606,8 @@ const ListCleaningReviewDialog = ({
                     busy={busy}
                     decide={decide}
                     decideGroup={decideGroup}
+                    showAuto={showAuto}
+                    onShowAuto={setShowAuto}
                 />
                 <div style={styles.actions} data-tour="apply">
                     {(submitError || applyError) && (
@@ -601,17 +624,9 @@ const ListCleaningReviewDialog = ({
                         <Button
                             color="primary"
                             disabled={busy}
-                            onClick={() => {
-                                if (!confirmUploaded) {
-                                    setConfirmUploaded(true);
-                                    return;
-                                }
-                                trySubmit(true);
-                            }}
+                            onClick={() => trySubmit(true)}
                         >
-                            {confirmUploaded
-                                ? 'Yes, submit without any changes'
-                                : 'Submit as uploaded instead'}
+                            Submit as uploaded instead
                         </Button>
                     )}
                     <Button
@@ -631,10 +646,12 @@ const ListCleaningReviewDialog = ({
                             : 'Submit list as uploaded'}
                     </Button>
                     <span style={styles.finalNote}>
-                        This is your one submission; after it nothing on the
-                        list changes. You can come back and review until{' '}
-                        {deadlineText(run.review_until)}; after that the list
-                        goes to the moderator as uploaded.
+                        These are automated suggestions: accept a fix only if it
+                        is correct for that facility. Names and addresses are
+                        never changed automatically. This is your one
+                        submission; you can come back and review until{' '}
+                        {deadlineText(run.review_until)}, after which the list
+                        goes to a human moderator as uploaded.
                     </span>
                 </div>
                 {tour && <ListCleaningTour onDone={() => setTour(false)} />}
@@ -644,29 +661,50 @@ const ListCleaningReviewDialog = ({
                     aria-labelledby="list-cleaning-submit-warning"
                 >
                     <DialogContent>
-                        <Typography
-                            id="list-cleaning-submit-warning"
-                            style={styles.warnTitle}
-                        >
-                            {summary.rows_must_fix_pending}{' '}
-                            {summary.rows_must_fix_pending === 1
-                                ? 'row still has'
-                                : 'rows still have'}{' '}
-                            a problem a moderator would remove
-                        </Typography>
-                        <Typography>
-                            That is{' '}
-                            {Math.round(
-                                (100 * summary.rows_must_fix_pending) /
-                                    Math.max(1, summary.rows_total),
-                            )}
-                            % of your list: personal information, PO Box
-                            addresses, missing or unreadable details. Lists with
-                            this many are much less likely to be approved as a
-                            whole. Fixing or removing those rows here first
-                            takes a minute per type and makes approval far more
-                            likely.
-                        </Typography>
+                        {warn && warn.asUploaded ? (
+                            <>
+                                <Typography
+                                    id="list-cleaning-submit-warning"
+                                    style={styles.warnTitle}
+                                >
+                                    Submit without any changes?
+                                </Typography>
+                                <Typography>
+                                    We may not be able to approve your list
+                                    until the flagged errors are fixed. If you
+                                    continue without changes, our team will
+                                    probably contact you to request the fixes
+                                    before your list can be published to OS Hub.
+                                </Typography>
+                            </>
+                        ) : (
+                            <>
+                                <Typography
+                                    id="list-cleaning-submit-warning"
+                                    style={styles.warnTitle}
+                                >
+                                    {summary.rows_blocking_pending}{' '}
+                                    {summary.rows_blocking_pending === 1
+                                        ? 'row still has'
+                                        : 'rows still have'}{' '}
+                                    a problem that blocks approval
+                                </Typography>
+                                <Typography>
+                                    That is{' '}
+                                    {Math.round(
+                                        (100 * summary.rows_blocking_pending) /
+                                            Math.max(1, summary.rows_total),
+                                    )}
+                                    % of your list: personal information, PO Box
+                                    addresses, missing or unreadable details. A
+                                    human moderator would have to remove those
+                                    rows, and lists with this many are much less
+                                    likely to be approved as a whole. Fixing or
+                                    removing them here first takes a minute per
+                                    type.
+                                </Typography>
+                            </>
+                        )}
                     </DialogContent>
                     <DialogActions>
                         <Button
@@ -677,14 +715,18 @@ const ListCleaningReviewDialog = ({
                                 doSubmit(choice.asUploaded);
                             }}
                         >
-                            Submit anyway
+                            {warn && warn.asUploaded
+                                ? 'Submit without changes'
+                                : 'Submit anyway'}
                         </Button>
                         <Button
                             variant="contained"
                             color="primary"
                             onClick={() => setWarn(null)}
                         >
-                            Go back and fix them
+                            {warn && warn.asUploaded
+                                ? 'Go back'
+                                : 'Go back and fix them'}
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -697,7 +739,7 @@ const ListCleaningReviewDialog = ({
             <AppBar style={styles.appBar}>
                 <Toolbar>
                     <Typography id="list-cleaning-review" style={styles.title}>
-                        Review your list before it goes to a moderator
+                        Review your list before it goes to a human moderator
                     </Typography>
                     {activeStep === STEP.REVIEW && (
                         <span

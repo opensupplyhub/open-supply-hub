@@ -232,7 +232,7 @@ def run_rules(payload):
         # file-pass findings applied to the row
         if n in repeated_rows:
             others = [r for r in repeated_rows[n]['rows'] if r != n]
-            issue('repeated_names', 'internal_note', 'name',
+            issue('repeated_names', 'advisory', 'name',
                   'The same name appears on rows '
                   f'{", ".join(str(r) for r in others)} with a different '
                   'address.')

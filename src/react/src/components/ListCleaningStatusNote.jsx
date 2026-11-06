@@ -25,7 +25,9 @@ const styles = Object.freeze({
         gap: '12px',
         padding: '12px 16px',
         margin: '0 0.5rem 20px 0.5rem',
-        borderLeft: `4px solid ${COLOURS.NAVY_BLUE}`,
+        borderLeftWidth: '4px',
+        borderLeftStyle: 'solid',
+        borderLeftColor: COLOURS.NAVY_BLUE,
         background: '#F0F4FF',
     }),
     closed: Object.freeze({
@@ -91,7 +93,7 @@ const ListCleaningStatusNote = ({
         if (isListOwner) {
             text = `You can still review and submit changes to this list until ${when(
                 run.review_until,
-            )}. After that it goes to a moderator as uploaded.`;
+            )}. After that it goes to a human moderator as uploaded.`;
         } else {
             text = `The contributor can still submit changes until ${when(
                 run.review_until,
@@ -109,7 +111,7 @@ const ListCleaningStatusNote = ({
                       applied === 1 ? 'change' : 'changes'
                   } from the automated checks`
                 : 'as uploaded'
-        }. No further changes are possible; a moderator will review it.`;
+        }. No further changes are possible; a human moderator will review it.`;
     } else {
         text = `The review window closed ${when(
             run.closed_at,

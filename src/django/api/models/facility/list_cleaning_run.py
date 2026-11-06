@@ -159,9 +159,14 @@ class ListCleaningSuggestion(models.Model):
     )
 
     MUST_FIX = 'must_fix'
+    # Shown to the contributor as "worth a look": it does not block
+    # approval, but they are the one who can tell (e.g. one name at
+    # several addresses).
+    ADVISORY = 'advisory'
     INTERNAL_NOTE = 'internal_note'
     SEVERITY_CHOICES = (
         (MUST_FIX, MUST_FIX),
+        (ADVISORY, ADVISORY),
         (INTERNAL_NOTE, INTERNAL_NOTE),
     )
 
@@ -221,8 +226,9 @@ class ListCleaningSuggestion(models.Model):
         choices=SEVERITY_CHOICES,
         blank=True,
         default='',
-        help_text='Issues only. internal_note is never shown to the '
-                  'contributor.')
+        help_text='Issues only. must_fix blocks approval, advisory is '
+                  'shown as worth a look, internal_note is never shown '
+                  'to the contributor.')
     original_value = models.TextField(blank=True, default='')
     corrected_value = models.TextField(blank=True, default='')
     note = models.TextField(
