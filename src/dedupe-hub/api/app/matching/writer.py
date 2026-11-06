@@ -62,9 +62,12 @@ class Writer:
 
         written: List[FacilityMatchDTO] = []
         for item_id in item_ids:
-            matches = matches_by_item.get(item_id, [])
-            if self._write_item(item_id, matches, item_updates.get(item_id)):
-                written.extend(matches)
+            try:
+                matches = matches_by_item.get(item_id, [])
+                if self._write_item(item_id, matches, item_updates.get(item_id)):
+                    written.extend(matches)
+            except Exception as e:
+                log.error(f'[Matching] Error occurred while writing item {item_id}: {e}')
 
         if len(written) > 0 and settings.dedupe_hub_live:
             self._index_facilities(
