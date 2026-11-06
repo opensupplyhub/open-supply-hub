@@ -3,6 +3,17 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.32.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: _Provide release date_
+
+### Architecture/Environment changes
+* [OSDEV-3747](https://opensupplyhub.atlassian.net/browse/OSDEV-3747) - Adds an optional CloudFront function that refuses identity record registration for any OS ID outside an allowlist, driven by `identity_record_allowlist`, and sets that list on production to the three head-office production locations taking part in the identity-resolver pilot. Registration against any other OS ID is refused at the edge with `403`. Registration is a write that goes live with no moderation behind it, unlike a production location submission; the OS ID is in the URL path, so the bound is applied at the edge rather than in the application. The function is created in every environment but attached only where the list is non-empty, so every other environment is unaffected. Backported from 2.33.0.
+
+---
+
 ## Release 2.32.0
 
 ## Introduction
