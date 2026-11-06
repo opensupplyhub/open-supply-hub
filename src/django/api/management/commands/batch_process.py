@@ -45,7 +45,8 @@ class Command(BaseCommand):
         group.add_argument('-a', '--action',
                            required=True,
                            help='The processing action to perform. '
-                                'One of "parse", "geocode", "match"')
+                                'One of {}.'.format(
+                                    ', '.join(sorted(VALID_ACTIONS))))
         group.add_argument('-l', '--list-id',
                            required=True,
                            help='The id of the facility list to process.')

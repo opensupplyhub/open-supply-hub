@@ -416,11 +416,16 @@ class SourceAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if change and 'contributor' in form.changed_data:
+            # The re-attribution is dispatched after this request's
+            # transaction commits, and for a list it runs as a Batch job
+            # that outlives the response, so the message must hold for
+            # both paths rather than claim either one. See OSDEV-3758.
             messages.info(
                 request,
-                'Contributor updated. Re-attributing the extended fields '
-                'contributed through this source has been scheduled and '
-                'can take a few minutes for large lists.',
+                'Contributor updated. The extended fields contributed '
+                'through this source are being re-attributed to the new '
+                'contributor; for large lists this runs in the background '
+                'and can take a few minutes to appear.',
             )
 
 
