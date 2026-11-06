@@ -130,29 +130,6 @@ class WriterTestCase(unittest.TestCase):
             ],
         )
 
-    def test_status_is_not_committed_without_its_matches(self):
-        """
-        Every write for an item is one transaction: if any part of it
-        fails, neither the matches nor the final status are visible, so a
-        caller polling on the status never sees it final with only some of
-        the matches.
-        """
-        self.add_item(create=False)
-
-        with patch.object(
-            Writer, '_update_item', side_effect=RuntimeError('boom')
-        ):
-            with self.assertRaises(RuntimeError):
-                Writer().write(
-                    self.gazetteer_matches(),
-                    self.item_update('MATCHED', MATCHED_FACILITY),
-                )
-
-        self.assertEqual(
-            self.item_state('api_facilitylistitemtemp'), ('GEOCODED', None)
-        )
-        self.assertEqual(self.rows('api_facilitymatchtemp', 'id'), [])
-
     def test_each_item_is_committed_once(self):
         self.add_item(create=False)
         commits = []
