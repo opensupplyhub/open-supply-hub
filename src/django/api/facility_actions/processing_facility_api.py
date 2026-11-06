@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 import traceback
 from typing import Any, Dict, List, Union
 
@@ -316,7 +317,7 @@ class ProcessingFacilityAPI(ProcessingFacility):
                 log.info(f'[API Upload] Source Id: {item.id}')
                 asyncio.run(produce_message_match_process(source.id))
                 break
-            asyncio.sleep(1)
+            time.sleep(1)
             timer = timer + 1
 
         # Handle results of "match" process from Dedupe Hub

@@ -47,6 +47,8 @@ class TestGazetteerItemMatch(unittest.TestCase):
         self.mock_item = MagicMock(
             spec=FacilityListItemTemp,
             id=self.item_id,
+            processing_results=[],
+            facility_id=None,
         )
         self.mock_facility = MagicMock(
             spec=Facility,
@@ -55,6 +57,8 @@ class TestGazetteerItemMatch(unittest.TestCase):
         # Setup the return values for query
         self.mock_query.return_value.get.return_value = self.mock_item
         self.mock_query_gazetteer.return_value.one.return_value = self.mock_facility
+        self.mock_query_gazetteer.return_value.filter.return_value \
+            .one.return_value = self.mock_facility
 
     def tearDown(self):
         self.session_patcher.stop()
@@ -85,6 +89,9 @@ class TestGazetteerItemMatch(unittest.TestCase):
         ]
 
         self.assertListEqual(result, expected_result)
+        self.assert_staged_update(
+            gazetteer_match, FacilityListItemTemp.MATCHED, self.facility_id
+        )
     
     def test_one_gazetter_greater(self):
         gazetteer_match = self.create_gazetteer_match(self.matches_multiple)
@@ -108,6 +115,30 @@ class TestGazetteerItemMatch(unittest.TestCase):
         ]
 
         self.assertListEqual(result, expected_result)
+        self.assert_staged_update(
+            gazetteer_match, FacilityListItemTemp.MATCHED, self.facility_id
+        )
+
+    def test_no_automatic_match_stages_potential_match(self):
+        gazetteer_match = self.create_gazetteer_match([
+            {"id": 2072, "facility_id": "CN20241096SFEBA", "score": 0.54},
+            {"id": 2073, "facility_id": "CN20241096SFEBB", "score": 0.53},
+        ])
+
+        result = gazetteer_match.process()
+
+        self.assertEqual(
+            [match['status'] for match in result], ['PENDING', 'PENDING']
+        )
+        self.assert_staged_update(
+            gazetteer_match, FacilityListItemTemp.POTENTIAL_MATCH, None
+        )
+
+    def test_no_matches_stages_nothing(self):
+        gazetteer_match = self.create_gazetteer_match(self.matches_empty)
+
+        self.assertEqual(gazetteer_match.process(), [])
+        self.assertIsNone(gazetteer_match.pending_item_update)
 
     def test_multiple_gazetteer(self):
         gazetteer_match = self.create_gazetteer_match(self.matches_multiple_second)
@@ -135,6 +166,20 @@ class TestGazetteerItemMatch(unittest.TestCase):
         ]
 
         self.assertListEqual(result, expected_result)
+
+    def assert_staged_update(self, gazetteer_match, status, facility_id):
+        """
+        The final status is staged for the Writer, which commits it with
+        the match rows; it is not written here (OSDEV-3149).
+        """
+        update = gazetteer_match.pending_item_update
+        self.assertEqual(update['facility_list_item_id'], self.item_id)
+        self.assertEqual(update['status'], status)
+        self.assertEqual(update['facility_id'], facility_id)
+        self.assertEqual(update['processing_results'][-1]['action'], 'match')
+        self.mock_session.return_value.__enter__.return_value \
+            .commit.assert_not_called()
+
 
 if __name__ == '__main__':
     unittest.main()
