@@ -314,6 +314,18 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(submitted.meta['applied'], 3)
         self.assertEqual(submitted.meta['rows_removed'], 1)
         self.assertEqual(submitted.meta['row_decisions'], 4)
+        # automatic versus through review: the country fix (auto) was
+        # turned off, the workers fix (auto) was retyped, the address fix
+        # accepted; the duplicate removal is automatic
+        self.assertEqual(submitted.meta['auto_offered'], 3)
+        self.assertEqual(submitted.meta['auto_applied'], 1)
+        self.assertEqual(submitted.meta['auto_turned_off'], 1)
+        self.assertEqual(submitted.meta['fixes_offered'], 1)
+        self.assertEqual(submitted.meta['fixes_accepted'], 1)
+        self.assertEqual(submitted.meta['values_typed'], 1)
+        self.assertEqual(submitted.meta['flags_offered'], 1)
+        self.assertEqual(submitted.meta['flags_left_as_uploaded'], 1)
+        self.assertEqual(submitted.meta['reviewed_changes'], 2)
 
     def test_flagged_row_cannot_be_accepted_but_can_be_fixed_or_removed(
             self):
@@ -580,6 +592,14 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response.data['left_at_least_once'], 1)
         self.assertEqual(response.data['resumed_at_least_once'], 1)
         self.assertEqual(response.data['submit_rate'], 0.5)
+        # nothing was decided in that submission: the automatic fixes
+        # went on, the one suggested fix and the flag were left
+        self.assertEqual(response.data['median_auto_applied'], 3)
+        self.assertEqual(response.data['median_reviewed_changes'], 0)
+        self.assertEqual(response.data['totals']['auto_applied'], 3)
+        self.assertEqual(response.data['totals']['fixes_offered'], 1)
+        self.assertEqual(response.data['totals']['flags_left_as_uploaded'],
+                         1)
 
     def test_start_is_superuser_only(self):
         self.client.force_login(self.user)

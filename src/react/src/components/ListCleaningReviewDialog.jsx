@@ -41,6 +41,17 @@ const timeOfDay = iso =>
         minute: '2-digit',
     });
 
+// "9:54 AM" today, or "Nov 7, 12:30 AM" if the hour runs past midnight.
+const deadlineText = iso => {
+    const d = new Date(iso);
+    const sameDay = d.toDateString() === new Date().toDateString();
+    return d.toLocaleString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+        ...(sameDay ? {} : { month: 'short', day: 'numeric' }),
+    });
+};
+
 const countdown = seconds => {
     if (seconds <= 0) return 'Time is up';
     if (seconds < 120) return `Submit within ${seconds} s`;
@@ -104,7 +115,12 @@ const styles = Object.freeze({
     body: Object.freeze({
         maxWidth: '960px',
         margin: '0 auto',
-        padding: '0 16px 32px 16px',
+        padding: '0 16px',
+    }),
+    content: Object.freeze({
+        // No padding of its own: the sticky footer should meet the
+        // bottom edge, and the body supplies the side gutters.
+        padding: 0,
     }),
     centred: Object.freeze({
         display: 'flex',
@@ -549,8 +565,10 @@ const ListCleaningReviewDialog = ({
                             : 'Submit list as uploaded'}
                     </Button>
                     <span style={styles.finalNote}>
-                        One submission only: after it nothing on the list
-                        changes. Decide later keeps the hour running.
+                        This is your one submission; after it nothing on the
+                        list changes. You can come back and review until{' '}
+                        {deadlineText(run.review_until)}; after that the list
+                        goes to the moderator as uploaded.
                     </span>
                 </div>
                 {tour && <ListCleaningTour onDone={() => setTour(false)} />}
@@ -589,7 +607,7 @@ const ListCleaningReviewDialog = ({
                     )}
                 </Toolbar>
             </AppBar>
-            <DialogContent>
+            <DialogContent style={styles.content}>
                 <div style={styles.body}>
                     <Stepper activeStep={activeStep} style={styles.stepper}>
                         {STEPS.map(label => (
@@ -660,18 +678,20 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
     decide: decisions =>
         dispatch(submitFacilityListCleaningDecisions(listID, decisions)),
     // One key or a list of keys; one request either way. RESET is not a
-    // decision: it clears that type's row-by-row decisions.
-    decideGroup: (keys, decision) =>
+    // decision: it clears that type's row-by-row decisions. With
+    // `everyRow`, the row-by-row decisions are cleared first so the
+    // decision covers every row of the type.
+    decideGroup: (keys, decision, everyRow = false) =>
         dispatch(
             submitFacilityListCleaningGroupDecisions(
                 listID,
-                []
-                    .concat(keys)
-                    .map(key =>
-                        decision === RESET
-                            ? { key, reset: true }
-                            : { key, decision },
-                    ),
+                [].concat(keys).reduce((acc, key) => {
+                    if (decision === RESET) {
+                        return acc.concat({ key, reset: true });
+                    }
+                    if (everyRow) acc.push({ key, reset: true });
+                    return acc.concat({ key, decision });
+                }, []),
             ),
         ),
     apply: (options = {}) =>

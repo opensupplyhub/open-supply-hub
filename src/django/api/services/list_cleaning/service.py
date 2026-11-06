@@ -334,21 +334,79 @@ def submit_run(run, user, as_uploaded=False):
     run.submitted_at = now
     run.save(update_fields=['submitted_at'])
     _close(run, ListCleaningRun.SUBMITTED, now)
-    decided = run.suggestions.exclude(
-        decision=ListCleaningSuggestion.PENDING).filter(
-        extra__by_row=True).count()
     record_event(run, ListCleaningEvent.SUBMITTED, user=user, meta={
         'as_uploaded': as_uploaded,
         'applied': counts['applied'],
         'rows_removed': run.facility_list.source.facilitylistitem_set
         .filter(status__in=REMOVED_STATUSES).count(),
-        'row_decisions': decided,
         'seconds_after_upload': int(
             (now - run.created_at).total_seconds()),
+        **change_breakdown(run, as_uploaded),
     })
     log.info(f'[List Cleaning] Run {run.id} submitted '
              f'({"as uploaded" if as_uploaded else counts})')
     return counts
+
+
+def change_breakdown(run, as_uploaded=False):
+    """
+    How much the contributor changed, split into what went on by itself
+    (the pre-accepted automatic fixes) and what took a person: fixes
+    they accepted, values they typed, rows they removed, and the flags
+    they resolved or left. Everything is zero for a submission as
+    uploaded, since nothing went on.
+    """
+    S = ListCleaningSuggestion
+    suggestions = list(run.suggestions.exclude(severity=S.INTERNAL_NOTE))
+    auto = [s for s in suggestions if (s.extra or {}).get('auto')]
+    fixes = [s for s in suggestions
+             if s.kind == S.CORRECTION and not (s.extra or {}).get('auto')]
+    flags = [s for s in suggestions if s.severity == S.MUST_FIX]
+    removed_rows = {s.row_number for s in suggestions
+                    if s.decision == S.REMOVED}
+    flags_resolved = [
+        s for s in flags
+        if s.decision == S.EDITED or s.row_number in removed_rows]
+    out = {
+        'auto_offered': len(auto),
+        'auto_turned_off': len(
+            [s for s in auto if s.decision == S.REJECTED]),
+        'fixes_offered': len(fixes),
+        'fixes_accepted': len(
+            [s for s in fixes if s.decision == S.ACCEPTED]),
+        'fixes_kept_original': len(
+            [s for s in fixes if s.decision == S.REJECTED]),
+        'values_typed': len(
+            [s for s in suggestions if s.decision == S.EDITED]),
+        'rows_removed_by_review': len(removed_rows),
+        'flags_offered': len(flags),
+        'flags_resolved': len(flags_resolved),
+        'flags_left_as_uploaded': len(flags) - len(flags_resolved),
+        'row_decisions': len(
+            [s for s in suggestions if (s.extra or {}).get('by_row')
+             and s.decision != S.PENDING]),
+    }
+    if as_uploaded:
+        out['auto_applied'] = 0
+        out['reviewed_changes'] = 0
+    else:
+        out['auto_applied'] = len(
+            [s for s in auto if s.decision == S.ACCEPTED])
+        # changes that took a person: accepted fixes, typed values and
+        # rows removed, counted once each
+        out['reviewed_changes'] = (
+            out['fixes_accepted'] + out['values_typed']
+            + out['rows_removed_by_review'])
+    return out
+
+
+BREAKDOWN_TOTALS = (
+    'auto_offered', 'auto_applied', 'auto_turned_off',
+    'fixes_offered', 'fixes_accepted', 'fixes_kept_original',
+    'values_typed', 'rows_removed_by_review',
+    'flags_offered', 'flags_resolved', 'flags_left_as_uploaded',
+    'reviewed_changes',
+)
 
 
 def metrics_summary():
@@ -372,8 +430,11 @@ def metrics_summary():
         'resumed_at_least_once': 0,
         'median_minutes_to_submit': None,
         'median_changes_applied': None,
+        'median_auto_applied': None,
+        'median_reviewed_changes': None,
+        'totals': {key: 0 for key in BREAKDOWN_TOTALS},
     }
-    minutes, applied = [], []
+    minutes, applied, auto_applied, reviewed = [], [], [], []
     for run in runs:
         out['runs_complete'] += 1
         kinds = [e.kind for e in run.events.all()]
@@ -400,12 +461,18 @@ def metrics_summary():
         else:
             out['submitted_with_changes'] += 1
             applied.append(meta.get('applied', 0))
+            auto_applied.append(meta.get('auto_applied', 0))
+            reviewed.append(meta.get('reviewed_changes', 0))
+        for key in BREAKDOWN_TOTALS:
+            out['totals'][key] += meta.get(key, 0)
         if 'seconds_after_upload' in meta:
             minutes.append(meta['seconds_after_upload'] / 60)
     if minutes:
         out['median_minutes_to_submit'] = round(statistics.median(minutes), 1)
     if applied:
         out['median_changes_applied'] = statistics.median(applied)
+        out['median_auto_applied'] = statistics.median(auto_applied)
+        out['median_reviewed_changes'] = statistics.median(reviewed)
     decided = (out['submitted_with_changes'] + out['submitted_as_uploaded']
                + out['lapsed_after_opening'] + out['lapsed_never_opened'])
     out['submit_rate'] = (

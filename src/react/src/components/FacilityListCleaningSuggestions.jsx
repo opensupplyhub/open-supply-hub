@@ -1235,20 +1235,25 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
     const internal = group.severity === SEVERITY.INTERNAL_NOTE;
     const isIssue = group.kind === KIND.ISSUE;
     const isRemoval = group.kind === KIND.REMOVAL;
-    const onGroup = decision => decideGroup(group.key, decision);
     // Rows the contributor decided one by one keep that decision; the
-    // group buttons act on the others.
+    // group buttons act on the others. Once every row has been decided
+    // one by one there are no "others", so the buttons cover all rows
+    // again (clearing the row-by-row marks first).
     const byRow = group.by_row || 0;
     const rest = group.count - byRow;
-    const others = byRow ? `the other ${rest}` : `all ${group.count}`;
-    const otherRows = byRow
+    const everyRow = rest === 0;
+    const onGroup = decision => decideGroup(group.key, decision, everyRow);
+    const partial = byRow > 0 && !everyRow;
+    const scope = everyRow ? group.count : rest;
+    const others = partial ? `the other ${rest}` : `all ${group.count}`;
+    const otherRows = partial
         ? `the other ${plural(rest, 'row')}`
         : plural(group.count, 'row');
-    // Nothing left for the button to do once every row outside the
-    // one-by-one set already carries that decision.
-    const allAccepted = group.accepted >= rest;
-    const allRejected = group.rejected >= rest;
-    const allRemoved = group.removed + group.accepted >= rest;
+    // Nothing left for the button to do once every row in scope
+    // already carries that decision.
+    const allAccepted = group.accepted >= scope;
+    const allRejected = group.rejected >= scope;
+    const allRemoved = group.removed + group.accepted >= scope;
     return (
         <div style={chipStyles.header}>
             <Typography variant="subheading">
@@ -1268,7 +1273,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                 </div>
             )}
             <div style={styles.decisionText}>{groupStatus(group)}</div>
-            {canAct && !internal && rest > 0 && (
+            {canAct && !internal && (
                 <div style={chipStyles.headerActions}>
                     {group.kind === KIND.CORRECTION && (
                         <>
@@ -1276,7 +1281,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                                 size="small"
                                 variant="outlined"
                                 color="primary"
-                                disabled={busy || !rest || allAccepted}
+                                disabled={busy || allAccepted}
                                 onClick={() => onGroup(DECISION.ACCEPTED)}
                             >
                                 Accept {others}
@@ -1284,7 +1289,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                             <Button
                                 size="small"
                                 variant="outlined"
-                                disabled={busy || !rest || allRejected}
+                                disabled={busy || allRejected}
                                 onClick={() => onGroup(DECISION.REJECTED)}
                             >
                                 Keep {others} originals
@@ -1297,7 +1302,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                                 size="small"
                                 variant="outlined"
                                 color={isRemoval ? 'primary' : 'secondary'}
-                                disabled={busy || !rest || allRemoved}
+                                disabled={busy || allRemoved}
                                 onClick={() =>
                                     onGroup(
                                         isRemoval
@@ -1311,7 +1316,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                             <Button
                                 size="small"
                                 variant="outlined"
-                                disabled={busy || !rest || allRejected}
+                                disabled={busy || allRejected}
                                 onClick={() => onGroup(DECISION.REJECTED)}
                             >
                                 {isRemoval
@@ -1327,9 +1332,11 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
             )}
             {byRow > 0 && (
                 <div style={styles.muted}>
-                    {plural(byRow, 'row')} you decided one by one{' '}
-                    {byRow === 1 ? 'keeps' : 'keep'} that decision; use the
-                    row&rsquo;s own buttons to change it, or{' '}
+                    {everyRow
+                        ? `You decided all ${group.count} one by one; the buttons above now change all of them, or `
+                        : `${plural(byRow, 'row')} you decided one by one ${
+                              byRow === 1 ? 'keeps' : 'keep'
+                          } that decision; use the row's own buttons to change it, or `}
                     <ResetLink
                         count={byRow}
                         busy={busy}
@@ -1374,60 +1381,68 @@ ResetLink.propTypes = {
  */
 const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
     const corrections = groups.filter(g => g.kind === KIND.CORRECTION);
-    const fixes = corrections.reduce(
-        (n, g) => n + g.count - (g.by_row || 0),
-        0,
-    );
-    const everything = groups.reduce(
-        (n, g) => n + g.count - (g.by_row || 0),
-        0,
-    );
+    const sumRest = list =>
+        list.reduce((n, g) => n + g.count - (g.by_row || 0), 0);
+    const sumAll = list => list.reduce((n, g) => n + g.count, 0);
+    const fixes = sumRest(corrections);
+    const everything = sumRest(groups);
     const byRow = groups.reduce((n, g) => n + (g.by_row || 0), 0);
     const flagged = groups.length - corrections.length;
+    // Once every row was decided one by one the buttons cover all rows
+    // again, clearing the row-by-row marks first.
+    const everyRow = byRow > 0 && everything === 0;
+    const partial = byRow > 0 && !everyRow;
+    const fixCount = everyRow ? sumAll(corrections) : fixes;
+    const keepCount = everyRow ? sumAll(groups) : everything;
     if (!canAct || !groups.length) return null;
     return (
         <div style={chipStyles.header}>
-            {everything > 0 && (
-                <div style={chipStyles.headerActions}>
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        color="primary"
-                        disabled={busy || !fixes}
-                        onClick={() =>
-                            decideGroup(
-                                corrections.map(g => g.key),
-                                DECISION.ACCEPTED,
-                            )
-                        }
-                    >
-                        Accept {byRow ? 'the other' : 'all'}{' '}
-                        {plural(fixes, 'suggested fix', 'suggested fixes')}
-                    </Button>
-                    <Button
-                        size="small"
-                        variant="outlined"
-                        disabled={busy || !everything}
-                        onClick={() =>
-                            decideGroup(
-                                groups.map(g => g.key),
-                                DECISION.REJECTED,
-                            )
-                        }
-                    >
-                        Keep {byRow ? 'the rest' : 'everything'} as uploaded
-                    </Button>
-                    <span style={styles.muted}>
-                        {flagged > 0 &&
-                            'Flagged rows have nothing to accept: fix or remove them by type or by row. '}
-                        Or pick a type above.
-                    </span>
-                </div>
-            )}
+            <div style={chipStyles.headerActions}>
+                <Button
+                    size="small"
+                    variant="outlined"
+                    color="primary"
+                    disabled={busy || !fixCount}
+                    onClick={() =>
+                        decideGroup(
+                            corrections.map(g => g.key),
+                            DECISION.ACCEPTED,
+                            everyRow,
+                        )
+                    }
+                >
+                    Accept {partial ? 'the other' : 'all'}{' '}
+                    {plural(fixCount, 'suggested fix', 'suggested fixes')}
+                </Button>
+                <Button
+                    size="small"
+                    variant="outlined"
+                    disabled={busy || !keepCount}
+                    onClick={() =>
+                        decideGroup(
+                            groups.map(g => g.key),
+                            DECISION.REJECTED,
+                            everyRow,
+                        )
+                    }
+                >
+                    Keep {partial ? 'the rest' : 'everything'} as uploaded
+                </Button>
+                <span style={styles.muted}>
+                    {flagged > 0 &&
+                        'Flagged rows have nothing to accept: fix or remove them by type or by row. '}
+                    Or pick a type above.
+                </span>
+            </div>
             {byRow > 0 && (
                 <div style={styles.muted}>
-                    {plural(byRow, 'row')} you decided one by one{' '}
-                    {byRow === 1 ? 'keeps' : 'keep'} that decision, or{' '}
+                    {everyRow
+                        ? `You decided all ${sumAll(
+                              groups,
+                          )} one by one; the buttons above now change all of them, or `
+                        : `${plural(byRow, 'row')} you decided one by one ${
+                              byRow === 1 ? 'keeps' : 'keep'
+                          } that decision, or `}
                     <ResetLink
                         count={byRow}
                         busy={busy}

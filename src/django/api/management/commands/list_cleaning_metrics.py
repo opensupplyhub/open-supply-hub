@@ -35,6 +35,28 @@ class Command(BaseCommand):
             ('Median minutes to submit',
              summary['median_minutes_to_submit']),
             ('Median changes applied', summary['median_changes_applied']),
+            ('  of which automatic (median)',
+             summary['median_auto_applied']),
+            ('  of which through review (median)',
+             summary['median_reviewed_changes']),
+        ]
+        totals = summary['totals']
+        rows += [
+            ('', ''),
+            ('Across every submission:', ''),
+            ('Automatic fixes offered / applied / turned off',
+             f"{totals['auto_offered']} / {totals['auto_applied']} / "
+             f"{totals['auto_turned_off']}"),
+            ('Suggested fixes offered / accepted / kept original',
+             f"{totals['fixes_offered']} / {totals['fixes_accepted']} / "
+             f"{totals['fixes_kept_original']}"),
+            ('Values typed by the contributor', totals['values_typed']),
+            ('Rows removed by the contributor',
+             totals['rows_removed_by_review']),
+            ('Flagged problems offered / resolved / left as uploaded',
+             f"{totals['flags_offered']} / {totals['flags_resolved']} / "
+             f"{totals['flags_left_as_uploaded']}"),
+            ('Changes that took a person', totals['reviewed_changes']),
         ]
         width = max(len(label) for label, _ in rows)
         for label, value in rows:
