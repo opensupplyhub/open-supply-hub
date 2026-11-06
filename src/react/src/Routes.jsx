@@ -42,6 +42,10 @@ import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags, refreshFeatureFlags } from './actions/featureFlags';
+import {
+    fetchAnnouncementBanner,
+    refreshAnnouncementBanner,
+} from './actions/announcementBanner';
 import { reportWindowResize } from './actions/ui';
 
 import { setFacilityGridRamp } from './actions/vectorTileLayer';
@@ -97,9 +101,16 @@ class Routes extends Component {
 
         window.setGridColorRamp = this.props.setRamp;
         this.props.getFeatureFlags();
-        this.unlistenHistory = history.listen(() =>
-            this.props.refreshFeatureFlags(),
-        );
+        // The banner only renders inside the Navbar, which embeds omit.
+        if (!this.props.embed) {
+            this.props.getAnnouncementBanner();
+        }
+        this.unlistenHistory = history.listen(() => {
+            this.props.refreshFeatureFlags();
+            if (!this.props.embed) {
+                this.props.refreshAnnouncementBanner();
+            }
+        });
 
         return this.props.logIn();
     }
@@ -356,6 +367,8 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch) {
     return {
         getFeatureFlags: () => dispatch(fetchFeatureFlags()),
+        getAnnouncementBanner: () => dispatch(fetchAnnouncementBanner()),
+        refreshAnnouncementBanner: () => dispatch(refreshAnnouncementBanner()),
         refreshFeatureFlags: () => dispatch(refreshFeatureFlags()),
         logIn: () => dispatch(sessionLogin()),
         handleWindowResize: data => dispatch(reportWindowResize(data)),
