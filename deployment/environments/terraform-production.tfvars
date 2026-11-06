@@ -178,3 +178,12 @@ claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claim
 earth_genome_contributor_id_secret_name = "oshub/production/earth-genome-contributor-id"
 earth_index_api_key_secret_name = "oshub/production/earth-index-api-key"
 earth_index_project_id_secret_name = "oshub/production/earth-index-project-id"
+
+# OSDEV-3747: the pilot's head-office locations. Registration goes live
+# unmoderated, so without this a token that can register one OS ID can
+# register any of them.
+identity_record_allowlist = [
+  "US2026289H36XVQ",
+  "US20262895VS0NK",
+  "AU2026292S56A50",
+]
