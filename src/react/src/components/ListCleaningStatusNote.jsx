@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { bool, func, number, object, shape } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
@@ -53,15 +53,25 @@ const ListCleaningStatusNote = ({
     onSubmitted,
 }) => {
     const [reviewing, setReviewing] = useState(false);
+    // The parent passes a new onSubmitted on every render, which makes
+    // react-redux rebuild the dispatchers; keep the latest in refs so the
+    // fetch-on-mount and clear-on-unmount happen once per list, not once
+    // per render (a mid-submission clear would wipe the dialog's state).
+    const fetchRef = useRef(fetchCleaning);
+    fetchRef.current = fetchCleaning;
+    const clearRef = useRef(clearCleaning);
+    clearRef.current = clearCleaning;
+    const submittedRef = useRef(onSubmitted);
+    submittedRef.current = onSubmitted;
     useEffect(() => {
-        fetchCleaning();
-        return () => clearCleaning();
-    }, [fetchCleaning, clearCleaning]);
+        fetchRef.current();
+        return () => clearRef.current();
+    }, [listID]);
     const backFromReview = useCallback(() => {
         setReviewing(false);
-        fetchCleaning();
-        if (onSubmitted) onSubmitted();
-    }, [fetchCleaning, onSubmitted]);
+        fetchRef.current();
+        if (submittedRef.current) submittedRef.current();
+    }, []);
 
     // A ticking refetch while the window is open, so the line flips to
     // "closed" on its own when the hour runs out.
@@ -69,9 +79,9 @@ const ListCleaningStatusNote = ({
     useEffect(() => {
         if (!open || reviewing) return undefined;
         const ms = Math.min(60000, (data.seconds_left + 1) * 1000);
-        const timer = setTimeout(fetchCleaning, ms);
+        const timer = setTimeout(() => fetchRef.current(), ms);
         return () => clearTimeout(timer);
-    }, [open, reviewing, data, fetchCleaning]);
+    }, [open, reviewing, data]);
 
     const run = data && data.run;
     if (!run || run.status !== 'COMPLETE') return null;
