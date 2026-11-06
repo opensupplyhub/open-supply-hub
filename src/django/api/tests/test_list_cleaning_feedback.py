@@ -1,6 +1,8 @@
+from datetime import timedelta
 from unittest.mock import MagicMock, patch
 
 from django.test import override_settings
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
@@ -9,6 +11,7 @@ from api.models import (
     Contributor,
     FacilityList,
     FacilityListItem,
+    ListCleaningEvent,
     ListCleaningRun,
     ListCleaningSuggestion,
     Source,
@@ -182,9 +185,10 @@ class ListCleaningFeedbackTest(APITestCase):
 
     # -- API ----------------------------------------------------------
 
-    def _ingested_run(self):
+    def _ingested_run(self, minutes_left=60):
         run = ListCleaningRun.objects.create(
-            facility_list=self.list, runner=ListCleaningRun.IMPORT)
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=minutes_left))
         ingest_result(run, SAMPLE_RESULT)
         return run
 
@@ -252,21 +256,24 @@ class ListCleaningFeedbackTest(APITestCase):
             pk=corrections['country'].id)
         self.assertEqual(country.decision, ListCleaningSuggestion.REJECTED)
         self.assertEqual(country.decided_by, self.user)
-        # nothing touches the list until apply: the typed value, the
-        # accepted address fix and the undo of the automatic country fix
-        # all wait for one call
+        # nothing touches the list until the one submission, the
+        # automatic fixes included: the typed value, the accepted address
+        # fix and the kept-original country all wait for it
         first = FacilityListItem.objects.get(pk=self.items[0].id)
-        self.assertEqual(first.raw_json['number_of_workers'], '1200')
-        self.assertEqual(first.raw_json['country'], 'VN')
+        self.assertEqual(first.raw_json['number_of_workers'], '1,200')
+        self.assertEqual(first.raw_json['country'], 'Viet Nam')
         self.assertEqual(response.data['summary']['corrections_unapplied'],
                          2)
         self.assertEqual(response.data['summary']['changes_unapplied'], 3)
+        self.assertTrue(response.data['window_open'])
 
-        response = self.client.post(self.url('apply/'), {}, format='json')
+        response = self.client.post(self.url('submit/'), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK,
                          response.data)
         self.assertEqual(response.data['applied'],
-                         {'applied': 2, 'reverted': 1})
+                         {'applied': 3, 'reverted': 0})
+        self.assertFalse(response.data['window_open'])
+        self.assertEqual(response.data['run']['closed_reason'], 'submitted')
 
         first.refresh_from_db()
         self.assertEqual(first.raw_json['country'], 'Viet Nam')
@@ -284,15 +291,29 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 3)
 
-        # reversing a decision after apply restores the original
-        self.client.post(self.url('decisions/'), {'decisions': [
-            {'id': corrections['address'].id, 'decision': 'REJECTED'},
-        ]}, format='json')
-        counts = apply_run(run)
-        self.assertEqual(counts['reverted'], 1)
+        # submitted means submitted: no decision, submission or change
+        # of mind is accepted afterwards
+        for body in ({'decisions': [{'id': corrections['address'].id,
+                                     'decision': 'REJECTED'}]},
+                     {'groups': [{'key': 'CORRECTION:country_code:country',
+                                  'decision': 'REJECTED'}]}):
+            response = self.client.post(
+                self.url('decisions/'), body, format='json')
+            self.assertEqual(response.status_code,
+                             status.HTTP_400_BAD_REQUEST)
+            self.assertIn('already been submitted', str(response.data))
+        self.assertEqual(
+            self.client.post(self.url('submit/'), {}).status_code,
+            status.HTTP_400_BAD_REQUEST)
         first.refresh_from_db()
         self.assertEqual(first.address,
-                         '36 Tay Thanh Street, Ho Chi Minh City, Vietnam')
+                         '36 Tay Thanh Street, Ho Chi Minh City')
+        # ...and the submission is on the record
+        submitted = run.events.get(kind=ListCleaningEvent.SUBMITTED)
+        self.assertFalse(submitted.meta['as_uploaded'])
+        self.assertEqual(submitted.meta['applied'], 3)
+        self.assertEqual(submitted.meta['rows_removed'], 1)
+        self.assertEqual(submitted.meta['row_decisions'], 4)
 
     def test_flagged_row_cannot_be_accepted_but_can_be_fixed_or_removed(
             self):
@@ -415,7 +436,7 @@ class ListCleaningFeedbackTest(APITestCase):
         removal = run.suggestions.get(kind=ListCleaningSuggestion.REMOVAL)
         self.client.post(self.url('decisions/'), {'decisions': [
             {'id': removal.id, 'decision': 'ACCEPTED'}]}, format='json')
-        self.client.post(self.url('apply/'), {}, format='json')
+        self.client.post(self.url('submit/'), {}, format='json')
 
         response = self.client.get(self.url('download/'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -449,8 +470,116 @@ class ListCleaningFeedbackTest(APITestCase):
             format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(
-            self.client.post(self.url('apply/'), {}).status_code,
+            self.client.post(self.url('submit/'), {}).status_code,
             status.HTTP_400_BAD_REQUEST)
+
+    def test_lapsed_window_sends_the_list_as_uploaded(self):
+        run = self._ingested_run(minutes_left=-1)
+        self.client.force_login(self.user)
+        # noticed lazily on the next read, no scheduler needed
+        response = self.client.get(self.url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['window_open'])
+        self.assertEqual(response.data['seconds_left'], 0)
+        self.assertEqual(response.data['run']['closed_reason'], 'lapsed')
+        run.refresh_from_db()
+        self.assertTrue(run.events.filter(
+            kind=ListCleaningEvent.LAPSED).exists())
+        # nothing was applied, not even the silent fixes
+        first = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(first.raw_json['number_of_workers'], '1,200')
+        third = FacilityListItem.objects.get(pk=self.items[2].id)
+        self.assertEqual(third.status, FacilityListItem.PARSED)
+        # and nothing can be changed any more
+        suggestion = run.suggestions.filter(
+            kind=ListCleaningSuggestion.CORRECTION).first()
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': suggestion.id, 'decision': 'ACCEPTED'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('has closed', str(response.data))
+        self.assertEqual(
+            self.client.post(self.url('submit/'), {}).status_code,
+            status.HTTP_400_BAD_REQUEST)
+
+    def test_submit_as_uploaded_applies_nothing_but_closes(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url('submit/'), {'as_uploaded': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        self.assertEqual(response.data['applied'],
+                         {'applied': 0, 'reverted': 0})
+        run.refresh_from_db()
+        self.assertEqual(run.closed_reason, ListCleaningRun.SUBMITTED)
+        self.assertIsNotNone(run.submitted_at)
+        first = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(first.raw_json['number_of_workers'], '1,200')
+        self.assertTrue(
+            run.events.get(kind=ListCleaningEvent.SUBMITTED)
+            .meta['as_uploaded'])
+
+    def test_moderation_waits_for_the_review_window(self):
+        self._ingested_run()
+        self.client.force_login(self.superuser)
+        for action in ('approve', 'reject'):
+            response = self.client.post(
+                f'/api/facility-lists/{self.list.id}/{action}/',
+                {'reason': 'x'}, format='json')
+            self.assertEqual(response.status_code,
+                             status.HTTP_400_BAD_REQUEST, action)
+            self.assertIn('review window', str(response.data))
+        self.list.refresh_from_db()
+        self.assertEqual(self.list.status, FacilityList.PENDING)
+
+    def test_review_events_and_metrics(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        for kind, meta in (('opened', {}), ('left', {'seconds_open': 40}),
+                           ('resumed', {})):
+            response = self.client.post(self.url('events/'), {
+                'kind': kind, 'meta': meta}, format='json')
+            self.assertEqual(response.status_code,
+                             status.HTTP_201_CREATED, kind)
+        self.assertEqual(
+            self.client.post(self.url('events/'), {'kind': 'submitted'},
+                             format='json').status_code,
+            status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(
+            [e.kind for e in run.events.all()],
+            ['opened', 'left', 'resumed'])
+        self.client.post(self.url('submit/'), {}, format='json')
+
+        # a second list whose window lapsed before anyone looked
+        other = FacilityList.objects.create(
+            header='country,name,address,number_of_workers',
+            file_name='other.csv', name='Other')
+        Source.objects.create(
+            source_type=Source.LIST, facility_list=other,
+            contributor=self.contributor)
+        lapsed = ListCleaningRun.objects.create(
+            facility_list=other, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() - timedelta(minutes=1))
+        ingest_result(lapsed, SAMPLE_RESULT)
+
+        self.assertEqual(
+            self.client.get('/api/facility-lists/cleaning-metrics/')
+            .status_code, status.HTTP_403_FORBIDDEN)
+        self.client.force_login(self.superuser)
+        response = self.client.get('/api/facility-lists/cleaning-metrics/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # the lapsed run is only closed once something reads it
+        self.assertEqual(response.data['runs_open'], 1)
+        from api.services.list_cleaning import sweep_lapsed
+        self.assertEqual(sweep_lapsed(), 1)
+        response = self.client.get('/api/facility-lists/cleaning-metrics/')
+        self.assertEqual(response.data['runs_complete'], 2)
+        self.assertEqual(response.data['submitted_with_changes'], 1)
+        self.assertEqual(response.data['lapsed_never_opened'], 1)
+        self.assertEqual(response.data['left_at_least_once'], 1)
+        self.assertEqual(response.data['resumed_at_least_once'], 1)
+        self.assertEqual(response.data['submit_rate'], 0.5)
 
     def test_start_is_superuser_only(self):
         self.client.force_login(self.user)

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { bool, func, number, object, shape } from 'prop-types';
 import { connect } from 'react-redux';
 import AppBar from '@material-ui/core/AppBar';
@@ -18,6 +18,8 @@ import {
     submitFacilityListCleaningDecisions,
     submitFacilityListCleaningGroupDecisions,
     applyFacilityListCleaning,
+    recordFacilityListCleaningEvent,
+    beaconFacilityListCleaningEvent,
 } from '../actions/facilityListCleaning';
 
 import {
@@ -32,6 +34,18 @@ import {
 
 import COLOURS from '../util/COLOURS';
 import ListCleaningTour from './ListCleaningTour';
+
+const timeOfDay = iso =>
+    new Date(iso).toLocaleTimeString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+
+const countdown = seconds => {
+    if (seconds <= 0) return 'Time is up';
+    if (seconds < 120) return `Submit within ${seconds} s`;
+    return `Submit within ${Math.ceil(seconds / 60)} min`;
+};
 
 // The contributor is waiting on this screen, so poll faster than the
 // list-page panel does, and stop pretending after a while.
@@ -66,6 +80,23 @@ const styles = Object.freeze({
     tourButton: Object.freeze({
         color: COLOURS.WHITE,
         border: '1px solid rgba(255, 255, 255, 0.6)',
+    }),
+    clock: Object.freeze({
+        color: COLOURS.WHITE,
+        background: 'rgba(255, 255, 255, 0.16)',
+        borderRadius: '14px',
+        padding: '4px 12px',
+        fontWeight: 700,
+        marginRight: '12px',
+        whiteSpace: 'nowrap',
+    }),
+    clockUrgent: Object.freeze({
+        background: '#d32f2f',
+    }),
+    finalNote: Object.freeze({
+        flex: '1 1 100%',
+        fontSize: '0.85rem',
+        color: 'rgba(0, 0, 0, 0.6)',
     }),
     stepper: Object.freeze({
         padding: '16px 0 8px 0',
@@ -172,12 +203,12 @@ const Clean = ({ onContinue }) => (
 
 Clean.propTypes = { onContinue: func.isRequired };
 
-const Done = ({ listID, summary, lastApplied, skipped, onContinue }) => (
+const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => (
     <div style={styles.centred}>
         <Typography style={styles.heading}>
-            {skipped ? 'No changes applied' : 'Your list has been updated'}
+            Your list has been submitted
         </Typography>
-        {!skipped && lastApplied && (
+        {!asUploaded && lastApplied && (
             <Typography>
                 {lastApplied.applied}{' '}
                 {lastApplied.applied === 1 ? 'change was' : 'changes were'}{' '}
@@ -187,28 +218,30 @@ const Done = ({ listID, summary, lastApplied, skipped, onContinue }) => (
                           summary.rows_removed === 1 ? 'row' : 'rows'
                       } removed`
                     : ''}
-                . The original values are kept with your uploaded file, and a
-                moderator will review the list as usual.
+                . The original values are kept with your uploaded file.
             </Typography>
         )}
-        {skipped && (
+        {asUploaded && (
             <Typography>
-                Your list was submitted as uploaded. You can still review the
-                suggestions on your list page.
+                Your list was submitted exactly as uploaded; none of the
+                suggested changes were made.
             </Typography>
         )}
         {summary.must_fix_pending > 0 && (
             <Typography>
                 {summary.must_fix_pending}{' '}
                 {summary.must_fix_pending === 1
-                    ? 'row still needs'
-                    : 'rows still need'}{' '}
-                your attention. You can fix or remove them from your list page
-                at any time before a moderator reviews the list.
+                    ? 'flagged row went'
+                    : 'flagged rows went'}{' '}
+                through as uploaded; the moderator will see them.
             </Typography>
         )}
+        <Typography>
+            This was your one submission. A moderator will now review the list
+            and you will hear by email.
+        </Typography>
         <div style={styles.actions}>
-            <DownloadFixedList listID={listID} applied={!skipped} />
+            <DownloadFixedList listID={listID} applied={!asUploaded} />
             <Button variant="contained" color="primary" onClick={onContinue}>
                 Go to my list
             </Button>
@@ -222,13 +255,50 @@ Done.propTypes = {
     listID: number.isRequired,
     summary: object.isRequired,
     lastApplied: object,
-    skipped: bool.isRequired,
+    asUploaded: bool.isRequired,
+    onContinue: func.isRequired,
+};
+
+// Reopened after the window closed: nothing to decide any more.
+const Closed = ({ run, summary, onContinue }) => (
+    <div style={styles.centred}>
+        <Typography style={styles.heading}>
+            {run.closed_reason === 'submitted'
+                ? 'This list has already been submitted'
+                : 'The review window has closed'}
+        </Typography>
+        <Typography>
+            {run.closed_reason === 'submitted'
+                ? `You submitted it at ${timeOfDay(run.submitted_at)}${
+                      summary && summary.changes_applied
+                          ? ` with ${summary.changes_applied} ${
+                                summary.changes_applied === 1
+                                    ? 'change'
+                                    : 'changes'
+                            }`
+                          : ' as uploaded'
+                  }. No further changes are possible.`
+                : `The hour for changes ended at ${timeOfDay(
+                      run.closed_at,
+                  )}, so the list went to the moderator exactly as uploaded.`}
+        </Typography>
+        <Button variant="contained" color="primary" onClick={onContinue}>
+            Go to my list
+        </Button>
+    </div>
+);
+
+Closed.defaultProps = { summary: null };
+Closed.propTypes = {
+    run: object.isRequired,
+    summary: object,
     onContinue: func.isRequired,
 };
 
 const ListCleaningReviewDialog = ({
     listID,
     open,
+    resumed,
     onContinue,
     data,
     submitting,
@@ -244,8 +314,20 @@ const ListCleaningReviewDialog = ({
 }) => {
     const [openedAt, setOpenedAt] = useState(null);
     const [timedOut, setTimedOut] = useState(false);
-    const [finished, setFinished] = useState(null); // 'applied' | 'skipped'
+    const [finished, setFinished] = useState(null); // 'submitted' | 'uploaded'
+    const [confirmUploaded, setConfirmUploaded] = useState(false);
+    // The deadline as this browser sees it, from the server's count.
+    const [deadline, setDeadline] = useState(null);
+    const [now, setNow] = useState(Date.now());
+    const [reported, setReported] = useState(false);
 
+    // The connected dispatchers are rebuilt whenever a parent passes a
+    // new prop identity; keep the latest in refs so the effects below
+    // run once per open, not once per parent render.
+    const fetchRef = useRef(fetchCleaning);
+    fetchRef.current = fetchCleaning;
+    const clearRef = useRef(clearCleaning);
+    clearRef.current = clearCleaning;
     useEffect(() => {
         if (!open || !listID) {
             return undefined;
@@ -253,9 +335,10 @@ const ListCleaningReviewDialog = ({
         setOpenedAt(Date.now());
         setTimedOut(false);
         setFinished(null);
-        fetchCleaning();
-        return () => clearCleaning();
-    }, [open, listID, fetchCleaning, clearCleaning]);
+        setReported(false);
+        fetchRef.current();
+        return () => clearRef.current();
+    }, [open, listID]);
 
     const run = data && data.run;
     const runStatus = run ? run.status : null;
@@ -274,16 +357,72 @@ const ListCleaningReviewDialog = ({
             if (openedAt && Date.now() - openedAt > MAX_WAIT_MS) {
                 setTimedOut(true);
             }
-            fetchCleaning();
+            fetchRef.current();
         }, POLL_INTERVAL_MS);
         return () => clearInterval(timer);
-    }, [waiting, openedAt, fetchCleaning]);
+    }, [waiting, openedAt]);
 
     useEffect(() => {
         if (lastApplied) {
-            setFinished('applied');
+            setFinished(f => f || 'submitted');
         }
     }, [lastApplied]);
+
+    useEffect(() => {
+        if (data && data.run && data.run.status === RUN_STATUS.COMPLETE) {
+            setDeadline(Date.now() + (data.seconds_left || 0) * 1000);
+        }
+    }, [data]);
+
+    // A once-a-second clock while the window is open; when it runs out,
+    // one more fetch lets the server close the run and the screen follow.
+    const windowOpen = !!(data && data.window_open);
+    useEffect(() => {
+        if (!windowOpen || finished) return undefined;
+        const timer = setInterval(() => {
+            setNow(Date.now());
+            if (deadline && Date.now() >= deadline) fetchRef.current();
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [windowOpen, finished, deadline]);
+    const secondsLeft = deadline
+        ? Math.max(0, Math.round((deadline - now) / 1000))
+        : 0;
+
+    // Metrics: one "opened"/"resumed" per visit, "left" when they go
+    // without submitting (button or closing the tab).
+    const reviewing = windowOpen && !finished && !!data && !!data.summary;
+    const secondsAtOpen = data ? data.seconds_left : null;
+    useEffect(() => {
+        if (!reviewing || reported) return;
+        setReported(true);
+        recordFacilityListCleaningEvent(
+            listID,
+            resumed ? 'resumed' : 'opened',
+            { seconds_left: secondsAtOpen },
+        );
+    }, [reviewing, reported, listID, resumed, secondsAtOpen]);
+    useEffect(() => {
+        if (!reviewing) return undefined;
+        const onHide = () =>
+            beaconFacilityListCleaningEvent(listID, 'left', {
+                via: 'unload',
+                seconds_open: openedAt
+                    ? Math.round((Date.now() - openedAt) / 1000)
+                    : null,
+            });
+        window.addEventListener('pagehide', onHide);
+        return () => window.removeEventListener('pagehide', onHide);
+    }, [reviewing, listID, openedAt]);
+    const leave = () => {
+        recordFacilityListCleaningEvent(listID, 'left', {
+            via: 'button',
+            seconds_open: openedAt
+                ? Math.round((Date.now() - openedAt) / 1000)
+                : null,
+        });
+        onContinue();
+    };
 
     // Prototype: the walkthrough opens with every review so demos need no
     // reset. Production would remember dismissal per user.
@@ -307,9 +446,14 @@ const ListCleaningReviewDialog = ({
                 listID={listID}
                 summary={summary}
                 lastApplied={lastApplied}
-                skipped={finished === 'skipped'}
+                asUploaded={finished === 'uploaded'}
                 onContinue={onContinue}
             />
+        );
+    } else if (!windowOpen) {
+        activeStep = STEP.DONE;
+        content = (
+            <Closed run={run} summary={summary} onContinue={onContinue} />
         );
     } else if (nothingFound) {
         activeStep = STEP.DONE;
@@ -323,13 +467,15 @@ const ListCleaningReviewDialog = ({
                     approved
                 </Typography>
                 <Typography>
-                    We checked every row. Formatting that needs no judgment was
-                    fixed automatically and is listed first, where you can undo
-                    any of it. What is left is grouped by type because the same
-                    problem usually repeats through a file. Pick a type to see
-                    its rows and accept, keep or remove them all at once, or
+                    We checked every row. Formatting that needs no judgment is
+                    ticked already and will go on when you submit; you can turn
+                    any of it off. What is left is grouped by type because the
+                    same problem usually repeats through a file. Pick a type to
+                    see its rows and accept, keep or remove them all at once, or
                     decide row by row. Nothing changes on your list until you
-                    press Apply.
+                    press Submit, and you can submit once: by{' '}
+                    {timeOfDay(run.review_until)} at the latest, or the list
+                    goes to the moderator exactly as uploaded.
                 </Typography>
                 <ReadinessTracker
                     summary={summary}
@@ -359,27 +505,53 @@ const ListCleaningReviewDialog = ({
                         </Typography>
                     )}
                     {busy && <CircularProgress size={22} />}
-                    <DownloadFixedList
-                        listID={listID}
-                        applied={!!run.applied_at}
-                    />
-                    <Button
-                        color="primary"
-                        disabled={busy}
-                        onClick={() => setFinished('skipped')}
-                    >
-                        Continue without applying
+                    <DownloadFixedList listID={listID} applied={false} />
+                    <Button color="primary" disabled={busy} onClick={leave}>
+                        Decide later
                     </Button>
+                    {summary.changes_unapplied > 0 && (
+                        <Button
+                            color="primary"
+                            disabled={busy}
+                            onClick={() => {
+                                if (!confirmUploaded) {
+                                    setConfirmUploaded(true);
+                                    return;
+                                }
+                                setFinished('uploaded');
+                                apply({ asUploaded: true });
+                            }}
+                        >
+                            {confirmUploaded
+                                ? 'Yes, submit without any changes'
+                                : 'Submit as uploaded instead'}
+                        </Button>
+                    )}
                     <Button
                         variant="contained"
                         color="primary"
-                        disabled={busy || summary.changes_unapplied === 0}
-                        onClick={apply}
+                        disabled={busy}
+                        onClick={() => {
+                            if (summary.changes_unapplied === 0) {
+                                setFinished('uploaded');
+                                apply({ asUploaded: true });
+                            } else {
+                                apply();
+                            }
+                        }}
                     >
-                        Apply {summary.changes_unapplied}{' '}
-                        {summary.changes_unapplied === 1 ? 'change' : 'changes'}{' '}
-                        and continue
+                        {summary.changes_unapplied > 0
+                            ? `Submit list with ${summary.changes_unapplied} ${
+                                  summary.changes_unapplied === 1
+                                      ? 'change'
+                                      : 'changes'
+                              }`
+                            : 'Submit list as uploaded'}
                     </Button>
+                    <span style={styles.finalNote}>
+                        One submission only: after it nothing on the list
+                        changes. Decide later keeps the hour running.
+                    </span>
                 </div>
                 {tour && <ListCleaningTour onDone={() => setTour(false)} />}
             </>
@@ -393,6 +565,19 @@ const ListCleaningReviewDialog = ({
                     <Typography id="list-cleaning-review" style={styles.title}>
                         Review your list before it goes to a moderator
                     </Typography>
+                    {activeStep === STEP.REVIEW && (
+                        <span
+                            style={{
+                                ...styles.clock,
+                                ...(secondsLeft < 300
+                                    ? styles.clockUrgent
+                                    : {}),
+                            }}
+                            data-tour="clock"
+                        >
+                            {countdown(secondsLeft)}
+                        </span>
+                    )}
                     {activeStep === STEP.REVIEW && !tour && (
                         <Button
                             size="small"
@@ -422,6 +607,7 @@ const ListCleaningReviewDialog = ({
 
 ListCleaningReviewDialog.defaultProps = {
     listID: null,
+    resumed: false,
     data: null,
     submitError: null,
     applyError: null,
@@ -431,6 +617,7 @@ ListCleaningReviewDialog.defaultProps = {
 ListCleaningReviewDialog.propTypes = {
     listID: number,
     open: bool.isRequired,
+    resumed: bool,
     onContinue: func.isRequired,
     data: shape({
         run: object,
@@ -487,7 +674,8 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
                     ),
             ),
         ),
-    apply: () => dispatch(applyFacilityListCleaning(listID)),
+    apply: (options = {}) =>
+        dispatch(applyFacilityListCleaning(listID, options)),
 });
 
 export default connect(

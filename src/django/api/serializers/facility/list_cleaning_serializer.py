@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework.serializers import ModelSerializer
 
 from ...models.facility.list_cleaning_run import (
@@ -20,7 +21,8 @@ class ListCleaningRunSerializer(ModelSerializer):
         model = ListCleaningRun
         fields = ('id', 'status', 'runner', 'prompt_version', 'file_pass',
                   'usage', 'error', 'created_at', 'started_at',
-                  'completed_at', 'applied_at')
+                  'completed_at', 'applied_at', 'review_until',
+                  'submitted_at', 'closed_at', 'closed_reason')
 
 
 GROUP_EXAMPLES = 3
@@ -204,6 +206,11 @@ def serialize_run(run, include_internal=False):
             {s.row_number for s in suggestions
              if (s.extra or {}).get('auto')}),
         'changes_unapplied': changes_unapplied,
+        # What the submission put on the list (for the note on the list
+        # page after the window has closed).
+        'changes_applied': len([
+            s for s in suggestions
+            if s.applied or (s.extra or {}).get('removal_applied')]),
         'internal_notes': len(
             [s for s in suggestions
              if s.severity == ListCleaningSuggestion.INTERNAL_NOTE]),
@@ -214,8 +221,12 @@ def serialize_run(run, include_internal=False):
         ),
     }
 
+    from api.services.list_cleaning import seconds_left, window_open
     return {
         'run': ListCleaningRunSerializer(run).data,
+        'window_open': window_open(run),
+        'seconds_left': seconds_left(run),
+        'server_time': timezone.now().isoformat(),
         'summary': summary,
         'groups': serialize_groups(suggestions),
         'rows': sorted(rows.values(), key=lambda r: r['row_number']),

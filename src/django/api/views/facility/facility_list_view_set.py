@@ -8,6 +8,7 @@ from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
     DEBUG
 )
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -44,7 +45,10 @@ from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_list import FacilityList
 from ...models.facility.facility_list_item import FacilityListItem
 from ...models.facility.facility_match import FacilityMatch
-from ...models.facility.list_cleaning_run import ListCleaningRun
+from ...models.facility.list_cleaning_run import (
+    ListCleaningEvent,
+    ListCleaningRun,
+)
 from ...models.source import Source
 from ...models.user import User
 from ...serializers.facility.list_cleaning_serializer import (
@@ -303,6 +307,7 @@ class FacilityListViewSet(ModelViewSet):
         except FacilityList.DoesNotExist as exc:
             raise NotFound() from exc
 
+        self._block_while_review_open(facility_list)
         facility_list.status_change_reason = request.data.get('reason', '')
         facility_list.status_change_by = request.user
         facility_list.status = FacilityList.APPROVED
@@ -338,6 +343,7 @@ class FacilityListViewSet(ModelViewSet):
         except FacilityList.DoesNotExist as exc:
             raise NotFound() from exc
 
+        self._block_while_review_open(facility_list)
         facility_list.status_change_reason = request.data.get('reason', '')
         facility_list.status_change_by = request.user
         facility_list.status = FacilityList.REJECTED
@@ -490,10 +496,24 @@ class FacilityListViewSet(ModelViewSet):
                 'run': None, 'summary': None, 'rows': [],
             })
         run = list_cleaning.refresh_run(run)
+        run = list_cleaning.sweep_run(run)
         data = serialize_run(
             run, include_internal=request.user.is_superuser)
         data['enabled'] = list_cleaning.feature_enabled()
         return Response(data)
+
+    @staticmethod
+    def _block_while_review_open(facility_list):
+        """
+        v3: while the contributor's review window is open the list is
+        not final, so moderation waits. Lapsed windows close here too.
+        """
+        run = list_cleaning.sweep_run(facility_list.cleaning_runs.first())
+        if run is not None and list_cleaning.window_open(run):
+            raise ValidationError(
+                'The contributor can still submit changes to this list '
+                f'until {run.review_until.isoformat()}; moderation can '
+                'start once the review window has closed.')
 
     @action(detail=True, methods=['post'], url_path='cleaning/start',
             permission_classes=(IsSuperuser,))
@@ -547,22 +567,58 @@ class FacilityListViewSet(ModelViewSet):
         return Response(serialize_run(
             run, include_internal=request.user.is_superuser))
 
-    @action(detail=True, methods=['post'], url_path='cleaning/apply')
-    def cleaning_apply(self, request, pk=None):
-        """Write the accepted corrections onto the list's items."""
+    @action(detail=True, methods=['post'], url_path='cleaning/submit')
+    def cleaning_submit(self, request, pk=None):
+        """
+        The contributor's one submission: apply every accepted change
+        (or none, with {"as_uploaded": true}) and close the review
+        window. After this nothing on the list changes.
+        """
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
         if run is None or run.status != ListCleaningRun.COMPLETE:
             raise ValidationError('There is no completed run for this list.')
         if facility_list.status != FacilityList.PENDING:
             raise ValidationError(
-                'Changes can only be applied while the list is pending '
+                'A list can only be submitted while it is pending '
                 'moderation.')
-        counts = list_cleaning.apply_run(run)
+        try:
+            counts = list_cleaning.submit_run(
+                run, request.user,
+                as_uploaded=bool(request.data.get('as_uploaded')))
+        except list_cleaning.DecisionError as e:
+            raise ValidationError(str(e))
         data = serialize_run(
             run, include_internal=request.user.is_superuser)
         data['applied'] = counts
         return Response(data)
+
+    @action(detail=True, methods=['post'], url_path='cleaning/events')
+    def cleaning_events(self, request, pk=None):
+        """
+        Record what the contributor did with the review screen:
+        {"kind": "opened" | "resumed" | "left", "meta": {...}}.
+        Submitted and lapsed are recorded server-side.
+        """
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None:
+            raise ValidationError('There is no run for this list.')
+        kind = request.data.get('kind')
+        if kind not in ListCleaningEvent.CLIENT_KINDS:
+            raise ValidationError(
+                f'"kind" must be one of {ListCleaningEvent.CLIENT_KINDS}.')
+        meta = request.data.get('meta') or {}
+        if not isinstance(meta, dict):
+            raise ValidationError('"meta" must be an object.')
+        list_cleaning.record_event(run, kind, user=request.user, meta=meta)
+        return Response({'recorded': kind}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='cleaning-metrics',
+            permission_classes=(IsSuperuser,))
+    def cleaning_metrics(self, request):
+        """Submit versus click away, across every closed run."""
+        return Response(list_cleaning.metrics_summary())
 
     @action(detail=True, methods=['get'], url_path='cleaning/download')
     def cleaning_download(self, request, pk=None):

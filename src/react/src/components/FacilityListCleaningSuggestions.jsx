@@ -35,6 +35,8 @@ export const DECISION = Object.freeze({
 // of that type so the ordinary group buttons cover every row again.
 export const RESET = 'RESET';
 
+export const isAuto = s => !!(s.extra && s.extra.auto);
+
 export const SEVERITY = Object.freeze({
     MUST_FIX: 'must_fix',
     INTERNAL_NOTE: 'internal_note',
@@ -529,7 +531,7 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
 
     let title;
     if (ready && summary.changes_unapplied > 0) {
-        title = 'Ready for the moderator: press Apply to finish';
+        title = 'Ready for the moderator: press Submit to finish';
     } else if (ready) {
         title = applied
             ? 'Your changes are applied and the list is ready for the moderator'
@@ -543,7 +545,7 @@ export const ReadinessTracker = ({ summary, applied, fixed }) => {
     if (ready) {
         shortTitle =
             summary.changes_unapplied > 0
-                ? 'Ready: press Apply to finish'
+                ? 'Ready: press Submit to finish'
                 : 'Ready for the moderator';
     }
 
@@ -683,7 +685,8 @@ export const Correction = ({ suggestion, canAct, busy, onDecide }) => {
     const decisionLabel = (() => {
         switch (suggestion.decision) {
             case DECISION.ACCEPTED:
-                return suggestion.applied ? 'Applied' : 'Accepted';
+                if (suggestion.applied) return 'Applied';
+                return isAuto(suggestion) ? 'Accepted (automatic)' : 'Accepted';
             case DECISION.EDITED:
                 return suggestion.applied ? 'Applied (edited)' : 'Edited';
             case DECISION.REJECTED:
@@ -1052,8 +1055,6 @@ ListFindings.propTypes = { filePass: object.isRequired };
 
 export const suggestionKey = s => `${s.kind}:${s.code}:${s.field}`;
 
-export const isAuto = s => !!(s.extra && s.extra.auto);
-
 export const visibleRows = (rows, filter) =>
     rows
         .map(row =>
@@ -1261,9 +1262,9 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
             )}
             {group.auto && (
                 <div style={styles.muted}>
-                    Applied automatically. Keep all originals undoes it for
-                    every row of this type; use a row&rsquo;s own buttons for
-                    one.
+                    Will be applied automatically when you submit. Keep all
+                    originals turns it off for every row of this type; use a
+                    row&rsquo;s own buttons for one.
                 </div>
             )}
             <div style={styles.decisionText}>{groupStatus(group)}</div>
@@ -1620,10 +1621,10 @@ export const GroupTabs = ({
                 <div style={autoStyles.box} data-tour="automatic">
                     <div style={autoStyles.head}>
                         <span>
-                            <b>{plural(autoFixes, 'fix', 'fixes')}</b> made
-                            automatically on {plural(autoRows, 'row')}:
-                            formatting that needs no judgment, already applied.
-                            You can undo any of them by type.
+                            <b>{plural(autoFixes, 'fix', 'fixes')}</b> will be
+                            made automatically on {plural(autoRows, 'row')} when
+                            you submit: formatting that needs no judgment. You
+                            can turn any of them off by type.
                         </span>
                         <Button
                             size="small"

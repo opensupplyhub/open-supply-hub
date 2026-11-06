@@ -7,7 +7,8 @@ import {
     makeFacilityListCleaningURL,
     makeFacilityListCleaningStartURL,
     makeFacilityListCleaningDecisionsURL,
-    makeFacilityListCleaningApplyURL,
+    makeFacilityListCleaningSubmitURL,
+    makeFacilityListCleaningEventsURL,
 } from '../util/util';
 
 export const startFetchFacilityListCleaning = createAction(
@@ -108,12 +109,16 @@ export function submitFacilityListCleaningDecisions(listID, decisions) {
     };
 }
 
-export function applyFacilityListCleaning(listID) {
+// v3: the one submission. Applies every accepted change (or none, with
+// asUploaded) and closes the review window for good.
+export function applyFacilityListCleaning(listID, { asUploaded = false } = {}) {
     return dispatch => {
         dispatch(startApplyFacilityListCleaning());
 
         return apiRequest
-            .post(makeFacilityListCleaningApplyURL(listID), {})
+            .post(makeFacilityListCleaningSubmitURL(listID), {
+                as_uploaded: asUploaded,
+            })
             .then(({ data }) =>
                 dispatch(completeApplyFacilityListCleaning(data)),
             )
@@ -121,7 +126,7 @@ export function applyFacilityListCleaning(listID) {
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
-                        'An error prevented applying the changes to your list',
+                        'An error prevented submitting your list',
                         failApplyFacilityListCleaning,
                     ),
                 ),
@@ -148,4 +153,30 @@ export function submitFacilityListCleaningGroupDecisions(listID, groups) {
                 ),
             );
     };
+}
+
+// Metrics for "submit versus click away": fire-and-forget, never shown.
+export function recordFacilityListCleaningEvent(listID, kind, meta = {}) {
+    return apiRequest
+        .post(makeFacilityListCleaningEventsURL(listID), { kind, meta })
+        .catch(() => null);
+}
+
+// Same, for the moment the tab is closing: fetch with keepalive survives
+// page unload where an XHR would be cancelled.
+export function beaconFacilityListCleaningEvent(listID, kind, meta = {}) {
+    try {
+        fetch(makeFacilityListCleaningEventsURL(listID), {
+            method: 'POST',
+            keepalive: true,
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-OAR-Client-Key': window.ENVIRONMENT.OAR_CLIENT_KEY,
+            },
+            body: JSON.stringify({ kind, meta }),
+        });
+    } catch (e) {
+        // best effort only
+    }
 }

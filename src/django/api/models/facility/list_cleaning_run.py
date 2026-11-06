@@ -78,11 +78,74 @@ class ListCleaningRun(models.Model):
         blank=True,
         help_text='When accepted corrections were last applied to the list.')
 
+    # v3: the contributor submits once. The review window opens with the
+    # run and closes either when they submit or when it lapses; after
+    # that nothing on the list changes and moderation can begin.
+    SUBMITTED = 'submitted'
+    LAPSED = 'lapsed'
+    CLOSED_REASON_CHOICES = (
+        (SUBMITTED, 'Contributor submitted'),
+        (LAPSED, 'Window lapsed, list as uploaded'),
+    )
+    review_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Deadline for the contributor to submit changes.')
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closed_reason = models.CharField(
+        max_length=20,
+        choices=CLOSED_REASON_CHOICES,
+        blank=True,
+        default='')
+
     class Meta:
         ordering = ['-created_at']
 
     def __str__(self):
         return f'ListCleaningRun {self.id} for list {self.facility_list_id}'
+
+    @property
+    def is_closed(self):
+        return self.closed_at is not None
+
+
+class ListCleaningEvent(models.Model):
+    """
+    What the contributor did with the review screen, for the question
+    "how many people submit through it versus click away": one row per
+    moment that matters, with whatever numbers describe it.
+    """
+    OPENED = 'opened'          # review screen shown after upload
+    RESUMED = 'resumed'        # reopened from the list page
+    LEFT = 'left'              # closed the screen without submitting
+    SUBMITTED = 'submitted'    # submitted (meta.as_uploaded says how)
+    LAPSED = 'lapsed'          # window passed with no submission
+    KIND_CHOICES = (
+        (OPENED, OPENED),
+        (RESUMED, RESUMED),
+        (LEFT, LEFT),
+        (SUBMITTED, SUBMITTED),
+        (LAPSED, LAPSED),
+    )
+    CLIENT_KINDS = (OPENED, RESUMED, LEFT)
+
+    run = models.ForeignKey(
+        ListCleaningRun,
+        on_delete=models.CASCADE,
+        related_name='events')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    user = models.ForeignKey(
+        'User',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+')
+    meta = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
 
 
 class ListCleaningSuggestion(models.Model):

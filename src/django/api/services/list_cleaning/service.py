@@ -10,16 +10,23 @@ ingest_result  -> turn the pipeline's aggregated {file_pass, records, usage}
                   into ListCleaningSuggestion rows.
 record_decisions -> log a contributor's accept / reject / edit / remove
                   per suggestion, or per error type across the list.
-apply_run      -> write accepted corrections and edits onto the PENDING
-                  list's items in place, and drop rows the contributor
-                  removed. The uploaded file and each suggestion's
-                  original_value keep the original.
+submit_run     -> the one submission (v3): apply every accepted
+                  correction, edit and removal onto the PENDING list's
+                  items and close the run. Nothing touches the list
+                  before this, not even the automatic fixes.
+sweep_run      -> close a run whose review window has lapsed; the list
+                  then goes through exactly as uploaded.
+record_event   -> one row per moment that matters on the review screen
+                  (opened, resumed, left, submitted, lapsed), for the
+                  "submit versus click away" numbers in metrics_summary.
 build_fixed_csv -> the list as it now stands, removed rows last with a
                   tag saying why.
 """
 import csv
 import io
 import logging
+import statistics
+from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
@@ -28,6 +35,7 @@ from waffle import switch_is_active
 from api.helpers.helpers import clean
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.list_cleaning_run import (
+    ListCleaningEvent,
     ListCleaningRun,
     ListCleaningSuggestion,
 )
@@ -72,7 +80,10 @@ def start_run(facility_list, runner_name=None, force=False):
 
     runner_name = runner_name or settings.LIST_CLEANING_RUNNER
     run = ListCleaningRun.objects.create(
-        facility_list=facility_list, runner=runner_name)
+        facility_list=facility_list,
+        runner=runner_name,
+        review_until=timezone.now() + timedelta(
+            minutes=settings.LIST_CLEANING_REVIEW_MINUTES))
     payload = build_payload(facility_list)
     if not payload['rows']:
         _fail(run, 'The list has no parsed rows to check.')
@@ -229,18 +240,179 @@ def ingest_result(run, result):
     run.completed_at = now
     run.save()
 
-    # Silent formatting fixes and automatic removals go onto the list
-    # straight away, so a contributor who does nothing still gets them.
-    auto_ids = {
-        s.id for s in run.suggestions.all() if (s.extra or {}).get('auto')}
-    if auto_ids:
-        apply_run(run, only=auto_ids)
-
+    # v3: nothing goes onto the list until the contributor submits, the
+    # automatic fixes included. They are pre-accepted, so a submission
+    # that touches nothing else still carries them; a lapsed window
+    # sends the list exactly as uploaded.
+    auto = len([s for s in suggestions if (s.extra or {}).get('auto')])
     log.info(
         f'[List Cleaning] Run {run.id} complete: {len(suggestions)} '
-        f'suggestions ({len(auto_ids)} applied automatically) for list '
-        f'{run.facility_list_id}')
+        f'suggestions ({auto} pre-accepted) for list '
+        f'{run.facility_list_id}; review open until {run.review_until}')
     return run
+
+
+# ---- the review window ------------------------------------------------
+
+def window_open(run):
+    return (run.closed_at is None and run.review_until is not None
+            and timezone.now() < run.review_until)
+
+
+def seconds_left(run):
+    if not window_open(run):
+        return 0
+    return max(0, int((run.review_until - timezone.now()).total_seconds()))
+
+
+def record_event(run, kind, user=None, meta=None):
+    return ListCleaningEvent.objects.create(
+        run=run, kind=kind, user=user, meta=meta or {})
+
+
+def _close(run, reason, now):
+    run.closed_at = now
+    run.closed_reason = reason
+    run.save(update_fields=['closed_at', 'closed_reason'])
+
+
+def sweep_run(run):
+    """Close the run if its window has lapsed. Safe to call any time."""
+    if run is None or run.closed_at is not None or run.review_until is None:
+        return run
+    now = timezone.now()
+    if now < run.review_until:
+        return run
+    _close(run, ListCleaningRun.LAPSED, now)
+    record_event(run, ListCleaningEvent.LAPSED, meta={
+        'opened': run.events.filter(
+            kind__in=(ListCleaningEvent.OPENED,
+                      ListCleaningEvent.RESUMED)).exists(),
+    })
+    log.info(f'[List Cleaning] Run {run.id} lapsed; list '
+             f'{run.facility_list_id} goes through as uploaded')
+    return run
+
+
+def sweep_lapsed():
+    """Close every run whose window has passed (for a scheduler)."""
+    closed = 0
+    for run in ListCleaningRun.objects.filter(
+            closed_at__isnull=True, review_until__lt=timezone.now()):
+        sweep_run(run)
+        closed += 1
+    return closed
+
+
+def _ensure_open(run):
+    sweep_run(run)
+    if run.closed_at is not None:
+        if run.closed_reason == ListCleaningRun.SUBMITTED:
+            raise DecisionError(
+                'This list has already been submitted; no further '
+                'changes are possible.')
+        raise DecisionError(
+            'The review window for this list has closed; it went '
+            'through as uploaded.')
+    if run.review_until is None:
+        raise DecisionError('This run has no review window.')
+
+
+@transaction.atomic
+def submit_run(run, user, as_uploaded=False):
+    """
+    The contributor's one submission. Applies every accepted or edited
+    suggestion (automatic fixes included) unless `as_uploaded`, then
+    closes the run so nothing on the list changes again.
+    """
+    _ensure_open(run)
+    now = timezone.now()
+    if as_uploaded:
+        counts = {'applied': 0, 'reverted': 0}
+    else:
+        counts = apply_run(run)
+    run.submitted_at = now
+    run.save(update_fields=['submitted_at'])
+    _close(run, ListCleaningRun.SUBMITTED, now)
+    decided = run.suggestions.exclude(
+        decision=ListCleaningSuggestion.PENDING).filter(
+        extra__by_row=True).count()
+    record_event(run, ListCleaningEvent.SUBMITTED, user=user, meta={
+        'as_uploaded': as_uploaded,
+        'applied': counts['applied'],
+        'rows_removed': run.facility_list.source.facilitylistitem_set
+        .filter(status__in=REMOVED_STATUSES).count(),
+        'row_decisions': decided,
+        'seconds_after_upload': int(
+            (now - run.created_at).total_seconds()),
+    })
+    log.info(f'[List Cleaning] Run {run.id} submitted '
+             f'({"as uploaded" if as_uploaded else counts})')
+    return counts
+
+
+def metrics_summary():
+    """
+    Submit versus click away, across every closed run. Counts runs, not
+    events: a contributor who opens, leaves, resumes and submits is one
+    "submitted" run that was also "left once".
+    """
+    E = ListCleaningEvent
+    runs = ListCleaningRun.objects.filter(
+        status=ListCleaningRun.COMPLETE).prefetch_related('events')
+    out = {
+        'runs_complete': 0,
+        'runs_open': 0,
+        'review_opened': 0,
+        'submitted_with_changes': 0,
+        'submitted_as_uploaded': 0,
+        'lapsed_after_opening': 0,
+        'lapsed_never_opened': 0,
+        'left_at_least_once': 0,
+        'resumed_at_least_once': 0,
+        'median_minutes_to_submit': None,
+        'median_changes_applied': None,
+    }
+    minutes, applied = [], []
+    for run in runs:
+        out['runs_complete'] += 1
+        kinds = [e.kind for e in run.events.all()]
+        opened = E.OPENED in kinds or E.RESUMED in kinds
+        if opened:
+            out['review_opened'] += 1
+        if E.LEFT in kinds:
+            out['left_at_least_once'] += 1
+        if E.RESUMED in kinds:
+            out['resumed_at_least_once'] += 1
+        if run.closed_at is None:
+            out['runs_open'] += 1
+            continue
+        if run.closed_reason == ListCleaningRun.LAPSED:
+            key = ('lapsed_after_opening' if opened
+                   else 'lapsed_never_opened')
+            out[key] += 1
+            continue
+        submitted = next(
+            (e for e in run.events.all() if e.kind == E.SUBMITTED), None)
+        meta = submitted.meta if submitted else {}
+        if meta.get('as_uploaded'):
+            out['submitted_as_uploaded'] += 1
+        else:
+            out['submitted_with_changes'] += 1
+            applied.append(meta.get('applied', 0))
+        if 'seconds_after_upload' in meta:
+            minutes.append(meta['seconds_after_upload'] / 60)
+    if minutes:
+        out['median_minutes_to_submit'] = round(statistics.median(minutes), 1)
+    if applied:
+        out['median_changes_applied'] = statistics.median(applied)
+    decided = (out['submitted_with_changes'] + out['submitted_as_uploaded']
+               + out['lapsed_after_opening'] + out['lapsed_never_opened'])
+    out['submit_rate'] = (
+        round((out['submitted_with_changes']
+               + out['submitted_as_uploaded']) / decided, 3)
+        if decided else None)
+    return out
 
 
 class DecisionError(ValueError):
@@ -293,6 +465,7 @@ def record_decisions(run, decisions, user):
                  EDITED|REMOVED|PENDING, 'value': <text, EDITED only>}]
     Each entry is one logged decision on one row and one code.
     """
+    _ensure_open(run)
     allowed = {c for c, _ in ListCleaningSuggestion.DECISION_CHOICES}
     by_id = {s.id: s for s in run.suggestions.all()}
     now = timezone.now()
@@ -329,6 +502,7 @@ def record_group_decisions(run, groups, user):
     entry puts those rows back to undecided (or back to the automatic
     fix, for an auto-applied type) so the group buttons cover them again.
     """
+    _ensure_open(run)
     allowed = {c for c, _ in ListCleaningSuggestion.DECISION_CHOICES}
     allowed.discard(ListCleaningSuggestion.EDITED)  # values differ per row
     by_key = {}

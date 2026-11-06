@@ -101,6 +101,10 @@ LIST_CLEANING_RUNNER = os.getenv(
 LIST_CLEANING_STATE_MACHINE_ARN = os.getenv(
     'LIST_CLEANING_STATE_MACHINE_ARN', '')
 LIST_CLEANING_AWS_REGION = os.getenv('LIST_CLEANING_AWS_REGION', 'us-east-1')
+# How long after upload a contributor may submit changes from the review
+# screen before the list goes through as uploaded.
+LIST_CLEANING_REVIEW_MINUTES = int(
+    os.getenv('LIST_CLEANING_REVIEW_MINUTES', '60'))
 
 BATCH_JOB_QUEUE_NAME = os.getenv('BATCH_JOB_QUEUE_NAME')
 if (

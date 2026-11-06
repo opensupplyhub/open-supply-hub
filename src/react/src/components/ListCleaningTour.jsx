@@ -30,11 +30,11 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
     }),
     Object.freeze({
         anchor: 'automatic',
-        title: 'Fixed for you already',
+        title: 'Fixed for you',
         text:
             'Formatting that needs no judgment, like country names and ' +
-            'worker counts, is already applied. Open this box to see each ' +
-            'type and undo it if we got one wrong.',
+            'worker counts, is ready to go on when you submit. Open this ' +
+            'box to see each type and turn it off if we got one wrong.',
     }),
     Object.freeze({
         anchor: 'chips',
@@ -54,12 +54,12 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
     }),
     Object.freeze({
         anchor: 'apply',
-        title: 'Apply when you are done',
+        title: 'Submit when you are done',
         text:
-            'One click applies every decision you made here, and you can ' +
-            'download the fixed list with removed rows tagged at the end. ' +
-            'Applying makes approval more likely, but a moderator reviews ' +
-            'the list either way.',
+            'One click submits the list with every decision you made ' +
+            'here, and you can download the fixed list first. This is ' +
+            'the one submission: after it, or once the hour is up, ' +
+            'nothing changes and a moderator takes over.',
     }),
 ]);
 

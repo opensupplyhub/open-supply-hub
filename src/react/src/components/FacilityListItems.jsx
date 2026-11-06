@@ -18,7 +18,7 @@ import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
 import ListUploadErrors from './ListUploadErrors';
-import FacilityListCleaningPanel from './FacilityListCleaningPanel';
+import ListCleaningStatusNote from './ListCleaningStatusNote';
 import RequireAuthNotice from './RequireAuthNotice';
 
 import {
@@ -39,7 +39,6 @@ import {
     listsRoute,
     facilityListItemsRoute,
     facilityListItemStatusChoicesEnum,
-    facilityListStatusChoicesEnum,
     dashboardListsRoute,
     matchResponsibilityEnum,
 } from '../util/constants';
@@ -344,16 +343,12 @@ const FacilityListItems = ({
                 {awaitingModerationMessage}
             </div>
 
-            <FacilityListCleaningPanel
+            <ListCleaningStatusNote
                 listID={list.id}
+                isListOwner={isListOwner}
                 isAdminUser={isAdminUser}
-                canAct={
-                    list.status === facilityListStatusChoicesEnum.PENDING &&
-                    (isListOwner || isAdminUser)
-                }
-                onApplied={() => {
-                    // The rows below reflect the applied changes straight
-                    // away; the contributor should not have to reload.
+                onSubmitted={() => {
+                    // The rows below reflect the submission straight away.
                     fetchList();
                     fetchListItems();
                 }}

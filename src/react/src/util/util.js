@@ -188,6 +188,10 @@ export const makeFacilityListCleaningStartURL = listID =>
     `/api/facility-lists/${listID}/cleaning/start/`;
 export const makeFacilityListCleaningDecisionsURL = listID =>
     `/api/facility-lists/${listID}/cleaning/decisions/`;
+export const makeFacilityListCleaningSubmitURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/submit/`;
+export const makeFacilityListCleaningEventsURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/events/`;
 export const makeFacilityListCleaningApplyURL = listID =>
     `/api/facility-lists/${listID}/cleaning/apply/`;
 export const makeFacilityListCleaningDownloadURL = listID =>
