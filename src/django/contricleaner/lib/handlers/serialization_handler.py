@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Iterable, List, Dict
 
 from contricleaner.lib.dto.list_dto import ListDTO
 from contricleaner.lib.dto.row_dto import RowDTO
@@ -38,10 +38,12 @@ class SerializationHandler(ListRowHandler):
     def __init__(
             self,
             sector_cache: CacheInterface,
-            os_id_lookup: LookupInterface
+            os_id_lookup: LookupInterface,
+            skip_length_check_fields: Iterable[str] = ()
     ) -> None:
         self.__sector_cache = sector_cache
         self.__os_id_lookup = os_id_lookup
+        self.__skip_length_check_fields = skip_length_check_fields
 
     def handle(self, rows: List[Dict]) -> ListDTO:
         serialized_rows = []
@@ -73,7 +75,7 @@ class SerializationHandler(ListRowHandler):
             RowCleanFieldSerializer('address', 'clean_address'),
             RowSectorSerializer(self.__sector_cache, split_pattern),
             RowCountrySerializer(),
-            RowRequiredFieldsSerializer(),
+            RowRequiredFieldsSerializer(self.__skip_length_check_fields),
             RowFacilityTypeSerializer(split_pattern),
             RowCoordinatesSerializer(),
             RowAdditionalIdsSerializer(),
