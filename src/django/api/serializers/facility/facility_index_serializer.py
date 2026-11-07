@@ -12,10 +12,12 @@ from rest_framework.serializers import (
 
 from countries.lib.countries import COUNTRY_NAMES
 from ...constants import MASKED_CONTRIBUTOR_LABEL
-from ...helpers.data_center import PROVENANCE_FIELDS
+from ...helpers.provenance import (
+    PROVENANCE_CONTEXT_KEY,
+    build_extended_field_provenance_map,
+)
 from ...models import Contributor
 from ...models.facility.facility_index import FacilityIndex
-from ...models.facility.facility_list_item import FacilityListItem
 from ...models.embed_config import EmbedConfig
 from ...models.embed_field import EmbedField
 from ...models.extended_field import ExtendedField
@@ -74,9 +76,10 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
     has_approved_claim = SerializerMethodField()
     sector = SerializerMethodField()
     # Whether extended-field entries should carry the per-row provenance of
-    # the FacilityListItem they came from. Enabled only on the
-    # single-facility details serializer to avoid extra queries on list
-    # endpoints.
+    # the FacilityListItem they came from, loaded per facility. Enabled only
+    # on the single-facility details serializer; the facilities list instead
+    # prefetches it once per page into the context (see
+    # `_get_extended_field_provenance_map`).
     include_extended_field_provenance = False
 
     class Meta:
@@ -236,36 +239,23 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             except EmbedConfig.DoesNotExist:
                 return fields
 
-    @staticmethod
-    def _build_extended_field_provenance_map(fields):
+    def _get_extended_field_provenance_map(self, fields):
         """
-        Bulk-load per-row provenance (see PROVENANCE_FIELDS) for the
-        FacilityListItems referenced by the given extended-field entries.
-        Returns {facility_list_item_id: {field: value}} containing only
-        items that carry at least one non-empty provenance value.
+        Return the `{facility_list_item_id: provenance}` map used to fill
+        each extended-field entry's `provenance`.
+
+        A map prefetched by the caller for a whole page (the facilities list
+        with `detail_provenance_data`, OSDEV-3751) takes precedence, so a
+        page costs one query instead of one per facility. Otherwise it is
+        loaded per facility when `include_extended_field_provenance` is set
+        (the details endpoint), and left empty when it is not.
         """
-        list_item_ids = {
-            field.get('facility_list_item_id')
-            for field in fields
-            if field.get('facility_list_item_id') is not None
-        }
-        if not list_item_ids:
-            return {}
-
-        provenance_map = {}
-        rows = FacilityListItem.objects.filter(
-            id__in=list_item_ids
-        ).values('id', *PROVENANCE_FIELDS)
-        for row in rows:
-            provenance = {
-                field: row[field]
-                for field in PROVENANCE_FIELDS
-                if row[field] not in (None, '')
-            }
-            if provenance:
-                provenance_map[row['id']] = provenance
-
-        return provenance_map
+        prefetched = (self.context or {}).get(PROVENANCE_CONTEXT_KEY)
+        if prefetched is not None:
+            return prefetched
+        if self.include_extended_field_provenance:
+            return build_extended_field_provenance_map(fields)
+        return {}
 
     @with_masked_contributors
     def get_extended_fields(self, facility, masked):
@@ -287,8 +277,7 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             (facility.approved_claim or {}).get('contributor_id')
         )
         provenance_by_list_item_id = (
-            self._build_extended_field_provenance_map(fields)
-            if self.include_extended_field_provenance else {}
+            self._get_extended_field_provenance_map(fields)
         )
 
         grouped_data = defaultdict(list)

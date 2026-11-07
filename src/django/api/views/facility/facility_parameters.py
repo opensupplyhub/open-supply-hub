@@ -221,6 +221,19 @@ facilities_list_parameters = [
             'significantly slower to return.'),
     ),
     Parameter(
+        'detail_provenance_data',
+        IN_QUERY,
+        type=TYPE_BOOLEAN,
+        required=False,
+        description=(
+            'Set this to true, together with detail=true, to fill the '
+            '`provenance` of each extended field with the source details '
+            'of the contribution it came from (source name, link and type, '
+            'date of source, notes, data collection methodology, AI usage '
+            'notes and the date it was added). Returns a 400 error when '
+            'used without detail=true.'),
+    ),
+    Parameter(
         'number_of_public_contributors',
         IN_QUERY,
         type=TYPE_BOOLEAN,
