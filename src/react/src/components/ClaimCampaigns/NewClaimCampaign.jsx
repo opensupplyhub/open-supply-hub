@@ -288,11 +288,12 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     color="primary"
                                 />
                             }
-                            label="From one of my lists"
+                            label="From my lists or API uploads"
                             classes={{ label: classes.listName }}
                         />
                         <Typography className={classes.sourceHint}>
-                            Invite suppliers you&apos;ve already uploaded.
+                            Invite suppliers you&apos;ve already added to OS
+                            Hub, by uploading a list or through the API.
                         </Typography>
                         <FormControlLabel
                             control={
@@ -315,20 +316,20 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                 {source === SOURCES.list && (
                     <>
                         <Typography className={classes.stepHeading}>
-                            Choose a list
+                            Choose a source
                         </Typography>
                         {lists.length === 0 ? (
                             <Paper className={classes.panel}>
                                 <Typography>
-                                    You have no lists yet.{' '}
+                                    You haven&apos;t added any suppliers yet.{' '}
                                     <Link to={contributeRoute}>
                                         Upload a list
                                     </Link>{' '}
-                                    first, or choose suppliers from a search
-                                    instead. If you don&apos;t want OS Hub to
-                                    show you as connected to these suppliers,
-                                    ask the OS Hub team to make the list
-                                    private.
+                                    or add locations through the API first, or
+                                    choose suppliers from a search instead. If
+                                    you don&apos;t want OS Hub to show you as
+                                    connected to these suppliers, ask the OS Hub
+                                    team to make the list private.
                                 </Typography>
                             </Paper>
                         ) : (
@@ -388,9 +389,9 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     </div>
                                 ))}
                                 <Typography className={classes.fine}>
-                                    Inviting suppliers from a private list
-                                    doesn&apos;t publish your connection to
-                                    them.
+                                    Inviting suppliers from a private list or
+                                    private API uploads doesn&apos;t publish
+                                    your connection to them.
                                     {lists.some(list => list.pending) &&
                                         ' A pending list is still being reviewed or matched by OS Hub. Its suppliers appear here once they are matched.'}
                                     {lists.some(

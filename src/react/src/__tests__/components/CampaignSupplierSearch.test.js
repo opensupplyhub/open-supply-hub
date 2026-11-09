@@ -113,7 +113,7 @@ describe('Choosing campaign suppliers from a search', () => {
             },
         );
 
-        expect(await findByLabelText('From one of my lists')).toBeChecked();
+        expect(await findByLabelText('From my lists or API uploads')).toBeChecked();
         expect(await findByLabelText('From a search of OS Hub')).not.toBeChecked();
     });
 

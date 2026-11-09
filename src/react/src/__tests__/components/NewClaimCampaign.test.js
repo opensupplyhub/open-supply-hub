@@ -378,3 +378,30 @@ test('API locations waiting for a confirmed match are counted but not choosable 
     expect(getByText(/appear here once you confirm it/)).toBeInTheDocument();
     expect(getByLabelText('Locations added through the API')).toBeDisabled();
 });
+
+test('the source wording covers API uploads as well as lists', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.get.mockImplementation(url =>
+        Promise.resolve({
+            data: url.includes('list=')
+                ? { id: 'api', suppliers: [] }
+                : [
+                      {
+                          id: 'api',
+                          name: 'Locations added through the API',
+                          kind: 'api',
+                          is_public: false,
+                          pending: false,
+                          awaiting_confirmation: 0,
+                          supplier_count: 3,
+                      },
+                  ],
+        }),
+    );
+    const { findByLabelText, getByText } = renderComponent();
+    expect(await findByLabelText('From my lists or API uploads')).toBeChecked();
+    expect(getByText('Choose a source')).toBeInTheDocument();
+    expect(
+        getByText(/from a private list or private API uploads/),
+    ).toBeInTheDocument();
+});
