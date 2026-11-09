@@ -158,7 +158,71 @@ export const claimCampaignsStyles = theme =>
         tableToolsActions: Object.freeze({
             display: 'flex',
             alignItems: 'center',
+            flexWrap: 'wrap',
             gap: '16px',
+        }),
+        modeToggle: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        modeLabel: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            marginRight: '4px',
+        }),
+        modeButton: Object.freeze({
+            minWidth: '0',
+            boxShadow: 'none',
+        }),
+        tableWrap: Object.freeze({
+            overflowX: 'auto',
+        }),
+        // Fixed layout so long facility names wrap instead of pushing the
+        // other columns right; the contact column gets the spare width.
+        supplierTable: Object.freeze({
+            tableLayout: 'fixed',
+            minWidth: '760px',
+        }),
+        colFacility: Object.freeze({ width: '28%', padding: '8px 12px' }),
+        colOsId: Object.freeze({ width: '17%', padding: '8px 12px' }),
+        colCountry: Object.freeze({ width: '9%', padding: '8px 12px' }),
+        colStatus: Object.freeze({ width: '16%', padding: '8px 12px' }),
+        colContact: Object.freeze({ width: '30%', padding: '8px 12px' }),
+        cell: Object.freeze({
+            padding: '8px 12px',
+            overflowWrap: 'anywhere',
+        }),
+        headerWithHelp: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        helpIcon: Object.freeze({
+            fontSize: '18px',
+            color: COLOURS.DARK_GREY,
+            cursor: 'help',
+        }),
+        emailInvite: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+        }),
+        emailInviteRow: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+        }),
+        emailField: Object.freeze({
+            flexGrow: 1,
+            minWidth: '0',
+        }),
+        invitedNote: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            fontSize: '13px',
+        }),
+        inviteError: Object.freeze({
+            color: COLOURS.MATERIAL_RED,
+            fontSize: '13px',
         }),
         statusClaimed: Object.freeze({
             backgroundColor: COLOURS.LIGHT_GREEN,

@@ -11,6 +11,8 @@ from waffle.testutils import override_switch
 
 from api.constants import FacilityClaimStatuses
 from api.models import (
+    ClaimCampaign,
+    ClaimCampaignSupplier,
     Contributor,
     Facility,
     FacilityClaim,
@@ -368,3 +370,93 @@ class FacilityClaimInviteTest(APITestCase):
 
         self.assertEqual(200, response.status_code, response.content)
         self.assertIsNone(FacilityClaim.objects.get().claim_invite)
+
+    # Invites sent from a claims campaign dashboard (claim_campaigns).
+
+    def make_campaign(self, contributor=None, **fields):
+        # Campaigns without a roster cover the facilities matched on the
+        # brand's lists, so link the list item to its facility.
+        list_item = self.facility.created_from
+        list_item.facility = self.facility
+        list_item.save()
+        return ClaimCampaign.objects.create(
+            contributor=contributor or self.sender,
+            name=fields.pop('name', 'Spring outreach'),
+            code=fields.pop('code', 'SPRING-26'),
+            **fields,
+        )
+
+    @override_switch('claim_campaigns', active=True)
+    def test_campaign_invite_adds_campaign_code_to_claim_link(self):
+        campaign = self.make_campaign()
+        self.login_sender()
+        response = self.send_invite(campaign='spring-26')
+
+        self.assertEqual(201, response.status_code)
+        invite = FacilityClaimInvite.objects.get()
+        self.assertEqual(campaign, invite.campaign)
+        self.assertIn(
+            f'?invite={invite.uuid}&campaign=SPRING-26',
+            mail.outbox[0].body,
+        )
+
+    @override_switch('claim_campaigns', active=True)
+    def test_campaign_invite_uses_roster_when_campaign_has_one(self):
+        campaign = self.make_campaign()
+        other_item = FacilityListItem.objects.create(
+            name='Elsewhere',
+            address='2 Example Street',
+            country_code='US',
+            sector=['Apparel'],
+            row_index=2,
+            geocoded_point=Point(0, 0),
+            status=FacilityListItem.CONFIRMED_MATCH,
+            source=self.source,
+        )
+        other = Facility.objects.create(
+            name='Elsewhere',
+            address='2 Example Street',
+            country_code='US',
+            location=Point(0, 0),
+            created_from=other_item,
+        )
+        ClaimCampaignSupplier.objects.create(campaign=campaign, facility=other)
+        self.login_sender()
+        response = self.send_invite(campaign='SPRING-26')
+
+        self.assertEqual(400, response.status_code)
+        self.assertIn('isn\'t part of this campaign', str(response.data))
+        self.assertEqual(0, FacilityClaimInvite.objects.count())
+
+    @override_switch('claim_campaigns', active=True)
+    def test_campaign_invite_rejects_another_brands_campaign(self):
+        self.make_campaign(contributor=self.claimant)
+        self.login_sender()
+        response = self.send_invite(campaign='SPRING-26')
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(0, len(mail.outbox))
+
+    @override_switch('claim_campaigns', active=True)
+    def test_campaign_invite_rejects_closed_campaign(self):
+        self.make_campaign(status=ClaimCampaign.Status.CLOSED)
+        self.login_sender()
+        response = self.send_invite(campaign='SPRING-26')
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(0, FacilityClaimInvite.objects.count())
+
+    @override_switch('claim_campaigns', active=True)
+    def test_campaign_dashboard_shows_last_invite(self):
+        self.make_campaign()
+        self.login_sender()
+        self.send_invite(campaign='SPRING-26')
+
+        response = self.client.get('/api/claim-campaigns/')
+
+        self.assertEqual(200, response.status_code)
+        [supplier] = response.data[0]['suppliers']
+        self.assertEqual(
+            'manager@factory.example',
+            supplier['last_invite']['recipient_email'],
+        )

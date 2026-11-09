@@ -3,6 +3,7 @@ import secrets
 
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
+from rest_framework.exceptions import ValidationError
 from waffle import switch_is_active
 
 from api.constants import FacilityClaimStatuses
@@ -74,6 +75,61 @@ def resolve_claim_campaign(facility, code):
     if len(campaigns) == 1:
         return campaigns[0], False
     return None, False
+
+
+def campaign_includes_facility(campaign, facility):
+    """
+    Whether the facility is one of the campaign's suppliers: on its
+    roster when it has one, otherwise (v1) on one of the contributor's
+    active lists.
+    """
+    if campaign.suppliers.exists():
+        return campaign.suppliers.filter(facility=facility).exists()
+    return FacilityListItem.objects.filter(
+        facility=facility,
+        source__contributor_id=campaign.contributor_id,
+        source__is_active=True,
+    ).exists()
+
+
+def get_campaign_for_invite(user, facility, code):
+    """
+    The sender's own active campaign with this code, for a claim invite
+    sent from the campaign dashboard. Raises a ValidationError (shown to
+    the sender) when the code isn't one of the sender's active campaigns
+    or the facility isn't one of its suppliers.
+    """
+    contributor = getattr(user, 'contributor', None)
+    campaign = None
+    if contributor is not None and switch_is_active('claim_campaigns'):
+        campaign = ClaimCampaign.objects.filter(
+            code=code.strip().upper(),
+            contributor=contributor,
+            status=ClaimCampaign.Status.ACTIVE,
+        ).first()
+    if campaign is None:
+        raise ValidationError(
+            'This campaign is closed or isn\'t one of yours.'
+        )
+    if not campaign_includes_facility(campaign, facility):
+        raise ValidationError(
+            'This production location isn\'t part of this campaign.'
+        )
+    return campaign
+
+
+def get_campaign_invites(campaign):
+    """
+    The most recent invite sent from the campaign to each supplier, as
+    {facility_id: {recipient_email, created_at}}.
+    """
+    latest = {}
+    for invite in campaign.invites.order_by('created_at'):
+        latest[invite.facility_id] = {
+            'recipient_email': invite.recipient_email,
+            'created_at': invite.created_at,
+        }
+    return latest
 
 
 def get_claim_statuses(facility_ids):

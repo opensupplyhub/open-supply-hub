@@ -132,6 +132,7 @@ from api.services.facility_claim_invite_service import (
     find_invite_for_claim,
     validate_can_invite,
 )
+from api.services.claim_campaign_service import get_campaign_for_invite
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
 
@@ -2654,6 +2655,13 @@ class FacilitiesViewSet(ListModelMixin,
         serializer.is_valid(raise_exception=True)
         recipient_email = serializer.validated_data['recipient_email']
 
+        campaign_code = serializer.validated_data['campaign']
+        campaign = (
+            get_campaign_for_invite(request.user, facility, campaign_code)
+            if campaign_code
+            else None
+        )
+
         validate_can_invite(facility, recipient_email)
 
         claim_invite = FacilityClaimInvite.objects.create(
@@ -2661,6 +2669,7 @@ class FacilitiesViewSet(ListModelMixin,
             sent_by_user=request.user,
             recipient_email=recipient_email,
             note=serializer.validated_data['note'],
+            campaign=campaign,
         )
         send_claim_invite_email(request, claim_invite)
         ClaimInviteThrottle().record_invite(request, self)

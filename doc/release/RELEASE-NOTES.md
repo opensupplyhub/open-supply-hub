@@ -20,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0266_announcement_banner.py` - Creates the `api_announcementbanner` table and seeds its single row. See [OSDEV-3723](https://opensupplyhub.atlassian.net/browse/OSDEV-3723).
 * `0267_create_claim_campaign.py` - Creates the `api_claimcampaign` table, adds a nullable `campaign` FK and a `via_link` boolean to `api_facilityclaim` (and its history table), and creates the `claim_campaigns` waffle switch (off). See [OSDEV-2967](https://opensupplyhub.atlassian.net/browse/OSDEV-2967).
 * `0268_claim_campaign_supplier_roster.py` - Creates `api_claimcampaignsupplier` (a campaign's chosen suppliers, unique per campaign and facility), limits `ClaimCampaign.code` to `[A-Z0-9-]` (validator only, no SQL), and creates the `claim_campaign_self_serve` waffle flag (superusers only) with an auth group of the same name. See [OSDEV-2966](https://opensupplyhub.atlassian.net/browse/OSDEV-2966).
+* `0269_facility_claim_invite_campaign.py` - Adds a nullable `campaign` FK (`ON DELETE SET NULL`) to `api_facilityclaiminvite`, recording the claims campaign an invite was sent from. Existing invites keep `campaign` empty. See [OSDEV-2966](https://opensupplyhub.atlassian.net/browse/OSDEV-2966).
 
 #### Schema changes
 * [OSDEV-3723](https://opensupplyhub.atlassian.net/browse/OSDEV-3723) - New `AnnouncementBanner` model: `is_active`, rich-text `content`, timestamps; a single row managed in the Django admin.

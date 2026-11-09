@@ -4,6 +4,7 @@ from api.models.facility.claim_campaign import ClaimCampaign
 from api.models.facility.facility_list_item import FacilityListItem
 from api.services.claim_campaign_service import (
     MAX_SUPPLIERS_PER_CAMPAIGN,
+    get_campaign_invites,
     get_contributor_list_sources,
     serialize_suppliers,
 )
@@ -32,6 +33,13 @@ class ClaimCampaignSerializer(serializers.ModelSerializer):
         )
 
     def get_suppliers(self, campaign):
+        invites = get_campaign_invites(campaign)
+        return [
+            {**supplier, 'last_invite': invites.get(supplier['os_id'])}
+            for supplier in self.get_campaign_suppliers(campaign)
+        ]
+
+    def get_campaign_suppliers(self, campaign):
         roster = [entry.facility for entry in campaign.suppliers.all()]
         if roster:
             return serialize_suppliers(roster)

@@ -14,20 +14,31 @@ import Select from '@material-ui/core/Select';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
+import TableFooter from '@material-ui/core/TableFooter';
 import TableHead from '@material-ui/core/TableHead';
+import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
+import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import InfoOutlined from '@material-ui/icons/InfoOutlined';
 
 import AppOverflow from '../AppOverflow';
 import RequireAuthNotice from '../RequireAuthNotice';
+import StyledTooltip from '../StyledTooltip';
 import { fetchClaimCampaigns } from '../../actions/claimCampaigns';
 import apiRequest from '../../util/apiRequest';
+import { sendClaimInvite } from '../../util/claimInvite';
 import {
+    CLAIM_INVITE,
     claimIntroRoute,
     makeClaimCampaignCandidatesURL,
     newClaimCampaignRoute,
 } from '../../util/constants';
-import { DownloadCSV, joinDataIntoCSVString } from '../../util/util';
+import {
+    convertFeatureFlagsObjectToListOfActiveFlags,
+    DownloadCSV,
+    joinDataIntoCSVString,
+} from '../../util/util';
 import COLOURS from '../../util/COLOURS';
 import { claimCampaignsStyles } from './styles';
 
@@ -45,6 +56,21 @@ const STATUS_COLORS = Object.freeze({
 
 const STATUS_ORDER = Object.freeze(['claimed', 'pending', 'unclaimed']);
 
+const ROWS_PER_PAGE_OPTIONS = Object.freeze([10, 25, 50, 100]);
+
+const INVITE_MODES = Object.freeze({
+    email: 'email',
+    link: 'link',
+});
+
+const CONTACT_COLUMN_HELP =
+    'Enter the email address of your contact at the facility and OS Hub will send them an invite to claim, or copy the link and send it yourself. Each link is unique to one facility, so make sure you send each facility its own link.';
+
+const lastInvitePropType = shape({
+    recipient_email: string.isRequired,
+    created_at: string.isRequired,
+});
+
 const campaignPropType = shape({
     id: number.isRequired,
     code: string.isRequired,
@@ -57,6 +83,7 @@ const campaignPropType = shape({
             name: string.isRequired,
             country_code: string.isRequired,
             claim_status: string.isRequired,
+            last_invite: lastInvitePropType,
         }),
     ).isRequired,
 });
@@ -127,6 +154,130 @@ SupplierStatusChip.propTypes = {
     classes: object.isRequired,
 };
 
+const InvitedNote = ({ invite, classes }) => (
+    <span className={classes.invitedNote}>
+        Invited {invite.recipient_email} ·{' '}
+        {moment(invite.created_at).format('D MMM YYYY')}
+    </span>
+);
+
+InvitedNote.propTypes = {
+    invite: lastInvitePropType.isRequired,
+    classes: object.isRequired,
+};
+
+// Sends one supplier the campaign's claim invite by email. Claimed and
+// pending suppliers can't be invited, so they get a note instead.
+const EmailInviteCell = ({ supplier, campaignCode, lastInvite, onSent, classes }) => {
+    const [email, setEmail] = useState('');
+    const [sending, setSending] = useState(false);
+    const [error, setError] = useState(null);
+
+    if (supplier.claim_status !== 'unclaimed') {
+        return (
+            <span className={classes.invitedNote}>
+                {supplier.claim_status === 'claimed'
+                    ? 'Already claimed'
+                    : 'Claim in review'}
+            </span>
+        );
+    }
+
+    const send = event => {
+        event.preventDefault();
+        setSending(true);
+        setError(null);
+        sendClaimInvite(supplier.os_id, {
+            recipientEmail: email.trim(),
+            campaign: campaignCode,
+        })
+            .then(({ data }) => {
+                onSent(supplier.os_id, {
+                    recipient_email: data.recipient_email,
+                    created_at: new Date().toISOString(),
+                });
+                setEmail('');
+            })
+            .catch(err => setError(err.message))
+            .finally(() => setSending(false));
+    };
+
+    return (
+        <form className={classes.emailInvite} onSubmit={send}>
+            <div className={classes.emailInviteRow}>
+                <TextField
+                    type="email"
+                    placeholder="contact@facility.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    disabled={sending}
+                    className={classes.emailField}
+                    inputProps={{
+                        'aria-label': `Email address for ${supplier.name}`,
+                    }}
+                    required
+                />
+                <Button
+                    type="submit"
+                    color="primary"
+                    size="small"
+                    disabled={sending || !email.trim()}
+                >
+                    {sending ? 'Sending…' : 'Send'}
+                </Button>
+            </div>
+            {error && <span className={classes.inviteError}>{error}</span>}
+            {!error && lastInvite && (
+                <InvitedNote invite={lastInvite} classes={classes} />
+            )}
+        </form>
+    );
+};
+
+EmailInviteCell.defaultProps = {
+    lastInvite: null,
+};
+
+EmailInviteCell.propTypes = {
+    supplier: shape({
+        os_id: string.isRequired,
+        name: string.isRequired,
+        claim_status: string.isRequired,
+    }).isRequired,
+    campaignCode: string.isRequired,
+    lastInvite: lastInvitePropType,
+    onSent: func.isRequired,
+    classes: object.isRequired,
+};
+
+const InviteModeToggle = ({ mode, onChange, classes }) => (
+    <div className={classes.modeToggle} role="group" aria-label="Invite by">
+        <span className={classes.modeLabel}>Invite by</span>
+        {[
+            [INVITE_MODES.email, 'Email'],
+            [INVITE_MODES.link, 'Copy link'],
+        ].map(([value, label]) => (
+            <Button
+                key={value}
+                size="small"
+                color="primary"
+                variant={mode === value ? 'contained' : 'outlined'}
+                aria-pressed={mode === value}
+                onClick={() => onChange(value)}
+                className={classes.modeButton}
+            >
+                {label}
+            </Button>
+        ))}
+    </div>
+);
+
+InviteModeToggle.propTypes = {
+    mode: string.isRequired,
+    onChange: func.isRequired,
+    classes: object.isRequired,
+};
+
 const KpiTile = ({ value, label, status, classes }) => (
     <div className={classes.kpiTile}>
         <span className={classes.kpiValue}>{value}</span>
@@ -148,8 +299,17 @@ KpiTile.propTypes = {
     classes: object.isRequired,
 };
 
-const CampaignCard = ({ campaign, classes }) => {
+const CampaignCard = ({ campaign, canEmail, classes }) => {
     const [statusFilter, setStatusFilter] = useState('ALL');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(25);
+    const [inviteMode, setInviteMode] = useState(
+        canEmail ? INVITE_MODES.email : INVITE_MODES.link,
+    );
+    // Invites sent from this page since it loaded, by OS ID.
+    const [sentInvites, setSentInvites] = useState({});
+    const recordSent = (osID, invite) =>
+        setSentInvites(current => ({ ...current, [osID]: invite }));
 
     const counts = { claimed: 0, pending: 0, unclaimed: 0 };
     campaign.suppliers.forEach(s => {
@@ -164,6 +324,11 @@ const CampaignCard = ({ campaign, classes }) => {
         statusFilter === 'ALL'
             ? campaign.suppliers
             : campaign.suppliers.filter(s => s.claim_status === statusFilter);
+    const pageSuppliers = suppliers.slice(
+        page * rowsPerPage,
+        page * rowsPerPage + rowsPerPage,
+    );
+    const showEmail = canEmail && inviteMode === INVITE_MODES.email;
 
     return (
         <Paper className={classes.campaignCard}>
@@ -248,9 +413,19 @@ const CampaignCard = ({ campaign, classes }) => {
             <div className={classes.tableTools}>
                 <Typography variant="subheading">Suppliers</Typography>
                 <div className={classes.tableToolsActions}>
+                    {canEmail && (
+                        <InviteModeToggle
+                            mode={inviteMode}
+                            onChange={setInviteMode}
+                            classes={classes}
+                        />
+                    )}
                     <Select
                         value={statusFilter}
-                        onChange={e => setStatusFilter(e.target.value)}
+                        onChange={e => {
+                            setStatusFilter(e.target.value);
+                            setPage(0);
+                        }}
                     >
                         <MenuItem value="ALL">All statuses</MenuItem>
                         <MenuItem value="claimed">Claimed</MenuItem>
@@ -267,48 +442,115 @@ const CampaignCard = ({ campaign, classes }) => {
                 </div>
             </div>
 
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Facility</TableCell>
-                        <TableCell>OS ID</TableCell>
-                        <TableCell>Country</TableCell>
-                        <TableCell>Claim status</TableCell>
-                        <TableCell>Unique claim link</TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {suppliers.map(supplier => (
-                        <TableRow key={supplier.os_id}>
-                            <TableCell>{supplier.name}</TableCell>
-                            <TableCell>{supplier.os_id}</TableCell>
-                            <TableCell>{supplier.country_code}</TableCell>
-                            <TableCell>
-                                <SupplierStatusChip
-                                    status={supplier.claim_status}
-                                    classes={classes}
-                                />
+            <div className={classes.tableWrap}>
+                <Table className={classes.supplierTable}>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell className={classes.colFacility}>
+                                Facility
                             </TableCell>
-                            <TableCell>
-                                <CopyToClipboard
-                                    text={makeCampaignClaimLink(
-                                        supplier.os_id,
-                                        campaign.code,
-                                    )}
-                                >
-                                    <Button color="primary">Copy link</Button>
-                                </CopyToClipboard>
+                            <TableCell className={classes.colOsId}>
+                                OS ID
+                            </TableCell>
+                            <TableCell className={classes.colCountry}>
+                                Country
+                            </TableCell>
+                            <TableCell className={classes.colStatus}>
+                                Claim status
+                            </TableCell>
+                            <TableCell className={classes.colContact}>
+                                <span className={classes.headerWithHelp}>
+                                    {showEmail
+                                        ? 'Contact email'
+                                        : 'Unique claim link'}
+                                    <StyledTooltip
+                                        title={CONTACT_COLUMN_HELP}
+                                        placement="top"
+                                    >
+                                        <InfoOutlined
+                                            className={classes.helpIcon}
+                                            aria-label={CONTACT_COLUMN_HELP}
+                                            tabIndex={0}
+                                        />
+                                    </StyledTooltip>
+                                </span>
                             </TableCell>
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHead>
+                    <TableBody>
+                        {pageSuppliers.map(supplier => (
+                            <TableRow key={supplier.os_id}>
+                                <TableCell className={classes.cell}>
+                                    {supplier.name}
+                                </TableCell>
+                                <TableCell className={classes.cell}>
+                                    {supplier.os_id}
+                                </TableCell>
+                                <TableCell className={classes.cell}>
+                                    {supplier.country_code}
+                                </TableCell>
+                                <TableCell className={classes.cell}>
+                                    <SupplierStatusChip
+                                        status={supplier.claim_status}
+                                        classes={classes}
+                                    />
+                                </TableCell>
+                                <TableCell className={classes.cell}>
+                                    {showEmail ? (
+                                        <EmailInviteCell
+                                            supplier={supplier}
+                                            campaignCode={campaign.code}
+                                            lastInvite={
+                                                sentInvites[supplier.os_id] ||
+                                                supplier.last_invite
+                                            }
+                                            onSent={recordSent}
+                                            classes={classes}
+                                        />
+                                    ) : (
+                                        <CopyToClipboard
+                                            text={makeCampaignClaimLink(
+                                                supplier.os_id,
+                                                campaign.code,
+                                            )}
+                                        >
+                                            <Button color="primary">
+                                                Copy link
+                                            </Button>
+                                        </CopyToClipboard>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                    {suppliers.length > ROWS_PER_PAGE_OPTIONS[0] && (
+                        <TableFooter>
+                            <TableRow>
+                                <TablePagination
+                                    count={suppliers.length}
+                                    page={page}
+                                    rowsPerPage={rowsPerPage}
+                                    rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+                                    onChangePage={(_, newPage) =>
+                                        setPage(newPage)
+                                    }
+                                    onChangeRowsPerPage={e => {
+                                        setRowsPerPage(Number(e.target.value));
+                                        setPage(0);
+                                    }}
+                                />
+                            </TableRow>
+                        </TableFooter>
+                    )}
+                </Table>
+            </div>
         </Paper>
     );
 };
 
 CampaignCard.propTypes = {
     campaign: campaignPropType.isRequired,
+    canEmail: bool.isRequired,
     classes: object.isRequired,
 };
 
@@ -320,6 +562,7 @@ const ClaimCampaigns = ({
     error,
     fetchCampaigns,
     location,
+    canEmail,
 }) => {
     // Brands enabled for self-serve can reach the candidates endpoint;
     // everyone else gets a 404 and sees no "New campaign" button.
@@ -403,8 +646,9 @@ const ClaimCampaigns = ({
                             Campaign <strong>{newCampaign.name}</strong> created
                             with {newCampaign.suppliers.length} supplier
                             {newCampaign.suppliers.length === 1 ? '' : 's'}.
-                            Copy each claim link below, or download the CSV to
-                            send them from your own email.
+                            {canEmail
+                                ? ' Enter a contact email for each supplier below and we\'ll send them an invite, or copy their links or download the CSV to send them yourself.'
+                                : ' Copy each claim link below, or download the CSV to send them from your own email.'}
                         </Typography>
                     </Paper>
                 )}
@@ -420,6 +664,7 @@ const ClaimCampaigns = ({
                         <CampaignCard
                             key={campaign.id}
                             campaign={campaign}
+                            canEmail={canEmail}
                             classes={classes}
                         />
                     ))
@@ -443,6 +688,7 @@ ClaimCampaigns.propTypes = {
     error: arrayOf(string),
     fetchCampaigns: func.isRequired,
     location: shape({ search: string }),
+    canEmail: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -450,8 +696,12 @@ const mapStateToProps = ({
         user: { user },
     },
     claimCampaigns: { fetching, data, error },
+    featureFlags: { flags },
 }) => ({
     userHasSignedIn: !user.isAnon,
+    canEmail: convertFeatureFlagsObjectToListOfActiveFlags(flags).includes(
+        CLAIM_INVITE,
+    ),
     fetching,
     campaigns: data,
     error,

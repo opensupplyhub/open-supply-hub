@@ -12,6 +12,7 @@ jest.mock('../../util/apiRequest', () => ({
     __esModule: true,
     default: {
         get: jest.fn(),
+        post: jest.fn(),
     },
 }));
 
@@ -49,12 +50,20 @@ const mockCampaigns = [
     },
 ];
 
-const renderComponent = (userHasSignedIn = true, props = {}) => {
+const renderComponent = (
+    userHasSignedIn = true,
+    props = {},
+    { claimInvite = false } = {},
+) => {
     const preloadedState = {
         auth: {
             user: {
                 user: { isAnon: !userHasSignedIn },
             },
+        },
+        featureFlags: {
+            fetching: false,
+            flags: { claim_invite: claimInvite },
         },
     };
 
@@ -175,5 +184,84 @@ describe('ClaimCampaigns component', () => {
         expect(banner).toHaveTextContent(
             'Campaign Fresh Produce Suppliers 2026 created with 2 suppliers.',
         );
+    });
+
+    test('without the claim_invite switch, only claim links are offered', async () => {
+        apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+
+        const { findByText, queryByText, getAllByText } = renderComponent();
+
+        await findByText('Unique claim link');
+        expect(queryByText('Invite by')).not.toBeInTheDocument();
+        expect(getAllByText('Copy link')).toHaveLength(2);
+    });
+
+    test('emails a supplier its campaign invite', async () => {
+        apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+        apiRequest.post.mockResolvedValue({
+            data: { recipient_email: 'ops@haiphong.example' },
+        });
+
+        const { findByText, getByLabelText, getByText } = renderComponent(
+            true,
+            {},
+            { claimInvite: true },
+        );
+
+        await findByText('Contact email');
+        // The claimed supplier can't be invited again.
+        expect(getByText('Already claimed')).toBeInTheDocument();
+
+        fireEvent.change(
+            getByLabelText('Email address for Hai Phong Packhouse Co'),
+            { target: { value: 'ops@haiphong.example' } },
+        );
+        fireEvent.click(getByText('Send'));
+
+        await findByText(/Invited ops@haiphong.example/);
+        expect(apiRequest.post).toHaveBeenCalledWith(
+            '/api/facilities/VN2024310ZZL8KD/claim-invite/',
+            {
+                recipient_email: 'ops@haiphong.example',
+                note: undefined,
+                campaign: 'EXAMPLE-FRESH-26',
+            },
+        );
+    });
+
+    test('switches the contact column to claim links', async () => {
+        apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+
+        const { findByText, getByText, getAllByText } = renderComponent(
+            true,
+            {},
+            { claimInvite: true },
+        );
+
+        await findByText('Contact email');
+        fireEvent.click(getAllByText('Copy link')[0]);
+
+        expect(getByText('Unique claim link')).toBeInTheDocument();
+        // Toggle button + one per supplier
+        expect(getAllByText('Copy link')).toHaveLength(3);
+    });
+
+    test('paginates long supplier lists', async () => {
+        const suppliers = Array.from({ length: 30 }, (_, i) => ({
+            os_id: `BD2024199SUP${String(i).padStart(3, '0')}`,
+            name: `Supplier ${i + 1}`,
+            country_code: 'BD',
+            claim_status: 'unclaimed',
+        }));
+        apiRequest.get.mockResolvedValue({
+            data: [{ ...mockCampaigns[0], suppliers }],
+        });
+
+        const { findByText, queryByText } = renderComponent();
+
+        await findByText('Supplier 1');
+        expect(queryByText('Supplier 25')).toBeInTheDocument();
+        expect(queryByText('Supplier 26')).not.toBeInTheDocument();
+        expect(await findByText('1-25 of 30')).toBeInTheDocument();
     });
 });
