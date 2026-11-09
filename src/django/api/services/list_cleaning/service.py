@@ -32,7 +32,13 @@ from django.db import transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
+from api.extended_fields import (
+    create_extendedfields_for_single_item,
+    update_extendedfields_for_list_item,
+)
 from api.helpers.helpers import clean
+from api.models.extended_field import ExtendedField
+from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.list_cleaning_run import (
     ListCleaningEvent,
@@ -40,6 +46,10 @@ from api.models.facility.list_cleaning_run import (
     ListCleaningSuggestion,
 )
 from django.conf import settings
+
+from api.os_id_lookup import OSIDLookup
+from api.sector_cache import SectorCache
+from contricleaner.lib.contri_cleaner import ContriCleaner
 
 from .runners import RunFailed, get_runner
 
@@ -647,6 +657,52 @@ REMOVED_STATUSES = (FacilityListItem.DUPLICATE,
                     FacilityListItem.ITEM_REMOVED)
 
 
+def _rederive_items(items):
+    """
+    Bring what parse derived from the uploaded row into line with the
+    corrected one: sector, the cleaned name and address, and the
+    ExtendedField rows (worker count, parent company, product, facility
+    and processing types, ids) the facility page reads. A row that is
+    now removed loses its extended fields; a row that is back gets them
+    again. Rows already matched keep their facility link, and the
+    facility is touched so the search index picks the change up.
+    """
+    sector_cache = SectorCache()
+    os_id_lookup = OSIDLookup()
+    now = timezone.now()
+    for item in items:
+        if item.status in REMOVED_STATUSES:
+            ExtendedField.objects.filter(facility_list_item=item).delete()
+        else:
+            _rederive_item(item, sector_cache, os_id_lookup)
+        if item.facility_id:
+            Facility.objects.filter(pk=item.facility_id).update(
+                updated_at=now)
+
+
+def _rederive_item(item, sector_cache, os_id_lookup):
+    processed = ContriCleaner(
+        dict(item.raw_json or {}), sector_cache, os_id_lookup
+    ).process_data()
+    row = processed.rows[0] if processed.rows else None
+    if processed.errors or row is None or row.errors:
+        # The corrected row no longer parses; keep what parse derived
+        # rather than leave the item with nothing. The moderator sees
+        # the corrected raw values either way.
+        log.warning(
+            f'[List Cleaning] Item {item.id} could not be re-parsed after '
+            f'apply: {processed.errors or (row and row.errors)}')
+        return
+    item.sector = row.sector
+    item.clean_name = row.clean_name
+    item.clean_address = row.clean_address
+    item.save(update_fields=['sector', 'clean_name', 'clean_address'])
+    ExtendedField.objects.filter(facility_list_item=item).delete()
+    create_extendedfields_for_single_item(item, row.fields)
+    if item.facility_id:
+        update_extendedfields_for_list_item(item)
+
+
 def _wants_removal(s):
     S = ListCleaningSuggestion
     return s.decision == S.REMOVED or (
@@ -690,8 +746,9 @@ def apply_run(run, only=None):
     is still worked out from all of that item's suggestions.
 
     Extended fields (sector, number of workers, parent company ...) were
-    created at parse time from the original values; re-deriving them from
-    the corrected raw_json is a TODO for the full implementation.
+    created at parse time from the uploaded values, so every touched row
+    is re-derived from its corrected raw_json afterwards (see
+    `_rederive_item`); a removed row loses them.
     """
     S = ListCleaningSuggestion
     # One instance per item: several suggestions touch the same row, and
@@ -791,6 +848,8 @@ def apply_run(run, only=None):
 
     for item_id in touched:
         items[item_id].save()
+    if touched:
+        _rederive_items([items[item_id] for item_id in touched])
 
     if only is None:
         run.applied_at = timezone.now()

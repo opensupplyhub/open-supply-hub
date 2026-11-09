@@ -5,6 +5,7 @@ from datetime import timedelta
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
+from django.contrib.gis.geos import Point
 from django.core.management import call_command
 from django.test import override_settings
 from django.utils import timezone
@@ -12,8 +13,11 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
+from api.extended_fields import create_extendedfields_for_single_item
 from api.models import (
     Contributor,
+    ExtendedField,
+    Facility,
     FacilityList,
     FacilityListItem,
     ListCleaningEvent,
@@ -537,6 +541,82 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertTrue(
             run.events.get(kind=ListCleaningEvent.SUBMITTED)
             .meta['as_uploaded'])
+
+    # -- extended fields follow the corrected row ----------------------
+
+    def _workers_field(self, item):
+        return ExtendedField.objects.get(
+            facility_list_item=item,
+            field_name=ExtendedField.NUMBER_OF_WORKERS)
+
+    def _parse_like_upload(self):
+        """Give the fixture items what parse would have derived."""
+        for item in self.items:
+            create_extendedfields_for_single_item(item, item.raw_json)
+
+    def test_submit_rederives_extended_fields_from_corrected_values(self):
+        self._parse_like_upload()
+        first = self.items[0]
+        # already matched before the contributor finished reviewing
+        facility = Facility.objects.create(
+            name=first.name, address=first.address, country_code='VN',
+            location=Point(0, 0), created_from=first)
+        first.facility = facility
+        first.status = FacilityListItem.MATCHED
+        first.save()
+        for field in ExtendedField.objects.filter(facility_list_item=first):
+            field.facility = facility
+            field.save()
+        self.assertEqual(self._workers_field(first).value,
+                         {'min': 1200, 'max': 1200})
+        before = facility.updated_at
+
+        run = self._ingested_run()
+        workers = run.suggestions.get(
+            field='number_of_workers', kind=ListCleaningSuggestion.CORRECTION)
+        record_decisions(
+            run,
+            [{'id': workers.id, 'decision': ListCleaningSuggestion.EDITED,
+              'value': '1250'}],
+            self.user)
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('submit/'), {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+
+        field = self._workers_field(first)
+        self.assertEqual(field.value, {'min': 1250, 'max': 1250})
+        self.assertEqual(field.facility_id, facility.id)
+        facility.refresh_from_db()
+        self.assertGreater(facility.updated_at, before)
+        first.refresh_from_db()
+        self.assertEqual(first.sector, ['Unspecified'])
+
+    def test_removed_row_loses_its_extended_fields(self):
+        self._parse_like_upload()
+        duplicate = self.items[2]
+        self.assertTrue(ExtendedField.objects.filter(
+            facility_list_item=duplicate).exists())
+        self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('submit/'), {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        duplicate.refresh_from_db()
+        self.assertEqual(duplicate.status, FacilityListItem.DUPLICATE)
+        self.assertFalse(ExtendedField.objects.filter(
+            facility_list_item=duplicate).exists())
+
+    def test_submit_as_uploaded_leaves_extended_fields_alone(self):
+        self._parse_like_upload()
+        ids = set(ExtendedField.objects.values_list('id', flat=True))
+        self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url('submit/'), {'as_uploaded': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            set(ExtendedField.objects.values_list('id', flat=True)), ids)
 
     def test_submit_rejects_a_non_boolean_as_uploaded(self):
         run = self._ingested_run()
