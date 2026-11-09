@@ -58,6 +58,7 @@ from django.views.decorators.vary import vary_on_headers
 from api.facilities_extent_cache import FacilitiesExtentCache
 from api.facilities_visibility_token import facilities_visibility_token
 from api.services.claim_campaign_service import (
+    campaign_for_invite_claim,
     move_campaign_suppliers,
     resolve_claim_campaign,
 )
@@ -2544,6 +2545,15 @@ class FacilitiesViewSet(ListModelMixin,
                 validated_data.get("claim_invite"),
                 facility,
             )
+            # A claim from a campaign's email invite counts for that
+            # campaign even when the claim page didn't pass the campaign
+            # code along (the older claim flow doesn't).
+            invite_campaign = campaign_for_invite_claim(
+                facility_claim.claim_invite
+            )
+            if invite_campaign is not None and not facility_claim.via_link:
+                facility_claim.campaign = invite_campaign
+                facility_claim.via_link = True
 
             facility_claim.save()
 

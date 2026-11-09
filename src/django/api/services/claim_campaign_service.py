@@ -130,6 +130,24 @@ def campaign_permissions(user):
     }
 
 
+def campaign_for_invite_claim(claim_invite):
+    """
+    The campaign a claim should count for because it came from that
+    campaign's email invite: the invite's campaign, if it is still
+    ACTIVE and campaigns are switched on. None otherwise.
+    """
+    if (
+        claim_invite is None
+        or claim_invite.campaign_id is None
+        or not switch_is_active('claim_campaigns')
+    ):
+        return None
+    campaign = claim_invite.campaign
+    if campaign.status != ClaimCampaign.Status.ACTIVE:
+        return None
+    return campaign
+
+
 def get_campaign_for_invite(user, facility, code):
     """
     The sender's own active campaign with this code, for a claim invite

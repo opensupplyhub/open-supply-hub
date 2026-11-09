@@ -463,3 +463,37 @@ class FacilityClaimInviteTest(APITestCase):
             'manager@factory.example',
             supplier['last_invite']['recipient_email'],
         )
+
+    @override_switch('claim_campaigns', active=True)
+    def test_claim_from_a_campaign_invite_counts_for_that_campaign(self):
+        # The older claim page passes the invite code but not the
+        # campaign code. The claim still counts for the invite's
+        # campaign, as a claim through its link, even when the facility
+        # is on two campaigns (which alone would be ambiguous).
+        campaign = self.make_campaign()
+        self.make_campaign(name='Autumn outreach', code='AUTUMN-26')
+        self.login_sender()
+        self.send_invite(campaign='SPRING-26')
+        invite = FacilityClaimInvite.objects.get()
+
+        response = self.submit_claim(claim_invite=str(invite.uuid))
+
+        self.assertEqual(200, response.status_code, response.content)
+        claim = FacilityClaim.objects.get()
+        self.assertEqual(campaign, claim.campaign)
+        self.assertTrue(claim.via_link)
+
+    @override_switch('claim_campaigns', active=True)
+    def test_claim_from_an_invite_of_a_closed_campaign_is_not_credited(self):
+        campaign = self.make_campaign()
+        self.login_sender()
+        self.send_invite(campaign='SPRING-26')
+        invite = FacilityClaimInvite.objects.get()
+        campaign.status = ClaimCampaign.Status.CLOSED
+        campaign.save()
+
+        self.submit_claim(claim_invite=str(invite.uuid))
+
+        claim = FacilityClaim.objects.get()
+        self.assertIsNone(claim.campaign)
+        self.assertFalse(claim.via_link)
