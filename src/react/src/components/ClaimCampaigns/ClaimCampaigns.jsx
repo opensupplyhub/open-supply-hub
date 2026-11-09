@@ -255,7 +255,7 @@ const InviteModeToggle = ({ mode, onChange, classes }) => (
         <span className={classes.modeLabel}>Invite by</span>
         {[
             [INVITE_MODES.email, 'Email'],
-            [INVITE_MODES.link, 'Copy link'],
+            [INVITE_MODES.link, 'Link'],
         ].map(([value, label]) => (
             <Button
                 key={value}
@@ -411,8 +411,21 @@ const CampaignCard = ({ campaign, canEmail, classes }) => {
             </div>
 
             <div className={classes.tableTools}>
-                <Typography variant="subheading">Suppliers</Typography>
+                <h2 className={classes.sectionTitle}>Suppliers</h2>
                 <div className={classes.tableToolsActions}>
+                    <Select
+                        value={statusFilter}
+                        onChange={e => {
+                            setStatusFilter(e.target.value);
+                            setPage(0);
+                        }}
+                        aria-label="Filter by claim status"
+                    >
+                        <MenuItem value="ALL">All statuses</MenuItem>
+                        <MenuItem value="claimed">Claimed</MenuItem>
+                        <MenuItem value="pending">Pending review</MenuItem>
+                        <MenuItem value="unclaimed">Not started</MenuItem>
+                    </Select>
                     {canEmail && (
                         <InviteModeToggle
                             mode={inviteMode}
@@ -420,25 +433,18 @@ const CampaignCard = ({ campaign, canEmail, classes }) => {
                             classes={classes}
                         />
                     )}
-                    <Select
-                        value={statusFilter}
-                        onChange={e => {
-                            setStatusFilter(e.target.value);
-                            setPage(0);
-                        }}
-                    >
-                        <MenuItem value="ALL">All statuses</MenuItem>
-                        <MenuItem value="claimed">Claimed</MenuItem>
-                        <MenuItem value="pending">Pending review</MenuItem>
-                        <MenuItem value="unclaimed">Not started</MenuItem>
-                    </Select>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => downloadSupplierCSV(campaign, suppliers)}
-                    >
-                        Download CSV
-                    </Button>
+                    {/* The CSV is the links, for the brand's own mail merge. */}
+                    {!showEmail && (
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() =>
+                                downloadSupplierCSV(campaign, suppliers)
+                            }
+                        >
+                            Download CSV
+                        </Button>
+                    )}
                 </div>
             </div>
 

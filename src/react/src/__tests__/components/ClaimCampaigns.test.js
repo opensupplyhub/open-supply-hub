@@ -232,18 +232,25 @@ describe('ClaimCampaigns component', () => {
     test('switches the contact column to claim links', async () => {
         apiRequest.get.mockResolvedValue({ data: mockCampaigns });
 
-        const { findByText, getByText, getAllByText } = renderComponent(
+        const {
+            findByText,
+            getByText,
+            getAllByText,
+            queryByText,
+        } = renderComponent(
             true,
             {},
             { claimInvite: true },
         );
 
         await findByText('Contact email');
-        fireEvent.click(getAllByText('Copy link')[0]);
+        // The CSV of links only goes with the link option.
+        expect(queryByText('Download CSV')).not.toBeInTheDocument();
+        fireEvent.click(getByText('Link'));
 
         expect(getByText('Unique claim link')).toBeInTheDocument();
-        // Toggle button + one per supplier
-        expect(getAllByText('Copy link')).toHaveLength(3);
+        expect(getAllByText('Copy link')).toHaveLength(2);
+        expect(getByText('Download CSV')).toBeInTheDocument();
     });
 
     test('paginates long supplier lists', async () => {

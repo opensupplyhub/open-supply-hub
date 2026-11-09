@@ -1,4 +1,5 @@
 import COLOURS from '../../util/COLOURS';
+import { OARFont } from '../../util/constants';
 
 export const claimCampaignsStyles = theme =>
     Object.freeze({
@@ -154,6 +155,13 @@ export const claimCampaignsStyles = theme =>
             alignItems: 'center',
             justifyContent: 'space-between',
             margin: '16px 0 8px',
+        }),
+        // Matches the page titles rendered by AppGrid (e.g. My Lists).
+        sectionTitle: Object.freeze({
+            fontFamily: OARFont,
+            fontWeight: 'normal',
+            fontSize: '32px',
+            margin: 0,
         }),
         tableToolsActions: Object.freeze({
             display: 'flex',
