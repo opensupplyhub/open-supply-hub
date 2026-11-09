@@ -24,8 +24,8 @@ import { campaignSupplierSearchStyles } from './styles';
 
 export const SEARCH_STATUS_LABELS = Object.freeze({
     claimed: 'Claimed',
-    pending: 'Claim pending',
-    unclaimed: 'Not claimed',
+    pending: 'Pending review',
+    unclaimed: 'Not started',
 });
 
 const searchErrorMessage = error => {
@@ -134,7 +134,7 @@ export const CampaignSupplierSearch = ({
                             disabled={!addable.length}
                             onClick={() => onAdd(addable)}
                         >
-                            Add all {addable.length} not claimed
+                            Add all {addable.length} not yet claimed
                         </Button>
                     </div>
                     <div className={classes.tableWrap}>

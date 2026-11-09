@@ -212,7 +212,13 @@ InvitedNote.propTypes = {
 
 // Sends one supplier the campaign's claim invite by email. Claimed and
 // pending suppliers can't be invited, so they get a note instead.
-const EmailInviteCell = ({ supplier, campaignCode, lastInvite, onSent, classes }) => {
+const EmailInviteCell = ({
+    supplier,
+    campaignCode,
+    lastInvite,
+    onSent,
+    classes,
+}) => {
     const [email, setEmail] = useState('');
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
@@ -761,7 +767,7 @@ const ClaimCampaigns = ({
                             with {newCampaign.suppliers.length} supplier
                             {newCampaign.suppliers.length === 1 ? '' : 's'}.
                             {canEmail
-                                ? ' Enter a contact email for each supplier below and we\'ll send them an invite, or copy their links or download the CSV to send them yourself.'
+                                ? " Enter a contact email for each supplier below and we'll send them an invite, or copy their links or download the CSV to send them yourself."
                                 : ' Copy each claim link below, or download the CSV to send them from your own email.'}
                         </Typography>
                     </Paper>

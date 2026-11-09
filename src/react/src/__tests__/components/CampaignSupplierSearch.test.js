@@ -152,7 +152,7 @@ describe('Choosing campaign suppliers from a search', () => {
         const utils = await renderAndChooseSearch();
         await searchFor(utils);
 
-        fireEvent.click(utils.getByText('Add all 2 not claimed'));
+        fireEvent.click(utils.getByText('Add all 2 not yet claimed'));
         expect(utils.getByText('Added to this campaign (2)')).toBeInTheDocument();
 
         fireEvent.click(utils.getByText('Create campaign'));

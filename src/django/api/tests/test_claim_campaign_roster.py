@@ -151,6 +151,7 @@ class ClaimCampaignRosterDashboardTest(ClaimCampaignRosterBaseTest):
                     "name": "Other",
                     "country_code": "BD",
                     "claim_status": "pending",
+                    "is_closed": False,
                     "last_invite": None,
                 }
             ],
@@ -280,3 +281,71 @@ class ClaimCampaignSelfServeTest(ClaimCampaignRosterBaseTest):
         )
         self.assertEqual(400, response.status_code)
         self.assertIn("list_id", response.json())
+
+
+@override_switch("claim_campaigns", active=True)
+class ClaimCampaignCreateValidationTest(ClaimCampaignRosterBaseTest):
+    url = "/api/claim-campaigns/"
+
+    def post(self, **overrides):
+        return self.client.post(
+            self.url,
+            {
+                "name": "Meridian onboarding",
+                "list_id": self.facility_list.id,
+                "os_ids": [self.facility.id, self.other_facility.id],
+                **overrides,
+            },
+            format="json",
+        )
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_rejects_an_already_claimed_supplier(self):
+        self.create_claim(status=FacilityClaimStatuses.APPROVED)
+        response = self.post()
+        self.assertEqual(400, response.status_code)
+        self.assertIn(self.facility.id, str(response.json()["os_ids"]))
+        self.assertEqual(1, ClaimCampaign.objects.count())
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_allows_a_supplier_with_a_pending_claim(self):
+        self.create_claim(status=FacilityClaimStatuses.PENDING)
+        self.assertEqual(201, self.post().status_code)
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_allows_a_supplier_whose_claim_was_revoked(self):
+        self.create_claim(status=FacilityClaimStatuses.REVOKED)
+        self.assertEqual(201, self.post().status_code)
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_rejects_a_whitespace_only_name(self):
+        response = self.post(name="   \n\t ")
+        self.assertEqual(400, response.status_code)
+        self.assertIn("name", response.json())
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_rejects_a_name_over_100_characters(self):
+        self.assertEqual(400, self.post(name="x" * 101).status_code)
+        self.assertEqual(201, self.post(name="x" * 100).status_code)
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_tidies_whitespace_and_keeps_unicode(self):
+        response = self.post(name="  Café\n onboarding   2026 🌱 <b>x</b> ")
+        self.assertEqual(201, response.status_code)
+        self.assertEqual(
+            "Café onboarding 2026 🌱 <b>x</b>", response.json()["name"]
+        )
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_rejects_a_duplicate_name_ignoring_case(self):
+        response = self.post(name="  fresh produce SUPPLIERS 2026 ")
+        self.assertEqual(400, response.status_code)
+        self.assertIn("name", response.json())
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_rejects_a_closed_supplier_from_a_list(self):
+        self.other_facility.is_closed = True
+        self.other_facility.save()
+        response = self.post()
+        self.assertEqual(400, response.status_code)
+        self.assertIn("Closed", str(response.json()["os_ids"]))

@@ -93,6 +93,7 @@ class ClaimCampaignSearchTest(ClaimCampaignRosterBaseTest):
                     "name": "Lotus Knitwear",
                     "country_code": "VN",
                     "claim_status": "unclaimed",
+                    "is_closed": False,
                 }
             ],
             data["suppliers"],
@@ -152,7 +153,7 @@ class ClaimCampaignSearchTest(ClaimCampaignRosterBaseTest):
         )
 
         self.assertEqual(400, response.status_code)
-        self.assertIn("already claimed", str(response.json()))
+        self.assertIn("already been claimed", str(response.json()))
 
     def test_create_from_search_refuses_unknown_os_ids(self):
         response = self.client.post(

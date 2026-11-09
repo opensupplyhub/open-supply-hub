@@ -187,6 +187,9 @@ def serialize_suppliers(facilities):
             'name': facility.name,
             'country_code': facility.country_code,
             'claim_status': statuses[facility.id],
+            # Closed facilities can't be added to a campaign; one already
+            # on a roster stays, shown as closed.
+            'is_closed': bool(getattr(facility, 'is_closed', False)),
         }
         for facility in facilities
     ]

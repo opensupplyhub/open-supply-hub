@@ -71,15 +71,23 @@ class ClaimCampaignSerializer(serializers.ModelSerializer):
         return serialize_suppliers(facilities.values())
 
 
+# Fits about two lines of the campaign card title.
+MAX_CAMPAIGN_NAME_LENGTH = 100
+
+
 class ClaimCampaignCreateSerializer(serializers.Serializer):
     """
     Validates a brand's request to create a campaign. Suppliers come
     either from one of its own active lists (public or private), when
     `list_id` is given, or from a search of OS Hub, when it isn't: then
-    any facility that isn't closed or already claimed can be chosen.
+    any facility can be chosen. Either way, closed and already-claimed
+    facilities are refused; pending claims are allowed, since they may
+    yet be denied.
     """
 
-    name = serializers.CharField(max_length=200, allow_blank=False)
+    # CharField trims surrounding whitespace before validating, so a
+    # whitespace-only name is rejected as blank.
+    name = serializers.CharField(max_length=MAX_CAMPAIGN_NAME_LENGTH)
     list_id = serializers.IntegerField(required=False, allow_null=True)
     os_ids = serializers.ListField(
         child=serializers.CharField(max_length=32),
@@ -87,14 +95,25 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
         max_length=MAX_SUPPLIERS_PER_CAMPAIGN,
     )
 
+    def validate_name(self, value):
+        # Collapse line breaks, tabs and runs of spaces into single spaces.
+        name = ' '.join(value.split())
+        if ClaimCampaign.objects.filter(
+            contributor=self.context['contributor'],
+            name__iexact=name,
+        ).exists():
+            raise serializers.ValidationError(
+                'You already have a campaign with this name.'
+            )
+        return name
+
     def validate(self, data):
         data['os_ids'] = list(dict.fromkeys(data['os_ids']))
         if data.get('list_id') is None:
             self.validate_search_suppliers(data['os_ids'])
         else:
             self.validate_list_suppliers(data['list_id'], data['os_ids'])
-
-        data['name'] = data['name'].strip()
+        self.validate_open_and_unclaimed(data['os_ids'])
         return data
 
     def validate_list_suppliers(self, list_id, os_ids):
@@ -110,9 +129,11 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
             )
 
         on_list = set(
-            FacilityListItem.objects.filter(
-                source=source,
-                facility_id__in=os_ids,
+            exclude_removed_list_items(
+                FacilityListItem.objects.filter(
+                    source=source,
+                    facility_id__in=os_ids,
+                )
             ).values_list('facility_id', flat=True)
         )
         missing = [os_id for os_id in os_ids if os_id not in on_list]
@@ -142,7 +163,12 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
                 }
             )
 
-        closed = [f.id for f in facilities if f.is_closed]
+    @staticmethod
+    def validate_open_and_unclaimed(os_ids):
+        closed = list(
+            Facility.objects.filter(id__in=os_ids, is_closed=True)
+            .values_list('id', flat=True)
+        )
         if closed:
             raise serializers.ValidationError(
                 {
@@ -161,8 +187,10 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {
                     'os_ids': (
-                        'These production locations are already claimed: '
+                        'These production locations have already been '
+                        'claimed: '
                         + ', '.join(claimed[:10])
+                        + '. Deselect them and try again.'
                     )
                 }
             )

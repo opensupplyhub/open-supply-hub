@@ -38,24 +38,28 @@ const SOURCES = Object.freeze({
 });
 
 const FILTERS = Object.freeze([
-    { value: 'unclaimed', label: 'Not claimed' },
-    { value: 'pending', label: 'Claim pending' },
+    { value: 'unclaimed', label: 'Not started' },
+    { value: 'pending', label: 'Pending review' },
     { value: 'claimed', label: 'Claimed' },
     { value: 'all', label: 'All' },
 ]);
 
 const STATUS_LABELS = Object.freeze({
     claimed: 'Claimed',
-    pending: 'Claim pending',
-    unclaimed: 'Not claimed',
+    pending: 'Pending review',
+    unclaimed: 'Not started',
 });
 
-// Claimed suppliers have nothing left to do, so they can't be invited.
-const isPickable = supplier => supplier.claim_status !== 'claimed';
+// Claimed suppliers have nothing left to do, and closed locations can't
+// claim, so neither can be invited.
+const isPickable = supplier =>
+    supplier.claim_status !== 'claimed' && !supplier.is_closed;
 
 const defaultSelection = suppliers =>
     new Set(
-        suppliers.filter(s => s.claim_status === 'unclaimed').map(s => s.os_id),
+        suppliers
+            .filter(s => s.claim_status === 'unclaimed' && !s.is_closed)
+            .map(s => s.os_id),
     );
 
 const firstError = error => {
@@ -446,7 +450,7 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                             )
                                         }
                                     >
-                                        Select all not claimed
+                                        Select all not started
                                     </Button>
                                     <Button
                                         size="small"
@@ -518,11 +522,11 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                                         </span>
                                                     </TableCell>
                                                     <TableCell>
-                                                        {
-                                                            STATUS_LABELS[
-                                                                s.claim_status
-                                                            ]
-                                                        }
+                                                        {s.is_closed
+                                                            ? 'Closed'
+                                                            : STATUS_LABELS[
+                                                                  s.claim_status
+                                                              ]}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -538,7 +542,9 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                 </div>
                                 <Typography className={classes.fine}>
                                     Claimed suppliers can&apos;t be selected
-                                    because they&apos;ve already claimed.
+                                    because they&apos;ve already claimed, and
+                                    closed production locations can&apos;t
+                                    claim.
                                 </Typography>
                             </Paper>
                         )}
@@ -558,7 +564,7 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     value={name}
                                     onChange={e => setName(e.target.value)}
                                     className={classes.nameField}
-                                    inputProps={{ maxLength: 200 }}
+                                    inputProps={{ maxLength: 100 }}
                                 />
                                 <Typography>
                                     {selectedCount} supplier

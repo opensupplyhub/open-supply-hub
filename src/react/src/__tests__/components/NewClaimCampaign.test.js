@@ -181,4 +181,32 @@ describe('NewClaimCampaign component', () => {
             '/api/claim-campaigns/candidates/?list=3',
         );
     });
+
+    test('closed suppliers on a list show as closed and cannot be picked', async () => {
+        const closedList = [
+            {
+                os_id: 'BD2024199CLOSED',
+                name: 'Shuttered Mill',
+                country_code: 'BD',
+                claim_status: 'unclaimed',
+                is_closed: true,
+            },
+            ...suppliersByList[7],
+        ];
+        apiRequest.get.mockImplementation(url =>
+            Promise.resolve({
+                data: url.includes('list=')
+                    ? { id: 7, suppliers: closedList }
+                    : lists,
+            }),
+        );
+
+        const { findByLabelText, getByText } = renderComponent();
+
+        const checkbox = await findByLabelText('Select Shuttered Mill');
+        expect(checkbox).toBeDisabled();
+        expect(checkbox).not.toBeChecked();
+        expect(getByText('Closed')).toBeInTheDocument();
+        expect(getByText('1 supplier will get a claim link')).toBeInTheDocument();
+    });
 });
