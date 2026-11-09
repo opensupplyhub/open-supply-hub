@@ -154,9 +154,15 @@ export const CampaignSupplierSearch = ({
                         }}
                     />
                 </div>
-                <CountryNameFilter />
-                <ContributorFilter />
-                <SectorFilter />
+                <div>
+                    <CountryNameFilter />
+                </div>
+                <div>
+                    <ContributorFilter />
+                </div>
+                <div>
+                    <SectorFilter />
+                </div>
                 <div className="form__field">
                     <StyledSelect
                         label="Facility Type"
@@ -172,6 +178,19 @@ export const CampaignSupplierSearch = ({
                     />
                 </div>
                 <div className="form__field">
+                    <StyledSelect
+                        creatable
+                        label="Parent Company"
+                        name="PARENT_COMPANY"
+                        value={filters.parentCompany}
+                        onChange={v =>
+                            updateFilter(updateParentCompanyFilter, v)
+                        }
+                        placeholder="e.g. ABC Textiles Limited"
+                        aria-label="Parent company"
+                    />
+                </div>
+                <div className="form__field">
                     <ProcessingTypeSearch
                         processingTypeSearchRef={processingTypeRef}
                         label="Processing Type"
@@ -183,19 +202,6 @@ export const CampaignSupplierSearch = ({
                         facilityType={filters.facilityType}
                         suggestions={filterOptions.processingTypeSuggestions}
                         onFetchSuggestions={fetchSuggestionsForProcessingType}
-                    />
-                </div>
-                <div className="form__field">
-                    <StyledSelect
-                        creatable
-                        label="Parent Company"
-                        name="PARENT_COMPANY"
-                        value={filters.parentCompany}
-                        onChange={v =>
-                            updateFilter(updateParentCompanyFilter, v)
-                        }
-                        placeholder="e.g. ABC Textiles Limited"
-                        aria-label="Parent company"
                     />
                 </div>
             </div>

@@ -286,9 +286,9 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     <Link to={contributeRoute}>
                                         Upload a list
                                     </Link>{' '}
-                                    first. You can upload it privately, so OS
-                                    Hub doesn&apos;t show you as connected to
-                                    these suppliers.
+                                    first. If you don&apos;t want OS Hub to show
+                                    you as connected to these suppliers, ask the
+                                    OS Hub team to make the list private.
                                 </Typography>
                             </Paper>
                         ) : (
