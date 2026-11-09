@@ -3,7 +3,7 @@ OSDEV-3743. Re-creates index_facilities_by(ids) and index_facilities() from
 their latest definition (0254_index_facilities_isic.sql) with the
 zone_set_ids column added: the ids of the zone sets with a zone covering
 the row's location, computed by index_zone_set_ids(location) in
-0264_index_zone_set_ids.sql. Nothing else changes.
+0267_index_zone_set_ids.sql. Nothing else changes.
 
 index_facilities_by is what the api_facility insert/update triggers call,
 so a facility save (including a coordinate correction through

@@ -3,7 +3,7 @@ OSDEV-3743. The zone sets whose zones cover a location, for the
 zone_set_ids column of api_facilityindex.
 
 index_facilities_by(ids) calls this for every row it writes (see
-0264_index_facilities_zone_set_ids.sql), so the column is refreshed by
+0267_index_facilities_zone_set_ids.sql), so the column is refreshed by
 the api_facility triggers on every facility save, including a coordinate
 correction. The backfill_facility_index "zone_set_ids" field group calls
 it for every existing row after a set's zones are replaced, which changes

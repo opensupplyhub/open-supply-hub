@@ -31,7 +31,7 @@ class Migration(Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0264_add_zone_set_ids_to_facility_index'),
+        ('api', '0267_add_zone_set_ids_to_facility_index'),
     ]
 
     operations = [

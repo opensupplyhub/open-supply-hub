@@ -9,8 +9,8 @@ helper = MigrationHelper(connection)
 
 def add_zone_set_ids_indexing(apps, schema_editor):
     helper.run_sql_files([
-        '0264_index_zone_set_ids.sql',
-        '0264_index_facilities_zone_set_ids.sql',
+        '0267_index_zone_set_ids.sql',
+        '0267_index_facilities_zone_set_ids.sql',
     ])
 
 
@@ -19,7 +19,7 @@ def revert_zone_set_ids_indexing(apps, schema_editor):
     # drops the function they stopped referencing.
     helper.run_sql_files([
         '0254_index_facilities_isic.sql',
-        '0264_revert_index_zone_set_ids.sql',
+        '0267_revert_index_zone_set_ids.sql',
     ])
 
 
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
     """
     OSDEV-3743. Adds `zone_set_ids` to api_facilityindex: the ids of the
     zone sets with a zone covering the row's location, so a zone-set
-    Spotlight partner search runs from an array column (and, after 0265,
+    Spotlight partner search runs from an array column (and, after 0268,
     a GIN index) instead of a point-in-polygon test over the whole table.
 
     Adds the index_zone_set_ids(location) function and re-creates
@@ -42,7 +42,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0263_seed_claim_profile_options'),
+        ('api', '0266_announcement_banner'),
     ]
 
     operations = [
