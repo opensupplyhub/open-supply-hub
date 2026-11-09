@@ -72,16 +72,50 @@ class TestCumulativeMatcher(unittest.TestCase):
         process_unmatched_items_mock.side_effect = [process_unmatched_items_one]
         c_m.process_unmatched_items = process_unmatched_items_mock
 
-        update_extended_fields_mock = MagicMock()
-        update_extended_fields_mock.return_value = None
-        c_m.update_extended_fields = update_extended_fields_mock
-
         result = c_m.process(self.messy)
 
         self.assertEqual(len(result), 4)
 
         for index, f_m_dto in enumerate(result):
             self.assertEqual(f_m_dto["facility_list_item_id"], str(index + 1))
+
+    def test_process_matches_stages_item_updates(self):
+        """
+        Item statuses are collected for the Writer instead of being written
+        by the item matchers (OSDEV-3149).
+        """
+        c_m = CumulativeMatcher()
+        update = {
+            "facility_list_item_id": 1,
+            "source_id": 1,
+            "status": "MATCHED",
+            "facility_id": "CN20241096SFEBA",
+            "processing_results": [],
+            "new_facility": None,
+        }
+        item_match = MagicMock()
+        item_match.process.return_value = [self.processed_matches[0]]
+        item_match.pending_item_update = update
+        matcher = MagicMock()
+        matcher.process.return_value = {"1": [{"id": "1"}]}
+        matcher.item_match.return_value = item_match
+
+        result = c_m.process_matches(matcher, {"1": self.messy["1"]})
+
+        self.assertEqual(result, [self.processed_matches[0]])
+        self.assertDictEqual(c_m.item_updates, {1: update})
+
+    def test_process_matches_without_staged_update(self):
+        c_m = CumulativeMatcher()
+        item_match = MagicMock()
+        item_match.process.return_value = []
+        item_match.pending_item_update = None
+        matcher = MagicMock()
+        matcher.process.return_value = {"1": []}
+        matcher.item_match.return_value = item_match
+
+        self.assertEqual(c_m.process_matches(matcher, self.messy), [])
+        self.assertDictEqual(c_m.item_updates, {})
 
     def test_clean_matched(self):
         c_m = CumulativeMatcher()

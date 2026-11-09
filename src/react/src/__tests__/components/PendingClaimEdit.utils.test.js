@@ -75,3 +75,27 @@ describe('pending claim edit ISIC mapping', () => {
         expect(payload.isic_5).toEqual([]);
     });
 });
+
+describe('pending claim edit profile visibility choices (OSDEV-2680)', () => {
+    it('loads the choices as booleans', () => {
+        const formData = pendingClaimApiToFormData({
+            your_name: 'Name',
+            facility_website_publicly_visible: true,
+            facility_phone_number_publicly_visible: false,
+        });
+
+        expect(formData.facilityWebsitePubliclyVisible).toBe(true);
+        expect(formData.facilityPhoneNumberPubliclyVisible).toBe(false);
+    });
+
+    it('sends both choices, including an explicit false', () => {
+        const payload = buildPendingClaimPatchPayload({
+            yourName: 'Name',
+            facilityWebsitePubliclyVisible: false,
+            facilityPhoneNumberPubliclyVisible: true,
+        });
+
+        expect(payload.facility_website_publicly_visible).toBe(false);
+        expect(payload.facility_phone_number_publicly_visible).toBe(true);
+    });
+});

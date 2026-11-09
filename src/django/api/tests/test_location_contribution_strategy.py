@@ -1199,6 +1199,81 @@ class TestLocationContributionStrategy(APITestCase):
             ['name', 'address', 'country'],
         )
 
+    @patch('api.geocoding.requests.get')
+    def test_patch_backfills_stored_values_over_the_submission_limit(
+        self,
+        mock_get,
+    ):
+        # Stored values are cleaned and may run past the 200-character
+        # submission limit (OSDEV-1085). Backfilling them is not a new
+        # submission, so a PATCH that only sends other fields still works.
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
+        mock_get.return_value.json.return_value = geocoding_data
+
+        existing_facility = self._create_existing_facility()
+        stored_name = 'Existing Facility, ' + 'n' * 183
+        stored_address = 'Existing Address, ' + 'a' * 184
+        Facility.objects.filter(id=existing_facility.id).update(
+            name=stored_name,
+            address=stored_address,
+        )
+        existing_facility.refresh_from_db()
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data={'source': 'API', 'sector': 'Apparel'},
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility,
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto,
+        )
+
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(
+            result.moderation_event.backfilled_fields,
+            ['name', 'address', 'country'],
+        )
+        self.assertEqual(
+            result.moderation_event.cleaned_data['name'], stored_name
+        )
+        self.assertEqual(
+            result.moderation_event.cleaned_data['address'], stored_address
+        )
+
+    def test_patch_rejects_a_submitted_value_over_the_limit(self):
+        existing_facility = self._create_existing_facility()
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data={
+                'source': 'API',
+                'name': 'Updated Facility Name',
+                'address': 'Updated Address, ' + 'a' * 184,
+                'country': 'US',
+            },
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility,
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto,
+        )
+
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertEqual(
+            result.errors['errors'],
+            [{
+                'field': 'address',
+                'detail': ('Field address cannot be longer than 200 '
+                           'characters.'),
+            }],
+        )
+        self.assertIsNone(result.moderation_event)
+
     def test_moderation_event_creation_with_valid_partner_field(self):
         existing_location_user_email = 'test2@example.com'
         existing_location_user_password = '4567test'

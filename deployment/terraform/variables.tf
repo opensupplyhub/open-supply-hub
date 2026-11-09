@@ -1189,6 +1189,16 @@ variable "enable_homepage_proxy" {
   description = "When true, proxies opensupplyhub.org/ to the Craft CMS homepage."
 }
 
+variable "identity_record_allowlist" {
+  type        = list(string)
+  default     = []
+  description = "OS IDs that may have an identity record registered against them. When empty, no restriction is applied and the CloudFront function is not created. Matched case-insensitively. Not sensitive: these are public identifiers that resolve on the site by design."
+  validation {
+    condition     = length([for id in var.identity_record_allowlist : id if trimspace(id) != id]) == 0
+    error_message = "identity_record_allowlist entries must not carry leading or trailing whitespace; such an entry can never match."
+  }
+}
+
 variable "craft_cms_origin_domain" {
   type        = string
   default     = ""

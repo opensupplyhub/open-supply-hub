@@ -272,6 +272,8 @@ export const makeGetFacilitiesCountURL = () => '/api/facilities/count/';
 
 export const makeGetAPIFeatureFlagsURL = () => '/api-feature-flags/';
 
+export const makeGetAnnouncementBannerURL = () => '/api-announcement-banner/';
+
 export const shouldUseProductionLocationPage = featureFlags =>
     get(featureFlags, `flags.${ENABLE_PRODUCTION_LOCATION_PAGE}`, false);
 

@@ -2,44 +2,55 @@ locals {
   frontend_bucket_name = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-frontend-${var.aws_region}"
   api_cache_behaviors = [
     {
-      path_pattern = "api/facilities/*"
-      default_ttl  = var.api_facilities_cache_default_ttl
-      max_ttl      = var.api_facilities_cache_max_ttl
+      path_pattern                = "api/facilities/*"
+      default_ttl                 = var.api_facilities_cache_default_ttl
+      max_ttl                     = var.api_facilities_cache_max_ttl
+      viewer_request_function_arn = null
     },
     {
       path_pattern = "api/v1/production-locations*"
       default_ttl  = var.api_production_locations_cache_default_ttl
       max_ttl      = var.api_production_locations_cache_max_ttl
+      # Identity record registration lives under this prefix. Guarded
+      # here rather than in its own behavior so the ordering of the
+      # api_cache_behaviors list, which decides precedence, is unchanged.
+      viewer_request_function_arn = length(var.identity_record_allowlist) > 0 ? aws_cloudfront_function.identity_record_allowlist.arn : null
     },
     {
-      path_pattern = "api/partner-field-groups/*"
-      default_ttl  = var.api_partner_field_groups_cache_default_ttl
-      max_ttl      = var.api_partner_field_groups_cache_max_ttl
+      path_pattern                = "api/partner-field-groups/*"
+      default_ttl                 = var.api_partner_field_groups_cache_default_ttl
+      max_ttl                     = var.api_partner_field_groups_cache_max_ttl
+      viewer_request_function_arn = null
     },
     {
-      path_pattern = "api/partner-fields/*"
-      default_ttl  = var.api_partner_fields_cache_default_ttl
-      max_ttl      = var.api_partner_fields_cache_max_ttl
+      path_pattern                = "api/partner-fields/*"
+      default_ttl                 = var.api_partner_fields_cache_default_ttl
+      max_ttl                     = var.api_partner_fields_cache_max_ttl
+      viewer_request_function_arn = null
     },
     {
-      path_pattern = "api/partner-group-contributors*"
-      default_ttl  = var.api_partner_group_contributors_cache_default_ttl
-      max_ttl      = var.api_partner_group_contributors_cache_max_ttl
+      path_pattern                = "api/partner-group-contributors*"
+      default_ttl                 = var.api_partner_group_contributors_cache_default_ttl
+      max_ttl                     = var.api_partner_group_contributors_cache_max_ttl
+      viewer_request_function_arn = null
     },
     {
-      path_pattern = "api/contributors/"
-      default_ttl  = var.api_contributors_cache_default_ttl
-      max_ttl      = var.api_contributors_cache_max_ttl
+      path_pattern                = "api/contributors/"
+      default_ttl                 = var.api_contributors_cache_default_ttl
+      max_ttl                     = var.api_contributors_cache_max_ttl
+      viewer_request_function_arn = null
     },
     {
-      path_pattern = "api/contributor-lists-sorted/*"
-      default_ttl  = var.api_contributor_lists_sorted_cache_default_ttl
-      max_ttl      = var.api_contributor_lists_sorted_cache_max_ttl
+      path_pattern                = "api/contributor-lists-sorted/*"
+      default_ttl                 = var.api_contributor_lists_sorted_cache_default_ttl
+      max_ttl                     = var.api_contributor_lists_sorted_cache_max_ttl
+      viewer_request_function_arn = null
     },
     {
-      path_pattern = "api/parent-companies/*"
-      default_ttl  = var.api_parent_companies_cache_default_ttl
-      max_ttl      = var.api_parent_companies_cache_max_ttl
+      path_pattern                = "api/parent-companies/*"
+      default_ttl                 = var.api_parent_companies_cache_default_ttl
+      max_ttl                     = var.api_parent_companies_cache_max_ttl
+      viewer_request_function_arn = null
     }
   ]
 }
@@ -154,6 +165,28 @@ resource "aws_cloudfront_function" "homepage_uri_rewrite" {
   runtime = "cloudfront-js-1.0"
   publish = true
   comment = "Routes / to Craft CMS homepage, or redirects to /map if query params are present"
+}
+
+#
+# Identity record registration is a write that goes live immediately and
+# has no moderation step behind it, unlike a production location
+# submission. While that is true, this bounds which OS IDs an issuer may
+# register against. The OS ID is in the URL path, so the check needs
+# neither the request body nor an application change.
+#
+# Created unconditionally because CloudFront refuses to delete a function
+# still attached to a distribution, and terraform does not order the
+# detach first. Only the association is conditional; a function attached
+# to nothing is inert.
+resource "aws_cloudfront_function" "identity_record_allowlist" {
+  name    = "func${local.short}IdentityRecordAllowlist"
+  runtime = "cloudfront-js-1.0"
+  publish = true
+  comment = "Refuses identity record registration outside the allowlisted OS IDs"
+  code = templatefile(
+    "${path.module}/cloudfront-functions/identity_record_allowlist.js.tftpl",
+    { allowed_os_ids = jsonencode([for id in var.identity_record_allowlist : upper(id)]) }
+  )
 }
 
 resource "aws_cloudfront_distribution" "cdn" {
@@ -336,6 +369,15 @@ resource "aws_cloudfront_distribution" "cdn" {
         }
       }
 
+      dynamic "function_association" {
+        for_each = ordered_cache_behavior.value.viewer_request_function_arn == null ? [] : [1]
+
+        content {
+          event_type   = "viewer-request"
+          function_arn = ordered_cache_behavior.value.viewer_request_function_arn
+        }
+      }
+
       compress               = true
       viewer_protocol_policy = "redirect-to-https"
       min_ttl                = 0
@@ -473,6 +515,28 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   ordered_cache_behavior {
     path_pattern     = "/api-feature-flags/*"
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id = "originAlb"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+
+      cookies {
+        forward = "all"
+      }
+    }
+
+    compress               = true
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 300
+  }
+
+  ordered_cache_behavior {
+    path_pattern     = "/api-announcement-banner/*"
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
     cached_methods   = ["GET", "HEAD", "OPTIONS"]
     target_origin_id = "originAlb"

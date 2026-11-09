@@ -29,6 +29,7 @@ from api.models.zone_set import Zone, ZoneSet
 from api.models.zone_set_admin import ZoneAdmin, ZoneSetAdmin
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
+from api.models.announcement_banner import AnnouncementBanner
 from api.models.wage_indicator_country_data import WageIndicatorCountryData
 from api.models.wage_indicator_link_text_config import (
     WageIndicatorLinkTextConfig
@@ -412,6 +413,21 @@ class SourceAdmin(admin.ModelAdmin):
     readonly_fields = ('source_type', 'facility_list', 'create')
     list_filter = ('source_type', 'contributor')
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if change and 'contributor' in form.changed_data:
+            # The re-attribution is dispatched after this request's
+            # transaction commits, and for a list it runs as a Batch job
+            # that outlives the response, so the message must hold for
+            # both paths rather than claim either one. See OSDEV-3758.
+            messages.info(
+                request,
+                'Contributor updated. The extended fields contributed '
+                'through this source are being re-attributed to the new '
+                'contributor; for large lists this runs in the background '
+                'and can take a few minutes to appear.',
+            )
+
 
 class RequestLogAdmin(admin.ModelAdmin):
     readonly_fields = ('user', 'token', 'method', 'path', 'response_code',
@@ -540,6 +556,18 @@ class WageIndicatorLinkTextConfigAdmin(admin.ModelAdmin):
     search_fields = ('link_type', 'display_text')
 
 
+class AnnouncementBannerAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'is_active', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+    # The single row is seeded by migration and edited in place.
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 class USCountyTigerlineAdmin(admin.ModelAdmin):
     list_display = ('geoid', 'name')
     search_fields = ('geoid', 'name')
@@ -660,6 +688,7 @@ admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)
 admin_site.register(
     WageIndicatorLinkTextConfig, WageIndicatorLinkTextConfigAdmin
 )
+admin_site.register(AnnouncementBanner, AnnouncementBannerAdmin)
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
 admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(ZoneSet, ZoneSetAdmin)
