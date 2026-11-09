@@ -1,7 +1,9 @@
 import logging
 
+from django.conf import settings
 from django.db import transaction
 
+from api.aws_batch import submit_reassignment_job
 from api.models.extended_field import ExtendedField
 from api.models.source import Source
 
@@ -17,6 +19,60 @@ REASSIGNMENT_CHUNK_SIZE = 500
 
 class SourceService:
     """Operations that span a Source and the records derived from it."""
+
+    @staticmethod
+    def schedule_reassignment(source_pk: int) -> None:
+        """
+        Run the extended field reassignment for this source, deferring
+        to AWS Batch when possible.
+
+        Reassigning a large list re-attributes thousands of extended
+        fields, and every updated row triggers a FacilityIndex rebuild,
+        which takes minutes. Running that inside a web request outlives
+        the CDN's origin timeout, so Django admin shows a 504 even
+        though the work succeeds. See OSDEV-3758.
+
+        The work is dispatched to Batch when the source belongs to a
+        facility list and the Batch settings are configured (always
+        true in deployed environments). Otherwise — SINGLE sources
+        (one item, re-attribution is immediate), local development and
+        tests, or a failed Batch submission — it falls back to running
+        `reassign_extended_fields` inline, which preserves correctness
+        at the cost of blocking the caller.
+        """
+        source = (
+            Source.objects
+            .filter(pk=source_pk)
+            .values('facility_list_id')
+            .first()
+        )
+        if source is None:
+            return
+
+        batch_is_configured = bool(
+            (settings.BATCH_JOB_QUEUE_NAME or '').strip()
+            and (settings.BATCH_JOB_DEF_NAME or '').strip()
+        )
+        if source['facility_list_id'] is not None and batch_is_configured:
+            try:
+                job_id = submit_reassignment_job(
+                    source['facility_list_id']
+                )
+                log.info(
+                    'Queued extended field reassignment for source %s '
+                    'as Batch job %s.',
+                    source_pk,
+                    job_id,
+                )
+                return
+            except Exception:
+                log.exception(
+                    'Batch submission failed for source %s; running the '
+                    'extended field reassignment inline instead.',
+                    source_pk,
+                )
+
+        SourceService.reassign_extended_fields(source_pk)
 
     @staticmethod
     def reassign_extended_fields(source_pk: int) -> int:

@@ -1,5 +1,6 @@
 # flake8: noqa: F401
 
+from .api.announcement_banner import announcement_banner
 from .api.api_block_view_set import ApiBlockViewSet
 from .api.api_feature_flags import api_feature_flags
 

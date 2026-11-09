@@ -282,6 +282,8 @@ internal_apis = [
          name='user-api-info'),
     path('api-feature-flags/', views.api_feature_flags,
          name='api_feature_flags'),
+    path('api-announcement-banner/', views.announcement_banner,
+         name='announcement_banner'),
     path('tile/<layer>/<cachekey>/<int:z>/<int:x>/<int:y>.<ext>',
          views.get_tile, name='tile'),
     path('api/current_tile_cache_key/', views.current_tile_cache_key),
