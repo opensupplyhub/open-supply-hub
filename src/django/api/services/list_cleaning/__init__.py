@@ -21,6 +21,7 @@ from .service import (  # noqa: F401
     submit_run,
     sweep_lapsed,
     sweep_run,
+    tour_seen,
     wants_removal,
     window_open,
 )

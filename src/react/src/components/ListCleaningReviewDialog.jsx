@@ -481,7 +481,7 @@ const ReviewStep = ({ review }) => {
         warn,
         setWarn,
         tour,
-        setTour,
+        dismissTour,
     } = review;
     const submitLabel =
         summary.changes_unapplied > 0
@@ -550,7 +550,7 @@ const ReviewStep = ({ review }) => {
                     after which the list goes to a human moderator as uploaded.
                 </span>
             </div>
-            {tour && <ListCleaningTour onDone={() => setTour(false)} />}
+            {tour && <ListCleaningTour onDone={dismissTour} />}
             <SubmitWarning
                 warn={warn}
                 summary={summary}
@@ -652,6 +652,9 @@ const ListCleaningReviewDialog = ({
     const [finished, setFinished] = useState(null); // 'submitted' | 'uploaded'
     const [warn, setWarn] = useState(null); // { asUploaded } while shown
     const [showAuto, setShowAuto] = useState(false);
+    // The walkthrough: null until the data is in, then open the first time
+    // this user reaches the review (see dismissTour below).
+    const [tour, setTour] = useState(null);
 
     // The connected dispatchers are rebuilt whenever a parent passes a
     // new prop identity; keep the latest in refs so the effects below
@@ -667,6 +670,7 @@ const ListCleaningReviewDialog = ({
         setOpenedAt(Date.now());
         setTimedOut(false);
         setFinished(null);
+        setTour(null);
         fetchRef.current();
         return () => clearRef.current();
     }, [open, listID]);
@@ -743,9 +747,24 @@ const ListCleaningReviewDialog = ({
         onContinue();
     };
 
-    // Prototype: the walkthrough opens with every review so demos need no
-    // reset. Production would remember dismissal per user.
-    const [tour, setTour] = useState(true);
+    // The walkthrough opens by itself the first time this user reaches
+    // the review. Closing it is recorded against the user (a
+    // tour_dismissed event), so later reviews start without it and the
+    // header button brings it back.
+    const tourSeen = !!data?.tour_seen;
+    const hasSummary = !!data?.summary;
+    useEffect(() => {
+        if (tour === null && hasSummary) setTour(!tourSeen);
+    }, [tour, hasSummary, tourSeen]);
+    const tourRecorded = useRef(false);
+    const dismissTour = how => {
+        setTour(false);
+        if (tourSeen || tourRecorded.current) return;
+        tourRecorded.current = true;
+        recordFacilityListCleaningEvent(listID, 'tour_dismissed', {
+            how: typeof how === 'string' ? how : 'closed',
+        });
+    };
     const busy = submitting || applying;
     const summary = data ? data.summary : null;
     const rows = data ? data.rows : [];
@@ -800,7 +819,7 @@ const ListCleaningReviewDialog = ({
                     warn,
                     setWarn,
                     tour,
-                    setTour,
+                    dismissTour,
                 }}
             />
         );

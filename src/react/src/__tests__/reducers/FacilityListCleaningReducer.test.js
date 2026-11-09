@@ -70,6 +70,7 @@ describe('FacilityListCleaningReducer', () => {
             completeFetchFacilityListCleaning({
                 run: { id: 1 },
                 summary: { rows_pending_review: 2 },
+                tour_seen: true,
                 rows: [
                     { row_number: 2, suggestions: ['a'] },
                     { row_number: 3, suggestions: ['b'] },
@@ -91,6 +92,7 @@ describe('FacilityListCleaningReducer', () => {
         );
         expect(merged.data.summary).toEqual({ rows_pending_review: 1 });
         expect(merged.data.rows_partial).toBeUndefined();
+        expect(merged.data.tour_seen).toBe(true);
         expect(merged.data.rows).toEqual([
             { row_number: 2, suggestions: ['a'] },
             { row_number: 3, suggestions: ['b2'] },

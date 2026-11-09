@@ -1001,6 +1001,29 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(run.status, ListCleaningRun.FAILED)
         self.assertIsNotNone(run.closed_at)
 
+    def test_closing_the_walkthrough_is_remembered_per_user(self):
+        self._ingested_run()
+        self.client.force_login(self.user)
+        self.assertFalse(self.client.get(self.url()).data['tour_seen'])
+        response = self.client.post(self.url('events/'), {
+            'kind': 'tour_dismissed', 'meta': {'how': 'skipped'}},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(self.client.get(self.url()).data['tour_seen'])
+        # on every list of theirs, not just this one
+        other_list = FacilityList.objects.create(
+            header='country,name,address', file_name='b.csv', name='B')
+        Source.objects.create(
+            source_type=Source.LIST, facility_list=other_list,
+            contributor=self.contributor)
+        response = self.client.get(
+            f'/api/facility-lists/{other_list.id}/cleaning/')
+        self.assertIsNone(response.data['run'])
+        self.assertTrue(response.data['tour_seen'])
+        # but only for them
+        self.client.force_login(self.superuser)
+        self.assertFalse(self.client.get(self.url()).data['tour_seen'])
+
     def test_review_events_and_metrics(self):
         run = self._ingested_run()
         self.client.force_login(self.user)

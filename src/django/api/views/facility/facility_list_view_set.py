@@ -491,18 +491,23 @@ class FacilityListViewSet(ModelViewSet):
         The latest list-cleaning run for the list, its summary and its
         per-row suggestions. internal_note issues are only returned to
         superusers. `run` is null when no run has been started.
+        `tour_seen` says whether this user has closed the walkthrough
+        before, so the review opens without it.
         """
         facility_list = self._get_list_for_user(request, pk)
+        tour_seen = list_cleaning.tour_seen(request.user)
         run = facility_list.cleaning_runs.first()
         if run is None:
             return Response({
                 'enabled': list_cleaning.feature_enabled(),
                 'run': None, 'summary': None, 'rows': [],
+                'tour_seen': tour_seen,
             })
         run = list_cleaning.settle_run(run)
         data = serialize_run(
             run, include_internal=request.user.is_superuser)
         data['enabled'] = list_cleaning.feature_enabled()
+        data['tour_seen'] = tour_seen
         return Response(data)
 
     @staticmethod
@@ -632,8 +637,11 @@ class FacilityListViewSet(ModelViewSet):
     def cleaning_events(self, request, pk=None):
         """
         Record what the contributor did with the review screen:
-        {"kind": "opened" | "resumed" | "left", "meta": {...}}.
-        Submitted and lapsed are recorded server-side.
+        {"kind": "opened" | "resumed" | "left" | "tour_dismissed",
+         "meta": {...}}.
+        Submitted and lapsed are recorded server-side. A tour_dismissed
+        event is remembered per user: the walkthrough no longer opens
+        by itself for them on later reviews.
         """
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()

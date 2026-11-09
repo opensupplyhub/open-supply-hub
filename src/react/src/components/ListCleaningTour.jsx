@@ -12,9 +12,10 @@ import COLOURS from '../util/COLOURS';
  * not on the page (a list with nothing fixed automatically, say) is simply
  * skipped.
  *
- * Prototype note: the dialog shows this on every open so demos can be
- * recorded without resetting anything. Production would remember that the
- * contributor has seen it, per user, and offer it again from the header.
+ * The dialog opens it the first time a user reaches the review; closing
+ * it is recorded against the user, so later reviews start without it and
+ * "Show me around" in the header brings it back. `onDone` says how it was
+ * closed: 'skipped', 'finished' or 'escaped'.
  */
 export const REVIEW_TOUR_STEPS = Object.freeze([
     Object.freeze({
@@ -181,7 +182,7 @@ const ListCleaningTour = ({ steps, onDone }) => {
 
     useEffect(() => {
         const onKey = e => {
-            if (e.key === 'Escape') onDone();
+            if (e.key === 'Escape') onDone('escaped');
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
@@ -242,7 +243,7 @@ const ListCleaningTour = ({ steps, onDone }) => {
                         <Button
                             size="small"
                             style={styles.skip}
-                            onClick={onDone}
+                            onClick={() => onDone('skipped')}
                         >
                             Skip tour
                         </Button>
@@ -259,7 +260,9 @@ const ListCleaningTour = ({ steps, onDone }) => {
                         size="small"
                         variant="contained"
                         color="primary"
-                        onClick={() => (last ? onDone() : setIndex(index + 1))}
+                        onClick={() =>
+                            last ? onDone('finished') : setIndex(index + 1)
+                        }
                     >
                         {last ? 'Got it' : 'Next'}
                     </Button>

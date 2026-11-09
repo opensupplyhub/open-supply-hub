@@ -361,6 +361,15 @@ def record_event(run, kind, user=None, meta=None):
         run=run, kind=kind, user=user, meta=meta or {})
 
 
+def tour_seen(user):
+    """Whether this user has closed the review walkthrough before, on
+    any list: it opens by itself only until they do."""
+    if user is None or not user.is_authenticated:
+        return False
+    return ListCleaningEvent.objects.filter(
+        user=user, kind=ListCleaningEvent.TOUR_DISMISSED).exists()
+
+
 def _close(run, reason, now):
     run.closed_at = now
     run.closed_reason = reason

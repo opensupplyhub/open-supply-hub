@@ -127,14 +127,18 @@ class ListCleaningEvent(models.Model):
     LEFT = 'left'              # closed the screen without submitting
     SUBMITTED = 'submitted'    # submitted (meta.as_uploaded says how)
     LAPSED = 'lapsed'          # window passed with no submission
+    # closed the walkthrough (meta.how: skipped, finished or escaped);
+    # the review opens without it for that user from then on
+    TOUR_DISMISSED = 'tour_dismissed'
     KIND_CHOICES = (
         (OPENED, OPENED),
         (RESUMED, RESUMED),
         (LEFT, LEFT),
         (SUBMITTED, SUBMITTED),
         (LAPSED, LAPSED),
+        (TOUR_DISMISSED, TOUR_DISMISSED),
     )
-    CLIENT_KINDS = (OPENED, RESUMED, LEFT)
+    CLIENT_KINDS = (OPENED, RESUMED, LEFT, TOUR_DISMISSED)
 
     run = models.ForeignKey(
         ListCleaningRun,

@@ -177,6 +177,7 @@ export const reviewData = (overrides = {}) => ({
     summary: { ...SUMMARY, ...(overrides.summary || {}) },
     groups: GROUPS,
     rows: ROWS,
+    tour_seen: false,
     ...Object.fromEntries(
         Object.entries(overrides).filter(
             ([key]) => !['run', 'summary'].includes(key),

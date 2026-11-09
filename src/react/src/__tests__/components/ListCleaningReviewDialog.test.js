@@ -96,6 +96,35 @@ describe('ListCleaningReviewDialog', () => {
         );
     });
 
+    test('closing the walkthrough is recorded once, against the user', () => {
+        renderDialog(reviewData());
+        expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Skip tour' }));
+        expect(recordFacilityListCleaningEvent).toHaveBeenCalledWith(
+            42, 'tour_dismissed', { how: 'skipped' },
+        );
+        // brought back from the header and closed again: not recorded twice
+        fireEvent.click(screen.getByRole('button', { name: /Show me around/ }));
+        expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
+        closeTour();
+        const dismissals = recordFacilityListCleaningEvent.mock.calls.filter(
+            ([, kind]) => kind === 'tour_dismissed',
+        );
+        expect(dismissals).toHaveLength(1);
+    });
+
+    test('a user who has closed the walkthrough before starts without it', () => {
+        renderDialog(reviewData({ tour_seen: true }));
+        expect(screen.queryByText('Where you are in the upload')).toBeNull();
+        expect(screen.getByText(/A few changes would make your list/)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /Show me around/ }));
+        expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
+        closeTour();
+        expect(recordFacilityListCleaningEvent).not.toHaveBeenCalledWith(
+            42, 'tour_dismissed', expect.anything(),
+        );
+    });
+
     test('decisions go through the actions with the list id', () => {
         renderDialog(reviewData());
         closeTour();
