@@ -38,16 +38,6 @@ class FacilityClaimInviteSerializer(serializers.Serializer):
         max_length=FacilityClaimInvite._meta.get_field('note').max_length,
     )
 
-    # Code of one of the sender's own active claims campaigns. When set,
-    # the claim link in the email carries the campaign code too.
-    campaign = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        default='',
-        trim_whitespace=True,
-        max_length=50,
-    )
-
     def validate_recipient_email(self, value):
         return value.strip().lower()
 

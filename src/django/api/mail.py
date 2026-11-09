@@ -229,10 +229,6 @@ def send_claim_invite_email(request, claim_invite):
             claim_invite.uuid,
         ),
     }
-    if claim_invite.campaign is not None:
-        invite_dictionary['claim_url'] += '&campaign={}'.format(
-            claim_invite.campaign.code
-        )
 
     send_mail(
         subj_template.render(invite_dictionary).rstrip(),

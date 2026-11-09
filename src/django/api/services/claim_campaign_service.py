@@ -3,7 +3,6 @@ import secrets
 
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
-from rest_framework.exceptions import ValidationError
 from waffle import get_waffle_flag_model, switch_is_active
 
 from api.constants import FacilityClaimStatuses
@@ -93,21 +92,6 @@ def resolve_claim_campaign(facility, code):
     return None, False
 
 
-def campaign_includes_facility(campaign, facility):
-    """
-    Whether the facility is one of the campaign's suppliers: on its
-    roster when it has one, otherwise (v1) on one of the contributor's
-    active lists.
-    """
-    if campaign.uses_roster:
-        return campaign.suppliers.filter(facility=facility).exists()
-    return FacilityListItem.objects.filter(
-        facility=facility,
-        source__contributor_id=campaign.contributor_id,
-        source__is_active=True,
-    ).exists()
-
-
 def user_has_flag(user, flag_name):
     if user is None or not user.is_authenticated:
         return False
@@ -128,64 +112,6 @@ def campaign_permissions(user):
         'access': access,
         'self_serve': access and user_has_flag(user, SELF_SERVE_FLAG),
     }
-
-
-def campaign_for_invite_claim(claim_invite):
-    """
-    The campaign a claim should count for because it came from that
-    campaign's email invite: the invite's campaign, if it is still
-    ACTIVE and campaigns are switched on. None otherwise.
-    """
-    if (
-        claim_invite is None
-        or claim_invite.campaign_id is None
-        or not switch_is_active('claim_campaigns')
-    ):
-        return None
-    campaign = claim_invite.campaign
-    if campaign.status != ClaimCampaign.Status.ACTIVE:
-        return None
-    return campaign
-
-
-def get_campaign_for_invite(user, facility, code):
-    """
-    The sender's own active campaign with this code, for a claim invite
-    sent from the campaign dashboard. Raises a ValidationError (shown to
-    the sender) when the code isn't one of the sender's active campaigns
-    or the facility isn't one of its suppliers.
-    """
-    contributor = getattr(user, 'contributor', None)
-    campaign = None
-    if contributor is not None and campaign_permissions(user)['access']:
-        campaign = ClaimCampaign.objects.filter(
-            code=code.strip().upper(),
-            contributor=contributor,
-            status=ClaimCampaign.Status.ACTIVE,
-        ).first()
-    if campaign is None:
-        raise ValidationError(
-            'This campaign is closed or isn\'t one of yours.'
-        )
-    if not campaign_includes_facility(campaign, facility):
-        raise ValidationError(
-            'This production location isn\'t part of this campaign.'
-        )
-    return campaign
-
-
-def get_campaign_invites(campaign):
-    """
-    The most recent invite sent from the campaign to each supplier, as
-    {facility_id: {recipient_email, created_at}}.
-    """
-    latest = {}
-    for invite in campaign.invites.order_by('created_at'):
-        latest[invite.facility_id] = {
-            'recipient_email': invite.recipient_email,
-            'created_at': invite.created_at,
-        }
-    return latest
 
 
 def get_claim_statuses(facility_ids):
@@ -397,7 +323,7 @@ def get_api_facilities(contributor):
 def close_campaign(campaign):
     """
     Close a campaign. It stops collecting: new claims are no longer
-    attributed to it and no more invites can be sent from it. Claims
+    attributed to it. Claims
     already attributed keep their campaign. Closing twice is a no-op.
     """
     if campaign.status != ClaimCampaign.Status.CLOSED:

@@ -7,7 +7,6 @@ from api.services.claim_campaign_service import (
     API_SOURCE_ID,
     MAX_SUPPLIERS_PER_CAMPAIGN,
     exclude_removed_list_items,
-    get_campaign_invites,
     get_claim_statuses,
     get_contributor_api_items,
     get_contributor_list_sources,
@@ -38,13 +37,6 @@ class ClaimCampaignSerializer(serializers.ModelSerializer):
         )
 
     def get_suppliers(self, campaign):
-        invites = get_campaign_invites(campaign)
-        return [
-            {**supplier, 'last_invite': invites.get(supplier['os_id'])}
-            for supplier in self.get_campaign_suppliers(campaign)
-        ]
-
-    def get_campaign_suppliers(self, campaign):
         if campaign.uses_roster:
             # Exactly the chosen suppliers; an emptied roster stays empty.
             return serialize_suppliers(

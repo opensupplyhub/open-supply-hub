@@ -1,4 +1,4 @@
-from api.models import ClaimCampaign, ClaimCampaignSupplier, Contributor, User
+from api.models import ClaimCampaign, Contributor, User
 from api.services.claim_campaign_service import campaign_permissions
 from api.tests.test_claim_campaign import (
     ClaimCampaignBaseTest,
@@ -97,27 +97,6 @@ class CampaignAccessTest(NoAccessBaseTest):
         self.assertEqual(
             {"access": True, "self_serve": False},
             response.json()["claim_campaigns"],
-        )
-
-    def test_invite_from_campaign_needs_access(self):
-        ClaimCampaignSupplier.objects.create(
-            campaign=self.campaign, facility=self.facility
-        )
-        from api.services.claim_campaign_service import (
-            get_campaign_for_invite,
-        )
-        from rest_framework.exceptions import ValidationError
-
-        with self.assertRaises(ValidationError):
-            get_campaign_for_invite(
-                self.user, self.facility, self.campaign.code
-            )
-        grant_campaign_access(self.user)
-        self.assertEqual(
-            self.campaign,
-            get_campaign_for_invite(
-                self.user, self.facility, self.campaign.code
-            ),
         )
 
 

@@ -165,7 +165,6 @@ class MergedSupplierTest(ClaimCampaignRosterBaseTest):
             facility=facility,
             sent_by_user=self.user,
             recipient_email="contact@supplier.com",
-            campaign=self.campaign,
         )
 
     def test_move_repoints_roster_and_invites(self):

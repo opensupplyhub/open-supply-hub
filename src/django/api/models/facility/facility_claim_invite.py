@@ -44,15 +44,6 @@ class FacilityClaimInvite(models.Model):
         help_text='Optional personal note from the sender, included in the '
                   'email as plain text.'
     )
-    campaign = models.ForeignKey(
-        'ClaimCampaign',
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='invites',
-        help_text='The claims campaign the invite was sent from, if any. '
-                  'Its code is added to the claim link.'
-    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     @property

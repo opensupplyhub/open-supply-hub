@@ -315,8 +315,7 @@ class ClaimCampaignScenarioTest(ClaimCampaignRosterBaseTest):
         rows = self.campaign_rows(campaign)
         self.assertEqual({self.facility.id, self.api_facility.id}, set(rows))
         self.assertEqual(
-            {"os_id", "name", "country_code", "claim_status", "is_closed",
-             "last_invite"},
+            {"os_id", "name", "country_code", "claim_status", "is_closed"},
             set(rows[self.api_facility.id]),
         )
         self.assertEqual(

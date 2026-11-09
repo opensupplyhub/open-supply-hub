@@ -58,7 +58,6 @@ from django.views.decorators.vary import vary_on_headers
 from api.facilities_extent_cache import FacilitiesExtentCache
 from api.facilities_visibility_token import facilities_visibility_token
 from api.services.claim_campaign_service import (
-    campaign_for_invite_claim,
     move_campaign_suppliers,
     resolve_claim_campaign,
 )
@@ -136,7 +135,6 @@ from api.services.facility_claim_invite_service import (
     find_invite_for_claim,
     validate_can_invite,
 )
-from api.services.claim_campaign_service import get_campaign_for_invite
 from api.services.contributor_masking_policy import ContributorMaskingPolicy
 from api.view_response_cache import cache_view_response
 
@@ -2545,15 +2543,6 @@ class FacilitiesViewSet(ListModelMixin,
                 validated_data.get("claim_invite"),
                 facility,
             )
-            # A claim from a campaign's email invite counts for that
-            # campaign even when the claim page didn't pass the campaign
-            # code along (the older claim flow doesn't).
-            invite_campaign = campaign_for_invite_claim(
-                facility_claim.claim_invite
-            )
-            if invite_campaign is not None and not facility_claim.via_link:
-                facility_claim.campaign = invite_campaign
-                facility_claim.via_link = True
 
             facility_claim.save()
 
@@ -2670,13 +2659,6 @@ class FacilitiesViewSet(ListModelMixin,
         serializer.is_valid(raise_exception=True)
         recipient_email = serializer.validated_data['recipient_email']
 
-        campaign_code = serializer.validated_data['campaign']
-        campaign = (
-            get_campaign_for_invite(request.user, facility, campaign_code)
-            if campaign_code
-            else None
-        )
-
         validate_can_invite(facility, recipient_email)
 
         claim_invite = FacilityClaimInvite.objects.create(
@@ -2684,7 +2666,6 @@ class FacilitiesViewSet(ListModelMixin,
             sent_by_user=request.user,
             recipient_email=recipient_email,
             note=serializer.validated_data['note'],
-            campaign=campaign,
         )
         send_claim_invite_email(request, claim_invite)
         ClaimInviteThrottle().record_invite(request, self)
