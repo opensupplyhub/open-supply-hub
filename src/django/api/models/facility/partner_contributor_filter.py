@@ -35,6 +35,13 @@ def apply_partner_fields_or_filter(
     # set inactive) nothing comes back here, the names stay in the
     # contributed branch, and that branch finds no rows for them: the
     # filter then matches nothing for those fields, never everything.
+    # Imported here rather than at module level for the circular-import
+    # reason build_india_labour_line_filter gives below.
+    from api.partner_fields.zone_set_provider import (
+        build_zone_sets_covered_q,
+        get_active_zone_sets_for_fields,
+    )
+
     zone_sets = get_active_zone_sets_for_fields(field_names)
     zone_set_field_names = {
         zone_set.partner_field.name for zone_set in zone_sets
@@ -151,37 +158,6 @@ def apply_partner_contributors_filter(
     )
 
     return facilities_queryset
-
-
-def get_active_zone_sets_for_fields(field_names):
-    """
-    Return the active zone sets linked to any of the field names.
-
-    Thin wrapper over the provider-module helper of the same name;
-    the import is deferred for the same circular-import reason as
-    build_india_labour_line_filter below.
-    """
-    from api.partner_fields.zone_set_provider import (
-        get_active_zone_sets_for_fields as get_zone_sets,
-    )
-
-    return get_zone_sets(field_names)
-
-
-def build_zone_sets_covered_q(zone_sets):
-    """
-    Return the condition matching the locations the zone sets cover.
-
-    Delegates to the shared helper in the provider module (see
-    build_zone_sets_covered_q there) so the search filter and the
-    contributor-profile spotlight apply one definition of "covered".
-    Deferred import, as above.
-    """
-    from api.partner_fields.zone_set_provider import (
-        build_zone_sets_covered_q as build_covered_q,
-    )
-
-    return build_covered_q(zone_sets)
 
 
 def build_india_labour_line_filter():
