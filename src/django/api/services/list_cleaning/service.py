@@ -199,6 +199,72 @@ def _default_decision(field, code):
     return ListCleaningSuggestion.PENDING
 
 
+def _correction(item, change, common, now):
+    field = change.get('field', '')
+    code = change.get('reason', '')
+    decision = _default_decision(field, code)
+    auto = decision == ListCleaningSuggestion.ACCEPTED
+    return ListCleaningSuggestion(
+        kind=ListCleaningSuggestion.CORRECTION,
+        field=field,
+        code=code,
+        original_value=_original_value(item, field, change),
+        corrected_value=_corrected_value(change),
+        note=change.get('note', '') or '',
+        decision=decision,
+        decided_at=now if auto else None,
+        extra={'auto': True} if auto else {},
+        **common,
+    )
+
+
+def _issue(item, issue, common):
+    field = issue.get('field', '') or ''
+    return ListCleaningSuggestion(
+        kind=ListCleaningSuggestion.ISSUE,
+        field=field,
+        code=issue.get('code', ''),
+        severity=issue.get('severity', ''),
+        original_value=_original_value(item, field),
+        note=issue.get('note', '') or '',
+        **common,
+    )
+
+
+def _removal(record, common, now):
+    # Exact duplicates and blank rows are removed automatically: the
+    # parser already drops exact duplicates before the pipeline runs,
+    # and neither needs judgment. The contributor can still put a row
+    # back.
+    reason = record.get('removed_reason', '') or ''
+    duplicate_of = record.get('duplicate_of')
+    if reason == 'duplicate' and duplicate_of:
+        note = f'This row repeats row {duplicate_of}, so it was removed.'
+    else:
+        note = 'This row is blank, so it was removed.'
+    return ListCleaningSuggestion(
+        kind=ListCleaningSuggestion.REMOVAL,
+        field='row',
+        code=reason,
+        note=note,
+        decision=ListCleaningSuggestion.ACCEPTED,
+        decided_at=now,
+        extra={'duplicate_of': duplicate_of, 'auto': True},
+        **common,
+    )
+
+
+def _record_suggestions(record, item, common, now):
+    """Every suggestion one pipeline record carries for its row."""
+    out = [_correction(item, change, common, now)
+           for change in record.get('changes') or []]
+    out += [_issue(item, issue, common)
+            for issue in record.get('issues') or []]
+    if record.get('status') == 'removed':
+        out.append(_removal(record, common, now))
+    return out
+
+
 @transaction.atomic
 def ingest_result(run, result):
     """
@@ -226,59 +292,7 @@ def ingest_result(run, result):
         item = items_by_row.get(row_number)
         common = {'run': run, 'facility_list_item': item,
                   'row_number': row_number}
-
-        for change in record.get('changes') or []:
-            field = change.get('field', '')
-            code = change.get('reason', '')
-            decision = _default_decision(field, code)
-            auto = decision == ListCleaningSuggestion.ACCEPTED
-            suggestions.append(ListCleaningSuggestion(
-                kind=ListCleaningSuggestion.CORRECTION,
-                field=field,
-                code=code,
-                original_value=_original_value(item, field, change),
-                corrected_value=_corrected_value(change),
-                note=change.get('note', '') or '',
-                decision=decision,
-                decided_at=now if auto else None,
-                extra={'auto': True} if auto else {},
-                **common,
-            ))
-
-        for issue in record.get('issues') or []:
-            field = issue.get('field', '') or ''
-            suggestions.append(ListCleaningSuggestion(
-                kind=ListCleaningSuggestion.ISSUE,
-                field=field,
-                code=issue.get('code', ''),
-                severity=issue.get('severity', ''),
-                original_value=_original_value(item, field),
-                note=issue.get('note', '') or '',
-                **common,
-            ))
-
-        if record.get('status') == 'removed':
-            reason = record.get('removed_reason', '') or ''
-            duplicate_of = record.get('duplicate_of')
-            # Exact duplicates and blank rows are removed automatically:
-            # the parser already drops exact duplicates before the
-            # pipeline runs, and neither needs judgment. The contributor
-            # can still put a row back.
-            if reason == 'duplicate' and duplicate_of:
-                note = (f'This row repeats row {duplicate_of}, so it was '
-                        'removed.')
-            else:
-                note = 'This row is blank, so it was removed.'
-            suggestions.append(ListCleaningSuggestion(
-                kind=ListCleaningSuggestion.REMOVAL,
-                field='row',
-                code=reason,
-                note=note,
-                decision=ListCleaningSuggestion.ACCEPTED,
-                decided_at=now,
-                extra={'duplicate_of': duplicate_of, 'auto': True},
-                **common,
-            ))
+        suggestions += _record_suggestions(record, item, common, now)
 
     ListCleaningSuggestion.objects.bulk_create(suggestions)
 
@@ -405,6 +419,10 @@ def submit_run(run, user, as_uploaded=False):
     return counts
 
 
+def _count(items, predicate):
+    return len([x for x in items if predicate(x)])
+
+
 def change_breakdown(run, as_uploaded=False):
     """
     How much the contributor changed, split into what went on by itself
@@ -421,34 +439,30 @@ def change_breakdown(run, as_uploaded=False):
     flags = [s for s in suggestions if s.severity == S.MUST_FIX]
     removed_rows = {s.row_number for s in suggestions
                     if s.decision == S.REMOVED}
-    flags_resolved = [
-        s for s in flags
-        if s.decision == S.EDITED or s.row_number in removed_rows]
+    flags_resolved = _count(
+        flags, lambda s: s.decision == S.EDITED
+        or s.row_number in removed_rows)
     out = {
         'auto_offered': len(auto),
-        'auto_turned_off': len(
-            [s for s in auto if s.decision == S.REJECTED]),
+        'auto_turned_off': _count(auto, lambda s: s.decision == S.REJECTED),
         'fixes_offered': len(fixes),
-        'fixes_accepted': len(
-            [s for s in fixes if s.decision == S.ACCEPTED]),
-        'fixes_kept_original': len(
-            [s for s in fixes if s.decision == S.REJECTED]),
-        'values_typed': len(
-            [s for s in suggestions if s.decision == S.EDITED]),
+        'fixes_accepted': _count(fixes, lambda s: s.decision == S.ACCEPTED),
+        'fixes_kept_original': _count(
+            fixes, lambda s: s.decision == S.REJECTED),
+        'values_typed': _count(suggestions, lambda s: s.decision == S.EDITED),
         'rows_removed_by_review': len(removed_rows),
         'flags_offered': len(flags),
-        'flags_resolved': len(flags_resolved),
-        'flags_left_as_uploaded': len(flags) - len(flags_resolved),
-        'row_decisions': len(
-            [s for s in suggestions if (s.extra or {}).get('by_row')
-             and s.decision != S.PENDING]),
+        'flags_resolved': flags_resolved,
+        'flags_left_as_uploaded': len(flags) - flags_resolved,
+        'row_decisions': _count(
+            suggestions, lambda s: (s.extra or {}).get('by_row')
+            and s.decision != S.PENDING),
+        'auto_applied': 0,
+        'reviewed_changes': 0,
     }
-    if as_uploaded:
-        out['auto_applied'] = 0
-        out['reviewed_changes'] = 0
-    else:
-        out['auto_applied'] = len(
-            [s for s in auto if s.decision == S.ACCEPTED])
+    if not as_uploaded:
+        out['auto_applied'] = _count(
+            auto, lambda s: s.decision == S.ACCEPTED)
         # changes that took a person: accepted fixes, typed values and
         # rows removed, counted once each
         out['reviewed_changes'] = (
@@ -466,13 +480,45 @@ BREAKDOWN_TOTALS = (
 )
 
 
+def _tally_run(run, out, samples):
+    """Count one completed run into the summary; closed submissions
+    add their timing and change counts to `samples`."""
+    E = ListCleaningEvent
+    kinds = [e.kind for e in run.events.all()]
+    opened = E.OPENED in kinds or E.RESUMED in kinds
+    out['runs_complete'] += 1
+    out['review_opened'] += opened
+    out['left_at_least_once'] += E.LEFT in kinds
+    out['resumed_at_least_once'] += E.RESUMED in kinds
+    if run.closed_at is None:
+        out['runs_open'] += 1
+        return
+    if run.closed_reason != ListCleaningRun.SUBMITTED:
+        key = 'lapsed_after_opening' if opened else 'lapsed_never_opened'
+        out[key] += 1
+        return
+    submitted = next(
+        (e for e in run.events.all() if e.kind == E.SUBMITTED), None)
+    meta = submitted.meta if submitted else {}
+    if meta.get('as_uploaded'):
+        out['submitted_as_uploaded'] += 1
+    else:
+        out['submitted_with_changes'] += 1
+        samples['applied'].append(meta.get('applied', 0))
+        samples['auto_applied'].append(meta.get('auto_applied', 0))
+        samples['reviewed'].append(meta.get('reviewed_changes', 0))
+    for key in BREAKDOWN_TOTALS:
+        out['totals'][key] += meta.get(key, 0)
+    if 'seconds_after_upload' in meta:
+        samples['minutes'].append(meta['seconds_after_upload'] / 60)
+
+
 def metrics_summary():
     """
     Submit versus click away, across every closed run. Counts runs, not
     events: a contributor who opens, leaves, resumes and submits is one
     "submitted" run that was also "left once".
     """
-    E = ListCleaningEvent
     runs = ListCleaningRun.objects.filter(
         status=ListCleaningRun.COMPLETE).prefetch_related('events')
     out = {
@@ -491,51 +537,23 @@ def metrics_summary():
         'median_reviewed_changes': None,
         'totals': dict.fromkeys(BREAKDOWN_TOTALS, 0),
     }
-    minutes, applied, auto_applied, reviewed = [], [], [], []
+    samples = {'minutes': [], 'applied': [], 'auto_applied': [],
+               'reviewed': []}
     for run in runs:
-        out['runs_complete'] += 1
-        kinds = [e.kind for e in run.events.all()]
-        opened = E.OPENED in kinds or E.RESUMED in kinds
-        if opened:
-            out['review_opened'] += 1
-        if E.LEFT in kinds:
-            out['left_at_least_once'] += 1
-        if E.RESUMED in kinds:
-            out['resumed_at_least_once'] += 1
-        if run.closed_at is None:
-            out['runs_open'] += 1
-            continue
-        if run.closed_reason == ListCleaningRun.LAPSED:
-            key = ('lapsed_after_opening' if opened
-                   else 'lapsed_never_opened')
-            out[key] += 1
-            continue
-        submitted = next(
-            (e for e in run.events.all() if e.kind == E.SUBMITTED), None)
-        meta = submitted.meta if submitted else {}
-        if meta.get('as_uploaded'):
-            out['submitted_as_uploaded'] += 1
-        else:
-            out['submitted_with_changes'] += 1
-            applied.append(meta.get('applied', 0))
-            auto_applied.append(meta.get('auto_applied', 0))
-            reviewed.append(meta.get('reviewed_changes', 0))
-        for key in BREAKDOWN_TOTALS:
-            out['totals'][key] += meta.get(key, 0)
-        if 'seconds_after_upload' in meta:
-            minutes.append(meta['seconds_after_upload'] / 60)
-    if minutes:
-        out['median_minutes_to_submit'] = round(statistics.median(minutes), 1)
-    if applied:
-        out['median_changes_applied'] = statistics.median(applied)
-        out['median_auto_applied'] = statistics.median(auto_applied)
-        out['median_reviewed_changes'] = statistics.median(reviewed)
-    decided = (out['submitted_with_changes'] + out['submitted_as_uploaded']
-               + out['lapsed_after_opening'] + out['lapsed_never_opened'])
-    out['submit_rate'] = (
-        round((out['submitted_with_changes']
-               + out['submitted_as_uploaded']) / decided, 3)
-        if decided else None)
+        _tally_run(run, out, samples)
+    if samples['minutes']:
+        out['median_minutes_to_submit'] = round(
+            statistics.median(samples['minutes']), 1)
+    if samples['applied']:
+        out['median_changes_applied'] = statistics.median(samples['applied'])
+        out['median_auto_applied'] = statistics.median(
+            samples['auto_applied'])
+        out['median_reviewed_changes'] = statistics.median(
+            samples['reviewed'])
+    submitted = out['submitted_with_changes'] + out['submitted_as_uploaded']
+    decided = submitted + out['lapsed_after_opening'] + out[
+        'lapsed_never_opened']
+    out['submit_rate'] = round(submitted / decided, 3) if decided else None
     return out
 
 
@@ -543,13 +561,8 @@ class DecisionError(ValueError):
     pass
 
 
-def _apply_decision(suggestion, decision, value, user, now, by_row):
-    """
-    Validate one decision against one suggestion and set it. `by_row`
-    records whether the contributor decided this row on its own; group
-    actions leave such rows alone, so fixing two rows and then removing
-    "the rest" of that error type does what it says.
-    """
+def _check_decision(suggestion, decision, value):
+    """The decisions one suggestion can take, or a DecisionError."""
     S = ListCleaningSuggestion
     if suggestion.kind == S.ISSUE:
         # A flagged row can be fixed in place (EDITED), dropped (REMOVED)
@@ -561,13 +574,25 @@ def _apply_decision(suggestion, decision, value, user, now, by_row):
                 'remove it or leave it as it is.')
         if suggestion.severity == S.INTERNAL_NOTE:
             raise DecisionError('Moderator notes cannot be decided.')
-    if decision == S.EDITED:
-        if value is None or str(value) == '':
-            raise DecisionError('An edited decision needs a value.')
-        if suggestion.kind == S.REMOVAL:
-            raise DecisionError('A removal cannot be edited.')
-        if suggestion.field in ('', 'row'):
-            raise DecisionError('This flag is not tied to a single field.')
+    if decision != S.EDITED:
+        return
+    if value is None or str(value) == '':
+        raise DecisionError('An edited decision needs a value.')
+    if suggestion.kind == S.REMOVAL:
+        raise DecisionError('A removal cannot be edited.')
+    if suggestion.field in ('', 'row'):
+        raise DecisionError('This flag is not tied to a single field.')
+
+
+def _apply_decision(suggestion, decision, value, user, now, by_row):
+    """
+    Validate one decision against one suggestion and set it. `by_row`
+    records whether the contributor decided this row on its own; group
+    actions leave such rows alone, so fixing two rows and then removing
+    "the rest" of that error type does what it says.
+    """
+    S = ListCleaningSuggestion
+    _check_decision(suggestion, decision, value)
     if decision == S.REMOVED and suggestion.kind == S.REMOVAL:
         decision = S.ACCEPTED  # same meaning; keep one spelling
     suggestion.decision = decision
@@ -639,24 +664,30 @@ def record_group_decisions(run, groups, user):
         if key not in by_key:
             raise DecisionError(f'Group {key!r} is not part of this run.')
         if entry.get('reset'):
-            S = ListCleaningSuggestion
-            for suggestion in by_key[key]:
-                extra = suggestion.extra or {}
-                if not extra.get('by_row'):
-                    continue
-                back_to = S.ACCEPTED if extra.get('auto') else S.PENDING
-                updated.append(_apply_decision(
-                    suggestion, back_to, '', user, now, by_row=False))
+            updated += _reset_group(by_key[key], user, now)
             continue
         decision = entry.get('decision')
         if decision not in allowed:
             raise DecisionError(
                 f'Decision {decision!r} cannot be made for a whole group.')
-        for suggestion in by_key[key]:
-            if (suggestion.extra or {}).get('by_row'):
-                continue
-            updated.append(_apply_decision(
-                suggestion, decision, '', user, now, by_row=False))
+        updated += [
+            _apply_decision(s, decision, '', user, now, by_row=False)
+            for s in by_key[key] if not (s.extra or {}).get('by_row')]
+    return updated
+
+
+def _reset_group(suggestions, user, now):
+    """Put the rows decided one by one back to undecided (or back to
+    the automatic fix), so the group buttons cover them again."""
+    S = ListCleaningSuggestion
+    updated = []
+    for suggestion in suggestions:
+        extra = suggestion.extra or {}
+        if not extra.get('by_row'):
+            continue
+        back_to = S.ACCEPTED if extra.get('auto') else S.PENDING
+        updated.append(_apply_decision(
+            suggestion, back_to, '', user, now, by_row=False))
     return updated
 
 
@@ -719,9 +750,21 @@ def _rederive_items(items, contributor):
         facility_list_item__in=removed + [item for item, _ in parsed],
         field_name__in=RAW_DATA_FIELDS,
     ).delete()
-    # Working out a stored value can mean a lookup (parent company,
-    # product types) and the same values repeat down a list, so each
-    # distinct (field, value, sector) is computed once.
+    fields = _build_fields(parsed, contributor)
+    if fields:
+        bulk_create_with_history(fields, ExtendedField)
+    facility_ids = {i.facility_id for i in items if i.facility_id}
+    if facility_ids:
+        Facility.objects.filter(pk__in=facility_ids).update(updated_at=now)
+
+
+def _build_fields(parsed, contributor):
+    """Unsaved ExtendedField rows for every (item, re-parsed row).
+
+    Working out a stored value can mean a lookup (parent company,
+    product types) and the same values repeat down a list, so each
+    distinct (field, value, sector) is computed once.
+    """
     memo = {}
 
     def stored_value(field, raw_value, item):
@@ -741,11 +784,7 @@ def _rederive_items(items, contributor):
                 contributor=contributor, facility_list_item=item,
                 facility_id=item.facility_id, field_name=field,
                 value=value))
-    if fields:
-        bulk_create_with_history(fields, ExtendedField)
-    facility_ids = {i.facility_id for i in items if i.facility_id}
-    if facility_ids:
-        Facility.objects.filter(pk__in=facility_ids).update(updated_at=now)
+    return fields
 
 
 def _reparse(item, sector_cache, os_id_lookup):
@@ -811,7 +850,6 @@ def apply_run(run, only=None):
     is re-derived from its corrected raw_json afterwards (see
     `_rederive_item`); a removed row loses them.
     """
-    S = ListCleaningSuggestion
     # One instance per item: several suggestions touch the same row, and
     # saving a second stale instance would overwrite the first's changes.
     items = {
@@ -841,10 +879,9 @@ def apply_run(run, only=None):
         # serializer reads `error` from every entry.
         item.processing_results.append({
             'action': 'list_cleaning',
-            'error': False,
             'started_at': now,
+            'error': False,
             'finished_at': now,
-            'run_id': run.id,
             'suggestion_id': s.id,
             'code': s.code,
             'decision': s.decision,
@@ -854,58 +891,12 @@ def apply_run(run, only=None):
 
     for item_id, suggestions in by_item.items():
         item = items[item_id]
-
-        # 1. Value changes: accepted corrections and edited values.
-        for s in suggestions:
-            if s.kind == S.REMOVAL or (only is not None and s.id not in only):
-                continue
-            accepted = s.decision in (S.ACCEPTED, S.EDITED)
-            if s.kind == S.ISSUE and s.decision != S.EDITED:
-                accepted = False
-            if accepted and not s.applied:
-                _write_field(item, s.field, s.final_value)
-                s.applied = True
-                applied += 1
-            elif (accepted and s.applied and s.decision == S.EDITED
-                  and (item.raw_json or {}).get(s.field) != s.final_value):
-                # re-edited after an earlier apply
-                _write_field(item, s.field, s.final_value)
-                applied += 1
-            elif not accepted and s.applied:
-                _write_field(item, s.field, s.original_value)
-                s.applied = False
-                reverted += 1
-            else:
-                continue
-            log_entry(item, s, s.applied)
-            s.save(update_fields=['applied'])
-
-        # 2. Row removal, decided per item so several suggestions on one
-        #    row cannot fight over its status.
-        want = [s for s in suggestions if _wants_removal(s)]
-        was = [s for s in suggestions
-               if (s.extra or {}).get('removal_applied')]
-        if want and not was:
-            dup = any(s.kind == S.REMOVAL and s.code == 'duplicate'
-                      for s in want)
-            item.status = (FacilityListItem.DUPLICATE if dup
-                           else FacilityListItem.ITEM_REMOVED)
-            for s in want:
-                s.extra = {**(s.extra or {}), 'removal_applied': True}
-                if s.kind == S.REMOVAL:
-                    s.applied = True
-                s.save(update_fields=['extra', 'applied'])
-                log_entry(item, s, True)
-            applied += 1
-        elif not want and was:
-            item.status = FacilityListItem.PARSED
-            for s in was:
-                s.extra = {**(s.extra or {}), 'removal_applied': False}
-                if s.kind == S.REMOVAL:
-                    s.applied = False
-                s.save(update_fields=['extra', 'applied'])
-                log_entry(item, s, False)
-            reverted += 1
+        a, r = _apply_values(item, suggestions, only, log_entry)
+        applied += a
+        reverted += r
+        a, r = _apply_removal(item, suggestions, log_entry)
+        applied += a
+        reverted += r
 
     for item_id in touched:
         items[item_id].save()
@@ -935,6 +926,86 @@ def _safe_cell(value):
     if value and value.startswith(FORMULA_STARTS):
         return "'" + value
     return value
+
+
+def _value_action(s, item, only):
+    """What one suggestion needs on its item now: 'apply', 'reapply'
+    (edited again after an earlier apply), 'revert' or None."""
+    S = ListCleaningSuggestion
+    if s.kind == S.REMOVAL or (only is not None and s.id not in only):
+        return None
+    accepted = s.decision in (S.ACCEPTED, S.EDITED)
+    if s.kind == S.ISSUE and s.decision != S.EDITED:
+        accepted = False
+    if accepted and not s.applied:
+        return 'apply'
+    if (accepted and s.applied and s.decision == S.EDITED
+            and (item.raw_json or {}).get(s.field) != s.final_value):
+        return 'reapply'
+    if not accepted and s.applied:
+        return 'revert'
+    return None
+
+
+def _apply_values(item, suggestions, only, log_entry):
+    """Step 1 of apply: accepted corrections and edited values on, and
+    previously applied values that were since rejected back off."""
+    applied = reverted = 0
+    for s in suggestions:
+        action = _value_action(s, item, only)
+        if action is None:
+            continue
+        if action == 'revert':
+            _write_field(item, s.field, s.original_value)
+            s.applied = False
+            reverted += 1
+        else:
+            _write_field(item, s.field, s.final_value)
+            s.applied = True
+            applied += 1
+        log_entry(item, s, s.applied)
+        s.save(update_fields=['applied'])
+    return applied, reverted
+
+
+def _apply_removal(item, suggestions, log_entry):
+    """Step 2 of apply: row removal, decided per item so several
+    suggestions on one row cannot fight over its status."""
+    S = ListCleaningSuggestion
+    want = [s for s in suggestions if _wants_removal(s)]
+    was = [s for s in suggestions if (s.extra or {}).get('removal_applied')]
+    if want and not was:
+        dup = any(s.kind == S.REMOVAL and s.code == 'duplicate'
+                  for s in want)
+        item.status = (FacilityListItem.DUPLICATE if dup
+                       else FacilityListItem.ITEM_REMOVED)
+        _mark_removal(want, True, item, log_entry)
+        return 1, 0
+    if not want and was:
+        item.status = FacilityListItem.PARSED
+        _mark_removal(was, False, item, log_entry)
+        return 0, 1
+    return 0, 0
+
+
+def _mark_removal(suggestions, applied, item, log_entry):
+    S = ListCleaningSuggestion
+    for s in suggestions:
+        s.extra = {**(s.extra or {}), 'removal_applied': applied}
+        if s.kind == S.REMOVAL:
+            s.applied = applied
+        s.save(update_fields=['extra', 'applied'])
+        log_entry(item, s, applied)
+
+
+def _removal_tag(item, suggestions):
+    """The tag for a dropped row, or '' for a row that stays."""
+    if item.status not in REMOVED_STATUSES:
+        return ''
+    reason = _removal_reason(suggestions)
+    if not reason and item.status == FacilityListItem.DUPLICATE:
+        reason = 'duplicate row'
+    return f'removed: {reason or "removed"}'
 
 
 def build_fixed_csv(run):
@@ -985,13 +1056,8 @@ def build_fixed_csv(run):
                            + ['not read: fix the row and re-upload'])
             continue
         values = paired([cell(item, column) for column in header], original)
-        if item.status in REMOVED_STATUSES:
-            reason = _removal_reason(by_item.get(item.id, []))
-            if not reason and item.status == FacilityListItem.DUPLICATE:
-                reason = 'duplicate row'
-            dropped.append(values + [f'removed: {reason or "removed"}'])
-        else:
-            kept.append(values + [''])
+        tag = _removal_tag(item, by_item.get(item.id, []))
+        (dropped if tag else kept).append(values + [tag])
 
     out = io.StringIO()
     writer = csv.writer(out)

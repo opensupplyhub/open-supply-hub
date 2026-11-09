@@ -23,10 +23,10 @@ TEXT_FIELDS = (
 FILLER = {'n/a', 'na', '#n/a', 'none', 'null', '-', '--', 'tbd', 'unknown',
           'not available'}
 PO_BOX_RE = re.compile(
-    r'\b(p\.?\s*o\.?\s*box|post\s*office\s*box|postal\s*bag|gpo\s*box)\b',
+    r'\b(?:p\.?\s*o\.?\s*box|post\s*office\s*box|postal\s*bag|gpo\s*box)\b',
     re.IGNORECASE)
 EMAIL_RE = re.compile(r'[\w.+-]+@[\w-]+\.[\w.-]+')
-PHONE_RE = re.compile(r'(?:\+?\d[\d\s().-]{7,}\d)')
+PHONE_RE = re.compile(r'\+?\d(?:[\s().-]*\d){7,}')
 PERSON_TITLE_RE = re.compile(
     r'^(mr|mrs|ms|miss|dr|mohammed|mohammad|md)\.?\s', re.IGNORECASE)
 WORKERS_JUNK_RE = re.compile(r'[,\s]|approx\.?|about|~', re.IGNORECASE)
@@ -52,13 +52,49 @@ def _country_name_for(code):
     return COUNTRY_NAMES.get(code, '')
 
 
-def run_rules(payload):
-    started = time.time()
-    rows = payload.get('rows') or []
+class _RowCheck:
+    """One row's findings: changes keyed by field, issues in order."""
+
+    def __init__(self, row):
+        self.row = row
+        self.changes = []
+        self.issues = []
+        self.values = {field: _s(row.get(field)) for field in TEXT_FIELDS}
+        self.values['country'] = _s(row.get('country'))
+
+    def change(self, field, value, reason):
+        # Several rules may touch one field: keep one entry, join reasons.
+        for existing in self.changes:
+            if existing['field'] == field:
+                existing['value'] = value
+                existing['reason'] = f"{existing['reason']}+{reason}"
+                return
+        self.changes.append({'field': field, 'value': value,
+                             'reason': reason})
+
+    def issue(self, code, severity, field, note):
+        self.issues.append({'code': code, 'severity': severity,
+                            'field': field, 'note': note})
+
+    @property
+    def blank(self):
+        return all(not v for v in self.values.values())
+
+    @property
+    def status(self):
+        if any(i['severity'] == 'must_fix' for i in self.issues):
+            return 'needs_your_action'
+        if self.changes:
+            return 'auto_corrected'
+        return 'unchanged'
+
+
+def _file_pass(rows):
+    """Stage 1: header, exact duplicates and repeated names over the raw
+    strings, as the prompt's file pass does."""
     header = set()
     for row in rows:
         header.update(k for k in row.keys() if k != 'row')
-
     file_pass = {
         'mode': 'file_pass',
         'row_count': len(rows),
@@ -71,9 +107,6 @@ def run_rules(payload):
         'exact_duplicates': [],
         'repeated_names': [],
     }
-
-    # Stage 1: duplicates and repeated names over the raw strings, as the
-    # prompt's file pass does.
     by_name_address = {}
     by_name = defaultdict(list)
     removed_as_duplicate = {}
@@ -98,163 +131,169 @@ def run_rules(payload):
                 'name': entries[0][1],
                 'rows': [n for n, _ in entries],
             })
+    return file_pass, removed_as_duplicate
+
+
+def _tidy_text(check):
+    """Whitespace and filler text on every text column."""
+    for field, original in list(check.values.items()):
+        normalized = _norm(original)
+        if normalized != original and normalized:
+            check.change(field, normalized, 'whitespace')
+            check.values[field] = normalized
+        if _is_filler(normalized) and normalized:
+            check.change(field, '', 'filler_text')
+            check.values[field] = ''
+
+
+def _check_country(check):
+    country = check.values['country']
+    if not country:
+        check.issue('missing_country', 'must_fix', 'country',
+                    'The country cell is blank. Please add the country the '
+                    'facility is in.')
+        return
+    is_code = (len(country) == 2 and country.upper() in COUNTRY_NAMES
+               and country == country.upper())
+    if is_code:
+        return
+    try:
+        code = get_country_code(country)
+    except ValueError:
+        check.issue('unknown_country', 'must_fix', 'country',
+                    f'We could not recognise "{country}" as a country. '
+                    'Please use the country name or its two-letter code.')
+        return
+    check.change('country', code, 'country_code')
+    check.values['country'] = code
+
+
+def _check_name(check):
+    name = check.values['name']
+    if not name:
+        check.issue('missing_name', 'must_fix', 'name',
+                    'The name cell is blank. Please add the facility name.')
+        return
+    if len(name) > 200:
+        check.issue('too_long', 'must_fix', 'name',
+                    'The name is over 200 characters. Please shorten it.')
+    if len(name) < 4:
+        check.issue('name_incomplete', 'internal_note', 'name',
+                    f'The name "{name}" is under four characters and may '
+                    'not identify the facility.')
+    if name.isupper() and len(name) > 3:
+        check.change('name', name.title(), 'casing')
+    if EMAIL_RE.search(name) or PERSON_TITLE_RE.match(name):
+        check.issue('pii', 'must_fix', 'name',
+                    'The name looks like a person or a personal contact '
+                    'rather than a business. Please give the business '
+                    'name.')
+
+
+def _trim_country_tail(check, address):
+    country_name = _country_name_for(check.values['country'])
+    for tail in (country_name, check.values['country']):
+        if tail and len(tail) > 1 and address.lower().endswith(tail.lower()):
+            trimmed = address[:-len(tail)].rstrip(' ,;.-')
+            if trimmed:
+                check.change('address', trimmed, 'country_in_address')
+            return
+
+
+def _check_address(check):
+    address = check.values['address']
+    if not address:
+        check.issue('missing_address', 'must_fix', 'address',
+                    'The address cell is blank. Please add the street '
+                    'address of the facility.')
+        return
+    if len(address) > 200:
+        check.issue('too_long', 'must_fix', 'address',
+                    'The address is over 200 characters. Please shorten '
+                    'it.')
+    if PO_BOX_RE.search(address) and address.count(',') < 2:
+        check.issue('address_po_box', 'must_fix', 'address',
+                    f'The address "{address}" has no street. Please give '
+                    'the street address of the facility.')
+    if EMAIL_RE.search(address) or PHONE_RE.search(address):
+        check.issue('pii', 'must_fix', 'address',
+                    'The address contains an email or phone number. '
+                    'Please remove personal contact details.')
+    _trim_country_tail(check, address)
+    if len([p for p in address.split(',') if p.strip()]) < 2:
+        check.issue('address_too_few', 'internal_note', 'address',
+                    'The address has fewer than two parts (street, town, '
+                    'region or postcode).')
+
+
+def _check_workers(check):
+    workers = check.values['number_of_workers']
+    if not workers:
+        return
+    cleaned = WORKERS_JUNK_RE.sub('', workers)
+    cleaned = re.sub(r'^(\d+)\+$', r'\1', cleaned)
+    if cleaned != workers and re.fullmatch(r'\d+(-\d+)?', cleaned):
+        check.change('number_of_workers', cleaned, 'workers_format')
+
+
+def _check_parent_company(check):
+    if EMAIL_RE.search(check.values['parent_company']):
+        check.issue('pii', 'must_fix', 'parent_company',
+                    'The parent company cell contains an email address. '
+                    'Please give the company name only.')
+
+
+def _check_repeated_name(check, repeated_rows):
+    n = check.row.get('row')
+    if n not in repeated_rows:
+        return
+    others = [r for r in repeated_rows[n]['rows'] if r != n]
+    check.issue('repeated_names', 'advisory', 'name',
+                'The same name appears on rows '
+                f'{", ".join(str(r) for r in others)} with a different '
+                'address.')
+
+
+def _check_row(row, repeated_rows, removed_as_duplicate):
+    """Stage 2: one row, rule by rule, to a pipeline record."""
+    n = row.get('row')
+    check = _RowCheck(row)
+    _tidy_text(check)
+    if check.blank:
+        return {
+            'row': n, 'status': 'removed', 'changes': check.changes,
+            'issues': [{'code': 'empty_row', 'severity': 'must_fix',
+                        'field': 'row',
+                        'note': 'Every cell in this row is blank, so '
+                                'the row is removed.'}],
+            'removed_reason': 'empty',
+        }
+    _check_country(check)
+    _check_name(check)
+    _check_address(check)
+    _check_workers(check)
+    _check_parent_company(check)
+    _check_repeated_name(check, repeated_rows)
+    if n in removed_as_duplicate:
+        return {
+            'row': n, 'status': 'removed', 'changes': check.changes,
+            'issues': check.issues, 'removed_reason': 'duplicate',
+            'duplicate_of': removed_as_duplicate[n],
+        }
+    return {'row': n, 'status': check.status, 'changes': check.changes,
+            'issues': check.issues}
+
+
+def run_rules(payload):
+    started = time.time()
+    rows = payload.get('rows') or []
+    file_pass, removed_as_duplicate = _file_pass(rows)
     repeated_rows = {
         n: group for group in file_pass['repeated_names']
         for n in group['rows']
     }
-
-    # Stage 2: row by row.
-    records = []
-    for row in rows:
-        n = row.get('row')
-        changes = []
-        issues = []
-        values = {field: _s(row.get(field)) for field in TEXT_FIELDS}
-        values['country'] = _s(row.get('country'))
-
-        def change(field, value, reason):
-            # Several rules may touch one field: keep one entry, join reasons.
-            for existing in changes:
-                if existing['field'] == field:
-                    existing['value'] = value
-                    existing['reason'] = f"{existing['reason']}+{reason}"
-                    return
-            changes.append({'field': field, 'value': value, 'reason': reason})
-
-        def issue(code, severity, field, note):
-            issues.append({'code': code, 'severity': severity,
-                           'field': field, 'note': note})
-
-        # whitespace and filler text on every text column
-        for field, original in list(values.items()):
-            normalized = _norm(original)
-            if normalized != original and normalized:
-                change(field, normalized, 'whitespace')
-                values[field] = normalized
-            if _is_filler(normalized) and normalized:
-                change(field, '', 'filler_text')
-                values[field] = ''
-
-        if all(not v for v in values.values()):
-            records.append({
-                'row': n, 'status': 'removed', 'changes': changes,
-                'issues': [{'code': 'empty_row', 'severity': 'must_fix',
-                            'field': 'row',
-                            'note': 'Every cell in this row is blank, so '
-                                    'the row is removed.'}],
-                'removed_reason': 'empty',
-            })
-            continue
-
-        # country
-        country = values['country']
-        if not country:
-            issue('missing_country', 'must_fix', 'country',
-                  'The country cell is blank. Please add the country the '
-                  'facility is in.')
-        elif not (len(country) == 2 and country.upper() in COUNTRY_NAMES
-                  and country == country.upper()):
-            try:
-                code = get_country_code(country)
-                change('country', code, 'country_code')
-                values['country'] = code
-            except ValueError:
-                issue('unknown_country', 'must_fix', 'country',
-                      f'We could not recognise "{country}" as a country. '
-                      'Please use the country name or its two-letter code.')
-
-        # name
-        name = values['name']
-        if not name:
-            issue('missing_name', 'must_fix', 'name',
-                  'The name cell is blank. Please add the facility name.')
-        else:
-            if len(name) > 200:
-                issue('too_long', 'must_fix', 'name',
-                      'The name is over 200 characters. Please shorten it.')
-            if len(name) < 4:
-                issue('name_incomplete', 'internal_note', 'name',
-                      f'The name "{name}" is under four characters and may '
-                      'not identify the facility.')
-            if name.isupper() and len(name) > 3:
-                change('name', name.title(), 'casing')
-            if EMAIL_RE.search(name) or PERSON_TITLE_RE.match(name):
-                issue('pii', 'must_fix', 'name',
-                      'The name looks like a person or a personal contact '
-                      'rather than a business. Please give the business '
-                      'name.')
-
-        # address
-        address = values['address']
-        if not address:
-            issue('missing_address', 'must_fix', 'address',
-                  'The address cell is blank. Please add the street '
-                  'address of the facility.')
-        else:
-            if len(address) > 200:
-                issue('too_long', 'must_fix', 'address',
-                      'The address is over 200 characters. Please shorten '
-                      'it.')
-            if PO_BOX_RE.search(address) and address.count(',') < 2:
-                issue('address_po_box', 'must_fix', 'address',
-                      f'The address "{address}" has no street. Please give '
-                      'the street address of the facility.')
-            if EMAIL_RE.search(address) or PHONE_RE.search(address):
-                issue('pii', 'must_fix', 'address',
-                      'The address contains an email or phone number. '
-                      'Please remove personal contact details.')
-            country_name = _country_name_for(values['country'])
-            for tail in (country_name, values['country']):
-                if tail and len(tail) > 1 and address.lower().endswith(
-                        tail.lower()):
-                    trimmed = address[:-len(tail)].rstrip(' ,;.-')
-                    if trimmed:
-                        change('address', trimmed, 'country_in_address')
-                    break
-            if len([p for p in address.split(',') if p.strip()]) < 2:
-                issue('address_too_few', 'internal_note', 'address',
-                      'The address has fewer than two parts (street, town, '
-                      'region or postcode).')
-
-        # workers
-        workers = values['number_of_workers']
-        if workers:
-            cleaned = WORKERS_JUNK_RE.sub('', workers)
-            cleaned = re.sub(r'^(\d+)\+$', r'\1', cleaned)
-            if cleaned != workers and re.fullmatch(r'\d+(-\d+)?', cleaned):
-                change('number_of_workers', cleaned, 'workers_format')
-
-        # parent company PII
-        if EMAIL_RE.search(values['parent_company']):
-            issue('pii', 'must_fix', 'parent_company',
-                  'The parent company cell contains an email address. '
-                  'Please give the company name only.')
-
-        # file-pass findings applied to the row
-        if n in repeated_rows:
-            others = [r for r in repeated_rows[n]['rows'] if r != n]
-            issue('repeated_names', 'advisory', 'name',
-                  'The same name appears on rows '
-                  f'{", ".join(str(r) for r in others)} with a different '
-                  'address.')
-
-        if n in removed_as_duplicate:
-            records.append({
-                'row': n, 'status': 'removed', 'changes': changes,
-                'issues': issues, 'removed_reason': 'duplicate',
-                'duplicate_of': removed_as_duplicate[n],
-            })
-            continue
-
-        if any(i['severity'] == 'must_fix' for i in issues):
-            status = 'needs_your_action'
-        elif changes:
-            status = 'auto_corrected'
-        else:
-            status = 'unchanged'
-        records.append({'row': n, 'status': status, 'changes': changes,
-                        'issues': issues})
-
+    records = [_check_row(row, repeated_rows, removed_as_duplicate)
+               for row in rows]
     return {
         'file_pass': file_pass,
         'records': records,

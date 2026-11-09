@@ -165,7 +165,7 @@ const ListCleaningTour = ({ steps, onDone }) => {
     useEffect(() => {
         if (!step) return undefined;
         const el = findTarget(step.anchor);
-        if (el && el.scrollIntoView) {
+        if (el?.scrollIntoView) {
             el.scrollIntoView({ block: step.scroll || 'center' });
         }
         remeasure();
@@ -226,9 +226,9 @@ const ListCleaningTour = ({ steps, onDone }) => {
                     height: `${rect.height + PAD * 2}px`,
                 }}
             />
-            <div
+            <dialog
+                open
                 style={calloutStyle}
-                role="dialog"
                 aria-label={`Tour step ${index + 1} of ${present.length}`}
             >
                 <div style={arrowStyle} />
@@ -264,7 +264,7 @@ const ListCleaningTour = ({ steps, onDone }) => {
                         {last ? 'Got it' : 'Next'}
                     </Button>
                 </div>
-            </div>
+            </dialog>
         </>,
         document.body,
     );

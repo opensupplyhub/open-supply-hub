@@ -9,6 +9,7 @@ import {
     resetFacilityListCleaning,
 } from '../actions/facilityListCleaning';
 import ListCleaningReviewDialog from './ListCleaningReviewDialog';
+import { plural } from './FacilityListCleaningSuggestions';
 import COLOURS from '../util/COLOURS';
 
 /*
@@ -45,6 +46,44 @@ const when = iso =>
         month: 'short',
     });
 
+const openText = (run, isListOwner, isAdminUser) => {
+    if (isListOwner) {
+        return `You can still review and submit changes to this list until ${when(
+            run.review_until,
+        )}. After that it goes to a human moderator as uploaded.`;
+    }
+    const forAdmin = isAdminUser
+        ? ' Approve and reject are unavailable until then.'
+        : '';
+    return `The contributor can still submit changes until ${when(
+        run.review_until,
+    )}.${forAdmin}`;
+};
+
+const submittedText = (run, data) => {
+    const applied = data.summary?.changes_applied || 0;
+    const how = applied
+        ? `with ${plural(applied, 'change')} from the automated checks`
+        : 'as uploaded';
+    return `Submitted ${when(
+        run.submitted_at,
+    )} ${how}. No further changes are possible; a human moderator will review it.`;
+};
+
+const statusText = (run, data, { open, isListOwner, isAdminUser }) => {
+    if (open) return openText(run, isListOwner, isAdminUser);
+    if (run.closed_reason === 'clean') {
+        return (
+            'The automated checks found nothing to fix, so the list went ' +
+            'straight to a human moderator as uploaded.'
+        );
+    }
+    if (run.closed_reason === 'submitted') return submittedText(run, data);
+    return `The review window closed ${when(
+        run.closed_at,
+    )} without a submission, so the list went through as uploaded.`;
+};
+
 const ListCleaningStatusNote = ({
     listID,
     isListOwner,
@@ -77,7 +116,7 @@ const ListCleaningStatusNote = ({
 
     // A ticking refetch while the window is open, so the line flips to
     // "closed" on its own when the hour runs out.
-    const open = !!(data && data.window_open);
+    const open = !!data?.window_open;
     useEffect(() => {
         if (!open || reviewing) return undefined;
         const ms = Math.min(60000, (data.seconds_left + 1) * 1000);
@@ -85,42 +124,9 @@ const ListCleaningStatusNote = ({
         return () => clearTimeout(timer);
     }, [open, reviewing, data]);
 
-    const run = data && data.run;
+    const run = data?.run;
     if (!run || run.status !== 'COMPLETE') return null;
-
-    let text;
-    if (open) {
-        if (isListOwner) {
-            text = `You can still review and submit changes to this list until ${when(
-                run.review_until,
-            )}. After that it goes to a human moderator as uploaded.`;
-        } else {
-            text = `The contributor can still submit changes until ${when(
-                run.review_until,
-            )}.${
-                isAdminUser
-                    ? ' Approve and reject are unavailable until then.'
-                    : ''
-            }`;
-        }
-    } else if (run.closed_reason === 'clean') {
-        text =
-            'The automated checks found nothing to fix, so the list went ' +
-            'straight to a human moderator as uploaded.';
-    } else if (run.closed_reason === 'submitted') {
-        const applied = (data.summary && data.summary.changes_applied) || 0;
-        text = `Submitted ${when(run.submitted_at)} ${
-            applied
-                ? `with ${applied} ${
-                      applied === 1 ? 'change' : 'changes'
-                  } from the automated checks`
-                : 'as uploaded'
-        }. No further changes are possible; a human moderator will review it.`;
-    } else {
-        text = `The review window closed ${when(
-            run.closed_at,
-        )} without a submission, so the list went through as uploaded.`;
-    }
+    const text = statusText(run, data, { open, isListOwner, isAdminUser });
 
     return (
         <>

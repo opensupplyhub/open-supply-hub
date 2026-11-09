@@ -35,7 +35,7 @@ export const DECISION = Object.freeze({
 // of that type so the ordinary group buttons cover every row again.
 export const RESET = 'RESET';
 
-export const isAuto = s => !!(s.extra && s.extra.auto);
+export const isAuto = s => !!s.extra?.auto;
 
 export const SEVERITY = Object.freeze({
     MUST_FIX: 'must_fix',
@@ -574,7 +574,7 @@ export const styles = Object.freeze({
 export const describeCode = code =>
     (code || '')
         .split('+')
-        .map(part => CODE_LABELS[part] || part.replace(/_/g, ' '))
+        .map(part => CODE_LABELS[part] || part.replaceAll('_', ' '))
         .join(', ');
 
 export const fieldLabel = field => FIELD_LABELS[field] || field;
@@ -594,7 +594,7 @@ export const Stat = ({ value, label }) => (
 
 Stat.propTypes = { value: number.isRequired, label: string.isRequired };
 
-const plural = (n, word, words = `${word}s`) =>
+export const plural = (n, word, words = `${word}s`) =>
     `${n} ${n === 1 ? word : words}`;
 
 const trackerStyles = Object.freeze({
@@ -654,6 +654,14 @@ const trackerStyles = Object.freeze({
     // A zero-height sticky anchor: it takes no room in the flow, sticks
     // to the top of the scrolling area, and the compact bar hangs off it
     // so nothing jumps when the bar appears.
+    srOnly: Object.freeze({
+        position: 'absolute',
+        width: '1px',
+        height: '1px',
+        overflow: 'hidden',
+        clip: 'rect(0 0 0 0)',
+        whiteSpace: 'nowrap',
+    }),
     stickyAnchor: Object.freeze({
         position: 'sticky',
         top: 0,
@@ -704,30 +712,16 @@ const GREEN = COLOURS.MATERIAL_GREEN;
  * automatic fixes are already decided, so the bar never opens at zero;
  * they get one line here with a way to open them, and nowhere else.
  */
-export const ReadinessTracker = ({
-    summary,
-    applied,
-    fixed,
-    showingAuto,
-    onViewFixes,
-}) => {
-    const total = summary.rows_to_review || 0;
-    const pending = summary.rows_pending_review || 0;
-    const done = total - pending;
-    const percent = total ? Math.round((100 * done) / total) : 100;
-    const ready = pending === 0;
-    const blocking = summary.rows_blocking_pending || 0;
-    const recommended = summary.rows_recommended_pending || 0;
-    const auto = summary.auto_fixes || 0;
-    const autoRows = summary.auto_rows || 0;
-
-    // Once the full box scrolls out of view a one-line version of it
-    // sticks to the top, so the bar is always in sight.
+/*
+ * Once the full box scrolls out of view a one-line version of it
+ * sticks to the top, so the bar is always in sight. On the list page
+ * an ancestor has overflow:auto without scrolling, which defeats
+ * position:sticky, so there (`fixed`) the bar is fixed instead: pinned
+ * under the site header and sized to the panel.
+ */
+const useCompactBar = fixed => {
     const boxRef = useRef(null);
     const [compact, setCompact] = useState(false);
-    // On the list page an ancestor has overflow:auto without scrolling,
-    // which defeats position:sticky, so there the bar is fixed instead:
-    // pinned under the site header and sized to the panel.
     const [pinned, setPinned] = useState(null);
     useEffect(() => {
         if (!boxRef.current || typeof IntersectionObserver === 'undefined') {
@@ -762,6 +756,55 @@ export const ReadinessTracker = ({
             window.removeEventListener('resize', measure);
         };
     }, [fixed]);
+    return { boxRef, compact, pinned };
+};
+
+const trackerTitles = ({ ready, applied, percent, changesUnapplied }) => {
+    if (!ready) {
+        return {
+            title: `Your review is ${percent}% done`,
+            shortTitle: `${percent}% of your review done`,
+        };
+    }
+    if (changesUnapplied > 0) {
+        return {
+            title: 'Review done: submit your list for human review',
+            shortTitle: 'Review done: press Submit',
+        };
+    }
+    return {
+        title: applied ? 'Submitted for human review' : 'Review done',
+        shortTitle: 'Review done',
+    };
+};
+
+const pendingSplit = (blocking, recommended) => {
+    const parts = [];
+    if (blocking > 0) parts.push(`${plural(blocking, 'row')} block approval`);
+    if (recommended > 0) {
+        const only = blocking > 0 ? ' only' : '';
+        parts.push(`${recommended} with recommended fixes${only}`);
+    }
+    return parts.length ? `: ${parts.join(' · ')}` : '';
+};
+
+export const ReadinessTracker = ({
+    summary,
+    applied,
+    fixed,
+    showingAuto,
+    onViewFixes,
+}) => {
+    const total = summary.rows_to_review || 0;
+    const pending = summary.rows_pending_review || 0;
+    const done = total - pending;
+    const percent = total ? Math.round((100 * done) / total) : 100;
+    const ready = pending === 0;
+    const blocking = summary.rows_blocking_pending || 0;
+    const recommended = summary.rows_recommended_pending || 0;
+    const auto = summary.auto_fixes || 0;
+    const autoRows = summary.auto_rows || 0;
+    const { boxRef, compact, pinned } = useCompactBar(fixed);
     const anchorStyle =
         fixed && pinned
             ? {
@@ -774,34 +817,17 @@ export const ReadinessTracker = ({
             : trackerStyles.stickyAnchor;
     const compactEdges = fixed ? { left: 0, right: 0 } : {};
 
-    let title;
-    if (ready && summary.changes_unapplied > 0) {
-        title = 'Review done: submit your list for human review';
-    } else if (ready) {
-        title = applied ? 'Submitted for human review' : 'Review done';
-    } else {
-        title = `Your review is ${percent}% done`;
-    }
-
+    const { title, shortTitle } = trackerTitles({
+        ready,
+        applied,
+        percent,
+        changesUnapplied: summary.changes_unapplied,
+    });
     const colour = ready ? GREEN : PURPLE;
-    let shortTitle = `${percent}% of your review done`;
-    if (ready) {
-        shortTitle =
-            summary.changes_unapplied > 0
-                ? 'Review done: press Submit'
-                : 'Review done';
-    }
-    const split = [];
-    if (blocking > 0) {
-        split.push(`${plural(blocking, 'row')} block approval`);
-    }
-    if (recommended > 0) {
-        split.push(
-            `${recommended} with recommended fixes${
-                blocking > 0 ? ' only' : ''
-            }`,
-        );
-    }
+    const blockingNote = blocking > 0 ? ` · ${blocking} block approval` : '';
+    const compactMeta = ready
+        ? `${plural(total, 'row')} reviewed`
+        : `${plural(pending, 'row')} to go${blockingNote}`;
 
     const anchor = (
         <div style={anchorStyle} aria-hidden={!compact}>
@@ -826,15 +852,7 @@ export const ReadinessTracker = ({
                         }}
                     />
                 </div>
-                <span style={trackerStyles.compactMeta}>
-                    {ready
-                        ? `${plural(total, 'row')} reviewed`
-                        : `${plural(pending, 'row')} to go${
-                              blocking > 0
-                                  ? ` · ${blocking} block approval`
-                                  : ''
-                          }`}
-                </span>
+                <span style={trackerStyles.compactMeta}>{compactMeta}</span>
             </div>
         </div>
     );
@@ -859,13 +877,13 @@ export const ReadinessTracker = ({
                         {percent}%
                     </span>
                 </div>
-                <div
-                    style={trackerStyles.track}
-                    role="progressbar"
-                    aria-valuenow={percent}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                >
+                <progress
+                    value={percent}
+                    max={100}
+                    style={trackerStyles.srOnly}
+                    aria-label="Review progress"
+                />
+                <div style={trackerStyles.track} aria-hidden>
                     <div
                         style={{
                             ...trackerStyles.fill,
@@ -886,7 +904,7 @@ export const ReadinessTracker = ({
                                 <b>{plural(pending, 'row')}</b>{' '}
                                 {pending === 1 ? 'still needs' : 'still need'}{' '}
                                 your review
-                                {split.length > 0 && `: ${split.join(' · ')}`}.
+                                {pendingSplit(blocking, recommended)}.
                             </span>
                         )}
                     </div>
@@ -1908,7 +1926,7 @@ export const GroupTabs = ({
 
     // Closing the automatic row while one of its chips is selected
     // drops back to Needs you.
-    const onAutoTab = current && current.auto;
+    const onAutoTab = !!current?.auto;
     useEffect(() => {
         if (!showAuto && (active === AUTO || onAutoTab)) setSelected(ALL);
     }, [showAuto, active, onAutoTab]);

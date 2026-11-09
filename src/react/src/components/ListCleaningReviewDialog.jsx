@@ -30,6 +30,7 @@ import {
     ListFindings,
     GroupTabs,
     DownloadFixedList,
+    plural,
 } from './FacilityListCleaningSuggestions';
 
 import COLOURS from '../util/COLOURS';
@@ -286,6 +287,9 @@ const WhatHappensNext = () => (
 
 const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => {
     const flagged = summary.rows_flagged_unresolved || 0;
+    const removedNote = summary.rows_removed
+        ? `, including ${plural(summary.rows_removed, 'row')} removed`
+        : '';
     return (
         <div style={styles.centred}>
             <Typography style={styles.heading}>
@@ -298,13 +302,8 @@ const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => {
                         {lastApplied.applied === 1
                             ? 'change was'
                             : 'changes were'}{' '}
-                        applied to your list
-                        {summary.rows_removed
-                            ? `, including ${summary.rows_removed} ${
-                                  summary.rows_removed === 1 ? 'row' : 'rows'
-                              } removed`
-                            : ''}
-                        . The original values are kept with your uploaded file.
+                        applied to your list{removedNote}. The original values
+                        are kept with your uploaded file.
                     </li>
                 )}
                 {asUploaded && (
@@ -354,6 +353,19 @@ Done.propTypes = {
     onContinue: func.isRequired,
 };
 
+const closedText = (run, summary) => {
+    if (run.closed_reason !== 'submitted') {
+        return `The hour for changes ended at ${timeOfDay(
+            run.closed_at,
+        )}, so the list went to a human moderator exactly as uploaded.`;
+    }
+    const applied = summary?.changes_applied;
+    const how = applied ? ` with ${plural(applied, 'change')}` : ' as uploaded';
+    return `You submitted it at ${timeOfDay(
+        run.submitted_at,
+    )}${how}. No further changes are possible.`;
+};
+
 // Reopened after the window closed: nothing to decide any more.
 const Closed = ({ run, summary, onContinue }) => (
     <div style={styles.centred}>
@@ -362,21 +374,7 @@ const Closed = ({ run, summary, onContinue }) => (
                 ? 'This list has already been submitted'
                 : 'The review window has closed'}
         </Typography>
-        <Typography>
-            {run.closed_reason === 'submitted'
-                ? `You submitted it at ${timeOfDay(run.submitted_at)}${
-                      summary && summary.changes_applied
-                          ? ` with ${summary.changes_applied} ${
-                                summary.changes_applied === 1
-                                    ? 'change'
-                                    : 'changes'
-                            }`
-                          : ' as uploaded'
-                  }. No further changes are possible.`
-                : `The hour for changes ended at ${timeOfDay(
-                      run.closed_at,
-                  )}, so the list went to a human moderator exactly as uploaded.`}
-        </Typography>
+        <Typography>{closedText(run, summary)}</Typography>
         <Button variant="contained" color="primary" onClick={onContinue}>
             Go to my list
         </Button>
@@ -388,6 +386,248 @@ Closed.propTypes = {
     run: object.isRequired,
     summary: object,
     onContinue: func.isRequired,
+};
+
+// Warn before a submission a human moderator is unlikely to approve as
+// it stands: many flagged rows left, or nothing changed at all.
+const SubmitWarning = ({ warn, summary, busy, onClose, onConfirm }) => (
+    <Dialog
+        open={!!warn}
+        onClose={onClose}
+        aria-labelledby="list-cleaning-submit-warning"
+    >
+        <DialogContent>
+            {warn?.asUploaded ? (
+                <>
+                    <Typography
+                        id="list-cleaning-submit-warning"
+                        style={styles.warnTitle}
+                    >
+                        Submit without any changes?
+                    </Typography>
+                    <Typography>
+                        We may not be able to approve your list until the
+                        flagged errors are fixed. If you continue without
+                        changes, our team will probably contact you to request
+                        the fixes before your list can be published to OS Hub.
+                    </Typography>
+                </>
+            ) : (
+                <>
+                    <Typography
+                        id="list-cleaning-submit-warning"
+                        style={styles.warnTitle}
+                    >
+                        {summary.rows_flagged_unresolved}{' '}
+                        {summary.rows_flagged_unresolved === 1
+                            ? 'row still has'
+                            : 'rows still have'}{' '}
+                        a problem that blocks approval
+                    </Typography>
+                    <Typography>
+                        That is{' '}
+                        {Math.round(
+                            (100 * summary.rows_flagged_unresolved) /
+                                Math.max(1, summary.rows_total),
+                        )}
+                        % of your list: personal information, PO Box addresses,
+                        missing or unreadable details. A human moderator would
+                        have to remove those rows, and lists with this many are
+                        much less likely to be approved as a whole. Fixing or
+                        removing them here first takes a minute per type.
+                    </Typography>
+                </>
+            )}
+        </DialogContent>
+        <DialogActions>
+            <Button disabled={busy} onClick={onConfirm}>
+                {warn?.asUploaded ? 'Submit without changes' : 'Submit anyway'}
+            </Button>
+            <Button variant="contained" color="primary" onClick={onClose}>
+                {warn?.asUploaded ? 'Go back' : 'Go back and fix them'}
+            </Button>
+        </DialogActions>
+    </Dialog>
+);
+
+SubmitWarning.defaultProps = { warn: null };
+SubmitWarning.propTypes = {
+    warn: shape({ asUploaded: bool }),
+    summary: object.isRequired,
+    busy: bool.isRequired,
+    onClose: func.isRequired,
+    onConfirm: func.isRequired,
+};
+
+// The review itself: intro, tracker, chips and rows, the footer with
+// the one submission, and the walkthrough.
+const ReviewStep = ({ review }) => {
+    const {
+        listID,
+        run,
+        summary,
+        data,
+        rows,
+        busy,
+        decide,
+        decideGroup,
+        showAuto,
+        setShowAuto,
+        submitError,
+        applyError,
+        leave,
+        trySubmit,
+        doSubmit,
+        warn,
+        setWarn,
+        tour,
+        setTour,
+    } = review;
+    const submitLabel =
+        summary.changes_unapplied > 0
+            ? `Submit list with ${plural(summary.changes_unapplied, 'change')}`
+            : 'Submit list as uploaded';
+    return (
+        <>
+            <Typography style={styles.heading}>
+                A few changes would make your list more likely to be approved
+            </Typography>
+            <Typography>
+                Pick a type below to see its rows, then accept, fix or remove
+                them. Problems that block approval come first. You can submit
+                once, by {timeOfDay(run.review_until)}.
+            </Typography>
+            <ReadinessTracker
+                summary={summary}
+                applied={!!run.applied_at}
+                showingAuto={showAuto}
+                onViewFixes={() => setShowAuto(s => !s)}
+            />
+            <ListFindings filePass={run.file_pass || {}} />
+            <GroupTabs
+                groups={data.groups || []}
+                rows={rows}
+                canAct
+                busy={busy}
+                decide={decide}
+                decideGroup={decideGroup}
+                showAuto={showAuto}
+                onShowAuto={setShowAuto}
+            />
+            <div style={styles.actions} data-tour="apply">
+                {(submitError || applyError) && (
+                    <Typography style={styles.error}>
+                        {(submitError || applyError).join(' ')}
+                    </Typography>
+                )}
+                {busy && <CircularProgress size={22} />}
+                <DownloadFixedList listID={listID} applied={false} />
+                <Button color="primary" disabled={busy} onClick={leave}>
+                    Decide later
+                </Button>
+                {summary.changes_unapplied > 0 && (
+                    <Button
+                        color="primary"
+                        disabled={busy}
+                        onClick={() => trySubmit(true)}
+                    >
+                        Submit as uploaded instead
+                    </Button>
+                )}
+                <Button
+                    variant="contained"
+                    color="primary"
+                    disabled={busy}
+                    onClick={() => trySubmit(summary.changes_unapplied === 0)}
+                >
+                    {submitLabel}
+                </Button>
+                <span style={styles.finalNote}>
+                    These are automated suggestions: accept a fix only if it is
+                    correct for that facility. Names and addresses are never
+                    changed automatically. This is your one submission; you can
+                    come back and review until {deadlineText(run.review_until)},
+                    after which the list goes to a human moderator as uploaded.
+                </span>
+            </div>
+            {tour && <ListCleaningTour onDone={() => setTour(false)} />}
+            <SubmitWarning
+                warn={warn}
+                summary={summary}
+                busy={busy}
+                onClose={() => setWarn(null)}
+                onConfirm={() => {
+                    const choice = warn;
+                    setWarn(null);
+                    doSubmit(choice.asUploaded);
+                }}
+            />
+        </>
+    );
+};
+
+ReviewStep.propTypes = { review: object.isRequired };
+
+/*
+ * The review window as this browser sees it: a deadline set from the
+ * server's count, a once-a-second clock while the window is open, and
+ * one more fetch when it runs out so the server can close the run and
+ * the screen follow.
+ */
+const useReviewClock = (data, finished, fetchRef) => {
+    const [deadline, setDeadline] = useState(null);
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => {
+        if (data?.run?.status === RUN_STATUS.COMPLETE) {
+            setDeadline(Date.now() + (data.seconds_left || 0) * 1000);
+        }
+    }, [data]);
+    const windowOpen = !!data?.window_open;
+    useEffect(() => {
+        if (!windowOpen || finished) return undefined;
+        const timer = setInterval(() => {
+            setNow(Date.now());
+            if (deadline && Date.now() >= deadline) fetchRef.current();
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [windowOpen, finished, deadline, fetchRef]);
+    const secondsLeft = deadline
+        ? Math.max(0, Math.round((deadline - now) / 1000))
+        : 0;
+    return { windowOpen, secondsLeft };
+};
+
+/*
+ * Metrics: one "opened"/"resumed" per visit, "left" when they go
+ * without submitting by closing the tab (the button records its own).
+ */
+const useReviewEvents = ({ listID, resumed, reviewing, openedAt, data }) => {
+    const [reported, setReported] = useState(false);
+    useEffect(() => {
+        if (!reviewing) setReported(false);
+    }, [reviewing]);
+    const secondsAtOpen = data?.seconds_left ?? null;
+    useEffect(() => {
+        if (!reviewing || reported) return;
+        setReported(true);
+        recordFacilityListCleaningEvent(
+            listID,
+            resumed ? 'resumed' : 'opened',
+            { seconds_left: secondsAtOpen },
+        );
+    }, [reviewing, reported, listID, resumed, secondsAtOpen]);
+    useEffect(() => {
+        if (!reviewing) return undefined;
+        const onHide = () =>
+            beaconFacilityListCleaningEvent(listID, 'left', {
+                via: 'unload',
+                seconds_open: openedAt
+                    ? Math.round((Date.now() - openedAt) / 1000)
+                    : null,
+            });
+        window.addEventListener('pagehide', onHide);
+        return () => window.removeEventListener('pagehide', onHide);
+    }, [reviewing, listID, openedAt]);
 };
 
 const ListCleaningReviewDialog = ({
@@ -412,10 +652,6 @@ const ListCleaningReviewDialog = ({
     const [finished, setFinished] = useState(null); // 'submitted' | 'uploaded'
     const [warn, setWarn] = useState(null); // { asUploaded } while shown
     const [showAuto, setShowAuto] = useState(false);
-    // The deadline as this browser sees it, from the server's count.
-    const [deadline, setDeadline] = useState(null);
-    const [now, setNow] = useState(Date.now());
-    const [reported, setReported] = useState(false);
 
     // The connected dispatchers are rebuilt whenever a parent passes a
     // new prop identity; keep the latest in refs so the effects below
@@ -431,13 +667,12 @@ const ListCleaningReviewDialog = ({
         setOpenedAt(Date.now());
         setTimedOut(false);
         setFinished(null);
-        setReported(false);
         fetchRef.current();
         return () => clearRef.current();
     }, [open, listID]);
 
-    const run = data && data.run;
-    const runStatus = run ? run.status : null;
+    const run = data?.run;
+    const runStatus = run?.status ?? null;
     const waiting =
         open &&
         !!listID &&
@@ -469,52 +704,14 @@ const ListCleaningReviewDialog = ({
         }
     }, [lastApplied]);
 
-    useEffect(() => {
-        if (data && data.run && data.run.status === RUN_STATUS.COMPLETE) {
-            setDeadline(Date.now() + (data.seconds_left || 0) * 1000);
-        }
-    }, [data]);
+    const { windowOpen, secondsLeft } = useReviewClock(
+        data,
+        finished,
+        fetchRef,
+    );
 
-    // A once-a-second clock while the window is open; when it runs out,
-    // one more fetch lets the server close the run and the screen follow.
-    const windowOpen = !!(data && data.window_open);
-    useEffect(() => {
-        if (!windowOpen || finished) return undefined;
-        const timer = setInterval(() => {
-            setNow(Date.now());
-            if (deadline && Date.now() >= deadline) fetchRef.current();
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [windowOpen, finished, deadline]);
-    const secondsLeft = deadline
-        ? Math.max(0, Math.round((deadline - now) / 1000))
-        : 0;
-
-    // Metrics: one "opened"/"resumed" per visit, "left" when they go
-    // without submitting (button or closing the tab).
-    const reviewing = windowOpen && !finished && !!data && !!data.summary;
-    const secondsAtOpen = data ? data.seconds_left : null;
-    useEffect(() => {
-        if (!reviewing || reported) return;
-        setReported(true);
-        recordFacilityListCleaningEvent(
-            listID,
-            resumed ? 'resumed' : 'opened',
-            { seconds_left: secondsAtOpen },
-        );
-    }, [reviewing, reported, listID, resumed, secondsAtOpen]);
-    useEffect(() => {
-        if (!reviewing) return undefined;
-        const onHide = () =>
-            beaconFacilityListCleaningEvent(listID, 'left', {
-                via: 'unload',
-                seconds_open: openedAt
-                    ? Math.round((Date.now() - openedAt) / 1000)
-                    : null,
-            });
-        window.addEventListener('pagehide', onHide);
-        return () => window.removeEventListener('pagehide', onHide);
-    }, [reviewing, listID, openedAt]);
+    const reviewing = windowOpen && !finished && !!data?.summary;
+    useReviewEvents({ listID, resumed, reviewing, openedAt, data });
     const doSubmit = asUploaded => {
         asUploadedRef.current = asUploaded;
         apply(asUploaded ? { asUploaded: true } : undefined);
@@ -583,156 +780,29 @@ const ListCleaningReviewDialog = ({
     } else {
         activeStep = STEP.REVIEW;
         content = (
-            <>
-                <Typography style={styles.heading}>
-                    A few changes would make your list more likely to be
-                    approved
-                </Typography>
-                <Typography>
-                    Pick a type below to see its rows, then accept, fix or
-                    remove them. Problems that block approval come first. You
-                    can submit once, by {timeOfDay(run.review_until)}.
-                </Typography>
-                <ReadinessTracker
-                    summary={summary}
-                    applied={!!run.applied_at}
-                    showingAuto={showAuto}
-                    onViewFixes={() => setShowAuto(s => !s)}
-                />
-                <ListFindings filePass={run.file_pass || {}} />
-                <GroupTabs
-                    groups={data.groups || []}
-                    rows={rows}
-                    canAct
-                    busy={busy}
-                    decide={decide}
-                    decideGroup={decideGroup}
-                    showAuto={showAuto}
-                    onShowAuto={setShowAuto}
-                />
-                <div style={styles.actions} data-tour="apply">
-                    {(submitError || applyError) && (
-                        <Typography style={styles.error}>
-                            {(submitError || applyError).join(' ')}
-                        </Typography>
-                    )}
-                    {busy && <CircularProgress size={22} />}
-                    <DownloadFixedList listID={listID} applied={false} />
-                    <Button color="primary" disabled={busy} onClick={leave}>
-                        Decide later
-                    </Button>
-                    {summary.changes_unapplied > 0 && (
-                        <Button
-                            color="primary"
-                            disabled={busy}
-                            onClick={() => trySubmit(true)}
-                        >
-                            Submit as uploaded instead
-                        </Button>
-                    )}
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        disabled={busy}
-                        onClick={() =>
-                            trySubmit(summary.changes_unapplied === 0)
-                        }
-                    >
-                        {summary.changes_unapplied > 0
-                            ? `Submit list with ${summary.changes_unapplied} ${
-                                  summary.changes_unapplied === 1
-                                      ? 'change'
-                                      : 'changes'
-                              }`
-                            : 'Submit list as uploaded'}
-                    </Button>
-                    <span style={styles.finalNote}>
-                        These are automated suggestions: accept a fix only if it
-                        is correct for that facility. Names and addresses are
-                        never changed automatically. This is your one
-                        submission; you can come back and review until{' '}
-                        {deadlineText(run.review_until)}, after which the list
-                        goes to a human moderator as uploaded.
-                    </span>
-                </div>
-                {tour && <ListCleaningTour onDone={() => setTour(false)} />}
-                <Dialog
-                    open={!!warn}
-                    onClose={() => setWarn(null)}
-                    aria-labelledby="list-cleaning-submit-warning"
-                >
-                    <DialogContent>
-                        {warn && warn.asUploaded ? (
-                            <>
-                                <Typography
-                                    id="list-cleaning-submit-warning"
-                                    style={styles.warnTitle}
-                                >
-                                    Submit without any changes?
-                                </Typography>
-                                <Typography>
-                                    We may not be able to approve your list
-                                    until the flagged errors are fixed. If you
-                                    continue without changes, our team will
-                                    probably contact you to request the fixes
-                                    before your list can be published to OS Hub.
-                                </Typography>
-                            </>
-                        ) : (
-                            <>
-                                <Typography
-                                    id="list-cleaning-submit-warning"
-                                    style={styles.warnTitle}
-                                >
-                                    {summary.rows_flagged_unresolved}{' '}
-                                    {summary.rows_flagged_unresolved === 1
-                                        ? 'row still has'
-                                        : 'rows still have'}{' '}
-                                    a problem that blocks approval
-                                </Typography>
-                                <Typography>
-                                    That is{' '}
-                                    {Math.round(
-                                        (100 *
-                                            summary.rows_flagged_unresolved) /
-                                            Math.max(1, summary.rows_total),
-                                    )}
-                                    % of your list: personal information, PO Box
-                                    addresses, missing or unreadable details. A
-                                    human moderator would have to remove those
-                                    rows, and lists with this many are much less
-                                    likely to be approved as a whole. Fixing or
-                                    removing them here first takes a minute per
-                                    type.
-                                </Typography>
-                            </>
-                        )}
-                    </DialogContent>
-                    <DialogActions>
-                        <Button
-                            disabled={busy}
-                            onClick={() => {
-                                const choice = warn;
-                                setWarn(null);
-                                doSubmit(choice.asUploaded);
-                            }}
-                        >
-                            {warn && warn.asUploaded
-                                ? 'Submit without changes'
-                                : 'Submit anyway'}
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => setWarn(null)}
-                        >
-                            {warn && warn.asUploaded
-                                ? 'Go back'
-                                : 'Go back and fix them'}
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </>
+            <ReviewStep
+                review={{
+                    listID,
+                    run,
+                    summary,
+                    data,
+                    rows,
+                    busy,
+                    decide,
+                    decideGroup,
+                    showAuto,
+                    setShowAuto,
+                    submitError,
+                    applyError,
+                    leave,
+                    trySubmit,
+                    doSubmit,
+                    warn,
+                    setWarn,
+                    tour,
+                    setTour,
+                }}
+            />
         );
     }
 
@@ -845,7 +915,7 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
         dispatch(
             submitFacilityListCleaningGroupDecisions(
                 listID,
-                [].concat(keys).reduce((acc, key) => {
+                [keys].flat().reduce((acc, key) => {
                     if (decision === RESET) {
                         return acc.concat({ key, reset: true });
                     }

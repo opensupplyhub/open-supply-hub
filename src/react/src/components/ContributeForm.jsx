@@ -311,7 +311,7 @@ const mapStateToProps = ({
     facilityLists,
     fetchingFacilityLists,
     user,
-    listCleaningEnabled: !!(flags && flags[ENABLE_LIST_CLEANING_FEEDBACK]),
+    listCleaningEnabled: !!flags?.[ENABLE_LIST_CLEANING_FEEDBACK],
 });
 
 const mapDispatchToProps = (dispatch, { history: { push } }) => ({
