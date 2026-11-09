@@ -46,6 +46,7 @@ import {
 } from '../../util/constants';
 import {
     convertFeatureFlagsObjectToListOfActiveFlags,
+    hasClaimCampaignAccess,
     DownloadCSV,
     joinDataIntoCSVString,
 } from '../../util/util';
@@ -897,6 +898,7 @@ const ClaimCampaigns = ({
     location,
     match,
     canEmail,
+    hasAccess,
 }) => {
     // On /claim-campaigns/{id} the page shows that one campaign in full.
     const campaignID =
@@ -908,14 +910,14 @@ const ClaimCampaigns = ({
     const [canCreate, setCanCreate] = useState(false);
 
     useEffect(() => {
-        if (userHasSignedIn) {
+        if (userHasSignedIn && hasAccess) {
             fetchCampaigns();
             apiRequest
                 .get(makeClaimCampaignCandidatesURL())
                 .then(() => setCanCreate(true))
                 .catch(() => setCanCreate(false));
         }
-    }, [userHasSignedIn, fetchCampaigns]);
+    }, [userHasSignedIn, hasAccess, fetchCampaigns]);
 
     const newCampaignID = Number(
         new URLSearchParams((location && location.search) || '').get('new'),
@@ -931,6 +933,28 @@ const ClaimCampaigns = ({
                 title="Claims Campaigns"
                 text="Log in to view your claims campaigns"
             />
+        );
+    }
+
+    if (!hasAccess) {
+        return (
+            <AppOverflow>
+                <div className={classes.container}>
+                    <Typography
+                        variant="title"
+                        component="h1"
+                        className={classes.title}
+                    >
+                        Claims Campaigns
+                    </Typography>
+                    <Typography className={classes.emptyMessage}>
+                        Claims campaigns aren&apos;t turned on for your account.
+                        They help brands invite their suppliers to claim their
+                        production locations on OS Hub. To find out more,
+                        contact your OS Hub account manager.
+                    </Typography>
+                </div>
+            </AppOverflow>
         );
     }
 
@@ -1090,6 +1114,7 @@ ClaimCampaigns.propTypes = {
     location: shape({ search: string }),
     match: shape({ params: shape({ campaignId: string }) }),
     canEmail: bool.isRequired,
+    hasAccess: bool.isRequired,
 };
 
 const mapStateToProps = ({
@@ -1100,6 +1125,7 @@ const mapStateToProps = ({
     featureFlags: { flags },
 }) => ({
     userHasSignedIn: !user.isAnon,
+    hasAccess: hasClaimCampaignAccess(user),
     canEmail: convertFeatureFlagsObjectToListOfActiveFlags(flags).includes(
         CLAIM_INVITE,
     ),

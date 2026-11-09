@@ -56,12 +56,15 @@ const mockCampaigns = [
 const renderComponent = (
     userHasSignedIn = true,
     props = {},
-    { claimInvite = false } = {},
+    { claimInvite = false, access = true } = {},
 ) => {
     const preloadedState = {
         auth: {
             user: {
-                user: { isAnon: !userHasSignedIn },
+                user: {
+                    isAnon: !userHasSignedIn,
+                    claim_campaigns: { access, self_serve: access },
+                },
             },
         },
         featureFlags: {
@@ -697,4 +700,18 @@ test('a closed campaign shows as Closed in the roll-up', async () => {
     expect(await findByText('Old')).toBeInTheDocument();
     expect(getByText('Closed')).toBeInTheDocument();
     expect(getByText('Active')).toBeInTheDocument();
+});
+
+describe('Premium access', () => {
+    beforeEach(() => {
+        apiRequest.get.mockReset();
+    });
+
+    test('a brand without campaign access sees a notice, not campaigns', () => {
+        const { getByText } = renderComponent(true, {}, { access: false });
+        expect(
+            getByText(/Claims campaigns aren't turned on for your account/),
+        ).toBeInTheDocument();
+        expect(apiRequest.get).not.toHaveBeenCalled();
+    });
 });

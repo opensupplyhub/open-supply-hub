@@ -5,7 +5,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from waffle import flag_is_active, switch_is_active
+from waffle import switch_is_active
 
 from api.models.facility.claim_campaign import (
     ClaimCampaign,
@@ -21,7 +21,7 @@ from api.services.claim_campaign_service import (
     API_SOURCE_ID,
     API_SOURCE_NAME,
     MAX_SEARCH_RESULTS,
-    SELF_SERVE_FLAG,
+    campaign_permissions,
     close_campaign,
     create_campaign_with_suppliers,
     describe_api_source,
@@ -52,7 +52,13 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
+        # Premium: off unless the switch is on and this user has been
+        # given campaign access (claim_campaign_access flag).
         if not switch_is_active('claim_campaigns'):
+            raise NotFound()
+        if request.user.is_authenticated and not campaign_permissions(
+            request.user
+        )['access']:
             raise NotFound()
 
     def get_contributor(self):
@@ -60,9 +66,9 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
 
     def require_self_serve(self):
         contributor = self.get_contributor()
-        if contributor is None or not flag_is_active(
-            self.request, SELF_SERVE_FLAG
-        ):
+        if contributor is None or not campaign_permissions(
+            self.request.user
+        )['self_serve']:
             raise NotFound()
         return contributor
 

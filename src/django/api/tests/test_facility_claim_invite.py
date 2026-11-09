@@ -23,6 +23,7 @@ from api.models import (
     Source,
     User,
 )
+from api.tests.test_claim_campaign import grant_campaign_access
 from api.throttles import ClaimInviteThrottle
 from api.services.facility_claim_invite_service import (
     CLAIM_INVITE_SWITCH,
@@ -379,6 +380,8 @@ class FacilityClaimInviteTest(APITestCase):
         list_item = self.facility.created_from
         list_item.facility = self.facility
         list_item.save()
+        # Campaigns are premium: the brand has been given access.
+        grant_campaign_access((contributor or self.sender).admin)
         return ClaimCampaign.objects.create(
             contributor=contributor or self.sender,
             name=fields.pop('name', 'Spring outreach'),

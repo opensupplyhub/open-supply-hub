@@ -1710,6 +1710,9 @@ export const formatAttribution = (date, contributor) => {
     return moment(date).format('LL');
 };
 
+export const hasClaimCampaignAccess = user =>
+    !!(user && user.claim_campaigns && user.claim_campaigns.access);
+
 export const createUserDropdownLinks = (
     user,
     logoutAction,
@@ -1735,7 +1738,12 @@ export const createUserDropdownLinks = (
         );
     }
 
-    if (includes(activeFeatureFlags, CLAIM_CAMPAIGNS)) {
+    // Claims campaigns are premium: the switch turns the feature on, and
+    // each brand user is given access separately (claim_campaign_access).
+    if (
+        includes(activeFeatureFlags, CLAIM_CAMPAIGNS) &&
+        hasClaimCampaignAccess(user)
+    ) {
         links.push(
             Object.freeze({
                 label: 'Claims Campaigns',

@@ -4,7 +4,7 @@ import secrets
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
 from rest_framework.exceptions import ValidationError
-from waffle import switch_is_active
+from waffle import get_waffle_flag_model, switch_is_active
 
 from api.constants import FacilityClaimStatuses
 from api.models import (
@@ -17,6 +17,11 @@ from api.models import (
     Source,
 )
 
+# Claims campaigns are a premium feature, turned on per brand user: the
+# user (or a group it's in, normally the group of the same name) must
+# have this flag. Superusers always have it.
+ACCESS_FLAG = 'claim_campaign_access'
+# On top of access: the brand may also create its own campaigns.
 SELF_SERVE_FLAG = 'claim_campaign_self_serve'
 MAX_SUPPLIERS_PER_CAMPAIGN = 5000
 # A supplier search returns at most this many facilities to choose from.
@@ -106,6 +111,28 @@ def campaign_includes_facility(campaign, facility):
     ).exists()
 
 
+def user_has_flag(user, flag_name):
+    if user is None or not user.is_authenticated:
+        return False
+    flag = get_waffle_flag_model().get(flag_name)
+    return bool(flag.pk and flag.is_active_for_user(user))
+
+
+def campaign_permissions(user):
+    """
+    What the user may do with claims campaigns, for the React app: see
+    them at all (the premium access flag) and create its own. Both are
+    False while the claim_campaigns switch is off.
+    """
+    if not switch_is_active('claim_campaigns'):
+        return {'access': False, 'self_serve': False}
+    access = user_has_flag(user, ACCESS_FLAG)
+    return {
+        'access': access,
+        'self_serve': access and user_has_flag(user, SELF_SERVE_FLAG),
+    }
+
+
 def get_campaign_for_invite(user, facility, code):
     """
     The sender's own active campaign with this code, for a claim invite
@@ -115,7 +142,7 @@ def get_campaign_for_invite(user, facility, code):
     """
     contributor = getattr(user, 'contributor', None)
     campaign = None
-    if contributor is not None and switch_is_active('claim_campaigns'):
+    if contributor is not None and campaign_permissions(user)['access']:
         campaign = ClaimCampaign.objects.filter(
             code=code.strip().upper(),
             contributor=contributor,

@@ -376,11 +376,64 @@ class ClaimCampaignSupplierInline(admin.TabularInline):
 
 
 class ClaimCampaignAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'contributor', 'status')
-    search_fields = ('name', 'code')
+    list_display = ('name', 'code', 'contributor', 'status', 'has_access')
+    list_filter = ('status',)
+    search_fields = ('name', 'code', 'contributor__name')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
     raw_id_fields = ('contributor',)
     inlines = (ClaimCampaignSupplierInline,)
+    actions = ('close_campaigns', 'reopen_campaigns', 'give_brands_access')
+
+    @admin.display(boolean=True, description='Brand has access')
+    def has_access(self, campaign):
+        from api.services.claim_campaign_service import ACCESS_FLAG
+        admin_user = campaign.contributor.admin
+        return admin_user.is_superuser or admin_user.groups.filter(
+            name=ACCESS_FLAG
+        ).exists()
+
+    @admin.action(description='Close selected campaigns')
+    def close_campaigns(self, request, queryset):
+        from api.models.facility.claim_campaign import ClaimCampaign
+        updated = queryset.exclude(
+            status=ClaimCampaign.Status.CLOSED
+        ).update(status=ClaimCampaign.Status.CLOSED)
+        self.message_user(request, f'Closed {updated} campaign(s).')
+
+    @admin.action(description='Reopen selected campaigns')
+    def reopen_campaigns(self, request, queryset):
+        from api.models.facility.claim_campaign import ClaimCampaign
+        updated = queryset.exclude(
+            status=ClaimCampaign.Status.ACTIVE
+        ).update(status=ClaimCampaign.Status.ACTIVE)
+        self.message_user(request, f'Reopened {updated} campaign(s).')
+
+    @admin.action(
+        description='Give these brands campaign access (premium)'
+    )
+    def give_brands_access(self, request, queryset):
+        from django.contrib.auth.models import Group
+        from api.services.claim_campaign_service import ACCESS_FLAG
+        group, _ = Group.objects.get_or_create(name=ACCESS_FLAG)
+        users = {campaign.contributor.admin for campaign in queryset}
+        for user in users:
+            user.groups.add(group)
+        self.message_user(
+            request,
+            f'{len(users)} brand user(s) can now see Claims Campaigns.',
+        )
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not self.has_access(obj):
+            self.message_user(
+                request,
+                f'{obj.contributor.name} can\'t see this campaign yet: '
+                'claims campaigns are a premium feature. Use the "Give '
+                'these brands campaign access" action, or add the brand\'s '
+                'user to the claim_campaign_access group.',
+                level=messages.WARNING,
+            )
 
     def get_readonly_fields(self, request, obj=None):
         # The code is used in live campaign links; lock it after creation.

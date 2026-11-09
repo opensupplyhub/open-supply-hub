@@ -3,43 +3,56 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
-FLAG_NAME = 'claim_campaign_self_serve'
+ACCESS_FLAG = 'claim_campaign_access'
+SELF_SERVE_FLAG = 'claim_campaign_self_serve'
+
+# Both are off for everyone except superusers. To turn a brand on, add
+# its user(s) to the group of the same name in Django admin (or use the
+# "Give these brands campaign access" action on Claim campaigns).
+FLAGS = {
+    ACCESS_FLAG: (
+        'Claims campaigns are a premium feature: brand users in the group '
+        'of the same name see Claims Campaigns in their account menu, '
+        'their campaigns, and can invite suppliers and close campaigns. '
+        'Also needs the claim_campaigns switch.'
+    ),
+    SELF_SERVE_FLAG: (
+        'Lets a brand create its own claims campaigns (on top of '
+        'claim_campaign_access). Add brand users to the group of the same '
+        'name.'
+    ),
+}
 
 
-def create_flag(apps, schema_editor):
-    # Off for everyone except superusers. To enable a brand, add its
-    # user(s) to the group of the same name in Django admin.
+def create_flags(apps, schema_editor):
     Group = apps.get_model('auth', 'Group')
-    group, _ = Group.objects.get_or_create(name=FLAG_NAME)
-
     Flag = apps.get_model('waffle', 'Flag')
-    flag, _ = Flag.objects.get_or_create(
-        name=FLAG_NAME,
-        defaults={
-            'everyone': None,
-            'superusers': True,
-            'staff': False,
-            'note': (
-                'Lets a brand create its own claims campaign from one of '
-                'its lists (also needs the claim_campaigns switch). Add '
-                'brand users to the group of the same name.'
-            ),
-        },
-    )
-    flag.groups.add(group)
+    for name, note in FLAGS.items():
+        group, _ = Group.objects.get_or_create(name=name)
+        flag, _ = Flag.objects.get_or_create(
+            name=name,
+            defaults={
+                'everyone': None,
+                'superusers': True,
+                'staff': False,
+                'note': note,
+            },
+        )
+        flag.groups.add(group)
 
 
-def delete_flag(apps, schema_editor):
+def delete_flags(apps, schema_editor):
     Flag = apps.get_model('waffle', 'Flag')
-    Flag.objects.filter(name=FLAG_NAME).delete()
+    Flag.objects.filter(name__in=FLAGS).delete()
     Group = apps.get_model('auth', 'Group')
-    Group.objects.filter(name=FLAG_NAME).delete()
+    Group.objects.filter(name__in=FLAGS).delete()
 
 
 class Migration(migrations.Migration):
     """
     Gives claim campaigns an explicit supplier roster, validates the
-    campaign code format, and adds the claim_campaign_self_serve flag.
+    campaign code format, and adds the claim_campaign_access (premium) and
+    claim_campaign_self_serve flags.
     """
 
     dependencies = [
@@ -98,5 +111,5 @@ class Migration(migrations.Migration):
                 name='unique_claim_campaign_supplier',
             ),
         ),
-        migrations.RunPython(create_flag, delete_flag),
+        migrations.RunPython(create_flags, delete_flags),
     ]

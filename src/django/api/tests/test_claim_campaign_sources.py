@@ -15,6 +15,7 @@ from api.models import (
 )
 from api.services.claim_campaign_service import resolve_claim_campaign
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
+from api.tests.test_claim_campaign import grant_campaign_access
 from api.tests.test_claim_campaign_roster import (
     SELF_SERVE,
     ClaimCampaignRosterBaseTest,
@@ -43,6 +44,7 @@ class ApiOnlyContributorBaseTest(ClaimCampaignRosterBaseTest):
         self.api_user = User.objects.create(email="api@example.com")
         self.api_user.set_password(self.password)
         self.api_user.save()
+        grant_campaign_access(self.api_user)
         self.api_contributor = Contributor.objects.create(
             admin=self.api_user,
             name="Api Brand",
@@ -389,6 +391,7 @@ class ApiSubmissionThroughPostTest(FacilityAPITestCaseBase):
         posting `public=false` needs a second group.
         """
         self.join_group_and_login()
+        grant_campaign_access(self.user)
         self.user.groups.add(
             auth.models.Group.objects.get(
                 name=FeatureGroups.CAN_SUBMIT_PRIVATE_FACILITY

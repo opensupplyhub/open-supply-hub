@@ -8,12 +8,25 @@ from api.models import (
     Source,
     User,
 )
+from django.contrib.auth.models import Group
 from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
 from django.contrib.gis.geos import Point
 from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
+
+
+def grant_campaign_access(user, self_serve=False):
+    """
+    Claims campaigns are premium: put the user in the access group (and
+    optionally the self-serve group), as OS Hub staff do for a brand.
+    """
+    names = ["claim_campaign_access"]
+    if self_serve:
+        names.append("claim_campaign_self_serve")
+    for name in names:
+        user.groups.add(Group.objects.get(name=name))
 
 
 class ClaimCampaignBaseTest(APITestCase):
@@ -24,6 +37,8 @@ class ClaimCampaignBaseTest(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create(email="test@example.com")
+
+        grant_campaign_access(self.user)
 
         self.contributor = Contributor.objects.create(
             admin=self.user,
