@@ -34,7 +34,7 @@ def _is_po_box(address):
     return any(r.search(address) for r in PO_BOX_RES)
 
 
-EMAIL_RE = re.compile(r'[\w+-]+(?:\.[\w+-]+)*@[\w-]+(?:\.[\w-]+)+')
+EMAIL_RE = re.compile(r'[\w+-]++(?:\.[\w+-]++)*+@[\w-]++(?:\.[\w-]++)++')
 PHONE_RE = re.compile(r'\+?\d(?:[\s().-]*\d){7,}')
 PERSON_TITLE_RE = re.compile(
     r'^(mr|mrs|ms|miss|dr|mohammed|mohammad|md)\.?\s', re.IGNORECASE)
