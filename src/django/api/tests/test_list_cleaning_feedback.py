@@ -1,6 +1,11 @@
+import json
+import os
+import tempfile
 from datetime import timedelta
+from io import StringIO
 from unittest.mock import MagicMock, patch
 
+from django.core.management import call_command
 from django.test import override_settings
 from django.utils import timezone
 from rest_framework import status
@@ -21,6 +26,7 @@ from api.services.list_cleaning import (
     SWITCH_NAME,
     apply_run,
     ingest_result,
+    record_decisions,
     refresh_run,
     start_run,
 )
@@ -531,6 +537,48 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertTrue(
             run.events.get(kind=ListCleaningEvent.SUBMITTED)
             .meta['as_uploaded'])
+
+    def test_submit_rejects_a_non_boolean_as_uploaded(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url('submit/'), {'as_uploaded': 'false'}, format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        run.refresh_from_db()
+        self.assertIsNone(run.closed_at)
+
+    def test_repeated_result_does_not_wipe_decisions(self):
+        run = self._ingested_run()
+        fix = run.suggestions.get(code='country_in_address')
+        before = run.suggestions.count()
+        record_decisions(
+            run,
+            [{'id': fix.id, 'decision': ListCleaningSuggestion.REJECTED}],
+            self.user)
+        # a second poll that fetched the same result
+        ingest_result(run, SAMPLE_RESULT)
+        fix.refresh_from_db()
+        self.assertEqual(fix.decision, ListCleaningSuggestion.REJECTED)
+        self.assertEqual(run.suggestions.count(), before)
+
+    def test_imported_run_opens_a_review_window(self):
+        path = os.path.join(tempfile.gettempdir(), 'osdev3726-records.json')
+        with open(path, 'w') as f:
+            json.dump(SAMPLE_RESULT, f)
+        try:
+            call_command('list_cleaning', '-l', str(self.list.id),
+                         '--records', path, stdout=StringIO())
+        finally:
+            os.remove(path)
+        run = self.list.cleaning_runs.first()
+        self.assertEqual(run.status, ListCleaningRun.COMPLETE)
+        self.assertIsNotNone(run.review_until)
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url('submit/'), {'as_uploaded': True}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
 
     def test_moderation_waits_for_the_review_window(self):
         self._ingested_run()

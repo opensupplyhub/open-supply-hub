@@ -70,6 +70,23 @@ def build_payload(facility_list):
     return {'list_id': str(facility_list.id), 'rows': rows}
 
 
+def review_deadline(now=None):
+    """When a run created now stops accepting the contributor's changes."""
+    return (now or timezone.now()) + timedelta(
+        minutes=settings.LIST_CLEANING_REVIEW_MINUTES)
+
+
+def _lock(run):
+    """
+    Take the run's row lock and reload it, so concurrent requests on the
+    same run (two tabs submitting, two polls ingesting the same result)
+    queue here and see what the first one did. Callers run inside a
+    transaction.
+    """
+    list(ListCleaningRun.objects.select_for_update().filter(pk=run.pk))
+    run.refresh_from_db()
+
+
 def start_run(facility_list, runner_name=None, force=False):
     """
     Start a run for the list. Returns the run, or None when the feature
@@ -82,8 +99,7 @@ def start_run(facility_list, runner_name=None, force=False):
     run = ListCleaningRun.objects.create(
         facility_list=facility_list,
         runner=runner_name,
-        review_until=timezone.now() + timedelta(
-            minutes=settings.LIST_CLEANING_REVIEW_MINUTES))
+        review_until=review_deadline())
     payload = build_payload(facility_list)
     if not payload['rows']:
         _fail(run, 'The list has no parsed rows to check.')
@@ -160,8 +176,15 @@ def _default_decision(field, code):
 def ingest_result(run, result):
     """
     Store the aggregated pipeline output against the run. Replaces any
-    suggestions the run already had, so a re-ingest is idempotent.
+    suggestions the run already had, so a re-ingest is idempotent, but
+    never a run that has already completed: two polls can fetch the same
+    result, and the second must not wipe decisions made since the first.
     """
+    _lock(run)
+    if run.status not in (ListCleaningRun.PENDING, ListCleaningRun.RUNNING):
+        log.info(f'[List Cleaning] Run {run.id} is {run.status}; '
+                 'ignoring a repeated result')
+        return run
     now = timezone.now()
     items_by_row = {
         item.row_index + ROW_OFFSET: item
@@ -305,6 +328,7 @@ def sweep_lapsed():
 
 
 def _ensure_open(run):
+    _lock(run)
     sweep_run(run)
     if run.closed_at is not None:
         if run.closed_reason == ListCleaningRun.SUBMITTED:

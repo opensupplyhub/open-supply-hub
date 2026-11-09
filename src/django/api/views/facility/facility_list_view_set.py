@@ -585,10 +585,12 @@ class FacilityListViewSet(ModelViewSet):
             raise ValidationError(
                 'A list can only be submitted while it is pending '
                 'moderation.')
+        as_uploaded = request.data.get('as_uploaded', False)
+        if not isinstance(as_uploaded, bool):
+            raise ValidationError('as_uploaded must be true or false.')
         try:
             counts = list_cleaning.submit_run(
-                run, request.user,
-                as_uploaded=bool(request.data.get('as_uploaded')))
+                run, request.user, as_uploaded=as_uploaded)
         except list_cleaning.DecisionError as e:
             raise ValidationError(str(e))
         data = serialize_run(

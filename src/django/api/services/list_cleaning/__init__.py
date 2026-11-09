@@ -13,6 +13,7 @@ from .service import (  # noqa: F401
     record_event,
     record_group_decisions,
     refresh_run,
+    review_deadline,
     seconds_left,
     start_run,
     submit_run,

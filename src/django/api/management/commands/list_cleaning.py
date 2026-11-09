@@ -7,6 +7,7 @@ from api.models import FacilityList, ListCleaningRun
 from api.services.list_cleaning import (
     ingest_result,
     refresh_run,
+    review_deadline,
     start_run,
 )
 
@@ -46,7 +47,8 @@ class Command(BaseCommand):
             if isinstance(result, list):
                 result = {'records': result}
             run = ListCleaningRun.objects.create(
-                facility_list=facility_list, runner=ListCleaningRun.IMPORT)
+                facility_list=facility_list, runner=ListCleaningRun.IMPORT,
+                review_until=review_deadline())
             ingest_result(run, result)
         else:
             run = start_run(
