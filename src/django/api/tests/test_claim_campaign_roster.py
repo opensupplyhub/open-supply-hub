@@ -152,6 +152,7 @@ class ClaimCampaignRosterDashboardTest(ClaimCampaignRosterBaseTest):
                     "country_code": "BD",
                     "claim_status": "pending",
                     "is_closed": False,
+                    "last_invite": None,
                 }
             ],
             campaign["suppliers"],

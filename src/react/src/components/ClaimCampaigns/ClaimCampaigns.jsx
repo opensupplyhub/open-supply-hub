@@ -24,6 +24,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
+import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
@@ -33,7 +34,9 @@ import RequireAuthNotice from '../RequireAuthNotice';
 import StyledTooltip from '../StyledTooltip';
 import { fetchClaimCampaigns } from '../../actions/claimCampaigns';
 import apiRequest from '../../util/apiRequest';
+import { sendClaimInvite } from '../../util/claimInvite';
 import {
+    CLAIM_INVITE,
     claimCampaignsRoute,
     claimIntroRoute,
     makeClaimCampaignCandidatesURL,
@@ -42,6 +45,7 @@ import {
     newClaimCampaignRoute,
 } from '../../util/constants';
 import {
+    convertFeatureFlagsObjectToListOfActiveFlags,
     hasClaimCampaignAccess,
     DownloadCSV,
     joinDataIntoCSVString,
@@ -102,8 +106,18 @@ export const sortSuppliers = (suppliers, orderBy, order) => {
     );
 };
 
+const INVITE_MODES = Object.freeze({
+    email: 'email',
+    link: 'link',
+});
+
 const CONTACT_COLUMN_HELP =
-    'Copy the link and send it to your contact at the facility, or download the CSV of all links. Each link is unique to one facility, so make sure you send each facility its own link.';
+    'Enter the email address of your contact at the facility and OS Hub will send them an invite to claim, or copy the link and send it yourself. Each link is unique to one facility, so make sure you send each facility its own link.';
+
+const lastInvitePropType = shape({
+    recipient_email: string.isRequired,
+    created_at: string.isRequired,
+});
 
 const campaignPropType = shape({
     id: number.isRequired,
@@ -117,6 +131,7 @@ const campaignPropType = shape({
             name: string.isRequired,
             country_code: string.isRequired,
             claim_status: string.isRequired,
+            last_invite: lastInvitePropType,
         }),
     ).isRequired,
 });
@@ -193,6 +208,130 @@ SupplierStatusChip.propTypes = {
     classes: object.isRequired,
 };
 
+const InvitedNote = ({ invite, classes }) => (
+    <span className={classes.invitedNote}>
+        Invited {invite.recipient_email} ·{' '}
+        {moment(invite.created_at).format('D MMM YYYY')}
+    </span>
+);
+
+InvitedNote.propTypes = {
+    invite: lastInvitePropType.isRequired,
+    classes: object.isRequired,
+};
+
+// Sends one supplier the campaign's claim invite by email. Claimed and
+// pending suppliers can't be invited, so they get a note instead.
+const EmailInviteCell = ({
+    supplier,
+    campaignCode,
+    lastInvite,
+    onSent,
+    classes,
+}) => {
+    const [email, setEmail] = useState('');
+    const [sending, setSending] = useState(false);
+    const [error, setError] = useState(null);
+
+    if (supplier.claim_status !== 'unclaimed') {
+        return (
+            <span className={classes.invitedNote}>
+                {supplier.claim_status === 'claimed'
+                    ? 'Already claimed'
+                    : 'Claim in review'}
+            </span>
+        );
+    }
+
+    const send = event => {
+        event.preventDefault();
+        setSending(true);
+        setError(null);
+        sendClaimInvite(supplier.os_id, {
+            recipientEmail: email.trim(),
+            campaign: campaignCode,
+        })
+            .then(({ data }) => {
+                onSent(supplier.os_id, {
+                    recipient_email: data.recipient_email,
+                    created_at: new Date().toISOString(),
+                });
+                setEmail('');
+            })
+            .catch(err => setError(err.message))
+            .finally(() => setSending(false));
+    };
+
+    return (
+        <form className={classes.emailInvite} onSubmit={send}>
+            <div className={classes.emailInviteRow}>
+                <TextField
+                    type="email"
+                    placeholder="contact@facility.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    disabled={sending}
+                    className={classes.emailField}
+                    inputProps={{
+                        'aria-label': `Email address for ${supplier.name}`,
+                    }}
+                    required
+                />
+                <Button
+                    type="submit"
+                    color="primary"
+                    size="small"
+                    disabled={sending || !email.trim()}
+                >
+                    {sending ? 'Sending…' : 'Send'}
+                </Button>
+            </div>
+            {error && <span className={classes.inviteError}>{error}</span>}
+            {!error && lastInvite && (
+                <InvitedNote invite={lastInvite} classes={classes} />
+            )}
+        </form>
+    );
+};
+
+EmailInviteCell.defaultProps = {
+    lastInvite: null,
+};
+
+EmailInviteCell.propTypes = {
+    supplier: shape({
+        os_id: string.isRequired,
+        name: string.isRequired,
+        claim_status: string.isRequired,
+    }).isRequired,
+    campaignCode: string.isRequired,
+    lastInvite: lastInvitePropType,
+    onSent: func.isRequired,
+    classes: object.isRequired,
+};
+
+const InviteModeToggle = ({ mode, onChange, classes }) => (
+    <div className={classes.modeToggle} role="group" aria-label="Invite by">
+        <span className={classes.modeLabel}>Invite by</span>
+        {[
+            [INVITE_MODES.email, 'Email'],
+            [INVITE_MODES.link, 'Link'],
+        ].map(([value, label]) => (
+            <Button
+                key={value}
+                size="small"
+                color="primary"
+                variant={mode === value ? 'contained' : 'outlined'}
+                aria-pressed={mode === value}
+                onClick={() => onChange(value)}
+                className={classes.modeButton}
+            >
+                {label}
+            </Button>
+        ))}
+    </div>
+);
+
 const SortableHeader = ({
     column,
     label,
@@ -226,6 +365,12 @@ SortableHeader.propTypes = {
     order: string.isRequired,
     onSort: func.isRequired,
     className: string.isRequired,
+};
+
+InviteModeToggle.propTypes = {
+    mode: string.isRequired,
+    onChange: func.isRequired,
+    classes: object.isRequired,
 };
 
 const KpiTile = ({ value, label, status, classes }) => (
@@ -443,8 +588,15 @@ CampaignRollupRow.propTypes = {
     classes: object.isRequired,
 };
 
-const CampaignCard = ({ campaign, onClosed, classes }) => {
+const CampaignCard = ({
+    campaign,
+    canEmail: canEmailAtAll,
+    onClosed,
+    classes,
+}) => {
     const isActive = campaign.status === 'ACTIVE';
+    // A closed campaign can't send invites (the server refuses them).
+    const canEmail = canEmailAtAll && isActive;
     const [confirmClose, setConfirmClose] = useState(false);
     const [closing, setClosing] = useState(false);
     const [closeError, setCloseError] = useState(null);
@@ -472,6 +624,13 @@ const CampaignCard = ({ campaign, onClosed, classes }) => {
     // the brand clicks a column header.
     const [orderBy, setOrderBy] = useState(null);
     const [order, setOrder] = useState(SORT_DIRECTIONS.asc);
+    const [inviteMode, setInviteMode] = useState(
+        canEmail ? INVITE_MODES.email : INVITE_MODES.link,
+    );
+    // Invites sent from this page since it loaded, by OS ID.
+    const [sentInvites, setSentInvites] = useState({});
+    const recordSent = (osID, invite) =>
+        setSentInvites(current => ({ ...current, [osID]: invite }));
 
     const { counts, total } = summarizeCampaign(campaign);
 
@@ -493,6 +652,7 @@ const CampaignCard = ({ campaign, onClosed, classes }) => {
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
     );
+    const showEmail = canEmail && inviteMode === INVITE_MODES.email;
 
     return (
         <Paper className={classes.campaignCard}>
@@ -527,7 +687,8 @@ const CampaignCard = ({ campaign, onClosed, classes }) => {
             {!isActive && (
                 <Typography className={classes.closedNote} role="status">
                     This campaign is closed. New claims from these suppliers no
-                    longer count toward it.
+                    longer count toward it, and invites can&apos;t be sent from
+                    it.
                 </Typography>
             )}
             <CloseCampaignDialog
@@ -577,14 +738,25 @@ const CampaignCard = ({ campaign, onClosed, classes }) => {
                         <MenuItem value="pending">Pending review</MenuItem>
                         <MenuItem value="unclaimed">Not started</MenuItem>
                     </Select>
+                    {canEmail && (
+                        <InviteModeToggle
+                            mode={inviteMode}
+                            onChange={setInviteMode}
+                            classes={classes}
+                        />
+                    )}
                     {/* The CSV is the links, for the brand's own mail merge. */}
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => downloadSupplierCSV(campaign, suppliers)}
-                    >
-                        Download CSV
-                    </Button>
+                    {!showEmail && (
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            onClick={() =>
+                                downloadSupplierCSV(campaign, suppliers)
+                            }
+                        >
+                            Download CSV
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -621,7 +793,9 @@ const CampaignCard = ({ campaign, onClosed, classes }) => {
                             />
                             <TableCell className={classes.colContact}>
                                 <span className={classes.headerWithHelp}>
-                                    Unique claim link
+                                    {showEmail
+                                        ? 'Contact email'
+                                        : 'Unique claim link'}
                                     <StyledTooltip
                                         title={CONTACT_COLUMN_HELP}
                                         placement="top"
@@ -663,16 +837,29 @@ const CampaignCard = ({ campaign, onClosed, classes }) => {
                                     )}
                                 </TableCell>
                                 <TableCell className={classes.cell}>
-                                    <CopyToClipboard
-                                        text={makeCampaignClaimLink(
-                                            supplier.os_id,
-                                            campaign.code,
-                                        )}
-                                    >
-                                        <Button color="primary">
-                                            Copy link
-                                        </Button>
-                                    </CopyToClipboard>
+                                    {showEmail ? (
+                                        <EmailInviteCell
+                                            supplier={supplier}
+                                            campaignCode={campaign.code}
+                                            lastInvite={
+                                                sentInvites[supplier.os_id] ||
+                                                supplier.last_invite
+                                            }
+                                            onSent={recordSent}
+                                            classes={classes}
+                                        />
+                                    ) : (
+                                        <CopyToClipboard
+                                            text={makeCampaignClaimLink(
+                                                supplier.os_id,
+                                                campaign.code,
+                                            )}
+                                        >
+                                            <Button color="primary">
+                                                Copy link
+                                            </Button>
+                                        </CopyToClipboard>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -704,6 +891,7 @@ const CampaignCard = ({ campaign, onClosed, classes }) => {
 
 CampaignCard.propTypes = {
     campaign: campaignPropType.isRequired,
+    canEmail: bool.isRequired,
     onClosed: func.isRequired,
     classes: object.isRequired,
 };
@@ -717,6 +905,7 @@ const ClaimCampaigns = ({
     fetchCampaigns,
     location,
     match,
+    canEmail,
     hasAccess,
 }) => {
     // On /claim-campaigns/{id} the page shows that one campaign in full.
@@ -799,6 +988,7 @@ const ClaimCampaigns = ({
         <CampaignCard
             key={campaign.id}
             campaign={campaign}
+            canEmail={canEmail}
             onClosed={fetchCampaigns}
             classes={classes}
         />
@@ -876,9 +1066,9 @@ const ClaimCampaigns = ({
                                 } been claimed or closed since you chose ${
                                     leftOut === 1 ? 'it' : 'them'
                                 }.`}
-                            {
-                                ' Copy each claim link, or download the CSV to send them from your own email.'
-                            }
+                            {canEmail
+                                ? " Enter a contact email for each supplier and we'll send them an invite, or copy their links or download the CSV to send them yourself."
+                                : ' Copy each claim link, or download the CSV to send them from your own email.'}
                             {collapsed && (
                                 <>
                                     {' '}
@@ -941,6 +1131,7 @@ ClaimCampaigns.propTypes = {
     fetchCampaigns: func.isRequired,
     location: shape({ search: string }),
     match: shape({ params: shape({ campaignId: string }) }),
+    canEmail: bool.isRequired,
     hasAccess: bool.isRequired,
 };
 
@@ -949,9 +1140,13 @@ const mapStateToProps = ({
         user: { user },
     },
     claimCampaigns: { fetching, data, error },
+    featureFlags: { flags },
 }) => ({
     userHasSignedIn: !user.isAnon,
     hasAccess: hasClaimCampaignAccess(user),
+    canEmail: convertFeatureFlagsObjectToListOfActiveFlags(flags).includes(
+        CLAIM_INVITE,
+    ),
     fetching,
     campaigns: data,
     error,
