@@ -34,7 +34,17 @@ def _is_po_box(address):
     return any(r.search(address) for r in PO_BOX_RES)
 
 
-EMAIL_RE = re.compile(r'[\w+-]++(?:\.[\w+-]++)*+@[\w-]++(?:\.[\w-]++)++')
+def _has_email(text):
+    """A token with one @ and a dotted domain after it. A plain scan
+    rather than a pattern: the stub only needs the obvious cases and a
+    scan cannot be made to backtrack."""
+    for token in _s(text).split():
+        local, at, domain = token.strip('(),;:<>"\'').partition('@')
+        if at and local and '.' in domain.strip('.') and len(domain) > 2:
+            return True
+    return False
+
+
 PHONE_RE = re.compile(r'\+?\d(?:[\s().-]*\d){7,}')
 PERSON_TITLE_RE = re.compile(
     r'^(mr|mrs|ms|miss|dr|mohammed|mohammad|md)\.?\s', re.IGNORECASE)
@@ -192,7 +202,7 @@ def _check_name(check):
                     'not identify the facility.')
     if name.isupper() and len(name) > 3:
         check.change('name', name.title(), 'casing')
-    if EMAIL_RE.search(name) or PERSON_TITLE_RE.match(name):
+    if _has_email(name) or PERSON_TITLE_RE.match(name):
         check.issue('pii', 'must_fix', 'name',
                     'The name looks like a person or a personal contact '
                     'rather than a business. Please give the business '
@@ -224,7 +234,7 @@ def _check_address(check):
         check.issue('address_po_box', 'must_fix', 'address',
                     f'The address "{address}" has no street. Please give '
                     'the street address of the facility.')
-    if EMAIL_RE.search(address) or PHONE_RE.search(address):
+    if _has_email(address) or PHONE_RE.search(address):
         check.issue('pii', 'must_fix', 'address',
                     'The address contains an email or phone number. '
                     'Please remove personal contact details.')
@@ -246,7 +256,7 @@ def _check_workers(check):
 
 
 def _check_parent_company(check):
-    if EMAIL_RE.search(check.values['parent_company']):
+    if _has_email(check.values['parent_company']):
         check.issue('pii', 'must_fix', 'parent_company',
                     'The parent company cell contains an email address. '
                     'Please give the company name only.')
