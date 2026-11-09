@@ -115,10 +115,9 @@ export const CampaignSupplierSearch = ({
             .finally(() => setSearching(false));
     };
 
+    const canAdd = s => s.claim_status !== 'claimed';
     const addable = results
-        ? results.suppliers.filter(
-              s => s.claim_status !== 'claimed' && !picked.has(s.os_id),
-          )
+        ? results.suppliers.filter(s => canAdd(s) && !picked.has(s.os_id))
         : [];
 
     return (
@@ -281,10 +280,7 @@ export const CampaignSupplierSearch = ({
                                                 <Button
                                                     size="small"
                                                     color="primary"
-                                                    disabled={
-                                                        s.claim_status ===
-                                                        'claimed'
-                                                    }
+                                                    disabled={!canAdd(s)}
                                                     onClick={() => onAdd([s])}
                                                     aria-label={`Add ${s.name}`}
                                                 >

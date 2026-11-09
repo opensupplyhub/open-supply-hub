@@ -111,5 +111,20 @@ class Migration(migrations.Migration):
                 name='unique_claim_campaign_supplier',
             ),
         ),
+        migrations.AddField(
+            model_name='claimcampaign',
+            name='uses_roster',
+            field=models.BooleanField(
+                default=False,
+                verbose_name='chosen suppliers only',
+                help_text=(
+                    'On: the campaign invites only the suppliers listed '
+                    'below, even if that list becomes empty. Off (v1): it '
+                    'covers every production location on the brand\'s '
+                    'active lists. Turned on automatically when suppliers '
+                    'are chosen.'
+                ),
+            ),
+        ),
         migrations.RunPython(create_flags, delete_flags),
     ]

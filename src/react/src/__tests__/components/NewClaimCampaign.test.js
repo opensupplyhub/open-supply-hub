@@ -331,3 +331,50 @@ describe('NewClaimCampaign list sources', () => {
         );
     });
 });
+
+test('passes the number of suppliers left out on to the dashboard', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.post.mockReset();
+    mockCandidates();
+    apiRequest.post.mockResolvedValue({
+        data: { id: 42, skipped: [{ os_id: 'X', reason: 'claimed' }] },
+    });
+    const pushSpy = jest.spyOn(history, 'push');
+    const { findByText, getByText, getByLabelText } = renderComponent();
+
+    await findByText('1 supplier will get a claim link');
+    fireEvent.change(getByLabelText('Campaign name'), {
+        target: { value: 'Left out' },
+    });
+    fireEvent.click(getByText('Create campaign'));
+    await waitFor(() =>
+        expect(pushSpy).toHaveBeenCalledWith('/claim-campaigns?new=42&left_out=1'),
+    );
+});
+
+test('API locations waiting for a confirmed match are counted but not choosable yet', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.get.mockImplementation(url =>
+        Promise.resolve({
+            data: url.includes('list=')
+                ? { id: 3, suppliers: [] }
+                : [
+                      {
+                          id: 'api',
+                          name: 'Locations added through the API',
+                          kind: 'api',
+                          is_public: true,
+                          pending: false,
+                          awaiting_confirmation: 2,
+                          supplier_count: 0,
+                      },
+                  ],
+        }),
+    );
+    const { findByText, getByText, getByLabelText } = renderComponent();
+    expect(
+        await findByText('No suppliers matched yet · 2 waiting for you to confirm a match'),
+    ).toBeInTheDocument();
+    expect(getByText(/appear here once you confirm it/)).toBeInTheDocument();
+    expect(getByLabelText('Locations added through the API')).toBeDisabled();
+});

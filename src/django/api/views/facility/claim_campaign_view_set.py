@@ -104,7 +104,12 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
         )
         campaign = self.get_queryset().get(pk=campaign.pk)
         return Response(
-            ClaimCampaignSerializer(campaign).data,
+            {
+                **ClaimCampaignSerializer(campaign).data,
+                # Chosen suppliers left out because they were closed or
+                # claimed by the time the campaign was created.
+                'skipped': data['skipped'],
+            },
             status=status.HTTP_201_CREATED,
         )
 

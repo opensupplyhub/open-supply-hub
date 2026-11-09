@@ -300,11 +300,29 @@ class ClaimCampaignCreateValidationTest(ClaimCampaignRosterBaseTest):
         )
 
     @override_flag(SELF_SERVE, active=True)
-    def test_create_rejects_an_already_claimed_supplier(self):
+    def test_create_leaves_out_a_supplier_claimed_since_it_was_chosen(self):
         self.create_claim(status=FacilityClaimStatuses.APPROVED)
         response = self.post()
+        self.assertEqual(201, response.status_code)
+        self.assertEqual(
+            [self.other_facility.id],
+            [s["os_id"] for s in response.json()["suppliers"]],
+        )
+        self.assertEqual(
+            [{"os_id": self.facility.id, "reason": "claimed"}],
+            response.json()["skipped"],
+        )
+
+    @override_flag(SELF_SERVE, active=True)
+    def test_create_is_refused_when_every_supplier_was_claimed_or_closed(
+        self,
+    ):
+        self.create_claim(status=FacilityClaimStatuses.APPROVED)
+        self.other_facility.is_closed = True
+        self.other_facility.save()
+        response = self.post()
         self.assertEqual(400, response.status_code)
-        self.assertIn(self.facility.id, str(response.json()["os_ids"]))
+        self.assertIn("claimed or closed", str(response.json()["os_ids"]))
         self.assertEqual(1, ClaimCampaign.objects.count())
 
     @override_flag(SELF_SERVE, active=True)
@@ -343,9 +361,16 @@ class ClaimCampaignCreateValidationTest(ClaimCampaignRosterBaseTest):
         self.assertIn("name", response.json())
 
     @override_flag(SELF_SERVE, active=True)
-    def test_create_rejects_a_closed_supplier_from_a_list(self):
+    def test_create_leaves_out_a_supplier_closed_since_it_was_chosen(self):
         self.other_facility.is_closed = True
         self.other_facility.save()
         response = self.post()
-        self.assertEqual(400, response.status_code)
-        self.assertIn("Closed", str(response.json()["os_ids"]))
+        self.assertEqual(201, response.status_code)
+        self.assertEqual(
+            [self.facility.id],
+            [s["os_id"] for s in response.json()["suppliers"]],
+        )
+        self.assertEqual(
+            [{"os_id": self.other_facility.id, "reason": "closed"}],
+            response.json()["skipped"],
+        )

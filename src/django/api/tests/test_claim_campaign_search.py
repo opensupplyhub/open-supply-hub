@@ -126,18 +126,24 @@ class ClaimCampaignSearchTest(ClaimCampaignRosterBaseTest):
             [s.facility_id for s in campaign.suppliers.all()],
         )
 
-    def test_create_from_search_refuses_closed_facilities(self):
+    def test_create_from_search_leaves_out_closed_facilities(self):
         response = self.client.post(
             self.url,
             {"name": "Closed", "os_ids": [self.not_mine.id, self.closed.id]},
             format="json",
         )
 
-        self.assertEqual(400, response.status_code)
-        self.assertIn("Closed", str(response.json()))
-        self.assertFalse(ClaimCampaign.objects.filter(name="Closed").exists())
+        self.assertEqual(201, response.status_code)
+        self.assertEqual(
+            [self.not_mine.id],
+            [s["os_id"] for s in response.json()["suppliers"]],
+        )
+        self.assertEqual(
+            [{"os_id": self.closed.id, "reason": "closed"}],
+            response.json()["skipped"],
+        )
 
-    def test_create_from_search_refuses_claimed_facilities(self):
+    def test_create_from_search_refuses_only_claimed_facilities(self):
         FacilityClaim.objects.create(
             contributor=self.contributor,
             facility=self.not_mine,
@@ -153,7 +159,8 @@ class ClaimCampaignSearchTest(ClaimCampaignRosterBaseTest):
         )
 
         self.assertEqual(400, response.status_code)
-        self.assertIn("already been claimed", str(response.json()))
+        self.assertIn("claimed or closed", str(response.json()))
+        self.assertFalse(ClaimCampaign.objects.filter(name="Claimed").exists())
 
     def test_create_from_search_refuses_unknown_os_ids(self):
         response = self.client.post(

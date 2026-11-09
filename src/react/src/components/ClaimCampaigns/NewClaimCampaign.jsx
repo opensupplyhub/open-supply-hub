@@ -58,9 +58,12 @@ const isPickable = supplier =>
 const defaultSelection = suppliers =>
     new Set(
         suppliers
-            .filter(s => s.claim_status === 'unclaimed' && !s.is_closed)
+            .filter(s => s.claim_status === 'unclaimed' && isPickable(s))
             .map(s => s.os_id),
     );
+
+export const pickerStatusLabel = (supplier, labels) =>
+    supplier.is_closed ? 'Closed' : labels[supplier.claim_status];
 
 const firstError = error => {
     const data = error && error.response && error.response.data;
@@ -75,20 +78,29 @@ const firstError = error => {
 
 // A list still in moderation or processing may have no matched
 // suppliers yet; until it has some there is nothing to choose from it.
-export const isSelectableList = list =>
-    !(list.pending && list.supplier_count === 0);
+// A source with no matched suppliers yet (a list in moderation, or
+// API locations still processing or waiting for the brand to confirm a
+// match) has nothing to choose from.
+export const isSelectableList = list => list.supplier_count !== 0;
+
+const describeAwaiting = list =>
+    list.awaiting_confirmation
+        ? ` · ${list.awaiting_confirmation} waiting for you to confirm a match`
+        : '';
 
 export const describeListCount = list => {
     if (typeof list.supplier_count !== 'number') {
         return null;
     }
-    if (list.pending && list.supplier_count === 0) {
-        return 'No suppliers matched yet';
+    if (list.supplier_count === 0) {
+        return `No suppliers matched yet${describeAwaiting(list)}`;
     }
     const count = `${list.supplier_count} supplier${
         list.supplier_count === 1 ? '' : 's'
     }`;
-    return list.pending ? `${count} matched so far` : count;
+    return `${
+        list.pending ? `${count} matched so far` : count
+    }${describeAwaiting(list)}`;
 };
 
 export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
@@ -230,9 +242,16 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
               };
         apiRequest
             .post('/api/claim-campaigns/', payload)
-            .then(({ data }) =>
-                history.push(`${claimCampaignsRoute}?new=${data.id}`),
-            )
+            .then(({ data }) => {
+                // Suppliers claimed or closed since they were chosen are
+                // left out by the server; the dashboard says how many.
+                const leftOut = (data.skipped || []).length;
+                history.push(
+                    `${claimCampaignsRoute}?new=${data.id}${
+                        leftOut ? `&left_out=${leftOut}` : ''
+                    }`,
+                );
+            })
             .catch(error => {
                 setCreating(false);
                 setCreateError(firstError(error));
@@ -374,6 +393,10 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     them.
                                     {lists.some(list => list.pending) &&
                                         ' A pending list is still being reviewed or matched by OS Hub. Its suppliers appear here once they are matched.'}
+                                    {lists.some(
+                                        list => list.awaiting_confirmation,
+                                    ) &&
+                                        ' Locations waiting for you to confirm a match appear here once you confirm it.'}
                                 </Typography>
                             </Paper>
                         )}
@@ -565,11 +588,10 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                                         </span>
                                                     </TableCell>
                                                     <TableCell>
-                                                        {s.is_closed
-                                                            ? 'Closed'
-                                                            : STATUS_LABELS[
-                                                                  s.claim_status
-                                                              ]}
+                                                        {pickerStatusLabel(
+                                                            s,
+                                                            STATUS_LABELS,
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}

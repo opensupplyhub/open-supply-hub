@@ -71,9 +71,6 @@ def resolve_claim_campaign(facility, code):
         if campaign is not None:
             return campaign, True
 
-    has_roster = ClaimCampaignSupplier.objects.filter(
-        campaign=OuterRef('pk'),
-    )
     on_roster = ClaimCampaignSupplier.objects.filter(
         campaign=OuterRef('pk'),
         facility=facility,
@@ -88,7 +85,7 @@ def resolve_claim_campaign(facility, code):
             status=ClaimCampaign.Status.ACTIVE,
         ).filter(
             Q(Exists(on_roster))
-            | (~Q(Exists(has_roster)) & Q(contributor__in=on_active_list))
+            | (Q(uses_roster=False) & Q(contributor__in=on_active_list))
         )[:2]
     )
     if len(campaigns) == 1:
@@ -102,7 +99,7 @@ def campaign_includes_facility(campaign, facility):
     roster when it has one, otherwise (v1) on one of the contributor's
     active lists.
     """
-    if campaign.suppliers.exists():
+    if campaign.uses_roster:
         return campaign.suppliers.filter(facility=facility).exists()
     return FacilityListItem.objects.filter(
         facility=facility,
@@ -278,16 +275,28 @@ PROCESSING_ITEM_STATUSES = (
 )
 
 
-def get_contributor_api_items(contributor):
-    """Matched items the contributor submitted through the API."""
-    return exclude_removed_list_items(
-        FacilityListItem.objects.filter(
-            source__contributor=contributor,
-            source__source_type=Source.SINGLE,
-            source__is_active=True,
-            facility__isnull=False,
-        )
+def get_contributor_api_items(contributor, matched=True):
+    """
+    Items the contributor submitted through the API: the matched ones,
+    or (matched=False) all of them, whatever their status.
+    """
+    items = FacilityListItem.objects.filter(
+        source__contributor=contributor,
+        source__source_type=Source.SINGLE,
+        source__is_active=True,
     )
+    if matched:
+        items = items.filter(facility__isnull=False)
+    return exclude_removed_list_items(items)
+
+
+def count_awaiting_confirmation(items):
+    """
+    Rows OS Hub found possible matches for and that wait for the
+    contributor to confirm or reject one (POTENTIAL_MATCH). They have no
+    production location yet, so they can't be invited until then.
+    """
+    return items.filter(status=FacilityListItem.POTENTIAL_MATCH).count()
 
 
 def count_facilities(items):
@@ -305,6 +314,9 @@ def describe_list_source(source):
         source.facility_list.status == FacilityList.PENDING
         or items.filter(status__in=PROCESSING_ITEM_STATUSES).exists()
     )
+    awaiting_confirmation = count_awaiting_confirmation(
+        exclude_removed_list_items(items)
+    )
     return {
         'id': source.facility_list.id,
         'name': source.facility_list.name,
@@ -312,6 +324,7 @@ def describe_list_source(source):
         'is_public': source.is_public,
         'created_at': source.created_at,
         'pending': pending,
+        'awaiting_confirmation': awaiting_confirmation,
         'supplier_count': count_facilities(
             exclude_removed_list_items(items.filter(facility__isnull=False))
         ),
@@ -321,11 +334,17 @@ def describe_list_source(source):
 def describe_api_source(contributor):
     """
     The step 1 entry for the contributor's API submissions, or None if
-    it has no matched ones.
+    it has none that are matched, still processing, or waiting for it to
+    confirm a match.
     """
     items = get_contributor_api_items(contributor)
     supplier_count = count_facilities(items)
-    if not supplier_count:
+    all_items = get_contributor_api_items(contributor, matched=False)
+    pending = all_items.filter(
+        status__in=PROCESSING_ITEM_STATUSES
+    ).exists()
+    awaiting_confirmation = count_awaiting_confirmation(all_items)
+    if not (supplier_count or pending or awaiting_confirmation):
         return None
     return {
         'id': API_SOURCE_ID,
@@ -333,9 +352,10 @@ def describe_api_source(contributor):
         'kind': 'api',
         # Each API submission has its own public/private setting; the
         # entry is private if any of them is.
-        'is_public': not items.filter(source__is_public=False).exists(),
+        'is_public': not all_items.filter(source__is_public=False).exists(),
         'created_at': None,
-        'pending': False,
+        'pending': pending,
+        'awaiting_confirmation': awaiting_confirmation,
         'supplier_count': supplier_count,
     }
 
@@ -423,6 +443,7 @@ def create_campaign_with_suppliers(contributor, name, facility_ids):
             with transaction.atomic():
                 campaign = ClaimCampaign.objects.create(
                     contributor=contributor,
+                    uses_roster=True,
                     name=name,
                     code=generate_campaign_code(contributor.name),
                 )

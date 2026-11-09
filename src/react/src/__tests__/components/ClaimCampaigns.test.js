@@ -715,3 +715,48 @@ describe('Premium access', () => {
         expect(apiRequest.get).not.toHaveBeenCalled();
     });
 });
+
+test('the confirmation says how many suppliers were left out', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.get.mockImplementation(url =>
+        Promise.resolve({ data: url.includes('candidates') ? [] : mockCampaigns }),
+    );
+    const { findByText } = renderComponent(true, {
+        location: { search: '?new=1&left_out=2' },
+    });
+    expect(
+        await findByText(
+            /2 were left out because they've been claimed or closed since you chose them\./,
+        ),
+    ).toBeInTheDocument();
+});
+
+test('a supplier that closed after it was added shows its status and Closed', async () => {
+    apiRequest.get.mockReset();
+    const withClosed = {
+        ...mockCampaigns[0],
+        suppliers: [{ ...mockCampaigns[0].suppliers[0], is_closed: true }],
+    };
+    apiRequest.get.mockImplementation(url =>
+        Promise.resolve({ data: url.includes('candidates') ? [] : [withClosed] }),
+    );
+    const { findByText, getAllByText } = renderComponent();
+    await findByText('Green Delta Produce Ltd');
+    expect(getAllByText('Closed').length).toBeGreaterThanOrEqual(1);
+    expect(getAllByText('Claimed').length).toBeGreaterThanOrEqual(2);
+});
+
+test('a campaign closed in Django admin shows as closed when the page loads', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.get.mockImplementation(url =>
+        Promise.resolve({
+            data: url.includes('candidates')
+                ? []
+                : [{ ...mockCampaigns[0], status: 'CLOSED' }],
+        }),
+    );
+    const { findByText, queryByText } = renderComponent(true, {}, { claimInvite: true });
+    expect(await findByText(/This campaign is closed/)).toBeInTheDocument();
+    expect(queryByText('Close campaign')).not.toBeInTheDocument();
+});
+

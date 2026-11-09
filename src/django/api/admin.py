@@ -363,15 +363,16 @@ class FacilityClaimReviewNoteAdmin(SimpleHistoryAdmin):
 
 
 class ClaimCampaignSupplierInline(admin.TabularInline):
-    # A campaign with no rows here uses the contributor's active lists
-    # as its roster (v1 behaviour).
+    # Adding a row turns on "chosen suppliers only" for the campaign.
+    # Rows can be deleted one at a time; deleting them all leaves the
+    # campaign empty rather than falling back to all the brand's lists.
     model = models.ClaimCampaignSupplier
     raw_id_fields = ('facility',)
     readonly_fields = ('created_at',)
     extra = 0
     verbose_name = 'supplier (OS ID)'
     verbose_name_plural = (
-        'suppliers (leave empty to use the contributor\'s active lists)'
+        'suppliers (see "chosen suppliers only" above)'
     )
 
 

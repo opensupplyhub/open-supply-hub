@@ -53,6 +53,15 @@ class ClaimCampaign(models.Model):
         choices=Status.choices,
         default=Status.ACTIVE,
         help_text='The campaign status.')
+    uses_roster = models.BooleanField(
+        default=False,
+        verbose_name='chosen suppliers only',
+        help_text=(
+            'On: the campaign invites only the suppliers listed below, even '
+            'if that list becomes empty. Off (v1): it covers every '
+            'production location on the brand\'s active lists. Turned on '
+            'automatically when suppliers are chosen.'
+        ))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -67,9 +76,10 @@ class ClaimCampaign(models.Model):
 
 class ClaimCampaignSupplier(models.Model):
     """
-    One production location a campaign invites to claim. When a campaign
-    has any of these rows, they are its roster; a campaign with none
-    falls back to the v1 roster (the contributor's active lists).
+    One production location a campaign invites to claim. A campaign with
+    `uses_roster` set invites exactly these (none, if all are removed); a
+    campaign without it uses the v1 roster (the contributor's active
+    lists).
     """
 
     campaign = models.ForeignKey(
@@ -93,6 +103,17 @@ class ClaimCampaignSupplier(models.Model):
                 name='unique_claim_campaign_supplier',
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Choosing a supplier (here, or in Django admin) puts the campaign
+        # on its chosen roster for good, so removing every supplier later
+        # leaves it empty instead of covering all the brand's lists.
+        if not self.campaign.uses_roster:
+            ClaimCampaign.objects.filter(pk=self.campaign_id).update(
+                uses_roster=True
+            )
+            self.campaign.uses_roster = True
 
     def __str__(self):
         return f'{self.campaign.code} → {self.facility_id}'

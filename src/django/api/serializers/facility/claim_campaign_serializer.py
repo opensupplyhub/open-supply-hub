@@ -45,9 +45,11 @@ class ClaimCampaignSerializer(serializers.ModelSerializer):
         ]
 
     def get_campaign_suppliers(self, campaign):
-        roster = [entry.facility for entry in campaign.suppliers.all()]
-        if roster:
-            return serialize_suppliers(roster)
+        if campaign.uses_roster:
+            # Exactly the chosen suppliers; an emptied roster stays empty.
+            return serialize_suppliers(
+                [entry.facility for entry in campaign.suppliers.all()]
+            )
 
         # Every list-based campaign of a contributor shares the same
         # roster, so compute it once per request.
@@ -80,11 +82,12 @@ MAX_CAMPAIGN_NAME_LENGTH = 100
 class ClaimCampaignCreateSerializer(serializers.Serializer):
     """
     Validates a brand's request to create a campaign. Suppliers come
-    either from one of its own active lists (public or private), when
-    `list_id` is given, or from a search of OS Hub, when it isn't: then
-    any facility can be chosen. Either way, closed and already-claimed
-    facilities are refused; pending claims are allowed, since they may
-    yet be denied.
+    either from one of its own active lists (public or private), or its
+    API submissions (`list_id` = "api"), when `list_id` is given, or from
+    a search of OS Hub, when it isn't: then any facility can be chosen.
+    Either way, facilities that are closed or already claimed are left
+    out (and reported as `skipped`); pending claims are kept, since they
+    may yet be denied.
     """
 
     # CharField trims surrounding whitespace before validating, so a
@@ -119,7 +122,9 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
             self.validate_api_suppliers(data['os_ids'])
         else:
             self.validate_list_suppliers(data['list_id'], data['os_ids'])
-        self.validate_open_and_unclaimed(data['os_ids'])
+        data['os_ids'], data['skipped'] = self.leave_out_closed_and_claimed(
+            data['os_ids']
+        )
         return data
 
     def validate_api_suppliers(self, os_ids):
@@ -190,33 +195,41 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
             )
 
     @staticmethod
-    def validate_open_and_unclaimed(os_ids):
-        closed = list(
+    def leave_out_closed_and_claimed(os_ids):
+        """
+        The screen never offers closed or claimed facilities, but one can
+        be closed or claimed between being chosen and the campaign being
+        created. Leave those out and say which (`skipped`), rather than
+        refusing the whole campaign. Pending claims stay in: they may yet
+        be denied. Only when nothing is left is the request refused.
+        """
+        closed = set(
             Facility.objects.filter(id__in=os_ids, is_closed=True)
             .values_list('id', flat=True)
         )
-        if closed:
-            raise serializers.ValidationError(
-                {
-                    'os_ids': (
-                        'Closed production locations can\'t be added: '
-                        + ', '.join(closed[:10])
-                    )
-                }
-            )
-
         statuses = get_claim_statuses(os_ids)
-        claimed = [
-            os_id for os_id in os_ids if statuses[os_id] == 'claimed'
+        claimed = {
+            os_id for os_id in os_ids
+            if os_id not in closed and statuses[os_id] == 'claimed'
+        }
+        kept = [
+            os_id for os_id in os_ids
+            if os_id not in closed and os_id not in claimed
         ]
-        if claimed:
+        if not kept:
             raise serializers.ValidationError(
                 {
                     'os_ids': (
-                        'These production locations have already been '
-                        'claimed: '
-                        + ', '.join(claimed[:10])
-                        + '. Deselect them and try again.'
+                        'None of the chosen production locations can be '
+                        'invited: they have all been claimed or closed.'
                     )
                 }
             )
+        skipped = [
+            {'os_id': os_id, 'reason': 'closed'}
+            for os_id in os_ids if os_id in closed
+        ] + [
+            {'os_id': os_id, 'reason': 'claimed'}
+            for os_id in os_ids if os_id in claimed
+        ]
+        return kept, skipped

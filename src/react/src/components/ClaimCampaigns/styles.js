@@ -405,6 +405,15 @@ export const newClaimCampaignStyles = theme =>
         publicChip: Object.freeze({
             height: '24px',
         }),
+        closedTag: Object.freeze({
+            marginLeft: '6px',
+            padding: '1px 8px',
+            borderRadius: '10px',
+            border: `1px solid ${COLOURS.GREY}`,
+            color: COLOURS.DARK_GREY,
+            fontSize: '12px',
+            whiteSpace: 'nowrap',
+        }),
         pendingChip: Object.freeze({
             height: '24px',
             backgroundColor: COLOURS.LIGHT_GREY,

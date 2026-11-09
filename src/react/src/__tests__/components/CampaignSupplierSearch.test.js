@@ -177,3 +177,53 @@ describe('Choosing campaign suppliers from a search', () => {
         expect(utils.getByLabelText('Add Lotus Knitwear')).toBeEnabled();
     });
 });
+
+test('three searches in a row add up into one campaign', async () => {
+    const batches = {
+        Lotus: [
+            { os_id: 'A1', name: 'Alpha Mill', country_code: 'VN', claim_status: 'unclaimed' },
+        ],
+        Delta: [
+            { os_id: 'B1', name: 'Beta Dye', country_code: 'BD', claim_status: 'unclaimed' },
+            { os_id: 'A1', name: 'Alpha Mill', country_code: 'VN', claim_status: 'unclaimed' },
+        ],
+        Orchid: [
+            { os_id: 'C1', name: 'Gamma Sewing', country_code: 'KH', claim_status: 'pending' },
+        ],
+    };
+    apiRequest.get.mockReset();
+    apiRequest.post.mockReset();
+    apiRequest.get.mockImplementation(url => {
+        if (url.startsWith('/api/claim-campaigns/candidates/search/')) {
+            const q = new URLSearchParams(url.split('?')[1]).get('q');
+            return Promise.resolve({
+                data: { count: batches[q].length, limit: 500, suppliers: batches[q] },
+            });
+        }
+        return Promise.resolve({ data: [] });
+    });
+    apiRequest.post.mockResolvedValue({ data: { id: 7, skipped: [] } });
+
+    const utils = await renderAndChooseSearch();
+    const search = async (q, firstName) => {
+        fireEvent.change(utils.getByPlaceholderText('e.g. ABC Textiles Limited'), {
+            target: { value: q },
+        });
+        fireEvent.click(utils.getByText('Search'));
+        await utils.findByLabelText(`Add ${firstName}`);
+    };
+
+    await search('Lotus', 'Alpha Mill');
+    fireEvent.click(utils.getByLabelText('Add Alpha Mill'));
+    await search('Delta', 'Beta Dye');
+    // Alpha Mill comes back in this search but is already added.
+    fireEvent.click(utils.getByText(/^Add all/));
+    await search('Orchid', 'Gamma Sewing');
+    fireEvent.click(utils.getByLabelText('Add Gamma Sewing'));
+
+    expect(utils.getByText('Added to this campaign (3)')).toBeInTheDocument();
+    fireEvent.click(utils.getByText('Create campaign'));
+    await waitFor(() => expect(apiRequest.post).toHaveBeenCalledTimes(1));
+    expect(apiRequest.post.mock.calls[0][1].os_ids).toEqual(['A1', 'B1', 'C1']);
+});
+

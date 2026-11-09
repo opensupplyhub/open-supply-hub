@@ -827,6 +827,14 @@ const CampaignCard = ({
                                         status={supplier.claim_status}
                                         classes={classes}
                                     />
+                                    {supplier.is_closed && (
+                                        <span
+                                            className={classes.closedTag}
+                                            title="This production location has closed since it was added."
+                                        >
+                                            Closed
+                                        </span>
+                                    )}
                                 </TableCell>
                                 <TableCell className={classes.cell}>
                                     {showEmail ? (
@@ -919,9 +927,11 @@ const ClaimCampaigns = ({
         }
     }, [userHasSignedIn, hasAccess, fetchCampaigns]);
 
-    const newCampaignID = Number(
-        new URLSearchParams((location && location.search) || '').get('new'),
+    const searchParams = new URLSearchParams(
+        (location && location.search) || '',
     );
+    const newCampaignID = Number(searchParams.get('new'));
+    const leftOut = Number(searchParams.get('left_out')) || 0;
     const newCampaign =
         newCampaignID && campaigns
             ? campaigns.find(c => c.id === newCampaignID)
@@ -1048,6 +1058,14 @@ const ClaimCampaigns = ({
                             Campaign <strong>{newCampaign.name}</strong> created
                             with {newCampaign.suppliers.length} supplier
                             {newCampaign.suppliers.length === 1 ? '' : 's'}.
+                            {leftOut > 0 &&
+                                ` ${leftOut} ${
+                                    leftOut === 1 ? 'was' : 'were'
+                                } left out because ${
+                                    leftOut === 1 ? "it's" : "they've"
+                                } been claimed or closed since you chose ${
+                                    leftOut === 1 ? 'it' : 'them'
+                                }.`}
                             {canEmail
                                 ? " Enter a contact email for each supplier and we'll send them an invite, or copy their links or download the CSV to send them yourself."
                                 : ' Copy each claim link, or download the CSV to send them from your own email.'}
