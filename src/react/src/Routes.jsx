@@ -71,6 +71,7 @@ import {
     claimIntroRoute,
     claimDetailsRoute,
     claimCampaignsRoute,
+    claimCampaignRoute,
     newClaimCampaignRoute,
     claimedFacilitiesRoute,
     CLAIM_A_FACILITY,
@@ -185,6 +186,18 @@ class Routes extends Component {
                                             <Route
                                                 component={NewClaimCampaign}
                                             />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={claimCampaignRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route component={ClaimCampaigns} />
                                         </FeatureFlag>
                                     )}
                                 />

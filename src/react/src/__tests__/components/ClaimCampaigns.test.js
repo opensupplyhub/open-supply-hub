@@ -574,3 +574,127 @@ describe('Closing a campaign', () => {
         expect(queryByPlaceholderText(/@/)).not.toBeInTheDocument();
     });
 });
+
+describe('Several campaigns', () => {
+    const second = {
+        id: 2,
+        name: 'Tier 2 mills 2026',
+        code: 'EXAMPLE-MILLS-26',
+        status: 'ACTIVE',
+        created_at: '2026-06-01T00:00:00Z',
+        suppliers: [
+            {
+                os_id: 'IN2023445GHKW2B',
+                name: 'Nashik Spinning Mill',
+                country_code: 'IN',
+                claim_status: 'pending',
+            },
+        ],
+    };
+    const both = [mockCampaigns[0], second];
+
+    beforeEach(() => {
+        apiRequest.get.mockReset();
+    });
+
+    const mockBoth = () =>
+        apiRequest.get.mockImplementation(url =>
+            Promise.resolve({ data: url.includes('candidates') ? [] : both }),
+        );
+
+    test('lists campaigns collapsed, each name linking to its own page', async () => {
+        mockBoth();
+        const {
+            findByText,
+            getByText,
+            getAllByText,
+            getByLabelText,
+            queryByText,
+        } = renderComponent();
+
+        const link = await findByText('Fresh Produce Suppliers 2026');
+        expect(link.closest('a')).toHaveAttribute('href', '/claim-campaigns/1');
+        expect(getByText('Tier 2 mills 2026').closest('a')).toHaveAttribute(
+            'href',
+            '/claim-campaigns/2',
+        );
+        // Roll-up rows: code, size, status and share claimed, but no
+        // supplier table or KPI tiles.
+        expect(getByText('EXAMPLE-FRESH-26')).toBeInTheDocument();
+        expect(getByText('50%')).toBeInTheDocument();
+        expect(getByText('0%')).toBeInTheDocument();
+        expect(getAllByText('Active')).toHaveLength(2);
+        expect(getByLabelText('Open Tier 2 mills 2026')).toHaveAttribute(
+            'href',
+            '/claim-campaigns/2',
+        );
+        expect(queryByText('Green Delta Produce Ltd')).not.toBeInTheDocument();
+        expect(queryByText('Suppliers invited')).not.toBeInTheDocument();
+        expect(queryByText('Close campaign')).not.toBeInTheDocument();
+        expect(getByText('New campaign')).toBeInTheDocument();
+    });
+
+    test('a single campaign stays expanded on the dashboard', async () => {
+        apiRequest.get.mockImplementation(url =>
+            Promise.resolve({ data: url.includes('candidates') ? [] : mockCampaigns }),
+        );
+        const { findByText, getByText } = renderComponent();
+
+        expect(await findByText('Green Delta Produce Ltd')).toBeInTheDocument();
+        expect(getByText('Suppliers invited')).toBeInTheDocument();
+        expect(getByText('New campaign')).toBeInTheDocument();
+    });
+
+    test('a campaign page shows that campaign in full under a breadcrumb', async () => {
+        mockBoth();
+        const { findByText, getByText, getByRole, queryByText } = renderComponent(
+            true,
+            { match: { params: { campaignId: '2' } } },
+        );
+
+        expect(await findByText('Nashik Spinning Mill')).toBeInTheDocument();
+        const crumbs = getByRole('navigation', { name: 'Breadcrumb' });
+        expect(getByText('Claims Campaigns').closest('a')).toHaveAttribute(
+            'href',
+            '/claim-campaigns',
+        );
+        expect(crumbs).toHaveTextContent('Claims Campaigns › Tier 2 mills 2026');
+        expect(getByText('Suppliers invited')).toBeInTheDocument();
+        expect(queryByText('Green Delta Produce Ltd')).not.toBeInTheDocument();
+        // "New campaign" lives on the dashboard only.
+        expect(queryByText('New campaign')).not.toBeInTheDocument();
+    });
+
+    test('an unknown campaign ID says so and links back', async () => {
+        mockBoth();
+        const { findByText, getByText } = renderComponent(true, {
+            match: { params: { campaignId: '99' } },
+        });
+
+        expect(
+            await findByText(/This campaign wasn't found/),
+        ).toBeInTheDocument();
+        expect(getByText('Claims Campaigns').closest('a')).toHaveAttribute(
+            'href',
+            '/claim-campaigns',
+        );
+    });
+});
+
+test('a closed campaign shows as Closed in the roll-up', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.get.mockImplementation(url =>
+        Promise.resolve({
+            data: url.includes('candidates')
+                ? []
+                : [
+                      mockCampaigns[0],
+                      { ...mockCampaigns[0], id: 3, name: 'Old', status: 'CLOSED' },
+                  ],
+        }),
+    );
+    const { findByText, getByText } = renderComponent();
+    expect(await findByText('Old')).toBeInTheDocument();
+    expect(getByText('Closed')).toBeInTheDocument();
+    expect(getByText('Active')).toBeInTheDocument();
+});

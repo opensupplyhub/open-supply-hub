@@ -27,6 +27,7 @@ import TableSortLabel from '@material-ui/core/TableSortLabel';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
+import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 
 import AppOverflow from '../AppOverflow';
 import RequireAuthNotice from '../RequireAuthNotice';
@@ -36,8 +37,10 @@ import apiRequest from '../../util/apiRequest';
 import { sendClaimInvite } from '../../util/claimInvite';
 import {
     CLAIM_INVITE,
+    claimCampaignsRoute,
     claimIntroRoute,
     makeClaimCampaignCandidatesURL,
+    makeClaimCampaignRoute,
     makeCloseClaimCampaignURL,
     newClaimCampaignRoute,
 } from '../../util/constants';
@@ -439,6 +442,151 @@ CloseCampaignDialog.propTypes = {
     onConfirm: func.isRequired,
 };
 
+// Counts per public claim status, the total and the share claimed.
+export const summarizeCampaign = campaign => {
+    const counts = { claimed: 0, pending: 0, unclaimed: 0 };
+    campaign.suppliers.forEach(s => {
+        counts[s.claim_status] = (counts[s.claim_status] || 0) + 1;
+    });
+    const total = campaign.suppliers.length;
+    const percentClaimed = total
+        ? Math.round((counts.claimed / total) * 100)
+        : 0;
+    return { counts, total, percentClaimed };
+};
+
+const CampaignProgress = ({ campaign, classes }) => {
+    const { counts, total, percentClaimed } = summarizeCampaign(campaign);
+    return (
+        <div className={classes.progressPanel}>
+            <div className={classes.progressHeader}>
+                <Typography className={classes.progressTitle}>
+                    Campaign progress
+                </Typography>
+                <Typography className={classes.campaignMeta}>
+                    {percentClaimed}% of suppliers claimed
+                </Typography>
+            </div>
+            <div className={classes.segmentBar}>
+                {STATUS_ORDER.map(
+                    status =>
+                        counts[status] > 0 && (
+                            <span
+                                key={status}
+                                className={classes.segment}
+                                style={{
+                                    width: `${(counts[status] / total) * 100}%`,
+                                    backgroundColor: STATUS_COLORS[status],
+                                }}
+                            >
+                                {counts[status]}
+                            </span>
+                        ),
+                )}
+            </div>
+            <div className={classes.legend}>
+                {STATUS_ORDER.map(status => (
+                    <span key={status} className={classes.legendItem}>
+                        <StatusSquare status={status} classes={classes} />
+                        {STATUS_LABELS[status]} ({counts[status]})
+                    </span>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+CampaignProgress.propTypes = {
+    campaign: campaignPropType.isRequired,
+    classes: object.isRequired,
+};
+
+const CampaignMeta = ({ campaign, classes }) => (
+    <Typography className={classes.campaignMeta}>
+        {campaign.suppliers.length} suppliers ·{' '}
+        {campaign.status === 'ACTIVE' ? 'Active' : 'Closed'} campaign · created{' '}
+        {moment(campaign.created_at).format('D MMM YYYY')}
+    </Typography>
+);
+
+CampaignMeta.propTypes = {
+    campaign: campaignPropType.isRequired,
+    classes: object.isRequired,
+};
+
+// One row of the dashboard roll-up shown when a brand has two or more
+// campaigns: name, code, size and date, status, a thin progress bar and
+// the share claimed. The name and the arrow open the campaign's own page.
+export const CampaignRollupRow = ({ campaign, classes }) => {
+    const { counts, total, percentClaimed } = summarizeCampaign(campaign);
+    const isActive = campaign.status === 'ACTIVE';
+    const route = makeClaimCampaignRoute(campaign.id);
+    return (
+        <div className={classes.rollupRow}>
+            <div className={classes.rollupText}>
+                <Link to={route} className={classes.campaignNameLink}>
+                    {campaign.name}
+                </Link>
+                <Typography className={classes.campaignMeta}>
+                    Code{' '}
+                    <span className={classes.rollupCode}>{campaign.code}</span>{' '}
+                    · {total} supplier{total === 1 ? '' : 's'} · created{' '}
+                    {moment(campaign.created_at).format('D MMM YYYY')}
+                </Typography>
+            </div>
+            <div className={classes.rollupStats}>
+                <span
+                    className={
+                        isActive ? classes.activeChip : classes.closedChip
+                    }
+                >
+                    {isActive ? 'Active' : 'Closed'}
+                </span>
+                <div
+                    className={classes.miniBar}
+                    role="img"
+                    aria-label={STATUS_ORDER.map(
+                        status => `${STATUS_LABELS[status]}: ${counts[status]}`,
+                    ).join(', ')}
+                >
+                    {STATUS_ORDER.map(
+                        status =>
+                            counts[status] > 0 && (
+                                <span
+                                    key={status}
+                                    style={{
+                                        width: `${
+                                            (counts[status] / total) * 100
+                                        }%`,
+                                        backgroundColor: STATUS_COLORS[status],
+                                    }}
+                                />
+                            ),
+                    )}
+                </div>
+                <span
+                    className={classes.rollupPercent}
+                    title="Share of suppliers claimed"
+                >
+                    {percentClaimed}%
+                </span>
+                <Link
+                    to={route}
+                    className={classes.rollupOpen}
+                    aria-label={`Open ${campaign.name}`}
+                >
+                    <KeyboardArrowRight />
+                </Link>
+            </div>
+        </div>
+    );
+};
+
+CampaignRollupRow.propTypes = {
+    campaign: campaignPropType.isRequired,
+    classes: object.isRequired,
+};
+
 const CampaignCard = ({
     campaign,
     canEmail: canEmailAtAll,
@@ -483,14 +631,7 @@ const CampaignCard = ({
     const recordSent = (osID, invite) =>
         setSentInvites(current => ({ ...current, [osID]: invite }));
 
-    const counts = { claimed: 0, pending: 0, unclaimed: 0 };
-    campaign.suppliers.forEach(s => {
-        counts[s.claim_status] = (counts[s.claim_status] || 0) + 1;
-    });
-    const total = campaign.suppliers.length;
-    const percentClaimed = total
-        ? Math.round((counts.claimed / total) * 100)
-        : 0;
+    const { counts, total } = summarizeCampaign(campaign);
 
     const sortBy = column => {
         const reverse = orderBy === column && order === SORT_DIRECTIONS.asc;
@@ -519,12 +660,7 @@ const CampaignCard = ({
                     <span className={classes.campaignName}>
                         {campaign.name}
                     </span>
-                    <Typography className={classes.campaignMeta}>
-                        {total} suppliers ·{' '}
-                        {campaign.status === 'ACTIVE' ? 'Active' : 'Closed'}{' '}
-                        campaign · created{' '}
-                        {moment(campaign.created_at).format('D MMM YYYY')}
-                    </Typography>
+                    <CampaignMeta campaign={campaign} classes={classes} />
                 </div>
                 <div className={classes.campaignActions}>
                     <div className={classes.codeBox}>
@@ -583,43 +719,7 @@ const CampaignCard = ({
                 ))}
             </div>
 
-            <div className={classes.progressPanel}>
-                <div className={classes.progressHeader}>
-                    <Typography className={classes.progressTitle}>
-                        Campaign progress
-                    </Typography>
-                    <Typography className={classes.campaignMeta}>
-                        {percentClaimed}% of suppliers claimed
-                    </Typography>
-                </div>
-                <div className={classes.segmentBar}>
-                    {STATUS_ORDER.map(
-                        status =>
-                            counts[status] > 0 && (
-                                <span
-                                    key={status}
-                                    className={classes.segment}
-                                    style={{
-                                        width: `${
-                                            (counts[status] / total) * 100
-                                        }%`,
-                                        backgroundColor: STATUS_COLORS[status],
-                                    }}
-                                >
-                                    {counts[status]}
-                                </span>
-                            ),
-                    )}
-                </div>
-                <div className={classes.legend}>
-                    {STATUS_ORDER.map(status => (
-                        <span key={status} className={classes.legendItem}>
-                            <StatusSquare status={status} classes={classes} />
-                            {STATUS_LABELS[status]} ({counts[status]})
-                        </span>
-                    ))}
-                </div>
-            </div>
+            <CampaignProgress campaign={campaign} classes={classes} />
 
             <div className={classes.tableTools}>
                 <h2 className={classes.sectionTitle}>Suppliers</h2>
@@ -795,8 +895,14 @@ const ClaimCampaigns = ({
     error,
     fetchCampaigns,
     location,
+    match,
     canEmail,
 }) => {
+    // On /claim-campaigns/{id} the page shows that one campaign in full.
+    const campaignID =
+        match && match.params && match.params.campaignId
+            ? Number(match.params.campaignId)
+            : null;
     // Brands enabled for self-serve can reach the candidates endpoint;
     // everyone else gets a 404 and sees no "New campaign" button.
     const [canCreate, setCanCreate] = useState(false);
@@ -844,6 +950,45 @@ const ClaimCampaigns = ({
         );
     }
 
+    const renderCard = campaign => (
+        <CampaignCard
+            key={campaign.id}
+            campaign={campaign}
+            canEmail={canEmail}
+            onClosed={fetchCampaigns}
+            classes={classes}
+        />
+    );
+
+    if (campaignID !== null) {
+        const campaign = (campaigns || []).find(c => c.id === campaignID);
+        return (
+            <AppOverflow>
+                <div className={classes.container}>
+                    <nav aria-label="Breadcrumb" className={classes.breadcrumb}>
+                        <Link to={claimCampaignsRoute}>Claims Campaigns</Link>
+                        <span aria-hidden="true"> › </span>
+                        <span aria-current="page">
+                            {campaign ? campaign.name : 'Campaign'}
+                        </span>
+                    </nav>
+                    {campaign ? (
+                        renderCard(campaign)
+                    ) : (
+                        <Typography className={classes.emptyMessage}>
+                            This campaign wasn&apos;t found. It may belong to
+                            another account.
+                        </Typography>
+                    )}
+                </div>
+            </AppOverflow>
+        );
+    }
+
+    // With two or more campaigns the dashboard lists them collapsed, and
+    // each opens on its own page; a single campaign is shown in full.
+    const collapsed = !!campaigns && campaigns.length > 1;
+
     return (
         <AppOverflow>
             <div className={classes.container}>
@@ -880,8 +1025,20 @@ const ClaimCampaigns = ({
                             with {newCampaign.suppliers.length} supplier
                             {newCampaign.suppliers.length === 1 ? '' : 's'}.
                             {canEmail
-                                ? " Enter a contact email for each supplier below and we'll send them an invite, or copy their links or download the CSV to send them yourself."
-                                : ' Copy each claim link below, or download the CSV to send them from your own email.'}
+                                ? " Enter a contact email for each supplier and we'll send them an invite, or copy their links or download the CSV to send them yourself."
+                                : ' Copy each claim link, or download the CSV to send them from your own email.'}
+                            {collapsed && (
+                                <>
+                                    {' '}
+                                    <Link
+                                        to={makeClaimCampaignRoute(
+                                            newCampaign.id,
+                                        )}
+                                    >
+                                        Open {newCampaign.name}
+                                    </Link>
+                                </>
+                            )}
                         </Typography>
                     </Paper>
                 )}
@@ -892,16 +1049,24 @@ const ClaimCampaigns = ({
                             ? 'Your account has no claims campaigns yet. Use "New campaign" to invite suppliers from one of your lists.'
                             : 'Your account has no claims campaigns yet. Campaigns are created for you by the OS Hub team — contact your account manager to get started.'}
                     </Typography>
+                ) : collapsed ? (
+                    <Paper className={classes.rollup}>
+                        {campaigns.map(campaign => (
+                            <CampaignRollupRow
+                                key={campaign.id}
+                                campaign={campaign}
+                                classes={classes}
+                            />
+                        ))}
+                    </Paper>
                 ) : (
-                    campaigns.map(campaign => (
-                        <CampaignCard
-                            key={campaign.id}
-                            campaign={campaign}
-                            canEmail={canEmail}
-                            onClosed={fetchCampaigns}
-                            classes={classes}
-                        />
-                    ))
+                    campaigns.map(renderCard)
+                )}
+                {!canCreate && campaigns && campaigns.length > 0 && (
+                    <Typography className={classes.fine}>
+                        Campaigns are created for you by the OS Hub team.
+                        Questions? Contact your account manager.
+                    </Typography>
                 )}
             </div>
         </AppOverflow>
@@ -912,6 +1077,7 @@ ClaimCampaigns.defaultProps = {
     campaigns: null,
     error: null,
     location: null,
+    match: null,
 };
 
 ClaimCampaigns.propTypes = {
@@ -922,6 +1088,7 @@ ClaimCampaigns.propTypes = {
     error: arrayOf(string),
     fetchCampaigns: func.isRequired,
     location: shape({ search: string }),
+    match: shape({ params: shape({ campaignId: string }) }),
     canEmail: bool.isRequired,
 };
 

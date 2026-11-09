@@ -364,6 +364,10 @@ export const claimFacilityRoute = '/facilities/:osID/claim';
 export const claimIntroRoute = '/claim/:osID';
 export const claimCampaignsRoute = '/claim-campaigns';
 export const newClaimCampaignRoute = '/claim-campaigns/new';
+// Digits only, so it never matches /claim-campaigns/new.
+export const claimCampaignRoute = '/claim-campaigns/:campaignId(\\d+)';
+export const makeClaimCampaignRoute = campaignID =>
+    `/claim-campaigns/${campaignID}`;
 export const makeClaimCampaignCandidatesURL = listID =>
     listID === undefined
         ? '/api/claim-campaigns/candidates/'
