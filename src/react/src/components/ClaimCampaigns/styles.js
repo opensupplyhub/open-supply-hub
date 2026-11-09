@@ -278,6 +278,19 @@ export const newClaimCampaignStyles = theme =>
         panel: Object.freeze({
             padding: '16px 24px',
         }),
+        sourceOptions: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+        }),
+        sourceHint: Object.freeze({
+            color: COLOURS.DARK_GREY,
+            fontSize: '14px',
+            margin: '-8px 0 8px 32px',
+        }),
+        pickedHeading: Object.freeze({
+            fontWeight: theme.typography.fontWeightMedium,
+            margin: '24px 0 8px',
+        }),
         listOption: Object.freeze({
             display: 'flex',
             alignItems: 'center',
@@ -331,6 +344,24 @@ export const newClaimCampaignStyles = theme =>
         error: Object.freeze({
             color: COLOURS.MATERIAL_RED,
             marginTop: '8px',
+        }),
+    });
+
+export const campaignSupplierSearchStyles = theme =>
+    Object.freeze({
+        ...newClaimCampaignStyles(theme),
+        // The public search filters, laid out in two columns.
+        filters: Object.freeze({
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            columnGap: '24px',
+        }),
+        searchRow: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '16px',
+            margin: '16px 0 8px',
         }),
     });
 

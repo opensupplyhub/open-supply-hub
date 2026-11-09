@@ -28,6 +28,14 @@ import {
     makeClaimCampaignCandidatesURL,
 } from '../../util/constants';
 import { newClaimCampaignStyles } from './styles';
+import CampaignSupplierSearch, {
+    SEARCH_STATUS_LABELS,
+} from './CampaignSupplierSearch';
+
+const SOURCES = Object.freeze({
+    list: 'list',
+    search: 'search',
+});
 
 const FILTERS = Object.freeze([
     { value: 'unclaimed', label: 'Not claimed' },
@@ -72,6 +80,11 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
         `Supplier onboarding · ${moment().format('MMM YYYY')}`,
     );
     const [creating, setCreating] = useState(false);
+    // Where the suppliers come from: one of the brand's lists (the main
+    // route) or a search of OS Hub. Each keeps its own selection.
+    const [source, setSource] = useState(SOURCES.list);
+    // Suppliers added from searches, by OS ID, in the order added.
+    const [picked, setPicked] = useState(new Map());
     const [createError, setCreateError] = useState(null);
 
     useEffect(() => {
@@ -164,17 +177,36 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
         setSelected(next);
     };
 
+    const addPicked = toAdd => {
+        const next = new Map(picked);
+        toAdd.forEach(s => next.set(s.os_id, s));
+        setPicked(next);
+    };
+
+    const removePicked = osID => {
+        const next = new Map(picked);
+        next.delete(osID);
+        setPicked(next);
+    };
+
+    const fromSearch = source === SOURCES.search;
+    const selectedCount = fromSearch ? picked.size : selected.size;
+    const showSteps = fromSearch || listId !== null;
+
     const create = () => {
         setCreating(true);
         setCreateError(null);
+        const payload = fromSearch
+            ? { name: name.trim(), os_ids: [...picked.keys()] }
+            : {
+                  name: name.trim(),
+                  list_id: listId,
+                  os_ids: (suppliers || [])
+                      .filter(s => selected.has(s.os_id))
+                      .map(s => s.os_id),
+              };
         apiRequest
-            .post('/api/claim-campaigns/', {
-                name: name.trim(),
-                list_id: listId,
-                os_ids: (suppliers || [])
-                    .filter(s => selected.has(s.os_id))
-                    .map(s => s.os_id),
-            })
+            .post('/api/claim-campaigns/', payload)
             .then(({ data }) =>
                 history.push(`${claimCampaignsRoute}?new=${data.id}`),
             )
@@ -202,53 +234,179 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                 </Typography>
 
                 <Typography className={classes.stepHeading}>
-                    1. Choose a list
+                    1. Choose where your suppliers come from
                 </Typography>
-                {lists.length === 0 ? (
-                    <Paper className={classes.panel}>
-                        <Typography>
-                            You have no lists yet.{' '}
-                            <Link to={contributeRoute}>Upload a list</Link>{' '}
-                            first. You can upload it privately, so OS Hub
-                            doesn&apos;t show you as connected to these
-                            suppliers.
+                <Paper className={classes.panel}>
+                    <div className={classes.sourceOptions}>
+                        <FormControlLabel
+                            control={
+                                <Radio
+                                    checked={source === SOURCES.list}
+                                    onChange={() => setSource(SOURCES.list)}
+                                    color="primary"
+                                />
+                            }
+                            label="From one of my lists"
+                            classes={{ label: classes.listName }}
+                        />
+                        <Typography className={classes.sourceHint}>
+                            Invite suppliers you&apos;ve already uploaded.
                         </Typography>
-                    </Paper>
-                ) : (
-                    <Paper className={classes.panel}>
-                        {lists.map(list => (
-                            <div key={list.id} className={classes.listOption}>
-                                <FormControlLabel
-                                    control={
-                                        <Radio
-                                            checked={listId === list.id}
-                                            onChange={() => setListId(list.id)}
-                                            color="primary"
+                        <FormControlLabel
+                            control={
+                                <Radio
+                                    checked={source === SOURCES.search}
+                                    onChange={() => setSource(SOURCES.search)}
+                                    color="primary"
+                                />
+                            }
+                            label="From a search of OS Hub"
+                            classes={{ label: classes.listName }}
+                        />
+                        <Typography className={classes.sourceHint}>
+                            Find any production location with the OS Hub search
+                            filters, including ones you haven&apos;t uploaded.
+                        </Typography>
+                    </div>
+                </Paper>
+
+                {source === SOURCES.list && (
+                    <>
+                        <Typography className={classes.stepHeading}>
+                            Choose a list
+                        </Typography>
+                        {lists.length === 0 ? (
+                            <Paper className={classes.panel}>
+                                <Typography>
+                                    You have no lists yet.{' '}
+                                    <Link to={contributeRoute}>
+                                        Upload a list
+                                    </Link>{' '}
+                                    first. You can upload it privately, so OS
+                                    Hub doesn&apos;t show you as connected to
+                                    these suppliers.
+                                </Typography>
+                            </Paper>
+                        ) : (
+                            <Paper className={classes.panel}>
+                                {lists.map(list => (
+                                    <div
+                                        key={list.id}
+                                        className={classes.listOption}
+                                    >
+                                        <FormControlLabel
+                                            control={
+                                                <Radio
+                                                    checked={listId === list.id}
+                                                    onChange={() =>
+                                                        setListId(list.id)
+                                                    }
+                                                    color="primary"
+                                                />
+                                            }
+                                            label={list.name}
+                                            classes={{
+                                                label: classes.listName,
+                                            }}
                                         />
-                                    }
-                                    label={list.name}
-                                    classes={{ label: classes.listName }}
-                                />
-                                <Chip
-                                    label={
-                                        list.is_public ? 'Public' : 'Private'
-                                    }
-                                    className={
-                                        list.is_public
-                                            ? classes.publicChip
-                                            : classes.privateChip
-                                    }
-                                />
-                            </div>
-                        ))}
-                        <Typography className={classes.fine}>
-                            Inviting suppliers from a private list doesn&apos;t
-                            publish your connection to them.
-                        </Typography>
-                    </Paper>
+                                        <Chip
+                                            label={
+                                                list.is_public
+                                                    ? 'Public'
+                                                    : 'Private'
+                                            }
+                                            className={
+                                                list.is_public
+                                                    ? classes.publicChip
+                                                    : classes.privateChip
+                                            }
+                                        />
+                                    </div>
+                                ))}
+                                <Typography className={classes.fine}>
+                                    Inviting suppliers from a private list
+                                    doesn&apos;t publish your connection to
+                                    them.
+                                </Typography>
+                            </Paper>
+                        )}
+                    </>
                 )}
 
-                {listId !== null && (
+                {fromSearch && (
+                    <>
+                        <Typography className={classes.stepHeading}>
+                            2. Find and add suppliers
+                        </Typography>
+                        <Paper className={classes.panel}>
+                            <CampaignSupplierSearch
+                                picked={picked}
+                                onAdd={addPicked}
+                            />
+                            <Typography className={classes.pickedHeading}>
+                                Added to this campaign ({picked.size})
+                            </Typography>
+                            {picked.size === 0 ? (
+                                <Typography className={classes.fine}>
+                                    Nothing added yet. Search, then add
+                                    suppliers one by one or all at once.
+                                </Typography>
+                            ) : (
+                                <>
+                                    <div className={classes.tableWrap}>
+                                        <Table>
+                                            <TableBody>
+                                                {[...picked.values()].map(s => (
+                                                    <TableRow key={s.os_id}>
+                                                        <TableCell>
+                                                            {s.name}
+                                                            <span
+                                                                className={
+                                                                    classes.country
+                                                                }
+                                                            >
+                                                                {s.country_code}
+                                                            </span>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {s.os_id}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {SEARCH_STATUS_LABELS[
+                                                                s.claim_status
+                                                            ] || s.claim_status}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Button
+                                                                size="small"
+                                                                onClick={() =>
+                                                                    removePicked(
+                                                                        s.os_id,
+                                                                    )
+                                                                }
+                                                                aria-label={`Remove ${s.name}`}
+                                                            >
+                                                                Remove
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+                                    <Button
+                                        size="small"
+                                        onClick={() => setPicked(new Map())}
+                                    >
+                                        Remove all
+                                    </Button>
+                                </>
+                            )}
+                        </Paper>
+                    </>
+                )}
+
+                {source === SOURCES.list && listId !== null && (
                     <>
                         <Typography className={classes.stepHeading}>
                             2. Pick suppliers to invite
@@ -384,7 +542,11 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                 </Typography>
                             </Paper>
                         )}
+                    </>
+                )}
 
+                {showSteps && (
+                    <>
                         <Typography className={classes.stepHeading}>
                             3. Create the campaign
                         </Typography>
@@ -399,8 +561,8 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     inputProps={{ maxLength: 200 }}
                                 />
                                 <Typography>
-                                    {selected.size} supplier
-                                    {selected.size === 1 ? '' : 's'} will get a
+                                    {selectedCount} supplier
+                                    {selectedCount === 1 ? '' : 's'} will get a
                                     claim link
                                 </Typography>
                                 <Button
@@ -408,7 +570,7 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     color="primary"
                                     disabled={
                                         creating ||
-                                        !selected.size ||
+                                        !selectedCount ||
                                         !name.trim()
                                     }
                                     onClick={create}

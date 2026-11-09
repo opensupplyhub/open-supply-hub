@@ -368,6 +368,8 @@ export const makeClaimCampaignCandidatesURL = listID =>
     listID === undefined
         ? '/api/claim-campaigns/candidates/'
         : `/api/claim-campaigns/candidates/?list=${listID}`;
+export const makeClaimCampaignSearchURL = queryString =>
+    `/api/claim-campaigns/candidates/search/?${queryString}`;
 export const claimDetailsRoute = '/claim/:osID/details';
 export const profileRoute = '/profile/:id';
 export const aboutProcessingRoute = `${InfoLink}/${InfoPaths.dataQuality}`;

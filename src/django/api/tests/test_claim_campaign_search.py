@@ -99,7 +99,8 @@ class ClaimCampaignSearchTest(ClaimCampaignRosterBaseTest):
         )
 
     def test_search_leaves_out_closed_facilities(self):
-        os_ids = [s["os_id"] for s in self.search("q=Lotus").json()["suppliers"]]
+        suppliers = self.search("q=Lotus").json()["suppliers"]
+        os_ids = [s["os_id"] for s in suppliers]
         self.assertNotIn(self.closed.id, os_ids)
 
     def test_search_needs_at_least_one_filter(self):
