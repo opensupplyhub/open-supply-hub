@@ -1,6 +1,8 @@
 from io import StringIO
 from unittest.mock import patch
 
+from api.admin import SourceAdmin, admin_site
+from api.aws_batch import submit_reassignment_job
 from api.models import (
     Contributor,
     ExtendedField,
@@ -14,8 +16,11 @@ from api.serializers.facility.facility_index_extended_field_list_serializer \
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 from django.contrib.gis.geos import Point
+from django.contrib.messages import get_messages
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.core.management import call_command
 from django.db.models import F
+from django.test import RequestFactory, SimpleTestCase, override_settings
 
 
 class SourceReassignmentTestBase(FacilityAPITestCaseBase):
@@ -473,3 +478,204 @@ class BackfillExtendedFieldContributorsTest(SourceReassignmentTestBase):
             .filter(facility_list_item__isnull=False)
             .exists()
         )
+
+
+class SourceReassignmentDispatchTest(SourceReassignmentTestBase):
+    """
+    Reassignment is dispatched to AWS Batch when it is configured, so
+    the caller (typically a Django admin request) is not blocked for
+    the minutes a large list takes. Otherwise it runs inline, exactly
+    as before. See OSDEV-3758.
+    """
+
+    SUBMIT = 'api.services.source_service.submit_reassignment_job'
+
+    @override_settings(
+        BATCH_JOB_QUEUE_NAME='queue', BATCH_JOB_DEF_NAME='job-def')
+    @patch(SUBMIT)
+    def test_list_source_submits_a_batch_job(self, submit):
+        submit.return_value = 'job-1'
+
+        self.source.contributor = self.new_contributor
+        self.save_source(self.source)
+
+        submit.assert_called_once_with(self.source.facility_list_id)
+        # The re-attribution now belongs to the Batch job; the caller
+        # must not have run it.
+        self.extended_field.refresh_from_db()
+        self.assertEqual(
+            self.contributor.id,
+            self.extended_field.contributor_id,
+        )
+
+    @override_settings(
+        BATCH_JOB_QUEUE_NAME='queue', BATCH_JOB_DEF_NAME='job-def')
+    @patch(SUBMIT)
+    def test_single_source_reassigns_inline(self, submit):
+        source, list_item = self.create_single_source(self.contributor)
+        field = self.create_extended_field(
+            list_item=list_item,
+            contributor=self.contributor,
+        )
+
+        source.contributor = self.new_contributor
+        self.save_source(source)
+
+        submit.assert_not_called()
+        field.refresh_from_db()
+        self.assertEqual(self.new_contributor.id, field.contributor_id)
+
+    @override_settings(
+        BATCH_JOB_QUEUE_NAME='queue', BATCH_JOB_DEF_NAME='job-def')
+    @patch(SUBMIT)
+    def test_failed_submission_falls_back_to_inline(self, submit):
+        submit.side_effect = RuntimeError('batch is down')
+
+        self.source.contributor = self.new_contributor
+        self.save_source(self.source)
+
+        submit.assert_called_once()
+        self.extended_field.refresh_from_db()
+        self.assertEqual(
+            self.new_contributor.id,
+            self.extended_field.contributor_id,
+        )
+
+    @override_settings(
+        BATCH_JOB_QUEUE_NAME=None, BATCH_JOB_DEF_NAME=None)
+    @patch(SUBMIT)
+    def test_unconfigured_batch_reassigns_inline(self, submit):
+        self.source.contributor = self.new_contributor
+        self.save_source(self.source)
+
+        submit.assert_not_called()
+        self.extended_field.refresh_from_db()
+        self.assertEqual(
+            self.new_contributor.id,
+            self.extended_field.contributor_id,
+        )
+
+
+class ReassignExtendedFieldsBatchActionTest(SourceReassignmentTestBase):
+    """
+    The `reassign_extended_fields` batch_process action is what the
+    Batch job submitted by SourceService.schedule_reassignment runs.
+    """
+
+    def test_action_reassigns_the_lists_source(self):
+        # A queryset update bypasses Source.save(), creating the same
+        # drift the Batch job is submitted to repair.
+        Source.objects.filter(pk=self.source.pk).update(
+            contributor=self.new_contributor)
+
+        call_command(
+            'batch_process',
+            '--action', 'reassign_extended_fields',
+            '--list-id', str(self.list.id),
+        )
+
+        self.extended_field.refresh_from_db()
+        self.assertEqual(
+            self.new_contributor.id,
+            self.extended_field.contributor_id,
+        )
+
+
+class SourceAdminReassignmentMessageTest(SourceReassignmentTestBase):
+    """
+    The admin save returns before the re-attribution completes, so the
+    change view must tell the admin the rest is coming. See OSDEV-3758.
+    """
+
+    class FakeForm:
+        def __init__(self, changed_data):
+            self.changed_data = changed_data
+
+    def admin_request(self):
+        request = RequestFactory().post('/admin/api/source/')
+        request.session = 'session'
+        request._messages = FallbackStorage(request)
+        return request
+
+    def save_model(self, changed_data):
+        model_admin = SourceAdmin(Source, admin_site)
+        request = self.admin_request()
+        with self.captureOnCommitCallbacks(execute=True):
+            model_admin.save_model(
+                request,
+                self.source,
+                self.FakeForm(changed_data),
+                change=True,
+            )
+        return [str(message) for message in get_messages(request)]
+
+    def test_contributor_change_messages_the_admin(self):
+        self.source.contributor = self.new_contributor
+        sent = self.save_model(changed_data=['contributor'])
+
+        self.assertEqual(1, len(sent))
+        self.assertIn('re-attributed', sent[0])
+
+    def test_other_changes_do_not_message(self):
+        self.source.is_active = False
+        sent = self.save_model(changed_data=['is_active'])
+
+        self.assertEqual([], sent)
+
+
+class ReassignmentJobSubmissionTest(SimpleTestCase):
+    """
+    Every dispatch test above mocks the submission helper, so the
+    submit_job call itself is only covered here: the parameter names the
+    job definition substitutes into its container command, and the
+    bounded client config that keeps a slow Batch control plane from
+    holding the admin request open. See OSDEV-3758.
+    """
+
+    @patch('api.aws_batch.fetch_latest_active_batch_job_definition_arn')
+    @patch('api.aws_batch.fetch_batch_queue_arn')
+    @patch('api.aws_batch.boto3.client')
+    def test_submits_the_list_id_and_action_the_job_definition_reads(
+            self, client_factory, fetch_queue, fetch_job_def):
+        fetch_queue.return_value = 'queue-arn'
+        fetch_job_def.return_value = 'job-def-arn'
+        client = client_factory.return_value
+        client.submit_job.return_value = {'jobId': 'job-1'}
+
+        job_id = submit_reassignment_job(17)
+
+        self.assertEqual('job-1', job_id)
+        kwargs = client.submit_job.call_args.kwargs
+        self.assertEqual('queue-arn', kwargs['jobQueue'])
+        self.assertEqual('job-def-arn', kwargs['jobDefinition'])
+        # These keys are what `Ref::listid` and `Ref::action` resolve to
+        # in deployment/terraform/job-definitions/default.json.
+        self.assertEqual(
+            {'listid': '17', 'action': 'reassign_extended_fields'},
+            kwargs['parameters'],
+        )
+        self.assertTrue(kwargs['jobName'].startswith('source-reassign-17-'))
+
+    @patch('api.aws_batch.fetch_latest_active_batch_job_definition_arn')
+    @patch('api.aws_batch.fetch_batch_queue_arn')
+    @patch('api.aws_batch.boto3.client')
+    def test_client_timeouts_are_bounded(
+            self, client_factory, fetch_queue, fetch_job_def):
+        client_factory.return_value.submit_job.return_value = {'jobId': 'j'}
+
+        submit_reassignment_job(17)
+
+        config = client_factory.call_args.kwargs['config']
+        self.assertEqual(5, config.connect_timeout)
+        self.assertEqual(15, config.read_timeout)
+        self.assertEqual(2, config.retries['max_attempts'])
+
+    @patch('api.aws_batch.fetch_latest_active_batch_job_definition_arn')
+    @patch('api.aws_batch.fetch_batch_queue_arn')
+    @patch('api.aws_batch.boto3.client')
+    def test_a_response_without_a_job_id_raises(
+            self, client_factory, fetch_queue, fetch_job_def):
+        client_factory.return_value.submit_job.return_value = {}
+
+        with self.assertRaises(RuntimeError):
+            submit_reassignment_job(17)

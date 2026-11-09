@@ -9,6 +9,10 @@ the column in an expression, and an expression can only be indexed when every
 function in it is immutable. unaccent() is not, because it reads a dictionary
 that can be reloaded; the two-argument form that names the dictionary
 explicitly is, and is the documented way to index unaccented text.
+
+immutable_unaccent and facility_processing_search_text are superseded by
+0264_qualify_facility_processing_search_functions.sql, which schema-qualifies
+their bodies so pg_restore can rebuild the indexes; edit them there.
 */
 CREATE OR REPLACE
 FUNCTION immutable_unaccent(txt TEXT)

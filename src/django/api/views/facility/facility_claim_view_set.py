@@ -39,6 +39,7 @@ from ...services.facility_claim_review_note_service import (
     create_review_note,
 )
 from ...mail import (
+    describe_pending_claim_changes,
     send_approved_claim_notice_to_list_contributors,
     send_claim_facility_approval_email,
     send_claim_facility_denial_email,
@@ -912,8 +913,7 @@ class FacilityClaimViewSet(ModelViewSet):
             self.__notify_claims_team_of_update(
                 request,
                 claim,
-                ['Updated {}'.format(field)
-                 for field in sorted(changed_fields)],
+                describe_pending_claim_changes(claim, changed_fields),
             )
 
         return Response(PendingClaimSerializer(claim).data)

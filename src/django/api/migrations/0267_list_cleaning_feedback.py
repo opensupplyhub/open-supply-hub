@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0263_seed_claim_profile_options'),
+        ('api', '0266_announcement_banner'),
     ]
 
     operations = [

@@ -120,12 +120,12 @@ class FacilityListItem(models.Model):
         help_text=('Diagnostic details logged by background processing '
                    'including details returned from the geocoder.'))
     name = models.CharField(
-        max_length=200,
+        max_length=300,
         null=False,
         blank=False,
         help_text='The name of the facility taken from the raw data.')
     address = models.CharField(
-        max_length=200,
+        max_length=300,
         null=False,
         blank=False,
         help_text='The address of the facility taken from the raw data.')

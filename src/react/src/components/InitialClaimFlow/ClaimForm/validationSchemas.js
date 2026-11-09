@@ -248,12 +248,14 @@ export const profileStepSchema = Yup.object().shape({
         'Company phone',
         Yup.string().trim(),
     ),
+    facilityPhoneNumberPubliclyVisible: Yup.boolean(),
     businessWebsite: Yup.string()
         .url('Invalid URL. Example: https://company.com')
         .max(
             WEBSITE_MAX_LENGTH,
             `Website URL must be ${WEBSITE_MAX_LENGTH} characters or fewer`,
         ),
+    facilityWebsitePubliclyVisible: Yup.boolean(),
     facilityDescription: Yup.string()
         .trim()
         .max(

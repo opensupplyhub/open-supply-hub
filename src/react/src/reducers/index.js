@@ -18,6 +18,7 @@ import UIReducer from './UIReducer';
 import FacilitiesReducer from './FacilitiesReducer';
 import FacilityCountReducer from './FacilityCountReducer';
 import FeatureFlagsReducer from './FeatureFlagsReducer';
+import AnnouncementBannerReducer from './AnnouncementBannerReducer';
 import ClaimFacilityReducer from './ClaimFacilityReducer';
 import ClaimFacilityDashboardReducer from './ClaimFacilityDashboardReducer';
 import ClaimedFacilityDetailsReducer from './ClaimedFacilityDetailsReducer';
@@ -57,6 +58,7 @@ export default combineReducers({
     facilities: FacilitiesReducer,
     facilityCount: FacilityCountReducer,
     featureFlags: FeatureFlagsReducer,
+    announcementBanner: AnnouncementBannerReducer,
     claimFacility: ClaimFacilityReducer,
     claimFacilityDashboard: ClaimFacilityDashboardReducer,
     claimedFacilityDetails: ClaimedFacilityDetailsReducer,
