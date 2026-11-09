@@ -17,6 +17,18 @@ from api.models import (
 
 SELF_SERVE_FLAG = 'claim_campaign_self_serve'
 MAX_SUPPLIERS_PER_CAMPAIGN = 5000
+# A supplier search returns at most this many facilities to choose from.
+MAX_SEARCH_RESULTS = 500
+# Search params that don't narrow the results, so a search made only of
+# these would return the whole database.
+NON_FILTER_SEARCH_PARAMS = frozenset({
+    'sort_by',
+    'page',
+    'pageSize',
+    'embed',
+    'detail',
+    'combine_contributors',
+})
 
 # Unambiguous characters for generated code suffixes (no 0/O, 1/I).
 CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -173,6 +185,32 @@ def serialize_suppliers(facilities):
         }
         for facility in facilities
     ]
+
+
+def search_campaign_candidates(query_params):
+    """
+    Facilities matching the public search filters, for a brand choosing
+    campaign suppliers from a search. Closed facilities are left out
+    because they can't be added to a campaign. Returns (total count,
+    the first MAX_SEARCH_RESULTS facilities by name).
+    """
+    from api.models.facility.facility_index import FacilityIndex
+
+    queryset = (
+        FacilityIndex.objects.filter_by_query_params(query_params)
+        .exclude(is_closed=True)
+        .order_by('name', 'id')
+    )
+    return queryset.count(), list(queryset[:MAX_SEARCH_RESULTS])
+
+
+def has_search_filter(query_params):
+    return any(
+        value.strip()
+        for key in query_params.keys()
+        if key not in NON_FILTER_SEARCH_PARAMS
+        for value in query_params.getlist(key)
+    )
 
 
 def get_contributor_list_sources(contributor):

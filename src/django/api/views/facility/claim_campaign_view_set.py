@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -16,11 +16,15 @@ from api.serializers.facility.claim_campaign_serializer import (
     ClaimCampaignCreateSerializer,
     ClaimCampaignSerializer,
 )
+from api.serializers import FacilityQueryParamsSerializer
 from api.services.claim_campaign_service import (
+    MAX_SEARCH_RESULTS,
     SELF_SERVE_FLAG,
     create_campaign_with_suppliers,
     get_contributor_list_sources,
     get_list_facilities,
+    has_search_filter,
+    search_campaign_candidates,
     serialize_suppliers,
 )
 
@@ -128,5 +132,34 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
                 'name': source.facility_list.name,
                 'is_public': source.is_public,
                 'suppliers': serialize_suppliers(get_list_facilities(source)),
+            }
+        )
+
+    @action(detail=False, methods=['get'], url_path='candidates/search')
+    def search_candidates(self, request):
+        """
+        Facilities matching the same filters as the public OS Hub search
+        (q, countries, sectors, facility_type, number_of_workers, ...),
+        with claim statuses, so a brand can add suppliers it didn't
+        contribute. Closed facilities are excluded. At most
+        MAX_SEARCH_RESULTS are returned, sorted by name; `count` is the
+        full number of matches.
+        """
+        self.require_self_serve()
+
+        params = FacilityQueryParamsSerializer(data=request.query_params)
+        if not params.is_valid():
+            raise ValidationError(params.errors)
+        if not has_search_filter(request.query_params):
+            raise ValidationError(
+                {'detail': 'Add at least one search filter.'}
+            )
+
+        count, facilities = search_campaign_candidates(request.query_params)
+        return Response(
+            {
+                'count': count,
+                'limit': MAX_SEARCH_RESULTS,
+                'suppliers': serialize_suppliers(facilities),
             }
         )

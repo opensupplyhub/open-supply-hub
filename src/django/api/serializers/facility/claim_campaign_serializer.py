@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
 from api.models.facility.claim_campaign import ClaimCampaign
+from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.services.claim_campaign_service import (
     MAX_SUPPLIERS_PER_CAMPAIGN,
     get_campaign_invites,
+    get_claim_statuses,
     get_contributor_list_sources,
     serialize_suppliers,
 )
@@ -68,12 +70,14 @@ class ClaimCampaignSerializer(serializers.ModelSerializer):
 
 class ClaimCampaignCreateSerializer(serializers.Serializer):
     """
-    Validates a brand's request to create a campaign from suppliers on
-    one of its own active lists (public or private).
+    Validates a brand's request to create a campaign. Suppliers come
+    either from one of its own active lists (public or private), when
+    `list_id` is given, or from a search of OS Hub, when it isn't: then
+    any facility that isn't closed or already claimed can be chosen.
     """
 
     name = serializers.CharField(max_length=200, allow_blank=False)
-    list_id = serializers.IntegerField()
+    list_id = serializers.IntegerField(required=False, allow_null=True)
     os_ids = serializers.ListField(
         child=serializers.CharField(max_length=32),
         allow_empty=False,
@@ -81,10 +85,20 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
+        data['os_ids'] = list(dict.fromkeys(data['os_ids']))
+        if data.get('list_id') is None:
+            self.validate_search_suppliers(data['os_ids'])
+        else:
+            self.validate_list_suppliers(data['list_id'], data['os_ids'])
+
+        data['name'] = data['name'].strip()
+        return data
+
+    def validate_list_suppliers(self, list_id, os_ids):
         contributor = self.context['contributor']
         source = (
             get_contributor_list_sources(contributor)
-            .filter(facility_list_id=data['list_id'])
+            .filter(facility_list_id=list_id)
             .first()
         )
         if source is None:
@@ -95,10 +109,10 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
         on_list = set(
             FacilityListItem.objects.filter(
                 source=source,
-                facility_id__in=data['os_ids'],
+                facility_id__in=os_ids,
             ).values_list('facility_id', flat=True)
         )
-        missing = [os_id for os_id in data['os_ids'] if os_id not in on_list]
+        missing = [os_id for os_id in os_ids if os_id not in on_list]
         if missing:
             raise serializers.ValidationError(
                 {
@@ -109,5 +123,43 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
                 }
             )
 
-        data['name'] = data['name'].strip()
-        return data
+    @staticmethod
+    def validate_search_suppliers(os_ids):
+        facilities = Facility.objects.filter(id__in=os_ids)
+        found = {f.id: f for f in facilities}
+
+        missing = [os_id for os_id in os_ids if os_id not in found]
+        if missing:
+            raise serializers.ValidationError(
+                {
+                    'os_ids': (
+                        'These OS IDs were not found: '
+                        + ', '.join(missing[:10])
+                    )
+                }
+            )
+
+        closed = [f.id for f in facilities if f.is_closed]
+        if closed:
+            raise serializers.ValidationError(
+                {
+                    'os_ids': (
+                        'Closed production locations can\'t be added: '
+                        + ', '.join(closed[:10])
+                    )
+                }
+            )
+
+        statuses = get_claim_statuses(os_ids)
+        claimed = [
+            os_id for os_id in os_ids if statuses[os_id] == 'claimed'
+        ]
+        if claimed:
+            raise serializers.ValidationError(
+                {
+                    'os_ids': (
+                        'These production locations are already claimed: '
+                        + ', '.join(claimed[:10])
+                    )
+                }
+            )
