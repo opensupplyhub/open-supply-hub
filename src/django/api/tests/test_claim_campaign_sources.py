@@ -1,3 +1,7 @@
+import asyncio
+from unittest.mock import patch
+
+from api.constants import FeatureGroups
 from api.models import (
     ClaimCampaign,
     ClaimCampaignSupplier,
@@ -5,17 +9,21 @@ from api.models import (
     Facility,
     FacilityList,
     FacilityListItem,
+    FacilityMatch,
     Source,
     User,
 )
 from api.services.claim_campaign_service import resolve_claim_campaign
+from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 from api.tests.test_claim_campaign_roster import (
     SELF_SERVE,
     ClaimCampaignRosterBaseTest,
 )
 from waffle.testutils import override_flag, override_switch
 
+from django.contrib import auth
 from django.contrib.gis.geos import Point
+from django.urls import reverse
 
 URL = "/api/claim-campaigns/"
 CANDIDATES_URL = "/api/claim-campaigns/candidates/"
@@ -296,3 +304,133 @@ class CloseCampaignTest(ClaimCampaignRosterBaseTest):
     def test_close_is_hidden_when_the_switch_is_off(self):
         response = self.client.post(self.close_url(self.campaign))
         self.assertEqual(404, response.status_code)
+
+
+PROCESSING = "api.facility_actions.processing_facility_api"
+
+
+def geocoded(lng, lat):
+    return {
+        "result_count": 1,
+        "geocoded_point": {"lng": lng, "lat": lat},
+        "geocoded_address": "Geocoded address",
+        "full_response": {},
+    }
+
+
+def dedupe_hub_creates_a_facility(source_id):
+    """
+    Stands in for dedupe-hub, which matches API submissions outside
+    Django (Kafka). Writes what it writes for a submission that becomes
+    a new production location: the facility, an AUTOMATIC match and
+    the item's final MATCHED status. The writes happen here, on the
+    test's own connection; the view then awaits an empty coroutine in
+    place of the Kafka send.
+    """
+    item = FacilityListItem.objects.get(source_id=source_id)
+    facility = Facility.objects.create(
+        name=item.name,
+        address=item.address,
+        country_code=item.country_code,
+        location=item.geocoded_point,
+        created_from=item,
+    )
+    FacilityMatch.objects.create(
+        status=FacilityMatch.AUTOMATIC,
+        facility=facility,
+        facility_list_item=item,
+        confidence=1,
+        results={},
+    )
+    item.facility = facility
+    item.status = FacilityListItem.MATCHED
+    item.save()
+    return asyncio.sleep(0)
+
+
+@override_switch("claim_campaigns", active=True)
+@override_flag(SELF_SERVE, active=True)
+@patch(f"{PROCESSING}.time.sleep", lambda seconds: None)
+@patch("api.processing.time.sleep", lambda seconds: None)
+@patch(
+    f"{PROCESSING}.produce_message_match_process",
+    dedupe_hub_creates_a_facility,
+)
+class ApiSubmissionThroughPostTest(FacilityAPITestCaseBase):
+    """
+    End to end through the real legacy `POST /api/facilities/` endpoint
+    that API-only contributors use: the sources and items it writes are
+    offered as the "Locations added through the API" source. Only the
+    geocoder and dedupe-hub (outside Django) are stubbed.
+    """
+
+    fixtures = ["sectors"]
+
+    def submit(self, name, public=True):
+        with patch(
+            f"{PROCESSING}.geocode_address", return_value=geocoded(90, 23)
+        ):
+            response = self.client.post(
+                f"{reverse('facility-list')}?create=true"
+                f"&public={'true' if public else 'false'}",
+                {
+                    "country": "Bangladesh",
+                    "name": name,
+                    "address": f"{name} Road, Dhaka",
+                    "sector": "Apparel",
+                },
+            )
+        self.assertEqual(201, response.status_code, response.content)
+        return response.json()["os_id"]
+
+    def join_groups_and_login(self):
+        """
+        Like an API contributor allowed to send private submissions:
+        posting `public=false` needs a second group.
+        """
+        self.join_group_and_login()
+        self.user.groups.add(
+            auth.models.Group.objects.get(
+                name=FeatureGroups.CAN_SUBMIT_PRIVATE_FACILITY
+            )
+        )
+
+    def test_posted_locations_become_campaign_candidates(self):
+        self.join_groups_and_login()
+        first = self.submit("Dhaka Knit One")
+        second = self.submit("Dhaka Knit Two", public=False)
+
+        sources = Source.objects.filter(contributor=self.contributor)
+        self.assertEqual(
+            2, sources.filter(source_type=Source.SINGLE).count()
+        )
+
+        entries = self.client.get(CANDIDATES_URL).json()
+        api_entry = next(e for e in entries if e["id"] == "api")
+        self.assertEqual(2, api_entry["supplier_count"])
+        self.assertFalse(api_entry["is_public"])
+
+        suppliers = self.client.get(
+            CANDIDATES_URL, {"list": "api"}
+        ).json()["suppliers"]
+        self.assertEqual(
+            [first, second], [s["os_id"] for s in suppliers]
+        )
+        self.assertEqual(
+            {"unclaimed"}, {s["claim_status"] for s in suppliers}
+        )
+
+        response = self.client.post(
+            URL,
+            {
+                "name": "API onboarding",
+                "list_id": "api",
+                "os_ids": [first, second],
+            },
+            format="json",
+        )
+        self.assertEqual(201, response.status_code, response.content)
+        self.assertEqual(
+            [first, second],
+            [s["os_id"] for s in response.json()["suppliers"]],
+        )
