@@ -64,6 +64,41 @@ describe('FacilityListCleaningReducer', () => {
         expect(failed.submitError).toEqual(['no']);
     });
 
+    test('a partial decision reply replaces only the rows it carries', () => {
+        const loaded = reducer(
+            initial,
+            completeFetchFacilityListCleaning({
+                run: { id: 1 },
+                summary: { rows_pending_review: 2 },
+                rows: [
+                    { row_number: 2, suggestions: ['a'] },
+                    { row_number: 3, suggestions: ['b'] },
+                    { row_number: 5, suggestions: ['c'] },
+                ],
+            }),
+        );
+        const merged = reducer(
+            loaded,
+            completeSubmitFacilityListCleaningDecisions({
+                run: { id: 1 },
+                summary: { rows_pending_review: 1 },
+                rows: [
+                    { row_number: 3, suggestions: ['b2'] },
+                    { row_number: 4, suggestions: ['d'] },
+                ],
+                rows_partial: true,
+            }),
+        );
+        expect(merged.data.summary).toEqual({ rows_pending_review: 1 });
+        expect(merged.data.rows_partial).toBeUndefined();
+        expect(merged.data.rows).toEqual([
+            { row_number: 2, suggestions: ['a'] },
+            { row_number: 3, suggestions: ['b2'] },
+            { row_number: 4, suggestions: ['d'] },
+            { row_number: 5, suggestions: ['c'] },
+        ]);
+    });
+
     test('keeps what the submission applied', () => {
         const applying = reducer(initial, startApplyFacilityListCleaning());
         expect(applying.applying).toBe(true);

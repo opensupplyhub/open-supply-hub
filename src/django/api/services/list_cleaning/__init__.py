@@ -16,9 +16,11 @@ from .service import (  # noqa: F401
     refresh_run,
     review_deadline,
     seconds_left,
+    settle_run,
     start_run,
     submit_run,
     sweep_lapsed,
     sweep_run,
+    wants_removal,
     window_open,
 )

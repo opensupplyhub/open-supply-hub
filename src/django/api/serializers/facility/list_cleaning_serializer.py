@@ -5,6 +5,12 @@ from ...models.facility.list_cleaning_run import (
     ListCleaningRun,
     ListCleaningSuggestion,
 )
+from ...services.list_cleaning import (
+    group_key,
+    seconds_left,
+    wants_removal,
+    window_open,
+)
 
 
 class ListCleaningSuggestionSerializer(ModelSerializer):
@@ -26,10 +32,6 @@ class ListCleaningRunSerializer(ModelSerializer):
 
 
 GROUP_EXAMPLES = 3
-
-
-def _group_key(s):
-    return f'{s.kind}:{s.code}:{s.field}'
 
 
 def _group_order(group):
@@ -59,6 +61,8 @@ def _new_group(key, s):
         'edited': 0,
         'removed': 0,
         'by_row': 0,
+        # Exact repeats the parser dropped at upload: shown, not decidable.
+        'fixed': 0,
         'applied': 0,
         'auto': True,
         'rows': [],
@@ -82,6 +86,7 @@ def _tally(g, s):
     if not extra.get('auto'):
         g['auto'] = False
     g['by_row'] += bool(extra.get('by_row'))
+    g['fixed'] += bool(extra.get('parser_removed'))
     counter = _DECISION_COUNTERS.get(s.decision)
     if counter:
         g[counter] += 1
@@ -103,7 +108,7 @@ def serialize_groups(suggestions):
     """
     groups = {}
     for s in suggestions:
-        key = _group_key(s)
+        key = group_key(s)
         if key not in groups:
             groups[key] = _new_group(key, s)
         _tally(groups[key], s)
@@ -150,19 +155,13 @@ def _value_pending(s):
             and not s.applied)
 
 
-def _removal_wanted(s):
-    S = ListCleaningSuggestion
-    return (s.decision == S.REMOVED
-            or (s.kind == S.REMOVAL and s.decision == S.ACCEPTED))
-
-
 def _change_unapplied(s):
     """The contributor decided something that is not yet on the list."""
     S = ListCleaningSuggestion
     extra = s.extra or {}
     if _value_pending(s):
         return True
-    if _removal_wanted(s) and not extra.get('removal_applied'):
+    if wants_removal(s) and not extra.get('removal_applied'):
         return True
     return (s.decision in (S.REJECTED, S.PENDING)
             and bool(s.applied or extra.get('removal_applied')))
@@ -175,7 +174,7 @@ def _summary(run, suggestions):
     fixes_to_review = [s for s in corrections
                        if not (s.extra or {}).get('auto')]
     must_fix = [s for s in suggestions if s.severity == S.MUST_FIX]
-    removed_rows = {s.row_number for s in suggestions if _removal_wanted(s)}
+    removed_rows = {s.row_number for s in suggestions if wants_removal(s)}
 
     def rows_where(seq, predicate):
         return {s.row_number for s in seq
@@ -253,12 +252,17 @@ def _summary(run, suggestions):
     }
 
 
-def serialize_run(run, include_internal=False):
+def serialize_run(run, include_internal=False, only_rows=None):
     """
     The payload the list items page renders: the run, a summary, the
     suggestions grouped by error type, and the suggestions grouped by row.
     internal_note issues are only included for moderators
     (include_internal=True); contributors never see them.
+
+    `only_rows` (a set of row numbers) limits `rows` to those rows and
+    marks the payload `rows_partial`, so a decision on one row of a
+    long list sends back the summary and groups plus that row, not every
+    row again; the client merges it into what it has.
     """
     suggestions = list(
         run.suggestions.select_related('facility_list_item').all())
@@ -268,8 +272,10 @@ def serialize_run(run, include_internal=False):
             if s.severity != ListCleaningSuggestion.INTERNAL_NOTE
         ]
     summary = _summary(run, suggestions)
-
-    from api.services.list_cleaning import seconds_left, window_open
+    row_suggestions = suggestions
+    if only_rows is not None:
+        row_suggestions = [s for s in suggestions
+                           if s.row_number in only_rows]
     return {
         'run': ListCleaningRunSerializer(run).data,
         'window_open': window_open(run),
@@ -277,5 +283,6 @@ def serialize_run(run, include_internal=False):
         'server_time': timezone.now().isoformat(),
         'summary': summary,
         'groups': serialize_groups(suggestions),
-        'rows': _rows_by_number(suggestions),
+        'rows': _rows_by_number(row_suggestions),
+        'rows_partial': only_rows is not None,
     }

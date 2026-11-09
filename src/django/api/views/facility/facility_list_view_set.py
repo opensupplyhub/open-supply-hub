@@ -499,8 +499,7 @@ class FacilityListViewSet(ModelViewSet):
                 'enabled': list_cleaning.feature_enabled(),
                 'run': None, 'summary': None, 'rows': [],
             })
-        run = list_cleaning.refresh_run(run)
-        run = list_cleaning.sweep_run(run)
+        run = list_cleaning.settle_run(run)
         data = serialize_run(
             run, include_internal=request.user.is_superuser)
         data['enabled'] = list_cleaning.feature_enabled()
@@ -510,9 +509,11 @@ class FacilityListViewSet(ModelViewSet):
     def _block_while_review_open(facility_list):
         """
         v3: while the contributor's review window is open the list is
-        not final, so moderation waits. Lapsed windows close here too.
+        not final, so moderation waits. A run still waiting on the
+        pipeline is polled first, so one that failed out there does not
+        hold the list; lapsed windows close here too.
         """
-        run = list_cleaning.sweep_run(facility_list.cleaning_runs.first())
+        run = list_cleaning.settle_run(facility_list.cleaning_runs.first())
         if run is not None and list_cleaning.window_open(run):
             raise ValidationError(
                 'The contributor can still submit changes to this list '
@@ -536,7 +537,7 @@ class FacilityListViewSet(ModelViewSet):
             current = facility_list.cleaning_runs.first()
             if current is not None:
                 list_cleaning.lock_run(current)
-                current = list_cleaning.sweep_run(current)
+                current = list_cleaning.settle_run(current)
             if current is not None and list_cleaning.window_open(current):
                 raise ValidationError(
                     'The contributor is still reviewing this list; a new '
@@ -579,20 +580,24 @@ class FacilityListViewSet(ModelViewSet):
             raise ValidationError(
                 'Send "decisions" (per suggestion) or "groups" (per error '
                 'type), or both.')
+        updated = []
         try:
             # One transaction, so a bad group key does not leave the
             # row decisions before it saved.
             with transaction.atomic():
                 if decisions:
-                    list_cleaning.record_decisions(
+                    updated += list_cleaning.record_decisions(
                         run, decisions, request.user)
                 if groups:
-                    list_cleaning.record_group_decisions(
+                    updated += list_cleaning.record_group_decisions(
                         run, groups, request.user)
         except list_cleaning.DecisionError as e:
             raise ValidationError(str(e))
+        # The summary and groups in full, but only the rows this request
+        # changed: on a long list the whole row set is several MB.
         return Response(serialize_run(
-            run, include_internal=request.user.is_superuser))
+            run, include_internal=request.user.is_superuser,
+            only_rows={s.row_number for s in updated}))
 
     @action(detail=True, methods=['post'], url_path='cleaning/submit')
     def cleaning_submit(self, request, pk=None):
@@ -682,7 +687,7 @@ class FacilityListViewSet(ModelViewSet):
             # While the contributor's review window is open, rows are
             # removed through the review and its single submission, so
             # the list cannot change underneath it.
-            review = list_cleaning.sweep_run(
+            review = list_cleaning.settle_run(
                 facility_list.cleaning_runs.first())
             if review is not None and list_cleaning.window_open(review):
                 raise ValidationError(

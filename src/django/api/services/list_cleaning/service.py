@@ -46,6 +46,7 @@ from api.models.facility.list_cleaning_run import (
 from django.conf import settings
 
 from api.os_id_lookup import OSIDLookup
+from countries.lib.get_country_code import get_country_code
 from api.sector_cache import SectorCache
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from simple_history.utils import bulk_create_with_history
@@ -161,10 +162,16 @@ def _fail(run, error):
             log.info(f'[List Cleaning] Run {run.id} completed elsewhere; '
                      f'ignoring: {error}')
             return
+        now = timezone.now()
         run.status = ListCleaningRun.FAILED
         run.error = error
-        run.completed_at = timezone.now()
+        run.completed_at = now
         run.save(update_fields=['status', 'error', 'completed_at'])
+        # A failed run has nothing to review, so its window must not
+        # hold the list: moderation, the owner's row removal and a
+        # restart of the checks all wait on window_open.
+        if run.review_until is not None and run.closed_at is None:
+            _close(run, ListCleaningRun.FAILED_RUN, now)
 
 
 def _corrected_value(change):
@@ -231,17 +238,26 @@ def _issue(item, issue, common):
     )
 
 
-def _removal(record, common, now):
-    # Exact duplicates and blank rows are removed automatically: the
-    # parser already drops exact duplicates before the pipeline runs,
-    # and neither needs judgment. The contributor can still put a row
-    # back.
+def _removal(record, item, common, now):
+    # Exact duplicates and blank rows are removed automatically: neither
+    # needs judgment. The contributor can still put a row back, except
+    # an exact repeat the parser already dropped at upload: restoring it
+    # would only give two identical rows matched to the same facility,
+    # so that one is shown but cannot be decided.
     reason = record.get('removed_reason', '') or ''
     duplicate_of = record.get('duplicate_of')
+    parser_removed = (
+        reason == 'duplicate' and item is not None
+        and item.status == FacilityListItem.DUPLICATE)
     if reason == 'duplicate' and duplicate_of:
         note = f'This row repeats row {duplicate_of}, so it was removed.'
+        if parser_removed:
+            note += ' It is an exact repeat, so it cannot be put back.'
     else:
         note = 'This row is blank, so it was removed.'
+    extra = {'duplicate_of': duplicate_of, 'auto': True}
+    if parser_removed:
+        extra['parser_removed'] = True
     return ListCleaningSuggestion(
         kind=ListCleaningSuggestion.REMOVAL,
         field='row',
@@ -249,7 +265,7 @@ def _removal(record, common, now):
         note=note,
         decision=ListCleaningSuggestion.ACCEPTED,
         decided_at=now,
-        extra={'duplicate_of': duplicate_of, 'auto': True},
+        extra=extra,
         **common,
     )
 
@@ -261,7 +277,7 @@ def _record_suggestions(record, item, common, now):
     out += [_issue(item, issue, common)
             for issue in record.get('issues') or []]
     if record.get('status') == 'removed':
-        out.append(_removal(record, common, now))
+        out.append(_removal(record, item, common, now))
     return out
 
 
@@ -313,7 +329,11 @@ def ingest_result(run, result):
         f'[List Cleaning] Run {run.id} complete: {len(suggestions)} '
         f'suggestions ({auto} pre-accepted) for list '
         f'{run.facility_list_id}; review open until {run.review_until}')
-    if not suggestions and run.review_until is not None:
+    # Moderator notes are never shown to the contributor, so a run whose
+    # findings are all internal notes is empty from their side.
+    visible = [s for s in suggestions
+               if s.severity != ListCleaningSuggestion.INTERNAL_NOTE]
+    if not visible and run.review_until is not None:
         # Nothing for the contributor to decide, so nothing to wait
         # for: the list goes to the moderator as uploaded right away.
         _close(run, ListCleaningRun.CLEAN, now)
@@ -326,6 +346,7 @@ def ingest_result(run, result):
 
 def window_open(run):
     return (run.closed_at is None and run.review_until is not None
+            and run.status != ListCleaningRun.FAILED
             and timezone.now() < run.review_until)
 
 
@@ -364,9 +385,29 @@ def sweep_run(run):
     return run
 
 
+def settle_run(run):
+    """
+    The run as it stands now, not as last stored: a running one is
+    polled for its result (a failure closes the window) and a lapsed
+    window is closed. Anything that asks whether the list is final goes
+    through here, so a run that failed inside the pipeline does not
+    hold the list until someone happens to open the review page.
+    """
+    if run is None:
+        return None
+    return sweep_run(refresh_run(run))
+
+
 def sweep_lapsed():
-    """Close every run whose window has passed (for a scheduler)."""
+    """
+    Close every run whose window has passed, and poll every run still
+    waiting on the pipeline (for a scheduler). A run that failed out
+    there closes its window; one that finished opens its review.
+    """
     closed = 0
+    for run in ListCleaningRun.objects.filter(
+            closed_at__isnull=True, status=ListCleaningRun.RUNNING):
+        refresh_run(run)
     for run in ListCleaningRun.objects.filter(
             closed_at__isnull=True, review_until__lt=timezone.now()):
         sweep_run(run)
@@ -564,6 +605,10 @@ class DecisionError(ValueError):
 def _check_decision(suggestion, decision, value):
     """The decisions one suggestion can take, or a DecisionError."""
     S = ListCleaningSuggestion
+    if (suggestion.extra or {}).get('parser_removed'):
+        raise DecisionError(
+            'This row is an exact repeat of another; it was removed when '
+            'the list was uploaded and cannot be put back.')
     if suggestion.kind == S.ISSUE:
         # A flagged row can be fixed in place (EDITED), dropped (REMOVED)
         # or left as it is (REJECTED). It cannot be "accepted": there is
@@ -582,6 +627,15 @@ def _check_decision(suggestion, decision, value):
         raise DecisionError('A removal cannot be edited.')
     if suggestion.field in ('', 'row'):
         raise DecisionError('This flag is not tied to a single field.')
+    if suggestion.field == 'country':
+        # The same lookup parse uses, so the typed value is one the row
+        # will re-parse with (and country_code follows it on submit).
+        try:
+            get_country_code(value)
+        except ValueError:
+            raise DecisionError(
+                f'{value!r} is not a country we recognise; type the ISO '
+                'country name or its two-letter code.')
 
 
 def _apply_decision(suggestion, decision, value, user, now, by_row):
@@ -620,6 +674,10 @@ def record_decisions(run, decisions, user):
     now = timezone.now()
     updated = []
     for entry in decisions:
+        if not isinstance(entry, dict):
+            raise DecisionError(
+                'Each decision must be an object with "id" and '
+                '"decision".')
         try:
             suggestion = by_id[int(entry.get('id'))]
         except (KeyError, TypeError, ValueError):
@@ -628,9 +686,11 @@ def record_decisions(run, decisions, user):
         decision = entry.get('decision')
         if decision not in allowed:
             raise DecisionError(f'Unknown decision {decision!r}.')
+        # Undoing a row (PENDING) hands it back to the group buttons, so
+        # it no longer counts as decided one by one.
         updated.append(_apply_decision(
             suggestion, decision, entry.get('value', ''), user, now,
-            by_row=True))
+            by_row=decision != ListCleaningSuggestion.PENDING))
     return updated
 
 
@@ -660,6 +720,9 @@ def record_group_decisions(run, groups, user):
     now = timezone.now()
     updated = []
     for entry in groups:
+        if not isinstance(entry, dict):
+            raise DecisionError(
+                'Each group entry must be an object with "key".')
         key = entry.get('key')
         if key not in by_key:
             raise DecisionError(f'Group {key!r} is not part of this run.')
@@ -672,7 +735,9 @@ def record_group_decisions(run, groups, user):
                 f'Decision {decision!r} cannot be made for a whole group.')
         updated += [
             _apply_decision(s, decision, '', user, now, by_row=False)
-            for s in by_key[key] if not (s.extra or {}).get('by_row')]
+            for s in by_key[key]
+            if not (s.extra or {}).get('by_row')
+            and not (s.extra or {}).get('parser_removed')]
     return updated
 
 
@@ -695,16 +760,14 @@ def _write_field(item, field, value):
     raw = dict(item.raw_json or {})
     raw[field] = value
     item.raw_json = raw
-    if field == 'country' and len(value) == 2:
-        item.country_code = value.upper()
-    elif field == 'name':
+    if field == 'name':
         item.name = value[:200]
         item.clean_name = clean(value)[:200]
     elif field == 'address':
         item.address = value[:200]
         item.clean_address = clean(value)[:200]
-    # Every other field lives only in raw_json until the item is
-    # re-parsed.
+    # country_code and every other derived field follow from the
+    # re-parse in _rederive_items.
 
 
 REMOVED_STATUSES = (FacilityListItem.DUPLICATE,
@@ -714,7 +777,8 @@ REMOVED_STATUSES = (FacilityListItem.DUPLICATE,
 def _rederive_items(items, contributor):
     """
     Bring what parse derived from the uploaded row into line with the
-    corrected one: sector, the cleaned name and address, and the
+    corrected one: the country code, sector, the cleaned name and
+    address, and the
     ExtendedField rows (worker count, parent company, product, facility
     and processing types, ids) the facility page reads. A row that is
     now removed loses those fields; a row that is back gets them again.
@@ -738,6 +802,7 @@ def _rederive_items(items, contributor):
             continue  # never parsed, so nothing was derived
         row = _reparse(item, sector_cache, os_id_lookup)
         if row is not None:
+            item.country_code = row.country_code
             item.sector = row.sector
             item.clean_name = row.clean_name
             item.clean_address = row.clean_address
@@ -745,7 +810,7 @@ def _rederive_items(items, contributor):
     if parsed:
         FacilityListItem.objects.bulk_update(
             [item for item, _ in parsed],
-            ['sector', 'clean_name', 'clean_address'])
+            ['country_code', 'sector', 'clean_name', 'clean_address'])
     ExtendedField.objects.filter(
         facility_list_item__in=removed + [item for item, _ in parsed],
         field_name__in=RAW_DATA_FIELDS,
@@ -803,7 +868,7 @@ def _reparse(item, sector_cache, os_id_lookup):
     return row
 
 
-def _wants_removal(s):
+def wants_removal(s):
     S = ListCleaningSuggestion
     return s.decision == S.REMOVED or (
         s.kind == S.REMOVAL and s.decision == S.ACCEPTED)
@@ -821,7 +886,7 @@ def _reason_text(s):
 
 def _removal_reason(suggestions):
     """Plain-language reason a row was dropped, for the CSV tag."""
-    wanted = next((s for s in suggestions if _wants_removal(s)), None)
+    wanted = next((s for s in suggestions if wants_removal(s)), None)
     if wanted is not None:
         return _reason_text(wanted)
     # The parser drops exact duplicates before the pipeline runs, so a row
@@ -833,7 +898,7 @@ def _removal_reason(suggestions):
 
 
 @transaction.atomic
-def apply_run(run, only=None):
+def apply_run(run):
     """
     Write every accepted or edited correction (and every edited flag) onto
     its list item, undo any previously applied change that has since been
@@ -841,14 +906,10 @@ def apply_run(run, only=None):
     original CSV line) and the list keeps its uploaded file, so the
     original upload stays recoverable.
 
-    `only` restricts the pass to those suggestion ids (used for the
-    automatic fixes at ingest); the row-removal state of a touched item
-    is still worked out from all of that item's suggestions.
-
     Extended fields (sector, number of workers, parent company ...) were
     created at parse time from the uploaded values, so every touched row
     is re-derived from its corrected raw_json afterwards (see
-    `_rederive_item`); a removed row loses them.
+    `_rederive_items`); a removed row loses them.
     """
     # One instance per item: several suggestions touch the same row, and
     # saving a second stale instance would overwrite the first's changes.
@@ -861,13 +922,6 @@ def apply_run(run, only=None):
     for s in run.suggestions.all():
         if s.facility_list_item_id in items:
             by_item.setdefault(s.facility_list_item_id, []).append(s)
-    if only is not None:
-        only = set(only)
-        by_item = {
-            item_id: suggestions
-            for item_id, suggestions in by_item.items()
-            if any(s.id in only for s in suggestions)
-        }
 
     touched = set()
     applied = 0
@@ -891,7 +945,7 @@ def apply_run(run, only=None):
 
     for item_id, suggestions in by_item.items():
         item = items[item_id]
-        a, r = _apply_values(item, suggestions, only, log_entry)
+        a, r = _apply_values(item, suggestions, log_entry)
         applied += a
         reverted += r
         a, r = _apply_removal(item, suggestions, log_entry)
@@ -904,9 +958,8 @@ def apply_run(run, only=None):
         _rederive_items([items[item_id] for item_id in touched],
                         run.facility_list.source.contributor)
 
-    if only is None:
-        run.applied_at = timezone.now()
-        run.save(update_fields=['applied_at'])
+    run.applied_at = timezone.now()
+    run.save(update_fields=['applied_at'])
     return {'applied': applied, 'reverted': reverted}
 
 
@@ -928,11 +981,11 @@ def _safe_cell(value):
     return value
 
 
-def _value_action(s, item, only):
+def _value_action(s, item):
     """What one suggestion needs on its item now: 'apply', 'reapply'
     (edited again after an earlier apply), 'revert' or None."""
     S = ListCleaningSuggestion
-    if s.kind == S.REMOVAL or (only is not None and s.id not in only):
+    if s.kind == S.REMOVAL:
         return None
     accepted = s.decision in (S.ACCEPTED, S.EDITED)
     if s.kind == S.ISSUE and s.decision != S.EDITED:
@@ -947,12 +1000,12 @@ def _value_action(s, item, only):
     return None
 
 
-def _apply_values(item, suggestions, only, log_entry):
+def _apply_values(item, suggestions, log_entry):
     """Step 1 of apply: accepted corrections and edited values on, and
     previously applied values that were since rejected back off."""
     applied = reverted = 0
     for s in suggestions:
-        action = _value_action(s, item, only)
+        action = _value_action(s, item)
         if action is None:
             continue
         if action == 'revert':
@@ -972,7 +1025,7 @@ def _apply_removal(item, suggestions, log_entry):
     """Step 2 of apply: row removal, decided per item so several
     suggestions on one row cannot fight over its status."""
     S = ListCleaningSuggestion
-    want = [s for s in suggestions if _wants_removal(s)]
+    want = [s for s in suggestions if wants_removal(s)]
     was = [s for s in suggestions if (s.extra or {}).get('removal_applied')]
     if want and not was:
         dup = any(s.kind == S.REMOVAL and s.code == 'duplicate'

@@ -16,6 +16,22 @@ import {
 
 import { completeSubmitLogOut } from '../actions/auth';
 
+// A decision reply carries the run, summary and groups in full but only
+// the rows it changed (rows_partial), so one click on a long list does
+// not send every row back. Those rows replace their earlier versions.
+const mergeDecisions = (data, payload) => {
+    if (!payload || !payload.rows_partial) return payload;
+    const { rows_partial: omit, ...rest } = payload;
+    const changed = new Map((payload.rows || []).map(r => [r.row_number, r]));
+    const existing = (data && data.rows) || [];
+    const known = new Set(existing.map(r => r.row_number));
+    const rows = existing
+        .map(r => changed.get(r.row_number) || r)
+        .concat((payload.rows || []).filter(r => !known.has(r.row_number)))
+        .sort((a, b) => a.row_number - b.row_number);
+    return { ...rest, rows };
+};
+
 const initialState = Object.freeze({
     data: null,
     fetching: false,
@@ -59,7 +75,7 @@ export default createReducer(
             update(state, {
                 submitting: { $set: false },
                 submitError: { $set: null },
-                data: { $set: payload },
+                data: { $set: mergeDecisions(state.data, payload) },
             }),
         [startApplyFacilityListCleaning]: state =>
             update(state, {

@@ -84,10 +84,14 @@ class ListCleaningRun(models.Model):
     SUBMITTED = 'submitted'
     LAPSED = 'lapsed'
     CLEAN = 'clean'
+    # The run itself failed, so there is nothing to review and nothing
+    # to wait for: the list goes to moderation as uploaded.
+    FAILED_RUN = 'failed'
     CLOSED_REASON_CHOICES = (
         (SUBMITTED, 'Contributor submitted'),
         (LAPSED, 'Window lapsed, list as uploaded'),
         (CLEAN, 'Nothing to review, list as uploaded'),
+        (FAILED_RUN, 'Run failed, list as uploaded'),
     )
     review_until = models.DateTimeField(
         null=True,

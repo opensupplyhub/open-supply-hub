@@ -34,6 +34,7 @@ from api.services.list_cleaning import (
     refresh_run,
     start_run,
 )
+from api.services.list_cleaning.runners import RunFailed
 from api.services.list_cleaning.service import build_fixed_csv
 from api.services.list_cleaning.stub import run_rules
 
@@ -195,6 +196,28 @@ class ListCleaningFeedbackTest(APITestCase):
         run = start_run(self.list)
         self.assertEqual(run.status, ListCleaningRun.FAILED)
         self.assertIn('LIST_CLEANING_STATE_MACHINE_ARN', run.error)
+        # A failed run has nothing to review, so it must not hold the
+        # list for the review window: moderation and a restart go ahead.
+        self.assertEqual(run.closed_reason, ListCleaningRun.FAILED_RUN)
+        self.assertIsNotNone(run.closed_at)
+        self.client.force_login(self.superuser)
+        response = self.client.get(self.url())
+        self.assertFalse(response.data['window_open'])
+        response = self.client.post(
+            f'/api/facility-lists/{self.list.id}/approve/',
+            {'reason': 'x'}, format='json')
+        self.assertNotEqual(response.status_code,
+                            status.HTTP_400_BAD_REQUEST, response.data)
+        self.list.refresh_from_db()
+        self.list.status = FacilityList.PENDING
+        self.list.save()
+        with override_settings(LIST_CLEANING_RUNNER='stub'):
+            response = self.client.post(
+                self.url('start/'), {'runner': 'stub'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        self.assertEqual(response.data['run']['status'],
+                         ListCleaningRun.COMPLETE)
 
     # -- API ----------------------------------------------------------
 
@@ -642,6 +665,123 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertNotEqual(response.status_code,
                             status.HTTP_400_BAD_REQUEST, response.data)
 
+    def test_internal_notes_alone_close_the_window_at_once(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, {'records': [{
+            'row': 2, 'status': 'needs_your_action', 'changes': [],
+            'issues': [{'code': 'address_too_few',
+                        'severity': 'internal_note', 'field': 'address',
+                        'note': 'For the moderator only.'}],
+        }], 'file_pass': {}})
+        run.refresh_from_db()
+        self.assertEqual(run.suggestions.count(), 1)
+        # the contributor is shown nothing, so there is nothing to wait for
+        self.assertEqual(run.closed_reason, ListCleaningRun.CLEAN)
+        self.client.force_login(self.user)
+        response = self.client.get(self.url())
+        self.assertFalse(response.data['window_open'])
+        self.assertEqual(response.data['rows'], [])
+
+    def test_parser_duplicate_is_shown_but_cannot_be_put_back(self):
+        # The parser dropped the exact repeat at upload, before the
+        # pipeline ran; restoring it would only give two identical rows.
+        self.items[2].status = FacilityListItem.DUPLICATE
+        self.items[2].save()
+        run = self._ingested_run()
+        removal = run.suggestions.get(kind=ListCleaningSuggestion.REMOVAL)
+        self.assertTrue(removal.extra['parser_removed'])
+        self.assertIn('cannot be put back', removal.note)
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': removal.id, 'decision': 'REJECTED'}]},
+            format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        self.assertIn('cannot be put back', str(response.data))
+        # a group decision on the duplicate type leaves it alone
+        response = self.client.post(self.url('decisions/'), {
+            'groups': [{'key': 'REMOVAL:duplicate:row',
+                        'decision': 'REJECTED'}]}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        removal.refresh_from_db()
+        self.assertEqual(removal.decision, ListCleaningSuggestion.ACCEPTED)
+        groups = {g['key']: g for g in response.data['groups']}
+        self.assertEqual(groups['REMOVAL:duplicate:row']['fixed'], 1)
+        response = self.client.post(self.url('submit/'), {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        self.items[2].refresh_from_db()
+        self.assertEqual(self.items[2].status, FacilityListItem.DUPLICATE)
+        self.assertIn('removed: duplicate of row 2', build_fixed_csv(run))
+
+    def test_typed_country_updates_the_country_code(self):
+        run = self._ingested_run()
+        country = run.suggestions.get(field='country')
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': country.id, 'decision': 'EDITED',
+                           'value': 'Narnia'}]}, format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        self.assertIn('not a country', str(response.data))
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': country.id, 'decision': 'EDITED',
+                           'value': 'Cambodia'}]}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        response = self.client.post(self.url('submit/'), {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        first = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(first.raw_json['country'], 'Cambodia')
+        self.assertEqual(first.country_code, 'KH')
+
+    def test_malformed_decision_bodies_are_rejected(self):
+        self._ingested_run()
+        self.client.force_login(self.user)
+        for body in ({'decisions': ['12']}, {'groups': ['x']},
+                     {'decisions': [None]}):
+            response = self.client.post(
+                self.url('decisions/'), body, format='json')
+            self.assertEqual(response.status_code,
+                             status.HTTP_400_BAD_REQUEST, body)
+
+    def test_undo_hands_the_row_back_and_replies_with_that_row_only(self):
+        run = self._ingested_run()
+        flag = run.suggestions.get(code='address_po_box')
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': flag.id, 'decision': 'REJECTED'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        flag.refresh_from_db()
+        self.assertTrue(flag.extra['by_row'])
+        # only the changed row comes back, with the summary in full
+        self.assertTrue(response.data['rows_partial'])
+        self.assertEqual([r['row_number'] for r in response.data['rows']],
+                         [3])
+        self.assertEqual(response.data['summary']['rows_pending_review'],
+                         1)
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': flag.id, 'decision': 'PENDING'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        flag.refresh_from_db()
+        self.assertEqual(flag.decision, ListCleaningSuggestion.PENDING)
+        # undone, so the group buttons cover it again
+        self.assertFalse(flag.extra['by_row'])
+        self.assertEqual(response.data['summary']['rows_pending_review'],
+                         2)
+        # the full read is never partial
+        response = self.client.get(self.url())
+        self.assertFalse(response.data['rows_partial'])
+        self.assertEqual(len(response.data['rows']), 3)
+
     def test_refresh_marks_a_broken_result_failed(self):
         run = ListCleaningRun.objects.create(
             facility_list=self.list, runner=ListCleaningRun.STEP_FUNCTIONS,
@@ -812,6 +952,54 @@ class ListCleaningFeedbackTest(APITestCase):
             self.assertIn('review window', str(response.data))
         self.list.refresh_from_db()
         self.assertEqual(self.list.status, FacilityList.PENDING)
+
+    def test_moderation_notices_a_run_that_failed_in_the_pipeline(self):
+        # The execution failed out in Step Functions while nobody had the
+        # review page open: the run is still RUNNING here. Moderation
+        # must poll it rather than wait out the window.
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.STEP_FUNCTIONS,
+            status=ListCleaningRun.RUNNING, execution_arn='arn:exec',
+            review_until=timezone.now() + timedelta(minutes=60))
+        self.client.force_login(self.superuser)
+        with patch('api.services.list_cleaning.service.get_runner') as g:
+            g.return_value.fetch_result.side_effect = RunFailed(
+                'Execution ended with FAILED: States.Timeout')
+            response = self.client.post(
+                f'/api/facility-lists/{self.list.id}/approve/',
+                {'reason': 'x'}, format='json')
+        self.assertNotEqual(response.status_code,
+                            status.HTTP_400_BAD_REQUEST, response.data)
+        run.refresh_from_db()
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        self.assertEqual(run.closed_reason, ListCleaningRun.FAILED_RUN)
+        self.assertIn('States.Timeout', run.error)
+
+    def test_moderation_waits_while_the_pipeline_is_still_running(self):
+        ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.STEP_FUNCTIONS,
+            status=ListCleaningRun.RUNNING, execution_arn='arn:exec',
+            review_until=timezone.now() + timedelta(minutes=60))
+        self.client.force_login(self.superuser)
+        with patch('api.services.list_cleaning.service.get_runner') as g:
+            g.return_value.fetch_result.return_value = None
+            response = self.client.post(
+                f'/api/facility-lists/{self.list.id}/approve/',
+                {'reason': 'x'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('review window', str(response.data))
+
+    def test_release_command_polls_running_runs(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.STEP_FUNCTIONS,
+            status=ListCleaningRun.RUNNING, execution_arn='arn:exec',
+            review_until=timezone.now() + timedelta(minutes=60))
+        with patch('api.services.list_cleaning.service.get_runner') as g:
+            g.return_value.fetch_result.side_effect = RunFailed('boom')
+            call_command('list_cleaning_release', stdout=StringIO())
+        run.refresh_from_db()
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        self.assertIsNotNone(run.closed_at)
 
     def test_review_events_and_metrics(self):
         run = self._ingested_run()

@@ -152,6 +152,33 @@ describe('row components', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Keep row' }));
         expect(onDecide).toHaveBeenLastCalledWith('REJECTED');
     });
+
+    test('an exact repeat the upload check dropped has no buttons', () => {
+        const fixed = {
+            ...SUGGESTIONS.duplicate,
+            extra: { ...SUGGESTIONS.duplicate.extra, parser_removed: true },
+        };
+        render(<Removal suggestion={fixed} canAct busy={false} onDecide={jest.fn()} />);
+        expect(screen.getByText('Removed: exact repeat')).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Keep row' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Remove row' })).toBeNull();
+    });
+
+    test('undo on a flagged row puts it back to undecided', () => {
+        const onDecide = jest.fn();
+        const fixedRow = { ...SUGGESTIONS.poBox, decision: 'EDITED' };
+        render(<Issue suggestion={fixedRow} canAct busy={false} onDecide={onDecide} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+        expect(onDecide).toHaveBeenLastCalledWith('PENDING');
+        fireEvent.click(screen.getByRole('button', { name: 'Leave as uploaded' }));
+        expect(onDecide).toHaveBeenLastCalledWith('REJECTED');
+    });
+
+    test('an undecided flagged row has nothing to undo', () => {
+        render(<Issue suggestion={SUGGESTIONS.poBox} canAct busy={false} onDecide={jest.fn()} />);
+        expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Leave as uploaded' })).toBeInTheDocument();
+    });
 });
 
 describe('GroupTabs', () => {

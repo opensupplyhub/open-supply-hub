@@ -286,7 +286,7 @@ const CODE_GUIDE = Object.freeze({
             'Only one version of a facility can exist on OS Hub; a duplicate would be matched to the first and discarded anyway.',
         fix: [
             'If they really are the same facility, nothing more is needed: the repeat is removed and the first row kept.',
-            'If they are different facilities, keep the row and give it a unique unit number or address detail.',
+            'If they are different facilities, keep the row and give it a unique unit number or address detail. An exact repeat of another row cannot be kept: change it and upload the list again.',
         ],
     },
     empty: {
@@ -1217,16 +1217,24 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
                                 Remove row
                             </Button>
                         )}
-                        {suggestion.decision !== DECISION.REJECTED &&
-                            suggestion.decision !== DECISION.PENDING && (
-                                <Button
-                                    size="small"
-                                    disabled={busy}
-                                    onClick={() => onDecide(DECISION.REJECTED)}
-                                >
-                                    Undo
-                                </Button>
-                            )}
+                        {suggestion.decision !== DECISION.REJECTED && (
+                            <Button
+                                size="small"
+                                disabled={busy}
+                                onClick={() => onDecide(DECISION.REJECTED)}
+                            >
+                                Leave as uploaded
+                            </Button>
+                        )}
+                        {suggestion.decision !== DECISION.PENDING && (
+                            <Button
+                                size="small"
+                                disabled={busy}
+                                onClick={() => onDecide(DECISION.PENDING)}
+                            >
+                                Undo
+                            </Button>
+                        )}
                     </>
                 )}
             </div>
@@ -1244,9 +1252,13 @@ Issue.propTypes = {
 };
 
 export const Removal = ({ suggestion, canAct, busy, onDecide }) => {
+    // An exact repeat the upload check already dropped: shown so the
+    // contributor knows, but not theirs to put back.
+    const fixed = !!suggestion.extra?.parser_removed;
     const decisionLabel = (() => {
         switch (suggestion.decision) {
             case DECISION.ACCEPTED:
+                if (fixed) return 'Removed: exact repeat';
                 return suggestion.applied ? 'Removed' : 'Will be removed';
             case DECISION.REJECTED:
                 return 'Kept';
@@ -1267,7 +1279,7 @@ export const Removal = ({ suggestion, canAct, busy, onDecide }) => {
             </div>
             <div style={styles.decisionBlock}>
                 <span style={styles.decisionText}>{decisionLabel}</span>
-                {canAct && suggestion.decision !== DECISION.ACCEPTED && (
+                {canAct && !fixed && suggestion.decision !== DECISION.ACCEPTED && (
                     <Button
                         size="small"
                         color="primary"
@@ -1277,7 +1289,7 @@ export const Removal = ({ suggestion, canAct, busy, onDecide }) => {
                         Remove row
                     </Button>
                 )}
-                {canAct && suggestion.decision !== DECISION.REJECTED && (
+                {canAct && !fixed && suggestion.decision !== DECISION.REJECTED && (
                     <Button
                         size="small"
                         disabled={busy}
@@ -1428,12 +1440,21 @@ const groupTitle = group => {
 
 const groupStatus = group => {
     const parts = [];
+    const fixed = group.fixed || 0;
+    const accepted = group.accepted - fixed;
     if (group.pending) parts.push(`${group.pending} to review`);
-    if (group.accepted) {
+    if (accepted) {
         parts.push(
             group.kind === KIND.REMOVAL
-                ? `${group.accepted} to remove`
-                : `${group.accepted} accepted`,
+                ? `${accepted} to remove`
+                : `${accepted} accepted`,
+        );
+    }
+    if (fixed) {
+        parts.push(
+            `${fixed} exact ${
+                fixed === 1 ? 'repeat' : 'repeats'
+            } removed at upload`,
         );
     }
     if (group.edited) parts.push(`${group.edited} fixed by you`);
@@ -1660,21 +1681,26 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
     // group buttons act on the others. Once every row has been decided
     // one by one there are no "others", so the buttons cover all rows
     // again (clearing the row-by-row marks first).
+    // Exact repeats the upload check dropped are not the contributor's
+    // to decide, so the buttons never count them.
+    const fixed = group.fixed || 0;
+    const actionable = group.count - fixed;
+    const accepted = group.accepted - fixed;
     const byRow = group.by_row || 0;
-    const rest = group.count - byRow;
+    const rest = actionable - byRow;
     const everyRow = rest === 0;
     const onGroup = decision => decideGroup(group.key, decision, everyRow);
     const partial = byRow > 0 && !everyRow;
-    const scope = everyRow ? group.count : rest;
-    const others = partial ? `the other ${rest}` : `all ${group.count}`;
+    const scope = everyRow ? actionable : rest;
+    const others = partial ? `the other ${rest}` : `all ${actionable}`;
     const otherRows = partial
         ? `the other ${plural(rest, 'row')}`
-        : plural(group.count, 'row');
+        : plural(actionable, 'row');
     // Nothing left for the button to do once every row in scope
     // already carries that decision.
-    const allAccepted = group.accepted >= scope;
+    const allAccepted = accepted >= scope;
     const allRejected = group.rejected >= scope;
-    const allRemoved = group.removed + group.accepted >= scope;
+    const allRemoved = group.removed + accepted >= scope;
     return (
         <div style={chipStyles.header}>
             <Typography variant="subheading">
@@ -1689,7 +1715,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                 </div>
             )}
             <div style={styles.decisionText}>{groupStatus(group)}</div>
-            {canAct && !internal && (
+            {canAct && !internal && actionable > 0 && (
                 <div style={chipStyles.headerActions}>
                     {group.kind === KIND.CORRECTION && (
                         <>
@@ -1856,7 +1882,9 @@ const BulkBar = ({ rows, selected, busy, decide, onClear }) => {
         (acc, r) =>
             acc.concat(
                 r.suggestions.filter(
-                    s => s.severity !== SEVERITY.INTERNAL_NOTE,
+                    s =>
+                        s.severity !== SEVERITY.INTERNAL_NOTE &&
+                        !s.extra?.parser_removed,
                 ),
             ),
         [],
