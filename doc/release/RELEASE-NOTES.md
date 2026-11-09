@@ -57,6 +57,10 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `POST /api/claim-campaigns/` and `GET /api/claim-campaigns/candidates/[?list=id]` (behind the `claim_campaign_self_serve` flag) let a brand create a campaign from OS IDs on one of its own active lists, public or private, with a generated code.
     * The claim submission accepts an optional `campaign` code. A claim is attributed to the campaign whose link was used, or else to the single active campaign whose roster has the facility.
     * `GET /api/facility-claims/` accepts a `campaigns` filter and returns each claim's campaign.
+    * The candidates list gives each list's `supplier_count` and a `pending` flag (the list is still in moderation or its rows are still being processed). A brand that contributed through the API also gets one entry with id `api` for those submissions; `?list=api` returns their suppliers and `POST` accepts `list_id: "api"`.
+    * `GET /api/claim-campaigns/candidates/search/` returns facilities matching the public search filters (closed ones excluded, at most 500, by name), so a brand can add suppliers it didn't contribute. Creating a campaign refuses closed and already-claimed facilities.
+    * `POST /api/claim-campaigns/{id}/close/` closes one of the requester's own campaigns (no self-serve flag needed; another brand's campaign is a 404). A closed campaign stops attributing new claims and can't send invites.
+    * `POST /api/facilities/{os_id}/claim-invite/` accepts an optional `campaign` code for the sender's own active campaign that has the facility; the invite link then carries the code.
 
 ### What's new
 * [OSDEV-3723](https://opensupplyhub.atlassian.net/browse/OSDEV-3723) - OS Hub staff can turn a site-wide announcement banner on and off and edit its text and links from the Django admin, without a deploy.

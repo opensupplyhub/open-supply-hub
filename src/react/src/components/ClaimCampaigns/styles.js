@@ -52,6 +52,20 @@ export const claimCampaignsStyles = theme =>
         campaignMeta: Object.freeze({
             color: COLOURS.DARK_GREY,
         }),
+        campaignActions: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+        }),
+        closedNote: Object.freeze({
+            marginTop: '12px',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            backgroundColor: COLOURS.LIGHT_GREY,
+            border: `1px solid ${COLOURS.GREY}`,
+            fontSize: '14px',
+        }),
         codeBox: Object.freeze({
             display: 'flex',
             alignItems: 'center',
@@ -308,6 +322,16 @@ export const newClaimCampaignStyles = theme =>
         }),
         publicChip: Object.freeze({
             height: '24px',
+        }),
+        pendingChip: Object.freeze({
+            height: '24px',
+            backgroundColor: COLOURS.LIGHT_GREY,
+            border: `1px solid ${COLOURS.GREY}`,
+        }),
+        listCount: Object.freeze({
+            fontSize: '13px',
+            color: COLOURS.DARK_GREY,
+            marginRight: '8px',
         }),
         privateChip: Object.freeze({
             height: '24px',

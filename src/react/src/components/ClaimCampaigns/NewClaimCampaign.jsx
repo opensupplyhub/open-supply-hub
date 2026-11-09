@@ -73,6 +73,24 @@ const firstError = error => {
         : 'An error prevented creating the campaign.';
 };
 
+// A list still in moderation or processing may have no matched
+// suppliers yet; until it has some there is nothing to choose from it.
+export const isSelectableList = list =>
+    !(list.pending && list.supplier_count === 0);
+
+export const describeListCount = list => {
+    if (typeof list.supplier_count !== 'number') {
+        return null;
+    }
+    if (list.pending && list.supplier_count === 0) {
+        return 'No suppliers matched yet';
+    }
+    const count = `${list.supplier_count} supplier${
+        list.supplier_count === 1 ? '' : 's'
+    }`;
+    return list.pending ? `${count} matched so far` : count;
+};
+
 export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
     const [lists, setLists] = useState(null);
     const [listsError, setListsError] = useState(false);
@@ -99,8 +117,9 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
             .get(makeClaimCampaignCandidatesURL())
             .then(({ data }) => {
                 setLists(data);
-                if (data.length) {
-                    setListId(data[0].id);
+                const first = data.find(isSelectableList);
+                if (first) {
+                    setListId(first.id);
                 }
             })
             .catch(() => setListsError(true));
@@ -286,9 +305,11 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     <Link to={contributeRoute}>
                                         Upload a list
                                     </Link>{' '}
-                                    first. If you don&apos;t want OS Hub to show
-                                    you as connected to these suppliers, ask the
-                                    OS Hub team to make the list private.
+                                    first, or choose suppliers from a search
+                                    instead. If you don&apos;t want OS Hub to
+                                    show you as connected to these suppliers,
+                                    ask the OS Hub team to make the list
+                                    private.
                                 </Typography>
                             </Paper>
                         ) : (
@@ -305,6 +326,9 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                                     onChange={() =>
                                                         setListId(list.id)
                                                     }
+                                                    disabled={
+                                                        !isSelectableList(list)
+                                                    }
                                                     color="primary"
                                                 />
                                             }
@@ -313,6 +337,23 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                                 label: classes.listName,
                                             }}
                                         />
+                                        <Typography
+                                            className={classes.listCount}
+                                        >
+                                            {describeListCount(list)}
+                                        </Typography>
+                                        {list.pending && (
+                                            <Chip
+                                                label="Pending"
+                                                className={classes.pendingChip}
+                                            />
+                                        )}
+                                        {list.kind === 'api' && (
+                                            <Chip
+                                                label="API"
+                                                className={classes.publicChip}
+                                            />
+                                        )}
                                         <Chip
                                             label={
                                                 list.is_public
@@ -331,6 +372,8 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     Inviting suppliers from a private list
                                     doesn&apos;t publish your connection to
                                     them.
+                                    {lists.some(list => list.pending) &&
+                                        ' A pending list is still being reviewed or matched by OS Hub. Its suppliers appear here once they are matched.'}
                                 </Typography>
                             </Paper>
                         )}

@@ -509,3 +509,68 @@ describe('ClaimCampaigns component', () => {
         expect(neutralizeCSVFormula('Anand Textiles')).toBe('Anand Textiles');
     });
 });
+
+describe('Closing a campaign', () => {
+    beforeEach(() => {
+        apiRequest.get.mockReset();
+        apiRequest.post.mockReset();
+    });
+
+    test('asks first, then closes the campaign and reloads', async () => {
+        const closed = { ...mockCampaigns[0], status: 'CLOSED' };
+        apiRequest.get
+            .mockResolvedValueOnce({ data: mockCampaigns })
+            .mockResolvedValue({ data: [closed] });
+        apiRequest.post.mockResolvedValue({ data: closed });
+
+        const { findByText, getByText, getByRole, queryByText } = renderComponent(
+            true,
+            {},
+            { claimInvite: true },
+        );
+
+        fireEvent.click(await findByText('Close campaign'));
+        expect(
+            getByText('Close Fresh Produce Suppliers 2026?'),
+        ).toBeInTheDocument();
+        expect(apiRequest.post).not.toHaveBeenCalled();
+
+        fireEvent.click(
+            getByRole('button', { name: 'Close campaign' }),
+        );
+        await waitFor(() =>
+            expect(apiRequest.post).toHaveBeenCalledWith(
+                '/api/claim-campaigns/1/close/',
+            ),
+        );
+        expect(
+            await findByText(/This campaign is closed/),
+        ).toBeInTheDocument();
+        expect(queryByText('Close campaign')).not.toBeInTheDocument();
+    });
+
+    test('"Keep it open" closes the dialog without closing the campaign', async () => {
+        apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+        const { findByText, getByText } = renderComponent();
+
+        fireEvent.click(await findByText('Close campaign'));
+        fireEvent.click(getByText('Keep it open'));
+        expect(apiRequest.post).not.toHaveBeenCalled();
+    });
+
+    test('a closed campaign offers links but no email invites', async () => {
+        apiRequest.get.mockResolvedValue({
+            data: [{ ...mockCampaigns[0], status: 'CLOSED' }],
+        });
+        const { findByText, queryByText, queryByPlaceholderText } = renderComponent(
+            true,
+            {},
+            { claimInvite: true },
+        );
+
+        expect(await findByText(/This campaign is closed/)).toBeInTheDocument();
+        expect(queryByText('Close campaign')).not.toBeInTheDocument();
+        expect(queryByText('Email')).not.toBeInTheDocument();
+        expect(queryByPlaceholderText(/@/)).not.toBeInTheDocument();
+    });
+});

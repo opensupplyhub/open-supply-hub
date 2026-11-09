@@ -20,8 +20,22 @@ beforeAll(() => {
 });
 
 const lists = [
-    { id: 7, name: 'Research shortlist', is_public: false },
-    { id: 3, name: 'Tier 1 suppliers', is_public: true },
+    {
+        id: 7,
+        name: 'Research shortlist',
+        kind: 'list',
+        is_public: false,
+        pending: false,
+        supplier_count: 3,
+    },
+    {
+        id: 3,
+        name: 'Tier 1 suppliers',
+        kind: 'list',
+        is_public: true,
+        pending: false,
+        supplier_count: 1,
+    },
 ];
 
 const suppliersByList = {
@@ -208,5 +222,112 @@ describe('NewClaimCampaign component', () => {
         expect(checkbox).not.toBeChecked();
         expect(getByText('Closed')).toBeInTheDocument();
         expect(getByText('1 supplier will get a claim link')).toBeInTheDocument();
+    });
+});
+
+describe('NewClaimCampaign list sources', () => {
+    const apiSuppliers = [
+        {
+            os_id: 'VN2025001APIAAA',
+            name: 'Saigon Knitwear JSC',
+            country_code: 'VN',
+            claim_status: 'unclaimed',
+        },
+    ];
+
+    const mockSources = sources =>
+        apiRequest.get.mockImplementation(url => {
+            const match = url.match(/list=(\w+)/);
+            if (match) {
+                const id = match[1] === 'api' ? 'api' : Number(match[1]);
+                return Promise.resolve({
+                    data: {
+                        id,
+                        suppliers:
+                            id === 'api'
+                                ? apiSuppliers
+                                : suppliersByList[id] || [],
+                    },
+                });
+            }
+            return Promise.resolve({ data: sources });
+        });
+
+    beforeEach(() => {
+        apiRequest.get.mockReset();
+        apiRequest.post.mockReset();
+    });
+
+    test('a list still in moderation is marked pending and cannot be chosen', async () => {
+        mockSources([
+            {
+                id: 9,
+                name: 'New upload',
+                kind: 'list',
+                is_public: true,
+                pending: true,
+                supplier_count: 0,
+            },
+            lists[1],
+        ]);
+        const { findByText, getByText, getAllByRole } = renderComponent();
+
+        expect(await findByText('New upload')).toBeInTheDocument();
+        expect(getByText('Pending')).toBeInTheDocument();
+        expect(getByText('No suppliers matched yet')).toBeInTheDocument();
+        expect(getByText(/A pending list is still being reviewed/)).toBeInTheDocument();
+
+        const radios = getAllByRole('radio').filter(
+            radio => radio.closest('label') && radio.name !== 'source',
+        );
+        expect(radios.some(radio => radio.disabled)).toBe(true);
+        // The first list that has suppliers is chosen instead.
+        await waitFor(() =>
+            expect(apiRequest.get).toHaveBeenCalledWith(
+                '/api/claim-campaigns/candidates/?list=3',
+            ),
+        );
+        expect(apiRequest.get).not.toHaveBeenCalledWith(
+            '/api/claim-campaigns/candidates/?list=9',
+        );
+    });
+
+    test('a brand that only uses the API picks from its API submissions', async () => {
+        mockSources([
+            {
+                id: 'api',
+                name: 'Locations added through the API',
+                kind: 'api',
+                is_public: true,
+                pending: false,
+                supplier_count: 1,
+            },
+        ]);
+        apiRequest.post.mockResolvedValue({ data: { id: 5 } });
+        const { findByText, getByText, getByLabelText } = renderComponent();
+
+        expect(
+            await findByText('Locations added through the API'),
+        ).toBeInTheDocument();
+        expect(getByText('API')).toBeInTheDocument();
+        expect(getByText('1 supplier')).toBeInTheDocument();
+
+        expect(
+            await findByText('1 supplier will get a claim link'),
+        ).toBeInTheDocument();
+        fireEvent.change(getByLabelText('Campaign name'), {
+            target: { value: 'API onboarding' },
+        });
+        fireEvent.click(getByText('Create campaign'));
+
+        await waitFor(() =>
+            expect(apiRequest.post).toHaveBeenCalledWith(
+                '/api/claim-campaigns/',
+                expect.objectContaining({
+                    list_id: 'api',
+                    os_ids: ['VN2025001APIAAA'],
+                }),
+            ),
+        );
     });
 });

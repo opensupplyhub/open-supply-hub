@@ -12,6 +12,7 @@ from api.models import (
     ClaimCampaignSupplier,
     FacilityClaim,
     FacilityClaimInvite,
+    FacilityList,
     FacilityListItem,
     Source,
 )
@@ -233,6 +234,111 @@ def get_contributor_list_sources(contributor):
         .select_related('facility_list')
         .order_by('-created_at')
     )
+
+
+# The candidate "list" standing for everything the brand added through
+# the API (one SINGLE source per submission) rather than by uploading a
+# list file, so API-only contributors can pick suppliers too.
+API_SOURCE_ID = 'api'
+API_SOURCE_NAME = 'Locations added through the API'
+
+# Item statuses still on their way to a match. A list with items in
+# these states is still being processed.
+PROCESSING_ITEM_STATUSES = (
+    FacilityListItem.UPLOADED,
+    FacilityListItem.PARSED,
+    FacilityListItem.GEOCODED,
+)
+
+
+def get_contributor_api_items(contributor):
+    """Matched items the contributor submitted through the API."""
+    return exclude_removed_list_items(
+        FacilityListItem.objects.filter(
+            source__contributor=contributor,
+            source__source_type=Source.SINGLE,
+            source__is_active=True,
+            facility__isnull=False,
+        )
+    )
+
+
+def count_facilities(items):
+    return items.values('facility_id').distinct().count()
+
+
+def describe_list_source(source):
+    """
+    One entry of the step 1 list picker. A list is `pending` while OS
+    Hub staff are still moderating it or its rows are still being
+    processed; until then it may have no matched suppliers yet.
+    """
+    items = FacilityListItem.objects.filter(source=source)
+    pending = (
+        source.facility_list.status == FacilityList.PENDING
+        or items.filter(status__in=PROCESSING_ITEM_STATUSES).exists()
+    )
+    return {
+        'id': source.facility_list.id,
+        'name': source.facility_list.name,
+        'kind': 'list',
+        'is_public': source.is_public,
+        'created_at': source.created_at,
+        'pending': pending,
+        'supplier_count': count_facilities(
+            exclude_removed_list_items(items.filter(facility__isnull=False))
+        ),
+    }
+
+
+def describe_api_source(contributor):
+    """
+    The step 1 entry for the contributor's API submissions, or None if
+    it has no matched ones.
+    """
+    items = get_contributor_api_items(contributor)
+    supplier_count = count_facilities(items)
+    if not supplier_count:
+        return None
+    return {
+        'id': API_SOURCE_ID,
+        'name': API_SOURCE_NAME,
+        'kind': 'api',
+        # Each API submission has its own public/private setting; the
+        # entry is private if any of them is.
+        'is_public': not items.filter(source__is_public=False).exists(),
+        'created_at': None,
+        'pending': False,
+        'supplier_count': supplier_count,
+    }
+
+
+def get_api_facilities(contributor):
+    """
+    The distinct matched production locations the contributor added
+    through the API, oldest submission first.
+    """
+    facilities = {}
+    items = (
+        get_contributor_api_items(contributor)
+        .select_related('facility')
+        .order_by('source__created_at', 'id')
+    )
+    for item in items:
+        facilities.setdefault(item.facility.id, item.facility)
+    return list(facilities.values())
+
+
+def close_campaign(campaign):
+    """
+    Close a campaign. It stops collecting: new claims are no longer
+    attributed to it and no more invites can be sent from it. Claims
+    already attributed keep their campaign. Closing twice is a no-op.
+    """
+    if campaign.status != ClaimCampaign.Status.CLOSED:
+        campaign.status = ClaimCampaign.Status.CLOSED
+        campaign.save(update_fields=['status', 'updated_at'])
+    return campaign
 
 
 def exclude_removed_list_items(items):

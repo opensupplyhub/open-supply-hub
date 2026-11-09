@@ -4,10 +4,12 @@ from api.models.facility.claim_campaign import ClaimCampaign
 from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.services.claim_campaign_service import (
+    API_SOURCE_ID,
     MAX_SUPPLIERS_PER_CAMPAIGN,
     exclude_removed_list_items,
     get_campaign_invites,
     get_claim_statuses,
+    get_contributor_api_items,
     get_contributor_list_sources,
     serialize_suppliers,
 )
@@ -88,7 +90,9 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
     # CharField trims surrounding whitespace before validating, so a
     # whitespace-only name is rejected as blank.
     name = serializers.CharField(max_length=MAX_CAMPAIGN_NAME_LENGTH)
-    list_id = serializers.IntegerField(required=False, allow_null=True)
+    # A list ID, or `api` for the locations the brand added through the
+    # API. Absent or null when the suppliers come from a search.
+    list_id = serializers.CharField(required=False, allow_null=True)
     os_ids = serializers.ListField(
         child=serializers.CharField(max_length=32),
         allow_empty=False,
@@ -111,10 +115,30 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
         data['os_ids'] = list(dict.fromkeys(data['os_ids']))
         if data.get('list_id') is None:
             self.validate_search_suppliers(data['os_ids'])
+        elif data['list_id'] == API_SOURCE_ID:
+            self.validate_api_suppliers(data['os_ids'])
         else:
             self.validate_list_suppliers(data['list_id'], data['os_ids'])
         self.validate_open_and_unclaimed(data['os_ids'])
         return data
+
+    def validate_api_suppliers(self, os_ids):
+        on_api = set(
+            get_contributor_api_items(self.context['contributor'])
+            .filter(facility_id__in=os_ids)
+            .values_list('facility_id', flat=True)
+        )
+        missing = [os_id for os_id in os_ids if os_id not in on_api]
+        if missing:
+            raise serializers.ValidationError(
+                {
+                    'os_ids': (
+                        'These OS IDs were not added through your API '
+                        'submissions: '
+                        + ', '.join(missing[:10])
+                    )
+                }
+            )
 
     def validate_list_suppliers(self, list_id, os_ids):
         contributor = self.context['contributor']
@@ -122,6 +146,8 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
             get_contributor_list_sources(contributor)
             .filter(facility_list_id=list_id)
             .first()
+            if str(list_id).isdigit()
+            else None
         )
         if source is None:
             raise serializers.ValidationError(

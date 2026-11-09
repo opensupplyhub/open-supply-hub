@@ -8,6 +8,11 @@ import moment from 'moment';
 import Button from '@material-ui/core/Button';
 import Chip from '@material-ui/core/Chip';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
 import Select from '@material-ui/core/Select';
@@ -33,6 +38,7 @@ import {
     CLAIM_INVITE,
     claimIntroRoute,
     makeClaimCampaignCandidatesURL,
+    makeCloseClaimCampaignURL,
     newClaimCampaignRoute,
 } from '../../util/constants';
 import {
@@ -384,7 +390,84 @@ KpiTile.propTypes = {
     classes: object.isRequired,
 };
 
-const CampaignCard = ({ campaign, canEmail, classes }) => {
+// Asks before closing: a closed campaign stops counting new claims and
+// can't send invites, and brands can't reopen it themselves.
+export const CloseCampaignDialog = ({
+    open,
+    campaign,
+    closing,
+    error,
+    onCancel,
+    onConfirm,
+}) => (
+    <Dialog open={open} onClose={closing ? undefined : onCancel}>
+        <DialogTitle>Close {campaign.name}?</DialogTitle>
+        <DialogContent>
+            <DialogContentText>
+                Once it&apos;s closed, new claims from these suppliers
+                won&apos;t count toward this campaign, and you can&apos;t send
+                invites from it. Claims already made stay in its numbers. To
+                reopen it, contact the OS Hub team.
+            </DialogContentText>
+            {error && (
+                <DialogContentText color="error" role="alert">
+                    {error}
+                </DialogContentText>
+            )}
+        </DialogContent>
+        <DialogActions>
+            <Button onClick={onCancel} disabled={closing}>
+                Keep it open
+            </Button>
+            <Button onClick={onConfirm} color="primary" disabled={closing}>
+                {closing ? 'Closing…' : 'Close campaign'}
+            </Button>
+        </DialogActions>
+    </Dialog>
+);
+
+CloseCampaignDialog.defaultProps = {
+    error: null,
+};
+
+CloseCampaignDialog.propTypes = {
+    open: bool.isRequired,
+    campaign: shape({ name: string.isRequired }).isRequired,
+    closing: bool.isRequired,
+    error: string,
+    onCancel: func.isRequired,
+    onConfirm: func.isRequired,
+};
+
+const CampaignCard = ({
+    campaign,
+    canEmail: canEmailAtAll,
+    onClosed,
+    classes,
+}) => {
+    const isActive = campaign.status === 'ACTIVE';
+    // A closed campaign can't send invites (the server refuses them).
+    const canEmail = canEmailAtAll && isActive;
+    const [confirmClose, setConfirmClose] = useState(false);
+    const [closing, setClosing] = useState(false);
+    const [closeError, setCloseError] = useState(null);
+    const closeCampaign = () => {
+        setClosing(true);
+        setCloseError(null);
+        apiRequest
+            .post(makeCloseClaimCampaignURL(campaign.id))
+            .then(() => {
+                setClosing(false);
+                setConfirmClose(false);
+                onClosed();
+            })
+            .catch(() => {
+                setClosing(false);
+                setCloseError(
+                    'The campaign could not be closed. Please try again.',
+                );
+            });
+    };
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -443,16 +526,45 @@ const CampaignCard = ({ campaign, canEmail, classes }) => {
                         {moment(campaign.created_at).format('D MMM YYYY')}
                     </Typography>
                 </div>
-                <div className={classes.codeBox}>
-                    <span className={classes.codeLabel}>Campaign code</span>
-                    <span className={classes.code}>{campaign.code}</span>
-                    <CopyToClipboard text={campaign.code}>
-                        <Button size="small" color="primary">
-                            Copy
+                <div className={classes.campaignActions}>
+                    <div className={classes.codeBox}>
+                        <span className={classes.codeLabel}>Campaign code</span>
+                        <span className={classes.code}>{campaign.code}</span>
+                        <CopyToClipboard text={campaign.code}>
+                            <Button size="small" color="primary">
+                                Copy
+                            </Button>
+                        </CopyToClipboard>
+                    </div>
+                    {isActive && (
+                        <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => setConfirmClose(true)}
+                        >
+                            Close campaign
                         </Button>
-                    </CopyToClipboard>
+                    )}
                 </div>
             </div>
+            {!isActive && (
+                <Typography className={classes.closedNote} role="status">
+                    This campaign is closed. New claims from these suppliers no
+                    longer count toward it, and invites can&apos;t be sent from
+                    it.
+                </Typography>
+            )}
+            <CloseCampaignDialog
+                open={confirmClose}
+                campaign={campaign}
+                closing={closing}
+                error={closeError}
+                onCancel={() => {
+                    setConfirmClose(false);
+                    setCloseError(null);
+                }}
+                onConfirm={closeCampaign}
+            />
 
             <div className={classes.kpiRow}>
                 <KpiTile
@@ -671,6 +783,7 @@ const CampaignCard = ({ campaign, canEmail, classes }) => {
 CampaignCard.propTypes = {
     campaign: campaignPropType.isRequired,
     canEmail: bool.isRequired,
+    onClosed: func.isRequired,
     classes: object.isRequired,
 };
 
@@ -785,6 +898,7 @@ const ClaimCampaigns = ({
                             key={campaign.id}
                             campaign={campaign}
                             canEmail={canEmail}
+                            onClosed={fetchCampaigns}
                             classes={classes}
                         />
                     ))
