@@ -413,6 +413,21 @@ class SourceAdmin(admin.ModelAdmin):
     readonly_fields = ('source_type', 'facility_list', 'create')
     list_filter = ('source_type', 'contributor')
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if change and 'contributor' in form.changed_data:
+            # The re-attribution is dispatched after this request's
+            # transaction commits, and for a list it runs as a Batch job
+            # that outlives the response, so the message must hold for
+            # both paths rather than claim either one. See OSDEV-3758.
+            messages.info(
+                request,
+                'Contributor updated. The extended fields contributed '
+                'through this source are being re-attributed to the new '
+                'contributor; for large lists this runs in the background '
+                'and can take a few minutes to appear.',
+            )
+
 
 class RequestLogAdmin(admin.ModelAdmin):
     readonly_fields = ('user', 'token', 'method', 'path', 'response_code',

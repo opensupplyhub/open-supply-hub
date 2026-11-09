@@ -20,6 +20,7 @@ class ProcessingAction:
     NOTIFY_COMPLETE = 'notify_complete'
     ITEM_REMOVED = 'item_removed'
     UNDO_MERGE = 'undo_merge'
+    REASSIGN_EXTENDED_FIELDS = 'reassign_extended_fields'
 
 
 class FacilitiesQueryParams:
