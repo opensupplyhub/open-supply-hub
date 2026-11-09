@@ -1,10 +1,12 @@
 import mimetypes
+import re
 import threading
-import unicodedata
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote
 
 import boto3
+from unidecode import unidecode
+
 from django.conf import settings
 from django.core.files.storage import default_storage
 
@@ -23,49 +25,51 @@ _credentials_lock = threading.Lock()
 _cached_credentials = None
 _cached_credentials_expiry = None
 
-# Characters that NFKD leaves intact because they are letters in their own
-# right rather than accented Latin. Without these the ASCII fallback drops
-# them outright, turning "çalıştırma" into "calstrma".
-_ASCII_FOLDING = str.maketrans({
-    'ı': 'i', 'İ': 'I', 'ğ': 'g', 'Ğ': 'G', 'ş': 's', 'Ş': 'S',
-    'ø': 'o', 'Ø': 'O', 'đ': 'd', 'Đ': 'D', 'ł': 'l', 'Ł': 'L',
-    'æ': 'ae', 'Æ': 'AE', 'œ': 'oe', 'Œ': 'OE', 'ß': 'ss',
-})
+_SEPARATOR_RUN = re.compile(r'[-\s]+')
+
+# Characters that would close the quoted filename and open a parameter of
+# their own. Stripped after transliteration, not before: unidecode maps
+# several ordinary letters onto them, including the Japanese iteration
+# mark 々 -> " and 〆 -> /, both of which occur in real names.
+_HEADER_UNSAFE = re.compile(r'["<>;,\\/\r\n]')
+
+
+def _to_ascii(value):
+    '''
+    Render one filename part as hyphen-separated ASCII. unidecode is used
+    rather than an NFKD fold because NFKD drops any letter it cannot
+    decompose, turning "çalıştırma" into "calstrma" and a CJK name into
+    nothing at all.
+    '''
+    transliterated = _HEADER_UNSAFE.sub('', unidecode(value))
+    return _SEPARATOR_RUN.sub('-', transliterated).strip('-')
 
 
 def build_content_disposition(file_name):
     '''
-    Build an RFC 6266 Content-Disposition carrying both an ASCII-folded
-    `filename=` and the RFC 5987 `filename*=UTF-8''` form. HTTP header
-    values are ISO-8859-1, so a Turkish or CJK name in the plain form
-    alone makes S3 reject the presigned request (OSDEV-3600).
+    Build an RFC 6266 Content-Disposition carrying both a transliterated
+    ASCII `filename=` and the RFC 5987 `filename*=UTF-8''` form. HTTP
+    header values are ISO-8859-1, so a Turkish or CJK name in the plain
+    form alone makes S3 reject the presigned request (OSDEV-3600).
     '''
-    # The display name is already slugified at upload; strip quotes and
-    # any stray path separators defensively.
-    safe_name = file_name.replace('"', '').replace('/', '').replace(
-        '\\', ''
-    ) or 'attachment'
-
-    stem, dot, extension = safe_name.rpartition('.')
+    stem, dot, extension = file_name.rpartition('.')
     if not dot:
-        stem, extension = safe_name, ''
+        stem, extension = file_name, ''
 
-    folded_stem = unicodedata.normalize(
-        'NFKD', stem.translate(_ASCII_FOLDING)
-    ).encode('ascii', 'ignore').decode('ascii')
-    folded_extension = unicodedata.normalize(
-        'NFKD', extension.translate(_ASCII_FOLDING)
-    ).encode('ascii', 'ignore').decode('ascii')
+    # Name both forms, not just the fallback: slugify reduces a stem of
+    # only emoji or punctuation to nothing, and a bare ".pdf" in
+    # filename* makes a browser save a hidden, stem-less dotfile.
+    def _join(part_stem, part_extension):
+        if part_extension:
+            return f'{part_stem}.{part_extension}'
+        return part_stem
 
-    # Keep the extension even when the stem folds away entirely, so the
-    # fallback name still opens in the right application.
-    ascii_name = folded_stem or 'attachment'
-    if folded_extension:
-        ascii_name = f'{ascii_name}.{folded_extension}'
+    ascii_name = _join(_to_ascii(stem) or 'attachment', _to_ascii(extension))
+    display_name = _join(stem or 'attachment', extension)
 
     # quote() leaves the RFC 5987 attr-chars (ALPHA/DIGIT/-._~) alone and
-    # percent-encodes the rest as UTF-8.
-    encoded_name = quote(safe_name, safe='')
+    # percent-encodes the rest as UTF-8, so no delimiter survives here.
+    encoded_name = quote(display_name, safe='')
 
     return (
         f'attachment; filename="{ascii_name}"; '
