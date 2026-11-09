@@ -5,6 +5,7 @@ from api.models.facility.facility import Facility
 from api.models.facility.facility_list_item import FacilityListItem
 from api.services.claim_campaign_service import (
     MAX_SUPPLIERS_PER_CAMPAIGN,
+    exclude_removed_list_items,
     get_campaign_invites,
     get_claim_statuses,
     get_contributor_list_sources,
@@ -59,10 +60,12 @@ class ClaimCampaignSerializer(serializers.ModelSerializer):
     def build_list_suppliers(contributor_id):
         facilities = {
             item.facility.id: item.facility
-            for item in FacilityListItem.objects.filter(
-                source__contributor_id=contributor_id,
-                source__is_active=True,
-                facility__isnull=False,
+            for item in exclude_removed_list_items(
+                FacilityListItem.objects.filter(
+                    source__contributor_id=contributor_id,
+                    source__is_active=True,
+                    facility__isnull=False,
+                )
             ).select_related('facility')
         }
         return serialize_suppliers(facilities.values())

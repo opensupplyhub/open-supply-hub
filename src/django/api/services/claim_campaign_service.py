@@ -11,6 +11,7 @@ from api.models import (
     ClaimCampaign,
     ClaimCampaignSupplier,
     FacilityClaim,
+    FacilityClaimInvite,
     FacilityListItem,
     Source,
 )
@@ -149,6 +150,10 @@ def get_claim_statuses(facility_ids):
     Map each facility ID to its public claim status: 'claimed' (approved
     claim), 'pending' (pending claim) or 'unclaimed'. Denied and revoked
     claims read as 'unclaimed', matching the public v1 API.
+
+    Always read live from the claims table (nothing is cached), so a
+    supplier that claims after the campaign was created shows as such on
+    the next page load.
     """
     statuses = {}
     claims = FacilityClaim.objects.filter(
@@ -227,16 +232,30 @@ def get_contributor_list_sources(contributor):
     )
 
 
+def exclude_removed_list_items(items):
+    """
+    Drop list items the contributor has since removed from the list:
+    either the item itself was removed, or its match to a production
+    location was dissociated (the facility link stays on the item).
+    Mirrors the REMOVED filter on the facility list items endpoint.
+    """
+    return items.exclude(status=FacilityListItem.ITEM_REMOVED).exclude(
+        facilitymatch__is_active=False
+    )
+
+
 def get_list_facilities(source):
     """
-    The distinct matched production locations on one uploaded list, in
-    upload order.
+    The distinct matched production locations still on one uploaded
+    list, in upload order.
     """
     facilities = {}
     items = (
-        FacilityListItem.objects.filter(
-            source=source,
-            facility__isnull=False,
+        exclude_removed_list_items(
+            FacilityListItem.objects.filter(
+                source=source,
+                facility__isnull=False,
+            )
         )
         .select_related('facility')
         .order_by('row_index')
@@ -284,3 +303,26 @@ def create_campaign_with_suppliers(contributor, name, facility_ids):
         except IntegrityError:
             continue
     raise IntegrityError('Could not generate a unique campaign code.')
+
+
+def move_campaign_suppliers(from_facility, to_facility):
+    """
+    Carry campaign rosters and sent invites over when a production
+    location is merged into (or replaced by) another, so the campaign
+    keeps the supplier under its surviving OS ID. Without this the
+    roster rows would be cascade-deleted with the old facility, and a
+    campaign that lost its whole roster would fall back to the v1
+    every-list-facility roster.
+    """
+    already_on = set(
+        ClaimCampaignSupplier.objects.filter(
+            facility=to_facility,
+        ).values_list('campaign_id', flat=True)
+    )
+    entries = ClaimCampaignSupplier.objects.filter(facility=from_facility)
+    entries.filter(campaign_id__in=already_on).delete()
+    entries.update(facility=to_facility)
+
+    FacilityClaimInvite.objects.filter(facility=from_facility).update(
+        facility=to_facility
+    )
