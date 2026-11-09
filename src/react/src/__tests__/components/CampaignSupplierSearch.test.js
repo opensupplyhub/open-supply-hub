@@ -20,15 +20,15 @@ jest.mock('../../util/apiRequest', () => ({
 jest.mock('../../components/Filters/ContributorFilter', () => () => null);
 jest.mock('../../components/Filters/CountryNameFilter', () => () => null);
 jest.mock('../../components/Filters/SectorFilter', () => () => null);
-jest.mock('../../components/FilterSidebarExtendedSearch', () => {
-    const ReactModule = jest.requireActual('react');
-    return ReactModule.forwardRef((props, ref) => {
-        ReactModule.useImperativeHandle(ref, () => ({
-            commitPendingQuery: () => true,
-        }));
+jest.mock('../../components/Filters/StyledSelect', () => () => null);
+jest.mock(
+    '../../components/Filters/ProcessingTypeSearch',
+    () => ({ processingTypeSearchRef }) => {
+        // eslint-disable-next-line no-param-reassign
+        processingTypeSearchRef.current = { commitPendingQuery: () => true };
         return null;
-    });
-});
+    },
+);
 
 beforeAll(() => {
     window.scrollTo = jest.fn();

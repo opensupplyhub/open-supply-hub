@@ -1,5 +1,6 @@
 import COLOURS from '../../util/COLOURS';
 import { OARFont } from '../../util/constants';
+import { makeFilterStyles } from '../../util/styles';
 
 export const claimCampaignsStyles = theme =>
     Object.freeze({
@@ -356,18 +357,47 @@ export const newClaimCampaignStyles = theme =>
 export const campaignSupplierSearchStyles = theme =>
     Object.freeze({
         ...newClaimCampaignStyles(theme),
-        // The public search filters, laid out in two columns.
+        // The search filters in an even grid: same label size, same
+        // control height and the same gap between rows, whatever spacing
+        // the filters carry from the map sidebar.
         filters: Object.freeze({
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
             columnGap: '24px',
+            rowGap: '20px',
+            alignItems: 'start',
+            '& .form__field': Object.freeze({
+                margin: 0,
+            }),
+            '& .select__control': Object.freeze({
+                minHeight: '48px',
+            }),
+            '& label[for="processing-type-search"]': Object.freeze({
+                boxSizing: 'border-box',
+                minHeight: '48px',
+            }),
+        }),
+        fieldLabel: Object.freeze({
+            ...makeFilterStyles(theme).inputLabelStyle,
+        }),
+        textRoot: Object.freeze({
+            borderRadius: 0,
+            backgroundColor: COLOURS.WHITE,
+        }),
+        textInput: Object.freeze({
+            boxSizing: 'border-box',
+            height: '48px',
+            padding: '0 12px',
+        }),
+        textOutline: Object.freeze({
+            borderRadius: 0,
         }),
         searchRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: '16px',
-            margin: '16px 0 8px',
+            margin: '28px 0 8px',
         }),
     });
 
