@@ -833,6 +833,32 @@ const ClaimCampaigns = ({
     // each opens on its own page; a single campaign is shown in full.
     const collapsed = !!campaigns && campaigns.length > 1;
 
+    // Nothing yet, one campaign in full, or a roll-up of several.
+    let campaignList;
+    if (!campaigns || campaigns.length === 0) {
+        campaignList = (
+            <Typography className={classes.emptyMessage}>
+                {canCreate
+                    ? 'Your account has no claims campaigns yet. Use "New campaign" to invite suppliers from one of your lists.'
+                    : 'Your account has no claims campaigns yet. Campaigns are created for you by the OS Hub team — contact your account manager to get started.'}
+            </Typography>
+        );
+    } else if (collapsed) {
+        campaignList = (
+            <Paper className={classes.rollup}>
+                {campaigns.map(campaign => (
+                    <CampaignRollupRow
+                        key={campaign.id}
+                        campaign={campaign}
+                        classes={classes}
+                    />
+                ))}
+            </Paper>
+        );
+    } else {
+        campaignList = campaigns.map(renderCard);
+    }
+
     return (
         <AppOverflow>
             <div className={classes.container}>
@@ -895,25 +921,7 @@ const ClaimCampaigns = ({
                     </Paper>
                 )}
 
-                {!campaigns || campaigns.length === 0 ? (
-                    <Typography className={classes.emptyMessage}>
-                        {canCreate
-                            ? 'Your account has no claims campaigns yet. Use "New campaign" to invite suppliers from one of your lists.'
-                            : 'Your account has no claims campaigns yet. Campaigns are created for you by the OS Hub team — contact your account manager to get started.'}
-                    </Typography>
-                ) : collapsed ? (
-                    <Paper className={classes.rollup}>
-                        {campaigns.map(campaign => (
-                            <CampaignRollupRow
-                                key={campaign.id}
-                                campaign={campaign}
-                                classes={classes}
-                            />
-                        ))}
-                    </Paper>
-                ) : (
-                    campaigns.map(renderCard)
-                )}
+                {campaignList}
                 {!canCreate && campaigns && campaigns.length > 0 && (
                     <Typography className={classes.fine}>
                         Campaigns are created for you by the OS Hub team.
