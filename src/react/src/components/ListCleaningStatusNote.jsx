@@ -125,7 +125,7 @@ const ListCleaningStatusNote = ({
     }, [open, reviewing, data]);
 
     const run = data?.run;
-    if (!run || run.status !== 'COMPLETE') return null;
+    if (run?.status !== 'COMPLETE') return null;
     const text = statusText(run, data, { open, isListOwner, isAdminUser });
 
     return (

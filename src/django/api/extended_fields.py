@@ -220,6 +220,12 @@ def build_extendedfield(field, field_value, item, contributor):
     )
 
 
+def _data_center_value(field, field_value):
+    if field in ExtendedField.DATA_CENTER_NUMERICAL_FIELDS:
+        field_value = get_integer_or_double_value(field_value)
+    return {'raw_value': field_value}
+
+
 def extendedfield_value(field, field_value, item):
     """
     The stored value for one raw column value, or None when the value is
@@ -227,48 +233,29 @@ def extendedfield_value(field, field_value, item):
     facility and processing types), so callers may cache by field,
     value and sector.
     """
-    if field_value is not None and field_value != "" \
-            and not all_values_empty(field_value):
-        if field == ExtendedField.NUMBER_OF_WORKERS:
-            field_value = extract_int_range_value(field_value)
-        elif field == ExtendedField.PARENT_COMPANY:
-            field_value = get_parent_company_extendedfield_value(field_value)
-        elif field == ExtendedField.PARENT_COMPANY_OS_ID:
-            field_value = get_parent_company_os_id_extendedfield_value(
-                field_value
-            )
-        elif field == ExtendedField.PRODUCT_TYPE:
-            field_value = get_product_type_extendedfield_value(field_value)
-        elif (field == ExtendedField.FACILITY_TYPE or
-              field == ExtendedField.PROCESSING_TYPE):
-            field_value = (
-                get_facility_and_processing_type_extendfield_value(
-                    field_value,
-                    item.sector
-                )
-            )
-        elif (
-            field == ExtendedField.DUNS_ID
-            or field == ExtendedField.LEI_ID
-            or field == ExtendedField.RBA_ID
-        ):
-            field_value = {
-                'raw_value': field_value,
-            }
-        elif field in ExtendedField.DATA_CENTER_FIELDS:
-            if (field in ExtendedField.DATA_CENTER_NUMERICAL_FIELDS):
-                field_value = get_integer_or_double_value(field_value)
-            field_value = {
-                'raw_value': field_value,
-            }
-        elif field in ISIC_REVISION_BY_FIELD:
-            normalized_isic = get_isic_extendedfield_value(field_value, field)
-            if not normalized_isic.get('raw_value'):
-                return None
-            field_value = normalized_isic
-
-        return field_value
-    return None
+    if field_value is None or field_value == "" \
+            or all_values_empty(field_value):
+        return None
+    if field == ExtendedField.NUMBER_OF_WORKERS:
+        return extract_int_range_value(field_value)
+    if field == ExtendedField.PARENT_COMPANY:
+        return get_parent_company_extendedfield_value(field_value)
+    if field == ExtendedField.PARENT_COMPANY_OS_ID:
+        return get_parent_company_os_id_extendedfield_value(field_value)
+    if field == ExtendedField.PRODUCT_TYPE:
+        return get_product_type_extendedfield_value(field_value)
+    if field in (ExtendedField.FACILITY_TYPE, ExtendedField.PROCESSING_TYPE):
+        return get_facility_and_processing_type_extendfield_value(
+            field_value, item.sector)
+    if field in (ExtendedField.DUNS_ID, ExtendedField.LEI_ID,
+                 ExtendedField.RBA_ID):
+        return {'raw_value': field_value}
+    if field in ExtendedField.DATA_CENTER_FIELDS:
+        return _data_center_value(field, field_value)
+    if field in ISIC_REVISION_BY_FIELD:
+        normalized_isic = get_isic_extendedfield_value(field_value, field)
+        return normalized_isic if normalized_isic.get('raw_value') else None
+    return field_value
 
 
 OBJECT_FIELD_TYPE = "object"

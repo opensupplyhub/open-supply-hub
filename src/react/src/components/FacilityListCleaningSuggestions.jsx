@@ -788,6 +788,52 @@ const pendingSplit = (blocking, recommended) => {
     return parts.length ? `: ${parts.join(' · ')}` : '';
 };
 
+const CompactBar = ({
+    anchorStyle,
+    compact,
+    edges,
+    colour,
+    title,
+    percent,
+    meta,
+}) => (
+    <div style={anchorStyle} aria-hidden={!compact}>
+        <div
+            style={{
+                ...trackerStyles.compact,
+                ...edges,
+                opacity: compact ? 1 : 0,
+                pointerEvents: compact ? 'auto' : 'none',
+            }}
+            data-tour="compact"
+        >
+            <span style={{ ...trackerStyles.compactTitle, color: colour }}>
+                {title}
+            </span>
+            <div style={trackerStyles.compactTrack}>
+                <div
+                    style={{
+                        ...trackerStyles.fill,
+                        width: `${percent}%`,
+                        background: colour,
+                    }}
+                />
+            </div>
+            <span style={trackerStyles.compactMeta}>{meta}</span>
+        </div>
+    </div>
+);
+
+CompactBar.propTypes = {
+    anchorStyle: object.isRequired,
+    compact: bool.isRequired,
+    edges: object.isRequired,
+    colour: string.isRequired,
+    title: string.isRequired,
+    percent: number.isRequired,
+    meta: string.isRequired,
+};
+
 export const ReadinessTracker = ({
     summary,
     applied,
@@ -830,31 +876,15 @@ export const ReadinessTracker = ({
         : `${plural(pending, 'row')} to go${blockingNote}`;
 
     const anchor = (
-        <div style={anchorStyle} aria-hidden={!compact}>
-            <div
-                style={{
-                    ...trackerStyles.compact,
-                    ...compactEdges,
-                    opacity: compact ? 1 : 0,
-                    pointerEvents: compact ? 'auto' : 'none',
-                }}
-                data-tour="compact"
-            >
-                <span style={{ ...trackerStyles.compactTitle, color: colour }}>
-                    {shortTitle}
-                </span>
-                <div style={trackerStyles.compactTrack}>
-                    <div
-                        style={{
-                            ...trackerStyles.fill,
-                            width: `${percent}%`,
-                            background: colour,
-                        }}
-                    />
-                </div>
-                <span style={trackerStyles.compactMeta}>{compactMeta}</span>
-            </div>
-        </div>
+        <CompactBar
+            anchorStyle={anchorStyle}
+            compact={compact}
+            edges={compactEdges}
+            colour={colour}
+            title={shortTitle}
+            percent={percent}
+            meta={compactMeta}
+        />
     );
     // An ancestor of the list-page panel has a transform, which makes
     // position:fixed relative to it; a portal onto the body avoids that.

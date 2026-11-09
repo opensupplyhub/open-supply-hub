@@ -809,27 +809,27 @@ def _wants_removal(s):
         s.kind == S.REMOVAL and s.decision == S.ACCEPTED)
 
 
+def _reason_text(s):
+    if s.kind == ListCleaningSuggestion.REMOVAL:
+        dup = (s.extra or {}).get('duplicate_of')
+        if s.code == 'duplicate' and dup:
+            return f'duplicate of row {dup}'
+        return s.code.replace('_', ' ')
+    field = s.field.replace('_', ' ') if s.field else 'row'
+    return f'{s.code.replace("_", " ")} in {field}'
+
+
 def _removal_reason(suggestions):
     """Plain-language reason a row was dropped, for the CSV tag."""
-    for s in suggestions:
-        if not _wants_removal(s):
-            continue
-        if s.kind == ListCleaningSuggestion.REMOVAL:
-            dup = (s.extra or {}).get('duplicate_of')
-            if s.code == 'duplicate' and dup:
-                return f'duplicate of row {dup}'
-            return s.code.replace('_', ' ')
-        field = s.field.replace('_', ' ') if s.field else 'row'
-        return f'{s.code.replace("_", " ")} in {field}'
+    wanted = next((s for s in suggestions if _wants_removal(s)), None)
+    if wanted is not None:
+        return _reason_text(wanted)
     # The parser drops exact duplicates before the pipeline runs, so a row
     # can be gone without any accepted suggestion; still say why.
-    for s in suggestions:
-        if s.kind == ListCleaningSuggestion.REMOVAL:
-            dup = (s.extra or {}).get('duplicate_of')
-            if s.code == 'duplicate' and dup:
-                return f'duplicate of row {dup}'
-            return s.code.replace('_', ' ')
-    return ''
+    removal = next(
+        (s for s in suggestions
+         if s.kind == ListCleaningSuggestion.REMOVAL), None)
+    return _reason_text(removal) if removal is not None else ''
 
 
 @transaction.atomic
@@ -998,6 +998,27 @@ def _mark_removal(suggestions, applied, item, log_entry):
         log_entry(item, s, applied)
 
 
+def _current_cell(item, column):
+    raw = item.raw_json or {}
+    key = column.strip().lower().replace(' ', '_')
+    value = raw.get(column, raw.get(key, ''))
+    return _safe_cell('' if value is None else str(value))
+
+
+def _uploaded_cells(item, header):
+    # raw_data is the row exactly as it came in, in header order.
+    values = next(csv.reader([item.raw_data or '']), [])
+    return [_safe_cell(v) for v in
+            (values + [''] * len(header))[:len(header)]]
+
+
+def _paired(current, original):
+    row = []
+    for now, then in zip(current, original):
+        row += [now, then]
+    return row
+
+
 def _removal_tag(item, suggestions):
     """The tag for a dropped row, or '' for a row that stays."""
     if item.status not in REMOVED_STATUSES:
@@ -1030,34 +1051,17 @@ def build_fixed_csv(run):
     for s in run.suggestions.all():
         by_item.setdefault(s.facility_list_item_id, []).append(s)
 
-    def cell(item, column):
-        raw = item.raw_json or {}
-        key = column.strip().lower().replace(' ', '_')
-        value = raw.get(column, raw.get(key, ''))
-        return _safe_cell('' if value is None else str(value))
-
-    def uploaded(item):
-        # raw_data is the row exactly as it came in, in header order.
-        values = next(csv.reader([item.raw_data or '']), [])
-        return [_safe_cell(v) for v in
-                (values + [''] * len(header))[:len(header)]]
-
-    def paired(current, original):
-        row = []
-        for now, then in zip(current, original):
-            row += [now, then]
-        return row
-
     kept, dropped = [], []
     for item in items:
-        original = uploaded(item)
+        original = _uploaded_cells(item, header)
         if item.status == FacilityListItem.ERROR_PARSING:
-            dropped.append(paired(original, original)
+            dropped.append(_paired(original, original)
                            + ['not read: fix the row and re-upload'])
             continue
-        values = paired([cell(item, column) for column in header], original)
+        current = [_current_cell(item, column) for column in header]
         tag = _removal_tag(item, by_item.get(item.id, []))
-        (dropped if tag else kept).append(values + [tag])
+        (dropped if tag else kept).append(
+            _paired(current, original) + [tag])
 
     out = io.StringIO()
     writer = csv.writer(out)

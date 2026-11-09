@@ -110,22 +110,27 @@ def serialize_groups(suggestions):
     return sorted(groups.values(), key=_group_order)
 
 
+def _row_head(s):
+    item = s.facility_list_item
+    if item is None:
+        return {'row_number': s.row_number, 'item_id': None, 'name': '',
+                'address': '', 'country_code': '', 'item_status': '',
+                'suggestions': []}
+    return {
+        'row_number': s.row_number,
+        'item_id': item.id,
+        'name': item.name,
+        'address': item.address,
+        'country_code': item.country_code,
+        'item_status': item.status,
+        'suggestions': [],
+    }
+
+
 def _rows_by_number(suggestions):
     rows = {}
     for s in suggestions:
-        row = rows.get(s.row_number)
-        if row is None:
-            item = s.facility_list_item
-            row = {
-                'row_number': s.row_number,
-                'item_id': item.id if item else None,
-                'name': item.name if item else '',
-                'address': item.address if item else '',
-                'country_code': item.country_code if item else '',
-                'item_status': item.status if item else '',
-                'suggestions': [],
-            }
-            rows[s.row_number] = row
+        row = rows.setdefault(s.row_number, _row_head(s))
         row['suggestions'].append(ListCleaningSuggestionSerializer(s).data)
     return sorted(rows.values(), key=lambda r: r['row_number'])
 

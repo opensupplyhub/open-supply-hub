@@ -22,9 +22,18 @@ TEXT_FIELDS = (
 )
 FILLER = {'n/a', 'na', '#n/a', 'none', 'null', '-', '--', 'tbd', 'unknown',
           'not available'}
-PO_BOX_RE = re.compile(
-    r'\b(?:p\.?\s*o\.?\s*box|post\s*office\s*box|postal\s*bag|gpo\s*box)\b',
-    re.IGNORECASE)
+PO_BOX_RES = tuple(re.compile(pattern, re.IGNORECASE) for pattern in (
+    r'\bp\.?\s*o\.?\s*box\b',
+    r'\bpost\s*office\s*box\b',
+    r'\bpostal\s*bag\b',
+    r'\bgpo\s*box\b',
+))
+
+
+def _is_po_box(address):
+    return any(r.search(address) for r in PO_BOX_RES)
+
+
 EMAIL_RE = re.compile(r'[\w.+-]+@[\w-]+\.[\w.-]+')
 PHONE_RE = re.compile(r'\+?\d(?:[\s().-]*\d){7,}')
 PERSON_TITLE_RE = re.compile(
@@ -136,7 +145,7 @@ def _file_pass(rows):
 
 def _tidy_text(check):
     """Whitespace and filler text on every text column."""
-    for field, original in list(check.values.items()):
+    for field, original in check.values.items():
         normalized = _norm(original)
         if normalized != original and normalized:
             check.change(field, normalized, 'whitespace')
@@ -211,7 +220,7 @@ def _check_address(check):
         check.issue('too_long', 'must_fix', 'address',
                     'The address is over 200 characters. Please shorten '
                     'it.')
-    if PO_BOX_RE.search(address) and address.count(',') < 2:
+    if _is_po_box(address) and address.count(',') < 2:
         check.issue('address_po_box', 'must_fix', 'address',
                     f'The address "{address}" has no street. Please give '
                     'the street address of the facility.')
