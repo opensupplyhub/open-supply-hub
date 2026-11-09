@@ -103,6 +103,10 @@ const ListCleaningStatusNote = ({
                     : ''
             }`;
         }
+    } else if (run.closed_reason === 'clean') {
+        text =
+            'The automated checks found nothing to fix, so the list went ' +
+            'straight to a human moderator as uploaded.';
     } else if (run.closed_reason === 'submitted') {
         const applied = (data.summary && data.summary.changes_applied) || 0;
         text = `Submitted ${when(run.submitted_at)} ${

@@ -82,7 +82,8 @@ def run_rules(payload):
         name_key = _key(row.get('name'))
         if not name_key:
             continue
-        pair_key = (name_key, _key(row.get('address')))
+        pair_key = (name_key, _key(row.get('address')),
+                    _key(row.get('country')))
         if pair_key in by_name_address:
             keep = by_name_address[pair_key]
             file_pass['exact_duplicates'].append(

@@ -22,6 +22,7 @@ from django.core.files.uploadedfile import (
 )
 from django.db import transaction
 from django.http import HttpResponse
+from django.utils.http import content_disposition_header
 from django.db.models import F, Q
 from django.utils import timezone
 
@@ -518,15 +519,34 @@ class FacilityListViewSet(ModelViewSet):
                 f'until {run.review_until.isoformat()}; moderation can '
                 'start once the review window has closed.')
 
+    @staticmethod
+    def _require_switch():
+        if not list_cleaning.feature_enabled():
+            raise ValidationError(
+                'List-cleaning feedback is switched off.')
+
     @action(detail=True, methods=['post'], url_path='cleaning/start',
             permission_classes=(IsSuperuser,))
     def cleaning_start(self, request, pk=None):
         """Start (or re-start) a run regardless of the feature switch."""
         facility_list = self._get_list_for_user(request, pk)
-        run = list_cleaning.start_run(
-            facility_list,
-            runner_name=request.data.get('runner'),
-            force=True)
+        # Under the current run's lock, so a submission in flight
+        # finishes first and the window check sees its closure.
+        with transaction.atomic():
+            current = facility_list.cleaning_runs.first()
+            if current is not None:
+                list_cleaning.lock_run(current)
+                current = list_cleaning.sweep_run(current)
+            if current is not None and list_cleaning.window_open(current):
+                raise ValidationError(
+                    'The contributor is still reviewing this list; a new '
+                    'run would discard their decisions. Wait for the '
+                    'window to close at '
+                    f'{current.review_until.isoformat()}.')
+            run = list_cleaning.start_run(
+                facility_list,
+                runner_name=request.data.get('runner'),
+                force=True)
         return Response(serialize_run(run, include_internal=True))
 
     @action(detail=True, methods=['post'], url_path='cleaning/decisions')
@@ -542,6 +562,7 @@ class FacilityListViewSet(ModelViewSet):
              "groups": [{"key": "CORRECTION:country_code:country",
                          "decision": "ACCEPTED"}]}
         """
+        self._require_switch()
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
         if run is None or run.status != ListCleaningRun.COMPLETE:
@@ -559,12 +580,15 @@ class FacilityListViewSet(ModelViewSet):
                 'Send "decisions" (per suggestion) or "groups" (per error '
                 'type), or both.')
         try:
-            if decisions:
-                list_cleaning.record_decisions(
-                    run, decisions, request.user)
-            if groups:
-                list_cleaning.record_group_decisions(
-                    run, groups, request.user)
+            # One transaction, so a bad group key does not leave the
+            # row decisions before it saved.
+            with transaction.atomic():
+                if decisions:
+                    list_cleaning.record_decisions(
+                        run, decisions, request.user)
+                if groups:
+                    list_cleaning.record_group_decisions(
+                        run, groups, request.user)
         except list_cleaning.DecisionError as e:
             raise ValidationError(str(e))
         return Response(serialize_run(
@@ -577,6 +601,7 @@ class FacilityListViewSet(ModelViewSet):
         (or none, with {"as_uploaded": true}) and close the review
         window. After this nothing on the list changes.
         """
+        self._require_switch()
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
         if run is None or run.status != ListCleaningRun.COMPLETE:
@@ -638,8 +663,8 @@ class FacilityListViewSet(ModelViewSet):
         body = list_cleaning.build_fixed_csv(run)
         stem = os.path.splitext(facility_list.file_name or 'list')[0]
         response = HttpResponse(body, content_type='text/csv')
-        response['Content-Disposition'] = (
-            f'attachment; filename="{stem}-fixed.csv"')
+        response['Content-Disposition'] = content_disposition_header(
+            True, f'{stem}-fixed.csv')
         return response
 
     @transaction.atomic
@@ -653,6 +678,16 @@ class FacilityListViewSet(ModelViewSet):
 
             if not is_users_facility and not request.user.is_superuser:
                 raise FacilityList.DoesNotExist
+
+            # While the contributor's review window is open, rows are
+            # removed through the review and its single submission, so
+            # the list cannot change underneath it.
+            review = list_cleaning.sweep_run(
+                facility_list.cleaning_runs.first())
+            if review is not None and list_cleaning.window_open(review):
+                raise ValidationError(
+                    'This list is still being reviewed; remove rows from '
+                    'the review screen and submit it there.')
 
             facility_list_item = (
                 FacilityListItem

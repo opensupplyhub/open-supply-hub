@@ -253,8 +253,8 @@ const Clean = ({ onContinue }) => (
     <div style={styles.centred}>
         <Typography style={styles.heading}>Your list looks good</Typography>
         <Typography>
-            We found nothing to fix. A human moderator will review your list as
-            usual.
+            We found nothing to fix, so your list has gone straight to a human
+            moderator as uploaded.
         </Typography>
         <Button variant="contained" color="primary" onClick={onContinue}>
             Go to my list
@@ -285,7 +285,7 @@ const WhatHappensNext = () => (
 );
 
 const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => {
-    const flagged = summary.rows_blocking_pending || 0;
+    const flagged = summary.rows_flagged_unresolved || 0;
     return (
         <div style={styles.centred}>
             <Typography style={styles.heading}>
@@ -458,9 +458,14 @@ const ListCleaningReviewDialog = ({
         return () => clearInterval(timer);
     }, [waiting, openedAt]);
 
+    // The Done screen waits for the server: a failed submission keeps
+    // the review on screen with its error and the buttons to retry.
+    const asUploadedRef = useRef(false);
     useEffect(() => {
         if (lastApplied) {
-            setFinished(f => f || 'submitted');
+            setFinished(
+                f => f || (asUploadedRef.current ? 'uploaded' : 'submitted'),
+            );
         }
     }, [lastApplied]);
 
@@ -511,12 +516,8 @@ const ListCleaningReviewDialog = ({
         return () => window.removeEventListener('pagehide', onHide);
     }, [reviewing, listID, openedAt]);
     const doSubmit = asUploaded => {
-        if (asUploaded) {
-            setFinished('uploaded');
-            apply({ asUploaded: true });
-        } else {
-            apply();
-        }
+        asUploadedRef.current = asUploaded;
+        apply(asUploaded ? { asUploaded: true } : undefined);
     };
     // A list that still has many rows a human moderator would remove is
     // much less likely to be approved as a whole: say so before it goes.
@@ -524,7 +525,7 @@ const ListCleaningReviewDialog = ({
     // whatever the count.
     const trySubmit = asUploaded => {
         const current = data ? data.summary : null;
-        const pendingRows = current ? current.rows_blocking_pending || 0 : 0;
+        const pendingRows = current ? current.rows_flagged_unresolved || 0 : 0;
         const total = current ? current.rows_total || 0 : 0;
         const risky =
             pendingRows > REMOVABLE_ROWS_WARN_COUNT ||
@@ -571,14 +572,14 @@ const ListCleaningReviewDialog = ({
                 onContinue={onContinue}
             />
         );
+    } else if (nothingFound) {
+        activeStep = STEP.MODERATION;
+        content = <Clean onContinue={onContinue} />;
     } else if (!windowOpen) {
         activeStep = STEP.MODERATION;
         content = (
             <Closed run={run} summary={summary} onContinue={onContinue} />
         );
-    } else if (nothingFound) {
-        activeStep = STEP.MODERATION;
-        content = <Clean onContinue={onContinue} />;
     } else {
         activeStep = STEP.REVIEW;
         content = (
@@ -683,8 +684,8 @@ const ListCleaningReviewDialog = ({
                                     id="list-cleaning-submit-warning"
                                     style={styles.warnTitle}
                                 >
-                                    {summary.rows_blocking_pending}{' '}
-                                    {summary.rows_blocking_pending === 1
+                                    {summary.rows_flagged_unresolved}{' '}
+                                    {summary.rows_flagged_unresolved === 1
                                         ? 'row still has'
                                         : 'rows still have'}{' '}
                                     a problem that blocks approval
@@ -692,7 +693,8 @@ const ListCleaningReviewDialog = ({
                                 <Typography>
                                     That is{' '}
                                     {Math.round(
-                                        (100 * summary.rows_blocking_pending) /
+                                        (100 *
+                                            summary.rows_flagged_unresolved) /
                                             Math.max(1, summary.rows_total),
                                     )}
                                     % of your list: personal information, PO Box

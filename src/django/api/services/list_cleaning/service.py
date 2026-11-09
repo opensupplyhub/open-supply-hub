@@ -24,6 +24,7 @@ build_fixed_csv -> the list as it now stands, removed rows last with a
 """
 import csv
 import io
+import json
 import logging
 import statistics
 from datetime import timedelta
@@ -32,10 +33,7 @@ from django.db import transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
-from api.extended_fields import (
-    create_extendedfields_for_single_item,
-    update_extendedfields_for_list_item,
-)
+from api.extended_fields import RAW_DATA_FIELDS, extendedfield_value
 from api.helpers.helpers import clean
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility import Facility
@@ -50,6 +48,7 @@ from django.conf import settings
 from api.os_id_lookup import OSIDLookup
 from api.sector_cache import SectorCache
 from contricleaner.lib.contri_cleaner import ContriCleaner
+from simple_history.utils import bulk_create_with_history
 
 from .runners import RunFailed, get_runner
 
@@ -97,6 +96,9 @@ def _lock(run):
     run.refresh_from_db()
 
 
+lock_run = _lock
+
+
 def start_run(facility_list, runner_name=None, force=False):
     """
     Start a run for the list. Returns the run, or None when the feature
@@ -139,15 +141,30 @@ def refresh_run(run):
         _fail(run, f'Could not read the pipeline result: {e}')
         return run
     if result is not None:
-        ingest_result(run, result)
+        try:
+            ingest_result(run, result)
+        except Exception as e:
+            # ingest_result is atomic, so the half-written result is
+            # rolled back; mark the run failed rather than leave it
+            # RUNNING and erroring on every read.
+            log.exception(f'[List Cleaning] Could not ingest run {run.id}')
+            _fail(run, f'Could not store the pipeline result: {e}')
     return run
 
 
 def _fail(run, error):
-    run.status = ListCleaningRun.FAILED
-    run.error = error
-    run.completed_at = timezone.now()
-    run.save(update_fields=['status', 'error', 'completed_at'])
+    # Two overlapping refreshes: if the other one has completed the run
+    # meanwhile, this one's failure must not undo that.
+    with transaction.atomic():
+        _lock(run)
+        if run.status == ListCleaningRun.COMPLETE:
+            log.info(f'[List Cleaning] Run {run.id} completed elsewhere; '
+                     f'ignoring: {error}')
+            return
+        run.status = ListCleaningRun.FAILED
+        run.error = error
+        run.completed_at = timezone.now()
+        run.save(update_fields=['status', 'error', 'completed_at'])
 
 
 def _corrected_value(change):
@@ -282,6 +299,12 @@ def ingest_result(run, result):
         f'[List Cleaning] Run {run.id} complete: {len(suggestions)} '
         f'suggestions ({auto} pre-accepted) for list '
         f'{run.facility_list_id}; review open until {run.review_until}')
+    if not suggestions and run.review_until is not None:
+        # Nothing for the contributor to decide, so nothing to wait
+        # for: the list goes to the moderator as uploaded right away.
+        _close(run, ListCleaningRun.CLEAN, now)
+        log.info(f'[List Cleaning] Run {run.id} found nothing; list '
+                 f'{run.facility_list_id} goes straight to moderation')
     return run
 
 
@@ -657,30 +680,75 @@ REMOVED_STATUSES = (FacilityListItem.DUPLICATE,
                     FacilityListItem.ITEM_REMOVED)
 
 
-def _rederive_items(items):
+def _rederive_items(items, contributor):
     """
     Bring what parse derived from the uploaded row into line with the
     corrected one: sector, the cleaned name and address, and the
     ExtendedField rows (worker count, parent company, product, facility
     and processing types, ids) the facility page reads. A row that is
-    now removed loses its extended fields; a row that is back gets them
-    again. Rows already matched keep their facility link, and the
-    facility is touched so the search index picks the change up.
+    now removed loses those fields; a row that is back gets them again.
+    Partner fields are not the pipeline's to change and are left alone.
+    Rows already matched keep their facility link, and the facility is
+    touched so the search index picks the change up.
+
+    The re-parse itself is cheap; the writes are batched (one delete,
+    one bulk create, one bulk update) so a submit that touched every
+    row of a large list stays well inside the request.
     """
     sector_cache = SectorCache()
     os_id_lookup = OSIDLookup()
     now = timezone.now()
+    removed = [i for i in items if i.status in REMOVED_STATUSES]
+    parsed = []
     for item in items:
         if item.status in REMOVED_STATUSES:
-            ExtendedField.objects.filter(facility_list_item=item).delete()
-        else:
-            _rederive_item(item, sector_cache, os_id_lookup)
-        if item.facility_id:
-            Facility.objects.filter(pk=item.facility_id).update(
-                updated_at=now)
+            continue
+        if item.status == FacilityListItem.ERROR_PARSING:
+            continue  # never parsed, so nothing was derived
+        row = _reparse(item, sector_cache, os_id_lookup)
+        if row is not None:
+            item.sector = row.sector
+            item.clean_name = row.clean_name
+            item.clean_address = row.clean_address
+            parsed.append((item, row))
+    if parsed:
+        FacilityListItem.objects.bulk_update(
+            [item for item, _ in parsed],
+            ['sector', 'clean_name', 'clean_address'])
+    ExtendedField.objects.filter(
+        facility_list_item__in=removed + [item for item, _ in parsed],
+        field_name__in=RAW_DATA_FIELDS,
+    ).delete()
+    # Working out a stored value can mean a lookup (parent company,
+    # product types) and the same values repeat down a list, so each
+    # distinct (field, value, sector) is computed once.
+    memo = {}
+
+    def stored_value(field, raw_value, item):
+        key = (field, json.dumps(raw_value, sort_keys=True, default=str),
+               tuple(item.sector or []))
+        if key not in memo:
+            memo[key] = extendedfield_value(field, raw_value, item)
+        return memo[key]
+
+    fields = []
+    for item, row in parsed:
+        for field in RAW_DATA_FIELDS:
+            value = stored_value(field, row.fields.get(field), item)
+            if value is None:
+                continue
+            fields.append(ExtendedField(
+                contributor=contributor, facility_list_item=item,
+                facility_id=item.facility_id, field_name=field,
+                value=value))
+    if fields:
+        bulk_create_with_history(fields, ExtendedField)
+    facility_ids = {i.facility_id for i in items if i.facility_id}
+    if facility_ids:
+        Facility.objects.filter(pk__in=facility_ids).update(updated_at=now)
 
 
-def _rederive_item(item, sector_cache, os_id_lookup):
+def _reparse(item, sector_cache, os_id_lookup):
     processed = ContriCleaner(
         dict(item.raw_json or {}), sector_cache, os_id_lookup
     ).process_data()
@@ -692,15 +760,8 @@ def _rederive_item(item, sector_cache, os_id_lookup):
         log.warning(
             f'[List Cleaning] Item {item.id} could not be re-parsed after '
             f'apply: {processed.errors or (row and row.errors)}')
-        return
-    item.sector = row.sector
-    item.clean_name = row.clean_name
-    item.clean_address = row.clean_address
-    item.save(update_fields=['sector', 'clean_name', 'clean_address'])
-    ExtendedField.objects.filter(facility_list_item=item).delete()
-    create_extendedfields_for_single_item(item, row.fields)
-    if item.facility_id:
-        update_extendedfields_for_list_item(item)
+        return None
+    return row
 
 
 def _wants_removal(s):
@@ -849,7 +910,8 @@ def apply_run(run, only=None):
     for item_id in touched:
         items[item_id].save()
     if touched:
-        _rederive_items([items[item_id] for item_id in touched])
+        _rederive_items([items[item_id] for item_id in touched],
+                        run.facility_list.source.contributor)
 
     if only is None:
         run.applied_at = timezone.now()
@@ -861,6 +923,18 @@ REMOVAL_TAG_COLUMN = 'os_hub_cleaning'
 
 
 UPLOADED_SUFFIX = ' (as uploaded)'
+
+
+# A cell that a spreadsheet would evaluate as a formula is prefixed
+# with an apostrophe, so what the contributor uploaded can never run
+# on the machine that opens the download.
+FORMULA_STARTS = ('=', '+', '-', '@', '\t', '\r')
+
+
+def _safe_cell(value):
+    if value and value.startswith(FORMULA_STARTS):
+        return "'" + value
+    return value
 
 
 def build_fixed_csv(run):
@@ -889,12 +963,13 @@ def build_fixed_csv(run):
         raw = item.raw_json or {}
         key = column.strip().lower().replace(' ', '_')
         value = raw.get(column, raw.get(key, ''))
-        return '' if value is None else str(value)
+        return _safe_cell('' if value is None else str(value))
 
     def uploaded(item):
         # raw_data is the row exactly as it came in, in header order.
         values = next(csv.reader([item.raw_data or '']), [])
-        return (values + [''] * len(header))[:len(header)]
+        return [_safe_cell(v) for v in
+                (values + [''] * len(header))[:len(header)]]
 
     def paired(current, original):
         row = []
@@ -921,7 +996,8 @@ def build_fixed_csv(run):
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow(
-        [h for column in header for h in (column, column + UPLOADED_SUFFIX)]
+        [_safe_cell(h) for column in header
+         for h in (column, column + UPLOADED_SUFFIX)]
         + [REMOVAL_TAG_COLUMN])
     writer.writerows(kept)
     writer.writerows(dropped)

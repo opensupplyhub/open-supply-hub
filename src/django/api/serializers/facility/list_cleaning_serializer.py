@@ -171,6 +171,13 @@ def serialize_run(run, include_internal=False):
     pending_flag_rows = {
         s.row_number for s in must_fix
         if s.decision == S.PENDING and s.row_number not in removed_rows}
+    # Rows a moderator would still have to remove: flagged and neither
+    # fixed nor removed, whether the contributor has not got to them
+    # yet or chose to leave them as uploaded.
+    unresolved_flag_rows = {
+        s.row_number for s in must_fix
+        if s.decision in (S.PENDING, S.REJECTED)
+        and s.row_number not in removed_rows}
     # The one number the screen leads with: rows that still wait for
     # the contributor. A row counts once however many suggestions it
     # carries; automatic fixes are already decided, and a removed row
@@ -191,6 +198,7 @@ def serialize_run(run, include_internal=False):
         # of those, rows with a problem that blocks approval versus
         # rows with only recommended fixes or things worth a look
         'rows_blocking_pending': len(pending_flag_rows),
+        'rows_flagged_unresolved': len(unresolved_flag_rows),
         'rows_recommended_pending': len(
             rows_recommended_pending - pending_flag_rows),
         # rows a moderator would still have to remove, for the warning

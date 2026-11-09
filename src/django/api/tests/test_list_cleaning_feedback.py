@@ -34,6 +34,8 @@ from api.services.list_cleaning import (
     refresh_run,
     start_run,
 )
+from api.services.list_cleaning.service import build_fixed_csv
+from api.services.list_cleaning.stub import run_rules
 
 SAMPLE_RESULT = {
     'file_pass': {
@@ -79,6 +81,7 @@ SAMPLE_RESULT = {
 
 
 @override_settings(LIST_CLEANING_RUNNER='stub')
+@override_switch(SWITCH_NAME, active=True)
 class ListCleaningFeedbackTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create(email='owner@example.com')
@@ -618,6 +621,145 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(
             set(ExtendedField.objects.values_list('id', flat=True)), ids)
 
+    # -- review follow-ups ---------------------------------------------
+
+    def test_clean_result_closes_the_window_at_once(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, {'records': [], 'file_pass': {}})
+        run.refresh_from_db()
+        self.assertEqual(run.status, ListCleaningRun.COMPLETE)
+        self.assertEqual(run.closed_reason, ListCleaningRun.CLEAN)
+        self.client.force_login(self.user)
+        response = self.client.get(self.url())
+        self.assertFalse(response.data['window_open'])
+        # moderation is not held up by a review with nothing in it
+        self.client.force_login(self.superuser)
+        response = self.client.post(
+            f'/api/facility-lists/{self.list.id}/approve/',
+            {'reason': 'x'}, format='json')
+        self.assertNotEqual(response.status_code,
+                            status.HTTP_400_BAD_REQUEST, response.data)
+
+    def test_refresh_marks_a_broken_result_failed(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.STEP_FUNCTIONS,
+            status=ListCleaningRun.RUNNING,
+            review_until=timezone.now() + timedelta(minutes=60))
+        broken = {'records': [{'row': 'two', 'status': 'auto_corrected',
+                               'changes': [{'field': 'country',
+                                            'value': 'VN',
+                                            'reason': 'country_code'}]}]}
+        with patch('api.services.list_cleaning.service.get_runner') as g:
+            g.return_value.fetch_result.return_value = broken
+            refresh_run(run)
+        run.refresh_from_db()
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        self.assertIn('Could not store', run.error)
+        self.assertEqual(run.suggestions.count(), 0)
+
+    def test_failure_does_not_undo_a_completed_run(self):
+        run = self._ingested_run()
+        from api.services.list_cleaning.service import _fail
+        _fail(run, 'late failure from an overlapping refresh')
+        run.refresh_from_db()
+        self.assertEqual(run.status, ListCleaningRun.COMPLETE)
+        self.assertEqual(run.error, '')
+
+    def test_row_removal_waits_for_the_review_window(self):
+        self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.post(
+            f'/api/facility-lists/{self.list.id}/remove/',
+            {'list_item_id': self.items[1].id}, format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        self.items[1].refresh_from_db()
+        self.assertEqual(self.items[1].status, FacilityListItem.PARSED)
+
+    def test_restart_refused_while_the_window_is_open(self):
+        run = self._ingested_run()
+        self.client.force_login(self.superuser)
+        response = self.client.post(self.url('start/'), {}, format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        self.assertIn('still reviewing', str(response.data))
+        self.assertEqual(self.list.cleaning_runs.first().id, run.id)
+
+    @override_switch(SWITCH_NAME, active=False)
+    def test_switch_off_blocks_review_writes(self):
+        run = self._ingested_run()
+        fix = run.suggestions.filter(
+            kind=ListCleaningSuggestion.CORRECTION).first()
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': fix.id, 'decision': 'REJECTED'}]},
+            format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        response = self.client.post(self.url('submit/'), {}, format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        run.refresh_from_db()
+        self.assertIsNone(run.closed_at)
+
+    def test_decisions_request_is_all_or_nothing(self):
+        run = self._ingested_run()
+        fix = run.suggestions.get(code='country_in_address')
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': fix.id, 'decision': 'REJECTED'}],
+            'groups': [{'key': 'no:such:group', 'decision': 'ACCEPTED'}],
+        }, format='json')
+        self.assertEqual(response.status_code,
+                         status.HTTP_400_BAD_REQUEST)
+        fix.refresh_from_db()
+        self.assertEqual(fix.decision, ListCleaningSuggestion.PENDING)
+
+    def test_fixed_csv_neutralises_formulas(self):
+        self.items[1].raw_json['name'] = '=HYPERLINK("http://x")'
+        self.items[1].raw_data = '"Bangladesh","=HYPERLINK(""http://x"")",' \
+                                 '"PO Box 41, Dhaka","500"'
+        self.items[1].save()
+        run = self._ingested_run()
+        body = build_fixed_csv(run)
+        self.assertNotIn(',=HYPERLINK', body)
+        self.assertIn("'=HYPERLINK", body)
+
+    def test_download_filename_is_encoded(self):
+        self.list.file_name = 'my "list"; rm.csv'
+        self.list.save()
+        self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.get(self.url('download/'))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        disposition = response['Content-Disposition']
+        # one filename parameter, with the quotes escaped inside it
+        self.assertEqual(disposition.count('filename'), 1)
+        self.assertIn('\\"list\\"', disposition)
+
+    def test_stub_duplicate_key_includes_country(self):
+        result = run_rules({'rows': [
+            {'row': 2, 'country': 'Viet Nam', 'name': 'Same Name',
+             'address': 'Industrial Zone 1'},
+            {'row': 3, 'country': 'Cambodia', 'name': 'Same Name',
+             'address': 'Industrial Zone 1'},
+        ]})
+        self.assertEqual(result['file_pass']['exact_duplicates'], [])
+        self.assertEqual(
+            [r['status'] for r in result['records']].count('removed'), 0)
+
+    def test_warning_counts_flags_left_as_uploaded(self):
+        run = self._ingested_run()
+        flag = run.suggestions.get(code='address_po_box')
+        record_decisions(
+            run, [{'id': flag.id, 'decision': 'REJECTED'}], self.user)
+        self.client.force_login(self.user)
+        summary = self.client.get(self.url()).data['summary']
+        self.assertEqual(summary['rows_blocking_pending'], 0)
+        self.assertEqual(summary['rows_flagged_unresolved'], 1)
+
     def test_submit_rejects_a_non_boolean_as_uploaded(self):
         run = self._ingested_run()
         self.client.force_login(self.user)
@@ -643,14 +785,12 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(run.suggestions.count(), before)
 
     def test_imported_run_opens_a_review_window(self):
-        path = os.path.join(tempfile.gettempdir(), 'osdev3726-records.json')
-        with open(path, 'w') as f:
-            json.dump(SAMPLE_RESULT, f)
-        try:
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, 'records.json')
+            with open(path, 'w') as f:
+                json.dump(SAMPLE_RESULT, f)
             call_command('list_cleaning', '-l', str(self.list.id),
                          '--records', path, stdout=StringIO())
-        finally:
-            os.remove(path)
         run = self.list.cleaning_runs.first()
         self.assertEqual(run.status, ListCleaningRun.COMPLETE)
         self.assertIsNotNone(run.review_until)

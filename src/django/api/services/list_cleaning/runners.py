@@ -82,10 +82,10 @@ class StepFunctionsRunner:
         output = json.loads(description.get('output') or '{}')
         pointer = output.get('result_s3')
         if pointer:
-            # The bucket must belong to the account we expect, so a
-            # pointer to a bucket someone else owns is refused.
-            owner = (pointer.get('owner')
-                     or settings.LIST_CLEANING_RESULTS_BUCKET_OWNER)
+            # The bucket must belong to the account we configured, so a
+            # pointer to a bucket someone else owns is refused whatever
+            # the execution output claims.
+            owner = settings.LIST_CLEANING_RESULTS_BUCKET_OWNER
             if not owner:
                 raise ImproperlyConfigured(
                     'LIST_CLEANING_RESULTS_BUCKET_OWNER is not set')

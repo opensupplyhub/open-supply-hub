@@ -8,6 +8,7 @@ from .service import (  # noqa: F401
     feature_enabled,
     group_key,
     ingest_result,
+    lock_run,
     metrics_summary,
     record_decisions,
     record_event,

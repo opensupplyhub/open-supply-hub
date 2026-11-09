@@ -198,6 +198,35 @@ def all_values_empty(value):
 
 
 def create_extendedfield(field, field_value, item, contributor):
+    extended_field = build_extendedfield(field, field_value, item, contributor)
+    if extended_field is not None:
+        extended_field.save()
+
+
+def build_extendedfield(field, field_value, item, contributor):
+    """
+    The ExtendedField for one raw column value, unsaved, or None when
+    the value is empty or unusable. `create_extendedfield` saves it;
+    callers that rebuild many at once can bulk-create instead.
+    """
+    value = extendedfield_value(field, field_value, item)
+    if value is None:
+        return None
+    return ExtendedField(
+        contributor=contributor,
+        facility_list_item=item,
+        field_name=field,
+        value=value
+    )
+
+
+def extendedfield_value(field, field_value, item):
+    """
+    The stored value for one raw column value, or None when the value is
+    empty or unusable. Depends on the item only through its sector (for
+    facility and processing types), so callers may cache by field,
+    value and sector.
+    """
     if field_value is not None and field_value != "" \
             and not all_values_empty(field_value):
         if field == ExtendedField.NUMBER_OF_WORKERS:
@@ -235,15 +264,11 @@ def create_extendedfield(field, field_value, item, contributor):
         elif field in ISIC_REVISION_BY_FIELD:
             normalized_isic = get_isic_extendedfield_value(field_value, field)
             if not normalized_isic.get('raw_value'):
-                return
+                return None
             field_value = normalized_isic
 
-        ExtendedField.objects.create(
-            contributor=contributor,
-            facility_list_item=item,
-            field_name=field,
-            value=field_value
-        )
+        return field_value
+    return None
 
 
 OBJECT_FIELD_TYPE = "object"

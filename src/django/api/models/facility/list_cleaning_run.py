@@ -83,9 +83,11 @@ class ListCleaningRun(models.Model):
     # that nothing on the list changes and moderation can begin.
     SUBMITTED = 'submitted'
     LAPSED = 'lapsed'
+    CLEAN = 'clean'
     CLOSED_REASON_CHOICES = (
         (SUBMITTED, 'Contributor submitted'),
         (LAPSED, 'Window lapsed, list as uploaded'),
+        (CLEAN, 'Nothing to review, list as uploaded'),
     )
     review_until = models.DateTimeField(
         null=True,
