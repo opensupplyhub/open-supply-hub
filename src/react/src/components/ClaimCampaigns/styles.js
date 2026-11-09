@@ -24,6 +24,7 @@ export const claimCampaignsStyles = theme =>
             gap: '16px',
         }),
         createdBanner: Object.freeze({
+            overflowWrap: 'anywhere',
             padding: '12px 16px',
             marginBottom: '16px',
             borderLeft: `4px solid ${COLOURS.MATERIAL_GREEN}`,
@@ -43,6 +44,9 @@ export const claimCampaignsStyles = theme =>
             fontWeight: theme.typography.fontWeightBold,
             fontSize: '24px',
             display: 'block',
+            // Long names (up to 200 characters, possibly one unbroken
+            // word) wrap instead of overflowing the card.
+            overflowWrap: 'anywhere',
         }),
         campaignMeta: Object.freeze({
             color: COLOURS.DARK_GREY,
@@ -191,11 +195,13 @@ export const claimCampaignsStyles = theme =>
             tableLayout: 'fixed',
             minWidth: '760px',
         }),
-        colFacility: Object.freeze({ width: '28%', padding: '8px 12px' }),
-        colOsId: Object.freeze({ width: '17%', padding: '8px 12px' }),
-        colCountry: Object.freeze({ width: '9%', padding: '8px 12px' }),
-        colStatus: Object.freeze({ width: '16%', padding: '8px 12px' }),
-        colContact: Object.freeze({ width: '30%', padding: '8px 12px' }),
+        // Sortable headers carry an arrow, so Country and Claim status get
+        // room for it.
+        colFacility: Object.freeze({ width: '26%', padding: '8px 12px' }),
+        colOsId: Object.freeze({ width: '16%', padding: '8px 12px' }),
+        colCountry: Object.freeze({ width: '12%', padding: '8px 12px' }),
+        colStatus: Object.freeze({ width: '17%', padding: '8px 12px' }),
+        colContact: Object.freeze({ width: '29%', padding: '8px 12px' }),
         cell: Object.freeze({
             padding: '8px 12px',
             overflowWrap: 'anywhere',

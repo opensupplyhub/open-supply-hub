@@ -6,7 +6,10 @@ import { saveAs } from 'file-saver';
 import history from '../../util/history';
 import apiRequest from '../../util/apiRequest';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
-import ClaimCampaigns from '../../components/ClaimCampaigns/ClaimCampaigns';
+import ClaimCampaigns, {
+    neutralizeCSVFormula,
+    sortSuppliers,
+} from '../../components/ClaimCampaigns/ClaimCampaigns';
 
 jest.mock('../../util/apiRequest', () => ({
     __esModule: true,
@@ -270,5 +273,239 @@ describe('ClaimCampaigns component', () => {
         expect(queryByText('Supplier 25')).toBeInTheDocument();
         expect(queryByText('Supplier 26')).not.toBeInTheDocument();
         expect(await findByText('1-25 of 30')).toBeInTheDocument();
+    });
+
+    describe('sorting the supplier table', () => {
+        const sortSuppliersFixture = [
+            {
+                os_id: 'VN0000000000003',
+                name: 'Hai Phong Packhouse Co',
+                country_code: 'VN',
+                claim_status: 'unclaimed',
+            },
+            {
+                os_id: 'BD0000000000001',
+                name: 'Green Delta Produce Ltd',
+                country_code: 'BD',
+                claim_status: 'pending',
+            },
+            {
+                os_id: 'IN0000000000004',
+                name: 'Anand Textiles',
+                country_code: 'IN',
+                claim_status: 'claimed',
+            },
+            {
+                os_id: 'BD0000000000002',
+                name: 'banglar Knitwear',
+                country_code: 'BD',
+                claim_status: 'unclaimed',
+            },
+        ];
+
+        const renderSortable = suppliers => {
+            apiRequest.get.mockResolvedValue({
+                data: [{ ...mockCampaigns[0], suppliers }],
+            });
+            return renderComponent();
+        };
+
+        // Facility names of the table body rows, top to bottom.
+        const shownNames = container =>
+            Array.from(container.querySelectorAll('tbody tr')).map(
+                row => row.querySelector('td').textContent,
+            );
+
+        const header = (getByText, label) =>
+            getByText(label).closest('[role="button"]');
+
+        test('keeps the server order until a column is clicked', async () => {
+            const { container, findByText } = renderSortable(
+                sortSuppliersFixture,
+            );
+            await findByText('Anand Textiles');
+
+            expect(shownNames(container)).toEqual([
+                'Hai Phong Packhouse Co',
+                'Green Delta Produce Ltd',
+                'Anand Textiles',
+                'banglar Knitwear',
+            ]);
+        });
+
+        test('sorts by facility name, and reverses on a second click', async () => {
+            const { container, findByText, getByText } = renderSortable(
+                sortSuppliersFixture,
+            );
+            await findByText('Anand Textiles');
+
+            fireEvent.click(header(getByText, 'Facility'));
+            // Case-insensitive.
+            expect(shownNames(container)).toEqual([
+                'Anand Textiles',
+                'banglar Knitwear',
+                'Green Delta Produce Ltd',
+                'Hai Phong Packhouse Co',
+            ]);
+            expect(getByText('Facility').closest('th')).toHaveAttribute(
+                'aria-sort',
+                'ascending',
+            );
+
+            fireEvent.click(header(getByText, 'Facility'));
+            expect(shownNames(container)).toEqual([
+                'Hai Phong Packhouse Co',
+                'Green Delta Produce Ltd',
+                'banglar Knitwear',
+                'Anand Textiles',
+            ]);
+            expect(getByText('Facility').closest('th')).toHaveAttribute(
+                'aria-sort',
+                'descending',
+            );
+        });
+
+        test('sorts claim status by progress, ties by facility name', async () => {
+            const { container, findByText, getByText } = renderSortable(
+                sortSuppliersFixture,
+            );
+            await findByText('Anand Textiles');
+
+            fireEvent.click(header(getByText, 'Claim status'));
+            expect(shownNames(container)).toEqual([
+                'Anand Textiles', // Claimed
+                'Green Delta Produce Ltd', // Pending review
+                'banglar Knitwear', // Not started
+                'Hai Phong Packhouse Co', // Not started
+            ]);
+
+            fireEvent.click(header(getByText, 'Claim status'));
+            expect(shownNames(container)).toEqual([
+                'banglar Knitwear',
+                'Hai Phong Packhouse Co',
+                'Green Delta Produce Ltd',
+                'Anand Textiles',
+            ]);
+        });
+
+        test('sorts by country, ties by facility name', async () => {
+            const { container, findByText, getByText } = renderSortable(
+                sortSuppliersFixture,
+            );
+            await findByText('Anand Textiles');
+
+            fireEvent.click(header(getByText, 'Country'));
+            expect(shownNames(container)).toEqual([
+                'banglar Knitwear', // BD
+                'Green Delta Produce Ltd', // BD
+                'Anand Textiles', // IN
+                'Hai Phong Packhouse Co', // VN
+            ]);
+        });
+
+        test('OS ID and the contact column are not sortable', async () => {
+            const { findByText, getByText } = renderSortable(
+                sortSuppliersFixture,
+            );
+            await findByText('Anand Textiles');
+
+            expect(header(getByText, 'OS ID')).toBeNull();
+            expect(header(getByText, 'Unique claim link')).toBeNull();
+        });
+
+        test('sorts within the status filter', async () => {
+            const {
+                container,
+                findByText,
+                getByText,
+                getByRole,
+            } = renderSortable(sortSuppliersFixture);
+            await findByText('Anand Textiles');
+
+            fireEvent.click(header(getByText, 'Facility'));
+            fireEvent.click(header(getByText, 'Facility'));
+            fireEvent.click(getByRole('button', { name: /All statuses/ }));
+            fireEvent.click(await findByText('Not started', { selector: 'li' }));
+
+            expect(shownNames(container)).toEqual([
+                'Hai Phong Packhouse Co',
+                'banglar Knitwear',
+            ]);
+        });
+
+        test('sorts every supplier before paginating, back on page 1', async () => {
+            const suppliers = Array.from({ length: 30 }, (_, i) => ({
+                os_id: `BD2024199SUP${String(i).padStart(3, '0')}`,
+                name: `Supplier ${i + 1}`,
+                country_code: 'BD',
+                claim_status: 'unclaimed',
+            }));
+            const { container, findByText, getByText } = renderSortable(
+                suppliers,
+            );
+            await findByText('1-25 of 30');
+
+            // MUI v3's pagination arrows have no accessible name.
+            const [, nextPage] = container.querySelectorAll(
+                '[class*="MuiTablePagination-actions"] button',
+            );
+            fireEvent.click(nextPage);
+            await findByText('26-30 of 30');
+
+            fireEvent.click(header(getByText, 'Facility'));
+            fireEvent.click(header(getByText, 'Facility'));
+
+            expect(getByText('1-25 of 30')).toBeInTheDocument();
+            // Numbers in names sort naturally: 30, 29, ... not 9, 8, ...
+            expect(shownNames(container).slice(0, 3)).toEqual([
+                'Supplier 30',
+                'Supplier 29',
+                'Supplier 28',
+            ]);
+        });
+
+        test('the CSV follows the sorted order', async () => {
+            saveAs.mockClear();
+            global.Blob.mockClear();
+            const { findByText, getByText } = renderSortable(
+                sortSuppliersFixture,
+            );
+            await findByText('Anand Textiles');
+
+            fireEvent.click(header(getByText, 'Facility'));
+            fireEvent.click(getByText('Download CSV'));
+
+            await waitFor(() => expect(saveAs).toHaveBeenCalledTimes(1));
+            const csv = global.Blob.mock.calls[0][0][0];
+            const names = csv
+                .trim()
+                .split('\n')
+                .slice(1)
+                .map(line => line.split(',')[0]);
+            expect(names).toEqual([
+                '"Anand Textiles"',
+                '"banglar Knitwear"',
+                '"Green Delta Produce Ltd"',
+                '"Hai Phong Packhouse Co"',
+            ]);
+        });
+
+        test('sortSuppliers leaves the input untouched', () => {
+            const before = [...sortSuppliersFixture];
+            expect(sortSuppliers(sortSuppliersFixture, null, 'asc')).toBe(
+                sortSuppliersFixture,
+            );
+            sortSuppliers(sortSuppliersFixture, 'name', 'desc');
+            expect(sortSuppliersFixture).toEqual(before);
+        });
+    });
+
+    test('keeps facility names that look like formulas as plain text in the CSV', () => {
+        expect(neutralizeCSVFormula('=HYPERLINK("x")')).toBe(
+            '\'=HYPERLINK("x")',
+        );
+        expect(neutralizeCSVFormula('+1 Garments')).toBe("'+1 Garments");
+        expect(neutralizeCSVFormula('@home')).toBe("'@home");
+        expect(neutralizeCSVFormula('Anand Textiles')).toBe('Anand Textiles');
     });
 });

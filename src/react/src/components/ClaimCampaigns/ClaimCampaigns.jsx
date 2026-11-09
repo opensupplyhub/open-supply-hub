@@ -18,6 +18,7 @@ import TableFooter from '@material-ui/core/TableFooter';
 import TableHead from '@material-ui/core/TableHead';
 import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
+import TableSortLabel from '@material-ui/core/TableSortLabel';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import InfoOutlined from '@material-ui/icons/InfoOutlined';
@@ -58,6 +59,43 @@ const STATUS_ORDER = Object.freeze(['claimed', 'pending', 'unclaimed']);
 
 const ROWS_PER_PAGE_OPTIONS = Object.freeze([10, 25, 50, 100]);
 
+const SORT_DIRECTIONS = Object.freeze({ asc: 'asc', desc: 'desc' });
+
+const compareText = (a, b) =>
+    (a || '').localeCompare(b || '', undefined, {
+        sensitivity: 'base',
+        numeric: true,
+    });
+
+const statusRank = status => {
+    const rank = STATUS_ORDER.indexOf(status);
+    return rank === -1 ? STATUS_ORDER.length : rank;
+};
+
+// The sortable supplier columns. Claim status sorts by progress
+// (Claimed, Pending review, Not started), not alphabetically.
+const SUPPLIER_SORTS = Object.freeze({
+    name: (a, b) => compareText(a.name, b.name),
+    country: (a, b) => compareText(a.country_code, b.country_code),
+    status: (a, b) => statusRank(a.claim_status) - statusRank(b.claim_status),
+});
+
+// Ties always break by facility name A–Z (then OS ID), whichever way
+// the chosen column runs, so the order is stable and predictable.
+const breakTies = (a, b) =>
+    compareText(a.name, b.name) || compareText(a.os_id, b.os_id);
+
+export const sortSuppliers = (suppliers, orderBy, order) => {
+    const compare = SUPPLIER_SORTS[orderBy];
+    if (!compare) {
+        return suppliers;
+    }
+    const sign = order === SORT_DIRECTIONS.desc ? -1 : 1;
+    return [...suppliers].sort(
+        (a, b) => sign * compare(a, b) || breakTies(a, b),
+    );
+};
+
 const INVITE_MODES = Object.freeze({
     email: 'email',
     link: 'link',
@@ -94,8 +132,14 @@ const makeCampaignClaimLink = (osID, code) =>
         osID,
     )}?campaign=${code}`;
 
-// Exports the rows currently shown, so filtering to "Not started" first
-// yields exactly the outreach list.
+// Spreadsheet apps run a cell starting with = + - @ (or a tab/CR) as a
+// formula. Facility names come from any contributor's uploads, so prefix
+// such cells with an apostrophe to keep them plain text.
+export const neutralizeCSVFormula = value =>
+    /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+
+// Exports the rows currently shown, in the order shown, so filtering to
+// "Not started" first yields exactly the outreach list.
 const downloadSupplierCSV = (campaign, suppliers) =>
     DownloadCSV(
         joinDataIntoCSVString([
@@ -107,7 +151,7 @@ const downloadSupplierCSV = (campaign, suppliers) =>
                 'claim_link',
             ],
             ...suppliers.map(s => [
-                s.name,
+                neutralizeCSVFormula(s.name),
                 s.os_id,
                 s.country_code,
                 STATUS_LABELS[s.claim_status] || s.claim_status,
@@ -272,6 +316,41 @@ const InviteModeToggle = ({ mode, onChange, classes }) => (
     </div>
 );
 
+const SortableHeader = ({
+    column,
+    label,
+    orderBy,
+    order,
+    onSort,
+    className,
+}) => (
+    <TableCell
+        className={className}
+        sortDirection={orderBy === column ? order : false}
+    >
+        <TableSortLabel
+            active={orderBy === column}
+            direction={orderBy === column ? order : SORT_DIRECTIONS.asc}
+            onClick={() => onSort(column)}
+        >
+            {label}
+        </TableSortLabel>
+    </TableCell>
+);
+
+SortableHeader.defaultProps = {
+    orderBy: null,
+};
+
+SortableHeader.propTypes = {
+    column: string.isRequired,
+    label: string.isRequired,
+    orderBy: string,
+    order: string.isRequired,
+    onSort: func.isRequired,
+    className: string.isRequired,
+};
+
 InviteModeToggle.propTypes = {
     mode: string.isRequired,
     onChange: func.isRequired,
@@ -303,6 +382,10 @@ const CampaignCard = ({ campaign, canEmail, classes }) => {
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(25);
+    // Unsorted (server order, i.e. the order suppliers were added) until
+    // the brand clicks a column header.
+    const [orderBy, setOrderBy] = useState(null);
+    const [order, setOrder] = useState(SORT_DIRECTIONS.asc);
     const [inviteMode, setInviteMode] = useState(
         canEmail ? INVITE_MODES.email : INVITE_MODES.link,
     );
@@ -320,10 +403,20 @@ const CampaignCard = ({ campaign, canEmail, classes }) => {
         ? Math.round((counts.claimed / total) * 100)
         : 0;
 
-    const suppliers =
+    const sortBy = column => {
+        const reverse = orderBy === column && order === SORT_DIRECTIONS.asc;
+        setOrder(reverse ? SORT_DIRECTIONS.desc : SORT_DIRECTIONS.asc);
+        setOrderBy(column);
+        setPage(0);
+    };
+
+    const suppliers = sortSuppliers(
         statusFilter === 'ALL'
             ? campaign.suppliers
-            : campaign.suppliers.filter(s => s.claim_status === statusFilter);
+            : campaign.suppliers.filter(s => s.claim_status === statusFilter),
+        orderBy,
+        order,
+    );
     const pageSuppliers = suppliers.slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
@@ -452,18 +545,33 @@ const CampaignCard = ({ campaign, canEmail, classes }) => {
                 <Table className={classes.supplierTable}>
                     <TableHead>
                         <TableRow>
-                            <TableCell className={classes.colFacility}>
-                                Facility
-                            </TableCell>
+                            <SortableHeader
+                                column="name"
+                                label="Facility"
+                                orderBy={orderBy}
+                                order={order}
+                                onSort={sortBy}
+                                className={classes.colFacility}
+                            />
                             <TableCell className={classes.colOsId}>
                                 OS ID
                             </TableCell>
-                            <TableCell className={classes.colCountry}>
-                                Country
-                            </TableCell>
-                            <TableCell className={classes.colStatus}>
-                                Claim status
-                            </TableCell>
+                            <SortableHeader
+                                column="country"
+                                label="Country"
+                                orderBy={orderBy}
+                                order={order}
+                                onSort={sortBy}
+                                className={classes.colCountry}
+                            />
+                            <SortableHeader
+                                column="status"
+                                label="Claim status"
+                                orderBy={orderBy}
+                                order={order}
+                                onSort={sortBy}
+                                className={classes.colStatus}
+                            />
                             <TableCell className={classes.colContact}>
                                 <span className={classes.headerWithHelp}>
                                     {showEmail
