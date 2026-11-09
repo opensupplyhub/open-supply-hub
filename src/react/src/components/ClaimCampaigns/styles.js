@@ -9,9 +9,13 @@ export const claimCampaignsStyles = theme =>
             margin: '0 auto',
             padding: '24px 16px 64px',
         }),
+        // Same as every other account page's title (AppGrid).
         title: Object.freeze({
-            fontWeight: theme.typography.fontWeightBold,
-            marginBottom: '4px',
+            fontFamily: OARFont,
+            fontWeight: 'normal',
+            fontSize: '32px',
+            lineHeight: 1.2,
+            margin: '20px 0 8px',
         }),
         subtitle: Object.freeze({
             color: COLOURS.DARK_GREY,
@@ -361,9 +365,13 @@ export const newClaimCampaignStyles = theme =>
             margin: '0 auto',
             padding: '24px 16px 64px',
         }),
+        // Same as every other account page's title (AppGrid).
         title: Object.freeze({
-            fontWeight: theme.typography.fontWeightBold,
-            marginBottom: '4px',
+            fontFamily: OARFont,
+            fontWeight: 'normal',
+            fontSize: '32px',
+            lineHeight: 1.2,
+            margin: '20px 0 8px',
         }),
         subtitle: Object.freeze({
             color: COLOURS.DARK_GREY,
