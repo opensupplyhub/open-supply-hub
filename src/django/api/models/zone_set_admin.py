@@ -38,7 +38,10 @@ class ZoneSetForm(forms.ModelForm):
             'set. When editing, leave empty to keep the current zones; '
             'uploading a new file replaces them all. Features are kept '
             'separate (not merged); if zones overlap, the feature that '
-            'comes first in the file wins.'
+            'comes first in the file wins. Large features are stored '
+            'as several small pieces that share the feature\'s value, '
+            'so a dissolved layer performs the same as one of many '
+            'small features.'
         ),
     )
 
@@ -206,23 +209,30 @@ class ZoneSetAdmin(admin.ModelAdmin):
         ))
 
     def get_queryset(self, request):
-        """Annotate the zone count so the list view needs one query."""
+        """Annotate the feature count so the list view needs one query."""
         return super().get_queryset(request).annotate(
-            _zone_count=Count('zones')
+            _zone_count=Count('zones__feature_index', distinct=True)
         )
 
     @admin.display(description='Zones', ordering='_zone_count')
     def zone_count(self, obj):
-        """Number of zones in the set (from the list annotation)."""
+        """
+        Number of zones in the set, counting source features rather
+        than the pieces they are stored as (from the list annotation).
+        """
         count = getattr(obj, '_zone_count', None)
-        return obj.zones.count() if count is None else count
+        if count is None:
+            return obj.zones.aggregate(
+                n=Count('feature_index', distinct=True)
+            )['n']
+        return count
 
     @admin.display(description='Current zones')
     def zone_summary(self, obj):
         """
-        One-line description of the saved zones (count, distinct
-        labels, and lon/lat extent), so staff can sanity-check an
-        upload at a glance.
+        One-line description of the saved zones (feature and piece
+        counts, distinct labels), so staff can sanity-check an upload
+        at a glance.
 
         Args:
             obj: The ZoneSet being displayed, or an unsaved instance on
@@ -231,8 +241,11 @@ class ZoneSetAdmin(admin.ModelAdmin):
         if not obj or not obj.pk:
             return '(no zones saved yet)'
         zones = obj.zones.all()
-        count = zones.count()
-        if count == 0:
+        counts = zones.aggregate(
+            features=Count('feature_index', distinct=True),
+            pieces=Count('id'),
+        )
+        if counts['pieces'] == 0:
             return '(no zones saved yet)'
         # Distinct labels straight from the database: pulling every
         # zone's full JSON (label plus all source properties) into
@@ -245,7 +258,10 @@ class ZoneSetAdmin(admin.ModelAdmin):
         shown = ', '.join(labels[:10])
         if len(labels) > 10:
             shown += f', … ({len(labels)} distinct)'
-        return f'{count} zone(s); labels: {shown}'
+        return (
+            f'{counts["features"]} zone(s) stored as {counts["pieces"]} '
+            f'piece(s); labels: {shown}'
+        )
 
     def save_model(self, request, obj, form, change):
         """
@@ -274,14 +290,18 @@ class ZoneSetAdmin(admin.ModelAdmin):
 class ZoneAdmin(admin.ModelAdmin):
     """
     Read-only listing of zones, for checking what an upload produced.
-    Zones are created and replaced only through their zone set.
+    One row per stored piece: a feature cut into several pieces at
+    upload appears once per piece, with the same feature index and
+    label. Zones are created and replaced only through their zone set.
     """
 
-    list_display = ('zone_set', 'feature_index', 'label', 'created_at')
+    list_display = (
+        'zone_set', 'feature_index', 'piece_index', 'label', 'created_at',
+    )
     list_filter = ('zone_set',)
     search_fields = ('value__label',)
-    readonly_fields = ('zone_set', 'feature_index', 'label', 'value',
-                       'created_at')
+    readonly_fields = ('zone_set', 'feature_index', 'piece_index', 'label',
+                       'value', 'created_at')
     fields = readonly_fields
 
     @admin.display(description='Label')

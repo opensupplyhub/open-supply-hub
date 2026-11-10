@@ -6,6 +6,7 @@ from django.db import models, transaction
 from api.facility_index_backfill.zone_set_ids_recompute import (
     schedule_zone_set_ids_recompute,
 )
+from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.polygon import variable_style_name_validator
 
 
@@ -38,6 +39,14 @@ class ZoneSet(models.Model):
     file wins (lowest `Zone.feature_index`). This is deterministic
     and under the uploader's control — sort the features by severity
     before export to get "most severe wins". See `resolve_zone`.
+
+    Storage: each uploaded feature is cut into pieces of a bounded
+    vertex count before it is saved (`api.helpers.zone_subdivision`),
+    so a dissolved layer of a few enormous multipolygons costs the
+    point-in-polygon test no more than a layer of many small ones.
+    Every piece carries the feature's value and `feature_index`, so
+    nothing above this paragraph changes; `Zone.piece_index` only
+    tells the pieces of one feature apart.
     """
 
     uuid = models.UUIDField(
@@ -123,7 +132,7 @@ class ZoneSet(models.Model):
         """
         return (
             self.zones.filter(geom__covers=point)
-            .order_by('feature_index')
+            .order_by('feature_index', 'piece_index')
             .first()
         )
 
@@ -139,6 +148,12 @@ class ZoneSet(models.Model):
         delete and the inserts commit together: readers either see the
         complete old set or the complete new set, never a mix or a gap.
 
+        Each record is stored as one or more `Zone` rows: its geometry
+        is cut into pieces of at most `ZONE_PIECE_MAX_VERTICES`
+        vertices (see `api.helpers.zone_subdivision`), and every piece
+        carries the record's label, properties and position in the
+        file. The subdivision runs inside this transaction too.
+
         New zones change which locations the set covers without
         touching any facility row, so once the transaction commits a
         recompute of `FacilityIndex.zone_set_ids` for the whole table
@@ -153,19 +168,21 @@ class ZoneSet(models.Model):
                 keys, in file order (the order defines
                 `feature_index`).
         """
+        pieces = subdivide_zone_records(zone_records)
         self.zones.all().delete()
         Zone.objects.bulk_create(
             [
                 Zone(
                     zone_set=self,
-                    feature_index=index,
-                    geom=record['geom'],
+                    feature_index=piece['feature_index'],
+                    piece_index=piece['piece_index'],
+                    geom=piece['geom'],
                     value={
-                        'label': record['label'],
-                        'properties': record['properties'],
+                        'label': piece['label'],
+                        'properties': piece['properties'],
                     },
                 )
-                for index, record in enumerate(zone_records)
+                for piece in pieces
             ],
             batch_size=500,
         )
@@ -174,9 +191,12 @@ class ZoneSet(models.Model):
 
 class Zone(models.Model):
     """
-    One polygon in a `ZoneSet`, carrying the value shown for locations
-    inside it. Rows are created only by `ZoneSet.replace_zones`; they
-    are not edited individually.
+    One piece of one feature of a `ZoneSet`, carrying the value shown
+    for locations inside it. A feature whose geometry fits the vertex
+    budget is a single piece; a larger one is several rows that share
+    its `feature_index` and value and differ in `piece_index` (see
+    `api.helpers.zone_subdivision`). Rows are created only by
+    `ZoneSet.replace_zones`; they are not edited individually.
     """
 
     zone_set = models.ForeignKey(
@@ -189,6 +209,15 @@ class Zone(models.Model):
             'Position of the source feature in the uploaded file '
             '(0-based). When zones in a set overlap, the lowest index '
             'wins.'
+        ),
+    )
+    piece_index = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            'Position of this piece within its source feature '
+            '(0-based). Large features are cut into pieces of a '
+            'bounded vertex count at upload; every piece carries the '
+            "feature's value."
         ),
     )
     geom = gis_models.MultiPolygonField(
@@ -206,17 +235,20 @@ class Zone(models.Model):
     class Meta:
         verbose_name = 'Zone'
         verbose_name_plural = 'Zones'
-        ordering = ('zone_set', 'feature_index')
+        ordering = ('zone_set', 'feature_index', 'piece_index')
         constraints = [
             models.UniqueConstraint(
-                fields=('zone_set', 'feature_index'),
-                name='zone_unique_feature_index_per_set',
+                fields=('zone_set', 'feature_index', 'piece_index'),
+                name='zone_unique_piece_per_feature_per_set',
             ),
         ]
 
     def __str__(self):
-        """A zone is identified by its set and displayed label."""
-        return f'{self.zone_set.name} #{self.feature_index}: {self.label}'
+        """A zone is identified by its set, feature, piece and label."""
+        return (
+            f'{self.zone_set.name} #{self.feature_index}.{self.piece_index}: '
+            f'{self.label}'
+        )
 
     @property
     def label(self):
