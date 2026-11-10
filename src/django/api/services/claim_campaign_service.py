@@ -23,6 +23,10 @@ from api.models import (
 ACCESS_FLAG = 'claim_campaign_access'
 # On top of access: the brand may also create its own campaigns.
 SELF_SERVE_FLAG = 'claim_campaign_self_serve'
+# On top of access: the brand may have OS Hub email claim invites to its
+# suppliers from a campaign. Only contributors on this list (the group of
+# the same name) can; everyone else shares the claim links themselves.
+EMAIL_INVITES_FLAG = 'claim_campaign_email_invites'
 MAX_SUPPLIERS_PER_CAMPAIGN = 5000
 # A supplier search returns at most this many facilities to choose from.
 MAX_SEARCH_RESULTS = 500
@@ -118,15 +122,17 @@ def user_has_flag(user, flag_name):
 def campaign_permissions(user):
     """
     What the user may do with claims campaigns, for the React app: see
-    them at all (the premium access flag) and create its own. Both are
-    False while the claim_campaigns switch is off.
+    them at all (the premium access flag), create its own, and have OS
+    Hub email claim invites from a campaign. All are False while the
+    claim_campaigns switch is off.
     """
     if not switch_is_active('claim_campaigns'):
-        return {'access': False, 'self_serve': False}
+        return {'access': False, 'self_serve': False, 'email': False}
     access = user_has_flag(user, ACCESS_FLAG)
     return {
         'access': access,
         'self_serve': access and user_has_flag(user, SELF_SERVE_FLAG),
+        'email': access and user_has_flag(user, EMAIL_INVITES_FLAG),
     }
 
 
@@ -156,8 +162,15 @@ def get_campaign_for_invite(user, facility, code):
     or the facility isn't one of its suppliers.
     """
     contributor = getattr(user, 'contributor', None)
+    permissions = campaign_permissions(user)
+    if permissions['access'] and not permissions['email']:
+        raise ValidationError(
+            'Emailing claim invites from a campaign isn\'t turned on for '
+            'your account. Copy the claim link or download the CSV and '
+            'send it yourself.'
+        )
     campaign = None
-    if contributor is not None and campaign_permissions(user)['access']:
+    if contributor is not None and permissions['access']:
         campaign = ClaimCampaign.objects.filter(
             code=code.strip().upper(),
             contributor=contributor,

@@ -56,14 +56,18 @@ const mockCampaigns = [
 const renderComponent = (
     userHasSignedIn = true,
     props = {},
-    { claimInvite = false, access = true } = {},
+    { claimInvite = false, access = true, emailInvites = true } = {},
 ) => {
     const preloadedState = {
         auth: {
             user: {
                 user: {
                     isAnon: !userHasSignedIn,
-                    claim_campaigns: { access, self_serve: access },
+                    claim_campaigns: {
+                        access,
+                        self_serve: access,
+                        email: emailInvites,
+                    },
                 },
             },
         },
@@ -760,3 +764,19 @@ test('a campaign closed in Django admin shows as closed when the page loads', as
     expect(queryByText('Close campaign')).not.toBeInTheDocument();
 });
 
+
+test('brands not on the email list only get claim links, even with the switch on', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+    const { findByText, queryByText, getAllByText, getByText } = renderComponent(
+        true,
+        {},
+        { claimInvite: true, emailInvites: false },
+    );
+
+    await findByText('Unique claim link');
+    expect(queryByText('Invite by')).not.toBeInTheDocument();
+    expect(queryByText('Contact email')).not.toBeInTheDocument();
+    expect(getAllByText('Copy link')).toHaveLength(2);
+    expect(getByText('Download CSV')).toBeInTheDocument();
+});

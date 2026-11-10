@@ -381,7 +381,7 @@ class FacilityClaimInviteTest(APITestCase):
         list_item.facility = self.facility
         list_item.save()
         # Campaigns are premium: the brand has been given access.
-        grant_campaign_access((contributor or self.sender).admin)
+        grant_campaign_access((contributor or self.sender).admin, email=True)
         return ClaimCampaign.objects.create(
             contributor=contributor or self.sender,
             name=fields.pop('name', 'Spring outreach'),

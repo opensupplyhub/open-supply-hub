@@ -46,6 +46,7 @@ import {
 } from '../../util/constants';
 import {
     convertFeatureFlagsObjectToListOfActiveFlags,
+    canEmailCampaignInvites,
     hasClaimCampaignAccess,
     DownloadCSV,
     joinDataIntoCSVString,
@@ -1152,9 +1153,10 @@ const mapStateToProps = ({
 }) => ({
     userHasSignedIn: !user.isAnon,
     hasAccess: hasClaimCampaignAccess(user),
-    canEmail: convertFeatureFlagsObjectToListOfActiveFlags(flags).includes(
-        CLAIM_INVITE,
-    ),
+    canEmail:
+        convertFeatureFlagsObjectToListOfActiveFlags(flags).includes(
+            CLAIM_INVITE,
+        ) && canEmailCampaignInvites(user),
     fetching,
     campaigns: data,
     error,

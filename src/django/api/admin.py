@@ -377,13 +377,19 @@ class ClaimCampaignSupplierInline(admin.TabularInline):
 
 
 class ClaimCampaignAdmin(admin.ModelAdmin):
-    list_display = ('name', 'code', 'contributor', 'status', 'has_access')
+    list_display = (
+        'name', 'code', 'contributor', 'status', 'has_access',
+        'can_email_invites',
+    )
     list_filter = ('status',)
     search_fields = ('name', 'code', 'contributor__name')
     readonly_fields = ('uuid', 'created_at', 'updated_at')
     raw_id_fields = ('contributor',)
     inlines = (ClaimCampaignSupplierInline,)
-    actions = ('close_campaigns', 'reopen_campaigns', 'give_brands_access')
+    actions = (
+        'close_campaigns', 'reopen_campaigns', 'give_brands_access',
+        'allow_email_invites', 'stop_email_invites',
+    )
 
     @admin.display(boolean=True, description='Brand has access')
     def has_access(self, campaign):
@@ -392,6 +398,45 @@ class ClaimCampaignAdmin(admin.ModelAdmin):
         return admin_user.is_superuser or admin_user.groups.filter(
             name=ACCESS_FLAG
         ).exists()
+
+    @admin.display(boolean=True, description='Can email invites')
+    def can_email_invites(self, campaign):
+        from api.services.claim_campaign_service import EMAIL_INVITES_FLAG
+        admin_user = campaign.contributor.admin
+        return admin_user.is_superuser or admin_user.groups.filter(
+            name=EMAIL_INVITES_FLAG
+        ).exists()
+
+    @admin.action(
+        description='Allow these brands to have OS Hub email claim invites'
+    )
+    def allow_email_invites(self, request, queryset):
+        from django.contrib.auth.models import Group
+        from api.services.claim_campaign_service import EMAIL_INVITES_FLAG
+        group, _ = Group.objects.get_or_create(name=EMAIL_INVITES_FLAG)
+        users = {campaign.contributor.admin for campaign in queryset}
+        for user in users:
+            user.groups.add(group)
+        self.message_user(
+            request,
+            f'{len(users)} brand user(s) can now email claim invites from '
+            'their campaigns.',
+        )
+
+    @admin.action(description='Stop these brands emailing claim invites')
+    def stop_email_invites(self, request, queryset):
+        from django.contrib.auth.models import Group
+        from api.services.claim_campaign_service import EMAIL_INVITES_FLAG
+        group = Group.objects.filter(name=EMAIL_INVITES_FLAG).first()
+        users = {campaign.contributor.admin for campaign in queryset}
+        if group is not None:
+            for user in users:
+                user.groups.remove(group)
+        self.message_user(
+            request,
+            f'{len(users)} brand user(s) can no longer email claim invites; '
+            'they can still share the claim links.',
+        )
 
     @admin.action(description='Close selected campaigns')
     def close_campaigns(self, request, queryset):
