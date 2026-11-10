@@ -8,6 +8,7 @@ from oar.settings import (
     MAX_UPLOADED_FILE_SIZE_IN_BYTES,
     DEBUG
 )
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
@@ -20,6 +21,8 @@ from django.core.files.uploadedfile import (
     TemporaryUploadedFile
 )
 from django.db import transaction
+from django.http import HttpResponse
+from django.utils.http import content_disposition_header
 from django.db.models import F, Q
 from django.utils import timezone
 
@@ -43,8 +46,16 @@ from ...models.contributor.contributor import Contributor
 from ...models.facility.facility_list import FacilityList
 from ...models.facility.facility_list_item import FacilityListItem
 from ...models.facility.facility_match import FacilityMatch
+from ...models.facility.list_cleaning_run import (
+    ListCleaningEvent,
+    ListCleaningRun,
+)
 from ...models.source import Source
 from ...models.user import User
+from ...serializers.facility.list_cleaning_serializer import (
+    serialize_run,
+)
+from ...services import list_cleaning
 from ...permissions import (
     IsRegisteredAndConfirmed,
     IsSuperuser
@@ -56,6 +67,9 @@ from ...serializers import (
 )
 
 log = logging.getLogger(__name__)
+
+
+NO_COMPLETED_RUN = 'There is no completed run for this list.'
 
 
 class FacilityListViewSet(ModelViewSet):
@@ -188,9 +202,25 @@ class FacilityListViewSet(ModelViewSet):
 
         if not DEBUG:
             submit_parse_job(new_list)
+        elif list_cleaning.feature_enabled():
+            # Local development has no AWS Batch. Parse inline so the
+            # upload-time review step has something to show; the
+            # cleaning run itself starts from the end of the parse.
+            self.__parse_inline(new_list)
 
         serializer = self.get_serializer(new_list)
         return Response(serializer.data)
+
+    @staticmethod
+    def __parse_inline(facility_list):
+        from ...processing import parse_production_location_list
+        try:
+            parse_production_location_list(facility_list)
+        except Exception as exc:  # noqa: BLE001
+            log.exception(
+                f'[List Upload] Inline parse failed for list '
+                f'{facility_list.id}: {exc}'
+            )
 
     def list(self, request):
         """
@@ -281,6 +311,7 @@ class FacilityListViewSet(ModelViewSet):
         except FacilityList.DoesNotExist as exc:
             raise NotFound() from exc
 
+        self._block_while_review_open(facility_list)
         facility_list.status_change_reason = request.data.get('reason', '')
         facility_list.status_change_by = request.user
         facility_list.status = FacilityList.APPROVED
@@ -316,6 +347,7 @@ class FacilityListViewSet(ModelViewSet):
         except FacilityList.DoesNotExist as exc:
             raise NotFound() from exc
 
+        self._block_while_review_open(facility_list)
         facility_list.status_change_reason = request.data.get('reason', '')
         facility_list.status_change_by = request.user
         facility_list.status = FacilityList.REJECTED
@@ -438,6 +470,216 @@ class FacilityListViewSet(ModelViewSet):
         serializer = FacilityListItemSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    # ------------------------------------------------------------------
+    # OSDEV-3726: contributor-facing list-cleaning feedback
+    # ------------------------------------------------------------------
+
+    def _get_list_for_user(self, request, pk):
+        if request.user.is_superuser:
+            facility_lists = FacilityList.objects.all()
+        else:
+            facility_lists = FacilityList.objects.filter(
+                source__contributor=request.user.contributor)
+        try:
+            return facility_lists.get(pk=pk)
+        except FacilityList.DoesNotExist as exc:
+            raise NotFound() from exc
+
+    @action(detail=True, methods=['get'], url_path='cleaning')
+    def cleaning(self, request, pk=None):
+        """
+        The latest list-cleaning run for the list, its summary and its
+        per-row suggestions. internal_note issues are only returned to
+        superusers. `run` is null when no run has been started.
+        `tour_seen` says whether this user has closed the walkthrough
+        before, so the review opens without it.
+        """
+        facility_list = self._get_list_for_user(request, pk)
+        tour_seen = list_cleaning.tour_seen(request.user)
+        run = facility_list.cleaning_runs.first()
+        if run is None:
+            return Response({
+                'enabled': list_cleaning.feature_enabled(),
+                'run': None, 'summary': None, 'rows': [],
+                'tour_seen': tour_seen,
+            })
+        run = list_cleaning.settle_run(run)
+        data = serialize_run(
+            run, include_internal=request.user.is_superuser)
+        data['enabled'] = list_cleaning.feature_enabled()
+        data['tour_seen'] = tour_seen
+        return Response(data)
+
+    @staticmethod
+    def _block_while_review_open(facility_list):
+        """
+        v3: while the contributor's review window is open the list is
+        not final, so moderation waits. A run still waiting on the
+        pipeline is polled first, so one that failed out there does not
+        hold the list; lapsed windows close here too.
+        """
+        run = list_cleaning.settle_run(facility_list.cleaning_runs.first())
+        if run is not None and list_cleaning.window_open(run):
+            raise ValidationError(
+                'The contributor can still submit changes to this list '
+                f'until {run.review_until.isoformat()}; moderation can '
+                'start once the review window has closed.')
+
+    @staticmethod
+    def _require_switch():
+        if not list_cleaning.feature_enabled():
+            raise ValidationError(
+                'List-cleaning feedback is switched off.')
+
+    @action(detail=True, methods=['post'], url_path='cleaning/start',
+            permission_classes=(IsSuperuser,))
+    def cleaning_start(self, request, pk=None):
+        """Start (or re-start) a run regardless of the feature switch."""
+        facility_list = self._get_list_for_user(request, pk)
+        # Under the current run's lock, so a submission in flight
+        # finishes first and the window check sees its closure.
+        with transaction.atomic():
+            current = facility_list.cleaning_runs.first()
+            if current is not None:
+                list_cleaning.lock_run(current)
+                current = list_cleaning.settle_run(current)
+            if current is not None and list_cleaning.window_open(current):
+                raise ValidationError(
+                    'The contributor is still reviewing this list; a new '
+                    'run would discard their decisions. Wait for the '
+                    'window to close at '
+                    f'{current.review_until.isoformat()}.')
+            run = list_cleaning.start_run(
+                facility_list,
+                runner_name=request.data.get('runner'),
+                force=True)
+        return Response(serialize_run(run, include_internal=True))
+
+    @action(detail=True, methods=['post'], url_path='cleaning/decisions')
+    def cleaning_decisions(self, request, pk=None):
+        """
+        Record accept / reject / edit decisions.
+
+        ## Request Body
+            {"decisions": [{"id": 12, "decision": "ACCEPTED"},
+                           {"id": 13, "decision": "EDITED",
+                            "value": "1200"},
+                           {"id": 14, "decision": "REMOVED"}],
+             "groups": [{"key": "CORRECTION:country_code:country",
+                         "decision": "ACCEPTED"}]}
+        """
+        self._require_switch()
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None or run.status != ListCleaningRun.COMPLETE:
+            raise ValidationError(NO_COMPLETED_RUN)
+        if facility_list.status != FacilityList.PENDING:
+            raise ValidationError(
+                'Suggestions can only be acted on while the list is '
+                'pending moderation.')
+        decisions = request.data.get('decisions') or []
+        groups = request.data.get('groups') or []
+        if not isinstance(decisions, list) or not isinstance(groups, list):
+            raise ValidationError('"decisions" and "groups" must be lists.')
+        if not decisions and not groups:
+            raise ValidationError(
+                'Send "decisions" (per suggestion) or "groups" (per error '
+                'type), or both.')
+        updated = []
+        try:
+            # One transaction, so a bad group key does not leave the
+            # row decisions before it saved.
+            with transaction.atomic():
+                if decisions:
+                    updated += list_cleaning.record_decisions(
+                        run, decisions, request.user)
+                if groups:
+                    updated += list_cleaning.record_group_decisions(
+                        run, groups, request.user)
+        except list_cleaning.DecisionError as e:
+            raise ValidationError(str(e))
+        # The summary and groups in full, but only the rows this request
+        # changed: on a long list the whole row set is several MB.
+        return Response(serialize_run(
+            run, include_internal=request.user.is_superuser,
+            only_rows={s.row_number for s in updated}))
+
+    @action(detail=True, methods=['post'], url_path='cleaning/submit')
+    def cleaning_submit(self, request, pk=None):
+        """
+        The contributor's one submission: apply every accepted change
+        (or none, with {"as_uploaded": true}) and close the review
+        window. After this nothing on the list changes.
+        """
+        self._require_switch()
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None or run.status != ListCleaningRun.COMPLETE:
+            raise ValidationError(NO_COMPLETED_RUN)
+        if facility_list.status != FacilityList.PENDING:
+            raise ValidationError(
+                'A list can only be submitted while it is pending '
+                'moderation.')
+        as_uploaded = request.data.get('as_uploaded', False)
+        if not isinstance(as_uploaded, bool):
+            raise ValidationError('as_uploaded must be true or false.')
+        try:
+            counts = list_cleaning.submit_run(
+                run, request.user, as_uploaded=as_uploaded)
+        except list_cleaning.DecisionError as e:
+            raise ValidationError(str(e))
+        data = serialize_run(
+            run, include_internal=request.user.is_superuser)
+        data['applied'] = counts
+        return Response(data)
+
+    @action(detail=True, methods=['post'], url_path='cleaning/events')
+    def cleaning_events(self, request, pk=None):
+        """
+        Record what the contributor did with the review screen:
+        {"kind": "opened" | "resumed" | "left" | "tour_dismissed",
+         "meta": {...}}.
+        Submitted and lapsed are recorded server-side. A tour_dismissed
+        event is remembered per user: the walkthrough no longer opens
+        by itself for them on later reviews.
+        """
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None:
+            raise ValidationError('There is no run for this list.')
+        kind = request.data.get('kind')
+        if kind not in ListCleaningEvent.CLIENT_KINDS:
+            raise ValidationError(
+                f'"kind" must be one of {ListCleaningEvent.CLIENT_KINDS}.')
+        meta = request.data.get('meta') or {}
+        if not isinstance(meta, dict):
+            raise ValidationError('"meta" must be an object.')
+        list_cleaning.record_event(run, kind, user=request.user, meta=meta)
+        return Response({'recorded': kind}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='cleaning-metrics',
+            permission_classes=(IsSuperuser,))
+    def cleaning_metrics(self, request):
+        """Submit versus click away, across every closed run."""
+        return Response(list_cleaning.metrics_summary())
+
+    @action(detail=True, methods=['get'], url_path='cleaning/download')
+    def cleaning_download(self, request, pk=None):
+        """
+        The list as it now stands, as CSV: original columns, current
+        values, removed rows at the end tagged with the reason.
+        """
+        facility_list = self._get_list_for_user(request, pk)
+        run = facility_list.cleaning_runs.first()
+        if run is None or run.status != ListCleaningRun.COMPLETE:
+            raise ValidationError(NO_COMPLETED_RUN)
+        body = list_cleaning.build_fixed_csv(run)
+        stem = os.path.splitext(facility_list.file_name or 'list')[0]
+        response = HttpResponse(body, content_type='text/csv')
+        response['Content-Disposition'] = content_disposition_header(
+            True, f'{stem}-fixed.csv')
+        return response
+
     @transaction.atomic
     @action(detail=True, methods=['post'],
             url_path='remove')
@@ -449,6 +691,16 @@ class FacilityListViewSet(ModelViewSet):
 
             if not is_users_facility and not request.user.is_superuser:
                 raise FacilityList.DoesNotExist
+
+            # While the contributor's review window is open, rows are
+            # removed through the review and its single submission, so
+            # the list cannot change underneath it.
+            review = list_cleaning.settle_run(
+                facility_list.cleaning_runs.first())
+            if review is not None and list_cleaning.window_open(review):
+                raise ValidationError(
+                    'This list is still being reviewed; remove rows from '
+                    'the review screen and submit it there.')
 
             facility_list_item = (
                 FacilityListItem

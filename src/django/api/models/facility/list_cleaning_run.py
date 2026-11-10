@@ -1,0 +1,295 @@
+"""
+Results of the Cornell list-cleaning pipeline (OSDEV-3726) for one upload.
+
+A ``ListCleaningRun`` is one invocation of the pipeline for a facility list.
+Each thing the pipeline said about a row is a ``ListCleaningSuggestion``: a
+suggested correction, an issue to flag, or a row removal. The contributor's
+(or moderator's) decision is recorded on the suggestion itself, so every
+accept / reject / edit is logged per row and per code, which is what the
+per-code agreement rates in OSDEV-3399 need.
+"""
+from django.db import models
+
+
+class ListCleaningRun(models.Model):
+    PENDING = 'PENDING'
+    RUNNING = 'RUNNING'
+    COMPLETE = 'COMPLETE'
+    FAILED = 'FAILED'
+    STATUS_CHOICES = (
+        (PENDING, PENDING),
+        (RUNNING, RUNNING),
+        (COMPLETE, COMPLETE),
+        (FAILED, FAILED),
+    )
+
+    STEP_FUNCTIONS = 'stepfunctions'
+    STUB = 'stub'
+    IMPORT = 'import'
+    RUNNER_CHOICES = (
+        (STEP_FUNCTIONS, 'AWS Step Functions'),
+        (STUB, 'Local stub rules'),
+        (IMPORT, 'Imported records file'),
+    )
+
+    facility_list = models.ForeignKey(
+        'FacilityList',
+        on_delete=models.CASCADE,
+        related_name='cleaning_runs',
+        help_text='The list this run was started for.')
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=PENDING)
+    runner = models.CharField(
+        max_length=20,
+        choices=RUNNER_CHOICES,
+        default=STEP_FUNCTIONS,
+        help_text='What executed the pipeline for this run.')
+    execution_arn = models.CharField(
+        max_length=512,
+        blank=True,
+        default='',
+        help_text='Step Functions execution ARN, when the runner is '
+                  'stepfunctions.')
+    prompt_version = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        help_text='PromptVersion the pipeline reported for this run.')
+    file_pass = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='List-level findings from stage 1: header issues, '
+                  'repeated names, exact duplicates.')
+    usage = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Token usage and wall-clock reported by the pipeline.')
+    error = models.TextField(
+        blank=True,
+        default='',
+        help_text='Why the run failed, if it did.')
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    applied_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='When accepted corrections were last applied to the list.')
+
+    # v3: the contributor submits once. The review window opens with the
+    # run and closes either when they submit or when it lapses (with
+    # what they had decided applied, if they opened the review); after
+    # that nothing on the list changes and moderation can begin.
+    SUBMITTED = 'submitted'
+    LAPSED = 'lapsed'
+    CLEAN = 'clean'
+    # The run itself failed, so there is nothing to review and nothing
+    # to wait for: the list goes to moderation as uploaded.
+    FAILED_RUN = 'failed'
+    CLOSED_REASON_CHOICES = (
+        (SUBMITTED, 'Contributor submitted'),
+        (LAPSED, 'Window lapsed, decisions so far applied'),
+        (CLEAN, 'Nothing to review, list as uploaded'),
+        (FAILED_RUN, 'Run failed, list as uploaded'),
+    )
+    review_until = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Deadline for the contributor to submit changes.')
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    closed_at = models.DateTimeField(null=True, blank=True)
+    closed_reason = models.CharField(
+        max_length=20,
+        choices=CLOSED_REASON_CHOICES,
+        blank=True,
+        default='')
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'ListCleaningRun {self.id} for list {self.facility_list_id}'
+
+    @property
+    def is_closed(self):
+        return self.closed_at is not None
+
+
+class ListCleaningEvent(models.Model):
+    """
+    What the contributor did with the review screen, for the question
+    "how many people submit through it versus click away": one row per
+    moment that matters, with whatever numbers describe it.
+    """
+    OPENED = 'opened'          # review screen shown after upload
+    RESUMED = 'resumed'        # reopened from the list page
+    LEFT = 'left'              # closed the screen without submitting
+    SUBMITTED = 'submitted'    # submitted (meta.as_uploaded says how)
+    # window passed with no submission (meta.opened and meta.applied
+    # say whether anything went on)
+    LAPSED = 'lapsed'
+    # closed the walkthrough (meta.how: skipped, finished or escaped);
+    # the review opens without it for that user from then on
+    TOUR_DISMISSED = 'tour_dismissed'
+    KIND_CHOICES = (
+        (OPENED, OPENED),
+        (RESUMED, RESUMED),
+        (LEFT, LEFT),
+        (SUBMITTED, SUBMITTED),
+        (LAPSED, LAPSED),
+        (TOUR_DISMISSED, TOUR_DISMISSED),
+    )
+    CLIENT_KINDS = (OPENED, RESUMED, LEFT, TOUR_DISMISSED)
+
+    run = models.ForeignKey(
+        ListCleaningRun,
+        on_delete=models.CASCADE,
+        related_name='events')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    user = models.ForeignKey(
+        'User',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+')
+    meta = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+
+class ListCleaningSuggestion(models.Model):
+    CORRECTION = 'CORRECTION'
+    ISSUE = 'ISSUE'
+    REMOVAL = 'REMOVAL'
+    KIND_CHOICES = (
+        (CORRECTION, 'Suggested correction'),
+        (ISSUE, 'Issue'),
+        (REMOVAL, 'Row removal'),
+    )
+
+    MUST_FIX = 'must_fix'
+    # Shown to the contributor as "worth a look": it does not block
+    # approval, but they are the one who can tell (e.g. one name at
+    # several addresses).
+    ADVISORY = 'advisory'
+    INTERNAL_NOTE = 'internal_note'
+    SEVERITY_CHOICES = (
+        (MUST_FIX, MUST_FIX),
+        (ADVISORY, ADVISORY),
+        (INTERNAL_NOTE, INTERNAL_NOTE),
+    )
+
+    PENDING = 'PENDING'
+    ACCEPTED = 'ACCEPTED'
+    REJECTED = 'REJECTED'
+    EDITED = 'EDITED'
+    REMOVED = 'REMOVED'  # contributor chose to drop the row instead
+    DECISION_CHOICES = (
+        (PENDING, PENDING),
+        (ACCEPTED, ACCEPTED),
+        (REJECTED, REJECTED),
+        (EDITED, EDITED),
+        (REMOVED, REMOVED),
+    )
+
+    # Fields the pipeline may flag but must never change (handoff §2,
+    # OSDEV-3725). A correction the model emits for one of these is kept
+    # visible but is never pre-accepted.
+    PROTECTED_FIELDS = ('name', 'address')
+
+    # Corrections the prompt applies silently (§4 "internal"). The prototype
+    # shows them but pre-accepts them so a contributor who does nothing still
+    # gets the formatting fixes; rejecting one is a recorded decision.
+    SILENT_CORRECTION_CODES = (
+        'whitespace', 'quotes', 'filler_text', 'encoding', 'country_code',
+        'separators', 'workers_format', 'casing',
+    )
+
+    run = models.ForeignKey(
+        ListCleaningRun,
+        on_delete=models.CASCADE,
+        related_name='suggestions')
+    facility_list_item = models.ForeignKey(
+        'FacilityListItem',
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name='cleaning_suggestions',
+        help_text='The row this suggestion is about. Null for findings '
+                  'the pipeline reported for a row that has no item.')
+    row_number = models.IntegerField(
+        help_text='Row number as in the spreadsheet (first data row is 2).')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES)
+    field = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        help_text='Column the suggestion applies to, when it is one column.')
+    code = models.CharField(
+        max_length=100,
+        help_text='Reason code (corrections) or issue code (issues) from '
+                  'the prompt catalog. Several codes joined by "+" when '
+                  'the model applied more than one rule to a field.')
+    severity = models.CharField(
+        max_length=20,
+        choices=SEVERITY_CHOICES,
+        blank=True,
+        default='',
+        help_text='Issues only. must_fix blocks approval, advisory is '
+                  'shown as worth a look, internal_note is never shown '
+                  'to the contributor.')
+    original_value = models.TextField(blank=True, default='')
+    corrected_value = models.TextField(blank=True, default='')
+    note = models.TextField(
+        blank=True,
+        default='',
+        help_text='The one-sentence plain-language explanation.')
+    extra = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Anything else the record carried, e.g. duplicate_of.')
+
+    decision = models.CharField(
+        max_length=20,
+        choices=DECISION_CHOICES,
+        default=PENDING)
+    decided_value = models.TextField(
+        blank=True,
+        default='',
+        help_text='The value the contributor typed, when decision is '
+                  'EDITED.')
+    decided_by = models.ForeignKey(
+        'User',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+        help_text='Null when the decision was the default the system '
+                  'applied (pre-accepted silent corrections).')
+    decided_at = models.DateTimeField(null=True, blank=True)
+    applied = models.BooleanField(
+        default=False,
+        help_text='Whether this correction has been written to the list '
+                  'item.')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['row_number', 'id']
+        indexes = [
+            models.Index(fields=['run', 'row_number'],
+                         name='api_lcs_run_row_idx'),
+        ]
+
+    def __str__(self):
+        return (f'{self.kind} {self.code} on row {self.row_number} '
+                f'(run {self.run_id})')
+
+    @property
+    def final_value(self):
+        if self.decision == self.EDITED:
+            return self.decided_value
+        return self.corrected_value

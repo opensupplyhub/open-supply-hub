@@ -85,6 +85,35 @@ class ProcessingFacilityList(ProcessingFacility):
 
             self.__finalize_item_processing(item, is_geocoded, parsed_items)
 
+        self.__start_list_cleaning()
+
+    def __start_list_cleaning(self) -> None:
+        '''
+        OSDEV-3726: kick off the contributor-facing list-cleaning run now
+        that rows exist with ids to attach results to. Gated by the
+        `enable_list_cleaning_feedback` switch inside `start_run`, and never
+        allowed to break the parse step.
+        '''
+        from api.services.list_cleaning import start_run
+        try:
+            run = start_run(self.__facility_list)
+        except Exception as e:
+            error_message = (
+                f'[List Upload] Could not start list cleaning run: {e}'
+            )
+            log.error(error_message)
+            report_error_to_rollbar(
+                message=error_message,
+                extra_data={'affected_list': str(self.__facility_list)}
+            )
+            return
+        if run is not None:
+            log.info(
+                f'[List Upload] List cleaning run {run.id} started for '
+                f'FacilityList {self.__facility_list.id} '
+                f'({run.runner}, {run.status}).'
+            )
+
     @staticmethod
     def _create_facility_list_item(
         source: Source, row: RowDTO, idx: int, header_str: str

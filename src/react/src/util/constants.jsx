@@ -609,6 +609,7 @@ export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 export const ENABLE_IDENTITY_RESOLVER = 'enable_identity_resolver';
 export const PRIVATE_INSTANCE = 'private_instance';
 export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
+export const ENABLE_LIST_CLEANING_FEEDBACK = 'enable_list_cleaning_feedback';
 export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
 // Earth Genome candidate pilot kill switch (OSDEV-3627): off hides the
 // candidate footprint layer; the API answers 404 for candidates anyway.

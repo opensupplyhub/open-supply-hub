@@ -18,6 +18,7 @@ import FacilityListItemsEmpty from './FacilityListItemsEmpty';
 import FacilityListItemsTable from './FacilityListItemsTable';
 import FacilityListControls from './FacilityListControls';
 import ListUploadErrors from './ListUploadErrors';
+import ListCleaningStatusNote from './ListCleaningStatusNote';
 import RequireAuthNotice from './RequireAuthNotice';
 
 import {
@@ -341,6 +342,17 @@ const FacilityListItems = ({
                 will receive an email when your list has finished processing.
                 {awaitingModerationMessage}
             </div>
+
+            <ListCleaningStatusNote
+                listID={list.id}
+                isListOwner={isListOwner}
+                isAdminUser={isAdminUser}
+                onSubmitted={() => {
+                    // The rows below reflect the submission straight away.
+                    fetchList();
+                    fetchListItems();
+                }}
+            />
 
             {list.item_count ? (
                 <Route

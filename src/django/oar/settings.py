@@ -92,6 +92,23 @@ if ENVIRONMENT not in VALID_ENVIRONMENTS:
 # processing management commands.
 BATCH_MODE = os.getenv('BATCH_MODE', '')
 
+# OSDEV-3726: contributor-facing list-cleaning feedback. The feature itself is
+# gated by the `enable_list_cleaning_feedback` waffle switch; these only say
+# how a run is executed once the switch is on. `stub` runs deterministic
+# local rules (no AWS); `stepfunctions` starts the OSDEV-3724 state machine.
+LIST_CLEANING_RUNNER = os.getenv(
+    'LIST_CLEANING_RUNNER', 'stub' if DEBUG else 'stepfunctions')
+LIST_CLEANING_STATE_MACHINE_ARN = os.getenv(
+    'LIST_CLEANING_STATE_MACHINE_ARN', '')
+LIST_CLEANING_AWS_REGION = os.getenv('LIST_CLEANING_AWS_REGION', 'us-east-1')
+# AWS account id that owns the bucket pipeline results are read from.
+LIST_CLEANING_RESULTS_BUCKET_OWNER = os.getenv(
+    'LIST_CLEANING_RESULTS_BUCKET_OWNER', '')
+# How long after upload a contributor may submit changes from the review
+# screen before the list goes through as uploaded.
+LIST_CLEANING_REVIEW_MINUTES = int(
+    os.getenv('LIST_CLEANING_REVIEW_MINUTES', '60'))
+
 BATCH_JOB_QUEUE_NAME = os.getenv('BATCH_JOB_QUEUE_NAME')
 if (
     not (BATCH_JOB_QUEUE_NAME or '').strip()

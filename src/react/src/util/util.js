@@ -182,6 +182,18 @@ export const makeApproveFacilityListURL = listID =>
 export const makeRejectFacilityListURL = listID =>
     `/api/facility-lists/${listID}/reject/`;
 
+export const makeFacilityListCleaningURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/`;
+export const makeFacilityListCleaningStartURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/start/`;
+export const makeFacilityListCleaningDecisionsURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/decisions/`;
+export const makeFacilityListCleaningSubmitURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/submit/`;
+export const makeFacilityListCleaningEventsURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/events/`;
+export const makeFacilityListCleaningDownloadURL = listID =>
+    `/api/facility-lists/${listID}/cleaning/download/`;
 export const makeDashboardFacilityListsURL = () => '/api/admin-facility-lists/';
 
 export const makeDashboardApiBlocksURL = () => '/api/api-blocks/';

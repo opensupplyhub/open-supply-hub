@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     arrayOf,
     bool,
@@ -19,6 +19,7 @@ import ContributeFormSelectListToReplace from './ContributeFormSelectListToRepla
 import ListUploadErrors from './ListUploadErrors';
 import SelfServiceDromoUploader from './SelfServiceDromoUploader';
 import StyledTooltip from './StyledTooltip';
+import ListCleaningReviewDialog from './ListCleaningReviewDialog';
 
 import COLOURS from '../util/COLOURS';
 
@@ -35,6 +36,7 @@ import {
     DISABLE_LIST_UPLOADING,
     MAINTENANCE_MESSAGE,
     ENABLE_DROMO_UPLOADING,
+    ENABLE_LIST_CLEANING_FEEDBACK,
     facilityListFileExtensions,
     facilityListStatusChoicesEnum,
 } from '../util/constants';
@@ -95,6 +97,8 @@ const ContributeForm = ({
     facilityLists,
     fetchingFacilityLists,
     user,
+    listCleaningEnabled,
+    goToList,
 }) => {
     const { fileInput } = useFileUploadHandler({
         resetForm,
@@ -106,7 +110,18 @@ const ContributeForm = ({
 
     const selectFile = () => fileInput.current.click();
     const updateSelectedFileName = () => updateFileName(fileInput);
-    const handleUploadList = () => uploadList(fileInput);
+    // When list-cleaning feedback is on, hold the contributor on an
+    // upload-time review step instead of sending them straight to the list.
+    const [reviewListID, setReviewListID] = useState(null);
+    const handleUploadList = () =>
+        uploadList(fileInput, id =>
+            listCleaningEnabled ? setReviewListID(id) : goToList(id),
+        );
+    const continueToList = useCallback(() => {
+        const id = reviewListID;
+        setReviewListID(null);
+        goToList(id);
+    }, [reviewListID, goToList]);
 
     const errorMessages =
         error && error.length ? <ListUploadErrors errors={error} /> : null;
@@ -155,6 +170,13 @@ const ContributeForm = ({
 
     return (
         <div className="control-panel__group">
+            {reviewListID !== null && (
+                <ListCleaningReviewDialog
+                    listID={reviewListID}
+                    open
+                    onContinue={continueToList}
+                />
+            )}
             {formInputs}
             <div className="form__field">
                 <FeatureFlag flag={ENABLE_DROMO_UPLOADING}>
@@ -261,6 +283,8 @@ ContributeForm.propTypes = {
     uploadList: func.isRequired,
     facilityLists: arrayOf(facilityListPropType).isRequired,
     fetchingFacilityLists: bool.isRequired,
+    listCleaningEnabled: bool.isRequired,
+    goToList: func.isRequired,
     fetchLists: func.isRequired,
     resetForm: func.isRequired,
     user: userPropType.isRequired,
@@ -276,6 +300,7 @@ const mapStateToProps = ({
     auth: {
         user: { user },
     },
+    featureFlags: { flags },
 }) => ({
     name,
     description,
@@ -286,6 +311,7 @@ const mapStateToProps = ({
     facilityLists,
     fetchingFacilityLists,
     user,
+    listCleaningEnabled: !!flags?.[ENABLE_LIST_CLEANING_FEEDBACK],
 });
 
 const mapDispatchToProps = (dispatch, { history: { push } }) => ({
@@ -296,12 +322,9 @@ const mapDispatchToProps = (dispatch, { history: { push } }) => ({
         dispatch(updateFileUploadFileName(getFileNameFromInputRef(r))),
     updateListToReplace: e =>
         dispatch(updateFileUploadListToReplaceID(getValueFromEvent(e))),
-    uploadList: r =>
-        dispatch(
-            uploadFile(getFileFromInputRef(r), id =>
-                push(makeFacilityListItemsDetailLink(id)),
-            ),
-        ),
+    uploadList: (r, onUploaded) =>
+        dispatch(uploadFile(getFileFromInputRef(r), onUploaded)),
+    goToList: id => push(makeFacilityListItemsDetailLink(id)),
     fetchLists: () => dispatch(fetchUserFacilityLists()),
     resetForm: () => {
         dispatch(resetUserFacilityLists());
