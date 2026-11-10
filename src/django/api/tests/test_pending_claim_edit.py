@@ -548,6 +548,35 @@ class PendingClaimEditTest(APITestCase):
         )
         self.assertEqual(401, response.status_code)
 
+    @override_switch('claim_a_facility', active=True)
+    def test_download_of_non_roman_filename_sends_header_safe_disposition(
+        self
+    ):
+        '''
+        OSDEV-3600: S3 rejected the presigned request outright when the
+        Content-Disposition could not be encoded as ISO-8859-1.
+        '''
+        self.login()
+        attachment = self.add_attachment(
+            name='işyeri-açma-ve-çalıştırma-ruhsatı.png'
+        )
+
+        with patch(
+            'api.helpers.attachment_download.default_storage'
+        ) as storage:
+            storage.url.return_value = 'https://example.test/signed'
+            response = self.client.get(
+                f'{self.attachments_url}{attachment.id}/download/'
+            )
+
+        self.assertEqual(302, response.status_code)
+        disposition = storage.url.call_args.kwargs['parameters'][
+            'ResponseContentDisposition'
+        ]
+        # Would raise UnicodeEncodeError before the fix.
+        disposition.encode('latin-1')
+        self.assertIn("filename*=UTF-8''", disposition)
+
     # ------------------------------------------------------------------
     # Moderator claim details payload
     # ------------------------------------------------------------------

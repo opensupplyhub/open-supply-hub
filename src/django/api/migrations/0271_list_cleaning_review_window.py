@@ -6,7 +6,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0268_list_cleaning_removed_decision'),
+        ('api', '0270_list_cleaning_removed_decision'),
     ]
 
     operations = [
