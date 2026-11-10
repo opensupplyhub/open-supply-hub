@@ -2090,6 +2090,22 @@ it('should return an array without dashboard link if user does not have dashboar
     });
 });
 
+it('adds the satellite detections review link only under the Earth Genome flag', () => {
+    const user = { is_superuser: false };
+    const logoutAction = jest.fn();
+
+    const withFlag = createUserDropdownLinks(user, logoutAction, [
+        'earth_genome_candidates',
+    ]);
+    expect(withFlag).toContainEqual({
+        label: 'Review satellite detections',
+        href: '/candidates',
+    });
+
+    const withoutFlag = createUserDropdownLinks(user, logoutAction, []);
+    expect(withoutFlag.map(link => link.href)).not.toContain('/candidates');
+});
+
 it('should return an array with claimed facility link if active feature flag is present', () => {
     const user = { is_superuser: true };
     const logoutAction = jest.fn();

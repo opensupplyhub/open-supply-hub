@@ -354,6 +354,8 @@ export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
+// Earth Genome candidate review page (OSDEV-3755); flagged and login-gated.
+export const candidatesRoute = '/candidates';
 export const facilityDetailsRoute = '/facilities/:osID';
 // Scope doc 2.6: the registered record gets its own page rather than
 // being merged into the facility profile, so it is a sibling route.

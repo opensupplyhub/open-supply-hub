@@ -320,3 +320,268 @@ export const candidateValidationPanelStyles = theme => {
         }),
     });
 };
+
+// --- Candidate review page (/candidates, OSDEV-3755) -----------------
+
+export const candidateReviewPageStyles = theme => {
+    const spacing = theme.spacing.unit ?? 8;
+    const typography = getTypographyStyles(theme);
+    return Object.freeze({
+        root: Object.freeze({
+            maxWidth: 1400,
+            margin: '0 auto',
+            padding: `${spacing * 3}px ${spacing * 2}px ${spacing * 6}px`,
+        }),
+        header: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing,
+            marginBottom: spacing * 3,
+        }),
+        title: Object.freeze({
+            fontSize: '32px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: 0,
+        }),
+        intro: Object.freeze({
+            ...typography.bodyText,
+            maxWidth: 760,
+        }),
+        layout: Object.freeze({
+            display: 'flex',
+            gap: spacing * 3,
+            alignItems: 'flex-start',
+            [theme.breakpoints.down('sm')]: {
+                flexDirection: 'column',
+            },
+        }),
+        rail: Object.freeze({
+            flex: '0 0 260px',
+            [theme.breakpoints.down('sm')]: {
+                flex: '1 1 auto',
+                width: '100%',
+            },
+        }),
+        main: Object.freeze({
+            flex: '1 1 auto',
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing * 2,
+        }),
+        topRow: Object.freeze({
+            display: 'flex',
+            gap: spacing * 2,
+            alignItems: 'stretch',
+            [theme.breakpoints.down('md')]: {
+                flexDirection: 'column',
+            },
+        }),
+        mapColumn: Object.freeze({
+            flex: '1 1 55%',
+            minWidth: 0,
+        }),
+        panelColumn: Object.freeze({
+            flex: '1 1 45%',
+            minWidth: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing,
+        }),
+        panelNav: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing,
+            flexWrap: 'wrap',
+        }),
+        panelPosition: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.9rem',
+            marginLeft: 'auto',
+        }),
+        panelPaper: Object.freeze({
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 8,
+        }),
+        summaryRow: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing * 2,
+            flexWrap: 'wrap',
+        }),
+        summary: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.95rem',
+        }),
+        status: Object.freeze({
+            padding: spacing * 3,
+            textAlign: 'center',
+        }),
+        statusText: Object.freeze({
+            ...typography.bodyText,
+            marginBottom: spacing,
+        }),
+        loginNote: Object.freeze({
+            padding: spacing * 3,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing * 2,
+            alignItems: 'flex-start',
+        }),
+    });
+};
+
+export const candidateListFiltersStyles = theme => {
+    const spacing = theme.spacing.unit ?? 8;
+    const typography = getTypographyStyles(theme);
+    return Object.freeze({
+        root: Object.freeze({
+            padding: spacing * 2,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 8,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing * 2,
+        }),
+        title: Object.freeze({
+            fontSize: '1.1rem',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            margin: 0,
+        }),
+        group: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing * 0.5,
+        }),
+        groupLabel: Object.freeze({
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            letterSpacing: '0.04em',
+            textTransform: 'uppercase',
+            color: theme.palette.text.secondary,
+        }),
+        checkbox: Object.freeze({
+            padding: `${spacing * 0.25}px ${spacing}px`,
+        }),
+        checkboxLabel: Object.freeze({
+            marginLeft: -spacing,
+            marginRight: 0,
+        }),
+        range: Object.freeze({
+            display: 'flex',
+            gap: spacing,
+        }),
+        rangeField: Object.freeze({
+            flex: 1,
+        }),
+        hint: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '0.8rem',
+        }),
+        areaRow: Object.freeze({
+            display: 'flex',
+            alignItems: 'center',
+            gap: spacing,
+            flexWrap: 'wrap',
+        }),
+        resetButton: Object.freeze({
+            alignSelf: 'flex-start',
+            textTransform: 'none',
+        }),
+    });
+};
+
+export const candidateListTableStyles = theme => {
+    const spacing = theme.spacing.unit ?? 8;
+    return Object.freeze({
+        root: Object.freeze({
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 8,
+            overflow: 'hidden',
+        }),
+        scroll: Object.freeze({
+            overflowX: 'auto',
+        }),
+        headCell: Object.freeze({
+            whiteSpace: 'nowrap',
+            fontWeight: 600,
+        }),
+        row: Object.freeze({
+            cursor: 'pointer',
+            '&:hover': {
+                backgroundColor: theme.palette.action.hover,
+            },
+        }),
+        rowSelected: Object.freeze({
+            backgroundColor: `${COLOURS.LIGHT_PURPLE} !important`,
+        }),
+        cell: Object.freeze({
+            whiteSpace: 'nowrap',
+        }),
+        osIdLink: Object.freeze({
+            color: COLOURS.PURPLE,
+            fontWeight: 600,
+            textDecoration: 'none',
+            '&:hover': {
+                textDecoration: 'underline',
+            },
+        }),
+        nearestName: Object.freeze({
+            display: 'block',
+            fontSize: '0.8rem',
+            color: theme.palette.text.secondary,
+            maxWidth: 220,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+        }),
+        muted: Object.freeze({
+            color: theme.palette.text.secondary,
+        }),
+        loading: Object.freeze({
+            display: 'flex',
+            justifyContent: 'center',
+            padding: spacing * 3,
+        }),
+    });
+};
+
+export const candidateListMapStyles = theme => {
+    const spacing = theme.spacing.unit ?? 8;
+    return Object.freeze({
+        root: Object.freeze({
+            position: 'relative',
+            height: 360,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 8,
+            overflow: 'hidden',
+            '& .leaflet-container': {
+                height: '100%',
+                width: '100%',
+            },
+        }),
+        drawing: Object.freeze({
+            '& .leaflet-container': {
+                cursor: 'crosshair',
+            },
+        }),
+        controls: Object.freeze({
+            display: 'flex',
+            flexDirection: 'column',
+            gap: spacing * 0.5,
+        }),
+        controlButton: Object.freeze({
+            backgroundColor: theme.palette.common.white,
+            textTransform: 'none',
+            fontSize: '0.8rem',
+            '&:hover': {
+                backgroundColor: theme.palette.grey[100],
+            },
+        }),
+        hint: Object.freeze({
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            padding: `${spacing * 0.5}px ${spacing}px`,
+            borderRadius: 4,
+            fontSize: '0.8rem',
+        }),
+    });
+};
