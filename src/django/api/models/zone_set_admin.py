@@ -253,11 +253,22 @@ class ZoneSetAdmin(admin.ModelAdmin):
 
         Django wraps the whole admin save in one transaction, and
         `replace_zones` is atomic on its own as well, so the old zones
-        keep serving right up until the new ones are committed.
+        keep serving right up until the new ones are committed. The
+        search-side membership (`FacilityIndex.zone_set_ids`) is
+        recomputed in the background once they are (see
+        `ZoneSet.replace_zones`), so staff are told the two surfaces
+        will disagree briefly.
         """
         super().save_model(request, obj, form, change)
         if form.parsed_zones is not None:
             obj.replace_zones(form.parsed_zones)
+            messages.info(request, (
+                'Zones saved. Which locations the search filter returns '
+                'for this dataset is being recomputed in the background '
+                '(a pass over every indexed location); until it finishes, '
+                'Spotlight Partners search results reflect the previous '
+                'zones. Location pages show the new zones at once.'
+            ))
 
 
 class ZoneAdmin(admin.ModelAdmin):

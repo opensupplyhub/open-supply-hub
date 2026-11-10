@@ -9,14 +9,13 @@ from api.partner_fields.india_labour_line_provider import (
     IndiaLabourLineProvider,
 )
 from api.partner_fields.mit_living_wage_provider import MITLivingWageProvider
-from api.partner_fields.zone_set_provider import ZoneSetProvider
-
-# Gates the zone set providers. Created inactive by migration 0247 so
-# the registry never queries `api_zoneset` on an image that is live
-# before `migrate` has run in post-deploy, and so every zone-set-backed
-# field can be pulled from both Spotlight surfaces at once without a
-# deploy. The hard-wired providers do not depend on it.
-ZONE_SETS_SWITCH = 'enable_zone_sets'
+# ZONE_SETS_SWITCH lives with the zone-set helpers (the search filter
+# and the profile spotlight gate on it too) and is re-exported here
+# for the admin form and the tests.
+from api.partner_fields.zone_set_provider import (  # noqa: F401
+    ZONE_SETS_SWITCH,
+    ZoneSetProvider,
+)
 
 
 class SystemPartnerFieldRegistry:
