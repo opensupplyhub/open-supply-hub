@@ -1,4 +1,4 @@
-from api.models import ClaimCampaign, Contributor, User
+from api.models import ClaimCampaign, ClaimCampaignSupplier, Contributor, User
 from api.services.claim_campaign_service import campaign_permissions
 from api.tests.test_claim_campaign import (
     ClaimCampaignBaseTest,
@@ -51,7 +51,7 @@ class CampaignAccessTest(NoAccessBaseTest):
             Group.objects.get(name="claim_campaign_self_serve")
         )
         self.assertEqual(
-            {"access": False, "self_serve": False},
+            {"access": False, "self_serve": False, "email": False},
             campaign_permissions(self.user),
         )
         self.assertEqual(
@@ -61,7 +61,7 @@ class CampaignAccessTest(NoAccessBaseTest):
     def test_access_and_self_serve(self):
         grant_campaign_access(self.user, self_serve=True)
         self.assertEqual(
-            {"access": True, "self_serve": True},
+            {"access": True, "self_serve": True, "email": False},
             campaign_permissions(self.user),
         )
         self.assertEqual(
@@ -73,7 +73,7 @@ class CampaignAccessTest(NoAccessBaseTest):
             email="admin@example.com", password="example123"
         )
         self.assertEqual(
-            {"access": True, "self_serve": True},
+            {"access": True, "self_serve": True, "email": True},
             campaign_permissions(superuser),
         )
 
@@ -85,7 +85,7 @@ class CampaignAccessTest(NoAccessBaseTest):
         )
         self.assertEqual(200, response.status_code, response.content)
         self.assertEqual(
-            {"access": False, "self_serve": False},
+            {"access": False, "self_serve": False, "email": False},
             response.json()["claim_campaigns"],
         )
 
@@ -95,8 +95,67 @@ class CampaignAccessTest(NoAccessBaseTest):
             {"email": self.user.email, "password": "example123"},
         )
         self.assertEqual(
-            {"access": True, "self_serve": False},
+            {"access": True, "self_serve": False, "email": False},
             response.json()["claim_campaigns"],
+        )
+
+    def test_invite_from_campaign_needs_access(self):
+        ClaimCampaignSupplier.objects.create(
+            campaign=self.campaign, facility=self.facility
+        )
+        from api.services.claim_campaign_service import (
+            get_campaign_for_invite,
+        )
+        from rest_framework.exceptions import ValidationError
+
+        with self.assertRaises(ValidationError):
+            get_campaign_for_invite(
+                self.user, self.facility, self.campaign.code
+            )
+        grant_campaign_access(self.user, email=True)
+        self.assertEqual(
+            self.campaign,
+            get_campaign_for_invite(
+                self.user, self.facility, self.campaign.code
+            ),
+        )
+
+    def test_emailing_invites_needs_the_email_list(self):
+        from api.services.claim_campaign_service import (
+            get_campaign_for_invite,
+        )
+        from rest_framework.exceptions import ValidationError
+
+        ClaimCampaignSupplier.objects.create(
+            campaign=self.campaign, facility=self.facility
+        )
+        # Campaign access alone: the brand shares links, OS Hub doesn't
+        # send email for it.
+        grant_campaign_access(self.user, self_serve=True)
+        self.assertFalse(campaign_permissions(self.user)["email"])
+        with self.assertRaisesMessage(
+            ValidationError, "isn't turned on for your account"
+        ):
+            get_campaign_for_invite(
+                self.user, self.facility, self.campaign.code
+            )
+
+        grant_campaign_access(self.user, email=True)
+        self.assertTrue(campaign_permissions(self.user)["email"])
+        self.assertEqual(
+            self.campaign,
+            get_campaign_for_invite(
+                self.user, self.facility, self.campaign.code
+            ),
+        )
+
+    def test_email_list_alone_does_not_give_campaign_access(self):
+        self.user.groups.add(
+            Group.objects.get(name="claim_campaign_email_invites")
+        )
+        self.assertEqual(
+            {"access": False, "self_serve": False, "email": False},
+            campaign_permissions(self.user),
         )
 
 
@@ -105,7 +164,7 @@ class CampaignAccessSwitchOffTest(NoAccessBaseTest):
     def test_switch_off_turns_everything_off(self):
         grant_campaign_access(self.user, self_serve=True)
         self.assertEqual(
-            {"access": False, "self_serve": False},
+            {"access": False, "self_serve": False, "email": False},
             campaign_permissions(self.user),
         )
 
@@ -134,6 +193,13 @@ class ClaimCampaignAdminActionsTest(NoAccessBaseTest):
         self.admin.reopen_campaigns(self.request, self.queryset())
         self.campaign.refresh_from_db()
         self.assertEqual(ClaimCampaign.Status.ACTIVE, self.campaign.status)
+
+    def test_admin_allows_and_stops_email_invites(self):
+        self.assertFalse(self.admin.can_email_invites(self.campaign))
+        self.admin.allow_email_invites(self.request, self.queryset())
+        self.assertTrue(self.admin.can_email_invites(self.campaign))
+        self.admin.stop_email_invites(self.request, self.queryset())
+        self.assertFalse(self.admin.can_email_invites(self.campaign))
 
     def test_admin_gives_the_brand_access(self):
         self.assertFalse(self.admin.has_access(self.campaign))

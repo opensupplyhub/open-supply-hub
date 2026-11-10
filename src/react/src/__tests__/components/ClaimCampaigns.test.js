@@ -56,14 +56,18 @@ const mockCampaigns = [
 const renderComponent = (
     userHasSignedIn = true,
     props = {},
-    { claimInvite = false, access = true } = {},
+    { claimInvite = false, access = true, emailInvites = true } = {},
 ) => {
     const preloadedState = {
         auth: {
             user: {
                 user: {
                     isAnon: !userHasSignedIn,
-                    claim_campaigns: { access, self_serve: access },
+                    claim_campaigns: {
+                        access,
+                        self_serve: access,
+                        email: emailInvites,
+                    },
                 },
             },
         },
@@ -192,25 +196,71 @@ describe('ClaimCampaigns component', () => {
         );
     });
 
-    test('offers claim links and the CSV, and no email option', async () => {
+    test('without the claim_invite switch, only claim links are offered', async () => {
         apiRequest.get.mockResolvedValue({ data: mockCampaigns });
 
-        // Even with the profile invite switch on: sending invites from a
-        // campaign is a separate, later change.
-        const {
-            findByText,
-            getAllByText,
-            getByText,
-            queryByText,
-            queryByPlaceholderText,
-        } = renderComponent(true, {}, { claimInvite: true });
+        const { findByText, queryByText, getAllByText } = renderComponent();
 
         await findByText('Unique claim link');
+        expect(queryByText('Invite by')).not.toBeInTheDocument();
+        expect(getAllByText('Copy link')).toHaveLength(2);
+    });
+
+    test('emails a supplier its campaign invite', async () => {
+        apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+        apiRequest.post.mockResolvedValue({
+            data: { recipient_email: 'ops@haiphong.example' },
+        });
+
+        const { findByText, getByLabelText, getByText } = renderComponent(
+            true,
+            {},
+            { claimInvite: true },
+        );
+
+        await findByText('Contact email');
+        // The claimed supplier can't be invited again.
+        expect(getByText('Already claimed')).toBeInTheDocument();
+
+        fireEvent.change(
+            getByLabelText('Email address for Hai Phong Packhouse Co'),
+            { target: { value: 'ops@haiphong.example' } },
+        );
+        fireEvent.click(getByText('Send'));
+
+        await findByText(/Invited ops@haiphong.example/);
+        expect(apiRequest.post).toHaveBeenCalledWith(
+            '/api/facilities/VN2024310ZZL8KD/claim-invite/',
+            {
+                recipient_email: 'ops@haiphong.example',
+                note: undefined,
+                campaign: 'EXAMPLE-FRESH-26',
+            },
+        );
+    });
+
+    test('switches the contact column to claim links', async () => {
+        apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+
+        const {
+            findByText,
+            getByText,
+            getAllByText,
+            queryByText,
+        } = renderComponent(
+            true,
+            {},
+            { claimInvite: true },
+        );
+
+        await findByText('Contact email');
+        // The CSV of links only goes with the link option.
+        expect(queryByText('Download CSV')).not.toBeInTheDocument();
+        fireEvent.click(getByText('Link'));
+
+        expect(getByText('Unique claim link')).toBeInTheDocument();
         expect(getAllByText('Copy link')).toHaveLength(2);
         expect(getByText('Download CSV')).toBeInTheDocument();
-        expect(queryByText('Invite by')).not.toBeInTheDocument();
-        expect(queryByText('Contact email')).not.toBeInTheDocument();
-        expect(queryByPlaceholderText(/@/)).not.toBeInTheDocument();
     });
 
     test('paginates long supplier lists', async () => {
@@ -515,15 +565,20 @@ describe('Closing a campaign', () => {
         expect(apiRequest.post).not.toHaveBeenCalled();
     });
 
-    test('a closed campaign shows the closed note and keeps its links', async () => {
+    test('a closed campaign offers links but no email invites', async () => {
         apiRequest.get.mockResolvedValue({
             data: [{ ...mockCampaigns[0], status: 'CLOSED' }],
         });
-        const { findByText, queryByText, getAllByText } = renderComponent();
+        const { findByText, queryByText, queryByPlaceholderText } = renderComponent(
+            true,
+            {},
+            { claimInvite: true },
+        );
 
         expect(await findByText(/This campaign is closed/)).toBeInTheDocument();
         expect(queryByText('Close campaign')).not.toBeInTheDocument();
-        expect(getAllByText('Copy link')).toHaveLength(2);
+        expect(queryByText('Email')).not.toBeInTheDocument();
+        expect(queryByPlaceholderText(/@/)).not.toBeInTheDocument();
     });
 });
 
@@ -709,3 +764,19 @@ test('a campaign closed in Django admin shows as closed when the page loads', as
     expect(queryByText('Close campaign')).not.toBeInTheDocument();
 });
 
+
+test('brands not on the email list only get claim links, even with the switch on', async () => {
+    apiRequest.get.mockReset();
+    apiRequest.get.mockResolvedValue({ data: mockCampaigns });
+    const { findByText, queryByText, getAllByText, getByText } = renderComponent(
+        true,
+        {},
+        { claimInvite: true, emailInvites: false },
+    );
+
+    await findByText('Unique claim link');
+    expect(queryByText('Invite by')).not.toBeInTheDocument();
+    expect(queryByText('Contact email')).not.toBeInTheDocument();
+    expect(getAllByText('Copy link')).toHaveLength(2);
+    expect(getByText('Download CSV')).toBeInTheDocument();
+});

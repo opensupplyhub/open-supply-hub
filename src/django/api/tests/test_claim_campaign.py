@@ -17,14 +17,17 @@ from django.db import IntegrityError, transaction
 from django.db.models import ProtectedError
 
 
-def grant_campaign_access(user, self_serve=False):
+def grant_campaign_access(user, self_serve=False, email=False):
     """
     Claims campaigns are premium: put the user in the access group (and
-    optionally the self-serve group), as OS Hub staff do for a brand.
+    optionally the self-serve and email-invite groups), as OS Hub staff
+    do for a brand.
     """
     names = ["claim_campaign_access"]
     if self_serve:
         names.append("claim_campaign_self_serve")
+    if email:
+        names.append("claim_campaign_email_invites")
     for name in names:
         user.groups.add(Group.objects.get(name=name))
 

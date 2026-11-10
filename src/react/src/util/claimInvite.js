@@ -68,11 +68,14 @@ const firstErrorMessage = data => {
     return firstErrorMessage(firstValue);
 };
 
-export const sendClaimInvite = (osID, { recipientEmail, note }) =>
+// `campaign` (optional) is the code of one of the sender's own claims
+// campaigns; the emailed claim link then carries it too.
+export const sendClaimInvite = (osID, { recipientEmail, note, campaign }) =>
     apiRequest
         .post(makeClaimInviteURL(osID), {
             recipient_email: recipientEmail,
             note,
+            ...(campaign ? { campaign } : {}),
         })
         .catch(err => {
             const message =

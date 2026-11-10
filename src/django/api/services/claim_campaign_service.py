@@ -3,6 +3,7 @@ import secrets
 
 from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
+from rest_framework.exceptions import ValidationError
 from waffle import get_waffle_flag_model, switch_is_active
 
 from api.constants import FacilityClaimStatuses
@@ -22,6 +23,10 @@ from api.models import (
 ACCESS_FLAG = 'claim_campaign_access'
 # On top of access: the brand may also create its own campaigns.
 SELF_SERVE_FLAG = 'claim_campaign_self_serve'
+# On top of access: the brand may have OS Hub email claim invites to its
+# suppliers from a campaign. Only contributors on this list (the group of
+# the same name) can; everyone else shares the claim links themselves.
+EMAIL_INVITES_FLAG = 'claim_campaign_email_invites'
 MAX_SUPPLIERS_PER_CAMPAIGN = 5000
 # A supplier search returns at most this many facilities to choose from.
 MAX_SEARCH_RESULTS = 500
@@ -92,6 +97,21 @@ def resolve_claim_campaign(facility, code):
     return None, False
 
 
+def campaign_includes_facility(campaign, facility):
+    """
+    Whether the facility is one of the campaign's suppliers: on its
+    roster when it has one, otherwise (v1) on one of the contributor's
+    active lists.
+    """
+    if campaign.uses_roster:
+        return campaign.suppliers.filter(facility=facility).exists()
+    return FacilityListItem.objects.filter(
+        facility=facility,
+        source__contributor_id=campaign.contributor_id,
+        source__is_active=True,
+    ).exists()
+
+
 def user_has_flag(user, flag_name):
     if user is None or not user.is_authenticated:
         return False
@@ -102,16 +122,83 @@ def user_has_flag(user, flag_name):
 def campaign_permissions(user):
     """
     What the user may do with claims campaigns, for the React app: see
-    them at all (the premium access flag) and create its own. Both are
-    False while the claim_campaigns switch is off.
+    them at all (the premium access flag), create its own, and have OS
+    Hub email claim invites from a campaign. All are False while the
+    claim_campaigns switch is off.
     """
     if not switch_is_active('claim_campaigns'):
-        return {'access': False, 'self_serve': False}
+        return {'access': False, 'self_serve': False, 'email': False}
     access = user_has_flag(user, ACCESS_FLAG)
     return {
         'access': access,
         'self_serve': access and user_has_flag(user, SELF_SERVE_FLAG),
+        'email': access and user_has_flag(user, EMAIL_INVITES_FLAG),
     }
+
+
+def campaign_for_invite_claim(claim_invite):
+    """
+    The campaign a claim should count for because it came from that
+    campaign's email invite: the invite's campaign, if it is still
+    ACTIVE and campaigns are switched on. None otherwise.
+    """
+    if (
+        claim_invite is None
+        or claim_invite.campaign_id is None
+        or not switch_is_active('claim_campaigns')
+    ):
+        return None
+    campaign = claim_invite.campaign
+    if campaign.status != ClaimCampaign.Status.ACTIVE:
+        return None
+    return campaign
+
+
+def get_campaign_for_invite(user, facility, code):
+    """
+    The sender's own active campaign with this code, for a claim invite
+    sent from the campaign dashboard. Raises a ValidationError (shown to
+    the sender) when the code isn't one of the sender's active campaigns
+    or the facility isn't one of its suppliers.
+    """
+    contributor = getattr(user, 'contributor', None)
+    permissions = campaign_permissions(user)
+    if permissions['access'] and not permissions['email']:
+        raise ValidationError(
+            'Emailing claim invites from a campaign isn\'t turned on for '
+            'your account. Copy the claim link or download the CSV and '
+            'send it yourself.'
+        )
+    campaign = None
+    if contributor is not None and permissions['access']:
+        campaign = ClaimCampaign.objects.filter(
+            code=code.strip().upper(),
+            contributor=contributor,
+            status=ClaimCampaign.Status.ACTIVE,
+        ).first()
+    if campaign is None:
+        raise ValidationError(
+            'This campaign is closed or isn\'t one of yours.'
+        )
+    if not campaign_includes_facility(campaign, facility):
+        raise ValidationError(
+            'This production location isn\'t part of this campaign.'
+        )
+    return campaign
+
+
+def get_campaign_invites(campaign):
+    """
+    The most recent invite sent from the campaign to each supplier, as
+    {facility_id: {recipient_email, created_at}}.
+    """
+    latest = {}
+    for invite in campaign.invites.order_by('created_at'):
+        latest[invite.facility_id] = {
+            'recipient_email': invite.recipient_email,
+            'created_at': invite.created_at,
+        }
+    return latest
 
 
 def get_claim_statuses(facility_ids):
@@ -323,7 +410,7 @@ def get_api_facilities(contributor):
 def close_campaign(campaign):
     """
     Close a campaign. It stops collecting: new claims are no longer
-    attributed to it. Claims
+    attributed to it and no more invites can be sent from it. Claims
     already attributed keep their campaign. Closing twice is a no-op.
     """
     if campaign.status != ClaimCampaign.Status.CLOSED:

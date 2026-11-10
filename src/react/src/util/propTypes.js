@@ -74,6 +74,7 @@ export const userPropType = shape({
     claim_campaigns: shape({
         access: bool.isRequired,
         self_serve: bool.isRequired,
+        email: bool,
     }),
 });
 

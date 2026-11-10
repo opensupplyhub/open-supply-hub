@@ -1713,6 +1713,11 @@ export const formatAttribution = (date, contributor) => {
 export const hasClaimCampaignAccess = user =>
     !!(user && user.claim_campaigns && user.claim_campaigns.access);
 
+// Only brands on OS Hub's list (claim_campaign_email_invites) can have OS
+// Hub email claim invites from a campaign; others share the links.
+export const canEmailCampaignInvites = user =>
+    !!(user && user.claim_campaigns && user.claim_campaigns.email);
+
 export const createUserDropdownLinks = (
     user,
     logoutAction,
