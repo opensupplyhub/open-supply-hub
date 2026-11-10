@@ -42,13 +42,18 @@ const fromPercentText = text => {
 
 /**
  * Text inputs commit on blur or Enter rather than on every keystroke, so a
- * half-typed value is never sent as a filter.
+ * half-typed value is never sent as a filter. After a commit the text is
+ * re-read from the committed value, so what a commit normalised away
+ * (an unparseable number, a value clamped to the range, lower-case
+ * country codes) does not stay on screen disagreeing with the filter.
  */
 const CommittedTextField = ({ value, onCommit, ...props }) => {
     const [text, setText] = useState(value);
-    useEffect(() => setText(value), [value]);
+    const [commits, setCommits] = useState(0);
+    useEffect(() => setText(value), [value, commits]);
     const commit = () => {
         if (text !== value) onCommit(text);
+        setCommits(count => count + 1);
     };
     return (
         <TextField

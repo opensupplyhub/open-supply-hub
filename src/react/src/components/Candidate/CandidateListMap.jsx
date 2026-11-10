@@ -85,13 +85,30 @@ const CandidateListMap = ({
     const [drawing, setDrawing] = useState(false);
     const [dragBounds, setDragBounds] = useState(null);
     const dragStartRef = useRef(null);
+    const dragLatestRef = useRef(null);
 
     const getMap = () => mapRef.current && mapRef.current.leafletElement;
 
     const areaBounds = useMemo(() => bboxToBounds(bbox), [bbox]);
 
+    // The dots' positions as one string, so the fit below is keyed by
+    // where the dots are rather than by the rows array: a vote replaces
+    // the array (the row's state and tally change in place) and must not
+    // move the map.
+    const pointsKey = rows
+        .filter(row => row.coordinates)
+        .map(row => `${row.coordinates.lat},${row.coordinates.lng}`)
+        .join(';');
+    const points = useMemo(
+        () =>
+            pointsKey
+                ? pointsKey.split(';').map(pair => pair.split(',').map(Number))
+                : [],
+        [pointsKey],
+    );
+
     // Fit the view to what is on screen: the drawn area when there is one,
-    // otherwise the page's dots.
+    // otherwise the page's dots (when any row has a position).
     useEffect(() => {
         const map = getMap();
         if (!map) return;
@@ -99,15 +116,10 @@ const CandidateListMap = ({
             map.fitBounds(areaBounds, { padding: [16, 16] });
             return;
         }
-        if (rows.length) {
-            map.fitBounds(
-                rows
-                    .filter(row => row.coordinates)
-                    .map(row => [row.coordinates.lat, row.coordinates.lng]),
-                { padding: [24, 24], maxZoom: 13 },
-            );
+        if (points.length) {
+            map.fitBounds(points, { padding: [24, 24], maxZoom: 13 });
         }
-    }, [rows, areaBounds]);
+    }, [points, areaBounds]);
 
     const finishDrag = useCallback(
         (start, end) => {
@@ -141,21 +153,35 @@ const CandidateListMap = ({
                 L.DomEvent.preventDefault(event.originalEvent);
             }
             dragStartRef.current = event.latlng;
+            dragLatestRef.current = event.latlng;
             setDragBounds([event.latlng, event.latlng]);
         };
         const onMove = event => {
             if (dragStartRef.current) {
+                dragLatestRef.current = event.latlng;
                 setDragBounds([dragStartRef.current, event.latlng]);
             }
         };
         const onUp = event => finishDrag(dragStartRef.current, event.latlng);
+        // The button can be released outside the map container, where the
+        // map never sees the mouseup; the drag then ends at the last point
+        // the map did see.
+        const onDocumentUp = () => {
+            if (dragStartRef.current) {
+                finishDrag(dragStartRef.current, dragLatestRef.current);
+            }
+        };
         map.on('mousedown', onDown);
         map.on('mousemove', onMove);
         map.on('mouseup', onUp);
+        document.addEventListener('mouseup', onDocumentUp);
         return () => {
             map.off('mousedown', onDown);
             map.off('mousemove', onMove);
             map.off('mouseup', onUp);
+            document.removeEventListener('mouseup', onDocumentUp);
+            dragStartRef.current = null;
+            dragLatestRef.current = null;
             map.dragging.enable();
         };
     }, [drawing, finishDrag]);

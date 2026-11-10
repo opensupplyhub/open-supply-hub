@@ -214,6 +214,14 @@ describe('CandidateReviewPage', () => {
         );
 
         const min = screen.getByTestId('candidate-filter-confidence-min');
+        // Unparseable text commits as "no filter", which is what the
+        // field already held, so the field must not keep showing it.
+        const requestsBefore = apiRequest.get.mock.calls.length;
+        fireEvent.change(min, { target: { value: 'abc' } });
+        fireEvent.blur(min);
+        await waitFor(() => expect(min.value).toBe(''));
+        expect(apiRequest.get.mock.calls.length).toBe(requestsBefore);
+
         fireEvent.change(min, { target: { value: '25' } });
         fireEvent.blur(min);
         await waitFor(() =>
@@ -226,6 +234,11 @@ describe('CandidateReviewPage', () => {
         await waitFor(() =>
             expect(lastListRequest()).toContain('country=US%2CMX'),
         );
+        // Re-typing the same codes in lower case normalises to the value
+        // already applied; the field shows the applied form.
+        fireEvent.change(country, { target: { value: 'us,mx' } });
+        fireEvent.blur(country);
+        await waitFor(() => expect(country.value).toBe('US,MX'));
 
         fireEvent.click(screen.getByTestId('candidate-filter-reset'));
         await waitFor(() =>

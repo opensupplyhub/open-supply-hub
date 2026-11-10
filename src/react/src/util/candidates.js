@@ -126,10 +126,9 @@ export const candidateListQueryFromSearch = search => {
 /**
  * Query object -> URLSearchParams with the API's parameter names. Defaults
  * are left out so the page URL stays short; `includePageSize` builds the
- * API request instead, which always carries `page` and `limit`. The API
- * reads a request with nothing but `bbox` (and `limit`) as the legacy map
- * call (OSDEV-3249: capped box, no paging), so the explicit `page` keeps a
- * drawn-area-only filter in list mode.
+ * API request instead, which always carries `page` and `limit`: `page` is
+ * what selects the API's list mode (a `bbox` request without it is the
+ * OSDEV-3249 map call, with a capped box and no paging).
  */
 export const candidateListQueryToParams = (
     query,
