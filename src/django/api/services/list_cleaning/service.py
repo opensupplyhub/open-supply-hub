@@ -14,8 +14,10 @@ submit_run     -> the one submission (v3): apply every accepted
                   correction, edit and removal onto the PENDING list's
                   items and close the run. Nothing touches the list
                   before this, not even the automatic fixes.
-sweep_run      -> close a run whose review window has lapsed; the list
-                  then goes through exactly as uploaded.
+sweep_run      -> close a run whose review window has lapsed. A review
+                  the contributor opened lapses with what they had decided
+                  so far applied; one nobody opened goes through exactly
+                  as uploaded.
 record_event   -> one row per moment that matters on the review screen
                   (opened, resumed, left, submitted, lapsed), for the
                   "submit versus click away" numbers in metrics_summary.
@@ -322,8 +324,8 @@ def ingest_result(run, result):
 
     # v3: nothing goes onto the list until the contributor submits, the
     # automatic fixes included. They are pre-accepted, so a submission
-    # that touches nothing else still carries them; a lapsed window
-    # sends the list exactly as uploaded.
+    # that touches nothing else still carries them; so does a window
+    # that lapses after the contributor opened the review.
     auto = len([s for s in suggestions if (s.extra or {}).get('auto')])
     log.info(
         f'[List Cleaning] Run {run.id} complete: {len(suggestions)} '
@@ -376,21 +378,48 @@ def _close(run, reason, now):
     run.save(update_fields=['closed_at', 'closed_reason'])
 
 
+def review_opened(run):
+    """Whether the contributor ever reached the review screen."""
+    return run.events.filter(
+        kind__in=(ListCleaningEvent.OPENED,
+                  ListCleaningEvent.RESUMED)).exists()
+
+
 def sweep_run(run):
-    """Close the run if its window has lapsed. Safe to call any time."""
+    """
+    Close the run if its window has lapsed. Safe to call any time.
+
+    A review the contributor opened lapses with what they had decided so
+    far: every accepted or edited suggestion and every removal goes onto
+    the list, the pre-accepted automatic fixes they saw included, and
+    the rest stays as uploaded. A review nobody opened goes through
+    exactly as uploaded, since nothing in it was ever decided.
+    """
     if run is None or run.closed_at is not None or run.review_until is None:
         return run
-    now = timezone.now()
-    if now < run.review_until:
+    if timezone.now() < run.review_until:
         return run
-    _close(run, ListCleaningRun.LAPSED, now)
-    record_event(run, ListCleaningEvent.LAPSED, meta={
-        'opened': run.events.filter(
-            kind__in=(ListCleaningEvent.OPENED,
-                      ListCleaningEvent.RESUMED)).exists(),
-    })
+    with transaction.atomic():
+        # Reads sweep too, so two requests can notice the lapse at once;
+        # the lock makes the second one find the run already closed.
+        _lock(run)
+        if run.closed_at is not None:
+            return run
+        now = timezone.now()
+        opened = review_opened(run)
+        if opened:
+            counts = apply_run(run)
+        else:
+            counts = {'applied': 0, 'reverted': 0}
+        _close(run, ListCleaningRun.LAPSED, now)
+        record_event(run, ListCleaningEvent.LAPSED, meta={
+            'opened': opened,
+            'applied': counts['applied'],
+            **change_breakdown(run, as_uploaded=not opened),
+        })
     log.info(f'[List Cleaning] Run {run.id} lapsed; list '
-             f'{run.facility_list_id} goes through as uploaded')
+             f'{run.facility_list_id} goes through '
+             f'{"with " + str(counts) if opened else "as uploaded"}')
     return run
 
 
@@ -434,7 +463,7 @@ def _ensure_open(run):
                 'changes are possible.')
         raise DecisionError(
             'The review window for this list has closed; it went '
-            'through as uploaded.')
+            'through with what had been decided by then.')
     if run.review_until is None:
         raise DecisionError('This run has no review window.')
 
@@ -546,6 +575,12 @@ def _tally_run(run, out, samples):
     if run.closed_reason != ListCleaningRun.SUBMITTED:
         key = 'lapsed_after_opening' if opened else 'lapsed_never_opened'
         out[key] += 1
+        # A lapse after opening put what was decided on the list, so
+        # its changes count toward the totals like a submission's.
+        lapsed = next(
+            (e for e in run.events.all() if e.kind == E.LAPSED), None)
+        for key in BREAKDOWN_TOTALS:
+            out['totals'][key] += (lapsed.meta if lapsed else {}).get(key, 0)
         return
     submitted = next(
         (e for e in run.events.all() if e.kind == E.SUBMITTED), None)

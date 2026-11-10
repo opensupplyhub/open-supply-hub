@@ -50,7 +50,7 @@ const openText = (run, isListOwner, isAdminUser) => {
     if (isListOwner) {
         return `You can still review and submit changes to this list until ${when(
             run.review_until,
-        )}. After that it goes to a human moderator as uploaded.`;
+        )}. After that it goes to a human moderator with whatever you have decided by then.`;
     }
     const forAdmin = isAdminUser
         ? ' Approve and reject are unavailable until then.'
@@ -79,9 +79,13 @@ const statusText = (run, data, { open, isListOwner, isAdminUser }) => {
         );
     }
     if (run.closed_reason === 'submitted') return submittedText(run, data);
+    const applied = data.summary?.changes_applied || 0;
+    const how = applied
+        ? `with the ${plural(applied, 'change')} decided by then`
+        : 'as uploaded';
     return `The review window closed ${when(
         run.closed_at,
-    )} without a submission, so the list went through as uploaded.`;
+    )} without a submission, so the list went through ${how}.`;
 };
 
 const ListCleaningStatusNote = ({

@@ -354,12 +354,15 @@ Done.propTypes = {
 };
 
 const closedText = (run, summary) => {
+    const applied = summary?.changes_applied;
     if (run.closed_reason !== 'submitted') {
+        const how = applied
+            ? ` with the ${plural(applied, 'change')} you had decided by then`
+            : ' exactly as uploaded';
         return `The hour for changes ended at ${timeOfDay(
             run.closed_at,
-        )}, so the list went to a human moderator exactly as uploaded.`;
+        )}, so the list went to a human moderator${how}.`;
     }
-    const applied = summary?.changes_applied;
     const how = applied ? ` with ${plural(applied, 'change')}` : ' as uploaded';
     return `You submitted it at ${timeOfDay(
         run.submitted_at,
@@ -547,7 +550,8 @@ const ReviewStep = ({ review }) => {
                     correct for that facility. Names and addresses are never
                     changed automatically. This is your one submission; you can
                     come back and review until {deadlineText(run.review_until)},
-                    after which the list goes to a human moderator as uploaded.
+                    after which the list goes to a human moderator with whatever
+                    you have decided by then.
                 </span>
             </div>
             {tour && <ListCleaningTour onDone={dismissTour} />}

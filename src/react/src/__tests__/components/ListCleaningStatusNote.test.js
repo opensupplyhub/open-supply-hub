@@ -111,14 +111,26 @@ describe('ListCleaningStatusNote', () => {
         );
         expect(screen.getByText(/as uploaded\. No further changes/)).toBeInTheDocument();
         unmount();
-        renderNote(
+        const second = renderNote(
             reviewData({
                 window_open: false,
                 run: { closed_reason: 'lapsed', closed_at: '2026-11-09T11:00:00Z' },
             }),
         );
         expect(
-            screen.getByText(/closed .* without a submission/),
+            screen.getByText(/closed .* without a submission, so the list went through as uploaded/),
+        ).toBeInTheDocument();
+        second.unmount();
+        // a lapse after the contributor had decided things carries them
+        renderNote(
+            reviewData({
+                window_open: false,
+                run: { closed_reason: 'lapsed', closed_at: '2026-11-09T11:00:00Z' },
+                summary: { changes_applied: 2 },
+            }),
+        );
+        expect(
+            screen.getByText(/without a submission, so the list went through with the 2 changes decided by then/),
         ).toBeInTheDocument();
     });
 

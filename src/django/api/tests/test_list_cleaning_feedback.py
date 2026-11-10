@@ -521,7 +521,7 @@ class ListCleaningFeedbackTest(APITestCase):
             self.client.post(self.url('submit/'), {}).status_code,
             status.HTTP_400_BAD_REQUEST)
 
-    def test_lapsed_window_sends_the_list_as_uploaded(self):
+    def test_lapsed_window_never_opened_sends_the_list_as_uploaded(self):
         run = self._ingested_run(minutes_left=-1)
         self.client.force_login(self.user)
         # noticed lazily on the next read, no scheduler needed
@@ -530,10 +530,13 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertFalse(response.data['window_open'])
         self.assertEqual(response.data['seconds_left'], 0)
         self.assertEqual(response.data['run']['closed_reason'], 'lapsed')
+        self.assertEqual(response.data['summary']['changes_applied'], 0)
         run.refresh_from_db()
-        self.assertTrue(run.events.filter(
-            kind=ListCleaningEvent.LAPSED).exists())
-        # nothing was applied, not even the silent fixes
+        lapsed = run.events.get(kind=ListCleaningEvent.LAPSED)
+        self.assertFalse(lapsed.meta['opened'])
+        self.assertEqual(lapsed.meta['applied'], 0)
+        # nothing was decided, so nothing was applied, not even the
+        # silent fixes
         first = FacilityListItem.objects.get(pk=self.items[0].id)
         self.assertEqual(first.raw_json['number_of_workers'], '1,200')
         third = FacilityListItem.objects.get(pk=self.items[2].id)
@@ -549,6 +552,61 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(
             self.client.post(self.url('submit/'), {}).status_code,
             status.HTTP_400_BAD_REQUEST)
+
+    def test_lapsed_window_after_opening_applies_what_was_decided(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        self.client.post(self.url('events/'), {'kind': 'opened'},
+                         format='json')
+        # the contributor removes the duplicate row and turns off one
+        # automatic fix, then walks away without submitting
+        removal = run.suggestions.get(kind=ListCleaningSuggestion.REMOVAL)
+        workers = run.suggestions.get(field='number_of_workers')
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': removal.id, 'decision': 'ACCEPTED'},
+                          {'id': workers.id, 'decision': 'REJECTED'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        run.review_until = timezone.now() - timedelta(minutes=1)
+        run.save(update_fields=['review_until'])
+
+        response = self.client.get(self.url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(response.data['window_open'])
+        self.assertEqual(response.data['run']['closed_reason'], 'lapsed')
+        # what was decided went on: the other automatic fix they saw and
+        # the removal; the fix they turned off, the address fix (never
+        # pre-accepted) and the flag did not
+        self.assertEqual(response.data['summary']['changes_applied'], 2)
+        first = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(first.raw_json['number_of_workers'], '1,200')
+        self.assertEqual(first.raw_json['country'], 'VN')
+        self.assertEqual(first.raw_json['address'],
+                         self.items[0].raw_json['address'])
+        third = FacilityListItem.objects.get(pk=self.items[2].id)
+        self.assertEqual(third.status, FacilityListItem.DUPLICATE)
+        run.refresh_from_db()
+        self.assertIsNotNone(run.applied_at)
+        self.assertIsNone(run.submitted_at)
+        lapsed = run.events.get(kind=ListCleaningEvent.LAPSED)
+        self.assertTrue(lapsed.meta['opened'])
+        self.assertEqual(lapsed.meta['applied'], 2)
+        # the duplicate removal is pre-accepted too, so it counts as
+        # automatic beside the country fix
+        self.assertEqual(lapsed.meta['auto_applied'], 2)
+        self.assertEqual(lapsed.meta['auto_turned_off'], 1)
+        # a second read finds it closed and applies nothing twice
+        response = self.client.get(self.url())
+        self.assertEqual(response.data['summary']['changes_applied'], 2)
+        self.assertEqual(
+            run.events.filter(kind=ListCleaningEvent.LAPSED).count(), 1)
+        # and nothing can be changed any more
+        response = self.client.post(self.url('decisions/'), {
+            'decisions': [{'id': workers.id, 'decision': 'ACCEPTED'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('had been decided', str(response.data))
 
     def test_submit_as_uploaded_applies_nothing_but_closes(self):
         run = self._ingested_run()
@@ -1076,9 +1134,11 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response.data['median_auto_applied'], 3)
         self.assertEqual(response.data['median_reviewed_changes'], 0)
         self.assertEqual(response.data['totals']['auto_applied'], 3)
-        self.assertEqual(response.data['totals']['fixes_offered'], 1)
+        # the totals cover the lapsed list too: nobody opened it, so its
+        # fix and flag were offered and left and nothing went on
+        self.assertEqual(response.data['totals']['fixes_offered'], 2)
         self.assertEqual(response.data['totals']['flags_left_as_uploaded'],
-                         1)
+                         2)
 
     def test_start_is_superuser_only(self):
         self.client.force_login(self.user)

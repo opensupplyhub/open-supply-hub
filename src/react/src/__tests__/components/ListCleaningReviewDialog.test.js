@@ -206,7 +206,20 @@ describe('ListCleaningReviewDialog', () => {
             }),
         );
         expect(screen.getByText('The review window has closed')).toBeInTheDocument();
+        expect(screen.getByText(/went to a human moderator exactly as uploaded/)).toBeInTheDocument();
         unmount();
+        const lapsedWithChanges = renderDialog(
+            reviewData({
+                window_open: false,
+                seconds_left: 0,
+                run: { closed_reason: 'lapsed', closed_at: '2026-11-09T11:00:00Z' },
+                summary: { changes_applied: 2 },
+            }),
+        );
+        expect(
+            screen.getByText(/with the 2 changes you had decided by then/),
+        ).toBeInTheDocument();
+        lapsedWithChanges.unmount();
         renderDialog(
             reviewData({
                 window_open: false,

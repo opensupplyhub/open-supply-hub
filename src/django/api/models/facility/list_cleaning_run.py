@@ -79,7 +79,8 @@ class ListCleaningRun(models.Model):
         help_text='When accepted corrections were last applied to the list.')
 
     # v3: the contributor submits once. The review window opens with the
-    # run and closes either when they submit or when it lapses; after
+    # run and closes either when they submit or when it lapses (with
+    # what they had decided applied, if they opened the review); after
     # that nothing on the list changes and moderation can begin.
     SUBMITTED = 'submitted'
     LAPSED = 'lapsed'
@@ -89,7 +90,7 @@ class ListCleaningRun(models.Model):
     FAILED_RUN = 'failed'
     CLOSED_REASON_CHOICES = (
         (SUBMITTED, 'Contributor submitted'),
-        (LAPSED, 'Window lapsed, list as uploaded'),
+        (LAPSED, 'Window lapsed, decisions so far applied'),
         (CLEAN, 'Nothing to review, list as uploaded'),
         (FAILED_RUN, 'Run failed, list as uploaded'),
     )
@@ -126,7 +127,9 @@ class ListCleaningEvent(models.Model):
     RESUMED = 'resumed'        # reopened from the list page
     LEFT = 'left'              # closed the screen without submitting
     SUBMITTED = 'submitted'    # submitted (meta.as_uploaded says how)
-    LAPSED = 'lapsed'          # window passed with no submission
+    # window passed with no submission (meta.opened and meta.applied
+    # say whether anything went on)
+    LAPSED = 'lapsed'
     # closed the walkthrough (meta.how: skipped, finished or escaped);
     # the review opens without it for that user from then on
     TOUR_DISMISSED = 'tour_dismissed'
