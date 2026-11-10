@@ -376,8 +376,8 @@ class ProductionLocations(ViewSet):
         Candidate production locations, in two modes.
 
         **Map mode** (OSDEV-3249): ``GET /api/v1/production-locations/
-        candidates/?bbox=minLng,minLat,maxLng,maxLat[&limit=N]`` with no
-        other parameter. Answers a GeoJSON FeatureCollection of the
+        candidates/?bbox=minLng,minLat,maxLng,maxLat[&limit=N]`` without
+        ``page``. Answers a GeoJSON FeatureCollection of the
         candidates whose detected polygon (or point, when there is no
         polygon) intersects the box, each Feature labeled with ``os_id``,
         ``confidence``, ``source``, the derived validation ``state`` and
@@ -385,8 +385,9 @@ class ProductionLocations(ViewSet):
         is capped at 500; a malformed, inverted, out-of-range or oversized
         (more than 2 degrees on a side) bbox is 400.
 
-        **List mode** (OSDEV-3754): any other request. Every live
-        candidate, paged: ``page`` (default 1), ``limit`` (default 50,
+        **List mode** (OSDEV-3754): any request carrying ``page``, or
+        no ``bbox``. Every live candidate, paged: ``page`` (default 1,
+        and the parameter that selects this mode), ``limit`` (default 50,
         capped at 500), ``sort`` (``id``, ``confidence``, ``created_at``,
         ``nearby_count``, ``nearest_m``, each optionally ``-`` prefixed
         for descending), ``bbox`` (optional, uncapped), ``confidence_min``

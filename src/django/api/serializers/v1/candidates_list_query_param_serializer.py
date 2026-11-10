@@ -39,15 +39,17 @@ STATE_CHOICES = (
     candidate_validation.RETIREMENT_PENDING,
 )
 
-# The query params that make up a legacy (map viewport) request. A request
-# carrying only these keeps the OSDEV-3249 contract; anything else, or no
-# bbox at all, is the paged list mode (OSDEV-3754).
-LEGACY_BBOX_PARAMS = frozenset({'bbox', 'limit'})
+# ``page`` is the mode discriminator. A ``bbox`` request without it keeps
+# the OSDEV-3249 map-viewport contract whatever else it carries; a request
+# with ``page``, or with no ``bbox`` at all, is the paged list mode
+# (OSDEV-3754). Inferring the mode from the full key set instead would
+# silently flip a caller between two response shapes when it adds or
+# drops an unrelated parameter.
+LIST_MODE_PARAM = 'page'
 
 
 def is_legacy_bbox_request(query_params):
-    keys = set(query_params.keys())
-    return 'bbox' in keys and keys <= LEGACY_BBOX_PARAMS
+    return 'bbox' in query_params and LIST_MODE_PARAM not in query_params
 
 
 class CommaSeparatedChoiceField(CharField):
