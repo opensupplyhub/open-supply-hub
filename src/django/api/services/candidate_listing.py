@@ -253,7 +253,7 @@ def _order_cache_key(params):
         key: value for key, value in sorted(params.items())
         if key not in ('page', 'limit') and value is not None
     }
-    digest = hashlib.sha1(
+    digest = hashlib.sha256(
         json.dumps(relevant, sort_keys=True, default=list).encode()
     ).hexdigest()
     return f'order:v{ORDER_CACHE_VERSION}:{digest}'
