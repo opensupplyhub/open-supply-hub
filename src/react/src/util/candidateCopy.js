@@ -122,7 +122,6 @@ export const CANDIDATE_LIST_COPY = Object.freeze({
     columnVotes: 'Votes',
     columnNearby: 'Nearby',
     columnNearest: 'Nearest confirmed facility',
-    columnDetected: 'Detected',
     columnCountry: 'Country',
     nearestNone: 'None within 500 m',
     noVotes: 'No votes',

@@ -11,7 +11,6 @@ import TablePagination from '@material-ui/core/TablePagination';
 import TableRow from '@material-ui/core/TableRow';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import moment from 'moment';
 
 import { CandidateStateChip } from './CandidateBadge';
 import {
@@ -50,12 +49,6 @@ const COLUMNS = [
         label: CANDIDATE_LIST_COPY.columnNearest,
         sortField: CANDIDATE_LIST_SORT_FIELDS.NEAREST_M,
         defaultDirection: 'asc',
-    },
-    {
-        key: 'detected',
-        label: CANDIDATE_LIST_COPY.columnDetected,
-        sortField: CANDIDATE_LIST_SORT_FIELDS.CREATED_AT,
-        defaultDirection: 'desc',
     },
     { key: 'country', label: CANDIDATE_LIST_COPY.columnCountry },
 ];
@@ -231,11 +224,6 @@ const CandidateListTable = ({
                                         />
                                     </TableCell>
                                     <TableCell className={classes.cell}>
-                                        {row.createdAt
-                                            ? moment(row.createdAt).format('ll')
-                                            : '—'}
-                                    </TableCell>
-                                    <TableCell className={classes.cell}>
                                         {row.countryCode || '—'}
                                     </TableCell>
                                 </TableRow>
@@ -291,7 +279,6 @@ CandidateListTable.propTypes = {
                 name: PropTypes.string,
                 distanceM: PropTypes.number,
             }),
-            createdAt: PropTypes.string,
             countryCode: PropTypes.string,
         }),
     ).isRequired,
