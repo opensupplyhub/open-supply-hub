@@ -59,8 +59,6 @@ import {
     OTHER,
     FEATURE_COLLECTION,
     CLAIM_A_FACILITY,
-    EARTH_GENOME_CANDIDATES,
-    candidatesRoute,
     inputTypesEnum,
     registrationFieldsEnum,
     registrationFormFields,
@@ -1723,17 +1721,6 @@ export const createUserDropdownLinks = (
             Object.freeze({
                 label: 'My Facilities',
                 href: '/claimed',
-            }),
-        );
-    }
-
-    // OSDEV-3755: the only entry point to the candidate review page; it
-    // is deliberately absent from the public navigation.
-    if (includes(activeFeatureFlags, EARTH_GENOME_CANDIDATES)) {
-        links.push(
-            Object.freeze({
-                label: 'Review satellite detections',
-                href: candidatesRoute,
             }),
         );
     }

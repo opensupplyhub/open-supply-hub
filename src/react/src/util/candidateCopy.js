@@ -97,7 +97,6 @@ export const CANDIDATE_LIST_COPY = Object.freeze({
         'Production locations detected from satellite imagery that have ' +
         'not been confirmed by a person yet. Sort and filter to pick an ' +
         'order, then open a detection to vote without leaving the list.',
-    menuLink: 'Review satellite detections',
     loginNote:
         'Log in with an Open Supply Hub account to review satellite ' +
         'detections.',
