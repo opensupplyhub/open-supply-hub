@@ -314,13 +314,13 @@ export const CandidateReviewPage = ({
                             className={classes.summary}
                             data-testid="candidate-list-summary"
                         >
-                            {status === LIST_STATUS.LOADING
-                                ? '…'
-                                : CANDIDATE_LIST_COPY.countSummary(
-                                      count,
-                                      query.page,
-                                      totalPages,
-                                  )}
+                            {status === LIST_STATUS.LOADING && '…'}
+                            {status === LIST_STATUS.READY &&
+                                CANDIDATE_LIST_COPY.countSummary(
+                                    count,
+                                    query.page,
+                                    totalPages,
+                                )}
                         </Typography>
                     </div>
                     {statusBlock}

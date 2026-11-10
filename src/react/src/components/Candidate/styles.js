@@ -560,6 +560,7 @@ export const candidateListMapStyles = theme => {
             },
         }),
         drawing: Object.freeze({
+            userSelect: 'none',
             '& .leaflet-container': {
                 cursor: 'crosshair',
             },

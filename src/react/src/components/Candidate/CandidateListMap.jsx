@@ -135,6 +135,11 @@ const CandidateListMap = ({
         if (!map || !drawing) return undefined;
         map.dragging.disable();
         const onDown = event => {
+            // Panning is off, so nothing else stops the browser from
+            // starting a text selection across the page on this drag.
+            if (event.originalEvent) {
+                L.DomEvent.preventDefault(event.originalEvent);
+            }
             dragStartRef.current = event.latlng;
             setDragBounds([event.latlng, event.latlng]);
         };

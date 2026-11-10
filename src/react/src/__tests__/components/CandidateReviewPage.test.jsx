@@ -164,7 +164,7 @@ describe('CandidateReviewPage', () => {
         renderPage();
 
         await waitFor(() => expect(rows()).toHaveLength(3));
-        expect(lastListRequest()).toBe(`${LIST_URL}?limit=50`);
+        expect(lastListRequest()).toBe(`${LIST_URL}?page=1&limit=50`);
 
         const links = screen.getAllByTestId('candidate-os-id-link');
         expect(links[0]).toHaveAttribute(
@@ -203,7 +203,7 @@ describe('CandidateReviewPage', () => {
         fireEvent.click(screen.getByTestId('candidate-filter-state-unverified'));
         await waitFor(() => expect(listRequests()).toHaveLength(2));
         expect(lastListRequest()).toBe(
-            `${LIST_URL}?limit=50&sort=-confidence&state=disputed%2Cunverified`,
+            `${LIST_URL}?page=1&limit=50&sort=-confidence&state=disputed%2Cunverified`,
         );
 
         // Nearby is a Select: open it and pick an option from the menu.
@@ -230,7 +230,7 @@ describe('CandidateReviewPage', () => {
         fireEvent.click(screen.getByTestId('candidate-filter-reset'));
         await waitFor(() =>
             expect(lastListRequest()).toBe(
-                `${LIST_URL}?limit=50&sort=-confidence`,
+                `${LIST_URL}?page=1&limit=50&sort=-confidence`,
             ),
         );
     });
@@ -242,18 +242,18 @@ describe('CandidateReviewPage', () => {
 
         fireEvent.click(screen.getByTestId('candidate-sort-confidence'));
         await waitFor(() =>
-            expect(lastListRequest()).toBe(`${LIST_URL}?limit=50&sort=confidence`),
+            expect(lastListRequest()).toBe(`${LIST_URL}?page=1&limit=50&sort=confidence`),
         );
         fireEvent.click(screen.getByTestId('candidate-sort-confidence'));
         await waitFor(() =>
             expect(lastListRequest()).toBe(
-                `${LIST_URL}?limit=50&sort=-confidence`,
+                `${LIST_URL}?page=1&limit=50&sort=-confidence`,
             ),
         );
         fireEvent.click(screen.getByTestId('candidate-sort-nearby_count'));
         await waitFor(() =>
             expect(lastListRequest()).toBe(
-                `${LIST_URL}?limit=50&sort=-nearby_count`,
+                `${LIST_URL}?page=1&limit=50&sort=-nearby_count`,
             ),
         );
     });
@@ -287,7 +287,7 @@ describe('CandidateReviewPage', () => {
         mockApi();
         fireEvent.click(screen.getByTestId('candidate-list-first-page'));
         await waitFor(() =>
-            expect(lastListRequest()).toBe(`${LIST_URL}?limit=50`),
+            expect(lastListRequest()).toBe(`${LIST_URL}?page=1&limit=50`),
         );
     });
 
@@ -387,7 +387,7 @@ describe('CandidateReviewPage', () => {
         fireEvent.click(screen.getByTestId('mock-map-draw'));
         await waitFor(() =>
             expect(lastListRequest()).toBe(
-                `${LIST_URL}?limit=50&bbox=-87.5%2C33.5%2C-86.5%2C34.5`,
+                `${LIST_URL}?page=1&limit=50&bbox=-87.5%2C33.5%2C-86.5%2C34.5`,
             ),
         );
         expect(screen.getByTestId('candidate-filter-area-chip')).toBeInTheDocument();
@@ -398,7 +398,7 @@ describe('CandidateReviewPage', () => {
 
         fireEvent.click(screen.getByTestId('mock-map-clear'));
         await waitFor(() =>
-            expect(lastListRequest()).toBe(`${LIST_URL}?limit=50`),
+            expect(lastListRequest()).toBe(`${LIST_URL}?page=1&limit=50`),
         );
         expect(
             screen.queryByTestId('candidate-filter-area-chip'),

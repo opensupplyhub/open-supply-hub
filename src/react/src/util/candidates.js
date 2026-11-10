@@ -125,15 +125,20 @@ export const candidateListQueryFromSearch = search => {
 
 /**
  * Query object -> URLSearchParams with the API's parameter names. Defaults
- * are left out so the page URL stays short; `includePageSize` adds the
- * API's `limit`.
+ * are left out so the page URL stays short; `includePageSize` builds the
+ * API request instead, which always carries `page` and `limit`. The API
+ * reads a request with nothing but `bbox` (and `limit`) as the legacy map
+ * call (OSDEV-3249: capped box, no paging), so the explicit `page` keeps a
+ * drawn-area-only filter in list mode.
  */
 export const candidateListQueryToParams = (
     query,
     { includePageSize = false } = {},
 ) => {
     const params = new URLSearchParams();
-    if (query.page > 1) params.set('page', String(query.page));
+    if (includePageSize || query.page > 1) {
+        params.set('page', String(query.page || 1));
+    }
     if (includePageSize) {
         params.set('limit', String(CANDIDATE_LIST_PAGE_SIZE));
     }

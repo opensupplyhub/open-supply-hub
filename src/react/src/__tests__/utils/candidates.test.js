@@ -443,9 +443,9 @@ describe('candidates util', () => {
             ).toBe('');
         });
 
-        it('builds the API URL with the page size', () => {
+        it('builds the API URL with the page and page size', () => {
             expect(makeCandidatesListURL(DEFAULT_CANDIDATE_LIST_QUERY)).toBe(
-                '/api/v1/production-locations/candidates/?limit=50',
+                '/api/v1/production-locations/candidates/?page=1&limit=50',
             );
             expect(
                 makeCandidatesListURL({
@@ -460,6 +460,28 @@ describe('candidates util', () => {
                     '?page=4&limit=50&sort=-nearby_count&country=US%2CMX' +
                     '&bbox=-95%2C30%2C-76%2C37',
             );
+        });
+
+        it('keeps a drawn-area-only request in list mode', () => {
+            // `bbox` with nothing but `limit` is the legacy map call
+            // (OSDEV-3249): capped at two degrees, no count, no paging.
+            // The explicit `page` is what makes this a list request.
+            expect(
+                makeCandidatesListURL({
+                    ...DEFAULT_CANDIDATE_LIST_QUERY,
+                    bbox: '-95,30,-76,37',
+                }),
+            ).toBe(
+                '/api/v1/production-locations/candidates/' +
+                    '?page=1&limit=50&bbox=-95%2C30%2C-76%2C37',
+            );
+            // The page URL itself still leaves the default page out.
+            expect(
+                candidateListQueryToSearch({
+                    ...DEFAULT_CANDIDATE_LIST_QUERY,
+                    bbox: '-95,30,-76,37',
+                }),
+            ).toBe('?bbox=-95%2C30%2C-76%2C37');
         });
 
         it('normalizes a list feature with the list-only fields', () => {
