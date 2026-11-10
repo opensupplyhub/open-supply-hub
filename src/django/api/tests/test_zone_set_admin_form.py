@@ -1,5 +1,5 @@
 import json
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.contrib.admin.sites import AdminSite
@@ -296,6 +296,38 @@ class ZoneSetAdminSaveTest(TestCase):
         self.assertEqual([zone.label for zone in zones], ['Extremely high'])
         self.assertFalse(old_ids & {zone.id for zone in zones})
         self.assertFalse(Zone.objects.filter(id__in=old_ids).exists())
+
+    def test_reupload_queues_the_search_recompute_and_tells_staff(self):
+        """Saving a file replaces the zones, queues the recompute of
+        `FacilityIndex.zone_set_ids` for commit, and tells staff that
+        search results lag until it finishes. Editing without a file
+        does neither."""
+        recompute_path = (
+            'api.facility_index_backfill.zone_set_ids_recompute.'
+            'recompute_zone_set_ids'
+        )
+        with patch(recompute_path) as recompute:
+            with self.captureOnCommitCallbacks(execute=True):
+                zone_set = self._save(
+                    BASE_DATA,
+                    files={'geojson_file': upload(
+                        feature(LEFT, {'bws_label': 'High'}),
+                    )},
+                )
+            recompute.assert_called_once_with()
+            self.request._messages.add.assert_called_once()
+            message = self.request._messages.add.call_args.args[1]
+            self.assertIn('recomputed in the background', message)
+
+            recompute.reset_mock()
+            self.request._messages.add.reset_mock()
+            with self.captureOnCommitCallbacks(execute=True):
+                self._save(
+                    {**BASE_DATA, 'description': 'Edited.'},
+                    instance=zone_set,
+                )
+            recompute.assert_not_called()
+            self.request._messages.add.assert_not_called()
 
     def test_failed_reupload_leaves_old_zones_serving(self):
         """A bad replacement file is refused before any row changes,
