@@ -50,6 +50,11 @@ def _format_datetime(value):
     return _datetime_field.to_representation(value) if value else None
 
 
+def format_datetime(value):
+    """ISO 8601 as the v1 detail renders it, or ``None``."""
+    return _format_datetime(value)
+
+
 def your_vote(facility, user):
     """The caller's vote on ``facility`` (``None`` when anonymous/unvoted)."""
     if user is None or not user.is_authenticated:

@@ -247,6 +247,7 @@ class APIV1CommonErrorMessages:
     )
     LOCATION_NOT_FOUND = 'The location with the given id was not found.'
     LOCATION_ID_NOT_VALID = 'The value must be a valid id.'
+    PAGE_NOT_FOUND = 'The requested page is past the last page.'
 
 
 class APIV1LocationContributionErrorMessages:

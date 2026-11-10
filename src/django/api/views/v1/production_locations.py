@@ -5,6 +5,7 @@ from uuid import UUID
 
 from django.contrib.gis.geos import Polygon
 from django.http import Http404, QueryDict
+from rest_framework.utils.urls import remove_query_param, replace_query_param
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -55,10 +56,16 @@ from api.serializers.v1.ignore_warnings_query_param_serializer \
     import IgnoreWarningsQueryParamSerializer
 from api.serializers.v1.candidates_bbox_query_param_serializer \
     import CandidatesBboxQueryParamSerializer
+from api.serializers.v1.candidates_list_query_param_serializer import (
+    CandidatesListQueryParamSerializer,
+    is_legacy_bbox_request,
+)
+from api.services import candidate_listing
 from api.serializers.facility.facility_candidate_details_serializer import (
     NOINDEX_HEADER,
     NOINDEX_VALUE,
     candidate_production_location,
+    format_datetime as format_candidate_datetime,
     geometry_geojson,
 )
 from api.models.moderation_event import ModerationEvent
@@ -366,31 +373,48 @@ class ProductionLocations(ViewSet):
     @action(detail=False, methods=['GET'], url_path='candidates')
     def candidates(self, request):
         '''
-        Candidate production locations inside a bounding box (OSDEV-3249).
+        Candidate production locations, in two modes.
 
-        ``GET /api/v1/production-locations/candidates/?bbox=minLng,minLat,
-        maxLng,maxLat[&limit=N]`` is open, read-only and rate limited like
-        the other v1 reads. It answers a GeoJSON FeatureCollection of the
+        **Map mode** (OSDEV-3249): ``GET /api/v1/production-locations/
+        candidates/?bbox=minLng,minLat,maxLng,maxLat[&limit=N]`` with no
+        other parameter. Answers a GeoJSON FeatureCollection of the
         candidates whose detected polygon (or point, when there is no
-        polygon) intersects the box, each Feature labeled with
-        ``os_id``, ``confidence``, ``source``, the derived validation
-        ``state`` and ``tally`` and the pin ``centroid``. ``limit``
-        defaults to 200 and is capped at 500; a malformed, inverted,
-        out-of-range or oversized (more than 2 degrees on a side) bbox is
-        400. Only ``is_candidate`` rows are ever returned, so the
-        brand/CSO data contract (confirmed facilities only) is unaffected.
-        404 while the pilot switch is off (OSDEV-3627, see ``initial``).
+        polygon) intersects the box, each Feature labeled with ``os_id``,
+        ``confidence``, ``source``, the derived validation ``state`` and
+        ``tally`` and the pin ``centroid``. ``limit`` defaults to 200 and
+        is capped at 500; a malformed, inverted, out-of-range or oversized
+        (more than 2 degrees on a side) bbox is 400.
+
+        **List mode** (OSDEV-3754): any other request. Every live
+        candidate, paged: ``page`` (default 1), ``limit`` (default 50,
+        capped at 500), ``sort`` (``id``, ``confidence``, ``created_at``,
+        ``nearby_count``, ``nearest_m``, each optionally ``-`` prefixed
+        for descending), ``bbox`` (optional, uncapped), ``confidence_min``
+        / ``confidence_max``, ``state`` (comma-separated validation
+        states), ``country`` (comma-separated alpha-2 codes), ``source``
+        and ``has_nearby`` (``true``/``false``: a confirmed facility
+        within the suggestion radius or not). The body is the same
+        FeatureCollection with a paging envelope, ``count`` / ``next`` /
+        ``previous``, and each Feature additionally carries
+        ``nearby_count``, ``nearest_m`` and ``nearest`` (``{os_id, name,
+        distance_m}`` or ``null``), ``created_at``, ``country_code`` and
+        ``external_id``. A page past the end is 404; an invalid parameter
+        is 400.
+
+        Both modes are open, read-only and rate limited like the other v1
+        reads, answer ``Cache-Control: private`` and ``X-Robots-Tag:
+        noindex``, return only ``is_candidate`` rows (the brand/CSO data
+        contract, confirmed facilities only, is unaffected) and 404 while
+        the pilot switch is off (OSDEV-3627, see ``initial``).
         '''
+        if is_legacy_bbox_request(request.query_params):
+            return self.__candidates_in_bbox(request)
+        return self.__candidates_page(request)
+
+    def __candidates_in_bbox(self, request):
         params = CandidatesBboxQueryParamSerializer(data=request.query_params)
         if not params.is_valid():
-            field, messages = next(iter(params.errors.items()))
-            return Response(
-                {
-                    'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
-                    'errors': [{'field': field, 'detail': str(messages[0])}],
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return self.__candidate_query_error(params.errors)
 
         envelope = Polygon.from_bbox(params.validated_data['bbox'])
         envelope.srid = 4326
@@ -418,8 +442,80 @@ class ProductionLocations(ViewSet):
             ],
         })
 
+    def __candidates_page(self, request):
+        params = CandidatesListQueryParamSerializer(data=request.query_params)
+        if not params.is_valid():
+            return self.__candidate_query_error(params.errors)
+        validated = params.validated_data
+
+        try:
+            rows, total = candidate_listing.list_candidates(validated)
+        except candidate_listing.PageNotFound:
+            return Response(
+                data={'detail': APIV1CommonErrorMessages.PAGE_NOT_FOUND},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        vote_tallies = candidate_validation.tallies(row.id for row in rows)
+        page = validated['page']
+        last_page = max(1, -(-total // validated['limit']))
+        url = request.build_absolute_uri()
+        return self.__candidate_response({
+            'type': 'FeatureCollection',
+            'count': total,
+            'next': (
+                replace_query_param(url, 'page', page + 1)
+                if page < last_page else None
+            ),
+            'previous': (
+                (remove_query_param(url, 'page') if page == 2
+                 else replace_query_param(url, 'page', page - 1))
+                if page > 1 else None
+            ),
+            'features': [
+                self.__candidate_feature(
+                    row,
+                    vote_tallies[row.id],
+                    extra=self.__candidate_list_properties(row),
+                )
+                for row in rows
+            ],
+        })
+
     @staticmethod
-    def __candidate_feature(facility, vote_tally):
+    def __candidate_query_error(errors):
+        field, messages = next(iter(errors.items()))
+        return Response(
+            {
+                'detail': APIV1CommonErrorMessages.COMMON_REQ_QUERY_ERROR,
+                'errors': [{'field': field, 'detail': str(messages[0])}],
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @staticmethod
+    def __candidate_list_properties(row):
+        nearest_m = (
+            round(row.nearest_m, 1) if row.nearest_m is not None else None
+        )
+        return {
+            'nearby_count': row.nearby_count or 0,
+            'nearest_m': nearest_m,
+            'nearest': (
+                {
+                    'os_id': row.nearest_os_id,
+                    'name': row.nearest_name,
+                    'distance_m': nearest_m,
+                }
+                if row.nearest_os_id else None
+            ),
+            'created_at': format_candidate_datetime(row.created_at),
+            'country_code': row.country_code,
+            'external_id': row.external_id,
+        }
+
+    @staticmethod
+    def __candidate_feature(facility, vote_tally, extra=None):
         state = candidate_validation.derive_state(vote_tally)
         geometry = (
             facility.polygon if facility.polygon is not None
@@ -439,6 +535,7 @@ class ProductionLocations(ViewSet):
                     'lat': facility.location.y,
                     'lng': facility.location.x,
                 },
+                **(extra or {}),
             },
         }
 
