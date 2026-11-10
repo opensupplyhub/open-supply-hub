@@ -24,20 +24,20 @@ export const candidateBadgeStyles = theme => {
             border: `1px solid ${CANDIDATE_BADGE_COLOURS.border}`,
             backgroundColor: CANDIDATE_BADGE_COLOURS.background,
             color: CANDIDATE_BADGE_COLOURS.text,
-            fontSize: '0.75rem',
+            fontSize: '0.875rem',
             fontWeight: 600,
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
             whiteSpace: 'nowrap',
         }),
         badgeIcon: Object.freeze({
-            fontSize: 14,
+            fontSize: 16,
         }),
         stateChip: Object.freeze({
             display: 'inline-block',
             padding: `${spacing * 0.25}px ${spacing}px`,
             borderRadius: 12,
-            fontSize: '0.75rem',
+            fontSize: '0.875rem',
             fontWeight: 600,
             whiteSpace: 'nowrap',
         }),
@@ -130,7 +130,7 @@ export const candidateValidationPanelStyles = theme => {
         }),
         title: Object.freeze({
             margin: 0,
-            fontSize: '1rem',
+            fontSize: '1.25rem',
             fontWeight: 600,
             lineHeight: 1.3,
             color: theme.palette.text.primary,
@@ -145,7 +145,7 @@ export const candidateValidationPanelStyles = theme => {
         }),
         intro: Object.freeze({
             ...typography.bodyText,
-            fontSize: '0.85rem',
+            fontSize: '1rem',
             lineHeight: 1.4,
         }),
         closeButton: Object.freeze({
@@ -163,7 +163,7 @@ export const candidateValidationPanelStyles = theme => {
             borderBottom: 'none',
         }),
         metaRow: Object.freeze({
-            fontSize: '0.8rem',
+            fontSize: '1rem',
             color: theme.palette.text.secondary,
         }),
         metaLabel: Object.freeze({
@@ -177,7 +177,7 @@ export const candidateValidationPanelStyles = theme => {
             gap: spacing,
         }),
         tally: Object.freeze({
-            fontSize: '0.85rem',
+            fontSize: '1rem',
             fontWeight: 500,
             color: theme.palette.text.primary,
         }),
@@ -186,7 +186,7 @@ export const candidateValidationPanelStyles = theme => {
             fontWeight: 600,
         }),
         stateDescription: Object.freeze({
-            fontSize: '0.8rem',
+            fontSize: '1rem',
             color: theme.palette.text.secondary,
         }),
         voteButtons: Object.freeze({
@@ -198,7 +198,7 @@ export const candidateValidationPanelStyles = theme => {
             justifyContent: 'flex-start',
             textAlign: 'left',
             textTransform: 'none',
-            fontSize: '0.875rem',
+            fontSize: '1rem',
             fontWeight: 500,
             padding: `${spacing}px ${spacing * 1.5}px`,
             borderRadius: 4,
@@ -223,19 +223,19 @@ export const candidateValidationPanelStyles = theme => {
         }),
         voteButtonDisabled: Object.freeze({}),
         voteButtonIcon: Object.freeze({
-            fontSize: 18,
+            fontSize: 20,
             marginRight: spacing,
         }),
         yourVoteTag: Object.freeze({
             marginLeft: 'auto',
-            fontSize: '0.7rem',
+            fontSize: '0.8rem',
             fontWeight: 600,
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
             opacity: 0.85,
         }),
         statusText: Object.freeze({
-            fontSize: '0.8rem',
+            fontSize: '1rem',
             color: theme.palette.text.secondary,
         }),
         statusClosed: Object.freeze({
@@ -250,7 +250,7 @@ export const candidateValidationPanelStyles = theme => {
             color: COLOURS.MATERIAL_RED,
         }),
         matchesTitle: Object.freeze({
-            fontSize: '0.8rem',
+            fontSize: '0.875rem',
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
@@ -270,7 +270,7 @@ export const candidateValidationPanelStyles = theme => {
             gap: 2,
         }),
         matchName: Object.freeze({
-            fontSize: '0.875rem',
+            fontSize: '1rem',
             fontWeight: 500,
             color: COLOURS.NAVY_BLUE,
             textDecoration: 'none',
@@ -279,7 +279,7 @@ export const candidateValidationPanelStyles = theme => {
             },
         }),
         matchMeta: Object.freeze({
-            fontSize: '0.75rem',
+            fontSize: '0.875rem',
             color: theme.palette.text.secondary,
         }),
         matchActions: Object.freeze({
@@ -290,7 +290,7 @@ export const candidateValidationPanelStyles = theme => {
         }),
         matchButton: Object.freeze({
             textTransform: 'none',
-            fontSize: '0.75rem',
+            fontSize: '0.875rem',
             padding: `${spacing * 0.25}px ${spacing}px`,
             '&[aria-pressed="true"]': {
                 backgroundColor: COLOURS.NAVY_BLUE,
@@ -301,7 +301,7 @@ export const candidateValidationPanelStyles = theme => {
             display: 'inline-flex',
             alignItems: 'center',
             gap: spacing * 0.5,
-            fontSize: '0.875rem',
+            fontSize: '1rem',
             fontWeight: 600,
             color: COLOURS.NAVY_BLUE,
             textDecoration: 'none',
@@ -310,7 +310,7 @@ export const candidateValidationPanelStyles = theme => {
             },
         }),
         knowHint: Object.freeze({
-            fontSize: '0.75rem',
+            fontSize: '0.875rem',
             color: theme.palette.text.secondary,
         }),
         loading: Object.freeze({
@@ -345,6 +345,7 @@ export const candidateReviewPageStyles = theme => {
         }),
         intro: Object.freeze({
             ...typography.bodyText,
+            fontSize: '1.125rem',
             maxWidth: 760,
         }),
         layout: Object.freeze({
@@ -356,7 +357,7 @@ export const candidateReviewPageStyles = theme => {
             },
         }),
         rail: Object.freeze({
-            flex: '0 0 260px',
+            flex: '0 0 240px',
             [theme.breakpoints.down('sm')]: {
                 flex: '1 1 auto',
                 width: '100%',
@@ -396,7 +397,7 @@ export const candidateReviewPageStyles = theme => {
         }),
         panelPosition: Object.freeze({
             ...typography.bodyText,
-            fontSize: '0.9rem',
+            fontSize: '1rem',
             marginLeft: 'auto',
         }),
         panelPaper: Object.freeze({
@@ -411,7 +412,7 @@ export const candidateReviewPageStyles = theme => {
         }),
         summary: Object.freeze({
             ...typography.bodyText,
-            fontSize: '0.95rem',
+            fontSize: '1.125rem',
         }),
         status: Object.freeze({
             padding: spacing * 3,
@@ -419,6 +420,7 @@ export const candidateReviewPageStyles = theme => {
         }),
         statusText: Object.freeze({
             ...typography.bodyText,
+            fontSize: '1.125rem',
             marginBottom: spacing,
         }),
         loginNote: Object.freeze({
@@ -427,6 +429,13 @@ export const candidateReviewPageStyles = theme => {
             flexDirection: 'column',
             gap: spacing * 2,
             alignItems: 'flex-start',
+        }),
+        loginNoteText: Object.freeze({
+            ...typography.bodyText,
+            fontSize: '1.125rem',
+        }),
+        button: Object.freeze({
+            fontSize: '1rem',
         }),
     });
 };
@@ -444,8 +453,7 @@ export const candidateListFiltersStyles = theme => {
             gap: spacing * 2,
         }),
         title: Object.freeze({
-            fontSize: '1.1rem',
-            fontWeight: theme.typography.fontWeightSemiBold,
+            ...typography.formLabelTight,
             margin: 0,
         }),
         group: Object.freeze({
@@ -454,7 +462,7 @@ export const candidateListFiltersStyles = theme => {
             gap: spacing * 0.5,
         }),
         groupLabel: Object.freeze({
-            fontSize: '0.8rem',
+            fontSize: '0.875rem',
             fontWeight: 600,
             letterSpacing: '0.04em',
             textTransform: 'uppercase',
@@ -467,6 +475,15 @@ export const candidateListFiltersStyles = theme => {
             marginLeft: -spacing,
             marginRight: 0,
         }),
+        checkboxLabelText: Object.freeze({
+            fontSize: '1rem',
+        }),
+        helperText: Object.freeze({
+            fontSize: '0.875rem',
+        }),
+        chip: Object.freeze({
+            fontSize: '1rem',
+        }),
         range: Object.freeze({
             display: 'flex',
             gap: spacing,
@@ -476,7 +493,7 @@ export const candidateListFiltersStyles = theme => {
         }),
         hint: Object.freeze({
             ...typography.bodyText,
-            fontSize: '0.8rem',
+            fontSize: '1rem',
         }),
         areaRow: Object.freeze({
             display: 'flex',
@@ -487,6 +504,7 @@ export const candidateListFiltersStyles = theme => {
         resetButton: Object.freeze({
             alignSelf: 'flex-start',
             textTransform: 'none',
+            fontSize: '1rem',
         }),
     });
 };
@@ -502,9 +520,13 @@ export const candidateListTableStyles = theme => {
         scroll: Object.freeze({
             overflowX: 'auto',
         }),
+        // MUI's dense cell padding (56px on the right) no longer fits
+        // eight columns at body size; tighten it.
         headCell: Object.freeze({
             whiteSpace: 'nowrap',
+            fontSize: '1rem',
             fontWeight: 600,
+            padding: `${spacing}px ${spacing * 1.5}px`,
         }),
         row: Object.freeze({
             cursor: 'pointer',
@@ -517,6 +539,8 @@ export const candidateListTableStyles = theme => {
         }),
         cell: Object.freeze({
             whiteSpace: 'nowrap',
+            fontSize: '1rem',
+            padding: `${spacing}px ${spacing * 1.5}px`,
         }),
         osIdLink: Object.freeze({
             color: COLOURS.PURPLE,
@@ -528,7 +552,7 @@ export const candidateListTableStyles = theme => {
         }),
         nearestName: Object.freeze({
             display: 'block',
-            fontSize: '0.8rem',
+            fontSize: '0.9375rem',
             color: theme.palette.text.secondary,
             maxWidth: 220,
             overflow: 'hidden',
@@ -541,6 +565,9 @@ export const candidateListTableStyles = theme => {
             display: 'flex',
             justifyContent: 'center',
             padding: spacing * 3,
+        }),
+        paginationCaption: Object.freeze({
+            fontSize: '1rem',
         }),
     });
 };
@@ -573,7 +600,7 @@ export const candidateListMapStyles = theme => {
         controlButton: Object.freeze({
             backgroundColor: theme.palette.common.white,
             textTransform: 'none',
-            fontSize: '0.8rem',
+            fontSize: '1rem',
             '&:hover': {
                 backgroundColor: theme.palette.grey[100],
             },
@@ -582,7 +609,7 @@ export const candidateListMapStyles = theme => {
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
             padding: `${spacing * 0.5}px ${spacing}px`,
             borderRadius: 4,
-            fontSize: '0.8rem',
+            fontSize: '1rem',
         }),
     });
 };

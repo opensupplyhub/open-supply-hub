@@ -149,6 +149,7 @@ export const CandidateReviewPage = ({
                     </Typography>
                     <Button
                         variant="outlined"
+                        className={classes.button}
                         onClick={() => setQuery({ page: 1 })}
                         data-testid="candidate-list-first-page"
                     >
@@ -163,7 +164,11 @@ export const CandidateReviewPage = ({
                     <Typography className={classes.statusText}>
                         {CANDIDATE_LIST_COPY.loadError}
                     </Typography>
-                    <Button variant="outlined" onClick={refetch}>
+                    <Button
+                        variant="outlined"
+                        className={classes.button}
+                        onClick={refetch}
+                    >
                         {CANDIDATE_LIST_COPY.retry}
                     </Button>
                 </Paper>
@@ -212,12 +217,16 @@ export const CandidateReviewPage = ({
             <div className={classes.root} data-testid="candidate-review-page">
                 {header}
                 <Paper elevation={0} className={classes.loginNote}>
-                    <Typography data-testid="candidate-review-login-note">
+                    <Typography
+                        className={classes.loginNoteText}
+                        data-testid="candidate-review-login-note"
+                    >
                         {CANDIDATE_LIST_COPY.loginNote}
                     </Typography>
                     <Button
                         variant="contained"
                         color="primary"
+                        className={classes.button}
                         href={authLoginFormRoute}
                     >
                         Log In
@@ -260,6 +269,7 @@ export const CandidateReviewPage = ({
                                     <Button
                                         size="small"
                                         variant="outlined"
+                                        className={classes.button}
                                         disabled={selectedIndex <= 0}
                                         onClick={() =>
                                             stepTo(selectedIndex - 1)
@@ -272,6 +282,7 @@ export const CandidateReviewPage = ({
                                     <Button
                                         size="small"
                                         variant="outlined"
+                                        className={classes.button}
                                         disabled={
                                             selectedIndex < 0 ||
                                             selectedIndex >= rows.length - 1

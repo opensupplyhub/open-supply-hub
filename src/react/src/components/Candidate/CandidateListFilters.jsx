@@ -113,6 +113,7 @@ const CandidateListFilters = ({ classes, query, onChange }) => {
                     <FormControlLabel
                         key={state}
                         className={classes.checkboxLabel}
+                        classes={{ label: classes.checkboxLabelText }}
                         control={
                             <Checkbox
                                 className={classes.checkbox}
@@ -196,6 +197,7 @@ const CandidateListFilters = ({ classes, query, onChange }) => {
                 <CommittedTextField
                     label={CANDIDATE_LIST_COPY.filterCountry}
                     helperText={CANDIDATE_LIST_COPY.filterCountryHint}
+                    FormHelperTextProps={{ className: classes.helperText }}
                     inputProps={{ 'data-testid': 'candidate-filter-country' }}
                     value={query.country}
                     onCommit={text =>
@@ -217,6 +219,7 @@ const CandidateListFilters = ({ classes, query, onChange }) => {
                 {query.bbox ? (
                     <div className={classes.areaRow}>
                         <Chip
+                            className={classes.chip}
                             label={CANDIDATE_LIST_COPY.filterAreaSet}
                             onDelete={() => onChange({ bbox: null })}
                             data-testid="candidate-filter-area-chip"

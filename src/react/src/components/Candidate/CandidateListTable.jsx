@@ -72,12 +72,9 @@ export const parseSort = sort => ({
  */
 export const nextSortFor = (column, currentSort) => {
     const current = parseSort(currentSort);
+    const flipped = current.direction === 'asc' ? 'desc' : 'asc';
     const direction =
-        current.field === column.sortField
-            ? current.direction === 'asc'
-                ? 'desc'
-                : 'asc'
-            : column.defaultDirection;
+        current.field === column.sortField ? flipped : column.defaultDirection;
     return direction === 'desc' ? `-${column.sortField}` : column.sortField;
 };
 
@@ -262,6 +259,7 @@ const CandidateListTable = ({
             {!(loading && count === 0) && (
                 <TablePagination
                     component="div"
+                    classes={{ caption: classes.paginationCaption }}
                     count={count}
                     page={Math.max(0, page - 1)}
                     rowsPerPage={CANDIDATE_LIST_PAGE_SIZE}
