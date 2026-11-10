@@ -1,8 +1,12 @@
 import mimetypes
+import re
 import threading
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 
 import boto3
+from unidecode import unidecode
+
 from django.conf import settings
 from django.core.files.storage import default_storage
 
@@ -20,6 +24,57 @@ _SESSION_REFRESH_MARGIN = timedelta(minutes=5)
 _credentials_lock = threading.Lock()
 _cached_credentials = None
 _cached_credentials_expiry = None
+
+_SEPARATOR_RUN = re.compile(r'[-\s]+')
+
+# Characters that would close the quoted filename and open a parameter of
+# their own. Stripped after transliteration, not before: unidecode maps
+# several ordinary letters onto them, including the Japanese iteration
+# mark 々 -> " and 〆 -> /, both of which occur in real names.
+_HEADER_UNSAFE = re.compile(r'["<>;,\\/\r\n]')
+
+
+def _to_ascii(value):
+    '''
+    Render one filename part as hyphen-separated ASCII. unidecode is used
+    rather than an NFKD fold because NFKD drops any letter it cannot
+    decompose, turning "çalıştırma" into "calstrma" and a CJK name into
+    nothing at all.
+    '''
+    transliterated = _HEADER_UNSAFE.sub('', unidecode(value))
+    return _SEPARATOR_RUN.sub('-', transliterated).strip('-')
+
+
+def build_content_disposition(file_name):
+    '''
+    Build an RFC 6266 Content-Disposition carrying both a transliterated
+    ASCII `filename=` and the RFC 5987 `filename*=UTF-8''` form. HTTP
+    header values are ISO-8859-1, so a Turkish or CJK name in the plain
+    form alone makes S3 reject the presigned request (OSDEV-3600).
+    '''
+    stem, dot, extension = file_name.rpartition('.')
+    if not dot:
+        stem, extension = file_name, ''
+
+    # Name both forms, not just the fallback: slugify reduces a stem of
+    # only emoji or punctuation to nothing, and a bare ".pdf" in
+    # filename* makes a browser save a hidden, stem-less dotfile.
+    def _join(part_stem, part_extension):
+        if part_extension:
+            return f'{part_stem}.{part_extension}'
+        return part_stem
+
+    ascii_name = _join(_to_ascii(stem) or 'attachment', _to_ascii(extension))
+    display_name = _join(stem or 'attachment', extension)
+
+    # quote() leaves the RFC 5987 attr-chars (ALPHA/DIGIT/-._~) alone and
+    # percent-encodes the rest as UTF-8, so no delimiter survives here.
+    encoded_name = quote(display_name, safe='')
+
+    return (
+        f'attachment; filename="{ascii_name}"; '
+        f"filename*=UTF-8''{encoded_name}"
+    )
 
 
 def _get_signing_credentials():
@@ -57,9 +112,10 @@ def _get_signing_credentials():
 def generate_attachment_download_url(attachment):
     '''
     Mint a presigned GET URL for one claim attachment: 60-second
-    expiry, single object key, Content-Disposition attachment with the
-    original display filename, and the content type derived from the
-    validated extension (never the uploader's declared type).
+    expiry, single object key, an RFC 6266 Content-Disposition carrying
+    the original display filename (see build_content_disposition), and
+    the content type derived from the validated extension (never the
+    uploader's declared type).
 
     When CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN is configured, URLs are
     signed by that dedicated role (scoped to s3:GetObject on claim
@@ -71,10 +127,7 @@ def generate_attachment_download_url(attachment):
         mimetypes.guess_type(attachment.file_name)[0]
         or 'application/octet-stream'
     )
-    # RFC 6266/5987 filename for the browser's save dialog. The display
-    # name is already slugified at upload; strip quotes defensively.
-    safe_name = attachment.file_name.replace('"', '')
-    disposition = f'attachment; filename="{safe_name}"'
+    disposition = build_content_disposition(attachment.file_name)
 
     credentials = _get_signing_credentials()
     if credentials is None:
