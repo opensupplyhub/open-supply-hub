@@ -1,5 +1,6 @@
 import json
 import math
+from unittest.mock import Mock, patch
 
 from django.contrib.gis.geos import Point
 from django.db import connection
@@ -134,6 +135,25 @@ class SubdivideZoneRecordsTest(TestCase):
 
         self.assertLess(len(coarse), len(fine))
         self.assertTrue(all(p['geom'].num_coords <= 16 for p in fine))
+
+    def test_feature_with_no_pieces_is_refused(self):
+        """A feature PostGIS returns no piece for raises instead of
+        silently disappearing from the set."""
+        record = records(feature(SQUARE, {'bws_label': 'Low'}))[0]
+        cursor = Mock()
+        cursor.fetchall.return_value = []
+        connection_mock = Mock()
+        connection_mock.cursor.return_value.__enter__ = Mock(
+            return_value=cursor
+        )
+        connection_mock.cursor.return_value.__exit__ = Mock(
+            return_value=False
+        )
+        with patch(
+            'api.helpers.zone_subdivision.connection', connection_mock
+        ):
+            with self.assertRaisesRegex(ValueError, r'position\(s\) \[0\]'):
+                subdivide_zone_records([record])
 
     def test_empty_input(self):
         self.assertEqual(subdivide_zone_records([]), [])

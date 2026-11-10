@@ -25,9 +25,14 @@ class Migration(migrations.Migration):
     unique constraint with one over (zone_set, feature_index,
     piece_index), and re-cuts every existing zone in place with the
     same `ST_Subdivide` budget `ZoneSet.replace_zones` applies to new
-    uploads, so no set needs re-uploading. Coverage and labels are
-    unchanged (every piece carries its feature's value and
-    feature_index), so `FacilityIndex.zone_set_ids` needs no recompute.
+    uploads, so no set needs re-uploading. Every piece carries its
+    feature's value and feature_index, so coverage and labels are
+    unchanged for every point except one lying exactly on a feature
+    edge that is not axis-aligned: `ST_Subdivide` adds a vertex where
+    a cut line meets that edge, which can move the edge by a
+    floating-point rounding. The parity run on the 2.5M-row
+    production-derived dump found no such location, so
+    `FacilityIndex.zone_set_ids` is not recomputed.
 
     The reverse merges each feature's pieces back into one row before
     restoring the old constraint; see 0269_revert_subdivide_zones.sql
@@ -39,6 +44,17 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # api_zone is read by the facility indexing trigger on every
+        # facility save, by every location page (resolve_zone) and for
+        # minutes at a time by the zone_set_ids recompute Batch job;
+        # the ALTERs below must not queue behind a reader and stall
+        # every query that arrives meanwhile. SET LOCAL lasts to the
+        # end of the migration transaction; the RunSQL at the end does
+        # the same when migrating backwards (as in 0267).
+        migrations.RunSQL(
+            sql="SET LOCAL lock_timeout = '5s';",
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         migrations.AddField(
             model_name='zone',
             name='piece_index',
@@ -72,4 +88,8 @@ class Migration(migrations.Migration):
             ),
         ),
         RunPython(subdivide_existing_zones, merge_pieces_back),
+        migrations.RunSQL(
+            sql=migrations.RunSQL.noop,
+            reverse_sql="SET LOCAL lock_timeout = '5s';",
+        ),
     ]

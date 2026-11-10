@@ -1,4 +1,5 @@
 import json
+import math
 from unittest.mock import Mock, patch
 
 from django.conf import settings
@@ -16,6 +17,23 @@ from api.partner_fields.registry import ZONE_SETS_SWITCH
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
 FAR = [[[20, 20], [20, 30], [30, 30], [30, 20], [20, 20]]]
+
+
+def ring(center_x, center_y, radius, vertices):
+    """A closed ring approximating a circle with the given vertex count."""
+    coords = [
+        [
+            center_x + radius * math.cos(2 * math.pi * i / vertices),
+            center_y + radius * math.sin(2 * math.pi * i / vertices),
+        ]
+        for i in range(vertices)
+    ]
+    return coords + [coords[0]]
+
+
+# A single feature well over the vertex budget, stored as several
+# pieces (see api.helpers.zone_subdivision).
+DISC = [ring(50, 50, 20, 600)]
 
 
 def feature(coordinates, properties):
@@ -415,10 +433,34 @@ class ZoneSetAdminSaveTest(TestCase):
         with self.assertNumQueries(2):
             summary = self.model_admin.zone_summary(zone_set)
 
-        self.assertIn('3 zone(s)', summary)
+        self.assertIn('3 zone(s) stored as 3 piece(s)', summary)
         self.assertIn('High, Low', summary)
         self.assertEqual(
             self.model_admin.zone_summary(ZoneSet()), '(no zones saved yet)'
+        )
+
+    def test_counts_are_of_features_not_pieces(self):
+        """A feature stored as several pieces is one zone in the list
+        column and the summary; the summary also says how many pieces
+        the set is stored as."""
+        zone_set = self._save(
+            BASE_DATA,
+            files={'geojson_file': upload(
+                feature(DISC, {'bws_label': 'High'}),
+                feature(LEFT, {'bws_label': 'Low'}),
+            )},
+        )
+        pieces = zone_set.zones.count()
+        self.assertGreater(pieces, 2)
+
+        annotated = self.model_admin.get_queryset(self.request).get(
+            pk=zone_set.pk
+        )
+        self.assertEqual(self.model_admin.zone_count(annotated), 2)
+        self.assertEqual(self.model_admin.zone_count(zone_set), 2)
+        self.assertIn(
+            f'2 zone(s) stored as {pieces} piece(s)',
+            self.model_admin.zone_summary(zone_set),
         )
 
 

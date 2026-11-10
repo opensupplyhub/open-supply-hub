@@ -13,10 +13,14 @@ column see the same coverage and labels as before; only row ids change.
 */
 
 -- Django declares the zone_set foreign key DEFERRABLE INITIALLY
--- DEFERRED, so the inserts below would leave pending constraint
--- triggers and the ALTER TABLEs that run next in the same migration
--- transaction would fail with "pending trigger events". Check them
--- as they happen instead.
+-- DEFERRED, so the inserts below leave pending constraint triggers
+-- until commit. Nothing runs after this file in the forward
+-- migration, so that is harmless here; the checks are made as they
+-- happen anyway so this file behaves like its reverse (where ALTER
+-- TABLEs do follow and would fail with "pending trigger events") and
+-- so an operation appended after the RunPython later does not hit
+-- that error. Note this applies to every deferred constraint in the
+-- transaction, not only this table's.
 SET CONSTRAINTS ALL IMMEDIATE;
 
 CREATE TEMP TABLE zone_subdivide_sources ON COMMIT DROP AS

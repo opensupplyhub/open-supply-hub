@@ -16,12 +16,16 @@ is paid once here instead.
 
 `ST_Subdivide` tiles each feature into pieces of at most
 `ZONE_PIECE_MAX_VERTICES` vertices, cutting along axis-aligned lines.
-The pieces partition the feature exactly, so the covered area is the
-same; each piece carries the source feature's value and its position
-in the file, so `ZoneSet.resolve_zone` returns the same label as it did
-for the undivided feature and overlap precedence still follows file
-order. A point on a cut line is covered by two pieces of the same
-feature, which both carry the same value.
+The pieces partition the feature, so the covered area is the same;
+each piece carries the source feature's value and its position in the
+file, so `ZoneSet.resolve_zone` returns the same label as it did for
+the undivided feature and overlap precedence still follows file order.
+A point on a cut line is covered by two pieces of the same feature,
+which both carry the same value. The one caveat: where a cut line
+meets an edge of the feature that is not axis-aligned, the new vertex
+can sit a floating-point rounding off the original line, so a point
+lying exactly on such an edge can resolve differently from the
+undivided feature.
 """
 
 from django.contrib.gis.geos import GEOSGeometry
@@ -88,6 +92,20 @@ def subdivide_zone_records(zone_records, max_vertices=ZONE_PIECE_MAX_VERTICES):
             ],
         )
         rows = cursor.fetchall()
+    # Every feature must come back as at least one piece. ST_Subdivide
+    # drops empty and lower-dimensional parts, so a record it returns
+    # nothing for would otherwise vanish from the set without any
+    # error, and nothing in the admin would show which one.
+    returned = {feature_index for feature_index, _, _ in rows}
+    missing = [
+        index for index in range(len(zone_records)) if index not in returned
+    ]
+    if missing:
+        raise ValueError(
+            'ST_Subdivide returned no pieces for feature(s) at '
+            f'position(s) {missing}; the upload was refused rather '
+            'than saved without them.'
+        )
     pieces = []
     for feature_index, piece_index, ewkb in rows:
         record = zone_records[feature_index]
