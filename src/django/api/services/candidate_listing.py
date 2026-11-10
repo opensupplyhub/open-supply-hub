@@ -23,10 +23,13 @@ Whole-set annotation costs one location-index probe per candidate
 pay that on every page of a nearby-sorted list, the ordered OS IDs of such
 a request are kept in the ``candidate_lists`` cache (memcached, shared by
 every Django process) for ``CANDIDATE_LIST_ORDER_CACHE_SECONDS``, keyed
-by every filter except ``page`` / ``limit``. The rows of the requested
-page are always fetched live, so state and tally are current; only
-membership in a nearby-sorted, state-filtered set can lag by the cache
-window after a vote.
+by every filter except ``page`` / ``limit`` and by the settings the
+order depends on. The rows of the requested page are always fetched live
+and re-checked against the column filters, so state and tally are
+current and a row that stopped being a candidate (or left the filters)
+is dropped; only membership in a nearby-sorted, state-filtered set can
+lag by the cache window after a vote, and the ``count`` can include such
+a dropped row.
 
 Alternative kept in reserve (not built): store ``nearby_count``,
 ``nearest_m`` and the nearest facility's id per candidate in a small
@@ -196,16 +199,16 @@ def _ordering(sort):
     return (primary, 'id')
 
 
-def candidate_queryset(params):
+def _column_filtered(params):
     """
-    ``(queryset, ordered_by_nearby)``: the filtered, ordered queryset for
-    validated list ``params`` (the ``validated_data`` of
-    ``CandidatesListQueryParamSerializer``), not yet paged, and whether
-    it carries the whole-set nearby annotation (the expensive path whose
-    ordering ``list_candidates`` caches).
+    Live candidates narrowed by the filters that are plain columns (and
+    the bbox): everything in ``params`` except ``state``, which is derived
+    from votes, and ``has_nearby``, which needs the whole-set annotation.
+    Applied to the filtered set and again to the page rows, so a row that
+    left the set after its ordering was cached is dropped rather than
+    served (see ``list_candidates``).
     """
     queryset = Facility.including_candidates.filter(is_candidate=True)
-
     bbox = params.get('bbox')
     if bbox:
         queryset = queryset.filter(_bbox_filter(bbox))
@@ -217,6 +220,18 @@ def candidate_queryset(params):
         queryset = queryset.filter(country_code__in=params['country'])
     if params.get('source'):
         queryset = queryset.filter(source=params['source'])
+    return queryset
+
+
+def candidate_queryset(params):
+    """
+    ``(queryset, ordered_by_nearby)``: the filtered, ordered queryset for
+    validated list ``params`` (the ``validated_data`` of
+    ``CandidatesListQueryParamSerializer``), not yet paged, and whether
+    it carries the whole-set nearby annotation (the expensive path whose
+    ordering ``list_candidates`` caches).
+    """
+    queryset = _column_filtered(params)
     if params.get('state'):
         queryset = queryset.filter(_state_filter(params['state']))
 
@@ -246,12 +261,27 @@ ORDER_CACHE_ALIAS = 'candidate_lists'
 ORDER_CACHE_VERSION = 1
 
 
+# The settings the ordering depends on. memcached outlives a deploy, so a
+# changed radius or vote threshold must miss the entries computed under
+# the old value rather than serve them for the rest of the window.
+ORDER_CACHE_SETTINGS = (
+    'CANDIDATE_SUGGESTION_RADIUS_M',
+    'CANDIDATE_VOTE_THRESHOLD',
+    'CANDIDATE_CONFIRM_MARGIN',
+    'CANDIDATE_RETIRE_MARGIN',
+)
+
+
 def _order_cache_key(params):
     """The cache key of a request's ordered id list: every filter and the
-    sort, but not the page or its size."""
+    sort, but not the page or its size, plus the settings the order and
+    the state filter are computed under."""
     relevant = {
         key: value for key, value in sorted(params.items())
         if key not in ('page', 'limit') and value is not None
+    }
+    relevant['settings'] = {
+        name: getattr(settings, name) for name in ORDER_CACHE_SETTINGS
     }
     digest = hashlib.sha256(
         json.dumps(relevant, sort_keys=True, default=list).encode()
@@ -309,11 +339,15 @@ def list_candidates(params):
                 raise PageNotFound()
             page_ids = []
         total = paginator.count
-    rows = Facility.including_candidates.filter(id__in=page_ids)
+    # The cached ordering is trusted for order and count, not for
+    # membership: a row promoted out of candidacy or edited out of the
+    # column filters since the order was cached is dropped here.
+    rows = _column_filtered(params).filter(id__in=page_ids)
     rows = annotate_nearby_count_and_distance(rows)
     rows = annotate_nearest_facility(rows)
     by_id = {row.id: row for row in rows}
     # Re-apply the page order: the id__in fetch has none of its own.
-    # A candidate retired since the ordering was cached is simply absent.
+    # A candidate retired or filtered out since the ordering was cached
+    # is simply absent.
     ordered = [by_id[os_id] for os_id in page_ids if os_id in by_id]
     return ordered, total

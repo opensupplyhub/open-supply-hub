@@ -19,7 +19,10 @@ from api.models import (
     Source,
     User,
 )
-from api.services.candidate_listing import ORDER_CACHE_ALIAS
+from api.services.candidate_listing import (
+    ORDER_CACHE_ALIAS,
+    _order_cache_key,
+)
 from api.services.candidate_retirement import retire_candidate
 from api.services.candidate_validation import (
     CONFIRMED,
@@ -434,6 +437,36 @@ class CandidatesListEndpointTest(APITestCase):
         self.assertNotIn(self.c_mexico.id, props)
         self.assertEqual(4, response.data['count'])
 
+    def test_cached_order_does_not_serve_a_row_that_left_the_set(self):
+        self._get(sort='-nearby_count')
+        self._get(sort='-nearby_count', country='MX')
+
+        # Promoted out of candidacy, and moved out of a country filter.
+        Facility.including_candidates.filter(id=self.c_near_three.id).update(
+            is_candidate=False
+        )
+        Facility.including_candidates.filter(id=self.c_mexico.id).update(
+            country_code='US'
+        )
+
+        response = self._get(sort='-nearby_count')
+        self.assertNotIn(self.c_near_three.id, self._ids(response))
+        by_country = self._get(sort='-nearby_count', country='MX')
+        self.assertNotIn(self.c_mexico.id, self._ids(by_country))
+
+    def test_order_cache_key_changes_with_the_settings_it_depends_on(self):
+        params = {'sort': '-nearby_count', 'page': 1, 'limit': 50}
+        with override_settings(CANDIDATE_SUGGESTION_RADIUS_M=500):
+            before = _order_cache_key(params)
+        with override_settings(CANDIDATE_SUGGESTION_RADIUS_M=1000):
+            after = _order_cache_key(params)
+        with override_settings(CANDIDATE_VOTE_THRESHOLD=9):
+            threshold = _order_cache_key(params)
+
+        self.assertNotEqual(before, after)
+        self.assertNotEqual(before, threshold)
+        self.assertNotEqual(after, threshold)
+
     @override_settings(CANDIDATE_LIST_ORDER_CACHE_SECONDS=0)
     def test_order_cache_can_be_disabled(self):
         self._get(sort='-nearby_count')
@@ -472,8 +505,9 @@ class CandidatesListEndpointTest(APITestCase):
         )
 
     def test_filter_by_bbox_is_not_capped_in_list_mode(self):
-        # 6 degrees wide would be refused by the map mode.
-        response = self._get(bbox='-1,-1,5,1', sort='confidence')
+        # 6 degrees wide would be refused by the map mode; ``page``
+        # selects the list.
+        response = self._get(bbox='-1,-1,5,1', sort='confidence', page=1)
 
         self.assertEqual(
             [self.c_near_zero.id, self.c_alone.id, self.c_near_three.id],
@@ -575,13 +609,24 @@ class CandidatesListEndpointTest(APITestCase):
                 )
                 self.assertTrue(response.data['errors'][0]['detail'])
 
-    def test_bbox_with_a_list_parameter_uses_list_mode(self):
-        # bbox plus any list parameter is the list, not the map.
+    def test_page_selects_list_mode_for_a_bbox_request(self):
+        # ``page`` is the discriminator: bbox with it is the list.
         response = self._get(bbox='-1,-1,1,1', page=1)
 
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertIn('count', response.data)
         self.assertEqual(2, response.data['count'])
+
+    def test_bbox_without_page_is_map_mode_whatever_else_it_carries(self):
+        # A map caller that adds an unrelated parameter keeps its
+        # contract: no envelope, and the list's sort is not applied.
+        response = self._get(bbox='-1,-1,1,1', sort='-confidence', _='1')
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertNotIn('count', response.data)
+        self.assertCountEqual(
+            [self.c_near_zero.id, self.c_alone.id], self._ids(response)
+        )
 
     def test_anonymous_and_authenticated_see_the_same_list(self):
         anonymous = self._get()
