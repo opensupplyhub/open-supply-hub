@@ -32,9 +32,12 @@ const INITIAL = Object.freeze({
 });
 
 /**
- * `enabled` false (anonymous or session still unknown) never sends a
- * request: the page is login-gated and must not leak data to a logged-out
- * visitor.
+ * `enabled` false (anonymous or session still unknown) sends no request.
+ * That is the page's UX gate, not access control: the pilot switch is
+ * the gate, and the API's plain list answers anonymous callers (only its
+ * nearby sorts and filters need a login). A list fetched for a logged-out
+ * visitor would be one they can neither vote on nor sort by nearby, so
+ * the page asks them to log in instead.
  */
 export const useCandidateList = (query, { enabled = true } = {}) => {
     const [state, setState] = useState(INITIAL);

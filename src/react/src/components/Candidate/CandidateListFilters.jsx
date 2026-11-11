@@ -14,7 +14,10 @@ import {
     CANDIDATE_STATES,
     CANDIDATE_STATE_LABELS,
 } from '../../util/candidateCopy';
-import { DEFAULT_CANDIDATE_LIST_QUERY } from '../../util/candidates';
+import {
+    DEFAULT_CANDIDATE_LIST_QUERY,
+    normalizeCountryCodes,
+} from '../../util/candidates';
 import { candidateListFiltersStyles } from './styles';
 
 const STATE_ORDER = [
@@ -150,9 +153,20 @@ const CandidateListFilters = ({ classes, query, onChange }) => {
                             'data-testid': 'candidate-filter-confidence-min',
                         }}
                         value={toPercentText(query.confidenceMin)}
-                        onCommit={text =>
-                            onChange({ confidenceMin: fromPercentText(text) })
-                        }
+                        onCommit={text => {
+                            const next = fromPercentText(text);
+                            // An inverted range is a 400 from the API;
+                            // the value is dropped and the field re-reads
+                            // the one still applied.
+                            if (
+                                next !== null &&
+                                typeof query.confidenceMax === 'number' &&
+                                next > query.confidenceMax
+                            ) {
+                                return;
+                            }
+                            onChange({ confidenceMin: next });
+                        }}
                     />
                     <CommittedTextField
                         className={classes.rangeField}
@@ -164,9 +178,17 @@ const CandidateListFilters = ({ classes, query, onChange }) => {
                             'data-testid': 'candidate-filter-confidence-max',
                         }}
                         value={toPercentText(query.confidenceMax)}
-                        onCommit={text =>
-                            onChange({ confidenceMax: fromPercentText(text) })
-                        }
+                        onCommit={text => {
+                            const next = fromPercentText(text);
+                            if (
+                                next !== null &&
+                                typeof query.confidenceMin === 'number' &&
+                                next < query.confidenceMin
+                            ) {
+                                return;
+                            }
+                            onChange({ confidenceMax: next });
+                        }}
                     />
                 </div>
             </div>
@@ -206,13 +228,7 @@ const CandidateListFilters = ({ classes, query, onChange }) => {
                     inputProps={{ 'data-testid': 'candidate-filter-country' }}
                     value={query.country}
                     onCommit={text =>
-                        onChange({
-                            country: text
-                                .split(',')
-                                .map(part => part.trim().toUpperCase())
-                                .filter(Boolean)
-                                .join(','),
-                        })
+                        onChange({ country: normalizeCountryCodes(text) })
                     }
                 />
             </div>

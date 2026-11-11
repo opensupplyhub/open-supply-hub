@@ -239,6 +239,25 @@ describe('CandidateReviewPage', () => {
         fireEvent.change(country, { target: { value: 'us,mx' } });
         fireEvent.blur(country);
         await waitFor(() => expect(country.value).toBe('US,MX'));
+        // A three-letter code is not a filter the API accepts; it is
+        // dropped (clearing the filter) rather than sent as a 400.
+        fireEvent.change(country, { target: { value: 'USA' } });
+        fireEvent.blur(country);
+        await waitFor(() =>
+            expect(lastListRequest()).not.toContain('country='),
+        );
+        expect(country.value).toBe('');
+
+        // A maximum below the applied minimum (25) is an inverted range
+        // the API refuses; it is dropped and the field re-reads the
+        // applied value.
+        const max = screen.getByTestId('candidate-filter-confidence-max');
+        const requestsBeforeMax = apiRequest.get.mock.calls.length;
+        fireEvent.change(max, { target: { value: '10' } });
+        fireEvent.blur(max);
+        await waitFor(() => expect(max.value).toBe(''));
+        expect(apiRequest.get.mock.calls.length).toBe(requestsBeforeMax);
+        expect(lastListRequest()).not.toContain('confidence_max');
 
         fireEvent.click(screen.getByTestId('candidate-filter-reset'));
         await waitFor(() =>

@@ -130,12 +130,13 @@ const CandidateListMap = ({
             if (!map || !start || !end) return;
             const startPoint = map.latLngToContainerPoint(start);
             const endPoint = map.latLngToContainerPoint(end);
-            if (
-                Math.abs(startPoint.x - endPoint.x) < MIN_DRAG_PX ||
-                Math.abs(startPoint.y - endPoint.y) < MIN_DRAG_PX
-            ) {
-                return;
-            }
+            const dx = Math.abs(startPoint.x - endPoint.x);
+            const dy = Math.abs(startPoint.y - endPoint.y);
+            // A click is short on both axes. A drag long on one axis and
+            // short on the other is still an area (a thin strip), unless
+            // it has no extent at all, which the API refuses as a box.
+            if (dx < MIN_DRAG_PX && dy < MIN_DRAG_PX) return;
+            if (start.lat === end.lat || start.lng === end.lng) return;
             onBboxChange(formatBbox(L.latLngBounds(start, end)));
         },
         [onBboxChange],

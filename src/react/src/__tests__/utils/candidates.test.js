@@ -15,6 +15,7 @@ import {
     makeCandidatesListURL,
     normalizeCandidateFeatureProperties,
     normalizeCandidateListFeature,
+    normalizeCountryCodes,
     normalizeValidation,
     shouldFetchCandidates,
 } from '../../util/candidates';
@@ -55,6 +56,25 @@ describe('candidates util', () => {
             expect(makeCandidateVotesURL('US2026ABC')).toBe(
                 '/api/v1/production-locations/US2026ABC/candidate-votes/',
             );
+        });
+    });
+
+    describe('normalizeCountryCodes', () => {
+        it('keeps two-letter codes, upper-cased, de-duplicated, in order', () => {
+            expect(normalizeCountryCodes(' us, mx ,us')).toBe('US,MX');
+        });
+
+        it('drops parts that are not two letters rather than sending them', () => {
+            expect(normalizeCountryCodes('USA')).toBe('');
+            expect(normalizeCountryCodes('U.S., vn, 12')).toBe('VN');
+            expect(normalizeCountryCodes('')).toBe('');
+            expect(normalizeCountryCodes(null)).toBe('');
+        });
+
+        it('is applied to a deep link too', () => {
+            expect(
+                candidateListQueryFromSearch('?country=USA,us,mx').country,
+            ).toBe('US,MX');
         });
     });
 

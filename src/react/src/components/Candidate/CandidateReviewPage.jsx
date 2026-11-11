@@ -98,6 +98,9 @@ export const CandidateReviewPage = ({
                 ...changes,
                 page: resetPage ? 1 : changes.page || query.page,
             };
+            // `replace`, not `push`: a filter or page step adds no history
+            // entry, so Back from a candidate page returns to the list in
+            // its current state rather than walking through every change.
             history.replace({
                 pathname: location.pathname,
                 search: candidateListQueryToSearch(next),

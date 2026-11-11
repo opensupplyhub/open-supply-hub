@@ -95,6 +95,20 @@ const isBboxString = value =>
  * `?page=2&sort=-confidence&state=unverified,disputed` -> query object.
  * Anything malformed falls back to the default for that key.
  */
+/**
+ * Country text -> comma-joined ISO alpha-2 codes. Parts that are not two
+ * letters (`USA`, `U.S.`) are dropped, the way an unparseable confidence
+ * is, so what the user typed never reaches the API as a 400 the page
+ * cannot recover from.
+ */
+export const normalizeCountryCodes = text =>
+    (text || '')
+        .split(',')
+        .map(part => part.trim().toUpperCase())
+        .filter(part => /^[A-Z]{2}$/.test(part))
+        .filter((part, index, parts) => parts.indexOf(part) === index)
+        .join(',');
+
 export const candidateListQueryFromSearch = search => {
     const params = new URLSearchParams(search || '');
     const page = parseInt(params.get('page'), 10);
@@ -118,7 +132,7 @@ export const candidateListQueryFromSearch = search => {
         confidenceMin: parseConfidence(params.get('confidence_min')),
         confidenceMax: parseConfidence(params.get('confidence_max')),
         hasNearby,
-        country: (params.get('country') || '').toUpperCase(),
+        country: normalizeCountryCodes(params.get('country')),
         bbox: isBboxString(bbox) ? bbox : null,
     };
 };

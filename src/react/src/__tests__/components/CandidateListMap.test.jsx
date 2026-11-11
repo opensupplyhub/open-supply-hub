@@ -173,6 +173,27 @@ describe('CandidateListMap', () => {
         expect(onBboxChange).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps a drag that is long on one axis and short on the other', () => {
+        const { onBboxChange } = renderMap();
+        fireEvent.click(screen.getByTestId('candidate-map-draw'));
+        act(() => {
+            mockMap.fire('mousedown', { lat: 10, lng: 20 });
+            // 500 px wide, 5 px tall: a thin strip, not a click.
+            mockMap.fire('mouseup', { lat: 10.05, lng: 25 });
+        });
+        expect(onBboxChange).toHaveBeenCalledWith('20,10,25,10.05');
+    });
+
+    it('sets no area for a drag with no extent on one axis', () => {
+        const { onBboxChange } = renderMap();
+        fireEvent.click(screen.getByTestId('candidate-map-draw'));
+        act(() => {
+            mockMap.fire('mousedown', { lat: 10, lng: 20 });
+            mockMap.fire('mouseup', { lat: 10, lng: 25 });
+        });
+        expect(onBboxChange).not.toHaveBeenCalled();
+    });
+
     it('treats a short drag as a click and sets no area', () => {
         const { onBboxChange } = renderMap();
         fireEvent.click(screen.getByTestId('candidate-map-draw'));
