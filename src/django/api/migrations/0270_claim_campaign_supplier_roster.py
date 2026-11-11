@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0267_create_claim_campaign'),
+        ('api', '0269_create_claim_campaign'),
         ('waffle', '0004_update_everyone_nullbooleanfield'),
     ]
 
