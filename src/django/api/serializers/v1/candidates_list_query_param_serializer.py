@@ -49,6 +49,7 @@ LIST_MODE_PARAM = 'page'
 
 
 def is_legacy_bbox_request(query_params):
+    """Whether the request is the OSDEV-3249 map call (see above)."""
     return 'bbox' in query_params and LIST_MODE_PARAM not in query_params
 
 
@@ -59,10 +60,12 @@ class CommaSeparatedChoiceField(CharField):
     '''
 
     def __init__(self, choices, **kwargs):
+        """``choices``: the accepted values, in the order errors list them."""
         self.choices = tuple(choices)
         super().__init__(**kwargs)
 
     def to_internal_value(self, data):
+        """Split, strip, de-duplicate and check each part against choices."""
         raw = super().to_internal_value(data)
         values = []
         for part in raw.split(','):
@@ -124,12 +127,15 @@ class CandidatesListQueryParamSerializer(Serializer):
     has_nearby = BooleanField(required=False, allow_null=True, default=None)
 
     def validate_bbox(self, value):
+        """The map mode's bbox format, without its size cap."""
         return parse_bbox(value, max_side_degrees=None)
 
     def validate_limit(self, value):
+        """Clamp to ``MAX_PAGE_SIZE`` rather than reject, like the map mode."""
         return min(value, MAX_PAGE_SIZE)
 
     def validate_country(self, value):
+        """Comma-separated alpha-2 codes, upper-cased and de-duplicated."""
         codes = []
         for part in value.split(','):
             part = part.strip().upper()
@@ -150,6 +156,7 @@ class CandidatesListQueryParamSerializer(Serializer):
         return codes
 
     def validate(self, attrs):
+        """A confidence range must not be inverted."""
         low = attrs.get('confidence_min')
         high = attrs.get('confidence_max')
         if low is not None and high is not None and low > high:

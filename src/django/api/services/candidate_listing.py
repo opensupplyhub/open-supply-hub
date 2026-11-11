@@ -29,7 +29,8 @@ and re-checked against the column filters, so state and tally are
 current and a row that stopped being a candidate (or left the filters)
 is dropped; only membership in a nearby-sorted, state-filtered set can
 lag by the cache window after a vote, and the ``count`` can include such
-a dropped row.
+a dropped row. memcached's default item cap is 1 MB, about 50k ids; a
+list that does not fit is not cached and a warning is logged.
 
 Alternative kept in reserve (not built): store ``nearby_count``,
 ``nearest_m`` and the nearest facility's id per candidate in a small
@@ -44,6 +45,7 @@ in the number of candidates) becomes a problem, around 50k candidates.
 """
 import hashlib
 import json
+import logging
 import math
 
 from django.conf import settings
@@ -68,17 +70,21 @@ from api.serializers.v1.candidates_list_query_param_serializer import (
     NEARBY_SORT_FIELDS,
 )
 from api.services import candidate_validation
+from api.services.candidate_matches import METRES_PER_DEGREE
 
-# A degree radius that covers CANDIDATE_SUGGESTION_RADIUS_M metres of
-# longitude anywhere up to this latitude; the exact metre filter trims the
-# overshoot. 75 degrees covers every populated place. A fixed value is
-# needed because the pre-filter radius cannot depend on the outer row's
-# latitude inside a correlated subquery without losing the index.
+logger = logging.getLogger(__name__)
+
+# ``candidate_matches._degree_radius`` widens the pre-filter by the
+# point's own latitude. That is not possible here: the radius cannot
+# depend on the outer row's latitude inside a correlated subquery without
+# losing the index, so it is fixed at the widening for this latitude.
+# 75 degrees covers every populated place; above it the list can report
+# fewer nearby facilities than the detail endpoint's suggested matches.
 PREFILTER_MAX_LATITUDE = 75.0
-METRES_PER_DEGREE = 111_320.0
 
 
-def _degree_radius(radius_m):
+def _prefilter_degree_radius(radius_m):
+    """``radius_m`` metres of longitude as degrees at the fixed latitude."""
     return (
         radius_m / METRES_PER_DEGREE
         / math.cos(math.radians(PREFILTER_MAX_LATITUDE))
@@ -111,12 +117,15 @@ def _nearby_facilities(radius_m):
     candidates, so a candidate never counts another candidate.
     """
     return Facility.objects.filter(
-        location__dwithin=(_outer_location(), _degree_radius(radius_m)),
+        location__dwithin=(
+            _outer_location(), _prefilter_degree_radius(radius_m)
+        ),
         location__distance_lte=(_outer_location(), D(m=radius_m)),
     )
 
 
 def _nearest(radius_m):
+    """The nearby facilities, closest first, with ``distance`` annotated."""
     return (
         _nearby_facilities(radius_m)
         .annotate(distance=Distance('location', _outer_location()))
@@ -125,6 +134,10 @@ def _nearest(radius_m):
 
 
 def annotate_nearby_count_and_distance(queryset, radius_m=None):
+    """
+    Annotate each candidate with ``nearby_count`` and ``nearest_m``: two
+    correlated subqueries per row, each answered by the location index.
+    """
     if radius_m is None:
         radius_m = settings.CANDIDATE_SUGGESTION_RADIUS_M
     return queryset.annotate(
@@ -139,6 +152,10 @@ def annotate_nearby_count_and_distance(queryset, radius_m=None):
 
 
 def annotate_nearest_facility(queryset, radius_m=None):
+    """
+    Annotate ``nearest_os_id`` and ``nearest_name``; page-level only, as
+    these are two more probes per row and only the page needs them.
+    """
     if radius_m is None:
         radius_m = settings.CANDIDATE_SUGGESTION_RADIUS_M
     return queryset.annotate(
@@ -148,6 +165,11 @@ def annotate_nearest_facility(queryset, radius_m=None):
 
 
 def _bbox_filter(bbox):
+    """
+    Candidates whose polygon, or point when there is no polygon,
+    intersects the ``(min_lng, min_lat, max_lng, max_lat)`` box; the
+    map mode's rule.
+    """
     envelope = Polygon.from_bbox(bbox)
     envelope.srid = 4326
     return (
@@ -185,6 +207,7 @@ def _state_filter(states):
 
 
 def _ordering(sort):
+    """``order_by`` arguments for a validated ``sort`` value."""
     descending = sort.startswith('-')
     field = sort[1:] if descending else sort
     if field == 'id':
@@ -223,6 +246,21 @@ def _column_filtered(params):
     return queryset
 
 
+def needs_whole_set_nearby(params):
+    """
+    Whether validated list ``params`` sort or filter on the nearby
+    figures, which means annotating the whole filtered set (one
+    location-index probe per candidate, ~1.9 s on production) before the
+    page can be cut. The view requires a login for these requests: the
+    order cache only helps an identical parameter set, so an anonymous
+    caller varying one filter per request would run the full query every
+    time, and at the 100/minute anonymous burst rate that is about three
+    database-seconds per second from one address.
+    """
+    sort = (params.get('sort') or 'id').lstrip('-')
+    return sort in NEARBY_SORT_FIELDS or params.get('has_nearby') is not None
+
+
 def candidate_queryset(params):
     """
     ``(queryset, ordered_by_nearby)``: the filtered, ordered queryset for
@@ -236,11 +274,8 @@ def candidate_queryset(params):
         queryset = queryset.filter(_state_filter(params['state']))
 
     sort = params.get('sort') or 'id'
-    sort_field = sort.lstrip('-')
     has_nearby = params.get('has_nearby')
-    needs_nearby_on_set = (
-        sort_field in NEARBY_SORT_FIELDS or has_nearby is not None
-    )
+    needs_nearby_on_set = needs_whole_set_nearby(params)
     if needs_nearby_on_set:
         queryset = annotate_nearby_count_and_distance(queryset)
         if has_nearby is True:
@@ -303,11 +338,34 @@ def _ordered_ids_cached(params, queryset):
     ids = cache.get(key)
     if ids is None:
         ids = list(queryset.values_list('id', flat=True))
-        cache.set(key, ids, ttl)
+        _store_order(cache, key, ids, ttl)
     return ids
 
 
+def _store_order(cache, key, ids, ttl):
+    """
+    Cache the ordered id list and check it landed. memcached stores one
+    item of at most 1 MB by default (about 50k pickled ids); over that it
+    refuses the set and every page of the request silently pays the
+    whole-set query again. That failure is logged so it shows up as a
+    log line rather than as an unexplained latency regression.
+    """
+    try:
+        cache.set(key, ids, ttl)
+        stored = cache.get(key) is not None
+    except Exception:  # the backend refused the item (too large)
+        stored = False
+    if not stored:
+        logger.warning(
+            'Candidate list order %s (%d ids) was not cached; every page '
+            'of this request will run the whole-set nearby query.',
+            key,
+            len(ids),
+        )
+
+
 def _page_slice(ids, page, limit):
+    """``(page ids, total)`` from a cached ordering; 404 past the end."""
     start = (page - 1) * limit
     if start >= len(ids) and page > 1:
         raise PageNotFound()
