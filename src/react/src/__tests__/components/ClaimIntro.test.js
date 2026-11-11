@@ -1,18 +1,32 @@
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { fireEvent } from '@testing-library/react';
+import { fireEvent, waitFor } from '@testing-library/react';
 import history from '../../util/history';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimIntro from '../../components/InitialClaimFlow/ClaimIntro/ClaimIntro';
 import { facilityDetailsRoute, claimDetailsRoute } from '../../util/constants';
+import { isActiveClaimCampaign } from '../../util/claimCampaign';
 
 beforeAll(() => {
     window.scrollTo = jest.fn();
+    // The test environment is node; setupTests.js provides a JSDOM
+    // window, whose localStorage the campaign code storage uses.
+    global.localStorage = window.localStorage;
+});
+
+afterAll(() => {
+    delete global.localStorage;
 });
 
 jest.mock('../../components/InitialClaimFlow/ClaimIntro/ClaimInfoSection', () => ({ children }) => (
     <div data-testid="claim-info-section">{children}</div>
 ));
+
+// The banner waits for the backend to confirm the campaign is active.
+jest.mock('../../util/claimCampaign', () => ({
+    ...jest.requireActual('../../util/claimCampaign'),
+    isActiveClaimCampaign: jest.fn(),
+}));
 
 describe('ClaimIntro component', () => {
     const mockOsID = 'TEST123';
@@ -181,47 +195,172 @@ describe('ClaimIntro component', () => {
             expect(state.claimForm.completedSteps).toEqual([]);
         });
 
-        test('stores the campaign code and shows the banner when the flag is on', () => {
-            history.push(`/claim/${mockOsID}?campaign=EXAMPLE-FRESH-26`);
-            const preloadedState = {
-                auth: { user: { user: { isAnon: false } } },
-                featureFlags: {
-                    fetching: false,
-                    flags: { claim_campaigns: true },
-                },
-            };
+        const campaignState = (flagOn = true, isAnon = false) => ({
+            auth: { user: { user: { isAnon } } },
+            featureFlags: {
+                fetching: false,
+                flags: { claim_campaigns: flagOn },
+            },
+        });
 
-            const { reduxStore, getByText } = renderWithProviders(
+        const renderCampaignIntro = state =>
+            renderWithProviders(
                 <Router history={history}>
                     <ClaimIntro match={mockMatch} />
                 </Router>,
-                { preloadedState }
+                { preloadedState: state }
             );
 
+        const storedCampaign = () =>
+            JSON.parse(localStorage.getItem(`claim-campaign-${mockOsID}`));
+
+        beforeEach(() => {
+            localStorage.clear();
+            isActiveClaimCampaign.mockReset();
+        });
+
+        test('stores an active campaign code and shows the banner', async () => {
+            isActiveClaimCampaign.mockResolvedValue(true);
+            history.push(`/claim/${mockOsID}?campaign=example-fresh-26`);
+
+            const { reduxStore, findByText, getByText } = renderCampaignIntro(
+                campaignState()
+            );
+
+            expect(await findByText(/part of a claims campaign/)).toBeInTheDocument();
+            expect(getByText('EXAMPLE-FRESH-26')).toBeInTheDocument();
+            expect(isActiveClaimCampaign).toHaveBeenCalledWith('EXAMPLE-FRESH-26');
             expect(reduxStore.getState().claimForm.formData.campaign).toBe(
                 'EXAMPLE-FRESH-26'
             );
-            expect(getByText(/part of a claims campaign/)).toBeInTheDocument();
-            expect(getByText('EXAMPLE-FRESH-26')).toBeInTheDocument();
+            expect(storedCampaign().code).toBe('EXAMPLE-FRESH-26');
+        });
+
+        test('hides the banner and forgets a code that is not an active campaign', async () => {
+            isActiveClaimCampaign.mockResolvedValue(false);
+            history.push(`/claim/${mockOsID}?campaign=CLOSED-26`);
+
+            const { reduxStore, queryByText } = renderCampaignIntro(
+                campaignState()
+            );
+
+            await waitFor(() => {
+                expect(isActiveClaimCampaign).toHaveBeenCalled();
+                expect(storedCampaign()).toBeNull();
+            });
+            expect(queryByText(/part of a claims campaign/)).not.toBeInTheDocument();
+            expect(reduxStore.getState().claimForm.formData.campaign).toBe('');
+        });
+
+        test('keeps the code but shows no banner when the lookup fails', async () => {
+            isActiveClaimCampaign.mockResolvedValue(null);
+            history.push(`/claim/${mockOsID}?campaign=EXAMPLE-FRESH-26`);
+
+            const { queryByText } = renderCampaignIntro(campaignState());
+
+            await waitFor(() => {
+                expect(isActiveClaimCampaign).toHaveBeenCalled();
+            });
+            expect(queryByText(/part of a claims campaign/)).not.toBeInTheDocument();
+            expect(storedCampaign().code).toBe('EXAMPLE-FRESH-26');
+        });
+
+        test('drops a malformed code without asking the backend', () => {
+            localStorage.setItem(
+                `claim-campaign-${mockOsID}`,
+                JSON.stringify({ code: 'OLD-26', savedAt: Date.now() })
+            );
+            history.push(`/claim/${mockOsID}?campaign=${'x'.repeat(60)}`);
+
+            const { reduxStore } = renderCampaignIntro(campaignState());
+
+            expect(isActiveClaimCampaign).not.toHaveBeenCalled();
+            expect(storedCampaign()).toBeNull();
+            expect(reduxStore.getState().claimForm.formData.campaign).toBe('');
+        });
+
+        test('uses the remembered code when the page opens without the parameter', async () => {
+            // e.g. after logging in, or Back from the claim form.
+            isActiveClaimCampaign.mockResolvedValue(true);
+            localStorage.setItem(
+                `claim-campaign-${mockOsID}`,
+                JSON.stringify({ code: 'EXAMPLE-FRESH-26', savedAt: Date.now() })
+            );
+            history.push(`/claim/${mockOsID}`);
+
+            const { findByText } = renderCampaignIntro(campaignState());
+
+            expect(await findByText(/part of a claims campaign/)).toBeInTheDocument();
+        });
+
+        test('never shows a code from an earlier visit for an invalid link', async () => {
+            // The form still holds a code confirmed on an earlier visit.
+            isActiveClaimCampaign.mockResolvedValue(false);
+            history.push(`/claim/${mockOsID}?campaign=NOT-A-CAMPAIGN`);
+            const state = {
+                ...campaignState(),
+                claimForm: {
+                    osIdToClaim: mockOsID,
+                    formData: { campaign: 'EXAMPLE-FRESH-26' },
+                },
+            };
+
+            const { reduxStore, queryByText } = renderCampaignIntro(state);
+
+            // Not while the new code is being checked...
+            expect(queryByText(/part of a claims campaign/)).not.toBeInTheDocument();
+            expect(queryByText('EXAMPLE-FRESH-26')).not.toBeInTheDocument();
+
+            // ...nor after it turns out not to be a campaign.
+            await waitFor(() => {
+                expect(reduxStore.getState().claimForm.formData.campaign).toBe('');
+            });
+            expect(queryByText(/part of a claims campaign/)).not.toBeInTheDocument();
+        });
+
+        test('shows no banner while the code is still being checked', () => {
+            isActiveClaimCampaign.mockReturnValue(new Promise(() => {}));
+            history.push(`/claim/${mockOsID}?campaign=EXAMPLE-FRESH-26`);
+
+            const { queryByText } = renderCampaignIntro(campaignState());
+
+            expect(queryByText(/part of a claims campaign/)).not.toBeInTheDocument();
+        });
+
+        test('clears a stale form code when nothing is remembered', () => {
+            history.push(`/claim/${mockOsID}`);
+            const state = {
+                ...campaignState(),
+                claimForm: {
+                    osIdToClaim: mockOsID,
+                    formData: { campaign: 'STALE-26' },
+                },
+            };
+
+            const { reduxStore, queryByText } = renderCampaignIntro(state);
+
+            expect(isActiveClaimCampaign).not.toHaveBeenCalled();
+            expect(reduxStore.getState().claimForm.formData.campaign).toBe('');
+            expect(queryByText(/part of a claims campaign/)).not.toBeInTheDocument();
+        });
+
+        test('remembers the code before sign-in without looking it up', () => {
+            history.push(`/claim/${mockOsID}?campaign=EXAMPLE-FRESH-26`);
+
+            renderCampaignIntro(campaignState(true, true));
+
+            expect(isActiveClaimCampaign).not.toHaveBeenCalled();
+            expect(storedCampaign().code).toBe('EXAMPLE-FRESH-26');
         });
 
         test('ignores the campaign code when the flag is off', () => {
             history.push(`/claim/${mockOsID}?campaign=EXAMPLE-FRESH-26`);
-            const preloadedState = {
-                auth: { user: { user: { isAnon: false } } },
-                featureFlags: {
-                    fetching: false,
-                    flags: { claim_campaigns: false },
-                },
-            };
 
-            const { reduxStore, queryByText } = renderWithProviders(
-                <Router history={history}>
-                    <ClaimIntro match={mockMatch} />
-                </Router>,
-                { preloadedState }
+            const { reduxStore, queryByText } = renderCampaignIntro(
+                campaignState(false)
             );
 
+            expect(isActiveClaimCampaign).not.toHaveBeenCalled();
             expect(reduxStore.getState().claimForm.formData.campaign).toBe('');
             expect(
                 queryByText(/part of a claims campaign/)

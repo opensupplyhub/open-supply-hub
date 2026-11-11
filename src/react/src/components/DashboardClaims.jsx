@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { connect } from 'react-redux';
 import { arrayOf, bool, func, shape, string } from 'prop-types';
 import map from 'lodash/map';
@@ -41,7 +41,11 @@ import {
 import {
     makeDashboardClaimListLink,
     getDashboardClaimsListParamsFromQueryString,
+    convertFeatureFlagsObjectToListOfActiveFlags,
 } from '../util/util';
+import { CLAIM_CAMPAIGNS } from '../util/constants';
+
+const NO_CAMPAIGNS = Object.freeze([]);
 
 const dashboardClaimsStyles = () =>
     Object.freeze({
@@ -88,15 +92,17 @@ const DashboardClaims = ({
     countriesData,
     downloadClaims,
     downloadClaimsError,
+    campaignsEnabled,
 }) => {
-    const {
-        countries,
-        statuses,
-        campaigns,
-    } = getDashboardClaimsListParamsFromQueryString(search);
-    const [campaignFilter, setCampaignFilter] = useState(
-        campaigns.map(code => ({ value: code, label: code })),
+    // The URL is the single source of truth for every filter here, so
+    // back/forward navigation keeps the campaign select in step with it.
+    const { countries, statuses, campaigns } = useMemo(
+        () => getDashboardClaimsListParamsFromQueryString(search),
+        [search],
     );
+    // With the claim_campaigns switch off, a ?campaigns= param is kept in
+    // the URL but ignored: no campaign column, select or filtering.
+    const selectedCampaignCodes = campaignsEnabled ? campaigns : NO_CAMPAIGNS;
 
     useEffect(() => {
         fetchCountries();
@@ -148,7 +154,7 @@ const DashboardClaims = ({
             makeDashboardClaimListLink({
                 statuses: finalStatuses,
                 countries: finalCountries,
-                campaigns: map(campaignFilter, 'value'),
+                campaigns,
             }),
         );
     }, [countriesData]);
@@ -158,41 +164,53 @@ const DashboardClaims = ({
             makeDashboardClaimListLink({
                 countries: map(c, 'value'),
                 statuses: map(s, 'value'),
-                campaigns: map(campaignFilter, 'value'),
+                campaigns,
             }),
         );
     };
 
-    const onCampaignFilterUpdate = selected => {
-        const next = selected || [];
-        setCampaignFilter(next);
+    const onCampaignFilterUpdate = selected =>
         push(
             makeDashboardClaimListLink({
                 statuses,
                 countries,
-                campaigns: map(next, 'value'),
+                campaigns: map(selected || [], 'value'),
             }),
         );
-    };
-
-    if (error) {
-        return <Typography>{error}</Typography>;
-    }
 
     // The claims endpoint returns the full (unpaginated) result set for
     // the selected statuses/countries, so the campaign filter is applied
     // client-side rather than through the shared search filters store.
-    // The backend also supports ?campaigns= for API consumers.
-    const campaignCodes = uniq(
-        map(data || [], 'campaign_code').filter(Boolean),
+    // The backend also supports ?campaigns= for API consumers. The table
+    // gets the full list too: it sorts that one (and writes it back to the
+    // store), so sorting never drops the claims filtered out here.
+    const visibleData = useMemo(() => {
+        if (!data || selectedCampaignCodes.length === 0) {
+            return data;
+        }
+        const selected = new Set(selectedCampaignCodes);
+        return data.filter(claim => selected.has(claim.campaign_code));
+    }, [data, selectedCampaignCodes]);
+
+    // Offer every code in the loaded claims plus the selected ones, so a
+    // selection stays visible (and can be cleared) even when the current
+    // statuses/countries return no claim from that campaign.
+    const campaignOptions = useMemo(
+        () =>
+            uniq([
+                ...map(data || [], 'campaign_code').filter(Boolean),
+                ...selectedCampaignCodes,
+            ]).map(code => ({ value: code, label: code })),
+        [data, selectedCampaignCodes],
     );
-    const selectedCampaignCodes = map(campaignFilter, 'value');
-    const visibleData =
-        !data || selectedCampaignCodes.length === 0
-            ? data
-            : data.filter(claim =>
-                  selectedCampaignCodes.includes(claim.campaign_code),
-              );
+    const campaignSelectValue = useMemo(
+        () => selectedCampaignCodes.map(code => ({ value: code, label: code })),
+        [selectedCampaignCodes],
+    );
+
+    if (error) {
+        return <Typography>{error}</Typography>;
+    }
 
     const claimsCount = visibleData && visibleData.length;
 
@@ -212,16 +230,13 @@ const DashboardClaims = ({
                         isDisabled={fetching}
                     />
                     <CountryNameFilter isDisabled={fetching} />
-                    {campaignCodes.length > 0 && (
+                    {campaignsEnabled && campaignOptions.length > 0 && (
                         <div className="form__field">
                             <StyledSelect
                                 label="Campaign"
                                 name="CAMPAIGNS"
-                                options={campaignCodes.map(code => ({
-                                    value: code,
-                                    label: code,
-                                }))}
-                                value={campaignFilter}
+                                options={campaignOptions}
+                                value={campaignSelectValue}
                                 onChange={onCampaignFilterUpdate}
                                 isDisabled={fetching}
                             />
@@ -233,7 +248,9 @@ const DashboardClaims = ({
                 </div>
                 <DashboardClaimsListTable
                     fetching={fetching}
-                    data={visibleData}
+                    data={data}
+                    visibleData={visibleData}
+                    showCampaignColumn={campaignsEnabled}
                     handleSortClaims={sortClaims}
                     handleGetClaims={getClaims}
                     handleGetCountries={fetchCountries}
@@ -251,6 +268,7 @@ DashboardClaims.defaultProps = {
     error: null,
     countriesData: null,
     downloadClaimsError: null,
+    campaignsEnabled: false,
 };
 
 DashboardClaims.propTypes = {
@@ -273,6 +291,7 @@ DashboardClaims.propTypes = {
     clearCountry: func.isRequired,
     downloadClaims: func.isRequired,
     downloadClaimsError: arrayOf(string),
+    campaignsEnabled: bool,
 };
 
 function mapStateToProps({
@@ -281,6 +300,7 @@ function mapStateToProps({
         facilityClaimsDownloadStatus: { error: downloadClaimsError },
     },
     filters: { claimStatuses, countries: countriesData },
+    featureFlags: { flags },
 }) {
     return {
         data,
@@ -289,6 +309,9 @@ function mapStateToProps({
         claimStatuses,
         countriesData,
         downloadClaimsError,
+        campaignsEnabled: convertFeatureFlagsObjectToListOfActiveFlags(
+            flags,
+        ).includes(CLAIM_CAMPAIGNS),
     };
 }
 

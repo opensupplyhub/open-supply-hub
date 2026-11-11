@@ -461,6 +461,13 @@ export const newClaimCampaignStyles = theme =>
             fontSize: '14px',
             marginTop: '8px',
         }),
+        limitNote: Object.freeze({
+            backgroundColor: COLOURS.PURPLE_TINT,
+            borderRadius: '4px',
+            padding: '8px 12px',
+            margin: '8px 0',
+            fontSize: '14px',
+        }),
         createRow: Object.freeze({
             display: 'flex',
             alignItems: 'center',

@@ -5,9 +5,10 @@ import Typography from '@material-ui/core/Typography';
 
 import { claimCampaignBannerStyles } from './styles';
 
-// The campaign code only enters the claim form state when the
-// claim_campaigns feature flag is active (see ClaimIntro), so an empty
-// code is the single gate here.
+// ClaimIntro only passes a code the backend has just confirmed belongs to
+// an active campaign (with the claim_campaigns flag on), so an empty code
+// is the single gate here: an invalid, closed or unchecked code is never
+// shown as an invitation.
 const ClaimCampaignBanner = ({ classes, campaignCode }) => {
     if (!campaignCode) {
         return null;

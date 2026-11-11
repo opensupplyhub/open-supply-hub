@@ -428,6 +428,9 @@ class ClaimCampaignAdmin(admin.ModelAdmin):
     @admin.display(boolean=True, description='Brand has access')
     def has_access(self, campaign):
         from api.services.claim_campaign_service import ACCESS_FLAG
+        if campaign.contributor is None:
+            # Its brand was deleted; nobody can see it.
+            return False
         admin_user = campaign.contributor.admin
         return admin_user.is_superuser or admin_user.groups.filter(
             name=ACCESS_FLAG
@@ -444,10 +447,22 @@ class ClaimCampaignAdmin(admin.ModelAdmin):
     @admin.action(description='Reopen selected campaigns')
     def reopen_campaigns(self, request, queryset):
         from api.models.facility.claim_campaign import ClaimCampaign
+        # A campaign whose brand was deleted stays closed: nobody owns
+        # it, so it must not attribute new claims. Give it an owner first.
+        ownerless = queryset.filter(contributor__isnull=True).count()
         updated = queryset.exclude(
             status=ClaimCampaign.Status.ACTIVE
-        ).update(status=ClaimCampaign.Status.ACTIVE)
+        ).exclude(contributor__isnull=True).update(
+            status=ClaimCampaign.Status.ACTIVE
+        )
         self.message_user(request, f'Reopened {updated} campaign(s).')
+        if ownerless:
+            self.message_user(
+                request,
+                f'{ownerless} campaign(s) have no owner (their brand was '
+                'deleted) and stay closed. Choose an owner to reopen one.',
+                level=messages.WARNING,
+            )
 
     @admin.action(
         description='Give these brands campaign access (premium)'
@@ -456,7 +471,11 @@ class ClaimCampaignAdmin(admin.ModelAdmin):
         from django.contrib.auth.models import Group
         from api.services.claim_campaign_service import ACCESS_FLAG
         group, _ = Group.objects.get_or_create(name=ACCESS_FLAG)
-        users = {campaign.contributor.admin for campaign in queryset}
+        users = {
+            campaign.contributor.admin
+            for campaign in queryset.select_related('contributor__admin')
+            if campaign.contributor is not None
+        }
         for user in users:
             user.groups.add(group)
         self.message_user(
@@ -466,7 +485,7 @@ class ClaimCampaignAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        if not self.has_access(obj):
+        if obj.contributor is not None and not self.has_access(obj):
             self.message_user(
                 request,
                 f'{obj.contributor.name} can\'t see this campaign yet: '

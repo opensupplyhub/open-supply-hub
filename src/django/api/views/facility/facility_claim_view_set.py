@@ -270,7 +270,8 @@ class FacilityClaimViewSet(ModelViewSet):
         'facility',
         'contributor',
         'contributor__admin',
-        'status_change_by'
+        'status_change_by',
+        'campaign',
     ).all()
     serializer_class = FacilityClaimDashboardSerializer
     permission_classes = [IsSuperuser]

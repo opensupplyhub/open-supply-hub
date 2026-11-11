@@ -71,10 +71,10 @@ const mockAPI = () =>
         return Promise.resolve({ data: [] });
     });
 
-const renderAndChooseSearch = async () => {
+const renderAndChooseSearch = async (props = {}) => {
     const utils = renderWithProviders(
         <Router history={history}>
-            <NewClaimCampaign />
+            <NewClaimCampaign {...props} />
         </Router>,
         {
             preloadedState: {
@@ -227,3 +227,32 @@ test('three searches in a row add up into one campaign', async () => {
     expect(apiRequest.post.mock.calls[0][1].os_ids).toEqual(['A1', 'B1', 'C1']);
 });
 
+test('stops adding at the campaign supplier limit', async () => {
+    // Two results can be added; the campaign takes only one more.
+    apiRequest.get.mockReset();
+    apiRequest.post.mockReset();
+    apiRequest.get.mockImplementation(url => {
+        if (url.startsWith('/api/claim-campaigns/candidates/search/')) {
+            return Promise.resolve({
+                data: {
+                    ...searchResults,
+                    suppliers: searchResults.suppliers.slice(0, 2),
+                },
+            });
+        }
+        return Promise.resolve({ data: [] });
+    });
+    const utils = await renderAndChooseSearch({ maxSuppliers: 1 });
+    await searchFor(utils);
+
+    expect(
+        utils.getByText(/A campaign can invite up to 1 suppliers/),
+    ).toBeInTheDocument();
+    fireEvent.click(utils.getByText('Add 1 of 2 not yet claimed'));
+
+    expect(
+        await utils.findByText('Added to this campaign (1)'),
+    ).toBeInTheDocument();
+    // Full: nothing else can be added.
+    expect(utils.getByLabelText('Add Lotus Dye House')).toBeDisabled();
+});

@@ -1,7 +1,11 @@
 from django.db.models import Prefetch
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import (
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+)
 from rest_framework.mixins import ListModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -21,6 +25,7 @@ from api.services.claim_campaign_service import (
     API_SOURCE_ID,
     API_SOURCE_NAME,
     MAX_SEARCH_RESULTS,
+    SUPPLIER_FACILITY_FIELDS,
     campaign_permissions,
     close_campaign,
     count_list_facilities,
@@ -31,7 +36,9 @@ from api.services.claim_campaign_service import (
     get_contributor_list_sources,
     get_list_facilities,
     has_search_filter,
+    is_active_campaign_code,
     is_too_large,
+    normalize_campaign_code,
     search_campaign_candidates,
     serialize_suppliers,
     too_large_message,
@@ -47,7 +54,14 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
     Brands enabled for self-serve (the `claim_campaign_self_serve`
     waffle flag) can also list their candidate suppliers and create a
     campaign from one of their own lists.
+
+    `lookup` is the exception: any registered user (a supplier opening a
+    campaign claim link) may ask whether a code is an active campaign.
     """
+
+    NO_CONTRIBUTOR_MESSAGE = (
+        'The current user does not have an associated contributor.'
+    )
 
     serializer_class = ClaimCampaignSerializer
     permission_classes = (IsRegisteredAndConfirmed,)
@@ -59,19 +73,27 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
         # given campaign access (claim_campaign_access flag).
         if not switch_is_active('claim_campaigns'):
             raise NotFound()
+        if self.action == 'lookup':
+            # Claimants, not campaign owners: no access flag or
+            # contributor needed beyond the registered-user permission.
+            return
         if request.user.is_authenticated and not campaign_permissions(
             request.user
         )['access']:
             raise NotFound()
+        # Campaigns belong to a contributor; a user without one has
+        # nothing to list, create or close here.
+        if self.get_contributor() is None:
+            raise PermissionDenied(self.NO_CONTRIBUTOR_MESSAGE)
 
     def get_contributor(self):
         return getattr(self.request.user, 'contributor', None)
 
     def require_self_serve(self):
         contributor = self.get_contributor()
-        if contributor is None or not campaign_permissions(
-            self.request.user
-        )['self_serve']:
+        if contributor is None:
+            raise PermissionDenied(self.NO_CONTRIBUTOR_MESSAGE)
+        if not campaign_permissions(self.request.user)['self_serve']:
             raise NotFound()
         return contributor
 
@@ -85,9 +107,20 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
             .prefetch_related(
                 Prefetch(
                     'suppliers',
+                    # Only the fields a supplier row needs: a roster can
+                    # hold thousands of production locations.
                     queryset=ClaimCampaignSupplier.objects.select_related(
                         'facility'
-                    ).order_by('id'),
+                    )
+                    .only(
+                        'campaign',
+                        'facility',
+                        *(
+                            f'facility__{field}'
+                            for field in SUPPLIER_FACILITY_FIELDS
+                        ),
+                    )
+                    .order_by('id'),
                 )
             )
             .order_by('-created_at')
@@ -218,5 +251,25 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
                 'count': count,
                 'limit': MAX_SEARCH_RESULTS,
                 'suppliers': serialize_suppliers(facilities),
+            }
+        )
+
+    @action(detail=False, methods=['get'])
+    def lookup(self, request):
+        """
+        Whether `code` is an ACTIVE campaign, for the claim form's
+        campaign banner: `{"code": <normalized code>, "active": bool}`.
+        Says nothing else about the campaign (not its name or brand),
+        so a link can't reveal who invited the supplier. A code that
+        can't be a campaign code is simply not active.
+        """
+        raw_code = request.query_params.get('code', '')
+        if not raw_code.strip():
+            raise ValidationError({'code': 'This parameter is required.'})
+        code = normalize_campaign_code(raw_code)
+        return Response(
+            {
+                'code': code,
+                'active': is_active_campaign_code(code),
             }
         )

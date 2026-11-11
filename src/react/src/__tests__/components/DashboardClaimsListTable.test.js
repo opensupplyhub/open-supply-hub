@@ -155,7 +155,11 @@ describe('DashboardClaimsListTable component', () => {
         render(
             <Router history={history}>
                 <Route>
-                    <DashboardClaimsListTable data={data} handleSortClaims={handleSortClaimsMock} />
+                    <DashboardClaimsListTable
+                        data={data}
+                        handleSortClaims={handleSortClaimsMock}
+                        showCampaignColumn
+                    />
                 </Route>
             </Router>
         );
@@ -291,5 +295,51 @@ describe('DashboardClaimsListTable component', () => {
             expect(sortedData[0].claim_decision).toBe('2024-06-13T00:24:49.566204Z');
             expect(sortedData[sortedData.length - 1].claim_decision).toBe(null);
         });
+    });
+});
+
+describe('DashboardClaimsListTable with a narrowed view', () => {
+    const renderTable = props => {
+        const handleSortClaims = jest.fn();
+        render(
+            <Router history={history}>
+                <Route>
+                    <DashboardClaimsListTable
+                        data={data}
+                        handleSortClaims={handleSortClaims}
+                        {...props}
+                    />
+                </Route>
+            </Router>,
+        );
+        return handleSortClaims;
+    };
+
+    it('sorts the full list, not only the visible rows', async () => {
+        const visibleData = data.filter(
+            claim => claim.campaign_code === 'EXAMPLE-FRESH-26',
+        );
+        const handleSortClaims = renderTable({
+            visibleData,
+            showCampaignColumn: true,
+        });
+
+        act(() => {
+            fireEvent.click(screen.getByText('Claim ID'));
+        });
+
+        await waitFor(() => {
+            expect(handleSortClaims).toHaveBeenCalled();
+            expect(handleSortClaims.mock.calls[0][0]).toHaveLength(
+                data.length,
+            );
+        });
+    });
+
+    it('leaves out the campaign column when it is turned off', () => {
+        renderTable({});
+
+        expect(screen.queryByText('Campaign')).not.toBeInTheDocument();
+        expect(screen.queryByText('EXAMPLE-FRESH-26')).not.toBeInTheDocument();
     });
 });

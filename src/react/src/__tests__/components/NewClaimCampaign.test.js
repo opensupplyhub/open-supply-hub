@@ -441,3 +441,116 @@ test('the source wording covers API uploads as well as lists', async () => {
         getByText(/from a private list or private API uploads/),
     ).toBeInTheDocument();
 });
+
+describe('NewClaimCampaign supplier limit', () => {
+    // A small limit stands in for the real 5,000.
+    const bigList = {
+        id: 9,
+        name: 'All suppliers',
+        kind: 'list',
+        is_public: true,
+        pending: false,
+        supplier_count: 5,
+    };
+    const bigSuppliers = [1, 2, 3, 4, 5].map(n => ({
+        os_id: `OS${n}`,
+        name: `Supplier ${n}`,
+        country_code: 'BD',
+        claim_status: 'unclaimed',
+    }));
+
+    beforeEach(() => {
+        apiRequest.get.mockReset();
+        apiRequest.post.mockReset();
+        apiRequest.get.mockImplementation(url =>
+            Promise.resolve({
+                data: url.includes('list=')
+                    ? { id: 9, suppliers: bigSuppliers }
+                    : [bigList],
+            }),
+        );
+    });
+
+    const renderWithLimit = () =>
+        renderWithProviders(
+            <Router history={history}>
+                <NewClaimCampaign maxSuppliers={2} />
+            </Router>,
+            {
+                preloadedState: {
+                    auth: { user: { user: { isAnon: false } } },
+                },
+            },
+        );
+
+    test('opens a larger list with an allowed selection and explains the limit', async () => {
+        const { findByText, getByText, getByLabelText } = renderWithLimit();
+
+        expect(
+            await findByText('2 suppliers will get a claim link'),
+        ).toBeInTheDocument();
+        expect(getByLabelText('Select Supplier 1')).toBeChecked();
+        expect(getByLabelText('Select Supplier 2')).toBeChecked();
+        expect(getByLabelText('Select Supplier 3')).not.toBeChecked();
+        // At the limit, more can't be ticked by hand.
+        expect(getByLabelText('Select Supplier 3')).toBeDisabled();
+
+        expect(
+            getByText(/A campaign can invite up to 2 suppliers, and this list has 5/),
+        ).toBeInTheDocument();
+        expect(getByText(/the most one campaign can invite/)).toBeInTheDocument();
+        expect(getByText('Select first 2 not started')).toBeInTheDocument();
+        expect(getByText('Create campaign')).not.toBeDisabled();
+    });
+
+    test('a batch selects the next allowed subset, which is what gets created', async () => {
+        apiRequest.post.mockResolvedValue({ data: { id: 50 } });
+        const { findByText, getByText, getByLabelText } = renderWithLimit();
+        await findByText('2 suppliers will get a claim link');
+
+        fireEvent.click(getByText('Select a batch'));
+        fireEvent.click(await findByText('3–4'));
+
+        expect(getByLabelText('Select Supplier 1')).not.toBeChecked();
+        expect(getByLabelText('Select Supplier 3')).toBeChecked();
+        expect(getByLabelText('Select Supplier 4')).toBeChecked();
+
+        fireEvent.click(getByText('Create campaign'));
+        await waitFor(() =>
+            expect(apiRequest.post).toHaveBeenCalledWith(
+                '/api/claim-campaigns/',
+                expect.objectContaining({ os_ids: ['OS3', 'OS4'] }),
+            ),
+        );
+    });
+
+    test('the last batch holds the remainder', async () => {
+        const { findByText, getByText, getByLabelText } = renderWithLimit();
+        await findByText('2 suppliers will get a claim link');
+
+        fireEvent.click(getByText('Select a batch'));
+        fireEvent.click(await findByText('5–5'));
+
+        expect(getByLabelText('Select Supplier 5')).toBeChecked();
+        expect(
+            await findByText('1 supplier will get a claim link'),
+        ).toBeInTheDocument();
+    });
+
+    test('selecting all shown stops at the limit', async () => {
+        const { findByText, getByText, getByLabelText } = renderWithLimit();
+        await findByText('2 suppliers will get a claim link');
+
+        fireEvent.click(getByText('Clear'));
+        expect(
+            await findByText('0 suppliers will get a claim link'),
+        ).toBeInTheDocument();
+
+        fireEvent.click(getByLabelText('Select all shown'));
+        expect(
+            await findByText('2 suppliers will get a claim link'),
+        ).toBeInTheDocument();
+        expect(getByLabelText('Select Supplier 3')).not.toBeChecked();
+    });
+});
+

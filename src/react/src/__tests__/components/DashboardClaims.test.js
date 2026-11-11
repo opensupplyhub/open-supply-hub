@@ -59,11 +59,19 @@ const claims = [
     },
 ];
 
-const renderComponent = () =>
+const renderComponent = ({ campaignsEnabled = true } = {}) =>
     renderWithProviders(
         <Router history={history}>
             <Route path="/dashboard/claims" component={DashboardClaims} />
         </Router>,
+        {
+            preloadedState: {
+                featureFlags: {
+                    fetching: false,
+                    flags: { claim_campaigns: campaignsEnabled },
+                },
+            },
+        },
     );
 
 describe('DashboardClaims campaign filter', () => {
@@ -107,5 +115,55 @@ describe('DashboardClaims campaign filter', () => {
         expect(history.location.search).toContain(
             'campaigns=EXAMPLE-FRESH-26',
         );
+    });
+
+    test('keeps the campaign select while the selected campaign has no claims', async () => {
+        history.push('/dashboard/claims?campaigns=OTHER-CAMPAIGN');
+
+        const { getByText, getByTestId } = renderComponent();
+
+        await waitFor(() => {
+            expect(getByText('0 results')).toBeInTheDocument();
+        });
+
+        // The selection is still shown, so it can be cleared.
+        expect(getByTestId('select-CAMPAIGNS')).toBeInTheDocument();
+    });
+
+    test('follows the URL when it changes (back/forward)', async () => {
+        history.push('/dashboard/claims?campaigns=EXAMPLE-FRESH-26');
+
+        const { getByText, queryByText } = renderComponent();
+
+        await waitFor(() => {
+            expect(getByText('1 results')).toBeInTheDocument();
+        });
+
+        history.push('/dashboard/claims');
+
+        await waitFor(() => {
+            expect(getByText('Facility Gamma')).toBeInTheDocument();
+        });
+        expect(getByText('2 results')).toBeInTheDocument();
+        expect(queryByText('EXAMPLE-FRESH-26')).toBeInTheDocument();
+    });
+
+    test('hides the campaign column and filter with the switch off', async () => {
+        history.push('/dashboard/claims?campaigns=EXAMPLE-FRESH-26');
+
+        const { getByText, queryByText, queryByTestId } = renderComponent({
+            campaignsEnabled: false,
+        });
+
+        await waitFor(() => {
+            expect(getByText('Facility Beta')).toBeInTheDocument();
+        });
+
+        // The ?campaigns= param is ignored: both claims show.
+        expect(getByText('Facility Gamma')).toBeInTheDocument();
+        expect(getByText('2 results')).toBeInTheDocument();
+        expect(queryByTestId('select-CAMPAIGNS')).not.toBeInTheDocument();
+        expect(queryByText('Campaign')).not.toBeInTheDocument();
+        expect(queryByText('EXAMPLE-FRESH-26')).not.toBeInTheDocument();
     });
 });

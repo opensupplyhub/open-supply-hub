@@ -12,6 +12,10 @@ import {
 } from '../util/util';
 import { dismissedWarningsFor } from '../util/claimQualityCheck';
 import { forgetClaimInviteCode, getClaimInviteCode } from '../util/claimInvite';
+import {
+    forgetClaimCampaignCode,
+    getClaimCampaignCode,
+} from '../util/claimCampaign';
 
 // Step navigation actions.
 export const setActiveClaimFormStep = createAction(
@@ -97,7 +101,15 @@ export function submitClaimFormData(osID, freeEmissionsEstimateHasErrors) {
             ...filteredFormData
         } = filterFreeEmissionsEstimateFields(formData);
 
-        if (!filteredFormData.campaign) {
+        // The intro puts a confirmed campaign code in the form. After a
+        // page reload the form state is gone, so fall back to the code
+        // remembered for this location; the backend ignores a code that
+        // is no longer usable.
+        const campaignCode =
+            filteredFormData.campaign || getClaimCampaignCode(osID);
+        if (campaignCode) {
+            filteredFormData.campaign = campaignCode;
+        } else {
             delete filteredFormData.campaign;
         }
 
@@ -130,6 +142,7 @@ export function submitClaimFormData(osID, freeEmissionsEstimateHasErrors) {
             .post(makeClaimFacilityAPIURL(osID), postData)
             .then(({ data }) => {
                 forgetClaimInviteCode(osID);
+                forgetClaimCampaignCode(osID);
                 dispatch(completeSubmitClaimFormData(data));
             })
             .catch(err =>

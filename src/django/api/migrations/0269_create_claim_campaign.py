@@ -62,8 +62,13 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('contributor', models.ForeignKey(
-                    help_text='The contributor who owns this claim campaign.',
-                    on_delete=django.db.models.deletion.PROTECT,
+                    help_text=(
+                        'The contributor who owns this claim campaign. '
+                        'Empty once that contributor has been deleted; '
+                        'the campaign is then closed.'
+                    ),
+                    null=True,
+                    on_delete=django.db.models.deletion.SET_NULL,
                     to='api.contributor')),
             ],
         ),

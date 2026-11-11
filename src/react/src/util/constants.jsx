@@ -376,6 +376,10 @@ export const makeCloseClaimCampaignURL = campaignID =>
     `/api/claim-campaigns/${campaignID}/close/`;
 export const makeClaimCampaignSearchURL = queryString =>
     `/api/claim-campaigns/candidates/search/?${queryString}`;
+// The most suppliers one campaign can invite. Must match
+// MAX_SUPPLIERS_PER_CAMPAIGN in api/services/claim_campaign_service.py,
+// which refuses a larger os_ids list.
+export const MAX_SUPPLIERS_PER_CAMPAIGN = 5000;
 export const claimDetailsRoute = '/claim/:osID/details';
 export const profileRoute = '/profile/:id';
 export const aboutProcessingRoute = `${InfoLink}/${InfoPaths.dataQuality}`;

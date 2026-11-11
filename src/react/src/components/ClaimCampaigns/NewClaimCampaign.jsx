@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { bool, object } from 'prop-types';
+import { bool, number, object } from 'prop-types';
 import { connect } from 'react-redux';
 import { Link, withRouter } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
@@ -9,8 +9,10 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Chip from '@material-ui/core/Chip';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
 import Radio from '@material-ui/core/Radio';
+import Select from '@material-ui/core/Select';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -26,6 +28,7 @@ import {
     claimCampaignsRoute,
     contributeRoute,
     makeClaimCampaignCandidatesURL,
+    MAX_SUPPLIERS_PER_CAMPAIGN,
 } from '../../util/constants';
 import { newClaimCampaignStyles } from './styles';
 import CampaignSupplierSearch, {
@@ -55,12 +58,30 @@ const STATUS_LABELS = Object.freeze({
 const isPickable = supplier =>
     supplier.claim_status !== 'claimed' && !supplier.is_closed;
 
-const defaultSelection = suppliers =>
+const formatCount = count => count.toLocaleString('en-US');
+
+// A campaign invites at most `limit` suppliers (the backend refuses more),
+// so every bulk selection takes suppliers in the order shown, up to the
+// limit. Larger lists stay usable: choose another batch for the next
+// campaign.
+export const defaultSelection = (
+    suppliers,
+    limit = MAX_SUPPLIERS_PER_CAMPAIGN,
+) =>
     new Set(
         suppliers
             .filter(s => s.claim_status === 'unclaimed' && isPickable(s))
+            .slice(0, limit)
             .map(s => s.os_id),
     );
+
+// Consecutive batches of at most `size` rows, as {start, end} indexes
+// (end exclusive), for choosing which part of a large list to invite.
+export const makeBatches = (count, size) =>
+    Array.from({ length: Math.ceil(count / size) }, (_, i) => ({
+        start: i * size,
+        end: Math.min((i + 1) * size, count),
+    }));
 
 export const pickerStatusLabel = (supplier, labels) =>
     supplier.is_closed ? 'Closed' : labels[supplier.claim_status];
@@ -108,7 +129,12 @@ export const describeListCount = list => {
     }${describeAwaiting(list)}`;
 };
 
-export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
+export const NewClaimCampaign = ({
+    classes,
+    userHasSignedIn,
+    history,
+    maxSuppliers,
+}) => {
     const [lists, setLists] = useState(null);
     const [listsError, setListsError] = useState(false);
     const [listId, setListId] = useState(null);
@@ -125,6 +151,8 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
     // Suppliers added from searches, by OS ID, in the order added.
     const [picked, setPicked] = useState(new Map());
     const [createError, setCreateError] = useState(null);
+    // Set when "Add" from search had to leave suppliers out at the limit.
+    const [searchLimitNote, setSearchLimitNote] = useState(null);
 
     useEffect(() => {
         if (!userHasSignedIn) {
@@ -151,11 +179,11 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
             .get(makeClaimCampaignCandidatesURL(listId))
             .then(({ data }) => {
                 setSuppliers(data.suppliers);
-                setSelected(defaultSelection(data.suppliers));
+                setSelected(defaultSelection(data.suppliers, maxSuppliers));
                 setFilter('unclaimed');
             })
             .catch(() => setSuppliers([]));
-    }, [listId]);
+    }, [listId, maxSuppliers]);
 
     const counts = useMemo(() => {
         const result = { unclaimed: 0, pending: 0, claimed: 0 };
@@ -195,38 +223,72 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
         s => filter === 'all' || s.claim_status === filter,
     );
     const shownPickable = shown.filter(isPickable);
+    const shownSelectedCount = shownPickable.filter(s => selected.has(s.os_id))
+        .length;
     const allShownSelected =
-        shownPickable.length > 0 &&
-        shownPickable.every(s => selected.has(s.os_id));
+        shownPickable.length > 0 && shownSelectedCount === shownPickable.length;
+    const atLimit = selected.size >= maxSuppliers;
+    const unclaimedPickableCount = (suppliers || []).filter(
+        s => s.claim_status === 'unclaimed' && isPickable(s),
+    ).length;
+    const pickableCount = (suppliers || []).filter(isPickable).length;
+    const shownBatches =
+        shownPickable.length > maxSuppliers
+            ? makeBatches(shownPickable.length, maxSuppliers)
+            : [];
 
     const toggle = osID => {
         const next = new Set(selected);
         if (next.has(osID)) {
             next.delete(osID);
-        } else {
+        } else if (next.size < maxSuppliers) {
             next.add(osID);
         }
         setSelected(next);
     };
 
+    // With some shown suppliers selected, the header box clears them;
+    // otherwise it selects the shown ones, in order, up to the limit.
     const toggleAllShown = () => {
         const next = new Set(selected);
-        shownPickable.forEach(s =>
-            allShownSelected ? next.delete(s.os_id) : next.add(s.os_id),
-        );
+        if (shownSelectedCount > 0) {
+            shownPickable.forEach(s => next.delete(s.os_id));
+        } else {
+            shownPickable
+                .slice(0, Math.max(maxSuppliers - next.size, 0))
+                .forEach(s => next.add(s.os_id));
+        }
         setSelected(next);
+    };
+
+    // Replaces the selection with one batch of the shown suppliers.
+    const selectBatch = index => {
+        const { start, end } = shownBatches[index];
+        setSelected(new Set(shownPickable.slice(start, end).map(s => s.os_id)));
     };
 
     const addPicked = toAdd => {
         const next = new Map(picked);
-        toAdd.forEach(s => next.set(s.os_id, s));
+        const fresh = toAdd.filter(s => !next.has(s.os_id));
+        const room = Math.max(maxSuppliers - next.size, 0);
+        fresh.slice(0, room).forEach(s => next.set(s.os_id, s));
         setPicked(next);
+        setSearchLimitNote(
+            fresh.length > room
+                ? `${formatCount(
+                      fresh.length - room,
+                  )} not added: a campaign can invite up to ${formatCount(
+                      maxSuppliers,
+                  )} suppliers.`
+                : null,
+        );
     };
 
     const removePicked = osID => {
         const next = new Map(picked);
         next.delete(osID);
         setPicked(next);
+        setSearchLimitNote(null);
     };
 
     const fromSearch = source === SOURCES.search;
@@ -420,10 +482,26 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                             <CampaignSupplierSearch
                                 picked={picked}
                                 onAdd={addPicked}
+                                remaining={Math.max(
+                                    maxSuppliers - picked.size,
+                                    0,
+                                )}
                             />
                             <Typography className={classes.pickedHeading}>
                                 Added to this campaign ({picked.size})
                             </Typography>
+                            <Typography className={classes.fine}>
+                                A campaign can invite up to{' '}
+                                {formatCount(maxSuppliers)} suppliers.
+                            </Typography>
+                            {searchLimitNote && (
+                                <Typography
+                                    className={classes.limitNote}
+                                    role="status"
+                                >
+                                    {searchLimitNote}
+                                </Typography>
+                            )}
                             {picked.size === 0 ? (
                                 <Typography className={classes.fine}>
                                     Nothing added yet. Search, then add
@@ -474,7 +552,10 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     </div>
                                     <Button
                                         size="small"
-                                        onClick={() => setPicked(new Map())}
+                                        onClick={() => {
+                                            setPicked(new Map());
+                                            setSearchLimitNote(null);
+                                        }}
                                     >
                                         Remove all
                                     </Button>
@@ -514,17 +595,53 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     ))}
                                     <span className={classes.grow} />
                                     <Typography>
-                                        {selected.size} selected
+                                        {formatCount(selected.size)} selected
                                     </Typography>
+                                    {shownBatches.length > 0 && (
+                                        <Select
+                                            value=""
+                                            displayEmpty
+                                            onChange={e =>
+                                                selectBatch(e.target.value)
+                                            }
+                                            inputProps={{
+                                                'aria-label':
+                                                    'Select a batch of suppliers',
+                                            }}
+                                        >
+                                            <MenuItem value="" disabled>
+                                                Select a batch
+                                            </MenuItem>
+                                            {shownBatches.map(
+                                                ({ start, end }, index) => (
+                                                    <MenuItem
+                                                        key={start}
+                                                        value={index}
+                                                    >
+                                                        {`${formatCount(
+                                                            start + 1,
+                                                        )}–${formatCount(end)}`}
+                                                    </MenuItem>
+                                                ),
+                                            )}
+                                        </Select>
+                                    )}
                                     <Button
                                         size="small"
                                         onClick={() =>
                                             setSelected(
-                                                defaultSelection(suppliers),
+                                                defaultSelection(
+                                                    suppliers,
+                                                    maxSuppliers,
+                                                ),
                                             )
                                         }
                                     >
-                                        Select all not started
+                                        {unclaimedPickableCount > maxSuppliers
+                                            ? `Select first ${formatCount(
+                                                  maxSuppliers,
+                                              )} not started`
+                                            : 'Select all not started'}
                                     </Button>
                                     <Button
                                         size="small"
@@ -533,6 +650,32 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                         Clear
                                     </Button>
                                 </div>
+                                {pickableCount > maxSuppliers && (
+                                    <Typography
+                                        className={classes.limitNote}
+                                        role="status"
+                                    >
+                                        A campaign can invite up to{' '}
+                                        {formatCount(maxSuppliers)} suppliers,
+                                        and this list has{' '}
+                                        {formatCount(pickableCount)} you can
+                                        invite. Bulk selections stop at{' '}
+                                        {formatCount(maxSuppliers)}, in the
+                                        order shown. To invite the rest, create
+                                        this campaign, then start another one
+                                        and choose the next batch.
+                                    </Typography>
+                                )}
+                                {atLimit && (
+                                    <Typography
+                                        className={classes.limitNote}
+                                        role="status"
+                                    >
+                                        {formatCount(maxSuppliers)} selected:
+                                        the most one campaign can invite.
+                                        Unselect some to choose others.
+                                    </Typography>
+                                )}
                                 <div className={classes.tableWrap}>
                                     <Table>
                                         <TableHead>
@@ -541,6 +684,11 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                                     <Checkbox
                                                         checked={
                                                             allShownSelected
+                                                        }
+                                                        indeterminate={
+                                                            shownSelectedCount >
+                                                                0 &&
+                                                            !allShownSelected
                                                         }
                                                         disabled={
                                                             !shownPickable.length
@@ -572,7 +720,13 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                                                 s.os_id,
                                                             )}
                                                             disabled={
-                                                                !isPickable(s)
+                                                                !isPickable(
+                                                                    s,
+                                                                ) ||
+                                                                (atLimit &&
+                                                                    !selected.has(
+                                                                        s.os_id,
+                                                                    ))
                                                             }
                                                             onChange={() =>
                                                                 toggle(s.os_id)
@@ -650,6 +804,7 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     disabled={
                                         creating ||
                                         !selectedCount ||
+                                        selectedCount > maxSuppliers ||
                                         !name.trim()
                                     }
                                     onClick={create}
@@ -673,10 +828,16 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
     );
 };
 
+NewClaimCampaign.defaultProps = {
+    maxSuppliers: MAX_SUPPLIERS_PER_CAMPAIGN,
+};
+
 NewClaimCampaign.propTypes = {
     classes: object.isRequired,
     userHasSignedIn: bool.isRequired,
     history: object.isRequired,
+    // Overridable so tests needn't render thousands of rows.
+    maxSuppliers: number,
 };
 
 const mapStateToProps = ({

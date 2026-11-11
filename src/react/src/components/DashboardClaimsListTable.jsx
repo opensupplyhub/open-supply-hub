@@ -48,6 +48,8 @@ const CONTRIBUTOR_LINK_ID = 'CONTRIBUTOR_LINK_ID';
 
 function DashboardClaimsListTable({
     data,
+    visibleData,
+    showCampaignColumn,
     fetching,
     handleSortClaims,
     handleGetClaims,
@@ -151,6 +153,11 @@ function DashboardClaimsListTable({
         return null;
     }
 
+    // `data` is the full list, which sorting reorders and writes back to
+    // the store; `visibleData` is the subset to render (e.g. narrowed by
+    // the campaign filter), and defaults to the full list.
+    const rows = visibleData || data;
+
     return (
         <Table>
             <DashboardClaimsListTableHeader
@@ -159,11 +166,12 @@ function DashboardClaimsListTable({
                 onRequestSort={handleRequestSort}
                 fetching={fetching}
                 loading={loading}
+                showCampaignColumn={showCampaignColumn}
             />
             {loading || fetching ? (
                 <TableBody>
                     <TableRow>
-                        <TableCell colSpan={9}>
+                        <TableCell colSpan={showCampaignColumn ? 10 : 9}>
                             <CircularProgress
                                 size={25}
                                 className={classes.loaderStyle}
@@ -173,7 +181,7 @@ function DashboardClaimsListTable({
                 </TableBody>
             ) : (
                 <TableBody>
-                    {data.map(claim => (
+                    {rows.map(claim => (
                         <TableRow
                             hover
                             key={claim.id}
@@ -206,9 +214,11 @@ function DashboardClaimsListTable({
                             <TableCell padding="dense">
                                 {claim.facility_country_name}
                             </TableCell>
-                            <TableCell padding="dense">
-                                {claim.campaign_code || EMPTY_PLACEHOLDER}
-                            </TableCell>
+                            {showCampaignColumn && (
+                                <TableCell padding="dense">
+                                    {claim.campaign_code || EMPTY_PLACEHOLDER}
+                                </TableCell>
+                            )}
                             <TableCell padding="dense">
                                 {moment(claim.created_at).format('LL')}
                             </TableCell>
@@ -240,12 +250,16 @@ function DashboardClaimsListTable({
 
 DashboardClaimsListTable.defaultProps = {
     data: null,
+    visibleData: null,
+    showCampaignColumn: false,
     countriesData: null,
     claimStatuses: [],
 };
 
 DashboardClaimsListTable.propTypes = {
     data: facilityClaimsListPropType,
+    visibleData: facilityClaimsListPropType,
+    showCampaignColumn: bool,
     fetching: bool.isRequired,
     handleGetClaims: func.isRequired,
     history: shape({

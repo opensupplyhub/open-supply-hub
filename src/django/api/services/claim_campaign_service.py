@@ -1,11 +1,14 @@
 import re
 import secrets
+from collections import namedtuple
 
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.db.models import Exists, OuterRef, Q
 from waffle import get_waffle_flag_model, switch_is_active
 
 from api.constants import FacilityClaimStatuses
+from api.models.facility.claim_campaign import CAMPAIGN_CODE_REGEX
 from api.models import (
     ClaimCampaign,
     ClaimCampaignSupplier,
@@ -41,8 +44,45 @@ NON_FILTER_SEARCH_PARAMS = frozenset({
     'combine_contributors',
 })
 
+# The only Facility fields a supplier row needs. Loading just these (with
+# values_list() or only()) keeps rosters of thousands of locations cheap:
+# FacilityListItem and Facility rows otherwise carry large columns such as
+# raw_data, processing_results and the location geometry.
+SupplierFacility = namedtuple(
+    'SupplierFacility', ('id', 'name', 'country_code', 'is_closed')
+)
+SUPPLIER_FACILITY_FIELDS = SupplierFacility._fields
+
 # Unambiguous characters for generated code suffixes (no 0/O, 1/I).
 CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+
+CAMPAIGN_CODE_MAX_LENGTH = ClaimCampaign._meta.get_field('code').max_length
+CAMPAIGN_CODE_RE = re.compile(CAMPAIGN_CODE_REGEX)
+
+
+def normalize_campaign_code(value):
+    """
+    The campaign code in canonical form (trimmed, upper-case), or None
+    when the value can't be a campaign code: empty, too long or not in
+    the code format. Codes are stored upper-case, so a link typed in
+    lower case still matches.
+    """
+    code = (value or '').strip().upper()
+    if not code or len(code) > CAMPAIGN_CODE_MAX_LENGTH:
+        return None
+    if not CAMPAIGN_CODE_RE.match(code):
+        return None
+    return code
+
+
+def is_active_campaign_code(code):
+    """Whether the code belongs to an ACTIVE campaign."""
+    code = normalize_campaign_code(code)
+    return code is not None and ClaimCampaign.objects.filter(
+        code=code,
+        status=ClaimCampaign.Status.ACTIVE,
+    ).exists()
 
 
 def resolve_claim_campaign(facility, code):
@@ -67,9 +107,10 @@ def resolve_claim_campaign(facility, code):
     if not switch_is_active('claim_campaigns'):
         return None, False
 
+    code = normalize_campaign_code(code)
     if code:
         campaign = ClaimCampaign.objects.filter(
-            code=code.strip().upper(),
+            code=code,
             status=ClaimCampaign.Status.ACTIVE,
         ).first()
         if campaign is not None:
@@ -155,8 +196,31 @@ def get_claim_statuses(facility_ids):
     }
 
 
+def get_item_facilities(items):
+    """
+    The distinct production locations the given list items are matched
+    to, in the items' order (first occurrence wins), loading only the
+    fields a supplier row needs.
+    """
+    facilities = {}
+    rows = items.values_list(
+        'facility_id',
+        'facility__name',
+        'facility__country_code',
+        'facility__is_closed',
+    )
+    for row in rows:
+        facilities.setdefault(row[0], SupplierFacility(*row))
+    return list(facilities.values())
+
+
 def serialize_suppliers(facilities):
-    """Supplier rows (with claim status) for an iterable of facilities."""
+    """
+    Supplier rows (with claim status) for an iterable of facilities: any
+    objects with id, name, country_code and is_closed attributes, such
+    as SupplierFacility rows or Facility/FacilityIndex instances loaded
+    with only(*SUPPLIER_FACILITY_FIELDS).
+    """
     facilities = list(facilities)
     statuses = get_claim_statuses([facility.id for facility in facilities])
     return [
@@ -186,6 +250,7 @@ def search_campaign_candidates(query_params):
         FacilityIndex.objects.filter_by_query_params(query_params)
         .exclude(is_closed=True)
         .order_by('name', 'id')
+        .only(*SUPPLIER_FACILITY_FIELDS)
     )
     return queryset.count(), list(queryset[:MAX_SEARCH_RESULTS])
 
@@ -359,15 +424,28 @@ def get_api_facilities(contributor):
     The distinct matched production locations the contributor added
     through the API, oldest submission first.
     """
-    facilities = {}
-    items = (
-        get_contributor_api_items(contributor)
-        .select_related('facility')
-        .order_by('source__created_at', 'id')
+    return get_item_facilities(
+        get_contributor_api_items(contributor).order_by(
+            'source__created_at', 'id'
+        )
     )
-    for item in items:
-        facilities.setdefault(item.facility.id, item.facility)
-    return list(facilities.values())
+
+
+def close_contributor_campaigns(contributor):
+    """
+    Close every active campaign the contributor owns, before the
+    contributor is deleted. The campaigns themselves are kept (their
+    owner becomes empty), so claims already attributed to them keep that
+    attribution; closing them stops new claims from being attributed to
+    a campaign nobody owns. Returns how many were closed.
+    """
+    return ClaimCampaign.objects.filter(
+        contributor=contributor,
+        status=ClaimCampaign.Status.ACTIVE,
+    ).update(
+        status=ClaimCampaign.Status.CLOSED,
+        updated_at=timezone.now(),
+    )
 
 
 def close_campaign(campaign):
@@ -399,20 +477,14 @@ def get_list_facilities(source):
     The distinct matched production locations still on one uploaded
     list, in upload order.
     """
-    facilities = {}
-    items = (
+    return get_item_facilities(
         exclude_removed_list_items(
             FacilityListItem.objects.filter(
                 source=source,
                 facility__isnull=False,
             )
-        )
-        .select_related('facility')
-        .order_by('row_index')
+        ).order_by('row_index')
     )
-    for item in items:
-        facilities.setdefault(item.facility.id, item.facility)
-    return list(facilities.values())
 
 
 def make_code_prefix(contributor_name):

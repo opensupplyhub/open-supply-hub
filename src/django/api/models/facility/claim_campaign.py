@@ -5,8 +5,9 @@ from django.db import models
 
 # Codes go into public claim links (`?campaign=CODE`), so keep them to a
 # URL-safe, unambiguous upper-case alphabet.
+CAMPAIGN_CODE_REGEX = r'^[A-Z0-9][A-Z0-9-]*$'
 CAMPAIGN_CODE_VALIDATOR = RegexValidator(
-    regex=r'^[A-Z0-9][A-Z0-9-]*$',
+    regex=CAMPAIGN_CODE_REGEX,
     message=(
         'Use upper-case letters, digits and hyphens only, starting with a '
         'letter or digit.'
@@ -31,11 +32,22 @@ class ClaimCampaign(models.Model):
         editable=False,
         help_text='Unique identifier for the claim campaign.'
     )
+    # SET_NULL rather than PROTECT: deleting a brand (e.g. with the
+    # delete_user_and_contributor command) must not be blocked by its
+    # campaigns, and the campaign row has to survive so the claims
+    # attributed to it keep their campaign. The pre_delete handler in
+    # api/signals.py closes the campaigns first, so an ownerless campaign
+    # never attributes new claims. blank=False keeps an owner required
+    # when a campaign is created or edited in Django admin.
     contributor = models.ForeignKey(
         'Contributor',
-        null=False,
-        on_delete=models.PROTECT,
-        help_text='The contributor who owns this claim campaign.')
+        null=True,
+        blank=False,
+        on_delete=models.SET_NULL,
+        help_text=(
+            'The contributor who owns this claim campaign. Empty once that '
+            'contributor has been deleted; the campaign is then closed.'
+        ))
     name = models.CharField(
         max_length=200,
         null=False,

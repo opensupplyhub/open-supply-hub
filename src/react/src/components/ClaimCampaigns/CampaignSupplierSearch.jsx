@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { func, instanceOf, object } from 'prop-types';
+import { func, instanceOf, number, object } from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
@@ -76,6 +76,7 @@ export const CampaignSupplierSearch = ({
     getFilters,
     picked,
     onAdd,
+    remaining,
     fetchFilterOptions,
     updateFilter,
     fetchSuggestionsForProcessingType,
@@ -119,6 +120,10 @@ export const CampaignSupplierSearch = ({
     const addable = results
         ? results.suppliers.filter(s => canAdd(s) && !picked.has(s.os_id))
         : [];
+    // The campaign's supplier limit: "Add all" takes only what still fits,
+    // in the order shown, and nothing can be added once it's reached.
+    const addAllCount = Math.min(addable.length, remaining);
+    const isFull = remaining <= 0;
 
     return (
         <div>
@@ -240,10 +245,12 @@ export const CampaignSupplierSearch = ({
                             size="small"
                             color="primary"
                             variant="outlined"
-                            disabled={!addable.length}
-                            onClick={() => onAdd(addable)}
+                            disabled={!addAllCount}
+                            onClick={() => onAdd(addable.slice(0, addAllCount))}
                         >
-                            Add all {addable.length} not yet claimed
+                            {addAllCount < addable.length
+                                ? `Add ${addAllCount} of ${addable.length} not yet claimed`
+                                : `Add all ${addable.length} not yet claimed`}
                         </Button>
                     </div>
                     <div className={classes.tableWrap}>
@@ -280,7 +287,9 @@ export const CampaignSupplierSearch = ({
                                                 <Button
                                                     size="small"
                                                     color="primary"
-                                                    disabled={!canAdd(s)}
+                                                    disabled={
+                                                        !canAdd(s) || isFull
+                                                    }
                                                     onClick={() => onAdd([s])}
                                                     aria-label={`Add ${s.name}`}
                                                 >
@@ -307,6 +316,10 @@ export const CampaignSupplierSearch = ({
     );
 };
 
+CampaignSupplierSearch.defaultProps = {
+    remaining: Infinity,
+};
+
 CampaignSupplierSearch.propTypes = {
     classes: object.isRequired,
     filters: object.isRequired,
@@ -316,6 +329,8 @@ CampaignSupplierSearch.propTypes = {
     fetchSuggestionsForProcessingType: func.isRequired,
     picked: instanceOf(Map).isRequired,
     onAdd: func.isRequired,
+    // How many more suppliers the campaign can take.
+    remaining: number,
     fetchFilterOptions: func.isRequired,
 };
 

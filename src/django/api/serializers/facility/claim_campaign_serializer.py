@@ -12,6 +12,7 @@ from api.services.claim_campaign_service import (
     get_claim_statuses,
     get_contributor_api_items,
     get_contributor_list_sources,
+    get_item_facilities,
     is_too_large,
     serialize_suppliers,
     too_large_message,
@@ -58,17 +59,17 @@ class ClaimCampaignSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def build_list_suppliers(contributor_id):
-        facilities = {
-            item.facility.id: item.facility
-            for item in exclude_removed_list_items(
-                FacilityListItem.objects.filter(
-                    source__contributor_id=contributor_id,
-                    source__is_active=True,
-                    facility__isnull=False,
+        return serialize_suppliers(
+            get_item_facilities(
+                exclude_removed_list_items(
+                    FacilityListItem.objects.filter(
+                        source__contributor_id=contributor_id,
+                        source__is_active=True,
+                        facility__isnull=False,
+                    )
                 )
-            ).select_related('facility')
-        }
-        return serialize_suppliers(facilities.values())
+            )
+        )
 
 
 # Fits about two lines of the campaign card title.
@@ -189,8 +190,11 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
 
     @staticmethod
     def validate_search_suppliers(os_ids):
-        facilities = Facility.objects.filter(id__in=os_ids)
-        found = {f.id: f for f in facilities}
+        found = set(
+            Facility.objects.filter(id__in=os_ids).values_list(
+                'id', flat=True
+            )
+        )
 
         missing = [os_id for os_id in os_ids if os_id not in found]
         if missing:
