@@ -6,11 +6,15 @@ from api.models.facility.facility_list_item import FacilityListItem
 from api.services.claim_campaign_service import (
     API_SOURCE_ID,
     MAX_SUPPLIERS_PER_CAMPAIGN,
+    count_facilities,
+    count_list_facilities,
     exclude_removed_list_items,
     get_claim_statuses,
     get_contributor_api_items,
     get_contributor_list_sources,
+    is_too_large,
     serialize_suppliers,
+    too_large_message,
 )
 
 
@@ -120,6 +124,11 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
         return data
 
     def validate_api_suppliers(self, os_ids):
+        self.refuse_too_large(
+            count_facilities(
+                get_contributor_api_items(self.context['contributor'])
+            )
+        )
         on_api = set(
             get_contributor_api_items(self.context['contributor'])
             .filter(facility_id__in=os_ids)
@@ -150,6 +159,7 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'list_id': 'Choose one of your active lists.'}
             )
+        self.refuse_too_large(count_list_facilities(source))
 
         on_list = set(
             exclude_removed_list_items(
@@ -168,6 +178,13 @@ class ClaimCampaignCreateSerializer(serializers.Serializer):
                         + ', '.join(missing[:10])
                     )
                 }
+            )
+
+    @staticmethod
+    def refuse_too_large(facility_count):
+        if is_too_large(facility_count):
+            raise serializers.ValidationError(
+                {'list_id': too_large_message(facility_count)}
             )
 
     @staticmethod

@@ -23,6 +23,7 @@ from api.services.claim_campaign_service import (
     MAX_SEARCH_RESULTS,
     campaign_permissions,
     close_campaign,
+    count_list_facilities,
     create_campaign_with_suppliers,
     describe_api_source,
     describe_list_source,
@@ -30,8 +31,10 @@ from api.services.claim_campaign_service import (
     get_contributor_list_sources,
     get_list_facilities,
     has_search_filter,
+    is_too_large,
     search_campaign_candidates,
     serialize_suppliers,
+    too_large_message,
 )
 
 
@@ -120,7 +123,9 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
         with its matched supplier count and whether it is still pending
         moderation or processing), plus one entry with id `api` for the
         locations it added through the API, if any. With `list={id}`
-        (or `list=api`), those suppliers and their claim statuses.
+        (or `list=api`), those suppliers and their claim statuses. A
+        list over MAX_LIST_FACILITIES is marked `too_large` and can't be
+        opened (400).
         """
         contributor = self.require_self_serve()
         sources = get_contributor_list_sources(contributor)
@@ -137,6 +142,10 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
             api_entry = describe_api_source(contributor)
             if api_entry is None:
                 raise NotFound()
+            if api_entry['too_large']:
+                raise ValidationError(
+                    {'detail': too_large_message(api_entry['supplier_count'])}
+                )
             return Response(
                 {
                     'id': API_SOURCE_ID,
@@ -155,6 +164,13 @@ class ClaimCampaignViewSet(ListModelMixin, GenericViewSet):
         )
         if source is None:
             raise NotFound()
+        # Checked before loading the suppliers: counting is cheap, loading
+        # a very large list is not.
+        supplier_count = count_list_facilities(source)
+        if is_too_large(supplier_count):
+            raise ValidationError(
+                {'detail': too_large_message(supplier_count)}
+            )
         return Response(
             {
                 'id': source.facility_list.id,

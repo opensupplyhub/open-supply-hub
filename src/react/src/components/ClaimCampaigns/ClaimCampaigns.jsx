@@ -125,7 +125,7 @@ const makeCampaignClaimLink = (osID, code) =>
     `${window.location.origin}${claimIntroRoute.replace(
         ':osID',
         osID,
-    )}?campaign=${code}`;
+    )}?campaign=${encodeURIComponent(code)}`;
 
 // Spreadsheet apps run a cell starting with = + - @ (or a tab/CR) as a
 // formula. Facility names come from any contributor's uploads, so prefix

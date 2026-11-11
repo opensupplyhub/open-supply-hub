@@ -11,6 +11,7 @@ from api.models import (
 from api.services.claim_campaign_service import (
     get_claim_statuses,
     move_campaign_suppliers,
+    resolve_claim_campaign,
 )
 from api.signals import location_post_delete_handler_for_opensearch
 from api.tests.test_claim_campaign_roster import ClaimCampaignRosterBaseTest
@@ -129,6 +130,18 @@ class RemovedListItemsTest(ClaimCampaignRosterBaseTest):
         [campaign] = self.client.get(self.url).json()
         self.assertEqual(
             [self.facility.id], [s["os_id"] for s in campaign["suppliers"]]
+        )
+
+    @override_switch("claim_campaigns", active=True)
+    def test_claim_on_dissociated_supplier_is_not_attributed(self):
+        self.assertEqual(
+            (self.campaign, False),
+            resolve_claim_campaign(self.other_facility, None),
+        )
+        self.dissociate_other_facility()
+        self.assertEqual(
+            (None, False),
+            resolve_claim_campaign(self.other_facility, None),
         )
 
 

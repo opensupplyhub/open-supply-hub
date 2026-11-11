@@ -23,6 +23,11 @@ ACCESS_FLAG = 'claim_campaign_access'
 # On top of access: the brand may also create its own campaigns.
 SELF_SERVE_FLAG = 'claim_campaign_self_serve'
 MAX_SUPPLIERS_PER_CAMPAIGN = 5000
+# A list with more production locations than this is too large to load
+# on one page, so a campaign can't be started from it: brands can't
+# open it in the supplier picker, and staff can't create a campaign
+# that covers all of a brand's lists when together they exceed it.
+MAX_LIST_FACILITIES = 20000
 # A supplier search returns at most this many facilities to choose from.
 MAX_SEARCH_RESULTS = 500
 # Search params that don't narrow the results, so a search made only of
@@ -74,9 +79,13 @@ def resolve_claim_campaign(facility, code):
         campaign=OuterRef('pk'),
         facility=facility,
     )
-    on_active_list = FacilityListItem.objects.filter(
-        facility=facility,
-        source__is_active=True,
+    # A location the brand removed from its list, or dissociated from,
+    # no longer counts as on its lists.
+    on_active_list = exclude_removed_list_items(
+        FacilityListItem.objects.filter(
+            facility=facility,
+            source__is_active=True,
+        )
     ).values('source__contributor')
 
     campaigns = list(
@@ -247,6 +256,46 @@ def count_facilities(items):
     return items.values('facility_id').distinct().count()
 
 
+def is_too_large(facility_count):
+    return facility_count > MAX_LIST_FACILITIES
+
+
+def count_list_facilities(source):
+    """Distinct matched production locations still on one list."""
+    return count_facilities(
+        exclude_removed_list_items(
+            FacilityListItem.objects.filter(
+                source=source,
+                facility__isnull=False,
+            )
+        )
+    )
+
+
+def count_contributor_facilities(contributor):
+    """
+    Distinct production locations on all the contributor's active lists
+    and API submissions: the size of a campaign without chosen suppliers.
+    """
+    return count_facilities(
+        exclude_removed_list_items(
+            FacilityListItem.objects.filter(
+                source__contributor=contributor,
+                source__is_active=True,
+                facility__isnull=False,
+            )
+        )
+    )
+
+
+def too_large_message(facility_count):
+    return (
+        f'This list has {facility_count:,} production locations. A '
+        f'campaign can only be started from a list of up to '
+        f'{MAX_LIST_FACILITIES:,}. Use search to choose suppliers instead.'
+    )
+
+
 def describe_list_source(source):
     """
     One entry of the step 1 list picker. A list is `pending` while OS
@@ -261,6 +310,7 @@ def describe_list_source(source):
     awaiting_confirmation = count_awaiting_confirmation(
         exclude_removed_list_items(items)
     )
+    supplier_count = count_list_facilities(source)
     return {
         'id': source.facility_list.id,
         'name': source.facility_list.name,
@@ -269,9 +319,8 @@ def describe_list_source(source):
         'created_at': source.created_at,
         'pending': pending,
         'awaiting_confirmation': awaiting_confirmation,
-        'supplier_count': count_facilities(
-            exclude_removed_list_items(items.filter(facility__isnull=False))
-        ),
+        'supplier_count': supplier_count,
+        'too_large': is_too_large(supplier_count),
     }
 
 
@@ -301,6 +350,7 @@ def describe_api_source(contributor):
         'pending': pending,
         'awaiting_confirmation': awaiting_confirmation,
         'supplier_count': supplier_count,
+        'too_large': is_too_large(supplier_count),
     }
 
 

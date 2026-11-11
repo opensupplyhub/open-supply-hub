@@ -376,7 +376,47 @@ class ClaimCampaignSupplierInline(admin.TabularInline):
     )
 
 
+class ClaimCampaignAdminForm(forms.ModelForm):
+    """
+    Refuses a campaign without chosen suppliers for a contributor whose
+    active lists are too large: such a campaign covers every production
+    location on those lists, and the brand's campaign page loads them
+    all at once.
+    """
+
+    class Meta:
+        model = models.ClaimCampaign
+        fields = '__all__'
+
+    def clean(self):
+        from api.services import claim_campaign_service as service
+        cleaned = super().clean()
+        contributor = cleaned.get('contributor')
+        if contributor is None or cleaned.get('uses_roster'):
+            return cleaned
+        # Only when this save is what makes the campaign cover the lists,
+        # so an existing campaign can still be renamed or closed.
+        is_new = self.instance.pk is None
+        if not (
+            is_new
+            or 'contributor' in self.changed_data
+            or 'uses_roster' in self.changed_data
+        ):
+            return cleaned
+        facility_count = service.count_contributor_facilities(contributor)
+        if service.is_too_large(facility_count):
+            raise forms.ValidationError(
+                f'{contributor.name} has {facility_count:,} production '
+                f'locations on its active lists. A campaign that covers '
+                f'all of a brand\'s lists is limited to '
+                f'{service.MAX_LIST_FACILITIES:,}. Tick "chosen suppliers '
+                f'only" and add the suppliers to invite below instead.'
+            )
+        return cleaned
+
+
 class ClaimCampaignAdmin(admin.ModelAdmin):
+    form = ClaimCampaignAdminForm
     list_display = ('name', 'code', 'contributor', 'status', 'has_access')
     list_filter = ('status',)
     search_fields = ('name', 'code', 'contributor__name')

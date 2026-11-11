@@ -80,8 +80,10 @@ const firstError = error => {
 // suppliers yet; until it has some there is nothing to choose from it.
 // A source with no matched suppliers yet (a list in moderation, or
 // API locations still processing or waiting for the brand to confirm a
-// match) has nothing to choose from.
-export const isSelectableList = list => list.supplier_count !== 0;
+// match) has nothing to choose from. A list over the server's size
+// limit (`too_large`) can't be opened at all.
+export const isSelectableList = list =>
+    list.supplier_count !== 0 && !list.too_large;
 
 const describeAwaiting = list =>
     list.awaiting_confirmation
@@ -98,6 +100,9 @@ export const describeListCount = list => {
     const count = `${list.supplier_count} supplier${
         list.supplier_count === 1 ? '' : 's'
     }`;
+    if (list.too_large) {
+        return `${count} · too large to start a campaign from`;
+    }
     return `${
         list.pending ? `${count} matched so far` : count
     }${describeAwaiting(list)}`;
@@ -392,6 +397,8 @@ export const NewClaimCampaign = ({ classes, userHasSignedIn, history }) => {
                                     Inviting suppliers from a private list or
                                     private API uploads doesn&apos;t publish
                                     your connection to them.
+                                    {lists.some(list => list.too_large) &&
+                                        ' A list that is too large can\u2019t be opened here: use search to choose its suppliers instead.'}
                                     {lists.some(list => list.pending) &&
                                         ' A pending list is still being reviewed or matched by OS Hub. Its suppliers appear here once they are matched.'}
                                     {lists.some(

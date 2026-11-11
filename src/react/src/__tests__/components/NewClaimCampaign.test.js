@@ -292,6 +292,42 @@ describe('NewClaimCampaign list sources', () => {
         );
     });
 
+    test('a list over the size limit is marked too large and cannot be chosen', async () => {
+        mockSources([
+            {
+                id: 9,
+                name: 'Everything we buy from',
+                kind: 'list',
+                is_public: true,
+                pending: false,
+                supplier_count: 25000,
+                too_large: true,
+            },
+            lists[1],
+        ]);
+        const { findByText, getByText, getAllByRole } = renderComponent();
+
+        expect(await findByText('Everything we buy from')).toBeInTheDocument();
+        expect(
+            getByText('25000 suppliers · too large to start a campaign from'),
+        ).toBeInTheDocument();
+        expect(getByText(/use search to choose its suppliers/)).toBeInTheDocument();
+
+        const radios = getAllByRole('radio').filter(
+            radio => radio.closest('label') && radio.name !== 'source',
+        );
+        expect(radios.some(radio => radio.disabled)).toBe(true);
+        // The first list within the limit is chosen instead.
+        await waitFor(() =>
+            expect(apiRequest.get).toHaveBeenCalledWith(
+                '/api/claim-campaigns/candidates/?list=3',
+            ),
+        );
+        expect(apiRequest.get).not.toHaveBeenCalledWith(
+            '/api/claim-campaigns/candidates/?list=9',
+        );
+    });
+
     test('a brand that only uses the API picks from its API submissions', async () => {
         mockSources([
             {
