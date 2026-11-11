@@ -95,6 +95,10 @@ class CandidatesListEndpointTest(APITestCase):
             User.objects.create(email=f'voter{i}@example.com')
             for i in range(4)
         ]
+        # Nearby sorts and filters need a login (see
+        # candidate_listing.needs_whole_set_nearby); the anonymous cases
+        # below log out explicitly.
+        self.client.force_authenticate(user=self.voters[0])
         self.contributor = Contributor.objects.create(
             admin=self.user,
             name='Earth Genome',
@@ -300,8 +304,8 @@ class CandidatesListEndpointTest(APITestCase):
         page_two = self._get(limit=3, sort='confidence', page=2)
         self.assertEqual(1, len(page_two.data['features']))
         self.assertIsNone(page_two.data['next'])
-        # Back to page one: the page param is dropped rather than set to 1.
-        self.assertNotIn('page=', page_two.data['previous'])
+        # Back to page one keeps ``page``: it is the mode discriminator.
+        self.assertIn('page=1', page_two.data['previous'])
         self.assertIn('limit=3', page_two.data['previous'])
 
         page_three = self._get(limit=3, page=3)
@@ -609,6 +613,19 @@ class CandidatesListEndpointTest(APITestCase):
                 )
                 self.assertTrue(response.data['errors'][0]['detail'])
 
+    def test_previous_link_of_a_wide_bbox_list_stays_in_list_mode(self):
+        # 6 degrees wide: the map mode would refuse it, so a ``previous``
+        # that dropped ``page`` would turn page 1 into a 400.
+        page_two = self._get(bbox='-1,-1,5,1', page=2, limit=2)
+        self.assertEqual(status.HTTP_200_OK, page_two.status_code)
+
+        previous = page_two.data['previous']
+        self.assertIn('page=1', previous)
+        page_one = self.client.get(previous)
+        self.assertEqual(status.HTTP_200_OK, page_one.status_code)
+        self.assertEqual(3, page_one.data['count'])
+        self.assertEqual(2, len(page_one.data['features']))
+
     def test_page_selects_list_mode_for_a_bbox_request(self):
         # ``page`` is the discriminator: bbox with it is the list.
         response = self._get(bbox='-1,-1,1,1', page=1)
@@ -629,8 +646,41 @@ class CandidatesListEndpointTest(APITestCase):
         )
 
     def test_anonymous_and_authenticated_see_the_same_list(self):
-        anonymous = self._get()
-        self.client.force_authenticate(user=self.voters[0])
-        authenticated = self._get()
+        authenticated = self._get(sort='confidence', country='US')
+        self.client.force_authenticate(user=None)
+        anonymous = self._get(sort='confidence', country='US')
 
-        self.assertEqual(anonymous.data, authenticated.data)
+        self.assertEqual(authenticated.data, anonymous.data)
+
+    def test_nearby_sorts_and_filters_need_a_login(self):
+        self.client.force_authenticate(user=None)
+        for params in (
+            {'sort': '-nearby_count'},
+            {'sort': 'nearest_m'},
+            {'has_nearby': 'true'},
+        ):
+            with self.subTest(params=params):
+                response = self._get(**params)
+                self.assertEqual(
+                    status.HTTP_401_UNAUTHORIZED, response.status_code
+                )
+                self.assertEqual(
+                    'Log in to sort or filter candidates by nearby '
+                    'facilities.',
+                    response.data['detail'],
+                )
+        # The plain list, and the page-level nearby figures, stay open.
+        plain = self._get(sort='confidence')
+        self.assertEqual(status.HTTP_200_OK, plain.status_code)
+        self.assertIn('nearby_count', plain.data['features'][0]['properties'])
+
+    def test_logs_when_the_order_does_not_fit_in_the_cache(self):
+        cache = caches[ORDER_CACHE_ALIAS]
+        with unittest.mock.patch.object(cache, 'set'), self.assertLogs(
+            'api.services.candidate_listing', level='WARNING'
+        ) as logs:
+            response = self._get(sort='-nearby_count')
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(4, response.data['count'])
+        self.assertIn('was not cached', logs.output[0])

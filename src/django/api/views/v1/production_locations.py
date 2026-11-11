@@ -5,7 +5,7 @@ from uuid import UUID
 
 from django.contrib.gis.geos import Polygon
 from django.http import Http404, QueryDict
-from rest_framework.utils.urls import remove_query_param, replace_query_param
+from rest_framework.utils.urls import replace_query_param
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
@@ -200,6 +200,7 @@ class ProductionLocations(ViewSet):
 
     @staticmethod
     def __candidate_gone_response(os_id):
+        '''410 with the tombstone for a retired OS ID, else 404.'''
         tombstone = get_tombstone(os_id)
         if tombstone is not None:
             return Response(
@@ -400,7 +401,10 @@ class ProductionLocations(ViewSet):
         ``nearby_count``, ``nearest_m`` and ``nearest`` (``{os_id, name,
         distance_m}`` or ``null``), ``created_at``, ``country_code`` and
         ``external_id``. A page past the end is 404; an invalid parameter
-        is 400.
+        is 400. Sorting or filtering on the nearby figures (``sort`` of
+        ``nearby_count`` / ``nearest_m``, or ``has_nearby``) is 401 for
+        an anonymous caller: it annotates the whole set, which is too
+        much work to offer at the anonymous burst rate.
 
         Both modes are open, read-only and rate limited like the other v1
         reads, answer ``Cache-Control: private`` and ``X-Robots-Tag:
@@ -413,6 +417,7 @@ class ProductionLocations(ViewSet):
         return self.__candidates_page(request)
 
     def __candidates_in_bbox(self, request):
+        '''Map mode: the candidates intersecting a capped viewport box.'''
         params = CandidatesBboxQueryParamSerializer(data=request.query_params)
         if not params.is_valid():
             return self.__candidate_query_error(params.errors)
@@ -444,10 +449,25 @@ class ProductionLocations(ViewSet):
         })
 
     def __candidates_page(self, request):
+        '''List mode: one page of the filtered, sorted candidate set.'''
         params = CandidatesListQueryParamSerializer(data=request.query_params)
         if not params.is_valid():
             return self.__candidate_query_error(params.errors)
         validated = params.validated_data
+        if (
+            candidate_listing.needs_whole_set_nearby(validated)
+            and not request.user.is_authenticated
+        ):
+            # See candidate_listing.needs_whole_set_nearby: the expensive
+            # path is kept off the anonymous burst rate.
+            return Response(
+                data={
+                    'detail':
+                        APIV1CommonErrorMessages
+                        .CANDIDATE_NEARBY_LOGIN_REQUIRED
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         try:
             rows, total = candidate_listing.list_candidates(validated)
@@ -468,9 +488,10 @@ class ProductionLocations(ViewSet):
                 replace_query_param(url, 'page', page + 1)
                 if page < last_page else None
             ),
+            # ``page`` stays in the link: it is what keeps a bbox request
+            # in list mode, so ``previous`` from page 2 is ``page=1``.
             'previous': (
-                (remove_query_param(url, 'page') if page == 2
-                 else replace_query_param(url, 'page', page - 1))
+                replace_query_param(url, 'page', page - 1)
                 if page > 1 else None
             ),
             'features': [
@@ -485,6 +506,7 @@ class ProductionLocations(ViewSet):
 
     @staticmethod
     def __candidate_query_error(errors):
+        '''400 naming the first invalid query parameter.'''
         field, messages = next(iter(errors.items()))
         return Response(
             {
@@ -496,6 +518,7 @@ class ProductionLocations(ViewSet):
 
     @staticmethod
     def __candidate_list_properties(row):
+        '''The list-only Feature properties of an annotated row.'''
         nearest_m = (
             round(row.nearest_m, 1) if row.nearest_m is not None else None
         )
@@ -517,6 +540,7 @@ class ProductionLocations(ViewSet):
 
     @staticmethod
     def __candidate_feature(facility, vote_tally, extra=None):
+        '''A candidate as a GeoJSON Feature with its derived state.'''
         state = candidate_validation.derive_state(vote_tally)
         geometry = (
             facility.polygon if facility.polygon is not None
