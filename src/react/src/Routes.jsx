@@ -32,6 +32,7 @@ import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
 import IdentityRecord from './components/IdentityRecord/IdentityRecord';
+import CandidateReviewPage from './components/Candidate/CandidateReviewPage';
 import ProductionLocationDetailsContainer from './components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
@@ -63,6 +64,7 @@ import {
     facilityListItemsRoute,
     facilitiesRoute,
     identityRecordRoute,
+    candidatesRoute,
     productionLocationDetailsRoute,
     dashboardRoute,
     claimFacilityRoute,
@@ -80,6 +82,7 @@ import {
     productionLocationInfoRouteUpdate,
     ENABLE_PRODUCTION_LOCATION_PAGE,
     ENABLE_IDENTITY_RESOLVER,
+    EARTH_GENOME_CANDIDATES,
 } from './util/constants';
 
 // Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
@@ -188,6 +191,23 @@ class Routes extends Component {
                                             alternative={<RouteNotFound />}
                                         >
                                             <IdentityRecord />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                {/*
+                                 * OSDEV-3755: the candidate review page
+                                 * exists only while the Earth Genome pilot
+                                 * switch is on; off, the route is not there.
+                                 */}
+                                <Route
+                                    exact
+                                    path={candidatesRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={EARTH_GENOME_CANDIDATES}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <CandidateReviewPage />
                                         </FeatureFlag>
                                     )}
                                 />

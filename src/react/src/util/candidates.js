@@ -12,6 +12,10 @@
  *        -> { os_id, your_vote, tally, state }; POST body { vote }
  *   Legacy GET /api/facilities/{os_id}/ -> Feature whose properties carry
  *        is_candidate: true and a `candidate` object with the same content.
+ *   GET  /api/v1/production-locations/candidates/?page=&limit=&sort=...
+ *        (OSDEV-3754 list mode) -> { type, count, next, previous, features };
+ *        feature.properties adds nearby_count, nearest_m, nearest,
+ *        created_at, country_code, external_id.
  */
 import get from 'lodash/get';
 
@@ -46,6 +50,141 @@ export const formatBbox = bounds =>
 
 export const makeCandidatesBboxURL = (bbox, limit = CANDIDATE_LAYER_LIMIT) =>
     `/api/v1/production-locations/candidates/?bbox=${bbox}&limit=${limit}`;
+
+export const CANDIDATE_LIST_PAGE_SIZE = 50;
+
+export const CANDIDATE_LIST_SORT_FIELDS = Object.freeze({
+    ID: 'id',
+    CONFIDENCE: 'confidence',
+    CREATED_AT: 'created_at',
+    NEARBY_COUNT: 'nearby_count',
+    NEAREST_M: 'nearest_m',
+});
+
+/**
+ * The review page's query, which is also the list endpoint's query: the
+ * URL search string of /candidates and the API parameters share names, so
+ * one object round-trips through both.
+ *   { page: 1, sort: 'id', states: [], confidenceMin: null,
+ *     confidenceMax: null, hasNearby: null, country: '', bbox: null }
+ */
+export const DEFAULT_CANDIDATE_LIST_QUERY = Object.freeze({
+    page: 1,
+    sort: CANDIDATE_LIST_SORT_FIELDS.ID,
+    states: Object.freeze([]),
+    confidenceMin: null,
+    confidenceMax: null,
+    hasNearby: null,
+    country: '',
+    bbox: null,
+});
+
+const parseConfidence = value => {
+    if (value === null || value === undefined || value === '') return null;
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 0 || number > 1) return null;
+    return number;
+};
+
+const isBboxString = value =>
+    typeof value === 'string' &&
+    value.split(',').length === 4 &&
+    value.split(',').every(part => part !== '' && Number.isFinite(+part));
+
+/**
+ * `?page=2&sort=-confidence&state=unverified,disputed` -> query object.
+ * Anything malformed falls back to the default for that key.
+ */
+/**
+ * Country text -> comma-joined ISO alpha-2 codes. Parts that are not two
+ * letters (`USA`, `U.S.`) are dropped, the way an unparseable confidence
+ * is, so what the user typed never reaches the API as a 400 the page
+ * cannot recover from.
+ */
+export const normalizeCountryCodes = text =>
+    (text || '')
+        .split(',')
+        .map(part => part.trim().toUpperCase())
+        .filter(part => /^[A-Z]{2}$/.test(part))
+        .filter((part, index, parts) => parts.indexOf(part) === index)
+        .join(',');
+
+export const candidateListQueryFromSearch = search => {
+    const params = new URLSearchParams(search || '');
+    const page = parseInt(params.get('page'), 10);
+    const sort = params.get('sort') || DEFAULT_CANDIDATE_LIST_QUERY.sort;
+    const sortField = sort.replace(/^-/, '');
+    const states = (params.get('state') || '')
+        .split(',')
+        .map(part => part.trim())
+        .filter(part => Object.values(CANDIDATE_STATES).includes(part));
+    const hasNearbyParam = params.get('has_nearby');
+    let hasNearby = null;
+    if (hasNearbyParam === 'true') hasNearby = true;
+    if (hasNearbyParam === 'false') hasNearby = false;
+    const bbox = params.get('bbox');
+    return {
+        page: Number.isInteger(page) && page > 0 ? page : 1,
+        sort: Object.values(CANDIDATE_LIST_SORT_FIELDS).includes(sortField)
+            ? sort
+            : DEFAULT_CANDIDATE_LIST_QUERY.sort,
+        states,
+        confidenceMin: parseConfidence(params.get('confidence_min')),
+        confidenceMax: parseConfidence(params.get('confidence_max')),
+        hasNearby,
+        country: normalizeCountryCodes(params.get('country')),
+        bbox: isBboxString(bbox) ? bbox : null,
+    };
+};
+
+/**
+ * Query object -> URLSearchParams with the API's parameter names. Defaults
+ * are left out so the page URL stays short; `includePageSize` builds the
+ * API request instead, which always carries `page` and `limit`: `page` is
+ * what selects the API's list mode (a `bbox` request without it is the
+ * OSDEV-3249 map call, with a capped box and no paging).
+ */
+export const candidateListQueryToParams = (
+    query,
+    { includePageSize = false } = {},
+) => {
+    const params = new URLSearchParams();
+    if (includePageSize || query.page > 1) {
+        params.set('page', String(query.page || 1));
+    }
+    if (includePageSize) {
+        params.set('limit', String(CANDIDATE_LIST_PAGE_SIZE));
+    }
+    if (query.sort && query.sort !== DEFAULT_CANDIDATE_LIST_QUERY.sort) {
+        params.set('sort', query.sort);
+    }
+    if (query.states && query.states.length) {
+        params.set('state', query.states.join(','));
+    }
+    if (typeof query.confidenceMin === 'number') {
+        params.set('confidence_min', String(query.confidenceMin));
+    }
+    if (typeof query.confidenceMax === 'number') {
+        params.set('confidence_max', String(query.confidenceMax));
+    }
+    if (typeof query.hasNearby === 'boolean') {
+        params.set('has_nearby', String(query.hasNearby));
+    }
+    if (query.country) params.set('country', query.country);
+    if (query.bbox) params.set('bbox', query.bbox);
+    return params;
+};
+
+export const candidateListQueryToSearch = query => {
+    const params = candidateListQueryToParams(query).toString();
+    return params ? `?${params}` : '';
+};
+
+export const makeCandidatesListURL = query =>
+    `/api/v1/production-locations/candidates/?${candidateListQueryToParams(
+        query,
+        { includePageSize: true },
+    ).toString()}`;
 
 export const makeCandidateDetailURL = osId =>
     `/api/v1/production-locations/${osId}/`;
@@ -170,6 +309,41 @@ export const normalizeCandidateFeatureProperties = properties => {
         }),
         suggestedMatches: [],
         isDetailLoaded: false,
+    };
+};
+
+/**
+ * A list-mode feature (OSDEV-3754) -> the panel's normalized shape plus
+ * the list-only fields: nearbyCount, nearestM, nearest {osId, name,
+ * distanceM} | null, countryCode, coordinates (from centroid). Like a bbox
+ * feature it carries no your_vote, so the panel fetches the detail.
+ */
+export const normalizeCandidateListFeature = feature => {
+    const properties = (feature && feature.properties) || {};
+    const base = normalizeCandidateFeatureProperties(properties);
+    if (!base) return null;
+    const { nearest } = properties;
+    return {
+        ...base,
+        externalId: properties.external_id || null,
+        createdAt: properties.created_at || null,
+        countryCode: properties.country_code || null,
+        nearbyCount: Number(properties.nearby_count || 0),
+        nearestM:
+            typeof properties.nearest_m === 'number'
+                ? properties.nearest_m
+                : null,
+        nearest:
+            nearest && nearest.os_id
+                ? {
+                      osId: nearest.os_id,
+                      name: nearest.name || '',
+                      distanceM:
+                          typeof nearest.distance_m === 'number'
+                              ? nearest.distance_m
+                              : null,
+                  }
+                : null,
     };
 };
 

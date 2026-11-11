@@ -1,6 +1,9 @@
 import {
     CANDIDATE_LAYER_MIN_ZOOM,
+    DEFAULT_CANDIDATE_LIST_QUERY,
     applyVoteToTally,
+    candidateListQueryFromSearch,
+    candidateListQueryToSearch,
     formatBbox,
     formatConfidence,
     formatDistance,
@@ -9,7 +12,10 @@ import {
     getVoteErrorKind,
     makeCandidateVotesURL,
     makeCandidatesBboxURL,
+    makeCandidatesListURL,
     normalizeCandidateFeatureProperties,
+    normalizeCandidateListFeature,
+    normalizeCountryCodes,
     normalizeValidation,
     shouldFetchCandidates,
 } from '../../util/candidates';
@@ -50,6 +56,25 @@ describe('candidates util', () => {
             expect(makeCandidateVotesURL('US2026ABC')).toBe(
                 '/api/v1/production-locations/US2026ABC/candidate-votes/',
             );
+        });
+    });
+
+    describe('normalizeCountryCodes', () => {
+        it('keeps two-letter codes, upper-cased, de-duplicated, in order', () => {
+            expect(normalizeCountryCodes(' us, mx ,us')).toBe('US,MX');
+        });
+
+        it('drops parts that are not two letters rather than sending them', () => {
+            expect(normalizeCountryCodes('USA')).toBe('');
+            expect(normalizeCountryCodes('U.S., vn, 12')).toBe('VN');
+            expect(normalizeCountryCodes('')).toBe('');
+            expect(normalizeCountryCodes(null)).toBe('');
+        });
+
+        it('is applied to a deep link too', () => {
+            expect(
+                candidateListQueryFromSearch('?country=USA,us,mx').country,
+            ).toBe('US,MX');
         });
     });
 
@@ -391,6 +416,151 @@ describe('candidates util', () => {
                 'retired',
             );
             expect(getVoteErrorKind(new Error('network'))).toBe('error');
+        });
+    });
+    describe('list query (OSDEV-3755)', () => {
+        it('parses the page URL into a query and ignores junk', () => {
+            expect(
+                candidateListQueryFromSearch(
+                    '?page=3&sort=-nearest_m&state=disputed,bogus,confirmed' +
+                        '&confidence_min=0.2&confidence_max=1.5' +
+                        '&has_nearby=false&country=us&bbox=-1,-1,1,1',
+                ),
+            ).toEqual({
+                page: 3,
+                sort: '-nearest_m',
+                states: ['disputed', 'confirmed'],
+                confidenceMin: 0.2,
+                confidenceMax: null,
+                hasNearby: false,
+                country: 'US',
+                bbox: '-1,-1,1,1',
+            });
+            expect(
+                candidateListQueryFromSearch('?page=0&sort=name&bbox=1,2,3'),
+            ).toEqual({ ...DEFAULT_CANDIDATE_LIST_QUERY, states: [] });
+            expect(candidateListQueryFromSearch('')).toEqual({
+                ...DEFAULT_CANDIDATE_LIST_QUERY,
+                states: [],
+            });
+        });
+
+        it('round-trips through the search string, leaving defaults out', () => {
+            const query = {
+                ...DEFAULT_CANDIDATE_LIST_QUERY,
+                page: 2,
+                sort: 'confidence',
+                states: ['unverified'],
+                hasNearby: true,
+            };
+            const search = candidateListQueryToSearch(query);
+            expect(search).toBe(
+                '?page=2&sort=confidence&state=unverified&has_nearby=true',
+            );
+            expect(candidateListQueryFromSearch(search)).toEqual(query);
+            expect(
+                candidateListQueryToSearch(DEFAULT_CANDIDATE_LIST_QUERY),
+            ).toBe('');
+        });
+
+        it('builds the API URL with the page and page size', () => {
+            expect(makeCandidatesListURL(DEFAULT_CANDIDATE_LIST_QUERY)).toBe(
+                '/api/v1/production-locations/candidates/?page=1&limit=50',
+            );
+            expect(
+                makeCandidatesListURL({
+                    ...DEFAULT_CANDIDATE_LIST_QUERY,
+                    page: 4,
+                    sort: '-nearby_count',
+                    country: 'US,MX',
+                    bbox: '-95,30,-76,37',
+                }),
+            ).toBe(
+                '/api/v1/production-locations/candidates/' +
+                    '?page=4&limit=50&sort=-nearby_count&country=US%2CMX' +
+                    '&bbox=-95%2C30%2C-76%2C37',
+            );
+        });
+
+        it('keeps a drawn-area-only request in list mode', () => {
+            // `bbox` with nothing but `limit` is the legacy map call
+            // (OSDEV-3249): capped at two degrees, no count, no paging.
+            // The explicit `page` is what makes this a list request.
+            expect(
+                makeCandidatesListURL({
+                    ...DEFAULT_CANDIDATE_LIST_QUERY,
+                    bbox: '-95,30,-76,37',
+                }),
+            ).toBe(
+                '/api/v1/production-locations/candidates/' +
+                    '?page=1&limit=50&bbox=-95%2C30%2C-76%2C37',
+            );
+            // The page URL itself still leaves the default page out.
+            expect(
+                candidateListQueryToSearch({
+                    ...DEFAULT_CANDIDATE_LIST_QUERY,
+                    bbox: '-95,30,-76,37',
+                }),
+            ).toBe('?bbox=-95%2C30%2C-76%2C37');
+        });
+
+        it('normalizes a list feature with the list-only fields', () => {
+            const row = normalizeCandidateListFeature({
+                type: 'Feature',
+                id: 'US2026308ABCDEF',
+                properties: {
+                    os_id: 'US2026308ABCDEF',
+                    confidence: 0.5,
+                    source: 'earth_genome',
+                    state: 'disputed',
+                    tally: { confirmed: 2, not_a_facility: 2 },
+                    centroid: { lat: 33.7, lng: -86.9 },
+                    nearby_count: 2,
+                    nearest_m: 388.2,
+                    nearest: {
+                        os_id: 'US2025292ABCDEF',
+                        name: 'Nearby',
+                        distance_m: 388.2,
+                    },
+                    created_at: '2026-11-04T10:00:00Z',
+                    country_code: 'US',
+                    external_id: 'AL338',
+                },
+            });
+            expect(row).toMatchObject({
+                osId: 'US2026308ABCDEF',
+                confidence: 0.5,
+                externalId: 'AL338',
+                createdAt: '2026-11-04T10:00:00Z',
+                countryCode: 'US',
+                coordinates: { lat: 33.7, lng: -86.9 },
+                nearbyCount: 2,
+                nearestM: 388.2,
+                nearest: {
+                    osId: 'US2025292ABCDEF',
+                    name: 'Nearby',
+                    distanceM: 388.2,
+                },
+                isDetailLoaded: false,
+            });
+            expect(row.validation.state).toBe(CANDIDATE_STATES.DISPUTED);
+            expect(row.validation.tally).toEqual({
+                confirmed: 2,
+                not_a_facility: 2,
+            });
+
+            const alone = normalizeCandidateListFeature({
+                properties: {
+                    os_id: 'US2026308AAAAAA',
+                    nearby_count: 0,
+                    nearest_m: null,
+                    nearest: null,
+                },
+            });
+            expect(alone.nearbyCount).toBe(0);
+            expect(alone.nearestM).toBeNull();
+            expect(alone.nearest).toBeNull();
+            expect(normalizeCandidateListFeature({ properties: {} })).toBeNull();
         });
     });
 });
