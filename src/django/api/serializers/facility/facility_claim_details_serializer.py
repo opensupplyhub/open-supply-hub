@@ -21,6 +21,7 @@ from .facility_claim_review_note_serializer import (
 from .utils import _get_parent_company
 from waffle import switch_is_active
 from api.services.facility_claim_invite_service import CLAIM_INVITE_SWITCH
+from api.services.facility_claim_status_service import get_status_label
 
 
 class FacilityClaimDetailsSerializer(ModelSerializer):
@@ -32,12 +33,15 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
     email = SerializerMethodField()
     attachments = SerializerMethodField()
     claim_invite = SerializerMethodField()
+    status_label = SerializerMethodField()
 
     class Meta:
         model = FacilityClaim
         fields = ('id', 'created_at', 'updated_at', 'claimant_updated_at',
                   'contact_person', 'email',
                   'company_name', 'website', 'facility_description', 'status',
+                  'status_label', 'waiting_on', 'denial_type',
+                  'ai_decision', 'ai_decision_reason',
                   'contributor', 'facility', 'status_change', 'notes',
                   'facility_parent_company', 'job_title', 'linkedin_profile',
                   'claimant_linkedin_profile_url',
@@ -48,6 +52,9 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                   'facility_workers_count', 'facility_name_native_language',
                   'facility_name_english', 'facility_address',
                   'claim_invite')
+
+    def get_status_label(self, claim):
+        return get_status_label(claim)
 
     def get_claim_invite(self, claim):
         # The invite whose claim link this claim was submitted from, so
