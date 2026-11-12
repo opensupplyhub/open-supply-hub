@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { arrayOf, func, number, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 
@@ -6,6 +6,8 @@ import CountryMapCard from './CountryMapCard';
 import { useCountryMapData, useZoomPan } from './hooks';
 import { BINS, binFor, VIEW_WIDTH } from './utils';
 import { fetchCountryOptionsIfNeeded } from '../../actions/filterOptions';
+import { updateCountryFilter } from '../../actions/filters';
+import { fetchFacilities } from '../../actions/facilities';
 
 import '../../styles/css/countryMap.css';
 
@@ -17,9 +19,15 @@ import '../../styles/css/countryMap.css';
  * could cache none of it, because every filter produced a different tile.
  * Behind the `country_map` switch until the search page reads from it.
  */
-const CountryMap = ({ onSelectCountry, height, countryOptions, fetchCountries }) => {
+const CountryMap = ({
+    height,
+    countryOptions,
+    fetchCountries,
+    selectedCodes,
+    selectCountry,
+    clearCountry,
+}) => {
     const svgRef = useRef(null);
-    const [selected, setSelected] = useState(null);
 
     useEffect(() => {
         fetchCountries();
@@ -56,26 +64,28 @@ const CountryMap = ({ onSelectCountry, height, countryOptions, fetchCountries })
         [shapes],
     );
 
+    // Selecting a country sets the country filter, which is what the
+    // sidebar reads. Clicking the country that is already filtered clears
+    // it again, so the map can undo itself.
     const select = useCallback(
         code => {
             if (!byCode[code]) {
                 return;
             }
-            setSelected(code);
-            if (onSelectCountry) {
-                // The search page will use this to filter its list. Nothing
-                // listens yet, so the map stands alone for now.
-                onSelectCountry(code);
+            if (selectedCodes.length === 1 && selectedCodes[0] === code) {
+                clearCountry();
+                return;
             }
+            selectCountry({ value: code, label: names[code] || code });
         },
-        [byCode, onSelectCountry],
+        [byCode, clearCountry, names, selectCountry, selectedCodes],
     );
 
     const handleFind = useCallback(
         event => {
             const code = event.target.value;
             if (!code) {
-                setSelected(null);
+                clearCountry();
                 return;
             }
             select(code);
@@ -84,7 +94,7 @@ const CountryMap = ({ onSelectCountry, height, countryOptions, fetchCountries })
                 focusOn(node.getBBox());
             }
         },
-        [focusOn, select],
+        [clearCountry, focusOn, select],
     );
 
     const sortedCountries = useMemo(
@@ -103,9 +113,14 @@ const CountryMap = ({ onSelectCountry, height, countryOptions, fetchCountries })
         );
     }
 
-    const selectedShape = selected ? shapeByCode[selected] : null;
-    const cardOnLeft =
-        selectedShape && selectedShape.anchor.x >= VIEW_WIDTH / 2;
+    // Every filtered country gets a ring; the card describes the one
+    // country if the filter names exactly one.
+    const ringed = selectedCodes
+        .map(code => shapeByCode[code])
+        .filter(Boolean);
+    const single = selectedCodes.length === 1 ? selectedCodes[0] : null;
+    const singleShape = single ? shapeByCode[single] : null;
+    const cardOnLeft = singleShape && singleShape.anchor.x >= VIEW_WIDTH / 2;
 
     return (
         <div className="country-map" style={height ? { height } : undefined}>
@@ -115,7 +130,7 @@ const CountryMap = ({ onSelectCountry, height, countryOptions, fetchCountries })
                 </label>
                 <select
                     id="country-map-find"
-                    value={selected || ''}
+                    value={single || ''}
                     onChange={handleFind}
                     disabled={loading}
                 >
@@ -212,21 +227,22 @@ const CountryMap = ({ onSelectCountry, height, countryOptions, fetchCountries })
                         );
                     })}
 
-                    {/* Drawn last so the ring sits above neighbouring shapes */}
-                    {selectedShape && (
+                    {/* Drawn last so rings sit above neighbouring shapes */}
+                    {ringed.map(shape_ => (
                         <path
-                            d={selectedShape.path}
+                            key={`ring-${shape_.code}`}
+                            d={shape_.path}
                             className="country-map__selected"
                         />
-                    )}
+                    ))}
                 </svg>
 
-                {selected && (
+                {single && byCode[single] && (
                     <CountryMapCard
-                        countryCode={selected}
-                        name={nameFor(selected)}
-                        summary={byCode[selected]}
-                        onClose={() => setSelected(null)}
+                        countryCode={single}
+                        name={nameFor(single)}
+                        summary={byCode[single]}
+                        onClose={clearCountry}
                         side={cardOnLeft ? 'left' : 'right'}
                     />
                 )}
@@ -276,29 +292,54 @@ const CountryMap = ({ onSelectCountry, height, countryOptions, fetchCountries })
 };
 
 CountryMap.defaultProps = {
-    onSelectCountry: null,
     height: null,
     countryOptions: null,
 };
 
 CountryMap.propTypes = {
-    // Called with an ISO alpha-2 code. The search page will use this to
-    // filter its list; nothing listens until that is wired up.
-    onSelectCountry: func,
     height: number,
-    countryOptions: arrayOf(
-        shape({ value: string, label: string }),
-    ),
+    countryOptions: arrayOf(shape({ value: string, label: string })),
     fetchCountries: func.isRequired,
+    selectedCodes: arrayOf(string).isRequired,
+    selectCountry: func.isRequired,
+    clearCountry: func.isRequired,
 };
 
-function mapStateToProps({ filterOptions: { countries } }) {
-    return { countryOptions: countries.data };
+function mapStateToProps({
+    filterOptions: { countries },
+    filters: { countries: selected },
+}) {
+    return {
+        countryOptions: countries.data,
+        selectedCodes: (selected || []).map(option => option.value),
+    };
 }
 
-function mapDispatchToProps(dispatch) {
+/*
+ * Rerunning the search is the same two steps the sidebar's own search
+ * button takes: update the filters, then put the resulting query string in
+ * the URL. Going through the URL rather than fetching directly keeps the
+ * back button and shareable links working.
+ */
+/*
+ * fetchFacilities already builds the query string from the filters,
+ * requests the results and pushes the new route, which is how the sidebar
+ * and the sort dropdown run a search. Reusing it keeps the map on exactly
+ * the same path as every other way of searching, back button included.
+ */
+function mapDispatchToProps(dispatch, { history: { push } }) {
+    const runSearch = () => dispatch(fetchFacilities({ pushNewRoute: push }));
+
     return {
         fetchCountries: () => dispatch(fetchCountryOptionsIfNeeded()),
+        selectCountry: option => {
+            dispatch(updateCountryFilter([option]));
+            return runSearch();
+        },
+        clearCountry: () => {
+            dispatch(updateCountryFilter([]));
+            return runSearch();
+        },
     };
 }
 

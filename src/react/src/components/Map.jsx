@@ -83,7 +83,9 @@ class Map extends Component {
                 }
             >
                 <Route
-                    render={() => <CountryMap height={this.props.height} />}
+                    render={props => (
+                        <CountryMap {...props} height={this.props.height} />
+                    )}
                 />
             </FeatureFlag>
         );
