@@ -9,6 +9,7 @@ import FacilitiesMap from './FacilitiesMap';
 import FacilitiesMapErrorMessage from './FacilitiesMapErrorMessage';
 import FeatureFlag from './FeatureFlag';
 import VectorTileFacilitiesMap from './VectorTileFacilitiesMap';
+import CountryMap from './CountryMap/CountryMap';
 
 import '../styles/css/Map.css';
 
@@ -23,6 +24,7 @@ import {
     facilityDetailsRoute,
     productionLocationDetailsRoute,
     VECTOR_TILE,
+    COUNTRY_MAP,
     USER_DEFAULT_STATE,
 } from '../util/constants';
 
@@ -65,12 +67,24 @@ class Map extends Component {
             </FeatureFlag>
         );
 
+        // The country map supersedes the tile map where its switch is on.
+        // Falls through to the existing flag chain everywhere else, so the
+        // search page is unchanged until the switch is flipped.
         const renderFacilitiesRoute = () => (
             <FeatureFlag
-                flag={VECTOR_TILE}
-                alternative={<Route component={FacilitiesMap} />}
+                flag={COUNTRY_MAP}
+                alternative={
+                    <FeatureFlag
+                        flag={VECTOR_TILE}
+                        alternative={<Route component={FacilitiesMap} />}
+                    >
+                        <Route component={VectorTileFacilitiesMap} />
+                    </FeatureFlag>
+                }
             >
-                <Route component={VectorTileFacilitiesMap} />
+                <Route
+                    render={() => <CountryMap height={this.props.height} />}
+                />
             </FeatureFlag>
         );
 

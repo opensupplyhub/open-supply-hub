@@ -613,6 +613,7 @@ export const userApiInfoTooltipTitles = Object.freeze({
 export const IS_NOT_SET = 'Is not set';
 export const CLAIM_A_FACILITY = 'claim_a_facility';
 export const VECTOR_TILE = 'vector_tile';
+export const COUNTRY_MAP = 'country_map';
 export const REPORT_A_FACILITY = 'report_a_facility';
 export const EMBEDDED_MAP_FLAG = 'embedded_map';
 export const EXTENDED_PROFILE_FLAG = 'extended_profile';

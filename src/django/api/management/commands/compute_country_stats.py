@@ -6,11 +6,11 @@ from django.utils import timezone
 
 from api.models.country_stats import CountryStats
 from api.models.facility.facility_index import FacilityIndex
+from api.models.contributor.contributor import Contributor
 from api.models.partner_field import PartnerField
 from api.models.facility.partner_contributor_filter import (
     apply_partner_fields_or_filter,
 )
-from api.partner_fields.registry import SystemPartnerFieldRegistry
 
 
 # `is_closed` is null for virtually every row, and `NOT null` is null, so
@@ -126,11 +126,15 @@ class Command(BaseCommand):
         that is recorded, so each field is a DISTINCT over country codes
         rather than a count.
         '''
-        registry = SystemPartnerFieldRegistry()
-        contributor_ids = self.__partner_contributor_ids(registry)
-
         by_country = defaultdict(set)
         for field_name in self.__active_partner_field_names():
+            # Contributors are scoped per field. A partner's ExtendedField
+            # rows only count for the fields that partner actually supplies,
+            # which is what Contributor.partner_fields records. Passing one
+            # global set here would mean every partner vouching for every
+            # field.
+            contributor_ids = self.__contributor_ids_for(field_name)
+
             queryset = apply_partner_fields_or_filter(
                 FacilityIndex.objects.filter(is_closed__isnull=True)
                 | FacilityIndex.objects.filter(is_closed=False),
@@ -155,16 +159,18 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def __partner_contributor_ids(registry):
+    def __contributor_ids_for(field_name):
         '''
-        Contributors whose ExtendedField rows count as partner data. System
-        providers carry their own contributor, so they are collected from
-        the registry rather than hard-coded.
+        Contributors whose ExtendedField rows count as data for this partner
+        field, taken from the same Contributor.partner_fields link the search
+        page uses.
+
+        Empty for the country-scoped system fields and for zone sets, which
+        carry no ExtendedField rows; those are matched by country code and
+        polygon inside the filter instead.
         '''
-        contributor_ids = set()
-        for provider in registry.providers:
-            contributor = getattr(provider, 'contributor', None)
-            contributor_id = getattr(contributor, 'id', None)
-            if contributor_id is not None:
-                contributor_ids.add(contributor_id)
-        return list(contributor_ids)
+        return list(
+            Contributor.objects
+            .filter(partner_fields__name=field_name)
+            .values_list('id', flat=True)
+        )
