@@ -1,11 +1,12 @@
 import React from 'react';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
+import Button from '@material-ui/core/Button';
 import Radio from '@material-ui/core/Radio';
 import Typography from '@material-ui/core/Typography';
 import Select from 'react-select';
 
-import { func, string } from 'prop-types';
+import { func, number, oneOfType, string } from 'prop-types';
 
 import { OARFont, OARColor } from '../util/constants';
 
@@ -57,6 +58,20 @@ const fontOptions = [
     { label: 'Copperplate', value: 'Copperplate,Papyrus,fantasy' },
 ];
 
+// '' is "not set": headings then use the body font.
+const headingFontOptions = [
+    { label: 'Same as body font', value: '' },
+    ...fontOptions,
+];
+
+// '' is "not set": each element keeps its own corner style.
+export const cornerStyleOptions = [
+    { label: 'Default', value: '' },
+    { label: 'Square', value: 0 },
+    { label: 'Slightly rounded', value: 4 },
+    { label: 'Rounded', value: 8 },
+];
+
 const fontSelectStyles = {
     option: (provided, { data }) => ({
         ...provided,
@@ -77,8 +92,17 @@ function EmbeddedMapThemeConfig({
     embedLevel,
     mapStyle,
     setMapStyle,
+    accentColor,
+    setAccentColor,
+    headingFont,
+    setHeadingFont,
+    cornerRadius,
+    setCornerRadius,
 }) {
     const value = fontOptions.find(f => font === f.value) || OARFont;
+    const headingFontValue =
+        headingFontOptions.find(f => headingFont === f.value) ||
+        headingFontOptions[0];
     return (
         <div style={styles.section}>
             <Typography style={styles.sectionHeader}>Theme</Typography>
@@ -174,6 +198,106 @@ function EmbeddedMapThemeConfig({
                     />
                 </div>
             ) : null}
+            {embedLevel === 3 ? (
+                <>
+                    <div style={styles.subsection}>
+                        <Typography style={styles.subsectionHeader}>
+                            Accent Color
+                        </Typography>
+                        <Typography>
+                            If no accent color is chosen, the primary color will
+                            be used.
+                        </Typography>
+                        {errors?.accent_color && (
+                            <Typography style={{ color: 'red' }}>
+                                Error: {errors.accent_color.join(', ')}
+                            </Typography>
+                        )}
+                        <div style={styles.colorContainer}>
+                            <input
+                                type="color"
+                                aria-label="Accent color"
+                                value={accentColor || color}
+                                onChange={e => setAccentColor(e.target.value)}
+                                style={{ marginRight: '10px' }}
+                            />
+                            <Typography>
+                                {accentColor || 'Same as primary color'}
+                            </Typography>
+                            {accentColor ? (
+                                <Button
+                                    onClick={() => setAccentColor('')}
+                                    style={{ marginLeft: '10px' }}
+                                >
+                                    Use primary color
+                                </Button>
+                            ) : null}
+                        </div>
+                    </div>
+                    <div style={styles.subsection}>
+                        <Typography style={styles.subsectionHeader}>
+                            Heading Font
+                        </Typography>
+                        <Typography>
+                            If no heading font is selected, headings will use
+                            the same font as the rest of the map.
+                        </Typography>
+                        {errors?.heading_font && (
+                            <Typography style={{ color: 'red' }}>
+                                Error: {errors.heading_font.join(', ')}
+                            </Typography>
+                        )}
+                        <Select
+                            styles={fontSelectStyles}
+                            options={headingFontOptions}
+                            id="heading-font"
+                            value={headingFontValue}
+                            onChange={item => setHeadingFont(item.value)}
+                            placeholder="Select a heading font"
+                        />
+                    </div>
+                    <div style={styles.subsection}>
+                        <Typography style={styles.subsectionHeader}>
+                            Corner Style
+                        </Typography>
+                        <Typography>
+                            Choose how rounded buttons and inputs are.
+                        </Typography>
+                        {errors?.corner_radius && (
+                            <Typography style={{ color: 'red' }}>
+                                Error: {errors.corner_radius.join(', ')}
+                            </Typography>
+                        )}
+                        <FormControl style={styles.radios}>
+                            {cornerStyleOptions.map(option => (
+                                <FormControlLabel
+                                    key={option.label}
+                                    value={String(option.value)}
+                                    label={option.label}
+                                    style={styles.radioItem}
+                                    control={
+                                        <Radio
+                                            checked={
+                                                String(cornerRadius) ===
+                                                String(option.value)
+                                            }
+                                            onChange={() =>
+                                                setCornerRadius(option.value)
+                                            }
+                                            value={String(option.value)}
+                                            name="corner-style"
+                                            inputProps={{
+                                                'aria-label': option.label,
+                                            }}
+                                            style={styles.radio}
+                                        />
+                                    }
+                                />
+                            ))}
+                        </FormControl>
+                    </div>
+                </>
+            ) : null}
             {embedLevel >= 2 ? (
                 <div style={styles.subsection}>
                     <Typography style={styles.subsectionHeader}>
@@ -225,6 +349,21 @@ EmbeddedMapThemeConfig.propTypes = {
     setColor: func.isRequired,
     font: string.isRequired,
     setFont: func.isRequired,
+    accentColor: string,
+    setAccentColor: func,
+    headingFont: string,
+    setHeadingFont: func,
+    cornerRadius: oneOfType([number, string]),
+    setCornerRadius: func,
+};
+
+EmbeddedMapThemeConfig.defaultProps = {
+    accentColor: '',
+    setAccentColor: () => {},
+    headingFont: '',
+    setHeadingFont: () => {},
+    cornerRadius: '',
+    setCornerRadius: () => {},
 };
 
 export default EmbeddedMapThemeConfig;

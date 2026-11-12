@@ -1,4 +1,5 @@
 import sortBy from 'lodash/sortBy';
+import isNil from 'lodash/isNil';
 
 import { OARFont, DEFAULT_SEARCH_TEXT } from './constants';
 
@@ -23,6 +24,9 @@ export const formatExistingConfig = embedConfig => {
             font: OARFont,
             height: DEFAULT_HEIGHT,
             hideSectorData: true,
+            accentColor: '',
+            headingFont: '',
+            cornerRadius: '',
         };
     }
     return {
@@ -37,6 +41,12 @@ export const formatExistingConfig = embedConfig => {
             : DEFAULT_SEARCH_TEXT,
         mapStyle: embedConfig.map_style ? embedConfig.map_style : 'default',
         hideSectorData: embedConfig.hide_sector_data,
+        // '' means "not set" for all three: the embed keeps its current look.
+        accentColor: embedConfig.accent_color || '',
+        headingFont: embedConfig.heading_font || '',
+        cornerRadius: isNil(embedConfig.corner_radius)
+            ? ''
+            : embedConfig.corner_radius,
     };
 };
 
@@ -101,6 +111,10 @@ const formatEmbedFieldsForServer = fields =>
         column_name: f.columnName,
     }));
 
+// 0 is a real choice (square corners), so only '' and nil mean "not set".
+const formatCornerRadiusForServer = cornerRadius =>
+    cornerRadius === '' || isNil(cornerRadius) ? null : Number(cornerRadius);
+
 const formatWidthForServer = ({ width, fullWidth }) => {
     if (fullWidth) return '100%';
     if (!width || width === '100%') return '';
@@ -116,6 +130,9 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
     text_search_label: embedConfig.textSearchLabel,
     map_style: embedConfig.mapStyle,
     hide_sector_data: embedConfig.hideSectorData,
+    accent_color: embedConfig.accentColor || null,
+    heading_font: embedConfig.headingFont || null,
+    corner_radius: formatCornerRadiusForServer(embedConfig.cornerRadius),
 });
 
 export const getErrorMessage = e => e.response.data || e.message;

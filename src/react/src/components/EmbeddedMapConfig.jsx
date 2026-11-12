@@ -94,6 +94,9 @@ function EmbeddedMapConfig({
         preferContributorName,
         hideSectorData,
         mapStyle,
+        accentColor,
+        headingFont,
+        cornerRadius,
     },
     setEmbedConfig,
     fields,
@@ -193,6 +196,12 @@ function EmbeddedMapConfig({
                         setFont={updateEmbedConfig('font')}
                         mapStyle={mapStyle}
                         setMapStyle={updateEmbedConfig('mapStyle')}
+                        accentColor={accentColor}
+                        setAccentColor={updateEmbedConfig('accentColor')}
+                        headingFont={headingFont}
+                        setHeadingFont={updateEmbedConfig('headingFont')}
+                        cornerRadius={cornerRadius}
+                        setCornerRadius={updateEmbedConfig('cornerRadius')}
                         errors={errors}
                         embedLevel={user.embed_level}
                     />
