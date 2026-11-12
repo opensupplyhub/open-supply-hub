@@ -16,6 +16,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import EmbeddedMapSearchLabelConfig from './EmbeddedMapTextSearchLabelConfig';
+import { DISPLAY_AS_OPTIONS, DISPLAY_AS_TEXT } from '../util/embeddedMap';
 
 const styles = {
     section: {
@@ -74,6 +75,10 @@ const styles = {
     searchable: {
         marginLeft: '15px',
     },
+    displayAs: {
+        marginLeft: '5px',
+        padding: '4px',
+    },
     icon: {
         color: 'rgba(0, 0, 0, 0.38)',
     },
@@ -118,9 +123,10 @@ function EmbeddedMapFieldsConfig({
 }) {
     const updateItem = item => {
         const index = fields.findIndex(f => f.columnName === item.columnName);
+        // Merge, so a change to one option keeps the field's other options.
         const newFields = [
             ...fields.slice(0, index),
-            item,
+            { ...fields[index], ...item },
             ...fields.slice(index + 1),
         ];
         setFields(newFields);
@@ -148,7 +154,15 @@ function EmbeddedMapFieldsConfig({
     };
 
     const renderField = (
-        { visible, displayName, columnName, order, searchable },
+        {
+            visible,
+            displayName,
+            columnName,
+            order,
+            searchable,
+            showInList,
+            displayAs,
+        },
         index,
     ) => (
         <Draggable key={columnName} draggableId={columnName} index={index}>
@@ -248,6 +262,55 @@ function EmbeddedMapFieldsConfig({
                             }
                             style={styles.searchable}
                         />
+                        {userEmbedLevel === 3 ? (
+                            <>
+                                <FormControlLabel
+                                    label="In list"
+                                    control={
+                                        <Checkbox
+                                            checked={!!showInList}
+                                            onChange={e =>
+                                                updateItem({
+                                                    columnName,
+                                                    showInList:
+                                                        e.target.checked,
+                                                })
+                                            }
+                                            value="showInList"
+                                            style={{
+                                                color: visible
+                                                    ? 'rgb(0, 0, 0)'
+                                                    : 'rgba(0, 0, 0, 0.1)',
+                                                paddingRight: '4px',
+                                            }}
+                                            disabled={!visible}
+                                        />
+                                    }
+                                    style={styles.searchable}
+                                />
+                                <select
+                                    aria-label={`Show ${displayName} as`}
+                                    value={displayAs || DISPLAY_AS_TEXT}
+                                    onChange={e =>
+                                        updateItem({
+                                            columnName,
+                                            displayAs: e.target.value,
+                                        })
+                                    }
+                                    disabled={!visible}
+                                    style={styles.displayAs}
+                                >
+                                    {DISPLAY_AS_OPTIONS.map(option => (
+                                        <option
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </>
+                        ) : null}
                         <IconButton
                             className="draggable"
                             style={{ marginLeft: 0 }}

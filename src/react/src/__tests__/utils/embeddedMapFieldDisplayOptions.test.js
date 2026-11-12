@@ -1,0 +1,80 @@
+import {
+    combineEmbedAndNonstandardFields,
+    formatEmbedConfigForServer,
+    formatExistingFields,
+} from '../../util/embeddedMap';
+
+describe('embedded map field display options', () => {
+    const base = { width: '600', fullWidth: false, height: '400' };
+
+    it('reads the display options saved on a field', () => {
+        const [field] = formatExistingFields([
+            {
+                column_name: 'brand_note',
+                display_name: 'Brand note',
+                visible: true,
+                order: 0,
+                searchable: false,
+                show_in_list: true,
+                display_as: 'blurb',
+            },
+        ]);
+
+        expect(field.showInList).toBe(true);
+        expect(field.displayAs).toBe('blurb');
+    });
+
+    it('falls back to "not in the list, shown as text" for older fields', () => {
+        const [field] = formatExistingFields([
+            {
+                column_name: 'parent_company',
+                display_name: 'Parent Company',
+                visible: true,
+                order: 0,
+                searchable: true,
+            },
+        ]);
+
+        expect(field.showInList).toBe(false);
+        expect(field.displayAs).toBe('text');
+    });
+
+    it('gives new nonstandard fields the default display options', () => {
+        const fields = combineEmbedAndNonstandardFields([], ['my_column']);
+
+        expect(fields[0].showInList).toBe(false);
+        expect(fields[0].displayAs).toBe('text');
+    });
+
+    it('sends the display options to the server', () => {
+        const payload = formatEmbedConfigForServer(base, [
+            {
+                columnName: 'project',
+                displayName: 'Initiatives',
+                visible: true,
+                searchable: true,
+                order: 0,
+                showInList: true,
+                displayAs: 'tags',
+            },
+        ]);
+
+        expect(payload.embed_fields[0].show_in_list).toBe(true);
+        expect(payload.embed_fields[0].display_as).toBe('tags');
+    });
+
+    it('sends the defaults when a field has no display options', () => {
+        const payload = formatEmbedConfigForServer(base, [
+            {
+                columnName: 'project',
+                displayName: 'Initiatives',
+                visible: true,
+                searchable: true,
+                order: 0,
+            },
+        ]);
+
+        expect(payload.embed_fields[0].show_in_list).toBe(false);
+        expect(payload.embed_fields[0].display_as).toBe('text');
+    });
+});

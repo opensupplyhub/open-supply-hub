@@ -4,6 +4,15 @@ import isNil from 'lodash/isNil';
 import { OARFont, DEFAULT_SEARCH_TEXT } from './constants';
 
 export const DEFAULT_WIDTH = '1000';
+
+// Must be kept in sync with EmbedField.DISPLAY_AS_CHOICES in
+// django/api/models/embed_field.py
+export const DISPLAY_AS_TEXT = 'text';
+export const DISPLAY_AS_OPTIONS = [
+    { value: DISPLAY_AS_TEXT, label: 'Text' },
+    { value: 'tags', label: 'Tags' },
+    { value: 'blurb', label: 'Blurb' },
+];
 export const DEFAULT_HEIGHT = '800';
 
 const getHeight = embedConfig => (embedConfig.height ? embedConfig.height : '');
@@ -57,6 +66,8 @@ export const formatExistingFields = (fields = []) =>
         visible: field.visible,
         order: field.order,
         searchable: field.searchable,
+        showInList: !!field.show_in_list,
+        displayAs: field.display_as || DISPLAY_AS_TEXT,
     }));
 
 const doesExist = (field, existingFields) =>
@@ -75,6 +86,8 @@ const defaultFormatForNonstandardField = field => ({
     columnName: field,
     displayName: defaultNonstandardFieldLabels[field] || field,
     visible: !!defaultNonstandardFieldLabels[field],
+    showInList: false,
+    displayAs: DISPLAY_AS_TEXT,
 });
 
 const filterAndFormatNonstandardFields = ({
@@ -109,6 +122,8 @@ const formatEmbedFieldsForServer = fields =>
         order: i,
         display_name: f.displayName,
         column_name: f.columnName,
+        show_in_list: !!f.showInList,
+        display_as: f.displayAs || DISPLAY_AS_TEXT,
     }));
 
 // 0 is a real choice (square corners), so only '' and nil mean "not set".
