@@ -4,7 +4,15 @@
  */
 
 export const VIEW_WIDTH = 1000;
-export const VIEW_HEIGHT = 460;
+
+/*
+ * Mercator only keeps its shapes if the vertical scale matches the
+ * horizontal one. The width spans 2*pi radians of longitude over 1000
+ * units, so the height has to be the latitude band's Mercator span over
+ * the same factor. Picking a round number instead squashed every country
+ * by about a third.
+ */
+export const VIEW_HEIGHT = 668;
 
 // Clipped north and south of the populated band so the frame is not mostly
 // empty ocean and ice.

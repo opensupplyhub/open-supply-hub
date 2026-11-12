@@ -96,17 +96,24 @@
     color: var(--osh-ink-3);
 }
 
+/* The pane is usually taller than a world map is, so the map sits in it
+   rather than stretching to fill. Keeping the sea inside the map's own
+   rectangle means the leftover space reads as page, not as empty ocean. */
 .country-map__body {
     position: relative;
     flex: 1;
     min-height: 0;
-    background: var(--osh-sea);
+    display: flex;
+    align-items: center;
+    background: #fff;
 }
 
 .country-map__svg {
     display: block;
     width: 100%;
-    height: 100%;
+    height: auto;
+    max-height: 100%;
+    background: var(--osh-sea);
 }
 
 .country-map__country {
