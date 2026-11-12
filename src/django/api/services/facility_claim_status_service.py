@@ -135,6 +135,16 @@ def _read_review_block(note: str) -> Optional[dict]:
     return review
 
 
+def read_automated_review(note: str) -> Optional[dict]:
+    '''
+    The pipeline's review from a note that carries one, or None. For
+    callers that only read: nothing is logged or recorded.
+    '''
+    if not isinstance(note, str) or AUTOMATED_REVIEW_MARKER not in note:
+        return None
+    return _read_review_block(note)
+
+
 def _parse_automated_review(claim: FacilityClaim, note: str) -> Optional[dict]:
     '''
     The pipeline's review from its note, or None. A note with no marker

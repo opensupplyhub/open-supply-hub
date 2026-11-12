@@ -81,6 +81,26 @@ CLAIMS_AUTOMATION_ACCOUNT_EMAIL = os.getenv(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = (ENVIRONMENT == 'Local')
 
+# The live claim check (OSDEV-3804): right after a claimant submits a
+# claim, the app can ask the claims automation pipeline to review that
+# one claim now instead of waiting for its scheduled run.
+#
+# CLAIMS_LIVE_REVIEW_FUNCTION is the name or ARN of the pipeline's
+# Lambda function. Empty (the default) means the live check is not
+# configured: nothing is called, the claimant is told the check is not
+# available, and the claim waits for a moderator as it always has.
+CLAIMS_LIVE_REVIEW_FUNCTION = os.getenv('CLAIMS_LIVE_REVIEW_FUNCTION', '')
+
+# Local development only: answer live claim checks without calling
+# anything, so the flow can be clicked through without AWS. One of
+# `pass`, `timeout` or `not_pass:<fix>,<fix>` (see
+# api/services/claim_live_check_service.py). Read only when DEBUG is
+# on, which is the Local environment alone, so no deployed environment
+# can turn it on.
+CLAIMS_LIVE_REVIEW_DEV_STUB = (
+    os.getenv('CLAIMS_LIVE_REVIEW_DEV_STUB', '') if DEBUG else ''
+)
+
 VALID_ENVIRONMENTS = ('Production', 'Staging', 'Development', 'Test',
                       'Preprod', 'Rba', 'Local')
 if ENVIRONMENT not in VALID_ENVIRONMENTS:

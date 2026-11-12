@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 from api.models.transactions.index_facilities_new import index_facilities_new
 
@@ -30,6 +31,12 @@ from ...extended_fields import create_extendedfields_for_claim
 from ...services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
+)
+from ...services.claim_live_check_service import (
+    get_live_check_state,
+    is_claim_live_check_active,
+    start_live_check,
+    unavailable_state,
 )
 from ...services.claim_quality_check_service import (
     SOURCE_CLAIMED_DETAILS,
@@ -85,10 +92,15 @@ from ...serializers.facility.edit_pending_claim_serializer import (
     EditPendingClaimSerializer,
     PendingClaimSerializer,
 )
+from ...serializers.facility.facility_claim_live_check_serializer import (
+    FacilityClaimLiveCheckSerializer,
+)
 from ...serializers.facility.facility_create_claim_serializer import (
     validate_claimed_name_or_address,
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
+
+log = logging.getLogger(__name__)
 
 
 # Field groups the claimed-details PUT applies in bulk. get_claimed_details
@@ -872,6 +884,26 @@ class FacilityClaimViewSet(ModelViewSet):
 
         transaction.on_commit(send)
 
+    def __get_owned_claim(self, request, pk, for_update=False, **filters):
+        """
+        Fetch a claim whose contributor is the requesting user,
+        narrowed by any extra `filters`. Anything else, including a
+        claim that exists but belongs to someone else, is a 404, so the
+        endpoint does not leak which claim ids exist. See
+        __get_owned_pending_claim for what for_update does.
+        """
+        try:
+            queryset = FacilityClaim.objects.all()
+            if for_update:
+                queryset = queryset.select_for_update()
+            return queryset.get(
+                pk=pk,
+                contributor=request.user.contributor,
+                **filters,
+            )
+        except (FacilityClaim.DoesNotExist, Contributor.DoesNotExist) as exc:
+            raise NotFound() from exc
+
     def __get_owned_pending_claim(self, request, pk, for_update=False):
         """
         Fetch a claim the requesting user may edit: they are its
@@ -889,17 +921,60 @@ class FacilityClaimViewSet(ModelViewSet):
         only ever the owning claimant racing themselves, so the lock is
         cheap; it is skipped for plain reads.
         """
+        return self.__get_owned_claim(
+            request,
+            pk,
+            for_update=for_update,
+            status=FacilityClaimStatuses.PENDING,
+        )
+
+    @action(detail=True,
+            methods=['GET', 'POST'],
+            url_path='live-check',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def live_check(self, request, pk=None):
+        """
+        The live check of the requesting claimant's own claim
+        (OSDEV-3804). POST asks the claims automation pipeline to
+        review the claim now and returns at once; GET reports where
+        that check stands, and is what the claim form polls. Both
+        return {status, fixes, checks_left}: status is CHECKING, PASSED,
+        NOT_PASSED or UNAVAILABLE, fixes are the keys of the preset
+        lines to show when the claim did not pass, and checks_left is
+        how many more checks the claim may have. Nothing a moderator or
+        the pipeline wrote is returned.
+
+        Only the claim's own contributor may call it; anyone else gets
+        a 404, as does everyone while the claim_live_check switch is
+        off. A claim keeps this endpoint after it is decided, so a
+        claimant whose claim was just approved can read that.
+
+        The check must never cost a claimant their submission, which
+        is already saved by the time this is called. Any failure in
+        here is logged and answered as UNAVAILABLE rather than a 500.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+        if not is_claim_live_check_active():
+            raise NotFound()
+
+        starting = request.method == 'POST'
         try:
-            queryset = FacilityClaim.objects.all()
-            if for_update:
-                queryset = queryset.select_for_update()
-            return queryset.get(
-                pk=pk,
-                contributor=request.user.contributor,
-                status=FacilityClaimStatuses.PENDING,
-            )
-        except (FacilityClaim.DoesNotExist, Contributor.DoesNotExist) as exc:
-            raise NotFound() from exc
+            with transaction.atomic():
+                claim = self.__get_owned_claim(
+                    request, pk, for_update=starting
+                )
+                state = (
+                    start_live_check(claim) if starting
+                    else get_live_check_state(claim)
+                )
+        except NotFound:
+            raise
+        except Exception:
+            log.exception('Live claim check failed for claim %s.', pk)
+            state = unavailable_state()
+
+        return Response(FacilityClaimLiveCheckSerializer(state).data)
 
     @transaction.atomic
     @action(detail=True,
