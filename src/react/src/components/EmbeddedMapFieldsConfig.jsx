@@ -85,6 +85,12 @@ const styles = {
         flexWrap: 'wrap',
         margin: '-4px 0 10px 48px',
     },
+    columnName: {
+        fontFamily: 'monospace',
+        fontSize: '12px',
+        color: 'rgba(0, 0, 0, 0.6)',
+        overflowWrap: 'anywhere',
+    },
     hasData: {
         marginLeft: '10px',
         padding: '1px 8px',
@@ -314,6 +320,9 @@ function EmbeddedMapFieldsConfig({
                             </IconButton>
                         )}
                         <div style={styles.fieldOptions}>
+                            <span style={styles.columnName}>
+                                Column: {columnName}
+                            </span>
                             {hasData === true ? (
                                 <span style={styles.hasData}>In your data</span>
                             ) : null}
