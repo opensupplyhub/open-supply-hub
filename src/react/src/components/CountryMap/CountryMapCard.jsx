@@ -68,9 +68,9 @@ const CountryMapCard = ({ countryCode, name, summary, onClose, side }) => {
                                     {visiblePartners.map(partner => (
                                         <span
                                             className="country-map__chip"
-                                            key={partner}
+                                            key={partner.name}
                                         >
-                                            {partner}
+                                            {partner.label}
                                         </span>
                                     ))}
                                 </div>

@@ -5,6 +5,7 @@ from rest_framework.status import HTTP_404_NOT_FOUND
 from rest_framework.viewsets import ViewSet
 
 from api.models.country_stats import CountryStats
+from api.models.partner_field import PartnerField
 
 
 # The rollup is rebuilt once a day, so a shared cache for an hour costs
@@ -70,6 +71,30 @@ class CountryStatsViewSet(ViewSet):
             'country_code': row.country_code,
             'location_count': row.location_count,
             'sectors': row.sectors,
-            'partner_fields': row.partner_fields,
+            'partner_fields': self.__labelled(row.partner_fields),
             'computed_at': row.computed_at,
         })
+
+    @staticmethod
+    def __labelled(field_names):
+        '''
+        The rollup stores partner field names, which are snake_case and not
+        meant for reading. Resolve them to the labels the admin maintains so
+        callers do not have to keep their own copy of that mapping.
+
+        A field with no label set falls back to a readable form of its name
+        rather than showing the raw value.
+        '''
+        labels = dict(
+            PartnerField.objects
+            .filter(name__in=field_names)
+            .values_list('name', 'label')
+        )
+
+        return [
+            {
+                'name': name,
+                'label': labels.get(name) or name.replace('_', ' ').title(),
+            }
+            for name in field_names
+        ]
