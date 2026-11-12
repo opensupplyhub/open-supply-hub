@@ -1,0 +1,1 @@
+{% autoescape off %}{{ sender_name }} invited you to join {{ organization_name }} on OS Hub{% endautoescape %}

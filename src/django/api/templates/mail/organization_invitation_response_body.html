@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            {{ invitee_email }} {{ response_label }} your invitation to {{ organization_name }}
+        </title>
+    </head>
+    <body>
+        <p>
+            Hello,
+        </p>
+        <p>
+            {{ invitee_email }} {{ response_label }} your invitation to join the organization
+            <strong>{{ organization_name }}</strong> on Open Supply Hub (OS Hub).
+        </p>
+        {% if accepted %}
+        <p>
+            They are now a member, and the lists, contributions and claims they have
+            submitted appear in the organization's views.
+        </p>
+        {% else %}
+        <p>
+            Their seat is free again, and you can invite someone else.
+        </p>
+        {% endif %}
+        <p>
+            <a href="{{ organization_url }}">Manage your organization</a>
+        </p>
+        <p>
+            Best Regards,
+        </p>
+        {% include "mail/signature_block.html" %}
+    </body>
+</html>

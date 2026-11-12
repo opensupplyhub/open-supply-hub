@@ -384,7 +384,12 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             contributor_name = MASKED_CONTRIBUTOR_LABEL
         elif (created_from_info['contributor_name'] is not None
                 and display_detail):
-            contributor_name = created_from_info['contributor_name']
+            # A contribution recorded against an organization is shown
+            # under the organization's name.
+            contributor_name = (
+                created_from_info.get('organization_name')
+                or created_from_info['contributor_name']
+            )
         else:
             if created_from_info['contrib_type'] is not None:
                 name = prefix_a_an(created_from_info['contrib_type'])

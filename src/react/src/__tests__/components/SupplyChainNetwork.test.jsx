@@ -24,6 +24,19 @@ const anotherPublicContributor = {
     name: 'Global Auditors Inc',
 };
 
+// A contribution recorded against an organization: the organization's
+// name, and no profile id to link to.
+const organizationContributor = {
+    id: null,
+    is_organization: true,
+    contributor_name: 'Brand Group',
+    contributor_type: 'Brand / Retailer',
+    list_name: 'Brand Group Suppliers',
+    is_verified: false,
+    count: 1,
+    name: 'Brand Group (Brand Group Suppliers)',
+};
+
 const nonPublicContributor = {
     contributor_type: 'Civil Society Organization',
     count: 3,
@@ -100,6 +113,21 @@ describe('SupplyChainNetwork section', () => {
 
         expect(screen.getByText('Acme Brands')).toBeInTheDocument();
         expect(screen.getByText('Global Auditors Inc')).toBeInTheDocument();
+    });
+
+    test('renders an organization by name without a profile link', () => {
+        renderSection([organizationContributor, publicContributor]);
+
+        expect(screen.getByText('Brand Group')).toBeInTheDocument();
+        expect(
+            screen.queryByRole('link', { name: 'Brand Group' }),
+        ).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: 'Acme Brands' }),
+        ).toHaveAttribute('href', '/profile/1');
+        expect(
+            screen.getByRole('button', { name: /View all 2 data sources/i }),
+        ).toBeInTheDocument();
     });
 
     test('renders public contributors grouped by contributor type', () => {
@@ -224,6 +252,16 @@ describe('SupplyChainNetworkDrawer', () => {
         expect(
             screen.getAllByText('Acme Brands').length,
         ).toBeGreaterThanOrEqual(1);
+    });
+
+    test('shows an organization and its list without a profile link', () => {
+        openDrawer([organizationContributor]);
+
+        expect(screen.getAllByText('Brand Group').length).toBeGreaterThan(0);
+        expect(screen.getByText('Brand Group Suppliers')).toBeVisible();
+        expect(
+            screen.queryByRole('link', { name: 'Brand Group' }),
+        ).not.toBeInTheDocument();
     });
 
     test('shows contributor type label for public contributors', () => {

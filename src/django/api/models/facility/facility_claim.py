@@ -493,9 +493,29 @@ class FacilityClaim(models.Model):
         help_text=('When the claimant last updated this claim or its '
                    'attachments through the pending-claim edit flow.'))
 
+    organization = models.ForeignKey(
+        'Organization',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        # Indexed by the partial index in Meta, built concurrently.
+        db_index=False,
+        help_text=('The organization the contributor belonged to when the '
+                   'claim was filed. Recorded for members only and kept '
+                   'when the member leaves.'))
+
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source']
     )
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['organization'],
+                name='api_facilityclaim_org_idx',
+                condition=models.Q(organization__isnull=False),
+            ),
+        ]
 
     default_change_includes = (
         'facility_name_english',

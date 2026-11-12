@@ -2,7 +2,7 @@ import logging
 import json
 
 from django.conf import settings
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from opensearchpy.exceptions import \
     ConnectionError, NotFoundError, AuthorizationException
@@ -18,6 +18,10 @@ from api.models.facility.facility_activity_report import FacilityActivityReport
 from api.models.facility.facility_location import FacilityLocation
 from api.models.facility.facility_alias import FacilityAlias
 from api.models.moderation_event import ModerationEvent
+from api.models.source import Source
+from api.services.organization_service import (
+    get_organization_id_for_contributor,
+)
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -162,6 +166,36 @@ for model in [
     FacilityLocation
 ]:
     post_save.connect(set_origin_source_on_create, sender=model)
+
+
+def set_organization_on_create(instance, raw=False, **kwargs):
+    """
+    Record which organization a new contribution is made for.
+
+    A source, moderation event or claim created by a contributor whose
+    user is an active member of an organization is recorded against
+    that organization. Runs before the insert, so it adds no extra
+    write, and does nothing for non-members, for rows that already name
+    an organization, and while the organization_level switch is off.
+    """
+    if raw or not instance._state.adding:
+        return
+    if instance.organization_id is not None:
+        return
+
+    organization_id = get_organization_id_for_contributor(
+        instance.contributor_id
+    )
+    if organization_id is not None:
+        instance.organization_id = organization_id
+
+
+for model in [Source, ModerationEvent, FacilityClaim]:
+    pre_save.connect(
+        set_organization_on_create,
+        sender=model,
+        dispatch_uid='set_organization_on_create_{}'.format(model.__name__),
+    )
 
 
 @receiver(

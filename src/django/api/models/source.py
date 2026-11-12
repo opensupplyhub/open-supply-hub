@@ -70,8 +70,29 @@ class Source(models.Model):
         max_length=200,
         help_text="The environment value where instance running"
     )
+    organization = models.ForeignKey(
+        'Organization',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        # Indexed by the partial index in Meta, built concurrently.
+        db_index=False,
+        help_text=('The organization the contributor belonged to when the '
+                   'data was submitted. Recorded for members only, kept '
+                   'when the member leaves, and never used for public '
+                   'attribution.')
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['organization'],
+                name='api_source_org_idx',
+                condition=models.Q(organization__isnull=False),
+            ),
+        ]
 
     @property
     def display_name(self):

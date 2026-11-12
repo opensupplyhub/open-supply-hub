@@ -13,6 +13,10 @@ from django.core import exceptions
 
 from ...models import Contributor, FacilityClaim, User, FacilityDownloadLimit
 from ..embed_config import EmbedConfigSerializer
+from ...services.organization_service import (
+    get_active_membership,
+    is_organization_level_active,
+)
 
 
 class UserSerializer(ModelSerializer):
@@ -28,6 +32,7 @@ class UserSerializer(ModelSerializer):
     claimed_facility_ids = SerializerMethodField()
     embed_level = SerializerMethodField()
     allowed_records_number = SerializerMethodField()
+    organization = SerializerMethodField()
 
     class Meta:
         model = User
@@ -147,3 +152,23 @@ class UserSerializer(ModelSerializer):
             return limit.free_download_records + limit.paid_download_records
         except FacilityDownloadLimit.DoesNotExist:
             return FacilitiesDownloadSettings.FREE_FACILITIES_DOWNLOAD_LIMIT
+
+    def get_organization(self, user):
+        """
+        The organization the user belongs to and their role in it, or
+        None. Read-only, and always None while the organization_level
+        switch is off.
+        """
+        if not user.pk or not is_organization_level_active():
+            return None
+
+        membership = get_active_membership(user)
+        if membership is None:
+            return None
+
+        return {
+            'uuid': membership.organization.uuid,
+            'name': membership.organization.name,
+            'role': membership.role,
+            'dashboard_enabled': membership.organization.dashboard_enabled,
+        }

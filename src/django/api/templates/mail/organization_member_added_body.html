@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            You were added to {{ organization_name }} on OS Hub
+        </title>
+    </head>
+    <body>
+        <p>
+            Hello,
+        </p>
+        <p>
+            The Open Supply Hub (OS Hub) team added you to the organization
+            <strong>{{ organization_name }}</strong> as {{ role_label }}.
+        </p>
+        {% if is_admin %}
+        <p>
+            As an Admin you can invite other people who already have an OS Hub account,
+            change their roles and remove members.
+        </p>
+        {% endif %}
+        <p>
+            Nothing about your own account changes: you keep your login, your contributor
+            profile and the way your data is shown publicly. The organization can see the
+            lists, contributions and claims you have submitted, including the ones you
+            submitted before joining.
+        </p>
+        <p>
+            <a href="{{ organization_url }}">Open your organization</a>
+        </p>
+        <p>
+            Best Regards,
+        </p>
+        {% include "mail/signature_block.html" %}
+    </body>
+</html>

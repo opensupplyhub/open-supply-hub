@@ -371,6 +371,8 @@ export const dashboardApiBlocksRoute = '/dashboard/apiblocks';
 export const dashboardApiBlockRoute = '/dashboard/apiblocks/:blockId';
 export const dashboardClaimsRoute = '/dashboard/claims';
 export const dashboardClaimsV2Route = '/dashboard/claims-v2';
+export const organizationRoute = '/organization';
+export const organizationDashboardRoute = '/organization/dashboard';
 export const dashboardModerationQueueRoute = '/dashboard/moderation-queue';
 export const dashboardContributionRecordRoute =
     '/dashboard/moderation-queue/:moderationID';
@@ -620,6 +622,9 @@ export const ENABLE_PRODUCTION_LOCATION_PAGE =
     'enable_production_location_page';
 export const ENABLE_MODERATION_PAUSE_INFO = 'enable_moderation_pause_info';
 export const ENABLE_CLAIMS_V2_DASHBOARD = 'enable_claims_v2_dashboard';
+// Gates the organization level: the My Organization page and its link
+// in the account menu, its endpoints and the organization dashboard page.
+export const ORGANIZATION_LEVEL_FLAG = 'organization_level';
 export const ENABLE_CLAIM_NAME_ADDRESS_EDIT = 'enable_claim_name_address_edit';
 // "Send them a link to claim" on unclaimed production location profiles.
 export const CLAIM_INVITE = 'claim_invite';

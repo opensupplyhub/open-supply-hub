@@ -7,7 +7,10 @@ import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom';
 
 import SupplyChainNetworkDrawer from './SupplyChainNetworkDrawer/SupplyChainNetworkDrawer';
-import { makeProfileRouteLink } from '../../../../util/util';
+import {
+    getPublicContributorKey,
+    makeProfileRouteLink,
+} from '../../../../util/util';
 import { pluralizeContributorType } from './utils';
 import { useDrawerOpen, useDerivedContributors } from './hooks';
 import supplyChainStyles from './styles';
@@ -63,15 +66,25 @@ const SupplyChain = ({ classes, contributors = [] }) => {
                     data-testid="supply-chain-contributor-list"
                 >
                     {visiblePublicContributors.map(contributor => (
-                        <Grid item key={contributor.id}>
-                            <Link
-                                to={makeProfileRouteLink(contributor.id)}
-                                className={classes.contributorLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {contributor.contributor_name}
-                            </Link>
+                        <Grid item key={getPublicContributorKey(contributor)}>
+                            {contributor.id ? (
+                                <Link
+                                    to={makeProfileRouteLink(contributor.id)}
+                                    className={classes.contributorLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {contributor.contributor_name}
+                                </Link>
+                            ) : (
+                                // An organization has no profile to link to.
+                                <Typography
+                                    className={classes.contributorName}
+                                    component="span"
+                                >
+                                    {contributor.contributor_name}
+                                </Typography>
+                            )}
                         </Grid>
                     ))}
                 </Grid>

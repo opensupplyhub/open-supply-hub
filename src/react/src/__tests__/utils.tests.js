@@ -114,6 +114,8 @@ const {
     facilityListSummaryStatusMessages,
     FACILITIES_REQUEST_PAGE_SIZE,
     CLAIM_A_FACILITY,
+    ORGANIZATION_LEVEL_FLAG,
+    organizationRoute,
     componentsWithErrorMessage,
 } = require('../util/constants');
 
@@ -2103,6 +2105,36 @@ it('should return an array with claimed facility link if active feature flag is 
     });
 });
 
+it('should return an array with the organization link if the organization level is switched on', () => {
+    const user = { is_superuser: false };
+    const logoutAction = jest.fn();
+    const activeFeatureFlags = [CLAIM_A_FACILITY, ORGANIZATION_LEVEL_FLAG];
+
+    const result = createUserDropdownLinks(user, logoutAction, activeFeatureFlags);
+
+    expect(result.map(link => link.label)).toEqual([
+        'My Facilities',
+        'My Organization',
+        'My Lists',
+        'Settings',
+        'Log Out',
+    ]);
+    expect(result).toContainEqual({
+        label: 'My Organization',
+        href: organizationRoute,
+    });
+});
+
+it('should return an array without the organization link if the organization level is switched off', () => {
+    const user = { is_superuser: false };
+    const logoutAction = jest.fn();
+    const activeFeatureFlags = [CLAIM_A_FACILITY];
+
+    const result = createUserDropdownLinks(user, logoutAction, activeFeatureFlags);
+
+    expect(result.map(link => link.label)).not.toContain('My Organization');
+});
+
 it('extracts the ID from a valid URL without a trailing slash', () => {
     const url = '/contribute/single-location/search/id/BD202034606B9SA';
     expect(getLastPathParameter(url)).toBe('BD202034606B9SA');
@@ -3451,5 +3483,73 @@ describe('hasEmbeddedSeparator', () => {
         ['spaced', 'Assembly | Cut'],
     ])('returns true when a label contains a %s vertical bar', (_, label) => {
         expect(hasEmbeddedSeparator([{ label, value: label }])).toBe(true);
+    });
+});
+
+describe('public contributor entries for organizations', () => {
+    const {
+        isPublicContributor,
+        getPublicContributorKey,
+    } = require('../util/util');
+
+    const organizationEntry = overrides => ({
+        id: null,
+        is_organization: true,
+        contributor_name: 'Brand',
+        contributor_type: 'Brand / Retailer',
+        ...overrides,
+    });
+
+    it('treats an entry with an id or the organization mark as public', () => {
+        expect(isPublicContributor({ id: 7 })).toBe(true);
+        expect(isPublicContributor(organizationEntry())).toBe(true);
+        expect(isPublicContributor({ name: '2 Others', count: 2 })).toBe(false);
+        expect(isPublicContributor({ id: null })).toBe(false);
+    });
+
+    it('identifies a contributor by id and an organization by name', () => {
+        expect(getPublicContributorKey({ id: 7, contributor_name: 'A' })).toBe(7);
+        expect(getPublicContributorKey(organizationEntry())).toBe(
+            'organization:Brand',
+        );
+    });
+
+    it('keeps an organization among the public contributors and merges its lists', () => {
+        const result = splitContributorsIntoPublicAndNonPublic([
+            organizationEntry({
+                name: 'Brand (List One)',
+                list_name: 'List One',
+                list_uploaded_at: '2024-01-01T00:00:00Z',
+                last_contributed_at: '2024-01-01T00:00:00Z',
+            }),
+            organizationEntry({
+                name: 'Brand (List Two)',
+                list_name: 'List Two',
+                list_uploaded_at: '2024-02-01T00:00:00Z',
+                last_contributed_at: '2024-02-01T00:00:00Z',
+            }),
+            { name: '2 Others', contributor_type: 'Other', count: 2 },
+        ]);
+
+        expect(result.publicContributors).toHaveLength(1);
+        expect(result.publicContributors[0].contributor_name).toBe('Brand');
+        expect(result.publicContributors[0].id).toBeNull();
+        expect(result.publicContributors[0].lists).toEqual([
+            { name: 'List One', uploaded_at: '2024-01-01T00:00:00Z' },
+            { name: 'List Two', uploaded_at: '2024-02-01T00:00:00Z' },
+        ]);
+        expect(result.nonPublicContributors).toHaveLength(1);
+    });
+
+    it('keeps two organizations and a contributor apart', () => {
+        const result = splitContributorsIntoPublicAndNonPublic([
+            organizationEntry(),
+            organizationEntry({ contributor_name: 'Rival' }),
+            { id: 7, contributor_name: 'Brand' },
+        ]);
+
+        expect(
+            result.publicContributors.map(getPublicContributorKey),
+        ).toEqual(['organization:Brand', 'organization:Rival', 7]);
     });
 });

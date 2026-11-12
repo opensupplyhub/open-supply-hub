@@ -27,6 +27,26 @@ SIMPLE_HISTORY_IGNORE_FIELDS = {
 }
 
 
+def source_contributor_name(source):
+    """
+    The name a source's contribution is shown under: the organization it
+    was recorded against, or else its contributor.
+    """
+    if source.organization_id is not None:
+        return source.organization.name
+    return source.contributor.name if source.contributor else '[Unknown]'
+
+
+def claim_contributor_name(claim):
+    """
+    The name a claim is shown under: the organization it was recorded
+    against, or else its contributor.
+    """
+    if claim.organization_id is not None:
+        return claim.organization.name
+    return claim.contributor.name
+
+
 def anonymous_source_name(source):
     s = prefix_a_an(source.contributor.contrib_type)
     return s[0].lower() + s[1:]
@@ -60,8 +80,7 @@ def create_associate_match_entry_detail(match, facility_id,
                                         user_can_see_detail):
     source = match.facility_list_item.source
     if user_can_see_detail:
-        contrib_name = \
-            source.contributor.name if source.contributor else '[Unknown]'
+        contrib_name = source_contributor_name(source)
         list_name = \
             source.facility_list.name if source.facility_list else None
     else:
@@ -99,8 +118,7 @@ def create_dissociate_match_entry_detail(match, facility_id,
                                          user_can_see_detail):
     source = match.facility_list_item.source
     if user_can_see_detail:
-        contrib_name = \
-            source.contributor.name if source.contributor else '[Unknown]'
+        contrib_name = source_contributor_name(source)
         list_name = \
             source.facility_list.name if source.facility_list else None
     else:
@@ -119,8 +137,7 @@ def create_dissociate_inactive_item_detail(facility_list_item,
                                            user_can_see_detail):
     source = facility_list_item.source
     if user_can_see_detail:
-        contrib_name = \
-            source.contributor.name if source.contributor else '[Unknown]'
+        contrib_name = source_contributor_name(source)
         list_name = \
             source.facility_list.name if source.facility_list else None
     else:
@@ -313,7 +330,7 @@ def create_facility_claim_entry(claim):
             'action': FacilityHistoryActions.CLAIM_REVOKE,
             'detail': 'Claim on facility {} by {} was revoked'.format(
                 claim.facility.id,
-                claim.contributor.name,
+                claim_contributor_name(claim),
             ),
         }
 
@@ -324,7 +341,7 @@ def create_facility_claim_entry(claim):
             'action': FacilityHistoryActions.CLAIM,
             'detail': 'Facility {} was claimed by {}'.format(
                 claim.facility.id,
-                claim.contributor.name,
+                claim_contributor_name(claim),
             ),
         }
 

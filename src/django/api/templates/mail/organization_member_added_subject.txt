@@ -1,0 +1,1 @@
+{% autoescape off %}You were added to {{ organization_name }} on OS Hub{% endautoescape %}

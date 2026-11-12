@@ -1,0 +1,15 @@
+{% autoescape off %}{% block content %}
+Hello,
+
+{{ invitee_email }} {{ response_label }} your invitation to join the organization "{{ organization_name }}" on Open Supply Hub (OS Hub).
+{% if accepted %}
+They are now a member, and the lists, contributions and claims they have submitted appear in the organization's views.
+{% else %}
+Their seat is free again, and you can invite someone else.
+{% endif %}
+Manage your organization here: {{ organization_url }}
+
+Best Regards,
+
+{% include "mail/signature_block.txt" %}
+{% endblock content %}{% endautoescape %}

@@ -4,7 +4,10 @@ import ListIcon from '@material-ui/icons/List';
 import { Link } from 'react-router-dom';
 import { withStyles } from '@material-ui/core/styles';
 
-import { makeProfileRouteLink } from '../../../../../../util/util';
+import {
+    getPublicContributorKey,
+    makeProfileRouteLink,
+} from '../../../../../../util/util';
 import ContributionDate from '../../../../Shared/ContributionDate/ContributionDate';
 import { UPLOADED_VIA_LIST_LABEL, LAST_CONTRIBUTED_LABEL } from './constants';
 import publicContributorsSectionStyles from './styles';
@@ -13,15 +16,28 @@ const PublicContributorsSection = ({ classes, publicContributors }) => (
     <>
         <div className={classes.contributorList}>
             {publicContributors.map(contributor => (
-                <div key={contributor.id} className={classes.contributorEntry}>
-                    <Link
-                        to={makeProfileRouteLink(contributor.id)}
-                        className={classes.contributorName}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        {contributor.contributor_name}
-                    </Link>
+                <div
+                    key={getPublicContributorKey(contributor)}
+                    className={classes.contributorEntry}
+                >
+                    {contributor.id ? (
+                        <Link
+                            to={makeProfileRouteLink(contributor.id)}
+                            className={classes.contributorName}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {contributor.contributor_name}
+                        </Link>
+                    ) : (
+                        // An organization has no profile to link to.
+                        <Typography
+                            className={classes.contributorNameText}
+                            component="span"
+                        >
+                            {contributor.contributor_name}
+                        </Typography>
+                    )}
                     {contributor.contributor_type && (
                         <Typography
                             className={classes.contributorType}
@@ -45,7 +61,9 @@ const PublicContributorsSection = ({ classes, publicContributors }) => (
                     ) : (
                         contributor.lists.map(list => (
                             <div
-                                key={`${contributor.id}-${list.name}`}
+                                key={`${getPublicContributorKey(contributor)}-${
+                                    list.name
+                                }-${list.uploaded_at}`}
                                 className={classes.listEntry}
                             >
                                 <Typography
