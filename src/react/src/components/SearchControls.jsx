@@ -13,6 +13,8 @@ import { fetchFacilities } from '../actions/facilities';
 
 import { facilitiesRoute, mapRoute } from '../util/constants';
 
+import { embedButtonCornerStyle } from '../util/embeddedMap';
+
 const zoomStyles = theme =>
     Object.freeze({
         controlsStyle: Object.freeze({
@@ -39,6 +41,7 @@ const zoomStyles = theme =>
         areaStyle: Object.freeze({
             fontWeight: 400,
             borderRadius: 0,
+            ...embedButtonCornerStyle(theme),
             background: 'white',
             '&:hover': {
                 background: 'white',

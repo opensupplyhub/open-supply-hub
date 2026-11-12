@@ -12,6 +12,7 @@ import {
     makeNestedSelectFilterStyles,
     makeSelectFilterStyles,
 } from '../../util/styles';
+import { themeEmbedStyle } from '../../util/embeddedMap';
 import { useExpandedGroups, useMenuState } from '../../util/hooks';
 
 const NestedSelect = ({
@@ -24,9 +25,17 @@ const NestedSelect = ({
     isSideBarSearch,
     windowWidth,
     onMenuOpen: onMenuOpenProp,
+    // Taken out of `rest` so it is not passed to react-select, which has a
+    // `theme` prop of its own.
+    theme,
     ...rest
 }) => {
-    const selectFilterStyles = makeSelectFilterStyles(windowWidth);
+    const selectFilterStyles = makeSelectFilterStyles(
+        windowWidth,
+        undefined,
+        undefined,
+        themeEmbedStyle(theme).cornerRadius,
+    );
     const nestedSelectFilterStyles = makeNestedSelectFilterStyles;
     const combinedStyles = {
         ...selectFilterStyles,
@@ -150,5 +159,5 @@ function mapStateToProps({
 }
 
 export default connect(mapStateToProps)(
-    withStyles(makeFilterStyles)(NestedSelect),
+    withStyles(makeFilterStyles, { withTheme: true })(NestedSelect),
 );

@@ -1,3 +1,4 @@
+import isNil from 'lodash/isNil';
 import { OARColor, HEADER_HEIGHT } from './constants';
 import { embedCornerStyle, embedHeadingFont } from './embeddedMap';
 import COLOURS from './COLOURS';
@@ -251,7 +252,12 @@ export const makeFilterMultiValueChipStyles = (origin = null) =>
         }),
     });
 
-export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
+export const makeSelectFilterStyles = (
+    windowWidth,
+    origin,
+    color = OARColor,
+    cornerRadius = null,
+) =>
     Object.freeze({
         multiValue: Object.freeze((provided, state) => {
             const backgroundColor = multiValueBackgroundHandler(
@@ -282,7 +288,7 @@ export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
             const isInUse = state.isFocused || state.menuIsOpen;
             return {
                 ...provided,
-                borderRadius: 0,
+                borderRadius: isNil(cornerRadius) ? 0 : `${cornerRadius}px`,
                 '*': {
                     boxShadow: 'none !important',
                 },
@@ -1894,7 +1900,7 @@ export const filterSidebarHeaderStyles = theme =>
             fontSize: '44px',
             margin: 0,
             lineHeight: '48px',
-            fontFamily: theme.typography.fontFamily,
+            fontFamily: embedHeadingFont(theme),
         }),
         numberResults: Object.freeze({
             fontWeight: 800,
