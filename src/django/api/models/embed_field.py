@@ -45,6 +45,11 @@ class EmbedField(models.Model):
         default=False,
         help_text='Whether or not to include this field in search.'
     )
+    filterable = models.BooleanField(
+        default=False,
+        help_text='Whether or not to offer this field as a filter on the '
+                  'embedded map. Only applies to visible fields.'
+    )
     show_in_list = models.BooleanField(
         default=False,
         help_text='Whether or not to also display this field on the '

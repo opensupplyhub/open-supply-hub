@@ -12,6 +12,7 @@ from api.os_id import string_matches_os_id_format
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
+from api.services.embed_field_filters import apply_embed_filters
 from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 
@@ -250,6 +251,8 @@ class FacilityManager(models.Manager):
 
         from .facility import Facility
         facilities_qs = Facility.objects.filter(id__in=facility_ids)
+
+        facilities_qs = apply_embed_filters(facilities_qs, params)
 
         return facilities_qs
 

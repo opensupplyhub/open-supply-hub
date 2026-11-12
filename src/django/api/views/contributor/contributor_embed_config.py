@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from ...models import Contributor
 from ...serializers import EmbedConfigSerializer
+from ...services.embed_field_filters import embed_filter_options
 
 
 @api_view(['GET'])
@@ -19,6 +20,9 @@ def contributor_embed_config(_, pk=None):
                 'Embedded map is not configured for provided contributor.'
             )
         embed_config = EmbedConfigSerializer(contributor.embed_config).data
+        # The values a visitor can pick for each field the contributor has
+        # made filterable.
+        embed_config['filter_options'] = embed_filter_options(contributor)
         return Response(embed_config)
     except Contributor.DoesNotExist as exc:
         raise ValidationError('Contributor not found.') from exc
