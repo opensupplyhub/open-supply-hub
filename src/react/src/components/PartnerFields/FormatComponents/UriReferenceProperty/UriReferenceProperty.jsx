@@ -3,7 +3,8 @@ import { string, object, shape } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { getDescription, getAbsoluteUri, getDisplayLinkText } from './utils';
-import { getLinkTextFromSchema } from '../../utils';
+import { getLinkTextFromSchema, getTitleFromSchema } from '../../utils';
+import PartnerFieldLabel from '../../PartnerFieldLabel/PartnerFieldLabel';
 import { commonPropertyStyles } from '../../styles';
 import { sendLocationPartnerExternalLinkClick } from '../../../../util/analytics/gaCustomEvents';
 import useViewerUserIdForAnalytics from '../../../../util/analytics/hooks';
@@ -26,6 +27,14 @@ const UriReferenceProperty = ({
     const schemaProperties = incomingSchemaProperties || {};
     const partnerConfigFields = incomingPartnerConfigFields || {};
     const description = getDescription(propertyKey, schemaProperties);
+    /*
+    Opt-in only: this component has never rendered the schema title, so
+    existing fields carry unreviewed text there and must keep showing only
+    their link. Setting showTitle on the property turns the label on
+    (OSDEV-3792).
+    */
+    const { showTitle } = schemaProperties[propertyKey] || {};
+    const title = getTitleFromSchema(propertyKey, schemaProperties);
     const linkText = getLinkTextFromSchema(
         propertyKey,
         value,
@@ -68,6 +77,7 @@ const UriReferenceProperty = ({
                     {description}
                 </Typography>
             ) : null}
+            {showTitle && title ? <PartnerFieldLabel title={title} /> : null}
             <a
                 key={`${propertyKey}-uri-${propertyValue}`}
                 href={absoluteUri}

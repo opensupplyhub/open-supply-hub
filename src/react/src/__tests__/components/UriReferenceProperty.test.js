@@ -127,3 +127,133 @@ describe('UriReferenceProperty', () => {
     });
 
 });
+
+describe('UriReferenceProperty showTitle', () => {
+    const GLEIF_CONFIG = {
+        baseUrl: 'https://search.gleif.org/#/record/',
+        displayText: '',
+    };
+
+    // Mirrors the live mit_living_wage partner field: a title that is an
+    // internal join key, plus a display_text call to action.
+    const MIT_CONFIG = {
+        baseUrl: 'https://livingwage.mit.edu/counties/',
+        displayText: 'View Living Wage Data for this County',
+    };
+
+    it('renders the schema title as a label when showTitle is set', () => {
+        renderWithTheme({
+            propertyKey: 'site_lei',
+            value: { site_lei: '9845005AF685DA5C9059' },
+            schemaProperties: {
+                site_lei: {
+                    type: 'string',
+                    title: 'Site LEI',
+                    format: 'uri-reference',
+                    showTitle: true,
+                },
+            },
+            partnerConfigFields: GLEIF_CONFIG,
+        });
+
+        expect(screen.getByText(/Site LEI:/)).toBeInTheDocument();
+
+        const link = screen.getByRole('link', {
+            name: '9845005AF685DA5C9059',
+        });
+        expect(link).toHaveAttribute(
+            'href',
+            'https://search.gleif.org/#/record/9845005AF685DA5C9059',
+        );
+    });
+
+    it('does not render the title when showTitle is absent', () => {
+        renderWithTheme({
+            propertyKey: 'county_id',
+            value: { county_id: '36001' },
+            schemaProperties: {
+                county_id: {
+                    type: 'string',
+                    title: 'County Id',
+                    format: 'uri-reference',
+                },
+            },
+            partnerConfigFields: MIT_CONFIG,
+        });
+
+        // Regression guard for mit_living_wage: its card must keep showing
+        // only the call to action, never the internal join key title.
+        expect(screen.queryByText(/County Id/)).not.toBeInTheDocument();
+
+        const link = screen.getByRole('link', {
+            name: 'View Living Wage Data for this County',
+        });
+        expect(link).toHaveAttribute(
+            'href',
+            'https://livingwage.mit.edu/counties/36001',
+        );
+    });
+
+    it('does not render the title when showTitle is false', () => {
+        renderWithTheme({
+            propertyKey: 'site_lei',
+            value: { site_lei: '9845005AF685DA5C9059' },
+            schemaProperties: {
+                site_lei: {
+                    type: 'string',
+                    title: 'Site LEI',
+                    format: 'uri-reference',
+                    showTitle: false,
+                },
+            },
+            partnerConfigFields: GLEIF_CONFIG,
+        });
+
+        expect(screen.queryByText(/Site LEI:/)).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: '9845005AF685DA5C9059' }),
+        ).toBeInTheDocument();
+    });
+
+    it('renders no label when showTitle is set but the title is missing', () => {
+        renderWithTheme({
+            propertyKey: 'site_lei',
+            value: { site_lei: '9845005AF685DA5C9059' },
+            schemaProperties: {
+                site_lei: {
+                    type: 'string',
+                    format: 'uri-reference',
+                    showTitle: true,
+                },
+            },
+            partnerConfigFields: GLEIF_CONFIG,
+        });
+
+        expect(screen.queryByText(/:/)).not.toBeInTheDocument();
+        expect(
+            screen.getByRole('link', { name: '9845005AF685DA5C9059' }),
+        ).toBeInTheDocument();
+    });
+
+    it('renders both description and label when both are present', () => {
+        renderWithTheme({
+            propertyKey: 'site_lei',
+            value: { site_lei: '9845005AF685DA5C9059' },
+            schemaProperties: {
+                site_lei: {
+                    type: 'string',
+                    title: 'Site LEI',
+                    description: 'Registered to this site',
+                    format: 'uri-reference',
+                    showTitle: true,
+                },
+            },
+            partnerConfigFields: GLEIF_CONFIG,
+        });
+
+        expect(
+            screen.getByText('Registered to this site'),
+        ).toBeInTheDocument();
+        expect(screen.getByText(/Site LEI:/)).toBeInTheDocument();
+    });
+});
