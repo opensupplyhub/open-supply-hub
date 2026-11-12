@@ -11,6 +11,7 @@ import {
     updateClaimStatusFilter,
     updateSectorFilter,
     updateParentCompanyFilter,
+    updateEmbedFilter,
     updateFacilityTypeFilter,
     updateProcessingTypeFilter,
     updateIsic4Filter,
@@ -55,6 +56,8 @@ const initialState = Object.freeze({
     sectors: Object.freeze([]),
     sortAlgorithm: '',
     parentCompany: Object.freeze([]),
+    // Filters on an embedded map contributor's own columns: { column: value }
+    embedFilters: Object.freeze({}),
     facilityType: Object.freeze([]),
     processingType: Object.freeze([]),
     isic4: Object.freeze([]),
@@ -118,6 +121,12 @@ export default createReducer(
         [updateParentCompanyFilter]: (state, payload) =>
             update(state, {
                 parentCompany: { $set: payload },
+            }),
+        [updateEmbedFilter]: (state, { column, value }) =>
+            update(state, {
+                embedFilters: value
+                    ? { [column]: { $set: value } }
+                    : { $unset: [column] },
             }),
         [updateFacilityTypeFilter]: (state, payload) =>
             update(state, {

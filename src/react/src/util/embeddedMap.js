@@ -68,6 +68,7 @@ export const formatExistingFields = (fields = []) =>
         searchable: field.searchable,
         showInList: !!field.show_in_list,
         displayAs: field.display_as || DISPLAY_AS_TEXT,
+        filterable: !!field.filterable,
     }));
 
 const doesExist = (field, existingFields) =>
@@ -139,6 +140,7 @@ const formatEmbedFieldsForServer = fields =>
         column_name: f.columnName,
         show_in_list: !!f.showInList,
         display_as: f.displayAs || DISPLAY_AS_TEXT,
+        filterable: !!f.filterable,
     }));
 
 // 0 is a real choice (square corners), so only '' and nil mean "not set".
@@ -206,6 +208,27 @@ export const getListFields = (embedFields, contributorFields) =>
             };
         })
         .filter(f => hasValue(f.value));
+
+// The dropdown filters an embedded map offers: the contributor's visible,
+// filterable fields that have at least one value, in the contributor's order.
+// `filterOptions` is `filter_options` from the embed config:
+// { column: [{ value, count }] }.
+export const getEmbedFieldFilters = (embedFields, filterOptions) =>
+    sortBy(
+        (embedFields || []).filter(f => f.visible && f.filterable),
+        f => f.order,
+    )
+        .map(f => ({
+            columnName: f.column_name,
+            label: f.display_name,
+            options: ((filterOptions || {})[f.column_name] || []).map(
+                ({ value, count }) => ({
+                    value,
+                    label: `${value} (${count})`,
+                }),
+            ),
+        }))
+        .filter(f => f.options.length > 0);
 
 const NO_EMBED_STYLE = Object.freeze({
     accentColor: null,

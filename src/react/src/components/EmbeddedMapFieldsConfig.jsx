@@ -194,6 +194,7 @@ function EmbeddedMapFieldsConfig({
             showInList,
             displayAs,
             hasData,
+            filterable,
         },
         index,
     ) => (
@@ -331,6 +332,30 @@ function EmbeddedMapFieldsConfig({
                             ) : null}
                             {userEmbedLevel === 3 ? (
                                 <>
+                                    <FormControlLabel
+                                        label="Filter"
+                                        control={
+                                            <Checkbox
+                                                checked={!!filterable}
+                                                onChange={e =>
+                                                    updateItem({
+                                                        columnName,
+                                                        filterable:
+                                                            e.target.checked,
+                                                    })
+                                                }
+                                                value="filterable"
+                                                style={{
+                                                    color: visible
+                                                        ? 'rgb(0, 0, 0)'
+                                                        : 'rgba(0, 0, 0, 0.1)',
+                                                    paddingRight: '4px',
+                                                }}
+                                                disabled={!visible}
+                                            />
+                                        }
+                                        style={styles.searchable}
+                                    />
                                     <FormControlLabel
                                         label="In list"
                                         control={

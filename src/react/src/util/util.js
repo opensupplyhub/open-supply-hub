@@ -444,6 +444,27 @@ export const createQueryStringFromModerationQueueFilters = (
         .join('&');
 };
 
+// An embedded map can be filtered by its contributor's own columns. Each
+// filter travels as `embed_filters=<column>::<value>`.
+const EMBED_FILTER_SEPARATOR = '::';
+
+export const formatEmbedFiltersForQueryString = (embedFilters = {}) =>
+    Object.entries(embedFilters)
+        .filter(([column, value]) => column && value)
+        .map(([column, value]) => `${column}${EMBED_FILTER_SEPARATOR}${value}`)
+        .sort();
+
+export const parseEmbedFiltersFromQueryString = rawEmbedFilters => {
+    const raw = [].concat(rawEmbedFilters || []);
+    return raw.reduce((filters, entry) => {
+        const at = String(entry).indexOf(EMBED_FILTER_SEPARATOR);
+        if (at <= 0) return filters;
+        const column = entry.slice(0, at);
+        const value = entry.slice(at + EMBED_FILTER_SEPARATOR.length);
+        return value ? { ...filters, [column]: value } : filters;
+    }, {});
+};
+
 export const createQueryStringFromSearchFilters = (
     {
         facilityFreeTextQuery = '',
@@ -452,6 +473,7 @@ export const createQueryStringFromSearchFilters = (
         countries = [],
         sectors = [],
         parentCompany = [],
+        embedFilters = {},
         facilityType = [],
         processingType = [],
         isic4 = [],
@@ -505,6 +527,9 @@ export const createQueryStringFromSearchFilters = (
         boundary: isEmpty(boundary) ? '' : JSON.stringify(boundary),
         sort_by: isEmpty(sortAlgorithm) ? '' : sortAlgorithm.value,
         embed: !withEmbed ? '' : '1',
+        embed_filters: !withEmbed
+            ? []
+            : formatEmbedFiltersForQueryString(embedFilters),
         detail: detail ? 'true' : undefined,
         partner_contributor: partnerContributors.map(c => c.value),
     });
@@ -590,6 +615,7 @@ export const createFiltersFromQueryString = qs => {
         boundary = '',
         sort_by: sortBy = '',
         partner_contributor: rawPartnerContributors = [],
+        embed_filters: rawEmbedFilters = [],
     } = querystring.parse(qsToParse);
 
     const normaliseStringArray = val => {
@@ -630,6 +656,7 @@ export const createFiltersFromQueryString = qs => {
         statuses: createSelectOptionsFromParams(statuses),
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
+        embedFilters: parseEmbedFiltersFromQueryString(rawEmbedFilters),
         facilityType: createSelectOptionsFromParams(facilityType),
         processingType: hydratedProcessingTypes,
         isic4: createSelectOptionsFromParams(isic4),

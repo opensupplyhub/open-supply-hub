@@ -30,6 +30,8 @@ export const updateSectorFilter = createAction('UPDATE_SECTOR_FILTER');
 export const updateParentCompanyFilter = createAction(
     'UPDATE_PARENT_COMPANY_FILTER',
 );
+// Payload: { column, value }. An empty value clears that column's filter.
+export const updateEmbedFilter = createAction('UPDATE_EMBED_FILTER');
 export const updateFacilityTypeFilter = createAction(
     'UPDATE_FACILITY_TYPE_FILTER',
 );
