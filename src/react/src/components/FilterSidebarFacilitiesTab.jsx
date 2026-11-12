@@ -48,6 +48,11 @@ import {
 import { useMergeButtonClickHandler } from '../util/hooks';
 
 import COLOURS from '../util/COLOURS';
+import {
+    embedCornerStyle,
+    embedHeadingFont,
+    themeEmbedStyle,
+} from '../util/embeddedMap';
 
 import { filterSidebarStyles } from '../util/styles';
 import BadgeClaimed from './BadgeClaimed';
@@ -130,6 +135,7 @@ const makeFacilitiesTabStyles = theme => ({
         border: '1px solid rgb(134, 65, 15)',
     }),
     copyLinkButton: {
+        ...embedCornerStyle(theme),
         margin: '5px 16px 5px 0',
         height: '45px',
         fontSize: '16px',
@@ -158,6 +164,15 @@ const makeFacilitiesTabStyles = theme => ({
         '&[disabled]': {
             backgroundColor: 'rgba(0, 0, 0, 0.12)',
         },
+    },
+    facilityName: {
+        fontFamily: embedHeadingFont(theme),
+        fontWeight: 700,
+        fontSize: '26px',
+        letterSpacing: '-0.004em',
+    },
+    osId: {
+        color: themeEmbedStyle(theme).accentColor || 'inherit',
     },
     facilityDetailContainer: {
         marginLeft: '-16px',
@@ -476,12 +491,9 @@ function FilterSidebarFacilitiesTab({
                                                 className={classes.linkStyles}
                                             >
                                                 <span
-                                                    style={{
-                                                        fontWeight: 700,
-                                                        fontSize: '26px',
-                                                        letterSpacing:
-                                                            '-0.004em',
-                                                    }}
+                                                    className={
+                                                        classes.facilityName
+                                                    }
                                                 >
                                                     {name}
                                                 </span>
@@ -493,9 +505,7 @@ function FilterSidebarFacilitiesTab({
                                                 >
                                                     <Grid
                                                         item
-                                                        className={
-                                                            classes.facilityDetailItem
-                                                        }
+                                                        className={`${classes.facilityDetailItem} ${classes.osId}`}
                                                     >{`OS ID: ${osID}`}</Grid>
                                                     <ShowOnly
                                                         when={

@@ -151,3 +151,36 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
 });
 
 export const getErrorMessage = e => e.response.data || e.message;
+
+const NO_EMBED_STYLE = Object.freeze({
+    accentColor: null,
+    headingFont: null,
+    cornerRadius: null,
+});
+
+// The style settings the embedded map applies on top of its theme. Outside
+// embed mode, and for any setting that is not set, the value is null and each
+// component keeps its own style.
+export const getEmbedStyle = (embed, config) => {
+    if (!embed || !config) return NO_EMBED_STYLE;
+    return {
+        accentColor: config.accent_color || null,
+        headingFont: config.heading_font || null,
+        cornerRadius: isNil(config.corner_radius)
+            ? null
+            : Number(config.corner_radius),
+    };
+};
+
+// Themes built outside App.jsx (in tests, for example) have no embed style.
+export const themeEmbedStyle = theme =>
+    (theme && theme.embed) || NO_EMBED_STYLE;
+
+export const embedHeadingFont = theme =>
+    themeEmbedStyle(theme).headingFont || theme.typography.fontFamily;
+
+// Spread into a style object: adds a border radius only when one is set.
+export const embedCornerStyle = theme => {
+    const { cornerRadius } = themeEmbedStyle(theme);
+    return isNil(cornerRadius) ? {} : { borderRadius: `${cornerRadius}px` };
+};
