@@ -15,6 +15,19 @@ const STATS_URL = '/api/v1/country-stats/';
 
 const MIN_VIEW_WIDTH = VIEW_WIDTH / 12;
 
+// Rough size of a feature, for picking the main territory out of a country
+// that arrives in several pieces. Counting coordinates is enough to tell
+// Cyprus from Northern Cyprus; it does not need to be an area.
+const pointCount = ({ geometry: { type, coordinates } }) =>
+    type === 'Polygon'
+        ? coordinates.reduce((sum, ring) => sum + ring.length, 0)
+        : coordinates.reduce(
+              (sum, polygon) =>
+                  sum +
+                  polygon.reduce((inner, ring) => inner + ring.length, 0),
+              0,
+          );
+
 /*
  * The two payloads behind the map. Counts come from the daily rollup, which
  * is a few kilobytes for the whole world; borders are a one-off download.
@@ -59,19 +72,47 @@ export const useCountryMapData = () => {
         );
     }, [stats]);
 
-    // Paths and anchors are derived from geometry alone, so they are built
-    // once rather than on every render or zoom.
+    /*
+     * Paths and anchors are derived from geometry alone, so they are built
+     * once rather than on every render or zoom.
+     *
+     * Several features can share one ISO code: the 50m map units we use for
+     * the small countries split Cyprus and Somalia into two pieces each
+     * (Northern Cyprus, Somaliland), and both pieces carry the parent code.
+     * Left as separate shapes they collide on React key, and only whichever
+     * piece won the lookup got the selection ring. Merging their paths draws
+     * the whole country and makes the code unique again.
+     */
     const shapes = useMemo(() => {
         if (!borders) {
             return [];
         }
-        return borders.features
+
+        const byId = new Map();
+        borders.features
             .filter(feature => feature.id !== 'AQ')
-            .map(feature => ({
-                code: feature.id,
-                path: featurePath(feature),
-                anchor: featureAnchor(feature),
-            }));
+            .forEach(feature => {
+                const group = byId.get(feature.id);
+                if (group) {
+                    group.push(feature);
+                } else {
+                    byId.set(feature.id, [feature]);
+                }
+            });
+
+        return Array.from(byId.entries()).map(([code, features]) => ({
+            code,
+            path: features.map(featurePath).join(''),
+            // Anchor on the largest piece, so the card sits beside the
+            // mainland rather than beside a breakaway region.
+            anchor: featureAnchor(
+                features.reduce((biggest, feature) =>
+                    pointCount(feature) > pointCount(biggest)
+                        ? feature
+                        : biggest,
+                ),
+            ),
+        }));
     }, [borders]);
 
     return {
