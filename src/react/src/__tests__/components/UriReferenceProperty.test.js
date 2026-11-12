@@ -229,10 +229,13 @@ describe('UriReferenceProperty showTitle', () => {
             partnerConfigFields: GLEIF_CONFIG,
         });
 
-        expect(screen.queryByText(/:/)).not.toBeInTheDocument();
-        expect(
-            screen.getByRole('link', { name: '9845005AF685DA5C9059' }),
-        ).toBeInTheDocument();
+        // No label prefix: the container holds the value and nothing else.
+        const link = screen.getByRole('link', {
+            name: '9845005AF685DA5C9059',
+        });
+        expect(link.parentElement).toHaveTextContent(
+            /^9845005AF685DA5C9059$/,
+        );
     });
 
     it('does not double the title when the field has no base url', () => {
