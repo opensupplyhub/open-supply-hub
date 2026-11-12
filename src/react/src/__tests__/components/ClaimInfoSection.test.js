@@ -76,6 +76,24 @@ describe('ClaimInfoSection component', () => {
             expect(getByText(/Employee ID badge or employment letter/)).toBeInTheDocument();
         });
 
+        test('lists the best proof first and the website and LinkedIn last with their notes', () => {
+            const { getByText } = renderComponent();
+
+            const items = Array.from(
+                getByText('Job contract or business card')
+                    .closest('ul')
+                    .querySelectorAll('li'),
+            ).map(item => item.textContent);
+
+            expect(items).toEqual([
+                'Job contract or business card',
+                'Employee ID badge or employment letter',
+                'Audit reports',
+                'Company website showing your name and role (can delay approval)',
+                'Link to your LinkedIn profile (may not be accepted, can significantly delay approval)',
+            ]);
+        });
+
         test('displays employee examples for Step 2', () => {
             const { getAllByAltText } = renderComponent();
 
@@ -103,8 +121,25 @@ describe('ClaimInfoSection component', () => {
         test('displays company verification OPTIONS', () => {
             const { getByText } = renderComponent();
 
-            expect(getByText(/Business registration or business license/)).toBeInTheDocument();
+            expect(
+                getByText('Business registration, business license or tax document')
+            ).toBeInTheDocument();
             expect(getByText(/Utility bill/)).toBeInTheDocument();
+        });
+
+        test('lists the documents first and the website and LinkedIn last with their notes', () => {
+            const { getByText } = renderComponent();
+
+            const items = Array.from(
+                getByText('Utility bill').closest('ul').querySelectorAll('li'),
+            ).map(item => item.textContent);
+
+            expect(items).toEqual([
+                'Utility bill',
+                'Business registration, business license or tax document',
+                'Link to company website (can delay approval)',
+                'Link to company LinkedIn page (may not be accepted, can significantly delay approval)',
+            ]);
         });
 
         test('displays NOTE about company name and address', () => {

@@ -1,13 +1,8 @@
+// `label` is the text stored on the claim
+// (`location_address_verification_method`), so it must not change. Guidance
+// shown next to an option goes in `note`, which is display only. The order
+// (best proof first) only affects the dropdown.
 export const COMPANY_ADDRESS_VERIFICATION_OPTIONS = Object.freeze([
-    {
-        value: 'company-website-address',
-        label:
-            'Company website showing the production location address (e.g., Contact Us, Locations page)',
-    },
-    {
-        value: 'linkedin-address',
-        label: 'Company LinkedIn page showing the production location address',
-    },
     {
         value: 'utility-bill',
         label: 'Utility bill showing company name and address',
@@ -28,6 +23,17 @@ export const COMPANY_ADDRESS_VERIFICATION_OPTIONS = Object.freeze([
         value: 'official-documents',
         label:
             'Upload other official documents (business registration, utility bills, etc.)',
+    },
+    {
+        value: 'company-website-address',
+        label:
+            'Company website showing the production location address (e.g., Contact Us, Locations page)',
+        note: '(can delay approval)',
+    },
+    {
+        value: 'linkedin-address',
+        label: 'Company LinkedIn page showing the production location address',
+        note: '(may not be accepted, can significantly delay approval)',
     },
 ]);
 
