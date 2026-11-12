@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent } from '@testing-library/react';
+import { act, cleanup, fireEvent } from '@testing-library/react';
 
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import ClaimLiveCheck from '../../components/ClaimLiveCheck/ClaimLiveCheck';
@@ -59,6 +59,11 @@ describe('ClaimLiveCheck component', () => {
     });
 
     afterEach(() => {
+        // Unmount while the timers are still the fake ones, so the
+        // component clears its own intervals rather than leaving them
+        // to fire in the next test.
+        cleanup();
+        jest.clearAllTimers();
         jest.useRealTimers();
     });
 
