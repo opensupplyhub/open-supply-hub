@@ -200,14 +200,6 @@
     padding-right: 28px;
 }
 
-.country-map__card-count {
-    font-size: 32px;
-    font-weight: 650;
-    line-height: 1.05;
-    font-variant-numeric: tabular-nums;
-}
-
-.country-map__card-unit,
 .country-map__card-loading {
     font-size: 12.5px;
     color: var(--osh-ink-2);

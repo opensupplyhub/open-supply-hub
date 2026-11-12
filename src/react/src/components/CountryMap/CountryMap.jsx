@@ -237,11 +237,13 @@ const CountryMap = ({
                     ))}
                 </svg>
 
+                {/* byCode still gates the card: a country with no data has
+                    nothing to describe, even though the card no longer
+                    renders its count. */}
                 {single && byCode[single] && (
                     <CountryMapCard
                         countryCode={single}
                         name={nameFor(single)}
-                        summary={byCode[single]}
                         onClose={clearCountry}
                         side={cardOnLeft ? 'left' : 'right'}
                     />

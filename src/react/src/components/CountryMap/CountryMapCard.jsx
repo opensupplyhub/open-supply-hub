@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { func, number, oneOf, shape, string } from 'prop-types';
+import { func, oneOf, string } from 'prop-types';
 
 import { useCountryDetail } from './hooks';
 import { isUnspecified, orderSectors, sectorScale } from './utils';
@@ -10,9 +10,16 @@ const PARTNERS_SHOWN = 3;
 /*
  * The detail panel, floated over the map on the far side of whatever was
  * clicked so the selection stays visible. Sectors and partners collapse to
- * a few rows so the headline fits without scrolling.
+ * a few rows so the card fits without scrolling.
+ *
+ * It deliberately carries no headline count. Clicking a country sets the
+ * country filter, so the results list alongside already states the count
+ * for the current search — and when another filter is also active the two
+ * numbers are not even the same one, because this card describes the whole
+ * country while the list describes the search. Showing only what the list
+ * cannot show keeps the card small enough to stop covering the map.
  */
-const CountryMapCard = ({ countryCode, name, summary, onClose, side }) => {
+const CountryMapCard = ({ countryCode, name, onClose, side }) => {
     const { detail, loading } = useCountryDetail(countryCode);
     const [sectorsOpen, setSectorsOpen] = useState(false);
     const [partnersOpen, setPartnersOpen] = useState(false);
@@ -40,14 +47,6 @@ const CountryMapCard = ({ countryCode, name, summary, onClose, side }) => {
             </button>
 
             <div className="country-map__card-name">{name}</div>
-            <div className="country-map__card-count">
-                {summary.location_count.toLocaleString()}
-            </div>
-            {/* Not "open production locations": under a big number, in a
-                card where everything else is clickable, that reads as an
-                instruction to open something. The exclusion of closed
-                locations is stated once, in the footer. */}
-            <div className="country-map__card-unit">production locations</div>
 
             {loading && (
                 <div className="country-map__card-loading">
@@ -146,9 +145,14 @@ const CountryMapCard = ({ countryCode, name, summary, onClose, side }) => {
                                     : `Show all ${sectors.length} sectors`}
                             </button>
                         )}
+                        {/* "The total" used to mean the headline count above.
+                            With that gone the note has to name its own scope,
+                            and say that these are whole-country figures rather
+                            than counts for the current search. */}
                         <p className="country-map__note">
-                            A location can report more than one sector, so
-                            these do not sum to the total.
+                            Counts for the whole country. A location can report
+                            more than one sector, so they do not sum to its
+                            total.
                         </p>
                     </div>
                 </>
@@ -160,7 +164,6 @@ const CountryMapCard = ({ countryCode, name, summary, onClose, side }) => {
 CountryMapCard.propTypes = {
     countryCode: string.isRequired,
     name: string.isRequired,
-    summary: shape({ location_count: number }).isRequired,
     onClose: func.isRequired,
     side: oneOf(['left', 'right']).isRequired,
 };
