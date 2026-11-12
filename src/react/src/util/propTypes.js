@@ -71,6 +71,10 @@ export const userPropType = shape({
     is_staff: bool.isRequired,
     is_moderation_mode: bool.isRequired,
     allowed_records_number: number.isRequired,
+    claim_campaigns: shape({
+        access: bool.isRequired,
+        self_serve: bool.isRequired,
+    }),
 });
 
 export const profileFormValuesPropType = shape(
