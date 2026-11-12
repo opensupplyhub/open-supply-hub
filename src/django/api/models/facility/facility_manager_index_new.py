@@ -8,6 +8,11 @@ from api.helpers.helpers import (
     clean,
     format_custom_text,)
 from api.os_id import string_matches_os_id_format
+# Imported for the side effect of registering the immutable_unaccent
+# lookup used by build_name_token_filter.
+from api.models.facility.facility_name_search import (  # noqa: F401
+    ImmutableUnaccentTransform,
+)
 from api.models.facility.partner_contributor_filter import (
     apply_partner_contributors_filter,
 )
@@ -22,14 +27,19 @@ def build_name_token_filter(text):
     A single ``ILIKE`` on the whole typed string required the words to
     appear in that order with nothing between them, so "Interloop Hosiery"
     missed "Interloop Limited (Hosiery Division I)". See OSDEV-3790.
+
+    Folds accents through ``immutable_unaccent`` rather than Django's
+    ``__unaccent`` so the predicate matches the trigram index of 0269; the
+    two spell the same comparison, but only this one can be indexed
+    (OSDEV-3793).
     """
     tokens = text.split()
     if not tokens:
-        return Q(name__unaccent__icontains=text)
+        return Q(name__immutable_unaccent__icontains=text)
 
     name_filter = Q()
     for token in tokens:
-        name_filter &= Q(name__unaccent__icontains=token)
+        name_filter &= Q(name__immutable_unaccent__icontains=token)
     return name_filter
 
 
