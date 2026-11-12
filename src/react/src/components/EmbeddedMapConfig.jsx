@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import { func, shape, string, bool } from 'prop-types';
@@ -32,10 +32,46 @@ const styles = {
         fontSize: '24px',
     },
     code: {
-        padding: '20px',
-        minWidth: '300px',
+        marginTop: '30px',
+    },
+    nav: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        borderBottom: '1px solid rgb(214, 216, 221)',
+    },
+    navButton: {
+        border: 0,
+        borderBottom: '3px solid transparent',
+        background: 'none',
+        padding: '10px 16px',
+        marginBottom: '-1px',
+        fontFamily: 'inherit',
+        fontSize: '16px',
+        fontWeight: 700,
+        color: 'rgba(0, 0, 0, 0.55)',
+        cursor: 'pointer',
+    },
+    navButtonActive: {
+        color: 'rgb(0, 0, 0)',
+        borderBottomColor: 'rgb(0, 0, 0)',
+    },
+    preview: {
+        position: 'sticky',
+        top: '20px',
+    },
+    previewFrame: {
+        overflow: 'auto',
+        border: '1px solid rgb(214, 216, 221)',
     },
 };
+
+// The settings are split into sections, shown one at a time beside the
+// preview, so a change can be seen without scrolling past the other settings.
+const SECTIONS = [
+    { id: 'style', label: 'Style' },
+    { id: 'fields', label: 'Fields' },
+    { id: 'code', label: 'Size and embed code' },
+];
 
 // This must be kept in sync with createIFrameHTML in util.js
 // We use a separate function to avoid using dangerouslySetInnerHTML
@@ -104,6 +140,8 @@ function EmbeddedMapConfig({
     errors,
     timestamp,
 }) {
+    const [section, setSection] = useState(SECTIONS[0].id);
+
     if (!user.embed_level) return <EmbeddedMapUnauthorized isSettings />;
 
     const updateEmbedConfig = field => value =>
@@ -165,70 +203,108 @@ function EmbeddedMapConfig({
                 </a>
                 .
             </Typography>
-            <Grid container direction="row-reverse">
-                <Grid item xs={12} md={5} lg={6} style={styles.code}>
-                    <EmbeddedMapCode {...mapSettings} />
+            <Grid container spacing={40}>
+                <Grid item xs={12} md={6} lg={5}>
+                    <div style={styles.nav} role="tablist">
+                        {SECTIONS.map(({ id, label }) => (
+                            <button
+                                key={id}
+                                type="button"
+                                role="tab"
+                                aria-selected={section === id}
+                                onClick={() => setSection(id)}
+                                style={
+                                    section === id
+                                        ? {
+                                              ...styles.navButton,
+                                              ...styles.navButtonActive,
+                                          }
+                                        : styles.navButton
+                                }
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+                    {section === 'style' ? (
+                        <EmbeddedMapThemeConfig
+                            color={color}
+                            setColor={updateEmbedConfig('color')}
+                            font={font}
+                            setFont={updateEmbedConfig('font')}
+                            mapStyle={mapStyle}
+                            setMapStyle={updateEmbedConfig('mapStyle')}
+                            accentColor={accentColor}
+                            setAccentColor={updateEmbedConfig('accentColor')}
+                            headingFont={headingFont}
+                            setHeadingFont={updateEmbedConfig('headingFont')}
+                            cornerRadius={cornerRadius}
+                            setCornerRadius={updateEmbedConfig('cornerRadius')}
+                            errors={errors}
+                            embedLevel={user.embed_level}
+                        />
+                    ) : null}
+                    {section === 'fields' ? (
+                        <EmbeddedMapFieldsConfig
+                            fields={fields}
+                            setFields={setFields}
+                            preferContributorName={preferContributorName}
+                            setPreferContributorName={updateEmbedConfig(
+                                'preferContributorName',
+                            )}
+                            hideSectorData={hideSectorData}
+                            setShowSectorData={updateEmbedConfig(
+                                'hideSectorData',
+                            )}
+                            textSearchLabel={textSearchLabel}
+                            setTextSearchLabel={updateEmbedConfig(
+                                'textSearchLabel',
+                            )}
+                            anyFieldSearchable={fields.some(
+                                field => field.searchable,
+                            )}
+                            errors={errors}
+                            userEmbedLevel={user.embed_level}
+                        />
+                    ) : null}
+                    {section === 'code' ? (
+                        <>
+                            <EmbeddedMapSizeConfig
+                                width={width}
+                                setWidth={updateEmbedConfig('width')}
+                                height={height}
+                                setHeight={updateEmbedConfig('height')}
+                                fullWidth={fullWidth}
+                                setFullWidth={updateEmbedConfig('fullWidth')}
+                            />
+                            <div style={styles.code}>
+                                <EmbeddedMapCode {...mapSettings} />
+                            </div>
+                        </>
+                    ) : null}
                 </Grid>
-                <Grid item xs={12} md={7} lg={6}>
-                    <EmbeddedMapFieldsConfig
-                        fields={fields}
-                        setFields={setFields}
-                        preferContributorName={preferContributorName}
-                        setPreferContributorName={updateEmbedConfig(
-                            'preferContributorName',
+                <Grid item xs={12} md={6} lg={7}>
+                    <div style={styles.preview}>
+                        <Typography style={styles.previewHeader}>
+                            Preview
+                        </Typography>
+                        {minimumConfigurationIsComplete ? (
+                            <div style={styles.previewFrame}>
+                                {renderEmbeddedMap({
+                                    fullWidth,
+                                    mapSettings,
+                                    height,
+                                    width,
+                                })}
+                            </div>
+                        ) : (
+                            <Typography paragraph>
+                                Choose a color and enter a width and height to
+                                see a preview.
+                            </Typography>
                         )}
-                        hideSectorData={hideSectorData}
-                        setShowSectorData={updateEmbedConfig('hideSectorData')}
-                        textSearchLabel={textSearchLabel}
-                        setTextSearchLabel={updateEmbedConfig(
-                            'textSearchLabel',
-                        )}
-                        anyFieldSearchable={fields.some(
-                            field => field.searchable,
-                        )}
-                        errors={errors}
-                        userEmbedLevel={user.embed_level}
-                    />
-                    <EmbeddedMapThemeConfig
-                        color={color}
-                        setColor={updateEmbedConfig('color')}
-                        font={font}
-                        setFont={updateEmbedConfig('font')}
-                        mapStyle={mapStyle}
-                        setMapStyle={updateEmbedConfig('mapStyle')}
-                        accentColor={accentColor}
-                        setAccentColor={updateEmbedConfig('accentColor')}
-                        headingFont={headingFont}
-                        setHeadingFont={updateEmbedConfig('headingFont')}
-                        cornerRadius={cornerRadius}
-                        setCornerRadius={updateEmbedConfig('cornerRadius')}
-                        errors={errors}
-                        embedLevel={user.embed_level}
-                    />
-                    <EmbeddedMapSizeConfig
-                        width={width}
-                        setWidth={updateEmbedConfig('width')}
-                        height={height}
-                        setHeight={updateEmbedConfig('height')}
-                        fullWidth={fullWidth}
-                        setFullWidth={updateEmbedConfig('fullWidth')}
-                    />
+                    </div>
                 </Grid>
-            </Grid>
-            <Grid
-                item
-                xs={12}
-                style={{ ...styles.section, minHeight: '500px' }}
-            >
-                <Typography style={styles.previewHeader}>Preview</Typography>
-                {minimumConfigurationIsComplete ? (
-                    renderEmbeddedMap({ fullWidth, mapSettings, height, width })
-                ) : (
-                    <Typography paragraph>
-                        Choose a color and enter a width and height to see a
-                        preview.
-                    </Typography>
-                )}
             </Grid>
         </AppGrid>
     );

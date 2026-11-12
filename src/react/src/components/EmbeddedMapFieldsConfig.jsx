@@ -41,7 +41,7 @@ const styles = {
         marginTop: '10px',
         padding: 0,
         listStyleType: 'none',
-        minWidth: '550px',
+        minWidth: 0,
     },
     listItem: {
         listStyleType: 'none',
