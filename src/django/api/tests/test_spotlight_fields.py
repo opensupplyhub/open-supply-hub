@@ -344,6 +344,7 @@ class SpotlightAdminTest(TestCase):
         """The partner field's JSON tracks each field's active setting."""
         self.model_admin.approve_and_activate_all(
             self.request, self.queryset)
+        self.spotlight.partner_field.refresh_from_db()
         props = self.spotlight.partner_field.json_schema['properties']
         self.assertTrue(props['a']['active'])
         self.model_admin.deactivate_all(self.request, self.queryset)

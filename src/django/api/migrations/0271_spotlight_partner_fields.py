@@ -70,6 +70,35 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
+        migrations.AddField(
+            model_name='historicalcontributor',
+            name='is_spotlight_partner',
+            field=models.BooleanField(
+                default=False,
+                help_text=(
+                    'Gives this contributor a Spotlight section in their '
+                    'dashboard where they can create and manage their own '
+                    'Spotlight fields. Fields they add need admin approval '
+                    'before they can be active.'
+                ),
+                verbose_name='Spotlight partner',
+            ),
+        ),
+        migrations.AddField(
+            model_name='historicalcontributor',
+            name='can_control_spotlight_visibility',
+            field=models.BooleanField(
+                default=False,
+                help_text=(
+                    'Lets a Spotlight partner choose whether their fields '
+                    'appear in the API and in data downloads. Fields are '
+                    'visible in both by default.'
+                ),
+                verbose_name=(
+                    'Can control Spotlight visibility in API and downloads'
+                ),
+            ),
+        ),
         migrations.CreateModel(
             name='SpotlightField',
             fields=[
