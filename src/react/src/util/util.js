@@ -354,6 +354,10 @@ export const makeUpdateFacilityLocationURL = osID =>
 
 export const makeEmbedConfigURL = id =>
     `/api/embed-configs/${id ? `${id}/` : ''}`;
+export const makeSpotlightFieldsURL = name =>
+    `/api/spotlight-fields/${name ? `${name}/` : ''}`;
+export const makeSpotlightVisibilityURL = () =>
+    '/api/spotlight-fields/visibility/';
 export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';

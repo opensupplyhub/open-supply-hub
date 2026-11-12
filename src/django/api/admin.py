@@ -48,6 +48,14 @@ from waffle.admin import FlagAdmin, SampleAdmin, SwitchAdmin
 from api import models
 from api.models.partner_field import PartnerField
 from api.models.partner_field_admin import PartnerFieldAdmin
+from api.models.spotlight_field import (
+    SpotlightField,
+    SpotlightFieldProperty,
+)
+from api.models.spotlight_field_admin import (
+    SpotlightFieldAdmin,
+    SpotlightFieldPropertyAdmin,
+)
 
 from api.reports import get_report_names, run_report
 
@@ -823,6 +831,8 @@ admin_site.register(models.Sector, SectorAdmin)
 admin_site.register(SectorGroup, SectorGroupAdmin)
 admin_site.register(models.FacilityDownloadLimit, FacilityDownloadLimitAdmin)
 admin_site.register(PartnerField, PartnerFieldAdmin)
+admin_site.register(SpotlightField, SpotlightFieldAdmin)
+admin_site.register(SpotlightFieldProperty, SpotlightFieldPropertyAdmin)
 admin_site.register(PartnerFieldGroup)
 admin_site.register(EmailAddress, EmailAddressAdmin)
 admin_site.register(WageIndicatorCountryData, WageIndicatorCountryDataAdmin)

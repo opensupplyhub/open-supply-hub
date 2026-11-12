@@ -78,6 +78,7 @@ from .extended_field import (
 )
 from .nonstandard_field import NonstandardField
 from .partner_field import PartnerField
+from .spotlight_field import SpotlightField, SpotlightFieldProperty
 from .isic_crosswalk_entry import IsicCrosswalkEntry
 from .partner_data_file_upload import PartnerDataFileUpload
 from .partner_field_group import PartnerFieldGroup

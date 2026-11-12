@@ -27,6 +27,7 @@ class UserSerializer(ModelSerializer):
     embed_config = SerializerMethodField()
     claimed_facility_ids = SerializerMethodField()
     embed_level = SerializerMethodField()
+    is_spotlight_partner = SerializerMethodField()
     allowed_records_number = SerializerMethodField()
     claim_campaigns = SerializerMethodField()
 
@@ -109,6 +110,13 @@ class UserSerializer(ModelSerializer):
             return user.contributor.embed_level
         except Contributor.DoesNotExist:
             return None
+
+    def get_is_spotlight_partner(self, user):
+        """Whether to show this user the Spotlight dashboard section."""
+        try:
+            return user.contributor.is_spotlight_partner
+        except Contributor.DoesNotExist:
+            return False
 
     def get_claimed_facility_ids(self, user):
         if not switch_is_active('claim_a_facility'):

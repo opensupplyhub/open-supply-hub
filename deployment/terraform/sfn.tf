@@ -69,3 +69,25 @@ resource "aws_cloudwatch_event_rule" "update_expired_download_limits" {
   schedule_expression = var.update_expired_download_limits_schedule_expression
 }
 
+resource "aws_cloudwatch_event_target" "apply_spotlight_go_live" {
+  target_id = "eventTarget${local.short}ApplySpotlightGoLive"
+  rule      = aws_cloudwatch_event_rule.apply_spotlight_go_live.name
+  arn       = aws_sfn_state_machine.app_cli.id
+  role_arn  = aws_iam_role.cloudwatch_events_service_role.arn
+
+  input = <<EOF
+{
+  "commands": [
+    "apply_spotlight_go_live"
+  ]
+}
+EOF
+
+}
+
+resource "aws_cloudwatch_event_rule" "apply_spotlight_go_live" {
+  name                = "eventRule${local.short}ApplySpotlightGoLive"
+  description         = "Run apply_spotlight_go_live management command once a day at 00:30 UTC."
+  schedule_expression = var.apply_spotlight_go_live_schedule_expression
+}
+

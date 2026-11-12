@@ -678,6 +678,10 @@ variable "update_expired_download_limits_schedule_expression" {
   default = "cron(0 0 * * ? *)" # Once per day at 00:00 UTC.
 }
 
+variable "apply_spotlight_go_live_schedule_expression" {
+  default = "cron(30 0 * * ? *)" # Once per day at 00:30 UTC.
+}
+
 variable "ec2_service_role_policy_arn" {
   default = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }

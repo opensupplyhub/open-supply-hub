@@ -146,6 +146,25 @@ class Contributor(models.Model):
         return PartnerField.objects.get_all_including_inactive().filter(
             contributor=self
         )
+    is_spotlight_partner = models.BooleanField(
+        'Spotlight partner',
+        default=False,
+        help_text=(
+            'Gives this contributor a Spotlight section in their dashboard '
+            'where they can create and manage their own Spotlight fields. '
+            'Fields they add need admin approval before they can be '
+            'active.'
+        ),
+    )
+    can_control_spotlight_visibility = models.BooleanField(
+        'Can control Spotlight visibility in API and downloads',
+        default=False,
+        help_text=(
+            'Lets a Spotlight partner choose whether their fields appear '
+            'in the API and in data downloads. Fields are visible in both '
+            'by default.'
+        ),
+    )
     anonymise_in_paid_products = models.BooleanField(
         'Anonymise contributor name in paid products',
         default=False,

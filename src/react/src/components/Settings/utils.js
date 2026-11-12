@@ -1,6 +1,6 @@
 import includes from 'lodash/includes';
 import { EMBEDDED_MAP_FLAG } from '../../util/constants';
-import { PROFILE_TAB, EMBED_TAB, API_TAB } from './constants';
+import { PROFILE_TAB, EMBED_TAB, SPOTLIGHT_TAB, API_TAB } from './constants';
 
 /* eslint-disable import/prefer-default-export */
 export const getTabs = ({ fetchingFlags, activeFeatureFlags, user }) => {
@@ -11,6 +11,12 @@ export const getTabs = ({ fetchingFlags, activeFeatureFlags, user }) => {
     if (fetchingFlags || !includes(activeFeatureFlags, EMBEDDED_MAP_FLAG)) {
         const embedTabIndex = tabs.indexOf(EMBED_TAB);
         tabs.splice(embedTabIndex, removalRange);
+    }
+
+    // Only Spotlight partners (set by an admin) get the Spotlight tab.
+    if (user.is_spotlight_partner) {
+        const apiTabIndex = tabs.indexOf(API_TAB);
+        tabs.splice(apiTabIndex, 0, SPOTLIGHT_TAB);
     }
 
     if (!user.groups || user.groups.length === 0) {

@@ -10,13 +10,14 @@ import AppOverflow from '../AppOverflow';
 import AppGrid from '../AppGrid';
 import SettingTabs from './SettingTabs';
 import EmbeddedMapConfigWrapper from '../EmbeddedMapConfigWrapper';
+import SpotlightFieldsSettings from '../SpotlightFieldsSettings';
 import RequireAuthNotice from '../RequireAuthNotice';
 
 import { userPropType } from '../../util/propTypes';
 import { USER_DEFAULT_STATE } from '../../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../../util/util';
 import { getTabs } from './utils';
-import { PROFILE_TAB, EMBED_TAB, API_TAB } from './constants';
+import { PROFILE_TAB, EMBED_TAB, SPOTLIGHT_TAB, API_TAB } from './constants';
 
 function Settings({
     user,
@@ -66,6 +67,9 @@ function Settings({
                 )}
                 {tabs[activeTabIndex] === EMBED_TAB && (
                     <EmbeddedMapConfigWrapper />
+                )}
+                {tabs[activeTabIndex] === SPOTLIGHT_TAB && (
+                    <SpotlightFieldsSettings />
                 )}
                 {tabs[activeTabIndex] === API_TAB && (
                     <AppGrid>
