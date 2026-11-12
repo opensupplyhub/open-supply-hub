@@ -67,4 +67,52 @@ describe('submitClaimFormData', () => {
 
         expect(submittedValues(formData, 'sectors')).toEqual(['Apparel']);
     });
+
+    describe('campaign code', () => {
+        const storageKey = `claim-campaign-${OS_ID}`;
+
+        beforeEach(() => {
+            localStorage.clear();
+        });
+
+        test('sends the confirmed code from the form', () => {
+            expect(
+                submittedValues({ campaign: 'MERIDIAN-X7K2QP' }, 'campaign'),
+            ).toEqual(['MERIDIAN-X7K2QP']);
+        });
+
+        test('falls back to the code remembered for the location', () => {
+            // e.g. the claim form was reloaded and lost its state.
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify({
+                    code: 'MERIDIAN-X7K2QP',
+                    savedAt: Date.now(),
+                }),
+            );
+
+            expect(submittedValues({}, 'campaign')).toEqual([
+                'MERIDIAN-X7K2QP',
+            ]);
+        });
+
+        test('sends no campaign field without a code', () => {
+            expect(submittedValues({ campaign: '' }, 'campaign')).toEqual([]);
+        });
+
+        test('forgets the remembered code once the claim is sent', async () => {
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify({
+                    code: 'MERIDIAN-X7K2QP',
+                    savedAt: Date.now(),
+                }),
+            );
+            const store = mockStore({ claimForm: { formData: {} } });
+
+            await store.dispatch(submitClaimFormData(OS_ID, false));
+
+            expect(localStorage.getItem(storageKey)).toBeNull();
+        });
+    });
 });

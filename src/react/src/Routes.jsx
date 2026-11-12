@@ -42,6 +42,8 @@ import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAn
 import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
 import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
 import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
+import ClaimCampaigns from './components/ClaimCampaigns/ClaimCampaigns';
+import NewClaimCampaign from './components/ClaimCampaigns/NewClaimCampaign';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags, refreshFeatureFlags } from './actions/featureFlags';
@@ -71,8 +73,12 @@ import {
     claimFacilityRoute,
     claimIntroRoute,
     claimDetailsRoute,
+    claimCampaignsRoute,
+    claimCampaignRoute,
+    newClaimCampaignRoute,
     claimedFacilitiesRoute,
     CLAIM_A_FACILITY,
+    CLAIM_CAMPAIGNS,
     settingsRoute,
     organizationRoute,
     organizationDashboardRoute,
@@ -174,6 +180,44 @@ class Routes extends Component {
                                     exact
                                     path={claimIntroRoute}
                                     component={ClaimIntro}
+                                />
+                                <Route
+                                    exact
+                                    path={newClaimCampaignRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route
+                                                component={NewClaimCampaign}
+                                            />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={claimCampaignRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route component={ClaimCampaigns} />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={claimCampaignsRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route component={ClaimCampaigns} />
+                                        </FeatureFlag>
+                                    )}
                                 />
                                 <Route
                                     exact

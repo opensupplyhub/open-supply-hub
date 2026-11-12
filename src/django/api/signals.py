@@ -2,7 +2,7 @@ import logging
 import json
 
 from django.conf import settings
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import post_delete, post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from opensearchpy.exceptions import \
     ConnectionError, NotFoundError, AuthorizationException
@@ -22,6 +22,7 @@ from api.models.source import Source
 from api.services.organization_service import (
     get_organization_id_for_contributor,
 )
+from api.models.contributor.contributor import Contributor
 from api.services.opensearch.opensearch import OpenSearchServiceConnection
 from oar.rollbar import report_error_to_rollbar
 from api.views.v1.index_names import OpenSearchIndexNames
@@ -235,3 +236,24 @@ def claim_attachment_post_delete_file_cleanup(instance, **kwargs):
                     'file_name': instance.file_name,
                 },
             )
+
+
+@receiver(
+    pre_delete,
+    sender=Contributor,
+    dispatch_uid='close_deleted_contributor_claim_campaigns',
+)
+def close_deleted_contributor_claim_campaigns(instance, **kwargs):
+    """
+    A deleted contributor's claim campaigns are kept, with no owner
+    (ClaimCampaign.contributor is SET_NULL), so their claims stay
+    attributed. Close them first so they stop collecting new claims.
+    Runs for every way a contributor is deleted: the
+    delete_user_and_contributor command, Django admin, or a cascade.
+    """
+    # Imported here: the service imports api.models, which this module's
+    # import is part of loading.
+    from api.services.claim_campaign_service import (
+        close_contributor_campaigns,
+    )
+    close_contributor_campaigns(instance)

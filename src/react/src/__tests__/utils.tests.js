@@ -79,6 +79,7 @@ const {
     removeDuplicatesFromOtherLocationsData,
     makeGetSectorsURL,
     createUserDropdownLinks,
+    hasClaimCampaignAccess,
     createUploadFormErrorMessages,
     getLastPathParameter,
     generateRangeField,
@@ -3551,5 +3552,39 @@ describe('public contributor entries for organizations', () => {
         expect(
             result.publicContributors.map(getPublicContributorKey),
         ).toEqual(['organization:Brand', 'organization:Rival', 7]);
+    });
+});
+
+describe('Claims Campaigns menu link', () => {
+    const link = { label: 'Claims Campaigns', href: '/claim-campaigns' };
+
+    it('shows only to users given campaign access', () => {
+        const withAccess = {
+            is_superuser: false,
+            claim_campaigns: { access: true, self_serve: false },
+        };
+        const without = {
+            is_superuser: false,
+            claim_campaigns: { access: false, self_serve: false },
+        };
+        expect(
+            createUserDropdownLinks(withAccess, jest.fn(), ['claim_campaigns']),
+        ).toContainEqual(link);
+        expect(
+            createUserDropdownLinks(without, jest.fn(), ['claim_campaigns']),
+        ).not.toContainEqual(link);
+        expect(
+            createUserDropdownLinks({ is_superuser: false }, jest.fn(), [
+                'claim_campaigns',
+            ]),
+        ).not.toContainEqual(link);
+    });
+
+    it('is hidden while the claim_campaigns switch is off', () => {
+        const user = { claim_campaigns: { access: true, self_serve: true } };
+        expect(createUserDropdownLinks(user, jest.fn(), [])).not.toContainEqual(
+            link,
+        );
+        expect(hasClaimCampaignAccess(user)).toBe(true);
     });
 });
