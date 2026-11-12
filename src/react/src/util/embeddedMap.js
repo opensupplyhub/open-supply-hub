@@ -98,25 +98,36 @@ const filterAndFormatNonstandardFields = ({
         .filter(field => !doesExist(field, existingFields))
         .map(defaultFormatForNonstandardField);
 
+// `fieldsWithData` is the subset of fields the contributor has data for. When
+// it is given, each field is flagged with `hasData` and the fields with data
+// are listed first, keeping the contributor's order within each group. A field
+// without data shows nothing on the map, so its place in the order is moot.
 export const combineEmbedAndNonstandardFields = (
     embedFields,
     nonstandardFields,
+    fieldsWithData,
 ) => {
     const existingFields = formatExistingFields(embedFields);
     const newFields = filterAndFormatNonstandardFields({
         nonstandardFields,
         existingFields,
     });
-    // `nonstandardFields` is every field the contributor has data for. A
-    // field without data would show up empty on the map, so it is not offered,
-    // even if it was saved on the config earlier.
-    const available = new Set(nonstandardFields);
-    return sortBy([...existingFields, ...newFields], f => f.order)
-        .filter(f => available.has(f.columnName))
-        .map((f, i) => ({
+    const combined = sortBy([...existingFields, ...newFields], f => f.order);
+    if (!fieldsWithData) {
+        return combined.map((f, i) => ({
             ...f,
-            order: i,
+            order: f.order || i,
         }));
+    }
+    const withData = new Set(fieldsWithData);
+    const flagged = combined.map(f => ({
+        ...f,
+        hasData: withData.has(f.columnName),
+    }));
+    return [
+        ...flagged.filter(f => f.hasData),
+        ...flagged.filter(f => !f.hasData),
+    ].map((f, i) => ({ ...f, order: i }));
 };
 
 const formatEmbedFieldsForServer = fields =>

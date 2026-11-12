@@ -11,9 +11,11 @@ from ..contributor.get_contributor import get_contributor
 
 class NonstandardFieldsViewSet(ListModelMixin, GenericViewSet):
     """
-    View the fields a contributor has data for and can therefore show on
-    their embedded map: the nonstandard columns they have submitted, plus
-    whichever of the standard extended fields they have contributed.
+    View the fields a contributor can show on their embedded map: the
+    standard extended fields plus the nonstandard columns they have submitted.
+
+    With `?detail=true` the response also says which of those fields the
+    contributor has data for, so the settings screen can highlight them.
     """
     queryset = NonstandardField.objects.all()
     swagger_schema = None
@@ -27,14 +29,21 @@ class NonstandardFieldsViewSet(ListModelMixin, GenericViewSet):
         nonstandard_field_set = set(self.queryset.filter(
             contributor=contributor).values_list('column_name', flat=True))
 
-        # A standard field is only offered when the contributor has data for
-        # it; a field with nothing behind it would show up empty on the map.
+        field_list = list(
+            NonstandardField.EXTENDED_FIELDS.keys() | nonstandard_field_set)
+
+        if request.query_params.get('detail') != 'true':
+            return Response(field_list)
+
+        # A nonstandard column only exists because the contributor uploaded
+        # it. A standard field has data when they have contributed it.
         extended_field_set = set(
             ExtendedField.objects.filter(
                 contributor=contributor,
                 field_name__in=NonstandardField.EXTENDED_FIELDS.keys(),
             ).values_list('field_name', flat=True).distinct())
 
-        field_list = sorted(extended_field_set | nonstandard_field_set)
-
-        return Response(field_list)
+        return Response({
+            'fields': sorted(field_list),
+            'with_data': sorted(extended_field_set | nonstandard_field_set),
+        })

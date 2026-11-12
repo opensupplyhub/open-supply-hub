@@ -52,12 +52,13 @@ function EmbeddedMapConfigWrapper({ user }) {
     const fetchFields = useCallback(() => {
         setLoading(true);
         apiRequest
-            .get(makeNonStandardFieldsURL())
+            .get(makeNonStandardFieldsURL(), { params: { detail: true } })
             .then(({ data }) => {
                 setEmbedFields(
                     combineEmbedAndNonstandardFields(
                         user.embed_config.embed_fields,
-                        data,
+                        data.fields,
+                        data.with_data,
                     ),
                 );
                 handleSuccess();

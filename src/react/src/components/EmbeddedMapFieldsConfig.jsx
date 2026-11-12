@@ -79,6 +79,31 @@ const styles = {
         marginLeft: '5px',
         padding: '4px',
     },
+    fieldOptions: {
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        margin: '-4px 0 10px 48px',
+    },
+    hasData: {
+        marginLeft: '10px',
+        padding: '1px 8px',
+        borderRadius: '10px',
+        fontSize: '12px',
+        fontWeight: 700,
+        whiteSpace: 'nowrap',
+        color: 'rgb(21, 106, 54)',
+        background: 'rgb(223, 243, 229)',
+    },
+    noData: {
+        marginLeft: '10px',
+        padding: '1px 8px',
+        borderRadius: '10px',
+        fontSize: '12px',
+        whiteSpace: 'nowrap',
+        color: 'rgba(0, 0, 0, 0.55)',
+        background: 'rgba(0, 0, 0, 0.06)',
+    },
     icon: {
         color: 'rgba(0, 0, 0, 0.38)',
     },
@@ -162,6 +187,7 @@ function EmbeddedMapFieldsConfig({
             searchable,
             showInList,
             displayAs,
+            hasData,
         },
         index,
     ) => (
@@ -262,55 +288,6 @@ function EmbeddedMapFieldsConfig({
                             }
                             style={styles.searchable}
                         />
-                        {userEmbedLevel === 3 ? (
-                            <>
-                                <FormControlLabel
-                                    label="In list"
-                                    control={
-                                        <Checkbox
-                                            checked={!!showInList}
-                                            onChange={e =>
-                                                updateItem({
-                                                    columnName,
-                                                    showInList:
-                                                        e.target.checked,
-                                                })
-                                            }
-                                            value="showInList"
-                                            style={{
-                                                color: visible
-                                                    ? 'rgb(0, 0, 0)'
-                                                    : 'rgba(0, 0, 0, 0.1)',
-                                                paddingRight: '4px',
-                                            }}
-                                            disabled={!visible}
-                                        />
-                                    }
-                                    style={styles.searchable}
-                                />
-                                <select
-                                    aria-label={`Show ${displayName} as`}
-                                    value={displayAs || DISPLAY_AS_TEXT}
-                                    onChange={e =>
-                                        updateItem({
-                                            columnName,
-                                            displayAs: e.target.value,
-                                        })
-                                    }
-                                    disabled={!visible}
-                                    style={styles.displayAs}
-                                >
-                                    {DISPLAY_AS_OPTIONS.map(option => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
-                                        >
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </>
-                        ) : null}
                         <IconButton
                             className="draggable"
                             style={{ marginLeft: 0 }}
@@ -336,6 +313,63 @@ function EmbeddedMapFieldsConfig({
                                 <ArrowUpwardIcon />
                             </IconButton>
                         )}
+                        <div style={styles.fieldOptions}>
+                            {hasData === true ? (
+                                <span style={styles.hasData}>In your data</span>
+                            ) : null}
+                            {hasData === false ? (
+                                <span style={styles.noData}>No data yet</span>
+                            ) : null}
+                            {userEmbedLevel === 3 ? (
+                                <>
+                                    <FormControlLabel
+                                        label="In list"
+                                        control={
+                                            <Checkbox
+                                                checked={!!showInList}
+                                                onChange={e =>
+                                                    updateItem({
+                                                        columnName,
+                                                        showInList:
+                                                            e.target.checked,
+                                                    })
+                                                }
+                                                value="showInList"
+                                                style={{
+                                                    color: visible
+                                                        ? 'rgb(0, 0, 0)'
+                                                        : 'rgba(0, 0, 0, 0.1)',
+                                                    paddingRight: '4px',
+                                                }}
+                                                disabled={!visible}
+                                            />
+                                        }
+                                        style={styles.searchable}
+                                    />
+                                    <select
+                                        aria-label={`Show ${displayName} as`}
+                                        value={displayAs || DISPLAY_AS_TEXT}
+                                        onChange={e =>
+                                            updateItem({
+                                                columnName,
+                                                displayAs: e.target.value,
+                                            })
+                                        }
+                                        disabled={!visible}
+                                        style={styles.displayAs}
+                                    >
+                                        {DISPLAY_AS_OPTIONS.map(option => (
+                                            <option
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </>
+                            ) : null}
+                        </div>
                     </li>
                 );
             }}
@@ -429,16 +463,6 @@ function EmbeddedMapFieldsConfig({
                                             </FormLabel>
                                         </Tooltip>
                                     </li>
-                                    {fields.length === 0 ? (
-                                        <li>
-                                            <Typography>
-                                                Your uploaded data has no extra
-                                                fields yet. Add columns to your
-                                                facility list to choose them
-                                                here.
-                                            </Typography>
-                                        </li>
-                                    ) : null}
                                     {fields
                                         .sort((a, b) => a.order - b.order)
                                         .map(renderField)}

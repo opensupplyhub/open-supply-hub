@@ -22,19 +22,6 @@ class NonstandardFieldsApiTest(APITestCase):
             contrib_type=Contributor.OTHER_CONTRIB_TYPE,
         )
 
-    def _add_extended_field(self, field_name):
-        return ExtendedField.objects.create(
-            contributor=self.contributor,
-            field_name=field_name,
-            value={"raw_value": "x"},
-        )
-
-    def _get_fields(self):
-        self.client.login(email=self.user_email, password=self.user_password)
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        return json.loads(response.content)
-
     def test_nonstandard_fields(self):
         NonstandardField.objects.create(
             column_name="extra_1", contributor=self.contributor
@@ -42,25 +29,63 @@ class NonstandardFieldsApiTest(APITestCase):
         NonstandardField.objects.create(
             column_name="extra_2", contributor=self.contributor
         )
-        self._add_extended_field("parent_company")
+        self.client.login(email=self.user_email, password=self.user_password)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        content = json.loads(response.content)
+        self.assertEqual(7, len(content))
+        self.assertIn("extra_1", content)
+        self.assertIn("extra_2", content)
+        self.assertIn("parent_company", content)
 
-        self.assertEqual(
-            ["extra_1", "extra_2", "parent_company"], self._get_fields()
+    def test_without_nonstandard_fields(self):
+        self.client.login(email=self.user_email, password=self.user_password)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        content = json.loads(response.content)
+        self.assertEqual(5, len(content))
+        self.assertNotIn("extra_1", content)
+        self.assertNotIn("extra_2", content)
+        self.assertIn("parent_company", content)
+
+    # ------------------------------------------------------------------ #
+    # ?detail=true: which fields the contributor has data for             #
+    # ------------------------------------------------------------------ #
+    STANDARD_FIELDS = sorted(NonstandardField.EXTENDED_FIELDS.keys())
+
+    def _add_extended_field(self, field_name, contributor=None):
+        return ExtendedField.objects.create(
+            contributor=contributor or self.contributor,
+            field_name=field_name,
+            value={"raw_value": "x"},
         )
 
-    def test_without_any_fields(self):
-        """A contributor with no data for any field is offered none."""
-        self.assertEqual([], self._get_fields())
+    def _get_detail(self):
+        self.client.login(email=self.user_email, password=self.user_password)
+        response = self.client.get(self.url + "?detail=true")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return json.loads(response.content)
 
-    def test_standard_field_is_only_listed_with_data(self):
+    def test_detail_lists_every_field_and_marks_those_with_data(self):
+        NonstandardField.objects.create(
+            column_name="extra_1", contributor=self.contributor
+        )
         self._add_extended_field("processing_type")
         self._add_extended_field("processing_type")
 
-        content = self._get_fields()
-        self.assertEqual(["processing_type"], content)
-        self.assertNotIn("parent_company", content)
+        content = self._get_detail()
+        self.assertEqual(
+            sorted(self.STANDARD_FIELDS + ["extra_1"]), content["fields"]
+        )
+        self.assertEqual(["extra_1", "processing_type"], content["with_data"])
 
-    def test_other_contributors_data_is_not_listed(self):
+    def test_detail_without_any_data(self):
+        """The standard fields are still listed; none is marked."""
+        content = self._get_detail()
+        self.assertEqual(self.STANDARD_FIELDS, content["fields"])
+        self.assertEqual([], content["with_data"])
+
+    def test_detail_ignores_other_contributors_data(self):
         other_user = User.objects.create(email="other@example.com")
         other = Contributor.objects.create(
             admin=other_user,
@@ -70,10 +95,8 @@ class NonstandardFieldsApiTest(APITestCase):
         NonstandardField.objects.create(
             column_name="extra_3", contributor=other
         )
-        ExtendedField.objects.create(
-            contributor=other,
-            field_name="facility_type",
-            value={"raw_value": "x"},
-        )
+        self._add_extended_field("facility_type", contributor=other)
 
-        self.assertEqual([], self._get_fields())
+        content = self._get_detail()
+        self.assertEqual(self.STANDARD_FIELDS, content["fields"])
+        self.assertEqual([], content["with_data"])

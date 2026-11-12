@@ -39,7 +39,7 @@ describe('embedded map field display options', () => {
         expect(field.displayAs).toBe('text');
     });
 
-    it('only offers fields the contributor has data for', () => {
+    describe('fields with data', () => {
         const saved = [
             {
                 column_name: 'processing_type',
@@ -56,17 +56,45 @@ describe('embedded map field display options', () => {
                 searchable: true,
             },
         ];
-        const fields = combineEmbedAndNonstandardFields(saved, [
-            'project',
-            'tier',
-        ]);
+        const all = ['processing_type', 'project', 'parent_company', 'tier'];
 
-        expect(fields.map(f => f.columnName)).toEqual(['project', 'tier']);
-        expect(fields.map(f => f.order)).toEqual([0, 1]);
-    });
+        it('keeps every field and flags the ones with data', () => {
+            const fields = combineEmbedAndNonstandardFields(saved, all, [
+                'project',
+                'tier',
+            ]);
+            const flags = Object.fromEntries(
+                fields.map(f => [f.columnName, f.hasData]),
+            );
 
-    it('offers nothing when the contributor has no data for any field', () => {
-        expect(combineEmbedAndNonstandardFields([], [])).toEqual([]);
+            expect(flags).toEqual({
+                project: true,
+                tier: true,
+                processing_type: false,
+                parent_company: false,
+            });
+        });
+
+        it('lists the fields with data first, in a gapless order', () => {
+            const fields = combineEmbedAndNonstandardFields(saved, all, [
+                'project',
+                'tier',
+            ]);
+
+            expect(fields.slice(0, 2).map(f => f.hasData)).toEqual([
+                true,
+                true,
+            ]);
+            expect(fields[0].columnName).toBe('project');
+            expect(fields.map(f => f.order)).toEqual([0, 1, 2, 3]);
+        });
+
+        it('does not flag fields when no data information is given', () => {
+            const fields = combineEmbedAndNonstandardFields(saved, all);
+
+            expect(fields.map(f => f.columnName)).toContain('processing_type');
+            expect(fields.every(f => f.hasData === undefined)).toBe(true);
+        });
     });
 
     it('gives new nonstandard fields the default display options', () => {
