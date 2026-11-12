@@ -11,6 +11,7 @@ import get from 'lodash/get';
 import VectorTileFacilitiesLayer from './VectorTileFacilitiesLayer';
 import VectorTileFacilityGridLayer from './VectorTileFacilityGridLayer';
 import VectorTileGridLegend from './VectorTileGridLegend';
+import EmbedColorLegend from './EmbedColorLegend';
 import SearchControls from './SearchControls';
 import PolygonalSearchControl from './PolygonalSearchControl';
 
@@ -140,6 +141,9 @@ function VectorTileFacilitiesMap({
             />
             <Control position="topleft">
                 <SearchControls />
+            </Control>
+            <Control position="bottomleft">
+                <EmbedColorLegend />
             </Control>
             <Control position="bottomleft">
                 <VectorTileGridLegend

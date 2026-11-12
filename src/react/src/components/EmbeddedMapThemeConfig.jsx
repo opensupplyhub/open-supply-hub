@@ -6,9 +6,10 @@ import Radio from '@material-ui/core/Radio';
 import Typography from '@material-ui/core/Typography';
 import Select from 'react-select';
 
-import { func, number, oneOfType, string } from 'prop-types';
+import { arrayOf, func, number, object, oneOfType, string } from 'prop-types';
 
 import { OARFont, OARColor } from '../util/constants';
+import { getColorByLegend } from '../util/embeddedMap';
 
 const styles = {
     section: {
@@ -42,6 +43,16 @@ const styles = {
     },
     radio: {
         color: 'rgb(0, 0, 0)',
+    },
+    colorBySelect: {
+        marginTop: '10px',
+        padding: '8px',
+        width: '100%',
+        fontSize: '14px',
+    },
+    colorByNote: {
+        marginTop: '10px',
+        color: 'rgba(0, 0, 0, 0.6)',
     },
 };
 
@@ -98,7 +109,14 @@ function EmbeddedMapThemeConfig({
     setHeadingFont,
     cornerRadius,
     setCornerRadius,
+    fields,
+    colorByField,
+    setColorBy,
+    colorByColors,
+    colorByOptions,
 }) {
+    const colorLegend = getColorByLegend(colorByOptions, colorByColors);
+    const colorFields = fields.filter(f => f.visible && f.hasData !== false);
     const value = fontOptions.find(f => font === f.value) || OARFont;
     const headingFontValue =
         headingFontOptions.find(f => headingFont === f.value) ||
@@ -298,6 +316,67 @@ function EmbeddedMapThemeConfig({
                     </div>
                 </>
             ) : null}
+            {embedLevel === 3 ? (
+                <div style={styles.subsection}>
+                    <Typography style={styles.subsectionHeader}>
+                        Marker Colors
+                    </Typography>
+                    <Typography>
+                        Color each location&apos;s marker by one of the fields
+                        you show, such as a tier. Colors appear once a visitor
+                        zooms in to individual locations.
+                    </Typography>
+                    {errors?.color_by_colors && (
+                        <Typography style={{ color: 'red' }}>
+                            Error: {errors.color_by_colors.join(', ')}
+                        </Typography>
+                    )}
+                    <select
+                        aria-label="Color markers by"
+                        value={colorByField}
+                        onChange={e =>
+                            setColorBy({ field: e.target.value, colors: {} })
+                        }
+                        style={styles.colorBySelect}
+                    >
+                        <option value="">One color for all locations</option>
+                        {colorFields.map(f => (
+                            <option key={f.columnName} value={f.columnName}>
+                                {f.displayName}
+                            </option>
+                        ))}
+                    </select>
+                    {colorByField && colorLegend.length === 0 ? (
+                        <Typography style={styles.colorByNote}>
+                            The values of this field will be listed here once
+                            your choice is saved.
+                        </Typography>
+                    ) : null}
+                    {colorLegend.map(entry => (
+                        <div key={entry.value} style={styles.colorContainer}>
+                            <input
+                                type="color"
+                                aria-label={`Color for ${entry.value}`}
+                                value={entry.color}
+                                onChange={e =>
+                                    setColorBy({
+                                        field: colorByField,
+                                        colors: {
+                                            ...colorByColors,
+                                            [entry.value]: e.target.value,
+                                        },
+                                    })
+                                }
+                                style={{ marginRight: '10px' }}
+                            />
+                            <Typography>
+                                {entry.value} ({entry.count}{' '}
+                                {entry.count === 1 ? 'location' : 'locations'})
+                            </Typography>
+                        </div>
+                    ))}
+                </div>
+            ) : null}
             {embedLevel >= 2 ? (
                 <div style={styles.subsection}>
                     <Typography style={styles.subsectionHeader}>
@@ -355,6 +434,11 @@ EmbeddedMapThemeConfig.propTypes = {
     setHeadingFont: func,
     cornerRadius: oneOfType([number, string]),
     setCornerRadius: func,
+    fields: arrayOf(object),
+    colorByField: string,
+    setColorBy: func,
+    colorByColors: object,
+    colorByOptions: arrayOf(object),
 };
 
 EmbeddedMapThemeConfig.defaultProps = {
@@ -364,6 +448,11 @@ EmbeddedMapThemeConfig.defaultProps = {
     setHeadingFont: () => {},
     cornerRadius: '',
     setCornerRadius: () => {},
+    fields: [],
+    colorByField: '',
+    setColorBy: () => {},
+    colorByColors: {},
+    colorByOptions: [],
 };
 
 export default EmbeddedMapThemeConfig;

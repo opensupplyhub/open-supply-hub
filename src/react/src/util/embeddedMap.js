@@ -36,6 +36,8 @@ export const formatExistingConfig = embedConfig => {
             accentColor: '',
             headingFont: '',
             cornerRadius: '',
+            colorByField: '',
+            colorByColors: {},
         };
     }
     return {
@@ -56,6 +58,9 @@ export const formatExistingConfig = embedConfig => {
         cornerRadius: isNil(embedConfig.corner_radius)
             ? ''
             : embedConfig.corner_radius,
+        // '' means every marker shares one color.
+        colorByField: embedConfig.color_by_field || '',
+        colorByColors: embedConfig.color_by_colors || {},
     };
 };
 
@@ -165,6 +170,10 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
     accent_color: embedConfig.accentColor || null,
     heading_font: embedConfig.headingFont || null,
     corner_radius: formatCornerRadiusForServer(embedConfig.cornerRadius),
+    color_by_field: embedConfig.colorByField || null,
+    color_by_colors: embedConfig.colorByField
+        ? embedConfig.colorByColors || {}
+        : {},
 });
 
 export const getErrorMessage = e => e.response.data || e.message;
@@ -229,6 +238,45 @@ export const getEmbedFieldFilters = (embedFields, filterOptions) =>
             ),
         }))
         .filter(f => f.options.length > 0);
+
+// Marker colors used for a field's values until the contributor picks their
+// own, in the order the values are listed.
+export const COLOR_BY_PALETTE = [
+    '#14507a',
+    '#2a9d8f',
+    '#d98b1f',
+    '#8e44ad',
+    '#c0392b',
+    '#5b6abf',
+    '#3f7d20',
+    '#b0477f',
+];
+
+// The marker color for each value of the field an embedded map is colored
+// by: [{ value, color, count }]. `options` is `color_by_options` from the
+// embed config and `colors` is the contributor's own choices, { value: hex }.
+export const getColorByLegend = (options, colors) =>
+    (options || []).map(({ value, count }, i) => ({
+        value,
+        count,
+        color:
+            (colors || {})[value] ||
+            COLOR_BY_PALETTE[i % COLOR_BY_PALETTE.length],
+    }));
+
+// The legend for an embedded map, from its config as the API returns it.
+export const getEmbedColorLegend = config =>
+    config && config.color_by_field
+        ? getColorByLegend(config.color_by_options, config.color_by_colors)
+        : [];
+
+export const getEmbedColorLabel = config => {
+    if (!config || !config.color_by_field) return '';
+    const field = (config.embed_fields || []).find(
+        f => f.column_name === config.color_by_field,
+    );
+    return field ? field.display_name : config.color_by_field;
+};
 
 const NO_EMBED_STYLE = Object.freeze({
     accentColor: null,

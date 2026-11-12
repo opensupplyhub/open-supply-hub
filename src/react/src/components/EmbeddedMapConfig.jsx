@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import { func, shape, string, bool } from 'prop-types';
 import { Link } from 'react-router-dom';
 
 import { userPropType } from '../util/propTypes';
-import { getEmbeddedMapSrc } from '../util/util';
+import { getEmbeddedMapSrc, makeContributorEmbedConfigURL } from '../util/util';
+import apiRequest from '../util/apiRequest';
 import {
     EmbeddedMapInfoLink,
     minimum100PercentWidthEmbedHeight,
@@ -133,6 +134,8 @@ function EmbeddedMapConfig({
         accentColor,
         headingFont,
         cornerRadius,
+        colorByField,
+        colorByColors,
     },
     setEmbedConfig,
     fields,
@@ -141,6 +144,25 @@ function EmbeddedMapConfig({
     timestamp,
 }) {
     const [section, setSection] = useState(SECTIONS[0].id);
+
+    // The values of the field the markers are colored by come from the saved
+    // config, so they are fetched again after each save (`timestamp`).
+    const [colorByOptions, setColorByOptions] = useState([]);
+    const contributorId = user?.contributor_id;
+    useEffect(() => {
+        if (!colorByField || !contributorId) {
+            setColorByOptions([]);
+            return;
+        }
+        apiRequest
+            .get(makeContributorEmbedConfigURL(contributorId))
+            .then(({ data }) => {
+                if (data.color_by_field === colorByField) {
+                    setColorByOptions(data.color_by_options || []);
+                }
+            })
+            .catch(() => setColorByOptions([]));
+    }, [colorByField, contributorId, timestamp]);
 
     if (!user.embed_level) return <EmbeddedMapUnauthorized isSettings />;
 
@@ -240,6 +262,17 @@ function EmbeddedMapConfig({
                             setHeadingFont={updateEmbedConfig('headingFont')}
                             cornerRadius={cornerRadius}
                             setCornerRadius={updateEmbedConfig('cornerRadius')}
+                            fields={fields}
+                            colorByField={colorByField}
+                            colorByColors={colorByColors}
+                            colorByOptions={colorByOptions}
+                            setColorBy={({ field, colors }) =>
+                                setEmbedConfig(config => ({
+                                    ...config,
+                                    colorByField: field,
+                                    colorByColors: colors,
+                                }))
+                            }
                             errors={errors}
                             embedLevel={user.embed_level}
                         />

@@ -12,6 +12,7 @@ import isEqual from 'lodash/isEqual';
 import intersection from 'lodash/intersection';
 import sortBy from 'lodash/sortBy';
 
+import { getEmbedColorLegend, splitTagValues } from '../util/embeddedMap';
 import { SelectedMarkerColor } from '../util/constants';
 import FacilitiesMapPopup from './FacilitiesMapPopup';
 
@@ -215,7 +216,21 @@ const VectorTileFacilitiesLayer = ({
     minZoom,
     maxZoom,
     iconColor,
+    colorLegendKey,
 }) => {
+    // One marker icon per value of the field the embed is colored by.
+    const colorIcons = useMemo(
+        () =>
+            JSON.parse(colorLegendKey).reduce(
+                (icons, { value, color }) => ({
+                    ...icons,
+                    [value.toLowerCase()]: createMarkerIcon(color),
+                }),
+                {},
+            ),
+        [colorLegendKey],
+    );
+
     const [multipleFacilitiesAtPoint, setMultipleFacilitiesAtPoint] = useState(
         null,
     );
@@ -302,13 +317,17 @@ const VectorTileFacilitiesLayer = ({
                 vectorTileLayerStyles={{
                     facilities(properties) {
                         const facilityID = get(properties, 'id', null);
+                        const [colorValue] = splitTagValues(
+                            get(properties, 'embed_color_value', '') || '',
+                        );
+                        const colorIcon = colorValue
+                            ? colorIcons[colorValue.toLowerCase()]
+                            : null;
 
-                        return {
-                            icon:
-                                osID && facilityID === osID
-                                    ? selectedMarkerIcon
-                                    : unselectedMarkerIcon,
-                        };
+                        if (osID && facilityID === osID) {
+                            return { icon: selectedMarkerIcon };
+                        }
+                        return { icon: colorIcon || unselectedMarkerIcon };
                     },
                 }}
                 subdomains=""
@@ -365,7 +384,15 @@ function mapStateToProps({
     vectorTileLayer: { key },
     embeddedMap: { config, embed },
 }) {
-    const querystring = createQueryStringFromSearchFilters(filters, embed);
+    // An embed colored by a field asks for that field's value on each marker.
+    const colorByField = embed ? config.color_by_field : null;
+    const filtersQuerystring = createQueryStringFromSearchFilters(
+        filters,
+        embed,
+    );
+    const querystring = colorByField
+        ? `${filtersQuerystring}&color_by=${encodeURIComponent(colorByField)}`
+        : filtersQuerystring;
     const tileCacheKey = createTileCacheKeyWithEncodedFilters(filters, key);
     const tileURL = createTileURLWithQueryString(
         querystring,
@@ -380,6 +407,10 @@ function mapStateToProps({
         resetButtonClickCount,
         iconColor:
             config.selectedMarkerColor || config.color || SelectedMarkerColor,
+        // A string, so the icons are only rebuilt when the colors change.
+        colorLegendKey: JSON.stringify(
+            getEmbedColorLegend(embed ? config : null),
+        ),
     };
 }
 
