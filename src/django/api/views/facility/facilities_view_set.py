@@ -2833,7 +2833,6 @@ class FacilitiesViewSet(ListModelMixin,
                     FacilityClaimStatuses.REVOKED
                     if claim.status == FacilityClaimStatuses.APPROVED
                     else FacilityClaimStatuses.DENIED)
-                claim.waiting_on = None
                 claim.status_change_by = request.user
                 claim.status_change_date = timezone.now()
                 change_reason_template = (

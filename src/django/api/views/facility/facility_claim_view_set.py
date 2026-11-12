@@ -404,7 +404,6 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.APPROVED
-            claim.waiting_on = None
             record_ai_approval(claim, request.user)
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)
@@ -466,7 +465,6 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.DENIED
-            claim.waiting_on = None
             claim.denial_type = denial_type
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)
@@ -508,7 +506,6 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.REVOKED
-            claim.waiting_on = None
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)
 

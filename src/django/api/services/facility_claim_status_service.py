@@ -8,6 +8,7 @@ which the API, the frontend and the pipeline all read. These fields sit
 next to it, and the label staff see is built from both.
 '''
 import json
+import logging
 from typing import Optional
 
 from django.conf import settings
@@ -21,6 +22,8 @@ from api.constants import (
 from api.exceptions import BadRequestException
 from api.models.facility.facility_claim import FacilityClaim
 from api.models.user import User
+
+log = logging.getLogger(__name__)
 
 # The marker the pipeline puts before the JSON block in its review note.
 # The claims dashboard reads the same block (automatedReviewUtils.js).
@@ -114,24 +117,42 @@ def resolve_denial_type(
     return None
 
 
-def _parse_automated_review(note: str) -> Optional[dict]:
-    if not isinstance(note, str):
-        return None
-    marker_index = note.find(AUTOMATED_REVIEW_MARKER)
-    if marker_index == -1:
-        return None
-    json_start = note.find('{', marker_index)
+def _read_review_block(note: str) -> Optional[dict]:
+    '''
+    The JSON object that follows the marker, or None when there is no
+    object we understand. Text after the object is ignored.
+    '''
+    json_start = note.find('{', note.find(AUTOMATED_REVIEW_MARKER))
     if json_start == -1:
         return None
     try:
-        review = json.loads(note[json_start:])
+        review, _ = json.JSONDecoder().raw_decode(note[json_start:])
     except ValueError:
-        return None
-    if not isinstance(review, dict):
         return None
     if (review.get('v') != AUTOMATED_REVIEW_VERSION
             or review.get('kind') != AUTOMATED_REVIEW_KIND):
         return None
+    return review
+
+
+def _parse_automated_review(claim: FacilityClaim, note: str) -> Optional[dict]:
+    '''
+    The pipeline's review from its note, or None. A note with no marker
+    is an ordinary note. A note with the marker but no block we can
+    read is logged, because it means the pipeline and this reader no
+    longer agree on the format. The log line carries the claim id only,
+    never the note.
+    '''
+    if not isinstance(note, str) or AUTOMATED_REVIEW_MARKER not in note:
+        return None
+    review = _read_review_block(note)
+    if review is None:
+        log.warning(
+            'Claim %s: the automated review note has a machine-readable '
+            'block that could not be read, so no AI decision was '
+            'recorded.',
+            claim.id,
+        )
     return review
 
 
@@ -162,7 +183,7 @@ def record_ai_review(claim: FacilityClaim, user: User, note: str) -> None:
         return
     if not is_claims_automation_account(user):
         return
-    review = _parse_automated_review(note)
+    review = _parse_automated_review(claim, note)
     if review is None:
         return
     claim.ai_decision = FacilityClaimAIDecisions.HELD

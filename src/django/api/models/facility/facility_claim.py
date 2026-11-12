@@ -174,8 +174,8 @@ class FacilityClaim(models.Model):
         help_text=('Who has the next move while this claim is PENDING. '
                    'OS_HUB = a moderator owes the next step (the claim '
                    'is new, or the claimant updated it). CLAIMANT = the '
-                   'claimant was asked for something. Empty once the '
-                   'claim is decided.'))
+                   'claimant was asked for something. Emptied on save '
+                   'once the claim is decided.'))
     denial_type = models.CharField(
         max_length=200,
         null=True,
@@ -567,6 +567,22 @@ class FacilityClaim(models.Model):
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source']
     )
+
+    def save(self, *args, **kwargs):
+        """
+        Only a PENDING claim waits on anyone (OSDEV-3795). Clearing
+        `waiting_on` here covers every path that decides a claim, so no
+        caller has to remember it. A save limited by `update_fields`
+        gets `waiting_on` added to the write when it is cleared.
+        `QuerySet.update()` does not call save and is not covered.
+        """
+        if (self.status != FacilityClaimStatuses.PENDING
+                and self.waiting_on is not None):
+            self.waiting_on = None
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = {*update_fields, 'waiting_on'}
+        super().save(*args, **kwargs)
 
     default_change_includes = (
         'facility_name_english',

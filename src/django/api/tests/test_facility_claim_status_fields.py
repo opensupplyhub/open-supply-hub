@@ -22,6 +22,7 @@ from api.constants import (
     FacilityClaimStatuses,
     FacilityClaimWaitingOn,
 )
+from api.admin import FacilityClaimAdmin
 from api.models import (
     Contributor,
     Facility,
@@ -34,6 +35,7 @@ from api.models import (
     Source,
     User,
 )
+from api.services import facility_claim_status_service
 from api.services.facility_claim_status_service import (
     AUTOMATED_REVIEW_MARKER,
     get_status_label,
@@ -347,6 +349,62 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
         self.claim.refresh_from_db()
         self.assertIsNone(self.claim.waiting_on)
 
+    def test_saving_a_decided_claim_always_empties_waiting_on(self):
+        # No caller clears waiting_on by hand: any save of a claim that
+        # is not PENDING does it, whoever changed the status.
+        for decided_status in (
+            FacilityClaimStatuses.APPROVED,
+            FacilityClaimStatuses.DENIED,
+            FacilityClaimStatuses.REVOKED,
+        ):
+            with self.subTest(status=decided_status):
+                claim = self.create_claim(
+                    self.create_facility(decided_status)
+                )
+                self.assertEqual(
+                    FacilityClaimWaitingOn.OS_HUB, claim.waiting_on
+                )
+
+                claim.status = decided_status
+                claim.save()
+
+                claim.refresh_from_db()
+                self.assertEqual(decided_status, claim.status)
+                self.assertIsNone(claim.waiting_on)
+
+    def test_partial_save_of_a_decided_claim_writes_the_emptied_value(self):
+        self.claim.status = FacilityClaimStatuses.DENIED
+
+        self.claim.save(update_fields=['status'])
+
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimStatuses.DENIED, self.claim.status)
+        self.assertIsNone(self.claim.waiting_on)
+
+    def test_partial_save_of_a_pending_claim_writes_only_its_fields(self):
+        self.claim.contact_person = 'New Name'
+        self.claim.waiting_on = FacilityClaimWaitingOn.CLAIMANT
+
+        self.claim.save(update_fields=['contact_person'])
+
+        self.claim.refresh_from_db()
+        self.assertEqual('New Name', self.claim.contact_person)
+        self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
+
+    def test_claim_created_as_decided_has_no_waiting_on(self):
+        claim = self.create_claim(
+            self.create_facility('approved'),
+            status=FacilityClaimStatuses.APPROVED,
+        )
+
+        claim.refresh_from_db()
+        self.assertIsNone(claim.waiting_on)
+
+    def test_status_cannot_be_edited_in_the_django_admin(self):
+        # The admin cannot flip a status, so the save guard is the only
+        # path it needs; this fails if that ever changes.
+        self.assertIn('status', FacilityClaimAdmin.readonly_fields)
+
 
 @override_settings(CLAIMS_AUTOMATION_ACCOUNT_EMAIL=BOT_EMAIL)
 class ClaimDenialTypeTest(ClaimStatusFieldsTestBase):
@@ -406,6 +464,29 @@ class ClaimDenialTypeTest(ClaimStatusFieldsTestBase):
         self.claim.refresh_from_db()
         self.assertEqual(
             FacilityClaimDenialTypes.NO_RESPONSE, self.claim.denial_type
+        )
+
+    @override_switch('claim_a_facility', active=True)
+    def test_empty_denial_type_is_treated_as_not_sent(self):
+        self.login(self.moderator)
+
+        response = self.post('deny', {'reason': 'No', 'denial_type': ''})
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(FacilityClaimStatuses.DENIED, response.data['status'])
+        self.assertIsNone(response.data['denial_type'])
+        self.assertEqual('Denied', response.data['status_label'])
+
+    @override_switch('claim_a_facility', active=True)
+    def test_empty_denial_type_from_automation_is_no_response(self):
+        self.login(self.bot)
+
+        response = self.post('deny', {'reason': 'No', 'denial_type': ''})
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(
+            FacilityClaimDenialTypes.NO_RESPONSE,
+            response.data['denial_type'],
         )
 
     @override_switch('claim_a_facility', active=True)
@@ -559,10 +640,31 @@ class ClaimAIDecisionTest(ClaimStatusFieldsTestBase):
         )
 
     @override_switch('claim_a_facility', active=True)
+    def test_text_after_the_review_block_is_ignored(self):
+        self.login(self.bot)
+
+        response = self.post('note', {
+            'note': automated_review_note() + '\n\nEnd of review. {draft}',
+        })
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(
+            FacilityClaimAIDecisions.HELD, response.data['ai_decision']
+        )
+        self.assertEqual(
+            'Automated review result: NOT_VALIDATED.\n'
+            'address_match: The documents show a different street.',
+            response.data['ai_decision_reason'],
+        )
+
+    @override_switch('claim_a_facility', active=True)
     def test_automation_note_without_review_block_records_nothing(self):
         self.login(self.bot)
 
-        response = self.post('note', {'note': 'Extracted document text.'})
+        with self.assertNoLogs(
+            facility_claim_status_service.log, level='WARNING'
+        ):
+            response = self.post('note', {'note': 'Extracted document text.'})
 
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assert_no_ai_decision()
@@ -579,9 +681,16 @@ class ClaimAIDecisionTest(ClaimStatusFieldsTestBase):
 
         for note in notes:
             with self.subTest(note=note):
-                response = self.post('note', {'note': note})
+                with self.assertLogs(
+                    facility_claim_status_service.log, level='WARNING'
+                ) as logs:
+                    response = self.post('note', {'note': note})
                 self.assertEqual(status.HTTP_200_OK, response.status_code)
                 self.assert_no_ai_decision()
+                self.assertEqual(1, len(logs.output))
+                self.assertIn(f'Claim {self.claim.id}:', logs.output[0])
+                # The log line names the claim and never quotes the note.
+                self.assertNotIn(AUTOMATED_REVIEW_MARKER, logs.output[0])
 
         self.assertEqual(
             len(notes),

@@ -17,8 +17,8 @@ AI_DECISION_CHOICES = [('APPROVED', 'APPROVED'), ('HELD', 'HELD')]
 WAITING_ON_HELP_TEXT = (
     'Who has the next move while this claim is PENDING. OS_HUB = a '
     'moderator owes the next step (the claim is new, or the claimant '
-    'updated it). CLAIMANT = the claimant was asked for something. Empty '
-    'once the claim is decided.'
+    'updated it). CLAIMANT = the claimant was asked for something. '
+    'Emptied on save once the claim is decided.'
 )
 DENIAL_TYPE_HELP_TEXT = (
     'Why this claim was DENIED. NO_RESPONSE = the claimant never '
