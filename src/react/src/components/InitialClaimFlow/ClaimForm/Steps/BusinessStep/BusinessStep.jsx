@@ -9,6 +9,8 @@ import { Link } from 'react-router-dom';
 
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
+import BestProofBox from '../../../Shared/BestProofBox/BestProofBox';
+import { COMPANY_ADDRESS_BEST_PROOF } from '../../../Shared/BestProofBox/constants';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
@@ -244,11 +246,9 @@ const BusinessStep = ({
                     variant="body1"
                     className={classes.sectionDescription}
                 >
-                    Select one item below. Best: a utility bill or business
-                    registration that shows your company name and address. A
-                    LinkedIn page may not be accepted and can significantly
-                    delay approval.
+                    Select one item below.
                 </Typography>
+                <BestProofBox {...COMPANY_ADDRESS_BEST_PROOF} />
                 <StyledSelect
                     id="locationAddressVerificationMethod"
                     name="locationAddressVerificationMethod"

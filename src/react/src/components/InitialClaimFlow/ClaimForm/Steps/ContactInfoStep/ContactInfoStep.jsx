@@ -29,6 +29,11 @@ import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
+import BestProofBox from '../../../Shared/BestProofBox/BestProofBox';
+import {
+    EMAIL_BEST_PROOF,
+    EMPLOYMENT_BEST_PROOF,
+} from '../../../Shared/BestProofBox/constants';
 import findSelectedOption, { getOptionLabelWithNote } from '../utils';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import { selectStyles } from '../../styles';
@@ -131,13 +136,7 @@ const ContactInfoStep = ({
                         className={classes.textField}
                         placeholder="name@yourcompany.com"
                     />
-                    <Typography
-                        variant="body1"
-                        className={classes.fieldHelperText}
-                    >
-                        Use your work email. A personal email may not be
-                        accepted and can significantly delay approval.
-                    </Typography>
+                    <BestProofBox {...EMAIL_BEST_PROOF} />
                 </div>
                 <div className={classes.fieldContainer}>
                     <FormFieldTitle
@@ -212,11 +211,9 @@ const ContactInfoStep = ({
                         variant="body1"
                         className={classes.sectionDescription}
                     >
-                        Select one item below. Best: a business card, employment
-                        letter or ID badge that shows your name and your
-                        company. A LinkedIn link may not be accepted and can
-                        significantly delay approval.
+                        Select one item below.
                     </Typography>
+                    <BestProofBox {...EMPLOYMENT_BEST_PROOF} />
                     <StyledSelect
                         id="claimantEmploymentVerificationMethod"
                         name="claimantEmploymentVerificationMethod"
