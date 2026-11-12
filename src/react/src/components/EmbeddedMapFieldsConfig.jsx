@@ -4,8 +4,6 @@ import Typography from '@material-ui/core/Typography';
 import TextField from '@material-ui/core/TextField';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormLabel from '@material-ui/core/FormLabel';
-import Tooltip from '@material-ui/core/Tooltip';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import IconButton from '@material-ui/core/IconButton';
 import UndoIcon from '@material-ui/icons/Undo';
@@ -72,18 +70,30 @@ const styles = {
     textInput: {
         width: '250px',
     },
-    searchable: {
-        marginLeft: '15px',
-    },
     displayAs: {
-        marginLeft: '5px',
+        marginLeft: '6px',
         padding: '4px',
+    },
+    fieldSource: {
+        display: 'flex',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        margin: '-2px 0 0 48px',
     },
     fieldOptions: {
         display: 'flex',
         alignItems: 'center',
         flexWrap: 'wrap',
-        margin: '-4px 0 10px 48px',
+        margin: '0 0 12px 42px',
+    },
+    toggle: {
+        marginLeft: 0,
+        marginRight: '14px',
+    },
+    showAsLabel: {
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: '14px',
     },
     columnName: {
         fontFamily: 'monospace',
@@ -184,6 +194,26 @@ function EmbeddedMapFieldsConfig({
         setFields(reorder(fields, index, index + 1));
     };
 
+    // The per-field options share one look: a tick box with its label.
+    const renderToggle = ({ label, checked, disabled, onChange }) => (
+        <FormControlLabel
+            key={label}
+            label={label}
+            style={styles.toggle}
+            control={
+                <Checkbox
+                    checked={!!checked}
+                    onChange={e => onChange(e.target.checked)}
+                    disabled={disabled}
+                    style={{
+                        color: disabled ? 'rgba(0, 0, 0, 0.1)' : 'rgb(0, 0, 0)',
+                        padding: '6px',
+                    }}
+                />
+            }
+        />
+    );
+
     const renderField = (
         {
             visible,
@@ -270,31 +300,6 @@ function EmbeddedMapFieldsConfig({
                             }}
                         />
 
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={searchable}
-                                    onChange={e =>
-                                        updateItem({
-                                            displayName,
-                                            columnName,
-                                            searchable: e.target.checked,
-                                            visible,
-                                            order,
-                                        })
-                                    }
-                                    value="searchable"
-                                    style={{
-                                        color: visible
-                                            ? 'rgb(0, 0, 0)'
-                                            : 'rgba(0, 0, 0, 0.1)',
-                                        paddingRight: 0,
-                                    }}
-                                    disabled={!visible}
-                                />
-                            }
-                            style={styles.searchable}
-                        />
                         <IconButton
                             className="draggable"
                             style={{ marginLeft: 0 }}
@@ -320,7 +325,7 @@ function EmbeddedMapFieldsConfig({
                                 <ArrowUpwardIcon />
                             </IconButton>
                         )}
-                        <div style={styles.fieldOptions}>
+                        <div style={styles.fieldSource}>
                             <span style={styles.columnName}>
                                 Column: {columnName}
                             </span>
@@ -330,77 +335,67 @@ function EmbeddedMapFieldsConfig({
                             {hasData === false ? (
                                 <span style={styles.noData}>No data yet</span>
                             ) : null}
+                        </div>
+                        <div style={styles.fieldOptions}>
+                            {renderToggle({
+                                label: 'Search',
+                                checked: searchable,
+                                disabled: !visible,
+                                onChange: checked =>
+                                    updateItem({
+                                        columnName,
+                                        searchable: checked,
+                                    }),
+                            })}
                             {userEmbedLevel === 3 ? (
                                 <>
-                                    <FormControlLabel
-                                        label="Filter"
-                                        control={
-                                            <Checkbox
-                                                checked={!!filterable}
-                                                onChange={e =>
-                                                    updateItem({
-                                                        columnName,
-                                                        filterable:
-                                                            e.target.checked,
-                                                    })
-                                                }
-                                                value="filterable"
-                                                style={{
-                                                    color: visible
-                                                        ? 'rgb(0, 0, 0)'
-                                                        : 'rgba(0, 0, 0, 0.1)',
-                                                    paddingRight: '4px',
-                                                }}
-                                                disabled={!visible}
-                                            />
-                                        }
-                                        style={styles.searchable}
-                                    />
-                                    <FormControlLabel
-                                        label="In list"
-                                        control={
-                                            <Checkbox
-                                                checked={!!showInList}
-                                                onChange={e =>
-                                                    updateItem({
-                                                        columnName,
-                                                        showInList:
-                                                            e.target.checked,
-                                                    })
-                                                }
-                                                value="showInList"
-                                                style={{
-                                                    color: visible
-                                                        ? 'rgb(0, 0, 0)'
-                                                        : 'rgba(0, 0, 0, 0.1)',
-                                                    paddingRight: '4px',
-                                                }}
-                                                disabled={!visible}
-                                            />
-                                        }
-                                        style={styles.searchable}
-                                    />
-                                    <select
-                                        aria-label={`Show ${displayName} as`}
-                                        value={displayAs || DISPLAY_AS_TEXT}
-                                        onChange={e =>
+                                    {renderToggle({
+                                        label: 'Filter',
+                                        checked: filterable,
+                                        disabled: !visible,
+                                        onChange: checked =>
                                             updateItem({
                                                 columnName,
-                                                displayAs: e.target.value,
-                                            })
-                                        }
-                                        disabled={!visible}
-                                        style={styles.displayAs}
+                                                filterable: checked,
+                                            }),
+                                    })}
+                                    {renderToggle({
+                                        label: 'In list',
+                                        checked: showInList,
+                                        disabled: !visible,
+                                        onChange: checked =>
+                                            updateItem({
+                                                columnName,
+                                                showInList: checked,
+                                            }),
+                                    })}
+                                    <label
+                                        htmlFor={`show-as-${columnName}`}
+                                        style={styles.showAsLabel}
                                     >
-                                        {DISPLAY_AS_OPTIONS.map(option => (
-                                            <option
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                        Show as
+                                        <select
+                                            id={`show-as-${columnName}`}
+                                            value={displayAs || DISPLAY_AS_TEXT}
+                                            onChange={e =>
+                                                updateItem({
+                                                    columnName,
+                                                    displayAs: e.target.value,
+                                                })
+                                            }
+                                            disabled={!visible}
+                                            style={styles.displayAs}
+                                        >
+                                            {DISPLAY_AS_OPTIONS.map(option => (
+                                                <option
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
                                 </>
                             ) : null}
                         </div>
@@ -424,6 +419,20 @@ function EmbeddedMapFieldsConfig({
                             number of fields you are able to display corresponds
                             to your Embedded Map package). Facility name,
                             address, and OS ID will always be included.
+                        </Typography>
+                        <Typography>
+                            For each field you include, tick{' '}
+                            <strong>Search</strong> to let visitors find
+                            facilities by typing its text
+                            {userEmbedLevel === 3 ? (
+                                <>
+                                    , <strong>Filter</strong> to offer it as a
+                                    dropdown filter, and{' '}
+                                    <strong>In list</strong> to show it on each
+                                    facility in the results list
+                                </>
+                            ) : null}
+                            .
                         </Typography>
                         {errors?.embed_fields && (
                             <Typography style={{ color: 'red' }}>
@@ -481,21 +490,6 @@ function EmbeddedMapFieldsConfig({
                                                 label: classes.listText,
                                             }}
                                         />
-                                        <Tooltip
-                                            title="Choose which visible fields to include in text search for your map. Facility name, address, and OS ID will always be included."
-                                            classes={{
-                                                tooltip: classes.tooltip,
-                                            }}
-                                        >
-                                            <FormLabel
-                                                style={{ color: 'rgb(0,0,0)' }}
-                                            >
-                                                Searchable{' '}
-                                                <i
-                                                    className={`${classes.icon} fas fa-fw fa-question-circle`}
-                                                />
-                                            </FormLabel>
-                                        </Tooltip>
                                     </li>
                                     {fields
                                         .sort((a, b) => a.order - b.order)
