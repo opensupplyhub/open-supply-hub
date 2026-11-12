@@ -29,7 +29,7 @@ import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
-import findSelectedOption from '../utils';
+import findSelectedOption, { getOptionLabelWithNote } from '../utils';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import { selectStyles } from '../../styles';
 import { CLAIM_PII_WARNING_TEXT } from '../../../../../util/constants';
@@ -111,7 +111,7 @@ const ContactInfoStep = ({
             <Grid item>
                 <div className={classes.fieldContainer}>
                     <FormFieldTitle
-                        label="Your Email"
+                        label="Your Work Email"
                         classes={{ title: classes.formLabelRoot }}
                         required
                     />
@@ -129,8 +129,15 @@ const ContactInfoStep = ({
                             },
                         }}
                         className={classes.textField}
-                        placeholder="opensupplyhubuser@company.com"
+                        placeholder="name@yourcompany.com"
                     />
+                    <Typography
+                        variant="body1"
+                        className={classes.fieldHelperText}
+                    >
+                        Use your work email. A personal email may not be
+                        accepted and can significantly delay approval.
+                    </Typography>
                 </div>
                 <div className={classes.fieldContainer}>
                     <FormFieldTitle
@@ -205,8 +212,10 @@ const ContactInfoStep = ({
                         variant="body1"
                         className={classes.sectionDescription}
                     >
-                        You need to select and provide one of the below items
-                        for employment verification.
+                        Select one item below. Best: a business card, employment
+                        letter or ID badge that shows your name and your
+                        company. A LinkedIn link may not be accepted and can
+                        significantly delay approval.
                     </Typography>
                     <StyledSelect
                         id="claimantEmploymentVerificationMethod"
@@ -214,6 +223,7 @@ const ContactInfoStep = ({
                         aria-label="Select employment verification option"
                         label={null}
                         options={EMPLOYMENT_VERIFICATION_OPTIONS}
+                        getOptionLabel={getOptionLabelWithNote}
                         onBlur={() =>
                             handleBlur('claimantEmploymentVerificationMethod')
                         }
@@ -295,7 +305,7 @@ const ContactInfoStep = ({
                             <ClaimAttachmentsUploader
                                 inputId="employment-verification-upload"
                                 title={
-                                    'Upload your documents/photos\nPlease upload one or more clear photos or scans of your selected verification method. You can upload multiple files.'
+                                    'Upload your documents/photos\nPlease upload one or more clear photos or scans of your selected verification method. You can upload multiple files. Claims with a document are approved fastest. Submitting no document can significantly delay approval.'
                                 }
                                 files={
                                     formData.employmentVerificationDocuments ||

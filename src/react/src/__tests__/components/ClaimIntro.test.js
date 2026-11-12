@@ -95,6 +95,16 @@ describe('ClaimIntro component', () => {
             ).toBeInTheDocument();
         });
 
+        test('says which claims are approved fastest', () => {
+            const { getByText } = renderComponent();
+
+            expect(
+                getByText(
+                    'Claims with a work email and an official document are approved fastest.'
+                )
+            ).toBeInTheDocument();
+        });
+
         test('renders both action buttons', () => {
             const { getByText } = renderComponent();
 

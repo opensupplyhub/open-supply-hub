@@ -1,3 +1,6 @@
+// `label` is the text stored on the claim
+// (`claimant_employment_verification_method`), so it must not change.
+// Guidance shown next to an option goes in `note`, which is display only.
 const EMPLOYMENT_VERIFICATION_OPTIONS = Object.freeze([
     {
         value: 'employment-letter',
@@ -37,6 +40,7 @@ const EMPLOYMENT_VERIFICATION_OPTIONS = Object.freeze([
     {
         value: 'linkedin-page',
         label: 'Your LinkedIn page showing your name, title and company',
+        note: '(may not be accepted, can significantly delay approval)',
     },
 ]);
 

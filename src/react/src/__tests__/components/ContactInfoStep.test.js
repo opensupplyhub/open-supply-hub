@@ -7,7 +7,7 @@ import { EMPLOYMENT_VERIFICATION_OPTIONS } from '../../components/InitialClaimFl
 jest.mock('../../components/Filters/StyledSelect', () => {
     // eslint-disable-next-line global-require
     const mockPropTypes = require('prop-types');
-    const MockStyledSelect = ({ options, value, onChange, onBlur, placeholder, name }) => (
+    const MockStyledSelect = ({ options, value, onChange, onBlur, placeholder, name, getOptionLabel }) => (
         <select
             data-testid="employment-verification-select"
             name={name}
@@ -21,7 +21,7 @@ jest.mock('../../components/Filters/StyledSelect', () => {
             <option value="">{placeholder}</option>
             {options.map(opt => (
                 <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {getOptionLabel ? getOptionLabel(opt) : opt.label}
                 </option>
             ))}
         </select>
@@ -39,9 +39,10 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         onBlur: mockPropTypes.func,
         placeholder: mockPropTypes.string,
         name: mockPropTypes.string,
+        getOptionLabel: mockPropTypes.func,
     };
 
-    MockStyledSelect.defaultProps = { value: null, onBlur: () => {}, placeholder: '', name: 'claimantEmploymentVerificationMethod' };
+    MockStyledSelect.defaultProps = { value: null, onBlur: () => {}, placeholder: '', name: 'claimantEmploymentVerificationMethod', getOptionLabel: undefined };
 
     return MockStyledSelect;
 });
@@ -163,6 +164,78 @@ describe('ContactInfoStep component', () => {
             'pointOfContactEmail',
             'test@example.com',
         );
+    });
+
+    test('asks for a work email and warns about personal emails', () => {
+        renderComponent();
+
+        expect(screen.getByText('Your Work Email')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('name@yourcompany.com')).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                'Use your work email. A personal email may not be accepted and can significantly delay approval.',
+            ),
+        ).toBeInTheDocument();
+    });
+
+    test('tells the claimant which employment proof is best', () => {
+        renderComponent();
+
+        expect(
+            screen.getByText(
+                'Select one item below. Best: a business card, employment letter or ID badge that shows your name and your company. A LinkedIn link may not be accepted and can significantly delay approval.',
+            ),
+        ).toBeInTheDocument();
+    });
+
+    test('shows the note on the LinkedIn option only, in the same order as before', () => {
+        renderComponent();
+
+        const optionTexts = Array.from(
+            screen.getByTestId('employment-verification-select').querySelectorAll('option'),
+        )
+            .slice(1)
+            .map(option => option.textContent);
+
+        expect(optionTexts).toEqual([
+            'Employment letter or contract showing your name, title, and company',
+            'Signed and/or stamped letter on company letterhead that confirms your name, your title with the company, and your email address',
+            'Company ID badge or access card (photo showing name and title)',
+            'Official organizational chart showing your position',
+            'Business card showing your name, title and company',
+            'Company website showing your name and title (e.g., About Us, Team page)',
+            'An official company document showing your name and title',
+            'Audit reports showing your name and role at the facility',
+            'Your LinkedIn page showing your name, title and company (may not be accepted, can significantly delay approval)',
+        ]);
+    });
+
+    test('stores the LinkedIn option label without its note', () => {
+        renderComponent();
+
+        const select = screen.getByTestId('employment-verification-select');
+        fireEvent.change(select, { target: { value: 'linkedin-page' } });
+
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'claimantEmploymentVerificationMethod',
+            'Your LinkedIn page showing your name, title and company',
+        );
+    });
+
+    test('upload box says claims with a document are approved fastest', () => {
+        const letterLabel = EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === 'employment-letter').label;
+        renderComponent({
+            formData: {
+                ...defaultProps.formData,
+                claimantEmploymentVerificationMethod: letterLabel,
+            },
+        });
+
+        expect(
+            screen.getByText(
+                /You can upload multiple files\. Claims with a document are approved fastest\. Submitting no document can significantly delay approval\./,
+            ),
+        ).toBeInTheDocument();
     });
 
     test('selecting URL-based verification shows URL input with placeholder and updates value', () => {

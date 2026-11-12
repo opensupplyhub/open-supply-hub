@@ -27,7 +27,13 @@ export const claimIntroStyles = theme => ({
     subtitle: {
         fontSize: '18px',
         fontWeight: theme.typography.fontWeightSemiBold,
-        margin: '24px 0 32px 0',
+        margin: '24px 0 8px 0',
+        textAlign: 'center',
+    },
+    approvalTip: {
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightSemiBold,
+        margin: '0 0 32px 0',
         textAlign: 'center',
     },
     actionsInner: {
