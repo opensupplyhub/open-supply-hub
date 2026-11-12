@@ -49,7 +49,7 @@ import { useMergeButtonClickHandler } from '../util/hooks';
 
 import COLOURS from '../util/COLOURS';
 import {
-    embedCornerStyle,
+    embedButtonCornerStyle,
     embedHeadingFont,
     getListFields,
     themeEmbedStyle,
@@ -137,7 +137,7 @@ const makeFacilitiesTabStyles = theme => ({
         border: '1px solid rgb(134, 65, 15)',
     }),
     copyLinkButton: {
-        ...embedCornerStyle(theme),
+        ...embedButtonCornerStyle(theme),
         margin: '5px 16px 5px 0',
         height: '45px',
         fontSize: '16px',

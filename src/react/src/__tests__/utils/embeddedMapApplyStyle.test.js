@@ -1,4 +1,5 @@
 import {
+    embedButtonCornerStyle,
     embedCornerStyle,
     embedHeadingFont,
     getEmbedStyle,
@@ -55,6 +56,7 @@ describe('applying embedded map style settings', () => {
             expect(themeEmbedStyle(theme)).toEqual(NOT_SET);
             expect(embedHeadingFont(theme)).toBe('Arial');
             expect(embedCornerStyle(theme)).toEqual({});
+            expect(embedButtonCornerStyle(theme)).toEqual({});
         });
 
         it('use the embed style when it is set', () => {
@@ -69,6 +71,9 @@ describe('applying embedded map style settings', () => {
 
             expect(embedHeadingFont(theme)).toBe('Georgia,serif');
             expect(embedCornerStyle(theme)).toEqual({ borderRadius: '0px' });
+            expect(embedButtonCornerStyle(theme)).toEqual({
+                borderRadius: '0px !important',
+            });
         });
     });
 });

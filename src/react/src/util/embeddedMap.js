@@ -224,3 +224,12 @@ export const embedCornerStyle = theme => {
     const { cornerRadius } = themeEmbedStyle(theme);
     return isNil(cornerRadius) ? {} : { borderRadius: `${cornerRadius}px` };
 };
+
+// App.css squares every <button> with `border-radius: 0 !important`, so a
+// button needs !important on its own class to take the embed's corner style.
+export const embedButtonCornerStyle = theme => {
+    const { cornerRadius } = themeEmbedStyle(theme);
+    return isNil(cornerRadius)
+        ? {}
+        : { borderRadius: `${cornerRadius}px !important` };
+};

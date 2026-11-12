@@ -33,7 +33,7 @@ import {
 import { fetchFacilities } from '../actions/facilities';
 
 import {
-    embedCornerStyle,
+    embedButtonCornerStyle,
     embedHeadingFont,
     themeEmbedStyle,
 } from '../util/embeddedMap';
@@ -114,7 +114,7 @@ const filterSidebarSearchTabStyles = theme =>
             },
             color: theme.palette.getContrastText(theme.palette.action.main),
             flex: 1,
-            ...embedCornerStyle(theme),
+            ...embedButtonCornerStyle(theme),
         },
         ...filterSidebarStyles,
     });
