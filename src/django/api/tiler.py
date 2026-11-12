@@ -1,5 +1,9 @@
 from api.models.facility.facility import Facility
 from api.models.facility.facility_index import FacilityIndex
+from api.services.embed_field_filters import (
+    embed_color_by_column,
+    embed_color_value_subquery,
+)
 import mercantile
 
 from django.contrib.gis.geos import Polygon
@@ -122,8 +126,20 @@ def get_facilities_vector_tile(params, layer, z, x, y):
         )
     )
 
+    facilities = Facility.objects.filter_by_query_params(params)
+    fields = ["location", "id", "name", "address", "x", "y", "z"]
+
+    # An embedded map can color its markers by one of the contributor's
+    # fields; when it does, each marker carries that field's value.
+    color_column = embed_color_by_column(params)
+    if color_column is not None:
+        facilities = facilities.annotate(
+            embed_color_value=embed_color_value_subquery(params, color_column)
+        )
+        fields.append("embed_color_value")
+
     query, params_for_sql = (
-        Facility.objects.filter_by_query_params(params)
+        facilities
         .filter(location__within=filter_polygon)
         .extra(
             select={
@@ -138,7 +154,7 @@ def get_facilities_vector_tile(params, layer, z, x, y):
                 "z": z,
             }
         )
-        .values("location", "id", "name", "address", "x", "y", "z")
+        .values(*fields)
         .query.sql_with_params()
     )
 

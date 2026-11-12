@@ -9,11 +9,17 @@ from api.models import (
     Source,
     User,
 )
+from api.models.facility.facility_index import FacilityIndex
+from api.models.transactions.index_facilities_new import index_facilities_new
+from api.serializers.embed_config import EmbedConfigSerializer
 from api.services.embed_field_filters import (
     apply_embed_filters,
+    embed_color_by_column,
+    embed_color_value_subquery,
     embed_filter_options,
     parse_embed_filters,
 )
+from api.tiler import get_facilities_vector_tile
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -263,3 +269,117 @@ class EmbedFieldFiltersTest(APITestCase):
         self.assertEqual(
             {"project": True, "tier": True, "secret": False}, filterable
         )
+
+    # ------------------------------------------------------------------ #
+    # coloring markers by a field                                         #
+    # ------------------------------------------------------------------ #
+    def _color_by(self, column, colors=None):
+        config = self.contributor.embed_config
+        config.color_by_field = column
+        config.color_by_colors = colors or {}
+        config.save()
+
+    def _tile_params(self, extra=""):
+        return QueryDict(
+            "embed=1&contributors={}{}".format(self.contributor.id, extra)
+        )
+
+    def test_color_column_is_only_the_one_the_contributor_chose(self):
+        self._color_by("tier")
+
+        self.assertEqual(
+            "tier", embed_color_by_column(self._tile_params("&color_by=tier"))
+        )
+        self.assertIsNone(
+            embed_color_by_column(self._tile_params("&color_by=secret"))
+        )
+        self.assertIsNone(embed_color_by_column(self._tile_params()))
+        self.assertIsNone(
+            embed_color_by_column(
+                QueryDict(
+                    "contributors={}&color_by=tier".format(
+                        self.contributor.id
+                    )
+                )
+            )
+        )
+
+    def test_color_value_is_read_from_the_contributors_row(self):
+        params = self._tile_params("&color_by=tier")
+        values = dict(
+            Facility.objects.annotate(
+                embed_color_value=embed_color_value_subquery(params, "tier")
+            ).values_list("name", "embed_color_value")
+        )
+
+        self.assertEqual(
+            {"Health Factory": "1", "Sunrise Mill": "2", "Plain Factory": "1"},
+            values,
+        )
+
+    def test_marker_tile_carries_the_color_value(self):
+        self._color_by("tier")
+        # Tiles are built from the facility index, which needs to know the
+        # facilities belong to this contributor.
+        index_facilities_new(
+            [self.health.id, self.sunrise.id, self.plain.id]
+        )
+        FacilityIndex.objects.update(contributors_id=[self.contributor.id])
+
+        colored = get_facilities_vector_tile(
+            self._tile_params("&color_by=tier"), "facilities", 0, 0, 0
+        )
+        plain = get_facilities_vector_tile(
+            self._tile_params(), "facilities", 0, 0, 0
+        )
+
+        self.assertIn(b"embed_color_value", bytes(colored))
+        self.assertNotIn(b"embed_color_value", bytes(plain))
+
+    def test_color_settings_are_validated(self):
+        def errors(data):
+            serializer = EmbedConfigSerializer(
+                self.contributor.embed_config, data=data, partial=True
+            )
+            serializer.is_valid()
+            return serializer.errors
+
+        self.assertEqual(
+            {},
+            errors(
+                {
+                    "color_by_field": "tier",
+                    "color_by_colors": {"1": "#14507a", "2": "#2a9d8f"},
+                }
+            ),
+        )
+        self.assertIn(
+            "color_by_colors", errors({"color_by_colors": {"1": "red"}})
+        )
+        self.assertIn(
+            "color_by_colors", errors({"color_by_colors": ["#14507a"]})
+        )
+
+    def test_public_embed_config_includes_the_color_values(self):
+        self._color_by("tier", {"1": "#14507a"})
+
+        response = self.client.get(
+            "/api/contributor-embed-configs/{}/".format(self.contributor.id)
+        )
+        content = json.loads(response.content)
+
+        self.assertEqual("tier", content["color_by_field"])
+        self.assertEqual({"1": "#14507a"}, content["color_by_colors"])
+        self.assertEqual(
+            [{"value": "1", "count": 2}, {"value": "2", "count": 1}],
+            content["color_by_options"],
+        )
+
+    def test_public_embed_config_without_a_color_field(self):
+        response = self.client.get(
+            "/api/contributor-embed-configs/{}/".format(self.contributor.id)
+        )
+        content = json.loads(response.content)
+
+        self.assertIsNone(content["color_by_field"])
+        self.assertEqual([], content["color_by_options"])

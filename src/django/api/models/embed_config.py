@@ -1,7 +1,27 @@
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, RegexValidator
 from django.db import models
 
 MAX_CORNER_RADIUS = 16
+
+MAX_COLOR_BY_VALUES = 20
+
+
+def validate_color_by_colors(colors):
+    """`colors` maps a field value to the hex color of its map markers."""
+    if not isinstance(colors, dict):
+        raise ValidationError('Colors must be given per value.')
+    if len(colors) > MAX_COLOR_BY_VALUES:
+        raise ValidationError(
+            'At most {} values can have a color.'.format(MAX_COLOR_BY_VALUES)
+        )
+    for value, color in colors.items():
+        if not isinstance(value, str) or len(value) > 200:
+            raise ValidationError('Each value must be text.')
+        if not isinstance(color, str):
+            raise ValidationError('Each color must be a hex value.')
+        hex_color_validator(color)
+
 
 hex_color_validator = RegexValidator(
     regex=r'^#[0-9a-fA-F]{6}$',
@@ -56,6 +76,19 @@ class EmbedConfig(models.Model):
         help_text='The corner radius, in pixels, of buttons and inputs '
                   'in the embedded map. Each element keeps its own '
                   'corner style when this is not set.')
+    color_by_field = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        help_text='The column name of the embed field whose value colors '
+                  'each facility marker on the embedded map, for example a '
+                  'tier. Markers share one color when this is not set.')
+    color_by_colors = models.JSONField(
+        default=dict,
+        blank=True,
+        validators=[validate_color_by_colors],
+        help_text='The marker color for each value of color_by_field, as '
+                  '{value: hex color}.')
     prefer_contributor_name = models.BooleanField(
         null=True,
         blank=True,

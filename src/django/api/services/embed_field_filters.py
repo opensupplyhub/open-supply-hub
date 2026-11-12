@@ -12,9 +12,11 @@ when it equals any one of them, ignoring case.
 """
 import re
 
+from django.db.models import OuterRef, Subquery
 from django.db.models.fields.json import KeyTextTransform
 
 EMBED_FILTERS_PARAM = 'embed_filters'
+COLOR_BY_PARAM = 'color_by'
 SEPARATOR = '::'
 VALUE_SPLIT_PATTERN = re.compile(r'[|;,]')
 MAX_OPTIONS_PER_FIELD = 200
@@ -117,32 +119,74 @@ def split_values(cell):
     ]
 
 
+def field_value_options(contributor_id, column):
+    """
+    The values a contributor's facilities have in `column`, with how many
+    facilities have each, most common first.
+    """
+    facilities_by_value = {}
+    rows = (
+        _contributor_items(contributor_id)
+        .annotate(embed_value=KeyTextTransform(column, 'raw_json'))
+        .exclude(embed_value__isnull=True)
+        .exclude(embed_value='')
+        .values_list('facility_id', 'embed_value')
+        .distinct()
+    )
+    for facility_id, cell in rows:
+        for value in split_values(cell):
+            facilities_by_value.setdefault(value, set()).add(facility_id)
+    ranked = sorted(
+        facilities_by_value.items(),
+        key=lambda item: (-len(item[1]), item[0].lower()),
+    )
+    return [
+        {'value': value, 'count': len(facility_ids)}
+        for value, facility_ids in ranked[:MAX_OPTIONS_PER_FIELD]
+    ]
+
+
 def embed_filter_options(contributor):
     """
     The dropdown options for each of a contributor's filterable fields:
     `{column: [{'value': ..., 'count': <facilities>}, ...]}`, most common
     value first.
     """
-    options = {}
-    items = _contributor_items(contributor.id)
-    for column in sorted(_filterable_columns(contributor.id)):
-        facilities_by_value = {}
-        rows = (
-            items.annotate(embed_value=KeyTextTransform(column, 'raw_json'))
-            .exclude(embed_value__isnull=True)
-            .exclude(embed_value='')
-            .values_list('facility_id', 'embed_value')
-            .distinct()
-        )
-        for facility_id, cell in rows:
-            for value in split_values(cell):
-                facilities_by_value.setdefault(value, set()).add(facility_id)
-        ranked = sorted(
-            facilities_by_value.items(),
-            key=lambda item: (-len(item[1]), item[0].lower()),
-        )
-        options[column] = [
-            {'value': value, 'count': len(facility_ids)}
-            for value, facility_ids in ranked[:MAX_OPTIONS_PER_FIELD]
-        ]
-    return options
+    return {
+        column: field_value_options(contributor.id, column)
+        for column in sorted(_filterable_columns(contributor.id))
+    }
+
+
+def embed_color_by_column(params):
+    """
+    The column whose value an embedded map's tiles should carry on each
+    marker, so the map can color markers by it. Only the column the
+    contributor chose as their `color_by_field` is ever sent; anything else
+    asked for through `color_by` is ignored.
+    """
+    from api.models.embed_config import EmbedConfig
+
+    if params.get('embed') != '1':
+        return None
+    column = params.get(COLOR_BY_PARAM)
+    contributor_id = _embed_contributor_id(params)
+    if not column or contributor_id is None:
+        return None
+    is_chosen = EmbedConfig.objects.filter(
+        contributor__id=contributor_id, color_by_field=column
+    ).exists()
+    return column if is_chosen else None
+
+
+def embed_color_value_subquery(params, column):
+    """A facility's value in `column`, from the embed's contributor."""
+    return Subquery(
+        _contributor_items(_embed_contributor_id(params))
+        .filter(facility=OuterRef('pk'))
+        .annotate(embed_value=KeyTextTransform(column, 'raw_json'))
+        .exclude(embed_value__isnull=True)
+        .exclude(embed_value='')
+        .order_by('-id')
+        .values('embed_value')[:1]
+    )

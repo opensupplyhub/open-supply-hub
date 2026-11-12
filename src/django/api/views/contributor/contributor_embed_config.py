@@ -4,7 +4,10 @@ from rest_framework.response import Response
 
 from ...models import Contributor
 from ...serializers import EmbedConfigSerializer
-from ...services.embed_field_filters import embed_filter_options
+from ...services.embed_field_filters import (
+    embed_filter_options,
+    field_value_options,
+)
 
 
 @api_view(['GET'])
@@ -23,6 +26,13 @@ def contributor_embed_config(_, pk=None):
         # The values a visitor can pick for each field the contributor has
         # made filterable.
         embed_config['filter_options'] = embed_filter_options(contributor)
+        # The values of the field that colors the map's markers, if any.
+        color_by_field = contributor.embed_config.color_by_field
+        embed_config['color_by_options'] = (
+            field_value_options(contributor.id, color_by_field)
+            if color_by_field
+            else []
+        )
         return Response(embed_config)
     except Contributor.DoesNotExist as exc:
         raise ValidationError('Contributor not found.') from exc
