@@ -274,6 +274,8 @@ class EmbedConfigSerializerTest(TestCase):
                 "visible": True,
                 "order": 0,
                 "searchable": True,
+                "show_in_list": False,
+                "display_as": "text",
             },
         )
         self.assertEqual(
@@ -284,8 +286,20 @@ class EmbedConfigSerializerTest(TestCase):
                 "visible": False,
                 "order": 1,
                 "searchable": False,
+                "show_in_list": False,
+                "display_as": "text",
             },
         )
+
+    def test_embed_fields_include_display_options(self):
+        field = self._add_embed_field("note", order=0)
+        field.show_in_list = True
+        field.display_as = EmbedField.BLURB
+        field.save()
+
+        result = self._serialize()["embed_fields"]
+        self.assertEqual(result[0]["show_in_list"], True)
+        self.assertEqual(result[0]["display_as"], "blurb")
 
     def test_embed_fields_empty_when_no_rows(self):
         self.assertEqual(self._serialize()["embed_fields"], [])

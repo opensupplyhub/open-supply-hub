@@ -6,4 +6,5 @@ class EmbedFieldsSerializer(ModelSerializer):
     class Meta:
         model = EmbedField
         fields = ('column_name', 'display_name',
-                  'visible', 'order', 'searchable')
+                  'visible', 'order', 'searchable',
+                  'show_in_list', 'display_as')

@@ -8,6 +8,15 @@ class EmbedField(models.Model):
     class Meta:
         unique_together = ('embed_config', 'order')
 
+    TEXT = 'text'
+    TAGS = 'tags'
+    BLURB = 'blurb'
+    DISPLAY_AS_CHOICES = (
+        (TEXT, 'Text'),
+        (TAGS, 'Tags'),
+        (BLURB, 'Blurb'),
+    )
+
     embed_config = models.ForeignKey(
         'EmbedConfig',
         null=False,
@@ -36,6 +45,18 @@ class EmbedField(models.Model):
         default=False,
         help_text='Whether or not to include this field in search.'
     )
+    show_in_list = models.BooleanField(
+        default=False,
+        help_text='Whether or not to also display this field on the '
+                  'facility in the search results list. Only applies to '
+                  'visible fields.'
+    )
+    display_as = models.CharField(
+        max_length=10,
+        choices=DISPLAY_AS_CHOICES,
+        default=TEXT,
+        help_text='How to display the value of this field: as plain '
+                  'text, as tags, or as a blurb.')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

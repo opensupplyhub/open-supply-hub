@@ -11,6 +11,19 @@ def create_embed_fields(fields_data, embed_config, previously_searchable=None):
     if len(fields_data) != len(set([f['order'] for f in fields_data])):
         raise ValidationError('Fields cannot have the same order.')
 
+    # The rows are created straight from the request data, so the model's
+    # choices are not checked for us.
+    display_as_values = [value for value, _ in EmbedField.DISPLAY_AS_CHOICES]
+    if any(
+        f.get('display_as', EmbedField.TEXT) not in display_as_values
+        for f in fields_data
+    ):
+        raise ValidationError(
+            'Fields must be displayed as one of: {}.'.format(
+                ', '.join(display_as_values)
+            )
+        )
+
     for field_data in fields_data:
         EmbedField.objects.create(embed_config=embed_config, **field_data)
 
