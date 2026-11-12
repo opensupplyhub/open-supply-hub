@@ -40,6 +40,7 @@ import ContributeProductionLocationReducer from './ContributeProductionLocationR
 import DashboardModerationQueueReducer from './DashboardModerationQueueReducer';
 import DashboardContributionRecordReducer from './DashboardContributionRecordReducer';
 import ClaimFormReducer from './ClaimFormReducer';
+import ClaimLiveCheckReducer from './ClaimLiveCheckReducer';
 import ClaimCampaignsReducer from './ClaimCampaignsReducer';
 import PartnerFieldGroupsReducer from './PartnerFieldGroupsReducer';
 import PartnerGroupContributorsReducer from './PartnerGroupContributorsReducer';
@@ -80,6 +81,7 @@ export default combineReducers({
     dashboardModerationQueue: DashboardModerationQueueReducer,
     dashboardContributionRecord: DashboardContributionRecordReducer,
     claimForm: ClaimFormReducer,
+    claimLiveCheck: ClaimLiveCheckReducer,
     claimCampaigns: ClaimCampaignsReducer,
     partnerFieldGroups: PartnerFieldGroupsReducer,
     partnerGroupContributors: PartnerGroupContributorsReducer,

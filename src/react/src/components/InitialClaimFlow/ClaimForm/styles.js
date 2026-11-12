@@ -95,6 +95,34 @@ export const claimFormStyles = theme =>
             },
         }),
         buttonPrimary: primaryButtonStyles(theme),
+        // "Check and submit my claim" is longer than "Submit Claim".
+        buttonCheckAndSubmit: Object.freeze({
+            ...primaryButtonStyles(theme),
+            width: 'auto',
+            minWidth: '200px',
+            padding: '0 24px',
+        }),
+        checkAndSubmitHelp: Object.freeze({
+            maxWidth: '640px',
+            margin: '-24px auto 0 auto',
+            padding: '0 0 48px 0',
+            textAlign: 'center',
+            fontSize: '16px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            color: COLOURS.DARK_GREY,
+        }),
+        liveCheckPaper: Object.freeze({
+            backgroundColor: COLOURS.WHITE,
+            boxShadow: 'none',
+            borderRadius: 0,
+            padding: '40px 110px',
+            [theme.breakpoints.down('lg')]: {
+                padding: '40px 4%',
+            },
+            [theme.breakpoints.down('sm')]: {
+                padding: '24px 4%',
+            },
+        }),
         titleStyles: Object.freeze({
             display: 'flex',
             alignItems: 'center',

@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import { bool, func, number, object, arrayOf, array } from 'prop-types';
+import {
+    bool,
+    func,
+    number,
+    object,
+    arrayOf,
+    array,
+    oneOfType,
+    string,
+} from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
@@ -27,6 +36,11 @@ import {
     rememberedWarningsFor,
 } from '../../../util/claimQualityCheck';
 import ClaimOutcomeDialog from '../../ClaimOutcomeDialog';
+import ClaimLiveCheck from '../../ClaimLiveCheck/ClaimLiveCheck';
+import {
+    CHECK_AND_SUBMIT_BUTTON_TEXT,
+    CHECK_AND_SUBMIT_HELPER_TEXT,
+} from '../../ClaimLiveCheck/constants';
 import RequireAuthNotice from '../../RequireAuthNotice';
 
 import {
@@ -75,6 +89,7 @@ import {
     claimIntroRoute,
     mapRoute,
     ENABLE_CLAIM_NAME_ADDRESS_EDIT,
+    CLAIM_LIVE_CHECK,
 } from '../../../util/constants';
 
 const iconMapping = {
@@ -104,6 +119,7 @@ const ClaimForm = ({
     formData,
     submissionFetching,
     submissionError,
+    submittedClaimId,
     countriesOptions,
     facilityProcessingTypeOptions,
     parentCompanyOptions,
@@ -118,6 +134,7 @@ const ClaimForm = ({
     productionLocationError,
     userHasSignedIn,
     isNameAddressEditable,
+    isLiveCheckEnabled,
     fetchCountries,
     fetchFacilityProcessingType,
     fetchParentCompanies,
@@ -162,11 +179,12 @@ const ClaimForm = ({
     useClaimFormCleanup(resetFilters, resetProductionLocation);
 
     // Handle form state cleanup and success submission dialog.
-    const { dialogIsOpen } = useClaimFormSubmission(
+    const { dialogIsOpen, liveCheckClaimId } = useClaimFormSubmission(
         submissionFetching,
         submissionError,
         osID,
         resetForm,
+        isLiveCheckEnabled ? submittedClaimId : null,
     );
 
     // Handle form submission.
@@ -226,6 +244,28 @@ const ClaimForm = ({
                 title="Claim this production location"
                 text="Log in to claim a production location on Open Supply Hub"
             />
+        );
+    }
+
+    // The claim is submitted and is being checked right away
+    // (OSDEV-3805). The form has nothing left to do, so the check takes
+    // its place; fixing something happens on the pending claim edit
+    // page, which works on the saved claim.
+    if (liveCheckClaimId) {
+        return (
+            <div className={`${classes.container} notranslate`} translate="no">
+                <Typography className={classes.title}>
+                    Production Location Claims Process
+                </Typography>
+                <div className={classes.innerContainer}>
+                    <Paper className={classes.liveCheckPaper}>
+                        <ClaimLiveCheck
+                            claimID={liveCheckClaimId}
+                            history={history}
+                        />
+                    </Paper>
+                </div>
+            </div>
         );
     }
 
@@ -374,6 +414,10 @@ const ClaimForm = ({
         advanceStep();
     };
 
+    const submitButtonText = isLiveCheckEnabled
+        ? CHECK_AND_SUBMIT_BUTTON_TEXT
+        : 'Submit Claim';
+
     const handleBack = () => {
         if (isFirstStep(activeStep)) {
             // Go back to claim intro page.
@@ -465,7 +509,11 @@ const ClaimForm = ({
                                         variant="contained"
                                         type="button"
                                         onClick={claimForm.handleSubmit}
-                                        className={classes.buttonPrimary}
+                                        className={
+                                            isLiveCheckEnabled
+                                                ? classes.buttonCheckAndSubmit
+                                                : classes.buttonPrimary
+                                        }
                                         disabled={
                                             isButtonDisabled ||
                                             submissionFetching
@@ -473,11 +521,16 @@ const ClaimForm = ({
                                     >
                                         {submissionFetching
                                             ? 'Submitting...'
-                                            : 'Submit Claim'}
+                                            : submitButtonText}
                                     </Button>
                                 )}
                             </Grid>
                         </Grid>
+                        {isLiveCheckEnabled && isLastStep(activeStep) && (
+                            <Typography className={classes.checkAndSubmitHelp}>
+                                {CHECK_AND_SUBMIT_HELPER_TEXT}
+                            </Typography>
+                        )}
                     </Paper>
                 </form>
             </div>
@@ -510,6 +563,7 @@ const ClaimForm = ({
 
 ClaimForm.defaultProps = {
     submissionError: null,
+    submittedClaimId: null,
     countriesOptions: [],
     facilityProcessingTypeOptions: [],
     parentCompanyOptions: [],
@@ -529,6 +583,7 @@ ClaimForm.propTypes = {
     formData: object.isRequired,
     submissionFetching: bool.isRequired,
     submissionError: array,
+    submittedClaimId: oneOfType([number, string]),
     countriesOptions: array,
     facilityProcessingTypeOptions: array,
     parentCompanyOptions: array,
@@ -543,6 +598,7 @@ ClaimForm.propTypes = {
     productionLocationError: array,
     userHasSignedIn: bool.isRequired,
     isNameAddressEditable: bool.isRequired,
+    isLiveCheckEnabled: bool.isRequired,
     fetchCountries: func.isRequired,
     fetchFacilityProcessingType: func.isRequired,
     fetchParentCompanies: func.isRequired,
@@ -593,6 +649,7 @@ const mapStateToProps = ({
     formData,
     submissionFetching: submissionState.fetching,
     submissionError: submissionState.error,
+    submittedClaimId: submissionState.data?.claim_id ?? null,
     countriesOptions,
     facilityProcessingTypeOptions,
     parentCompanyOptions,
@@ -607,6 +664,7 @@ const mapStateToProps = ({
     productionLocationError,
     userHasSignedIn: !user.isAnon,
     isNameAddressEditable: !!flags[ENABLE_CLAIM_NAME_ADDRESS_EDIT],
+    isLiveCheckEnabled: !!flags[CLAIM_LIVE_CHECK],
 });
 
 const mapDispatchToProps = dispatch => ({

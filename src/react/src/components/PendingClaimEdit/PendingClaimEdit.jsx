@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { useFormik } from 'formik';
@@ -15,6 +15,9 @@ import BusinessStep from '../InitialClaimFlow/ClaimForm/Steps/BusinessStep/Busin
 import ProfileStep from '../InitialClaimFlow/ClaimForm/Steps/ProfileStep/ProfileStep';
 import PendingClaimAttachments from './PendingClaimAttachments';
 import ClaimOutcomeDialog from '../ClaimOutcomeDialog';
+import ClaimLiveCheck from '../ClaimLiveCheck/ClaimLiveCheck';
+import { SAVE_AND_CHECK_AGAIN_BUTTON_TEXT } from '../ClaimLiveCheck/constants';
+import { focusFixField, parseFixParams } from '../ClaimLiveCheck/utils';
 import SubmissionErrorsBanner from '../InitialClaimFlow/ClaimForm/SubmissionErrorsBanner/SubmissionErrorsBanner';
 
 import {
@@ -40,7 +43,11 @@ import {
     resetSingleProductionLocation,
 } from '../../actions/contributeProductionLocation';
 
-import { claimedFacilitiesRoute, mapRoute } from '../../util/constants';
+import {
+    claimedFacilitiesRoute,
+    mapRoute,
+    CLAIM_LIVE_CHECK,
+} from '../../util/constants';
 
 const pendingClaimEditStyles = Object.freeze({
     container: Object.freeze({
@@ -86,7 +93,8 @@ function PendingClaimEdit({
     match: {
         params: { claimID },
     },
-    history: { push },
+    history,
+    location,
     data,
     fetching,
     error,
@@ -106,8 +114,17 @@ function PendingClaimEdit({
     resetProductionLocation,
     countriesOptions,
     facilityProcessingTypeOptions,
+    isLiveCheckEnabled,
 }) {
+    const { push } = history;
     const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
+    // A claimant who chose "Go back and fix it" on the live check
+    // arrives with the field to fix, and whether to check again after
+    // saving, in the query string (OSDEV-3805). Without them, or with
+    // the feature off, this page behaves as it always has.
+    const search = location ? location.search : '';
+    const { fix, checkAgain } = useMemo(() => parseFixParams(search), [search]);
+    const checksAfterSave = isLiveCheckEnabled && checkAgain;
     // Latched locally so a stray Redux state change can never close the
     // dialog once a save has succeeded; it closes only by navigating
     // away (both dialog actions navigate, and unmount resets the slice).
@@ -186,6 +203,15 @@ function PendingClaimEdit({
     // section blank and syncs '' back over the fetched data.
     const formHydrated = Object.keys(formik.values).length > 0;
 
+    // Take the claimant to the field they came back to fix, once, as
+    // soon as the form is on the page.
+    const formReady = Boolean(data) && formHydrated && !fetching;
+    useEffect(() => {
+        if (isLiveCheckEnabled && formReady && fix) {
+            focusFixField(fix);
+        }
+    }, [isLiveCheckEnabled, formReady, fix]);
+
     // On the very first render data is null and fetching has not been
     // set yet (the fetch dispatch runs in an effect), so treat that as
     // loading too rather than flashing the not-available message.
@@ -209,6 +235,25 @@ function PendingClaimEdit({
             </div>
         );
     }
+
+    // The edit is saved; check the claim again in place of the usual
+    // thank-you dialog.
+    if (outcomeDialogOpen && checksAfterSave) {
+        return (
+            <div className={`${classes.container} notranslate`} translate="no">
+                <Typography variant="title" className={classes.header}>
+                    Edit your pending claim
+                </Typography>
+                <Paper className={classes.section}>
+                    <ClaimLiveCheck claimID={claimID} history={history} />
+                </Paper>
+            </div>
+        );
+    }
+
+    const saveButtonText = checksAfterSave
+        ? SAVE_AND_CHECK_AGAIN_BUTTON_TEXT
+        : 'Save changes';
 
     const stepProps = {
         formData: formik.values,
@@ -290,7 +335,7 @@ function PendingClaimEdit({
                             {saving ? (
                                 <CircularProgress size={20} />
                             ) : (
-                                'Save changes'
+                                saveButtonText
                             )}
                         </Button>
                     </div>
@@ -317,6 +362,7 @@ function PendingClaimEdit({
 }
 
 PendingClaimEdit.defaultProps = {
+    location: null,
     data: null,
     error: null,
     formData: null,
@@ -331,6 +377,8 @@ PendingClaimEdit.propTypes = {
         params: shape({ claimID: string.isRequired }).isRequired,
     }).isRequired,
     history: shape({ push: func.isRequired }).isRequired,
+    location: shape({ search: string }),
+    isLiveCheckEnabled: bool.isRequired,
     data: object,
     fetching: bool.isRequired,
     error: arrayOf(string),
@@ -367,7 +415,9 @@ const mapStateToProps = ({
         countries: { data: countriesOptions },
         facilityProcessingType: { data: facilityProcessingTypeOptions },
     },
+    featureFlags: { flags },
 }) => ({
+    isLiveCheckEnabled: !!flags[CLAIM_LIVE_CHECK],
     data,
     fetching,
     error,

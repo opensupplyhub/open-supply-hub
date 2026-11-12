@@ -117,6 +117,7 @@ const ContactInfoStep = ({
                     />
                     <TextField
                         fullWidth
+                        id="claimant-email"
                         value={userEmail || ''}
                         required
                         variant="outlined"
