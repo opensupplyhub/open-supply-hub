@@ -283,7 +283,7 @@ const CountryMap = ({
 
             {computedAt && (
                 <div className="country-map__asof">
-                    Figures recalculated{' '}
+                    Closed locations excluded &middot; recalculated{' '}
                     {new Date(computedAt).toLocaleDateString()}
                 </div>
             )}

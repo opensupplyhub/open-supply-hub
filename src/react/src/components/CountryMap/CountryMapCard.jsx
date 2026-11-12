@@ -43,9 +43,11 @@ const CountryMapCard = ({ countryCode, name, summary, onClose, side }) => {
             <div className="country-map__card-count">
                 {summary.location_count.toLocaleString()}
             </div>
-            <div className="country-map__card-unit">
-                open production locations
-            </div>
+            {/* Not "open production locations": under a big number, in a
+                card where everything else is clickable, that reads as an
+                instruction to open something. The exclusion of closed
+                locations is stated once, in the footer. */}
+            <div className="country-map__card-unit">production locations</div>
 
             {loading && (
                 <div className="country-map__card-loading">
