@@ -162,6 +162,66 @@ class ContributorFieldsApiTest(APITestCase):
         self.assertEqual("ExtraTwo", field_two["label"])
         self.assertEqual(None, field_two["value"])
 
+    def _index_for_contributor_search(self):
+        # The fixtures in setUp are enough for the facility detail endpoint
+        # but leave the index without a contributor, so the list filter
+        # would find nothing. Link the indexed rows to the contributor.
+        index_facilities_new([self.facility.id, self.facility_two.id])
+        FacilityIndex.objects.update(contributors_id=[self.contributor.id])
+
+    def _embed_list_properties(self):
+        self._index_for_contributor_search()
+        response = self.client.get(
+            self.url + "?embed=1&contributors=" + str(self.contributor.id)
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        features = json.loads(response.content)["features"]
+        return {
+            feature["id"]: feature["properties"] for feature in features
+        }
+
+    def test_embed_list_omits_fields_when_none_are_shown_in_list(self):
+        """The embed list stays compact unless a field is shown in it."""
+        properties = self._embed_list_properties()
+
+        self.assertIn(self.facility.id, properties)
+        self.assertNotIn("contributor_fields", properties[self.facility.id])
+
+    def test_embed_list_includes_fields_when_one_is_shown_in_list(self):
+        self.contributor.embed_level = 3
+        self.contributor.save()
+        self.embed_one.show_in_list = True
+        self.embed_one.save()
+
+        fields = self._embed_list_properties()[self.facility.id][
+            "contributor_fields"
+        ]
+        by_name = {field["fieldName"]: field for field in fields}
+        self.assertEqual("ExtraOne", by_name["extra_1"]["label"])
+        self.assertEqual("data one", by_name["extra_1"]["value"])
+
+    def test_embed_list_ignores_show_in_list_on_a_hidden_field(self):
+        self.embed_one.show_in_list = True
+        self.embed_one.visible = False
+        self.embed_one.save()
+
+        properties = self._embed_list_properties()
+        self.assertNotIn("contributor_fields", properties[self.facility.id])
+
+    def test_list_outside_embed_mode_never_includes_fields(self):
+        self.embed_one.show_in_list = True
+        self.embed_one.save()
+        self._index_for_contributor_search()
+
+        response = self.client.get(
+            self.url + "?contributors=" + str(self.contributor.id)
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        features = json.loads(response.content)["features"]
+        self.assertTrue(features)
+        for feature in features:
+            self.assertNotIn("contributor_fields", feature["properties"])
+
     def test_single_fields(self):
         response = self.client.get(
             self.url
