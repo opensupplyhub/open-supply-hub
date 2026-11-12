@@ -10,6 +10,8 @@ import { Link } from 'react-router-dom';
 import FacilityDetailsItem from './FacilityDetailsItem';
 import FacilityDetailsClaimedInfo from './FacilityDetailsClaimedInfo/FacilityDetailsClaimedInfo';
 import ShowOnly from './ShowOnly';
+import EmbedFieldValue from './EmbedFieldValue';
+import { DISPLAY_AS_TEXT } from '../util/embeddedMap';
 import FeatureFlag from './FeatureFlag';
 import { formatAttribution, formatExtendedField } from '../util/util';
 import { DATA_CENTER_FIELD_GROUPS } from './ProductionLocation/constants.jsx';
@@ -268,22 +270,49 @@ const FacilityDetailsGeneralFields = ({
 
     const renderEmbedFields = () => {
         const fields = embedConfig?.embed_fields?.filter(f => f.visible) || [];
-        return fields.map(({ column_name: fieldName, display_name: label }) => {
-            // If there is an extended field for that name, render and return it
-            const eft = EXTENDED_FIELD_TYPES.find(
-                x => x.fieldName === fieldName,
-            );
-            const ef = eft ? renderExtendedField({ ...eft, label }) : null;
-            if (ef) {
-                return ef;
-            }
-            // Otherwise, try rendering it as a contributor field
-            const cf = contributorFields.find(x => x.fieldName === fieldName);
-            if (cf) {
-                return renderContributorField(cf);
-            }
-            return null;
-        });
+        return fields.map(
+            ({
+                column_name: fieldName,
+                display_name: label,
+                display_as: displayAs,
+            }) => {
+                const cf = contributorFields.find(
+                    x => x.fieldName === fieldName,
+                );
+                // A field the contributor chose to show as tags or as a
+                // blurb is rendered that way from their own value.
+                if (cf && displayAs && displayAs !== DISPLAY_AS_TEXT) {
+                    return (
+                        <Grid
+                            item
+                            xs={12}
+                            md={displayAs === 'blurb' ? 12 : 6}
+                            key={fieldName}
+                        >
+                            <EmbedFieldValue
+                                label={label}
+                                value={cf.value}
+                                displayAs={displayAs}
+                            />
+                        </Grid>
+                    );
+                }
+                // If there is an extended field for that name, render and
+                // return it
+                const eft = EXTENDED_FIELD_TYPES.find(
+                    x => x.fieldName === fieldName,
+                );
+                const ef = eft ? renderExtendedField({ ...eft, label }) : null;
+                if (ef) {
+                    return ef;
+                }
+                // Otherwise, try rendering it as a contributor field
+                if (cf) {
+                    return renderContributorField(cf);
+                }
+                return null;
+            },
+        );
     };
 
     const [activityReport, otherActivityReports] = useMemo(

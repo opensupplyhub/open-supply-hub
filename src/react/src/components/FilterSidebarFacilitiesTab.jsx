@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
@@ -51,8 +51,10 @@ import COLOURS from '../util/COLOURS';
 import {
     embedCornerStyle,
     embedHeadingFont,
+    getListFields,
     themeEmbedStyle,
 } from '../util/embeddedMap';
+import EmbedFieldValue from './EmbedFieldValue';
 
 import { filterSidebarStyles } from '../util/styles';
 import BadgeClaimed from './BadgeClaimed';
@@ -209,6 +211,7 @@ function FilterSidebarFacilitiesTab({
     handleScroll,
     scrollTop,
     embed,
+    embedFields,
     updateToMergeOSID,
     fetchToMergeFacility,
     updateTargetOSID,
@@ -434,6 +437,7 @@ function FilterSidebarFacilitiesTab({
                                     os_id: osID,
                                     is_closed: isClosed,
                                     number_of_public_contributors: numberOfPublicContributors,
+                                    contributor_fields: contributorFields,
                                 },
                             }) => (
                                 <>
@@ -553,6 +557,27 @@ function FilterSidebarFacilitiesTab({
                                                     </ShowOnly>
                                                 </Grid>
                                                 {address}
+                                                {embed
+                                                    ? getListFields(
+                                                          embedFields,
+                                                          contributorFields,
+                                                      ).map(field => (
+                                                          <EmbedFieldValue
+                                                              key={
+                                                                  field.columnName
+                                                              }
+                                                              label={
+                                                                  field.label
+                                                              }
+                                                              value={
+                                                                  field.value
+                                                              }
+                                                              displayAs={
+                                                                  field.displayAs
+                                                              }
+                                                          />
+                                                      ))
+                                                    : null}
                                             </Link>
                                             {isClosed ? (
                                                 <FeatureFlag
@@ -584,6 +609,7 @@ function FilterSidebarFacilitiesTab({
 }
 
 FilterSidebarFacilitiesTab.defaultProps = {
+    embedFields: [],
     user: {
         isAnon: true,
     },
@@ -603,6 +629,7 @@ FilterSidebarFacilitiesTab.propTypes = {
     fetchNextPage: func.isRequired,
     isInfiniteLoading: bool.isRequired,
     embed: bool.isRequired,
+    embedFields: arrayOf(object),
     targetFacilityOSID: string.isRequired,
     facilityToMergeOSID: string.isRequired,
     updateToMergeOSID: func.isRequired,
@@ -632,9 +659,10 @@ function mapStateToProps({
     facilitiesDownload: {
         facilities: { data: downloadData },
     },
-    embeddedMap: { embed },
+    embeddedMap: { embed, config },
 }) {
     return {
+        embedFields: config?.embed_fields,
         user,
         data,
         downloadData,

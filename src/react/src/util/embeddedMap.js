@@ -152,6 +152,46 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
 
 export const getErrorMessage = e => e.response.data || e.message;
 
+// A blurb is brand-written text shown publicly, so it is capped.
+export const MAX_BLURB_LENGTH = 600;
+
+export const truncateBlurb = text => {
+    const blurb = String(text).trim();
+    return blurb.length > MAX_BLURB_LENGTH
+        ? `${blurb.slice(0, MAX_BLURB_LENGTH).trimEnd()}…`
+        : blurb;
+};
+
+// A tags field holds several values in one cell, separated by | ; or ,
+export const splitTagValues = value =>
+    String(value)
+        .split(/[|;,]/)
+        .map(tag => tag.trim())
+        .filter(Boolean);
+
+const hasValue = value => !isNil(value) && String(value).trim() !== '';
+
+// The fields to show on a facility in the search results list: visible
+// fields marked "In list" that have a value for this facility, in the
+// contributor's order.
+export const getListFields = (embedFields, contributorFields) =>
+    sortBy(
+        (embedFields || []).filter(f => f.visible && f.show_in_list),
+        f => f.order,
+    )
+        .map(f => {
+            const match = (contributorFields || []).find(
+                cf => cf.fieldName === f.column_name,
+            );
+            return {
+                columnName: f.column_name,
+                label: f.display_name,
+                value: match ? match.value : null,
+                displayAs: f.display_as || DISPLAY_AS_TEXT,
+            };
+        })
+        .filter(f => hasValue(f.value));
+
 const NO_EMBED_STYLE = Object.freeze({
     accentColor: null,
     headingFont: null,
