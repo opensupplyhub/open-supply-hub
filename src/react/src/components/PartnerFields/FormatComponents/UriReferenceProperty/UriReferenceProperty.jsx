@@ -30,8 +30,9 @@ const UriReferenceProperty = ({
     /*
     Opt-in only: this component has never rendered the schema title, so
     existing fields carry unreviewed text there and must keep showing only
-    their link. Setting showTitle on the property turns the label on
-    (OSDEV-3792).
+    their link. Setting showTitle on the property turns the label on, and it
+    applies to the base_url path alone because the link text already carries
+    "title: value" without one (OSDEV-3792).
     */
     const { showTitle } = schemaProperties[propertyKey] || {};
     const title = getTitleFromSchema(propertyKey, schemaProperties);
@@ -77,7 +78,9 @@ const UriReferenceProperty = ({
                     {description}
                 </Typography>
             ) : null}
-            {showTitle && title ? <PartnerFieldLabel title={title} /> : null}
+            {baseUrl && showTitle && title ? (
+                <PartnerFieldLabel title={title} />
+            ) : null}
             <a
                 key={`${propertyKey}-uri-${propertyValue}`}
                 href={absoluteUri}

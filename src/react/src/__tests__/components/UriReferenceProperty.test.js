@@ -235,6 +235,29 @@ describe('UriReferenceProperty showTitle', () => {
         ).toBeInTheDocument();
     });
 
+    it('does not double the title when the field has no base url', () => {
+        // Without a base url the link text already carries "Title: value",
+        // so the label must not be added on top of it.
+        renderWithTheme({
+            propertyKey: 'site_lei',
+            value: { site_lei: '9845005AF685DA5C9059' },
+            schemaProperties: {
+                site_lei: {
+                    type: 'string',
+                    title: 'Site LEI',
+                    format: 'uri-reference',
+                    showTitle: true,
+                },
+            },
+            partnerConfigFields: {},
+        });
+
+        expect(
+            screen.getByText('Site LEI: 9845005AF685DA5C9059'),
+        ).toBeInTheDocument();
+        expect(screen.queryAllByText(/Site LEI:/)).toHaveLength(1);
+    });
+
     it('renders both description and label when both are present', () => {
         renderWithTheme({
             propertyKey: 'site_lei',
