@@ -39,6 +39,36 @@ describe('embedded map field display options', () => {
         expect(field.displayAs).toBe('text');
     });
 
+    it('only offers fields the contributor has data for', () => {
+        const saved = [
+            {
+                column_name: 'processing_type',
+                display_name: 'Processing Type',
+                visible: true,
+                order: 0,
+                searchable: false,
+            },
+            {
+                column_name: 'project',
+                display_name: 'Initiatives',
+                visible: true,
+                order: 1,
+                searchable: true,
+            },
+        ];
+        const fields = combineEmbedAndNonstandardFields(saved, [
+            'project',
+            'tier',
+        ]);
+
+        expect(fields.map(f => f.columnName)).toEqual(['project', 'tier']);
+        expect(fields.map(f => f.order)).toEqual([0, 1]);
+    });
+
+    it('offers nothing when the contributor has no data for any field', () => {
+        expect(combineEmbedAndNonstandardFields([], [])).toEqual([]);
+    });
+
     it('gives new nonstandard fields the default display options', () => {
         const fields = combineEmbedAndNonstandardFields([], ['my_column']);
 

@@ -429,6 +429,16 @@ function EmbeddedMapFieldsConfig({
                                             </FormLabel>
                                         </Tooltip>
                                     </li>
+                                    {fields.length === 0 ? (
+                                        <li>
+                                            <Typography>
+                                                Your uploaded data has no extra
+                                                fields yet. Add columns to your
+                                                facility list to choose them
+                                                here.
+                                            </Typography>
+                                        </li>
+                                    ) : null}
                                     {fields
                                         .sort((a, b) => a.order - b.order)
                                         .map(renderField)}

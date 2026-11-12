@@ -107,12 +107,16 @@ export const combineEmbedAndNonstandardFields = (
         nonstandardFields,
         existingFields,
     });
-    return sortBy([...existingFields, ...newFields], f => f.order).map(
-        (f, i) => ({
+    // `nonstandardFields` is every field the contributor has data for. A
+    // field without data would show up empty on the map, so it is not offered,
+    // even if it was saved on the config earlier.
+    const available = new Set(nonstandardFields);
+    return sortBy([...existingFields, ...newFields], f => f.order)
+        .filter(f => available.has(f.columnName))
+        .map((f, i) => ({
             ...f,
-            order: f.order || i,
-        }),
-    );
+            order: i,
+        }));
 };
 
 const formatEmbedFieldsForServer = fields =>
