@@ -77,7 +77,7 @@ describe('embedded map supply chains', () => {
     });
 
     describe('getChainGroups', () => {
-        it('groups by tier, upstream first, when every location has one', () => {
+        it('groups by tier, the start of the chain first', () => {
             const groups = getChainGroups(chain);
 
             expect(groups.map(g => g.label)).toEqual([
@@ -115,8 +115,9 @@ describe('embedded map supply chains', () => {
             expect(groups[2].nodes.map(n => n.name)).toEqual(['Factory']);
         });
 
-        it('falls back to position when the tiers disagree with the links', () => {
-            // The spinner is marked tier 1 but supplies a tier 2 mill.
+        it("ignores the contributor's own tier values", () => {
+            // The spinner is marked tier 1 in the contributor's data, but it
+            // supplies a mill that supplies the factory: by position, tier 3.
             const muddled = {
                 ...chain,
                 nodes: chain.nodes.map(n =>
