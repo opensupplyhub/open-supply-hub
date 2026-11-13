@@ -191,6 +191,9 @@ class EventApprovalTemplate(ABC):
             is_public=True,
             is_anonymized=anonymize,
             create=True,
+            # Keep the organization the contribution was submitted for,
+            # even if the member has left it by the time of approval.
+            organization_id=self.__event.organization_id,
         )
 
     def __create_facility_list_item(

@@ -50,6 +50,14 @@ export default theme =>
                 color: theme.palette.primary.main,
             },
         }),
+        // A contributor that has no profile to link to (an organization).
+        contributorName: Object.freeze({
+            display: 'block',
+            fontSize: '1rem',
+            color: theme.palette.text.primary,
+            padding: '8px',
+            fontWeight: 500,
+        }),
         triggerButton: Object.freeze({
             fontSize: '1rem',
             textTransform: 'none',

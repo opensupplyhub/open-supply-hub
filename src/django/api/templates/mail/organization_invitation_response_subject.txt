@@ -1,0 +1,1 @@
+{% autoescape off %}{{ invitee_email }} {{ response_label }} your invitation to {{ organization_name }}{% endautoescape %}

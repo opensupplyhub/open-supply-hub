@@ -29,6 +29,9 @@ import ClaimForm from './components/InitialClaimFlow/ClaimForm/ClaimForm';
 import ClaimedFacilities from './components/ClaimedFacilities';
 import SurveyDialogNotification from './components/SurveyDialogNotification';
 import Settings from './components/Settings/Settings';
+import OrganizationPage from './components/Organization/OrganizationPage';
+import OrganizationDashboard from './components/Organization/OrganizationDashboard';
+import RecentlyViewedRecorder from './components/Organization/RecentlyViewedRecorder';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
 import IdentityRecord from './components/IdentityRecord/IdentityRecord';
@@ -77,6 +80,9 @@ import {
     CLAIM_A_FACILITY,
     CLAIM_CAMPAIGNS,
     settingsRoute,
+    organizationRoute,
+    organizationDashboardRoute,
+    ORGANIZATION_LEVEL_FLAG,
     InfoLink,
     InfoPaths,
     contributeProductionLocationRoute,
@@ -305,6 +311,36 @@ class Routes extends Component {
                                 />
                                 <Route
                                     exact
+                                    path={organizationRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={ORGANIZATION_LEVEL_FLAG}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route
+                                                component={OrganizationPage}
+                                            />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={organizationDashboardRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={ORGANIZATION_LEVEL_FLAG}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route
+                                                component={
+                                                    OrganizationDashboard
+                                                }
+                                            />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
                                     path={contributeProductionLocationRoute}
                                     component={ContributeProductionLocation}
                                 />
@@ -384,6 +420,7 @@ class Routes extends Component {
                         />
                         <GDPRNotification />
                         <SurveyDialogNotification />
+                        <RecentlyViewedRecorder />
                     </div>
                 </Router>
             </ErrorBoundary>

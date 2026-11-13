@@ -105,3 +105,12 @@ from .identity_record_association import (
   IdentityRecordAssociation,
   HistoricalIdentityRecordAssociation,
 )
+from .organization.organization import (
+  Organization,
+  HistoricalOrganization,
+)
+from .organization.organization_membership import (
+  OrganizationMembership,
+  HistoricalOrganizationMembership,
+)
+from .organization.organization_invitation import OrganizationInvitation

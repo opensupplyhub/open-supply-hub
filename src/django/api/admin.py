@@ -27,6 +27,8 @@ from api.models.polygon import Polygon
 from api.models.polygon_admin import PolygonAdmin
 from api.models.zone_set import Zone, ZoneSet
 from api.models.zone_set_admin import ZoneAdmin, ZoneSetAdmin
+from api.models.organization.organization import Organization
+from api.models.organization.organization_admin import OrganizationAdmin
 from api.models.sector_group import SectorGroup
 from api.models.partner_field_group import PartnerFieldGroup
 from api.models.announcement_banner import AnnouncementBanner
@@ -835,3 +837,4 @@ admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(ZoneSet, ZoneSetAdmin)
 admin_site.register(Zone, ZoneAdmin)
 admin_site.register(models.PartnerDataFileUpload, PartnerDataFileUploadAdmin)
+admin_site.register(Organization, OrganizationAdmin)

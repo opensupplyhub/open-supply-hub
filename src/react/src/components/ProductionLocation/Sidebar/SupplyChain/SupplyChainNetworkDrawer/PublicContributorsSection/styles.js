@@ -29,6 +29,15 @@ export default () =>
                 textDecoration: 'underline',
             }),
         }),
+        // A contributor that has no profile to link to (an organization).
+        contributorNameText: Object.freeze({
+            display: 'inline-flex',
+            alignItems: 'center',
+            fontSize: '1.25rem',
+            fontWeight: 600,
+            marginBottom: '2px',
+            overflowWrap: 'break-word',
+        }),
         contributorType: Object.freeze({
             fontSize: '1rem',
             color: COLOURS.DARK_GREY,

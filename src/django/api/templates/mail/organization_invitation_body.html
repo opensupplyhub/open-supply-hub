@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            {{ sender_name }} invited you to join {{ organization_name }} on OS Hub
+        </title>
+    </head>
+    <body>
+        <p>
+            Hello,
+        </p>
+        <p>
+            {{ sender_name }} invited you to join the organization
+            <strong>{{ organization_name }}</strong> on Open Supply Hub (OS Hub)
+            as {{ role_label }}.
+        </p>
+        <p>
+            Joining changes nothing about your own account: you keep your login, your
+            contributor profile and the way your data is shown publicly. The organization
+            will be able to see the lists, contributions and claims you have submitted,
+            including the ones you submitted before joining.
+        </p>
+        <p>
+            <a href="{{ invitation_url }}"><strong>Review the invitation</strong></a>
+        </p>
+        <p>
+            The invitation expires on {{ expires_on }}. If you don't want to join, you can
+            decline it on the same page or ignore this email.
+        </p>
+        <p>
+            Best Regards,
+        </p>
+        {% include "mail/signature_block.html" %}
+    </body>
+</html>

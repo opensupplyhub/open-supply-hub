@@ -22,7 +22,7 @@ from ...models.extended_field import ExtendedField
 from ...models.nonstandard_field import NonstandardField
 from ...helpers.helpers import parse_raw_data, get_csv_values
 from ...services.contributor_masking_policy import ContributorMaskingPolicy
-from ..utils import is_embed_mode_active
+from ..utils import is_attributed_to_organization, is_embed_mode_active
 from .facility_index_extended_field_list_serializer import (
     FacilityIndexExtendedFieldListSerializer
 )
@@ -479,8 +479,15 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                 contrib_type = contributor.get('contrib_type')
                 anonymous_data = anonymous_by_type[contrib_type]
 
-                if contributor['id'] not in counted_anonymous_ids:
-                    counted_anonymous_ids.add(contributor['id'])
+                # The members of one organization count as one
+                # contributor, as they do when they are named.
+                anonymous_key = (
+                    ('organization', contributor['organization_id'])
+                    if is_attributed_to_organization(contributor)
+                    else ('contributor', contributor['id'])
+                )
+                if anonymous_key not in counted_anonymous_ids:
+                    counted_anonymous_ids.add(anonymous_key)
                     anonymous_data['count'] += 1
 
                 self._update_max_contributed_at(
@@ -616,8 +623,16 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
                     else None
                 ),
             }
+        # An entry shown under an organization's name carries no id: the
+        # id is the member's profile, and the organization has no public
+        # profile to link to. is_organization tells the two kinds of
+        # public entry apart.
+        if is_attributed_to_organization(source):
+            identity = {'id': None, 'is_organization': True}
+        else:
+            identity = {'id': source.get('admin_id') or None}
         return {
-            'id': source.get('admin_id') or None,
+            **identity,
             'name': source.get('name'),
             'is_verified': bool(source.get('is_verified')),
             'contributor_name': source.get('contributor_name')

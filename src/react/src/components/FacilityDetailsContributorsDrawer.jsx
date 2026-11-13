@@ -10,7 +10,7 @@ import ShowOnly from './ShowOnly';
 import BadgeVerified from './BadgeVerified';
 import GroupIcon from './GroupIcon';
 
-import { makeProfileRouteLink } from '../util/util';
+import { getPublicContributorKey, makeProfileRouteLink } from '../util/util';
 
 const contributorsDrawerStyles = theme =>
     Object.freeze({
@@ -74,23 +74,35 @@ const FacilityDetailsContributorsDrawer = ({
                     {splittedContributors.publicContributors.map(
                         contributor => (
                             <div
-                                key={`${contributor.id} ${contributor.contributor_name}`}
+                                key={`${getPublicContributorKey(contributor)} ${
+                                    contributor.contributor_name
+                                }`}
                                 className={classes.contributor}
                             >
                                 <ShowOnly when={contributor.is_verified}>
                                     <BadgeVerified />
                                 </ShowOnly>
-                                <Link
-                                    to={makeProfileRouteLink(contributor.id)}
-                                    className={`${classes.primaryText} ${classes.link}`}
-                                >
-                                    {contributor.contributor_name}
-                                </Link>
-                                {contributor.lists.map((list, i) => (
+                                {contributor.id ? (
+                                    <Link
+                                        to={makeProfileRouteLink(
+                                            contributor.id,
+                                        )}
+                                        className={`${classes.primaryText} ${classes.link}`}
+                                    >
+                                        {contributor.contributor_name}
+                                    </Link>
+                                ) : (
+                                    // An organization has no profile to
+                                    // link to.
+                                    <Typography className={classes.primaryText}>
+                                        {contributor.contributor_name}
+                                    </Typography>
+                                )}
+                                {contributor.lists.map(list => (
                                     <Typography
-                                        key={`${contributor.id + i} ${
-                                            list.name
-                                        }`}
+                                        key={`${getPublicContributorKey(
+                                            contributor,
+                                        )} ${list.name} ${list.uploaded_at}`}
                                     >
                                         {list.name}
                                     </Typography>

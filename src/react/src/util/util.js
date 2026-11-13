@@ -59,6 +59,7 @@ import {
     OTHER,
     FEATURE_COLLECTION,
     CLAIM_A_FACILITY,
+    ORGANIZATION_LEVEL_FLAG,
     CLAIM_CAMPAIGNS,
     claimCampaignsRoute,
     inputTypesEnum,
@@ -68,6 +69,7 @@ import {
     facilitiesRoute,
     productionLocationsRoute,
     dashboardRoute,
+    organizationRoute,
     claimFacilityRoute,
     claimIntroRoute,
     DEFAULT_PAGE,
@@ -203,6 +205,45 @@ export const makeCreateDashboardActivityReportURL = osId =>
 export const makeAPITokenURL = () => '/api-token-auth/';
 
 export const makeUserAPIInfoURL = uid => `/user-api-info/${uid}/`;
+
+// The organization level. `qs` is an already-encoded query string.
+export const makeCurrentOrganizationURL = () => '/api/organizations/current/';
+export const makeOrganizationMembersURL = organizationUUID =>
+    `/api/organizations/${organizationUUID}/members/`;
+export const makeOrganizationMemberURL = (organizationUUID, membershipUUID) =>
+    `/api/organizations/${organizationUUID}/members/${membershipUUID}/`;
+export const makeOrganizationInvitationsURL = organizationUUID =>
+    `/api/organizations/${organizationUUID}/invitations/`;
+export const makeOrganizationInvitationURL = (
+    organizationUUID,
+    invitationUUID,
+) => `/api/organizations/${organizationUUID}/invitations/${invitationUUID}/`;
+export const makeOrganizationContributionsURL = (organizationUUID, qs = '') =>
+    `/api/organizations/${organizationUUID}/contributions/?${qs}`;
+export const makeOrganizationDashboardSummaryURL = (
+    organizationUUID,
+    qs = '',
+) => `/api/organizations/${organizationUUID}/dashboard/summary/?${qs}`;
+export const makeOrganizationDashboardFacilitiesURL = (
+    organizationUUID,
+    qs = '',
+) => `/api/organizations/${organizationUUID}/dashboard/facilities/?${qs}`;
+export const makeOrganizationDashboardFacilityURL = (organizationUUID, osID) =>
+    `/api/organizations/${organizationUUID}/dashboard/facilities/${osID}/`;
+export const makeOrganizationOnboardingURL = organizationUUID =>
+    `/api/organizations/${organizationUUID}/onboarding/`;
+export const makeOrganizationDomainAccountsURL = organizationUUID =>
+    `/api/organizations/${organizationUUID}/domain-accounts/`;
+export const makeOrganizationDashboardListsURL = organizationUUID =>
+    `/api/organizations/${organizationUUID}/dashboard/lists/`;
+export const makeOrganizationDashboardUsageURL = organizationUUID =>
+    `/api/organizations/${organizationUUID}/dashboard/usage/`;
+export const makeMyOrganizationInvitationsURL = () =>
+    '/api/organization-invitations/';
+export const makeAcceptOrganizationInvitationURL = invitationUUID =>
+    `/api/organization-invitations/${invitationUUID}/accept/`;
+export const makeDeclineOrganizationInvitationURL = invitationUUID =>
+    `/api/organization-invitations/${invitationUUID}/decline/`;
 
 export const makeGetContributorsURL = () => '/api/contributors/';
 export const makeGetListsURL = () => '/api/contributor-lists/';
@@ -1194,13 +1235,28 @@ export const makeDashboardClaimListLink = ({
     return params ? `/dashboard/claims/?${params}` : '/dashboard/claims';
 };
 
+// A public contributor entry carries the id of the contributor's profile.
+// An entry shown under an organization's name carries no id, because an
+// organization has no profile to link to, and is marked is_organization.
+export const isPublicContributor = contributor =>
+    Boolean(contributor.id) || Boolean(contributor.is_organization);
+
+// Identifies a public contributor across its entries (one per list).
+// Organization names are unique, so the name identifies an organization.
+export const getPublicContributorKey = contributor =>
+    contributor.is_organization
+        ? `organization:${contributor.contributor_name}`
+        : contributor.id;
+
 export const splitContributorsIntoPublicAndNonPublic = contributors =>
     contributors.reduce(
         (splittedContributors, currentContributor) => {
-            if (currentContributor.id) {
+            if (isPublicContributor(currentContributor)) {
+                const currentKey = getPublicContributorKey(currentContributor);
                 const index = splittedContributors.publicContributors.findIndex(
                     publicContributor =>
-                        publicContributor.id === currentContributor.id,
+                        getPublicContributorKey(publicContributor) ===
+                        currentKey,
                 );
                 if (index === -1) {
                     const {
@@ -1245,7 +1301,8 @@ export const splitContributorsIntoPublicAndNonPublic = contributors =>
                     }
                 }
             } else {
-                // If the object doesn't have the id key, it is a non-public contributor.
+                // An entry with neither an id nor the organization mark is a
+                // non-public contributor.
                 splittedContributors.nonPublicContributors.push(
                     currentContributor,
                 );
@@ -1738,6 +1795,16 @@ export const createUserDropdownLinks = (
         );
     }
 
+    // Shown to every signed-in user while the organization level is on,
+    // members or not: an invited user answers the invitation on this page.
+    if (includes(activeFeatureFlags, ORGANIZATION_LEVEL_FLAG)) {
+        links.push(
+            Object.freeze({
+                label: 'My Organization',
+                href: organizationRoute,
+            }),
+        );
+    }
     // Claims campaigns are premium: the switch turns the feature on, and
     // each brand user is given access separately (claim_campaign_access).
     if (
