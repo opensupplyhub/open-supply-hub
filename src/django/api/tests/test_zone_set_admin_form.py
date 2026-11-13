@@ -17,6 +17,11 @@ from api.tests.zone_fixtures import DISC, feature, records, upload
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
 FAR = [[[20, 20], [20, 30], [30, 30], [30, 20], [20, 20]]]
+# Covers the whole of LEFT and RIGHT, for overlap-precedence tests.
+WIDE = [[[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]]
+
+ADD = {'upload_mode': ZoneSetForm.UPLOAD_MODE_ADD}
+REPLACE = {'upload_mode': ZoneSetForm.UPLOAD_MODE_REPLACE}
 
 
 BASE_DATA = {
@@ -718,6 +723,427 @@ class ZoneSetAdminSaveTest(TestCase):
         self.assertNotIn('labels:', summary)
 
 
+class ZoneSetAddModeTest(TestCase):
+    """
+    Tests for "Add to the existing zones" (OSDEV-3812): a dataset too
+    large for one file under the cap is loaded as several files into
+    one set, each appended after the zones already stored.
+    """
+
+    RECOMPUTE = (
+        'api.facility_index_backfill.zone_set_ids_recompute.'
+        'recompute_zone_set_ids'
+    )
+
+    def setUp(self):
+        self.model_admin = ZoneSetAdmin(ZoneSet, AdminSite())
+        self.request = Mock()
+
+    def _save(self, data, files=None, instance=None):
+        form = ZoneSetForm(data=data, files=files, instance=instance)
+        self.assertTrue(form.is_valid(), form.errors)
+        obj = form.save(commit=False)
+        self.model_admin.save_model(
+            self.request, obj, form, change=instance is not None
+        )
+        return obj
+
+    def _string_set(self, *features):
+        """A saved string-field set holding the given features."""
+        return self._save(
+            BASE_DATA,
+            files={'geojson_file': upload(*features)},
+        )
+
+    def test_add_appends_zones_and_leaves_the_first_upload_alone(self):
+        """AC #1: feature and piece counts grow by the new file's, the
+        first file's rows are untouched, and a location inside them
+        resolves as before."""
+        zone_set = self._string_set(
+            feature(LEFT, {'bws_label': 'High'}),
+            feature(RIGHT, {'bws_label': 'Low'}),
+        )
+        before = list(zone_set.zones.values_list('id', 'feature_index',
+                                                 'piece_index', 'value'))
+
+        self._save(
+            {**BASE_DATA, **ADD},
+            files={'geojson_file': upload(
+                feature(FAR, {'bws_label': 'Extremely high'}),
+            )},
+            instance=zone_set,
+        )
+
+        zones = list(zone_set.zones.order_by('feature_index'))
+        self.assertEqual(
+            [(z.feature_index, z.piece_index, z.label) for z in zones],
+            [(0, 0, 'High'), (1, 0, 'Low'), (2, 0, 'Extremely high')],
+        )
+        self.assertEqual(
+            list(zone_set.zones.filter(id__in=[row[0] for row in before])
+                 .values_list('id', 'feature_index', 'piece_index',
+                              'value')),
+            before,
+        )
+        self.assertEqual(zone_set.feature_count, 3)
+        self.assertEqual(
+            zone_set.resolve_zone(Point(2, 5, srid=4326)).label, 'High'
+        )
+        self.assertEqual(
+            zone_set.resolve_zone(Point(25, 25, srid=4326)).label,
+            'Extremely high',
+        )
+
+    def test_added_features_continue_the_index_after_the_stored_maximum(
+        self
+    ):
+        """The added file's features are numbered after the set's
+        current maximum, with each feature's pieces kept together, so
+        the (zone_set, feature_index, piece_index) constraint holds
+        and subdivision is unchanged."""
+        zone_set = ZoneSet.objects.create(
+            name='water_stress', description='x', value_property='bws_label',
+        )
+        zone_set.replace_zones(subdivide_zone_records(records(
+            feature(DISC, {'bws_label': 'High'}),
+            feature(LEFT, {'bws_label': 'Low'}),
+        )))
+        self.assertEqual(zone_set.feature_count, 2)
+        disc_pieces = zone_set.zones.filter(feature_index=0).count()
+        self.assertGreater(disc_pieces, 1)
+
+        first = zone_set.add_zones(subdivide_zone_records(records(
+            feature(RIGHT, {'bws_label': 'Medium'}),
+            feature(DISC, {'bws_label': 'Extremely high'}),
+        )))
+
+        self.assertEqual(first, 2)
+        by_feature = {}
+        for zone in zone_set.zones.all():
+            by_feature.setdefault(zone.feature_index, []).append(zone)
+        self.assertEqual(sorted(by_feature), [0, 1, 2, 3])
+        self.assertEqual(len(by_feature[2]), 1)
+        self.assertEqual(by_feature[2][0].label, 'Medium')
+        self.assertEqual(len(by_feature[3]), disc_pieces)
+        self.assertEqual(
+            sorted(z.piece_index for z in by_feature[3]),
+            list(range(disc_pieces)),
+        )
+        self.assertEqual({z.label for z in by_feature[3]},
+                         {'Extremely high'})
+
+    def test_add_to_a_set_with_no_zones_starts_at_zero(self):
+        zone_set = ZoneSet.objects.create(
+            name='water_stress', description='x', value_property='bws_label',
+        )
+
+        first = zone_set.add_zones(subdivide_zone_records(records(
+            feature(LEFT, {'bws_label': 'High'}),
+        )))
+
+        self.assertEqual(first, 0)
+        self.assertEqual(
+            list(zone_set.zones.values_list('feature_index', flat=True)),
+            [0],
+        )
+
+    def test_add_mode_on_a_new_set_stores_the_file(self):
+        """There is nothing to add to on the add page; the file is
+        stored as a replace would store it."""
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High'}),
+            )},
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertFalse(form.adds_to_existing)
+
+        zone_set = self._save(
+            {**BASE_DATA, **ADD},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High'}),
+            )},
+        )
+        self.assertEqual(zone_set.feature_count, 1)
+
+    def test_added_object_file_missing_a_required_key_is_refused(self):
+        """AC #2: the message names the key and the count of features
+        lacking it, and the stored zones are untouched."""
+        zone_set = self._save(
+            {**OBJECT_DATA, 'partner_field': object_field().pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            )},
+        )
+        before = list(zone_set.zones.values_list('id', 'value'))
+
+        form = ZoneSetForm(
+            data={**OBJECT_DATA, **ADD,
+                  'partner_field': zone_set.partner_field.pk},
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low', 'bwd_label': 'Low'}),
+                feature(FAR, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+
+        self.assertFalse(form.is_valid())
+        message = str(form.errors)
+        self.assertIn('1 of 2 feature(s) are missing the', message)
+        self.assertIn('bwd_label', message)
+        self.assertIsNone(form.parsed_zones)
+        self.assertEqual(
+            list(zone_set.zones.values_list('id', 'value')), before
+        )
+
+    def test_added_object_file_is_stored_and_served_by_schema_key(self):
+        """A valid added file goes through the object-field path: its
+        values are read by schema key, the label is the first required
+        property, and the Zone summary totals both uploads."""
+        zone_set = self._save(
+            {**OBJECT_DATA, 'partner_field': object_field().pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            )},
+        )
+
+        self._save(
+            {**OBJECT_DATA, **ADD,
+             'partner_field': zone_set.partner_field.pk},
+            files={'geojson_file': upload(
+                feature(FAR, {'bws_label': 'Low', 'bwd_label': 'Medium',
+                              'atlas_url': 'https://example.org/f'}),
+            )},
+            instance=zone_set,
+        )
+
+        added = zone_set.resolve_zone(Point(25, 25, srid=4326))
+        self.assertEqual(added.feature_index, 1)
+        self.assertEqual(added.value['properties']['atlas_url'],
+                         'https://example.org/f')
+        self.assertIn('2 zone(s) stored as 2 piece(s)',
+                      self.model_admin.zone_summary(zone_set))
+
+    def test_overlap_resolves_to_the_earlier_upload(self):
+        """AC #3: precedence follows feature_index, so a location
+        covered by both uploads shows the first file's value."""
+        zone_set = self._string_set(
+            feature(LEFT, {'bws_label': 'High'}),
+        )
+
+        self._save(
+            {**BASE_DATA, **ADD},
+            files={'geojson_file': upload(
+                feature(WIDE, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+
+        self.assertEqual(
+            zone_set.resolve_zone(Point(2, 5, srid=4326)).label, 'High'
+        )
+        self.assertEqual(
+            zone_set.resolve_zone(Point(8, 5, srid=4326)).label, 'Low'
+        )
+
+    def test_add_with_a_value_property_change_is_refused(self):
+        """AC #4: the stored labels were read with the old key; the
+        error says the change needs a replace, and nothing changes."""
+        zone_set = self._string_set(
+            feature(LEFT, {'bws_label': 'High', 'bws_cat': 4}),
+        )
+        before = list(zone_set.zones.values_list('id', 'value'))
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD, 'value_property': 'bws_cat'},
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low', 'bws_cat': 1}),
+            )},
+            instance=zone_set,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('requires a replace',
+                      str(form.errors['value_property']))
+        self.assertIn('Replace all zones', str(form.errors['value_property']))
+        self.assertIsNone(form.parsed_zones)
+        self.assertEqual(
+            list(zone_set.zones.values_list('id', 'value')), before
+        )
+
+    def test_add_with_an_object_field_change_is_refused(self):
+        """AC #4: moving to, from or between object fields in the same
+        save as an add is refused; moving between string fields keeps
+        the zones' shape and is allowed, as without a file."""
+        string_a = PartnerField.objects.create(
+            name='string_a', type=PartnerField.STRING, label='A',
+        )
+        string_b = PartnerField.objects.create(
+            name='string_b', type=PartnerField.STRING, label='B',
+        )
+        object_a = object_field(name='object_a')
+        zone_set = self._save(
+            {**BASE_DATA, 'partner_field': string_a.pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            )},
+        )
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD, 'partner_field': object_a.pk},
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low', 'bwd_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('requires a replace',
+                      str(form.errors['partner_field']))
+        self.assertIsNone(form.parsed_zones)
+        self.assertEqual(zone_set.feature_count, 1)
+
+        # An invalid model form still copies its cleaned data onto the
+        # instance; start the allowed save from what is stored.
+        zone_set.refresh_from_db()
+        self._save(
+            {**BASE_DATA, **ADD, 'partner_field': string_b.pk},
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+        zone_set.refresh_from_db()
+        self.assertEqual(zone_set.partner_field, string_b)
+        self.assertEqual(zone_set.feature_count, 2)
+
+    def test_replace_after_several_adds_discards_them_all(self):
+        """AC #5: replace mode is today's behaviour whatever the set
+        was built from."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+        self._save(
+            {**BASE_DATA, **ADD},
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+        old_ids = set(zone_set.zones.values_list('id', flat=True))
+        self.assertEqual(len(old_ids), 2)
+
+        self._save(
+            {**BASE_DATA, **REPLACE},
+            files={'geojson_file': upload(
+                feature(FAR, {'bws_label': 'Extremely high'}),
+            )},
+            instance=zone_set,
+        )
+
+        zones = list(zone_set.zones.all())
+        self.assertEqual(
+            [(z.feature_index, z.label) for z in zones],
+            [(0, 'Extremely high')],
+        )
+        self.assertFalse(Zone.objects.filter(id__in=old_ids).exists())
+
+    def test_missing_upload_mode_means_replace(self):
+        """A form posted without the mode (older clients, scripts)
+        behaves exactly as before the field existed."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+
+        self._save(
+            BASE_DATA,
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+
+        self.assertEqual(
+            [z.label for z in zone_set.zones.all()], ['Low']
+        )
+
+    def test_add_queues_the_search_recompute_and_tells_staff(self):
+        """AC #6: the zone_set_ids recompute runs after an add exactly
+        as after a replace, and the message says what was added."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+        self.request._messages.add.reset_mock()
+
+        with patch(self.RECOMPUTE) as recompute:
+            with self.captureOnCommitCallbacks(execute=True):
+                self._save(
+                    {**BASE_DATA, **ADD},
+                    files={'geojson_file': upload(
+                        feature(RIGHT, {'bws_label': 'Low'}),
+                        feature(FAR, {'bws_label': 'Medium'}),
+                    )},
+                    instance=zone_set,
+                )
+            recompute.assert_called_once_with()
+
+        self.request._messages.add.assert_called_once()
+        message = self.request._messages.add.call_args.args[1]
+        self.assertIn('2 zone(s) added to the set as feature(s) 1–2', message)
+        self.assertIn('the set now holds 3', message)
+        self.assertIn('recomputed in the background', message)
+
+    def test_oversized_file_is_refused_in_add_mode(self):
+        """AC #7: the per-file cap applies in either mode."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+        big = upload(feature(RIGHT, {'bws_label': 'Low'}))
+        big.size = ZoneSetForm.GEOJSON_FILE_MAX_BYTES + 1
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD},
+            files={'geojson_file': big},
+            instance=zone_set,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('too large', str(form.errors))
+        self.assertIsNone(form.parsed_zones)
+        self.assertEqual(zone_set.feature_count, 1)
+
+    def test_bad_added_file_leaves_the_stored_zones_serving(self):
+        """A file that fails geometry validation in add mode is
+        refused before any row changes."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+        before = list(zone_set.zones.values_list('id', 'value'))
+        bowtie = [[[0, 0], [10, 10], [10, 0], [0, 10], [0, 0]]]
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD},
+            files={'geojson_file': upload(
+                feature(bowtie, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('not valid', str(form.errors))
+        self.assertEqual(
+            list(zone_set.zones.values_list('id', 'value')), before
+        )
+
+    def test_add_zones_is_all_or_nothing(self):
+        """If inserting the added zones fails mid-way, nothing from
+        the file is kept and the stored zones remain."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+        before = list(zone_set.zones.values_list('id', flat=True))
+        good = subdivide_zone_records(records(
+            feature(RIGHT, {'bws_label': 'Low'}),
+        ))
+        broken = good + [{'feature_index': 1, 'piece_index': 0,
+                          'geom': None, 'label': 'x', 'properties': {}}]
+
+        with self.assertRaises(Exception):
+            zone_set.add_zones(broken)
+
+        self.assertEqual(
+            list(zone_set.zones.values_list('id', flat=True)), before
+        )
+
+
 # The admin templates call `{% static %}`, and the project's manifest
 # storage then wants a `staticfiles.json` that only `collectstatic`
 # writes. CI never runs it, so render against the plain storage.
@@ -769,3 +1195,16 @@ class ZoneSetAdminSwitchNoticeTest(TestCase):
             )
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, self.NOTICE)
+
+    def test_change_page_offers_both_upload_modes(self):
+        """The upload mode sits next to the file field, with replace
+        selected by default and the precedence rule in its help."""
+        with override_switch(ZONE_SETS_SWITCH, active=True):
+            response = self.client.get(
+                reverse('admin:api_zoneset_change', args=[self.zone_set.pk])
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Replace all zones')
+        self.assertContains(response, 'Add to the existing zones')
+        self.assertContains(response, 'the earlier upload wins')
+        self.assertContains(response, 'id="id_upload_mode_0" checked')
