@@ -1,16 +1,25 @@
 /*
  * Country map.
  *
- * Green carries the data and nothing else; purple is the interface; yellow
- * is selection, matching SelectedMarkerColor in the app. The ramp is held in
- * custom properties rather than literals so it can follow a dark ground
+ * Green carries the data and nothing else; purple is the interface, and
+ * selection counts as interface rather than data, which is why a selected
+ * country is filled purple instead of shaded by its count. The ramp is held
+ * in custom properties rather than literals so it can follow a dark ground
  * later without the densest countries disappearing into it.
  */
 .country-map {
     --osh-purple: #8428fa;
     --osh-black: #0d1128;
     --osh-white: #f9f7f7;
-    --osh-select: #fccf3f;
+    /* Selection fills the country rather than outlining it. An outline has
+       to contrast with all six greens at once and nothing does: yellow
+       measured 1.00:1 against the no-data grey, so the ring disappeared on
+       exactly the countries with no data. A fill only has to differ from
+       its neighbours and the sea, which is a far easier problem, and purple
+       ties the selected country to the card describing it. The count is in
+       that card, so nothing is lost by covering the density colour. */
+    --osh-select: #8428fa;
+    --osh-select-edge: #4c128f;
 
     --osh-bin-1: #e8f7ec;
     --osh-bin-2: #aedfba;
@@ -144,10 +153,13 @@
     stroke-width: 0.35;
 }
 
+/* Drawn over the country's own shape, so the fill replaces the bin colour.
+   pointer-events stay off so a click still reaches the shape underneath and
+   can toggle the selection back off. */
 .country-map__selected {
-    fill: none;
-    stroke: var(--osh-select);
-    stroke-width: 3.5;
+    fill: var(--osh-select);
+    stroke: var(--osh-select-edge);
+    stroke-width: 1.2;
     vector-effect: non-scaling-stroke;
     pointer-events: none;
 }
@@ -341,5 +353,23 @@
         max-height: none;
         margin: 14px;
         box-shadow: none;
+    }
+}
+
+/*
+ * Give the map more of the page than the shared layout does.
+ *
+ * Map.css caps the sidebar at 50% for every map, which was the right split
+ * when the right-hand pane was a viewport you panned around. The country
+ * map is a single fixed picture of the whole world, so it reads better
+ * wider, and the results list loses little by being narrower.
+ *
+ * Scoped with :has so this applies only while the country map is on the
+ * page: the vector tile map keeps the layout it was built for. A browser
+ * without :has simply keeps the 50% split, which is the current behavior.
+ */
+@media (min-width: 600px) {
+    .map-sidebar-container:has(.country-map) #sidebar-container {
+        max-width: 40%;
     }
 }
