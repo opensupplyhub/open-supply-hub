@@ -31,9 +31,14 @@ class ZoneSetForm(forms.ModelForm):
     anything is saved — a
     bad file, or a feature PostGIS cannot cut, becomes an ordinary red
     form error and the set's existing zones are left untouched. The
-    pieces are handed to `ZoneSetAdmin.save_model`, which swaps them
-    in atomically.
+    pieces are handed to `ZoneSetAdmin.save_model`, which either swaps
+    them in atomically or, in "Add to the existing zones" mode
+    (OSDEV-3812), appends them after the stored zones, so a dataset
+    too large for one file under the cap can be loaded as several.
     """
+
+    UPLOAD_MODE_REPLACE = 'replace'
+    UPLOAD_MODE_ADD = 'add'
 
     geojson_file = forms.FileField(
         required=False,
@@ -41,7 +46,8 @@ class ZoneSetForm(forms.ModelForm):
             'Upload a .geojson/.json FeatureCollection with one Polygon '
             'or MultiPolygon feature per zone. Required when creating a '
             'set. When editing, leave empty to keep the current zones; '
-            'uploading a new file replaces them all. Features are kept '
+            'a new file replaces them all or is added after them, as '
+            'the upload mode below says. Features are kept '
             'separate (not merged); if zones overlap, the feature that '
             'comes first in the file wins. Large features are stored '
             'as several small pieces that share the feature\'s value, '
@@ -52,10 +58,40 @@ class ZoneSetForm(forms.ModelForm):
             'are served when present.'
         ),
     )
+    upload_mode = forms.ChoiceField(
+        required=False,
+        initial=UPLOAD_MODE_REPLACE,
+        choices=(
+            (UPLOAD_MODE_REPLACE, 'Replace all zones'),
+            (UPLOAD_MODE_ADD, 'Add to the existing zones'),
+        ),
+        widget=forms.RadioSelect,
+        label='Upload mode',
+        help_text=(
+            'What the uploaded file does to the zones already stored; '
+            'ignored when no file is uploaded. "Replace all zones" '
+            'discards them and keeps only this file\'s. "Add to the '
+            'existing zones" keeps them and stores this file\'s zones '
+            'after them, so a dataset larger than the per-file limit '
+            'can be loaded into one set as several files, each under '
+            'the limit. An added file is checked exactly as a '
+            'replacement is (size, geometry, properties); one that '
+            'fails leaves the stored zones untouched. Where zones from '
+            'two uploads overlap, the earlier upload wins, so upload '
+            'the file whose values should take precedence first. '
+            'Changing the value property, or linking or replacing an '
+            '"object" partner field, requires a replace. To take one '
+            'upload\'s zones out of a set, replace the whole set.'
+        ),
+    )
 
     # Same cap as polygon uploads: a bigger file almost certainly means
-    # an unsimplified export. Whether a set can be assembled from
-    # several files is still an open question (OSDEV-3551).
+    # an unsimplified export. A dataset that does not fit under it is
+    # loaded as several files in "Add to the existing zones" mode
+    # (OSDEV-3812); raising the cap is not the answer, because parsing
+    # and cutting a file of several tens of MB would outlast
+    # CloudFront's 30 s origin timeout and show staff a 504 while the
+    # save completed behind it.
     GEOJSON_FILE_MAX_BYTES = PolygonForm.GEOJSON_FILE_MAX_BYTES
 
     class Meta:
@@ -77,8 +113,11 @@ class ZoneSetForm(forms.ModelForm):
         )
         # Filled by clean() when a file is uploaded with the pieces to
         # store (see api.helpers.zone_subdivision); None means "keep
-        # the existing zones".
+        # the existing zones". `adds_to_existing` says whether they go
+        # after the stored zones (add mode on an existing set) or in
+        # their place.
         self.parsed_zones = None
+        self.adds_to_existing = False
 
     def clean_partner_field(self):
         """
@@ -131,7 +170,11 @@ class ZoneSetForm(forms.ModelForm):
         with the old key and would no longer match, or the set moved
         to, from or between object fields, because the stored zones
         were validated against (and are served by) the old field's
-        schema; re-uploading makes the change explicit.
+        schema; re-uploading makes the change explicit. The same two
+        changes are refused together with a file in add mode
+        (OSDEV-3812): the added file would be read with the new key or
+        schema while the stored zones were read with the old, so the
+        set must be replaced as a whole.
 
         The value property is required only for a string field: an
         object field reads one feature property per schema key, so
@@ -159,6 +202,13 @@ class ZoneSetForm(forms.ModelForm):
                 'leave this empty.'
             )
         value_property = cleaned_data.get('value_property')
+        # Add mode means something only for a set that exists; on a
+        # new set there is nothing to add to and the file is stored as
+        # a replace would store it.
+        adding = (
+            cleaned_data.get('upload_mode') == self.UPLOAD_MODE_ADD
+            and bool(self.instance.pk)
+        )
 
         if not geojson_file:
             if not self.instance.pk:
@@ -192,6 +242,29 @@ class ZoneSetForm(forms.ModelForm):
             # error above already says what to fix.
             return cleaned_data
 
+        if adding and self.instance.zones.exists():
+            # Every stored zone was validated against, and is served
+            # by, the key or schema the set has now; an added file
+            # read by a new one would leave the set half one way and
+            # half the other.
+            if 'value_property' in self.changed_data and not feeds_object:
+                self.add_error(
+                    'value_property',
+                    'Changing the value property requires a replace: '
+                    'choose "Replace all zones" and upload the whole '
+                    'set, so every zone is re-read with the new key.'
+                )
+            if self._field_change_needs_reupload(partner_field):
+                self.add_error(
+                    'partner_field',
+                    'Linking an "object" partner field or replacing one '
+                    'requires a replace: choose "Replace all zones" and '
+                    'upload the whole set, so every zone is re-read '
+                    'against the new field\'s schema.'
+                )
+            if self.errors:
+                return cleaned_data
+
         if geojson_file.size > self.GEOJSON_FILE_MAX_BYTES:
             raise forms.ValidationError(
                 f'GeoJSON file is too large '
@@ -221,6 +294,7 @@ class ZoneSetForm(forms.ModelForm):
             self.parsed_zones = subdivide_zone_records(records)
         except InvalidPolygonGeoJSON as exc:
             raise forms.ValidationError(str(exc)) from exc
+        self.adds_to_existing = adding
 
         return cleaned_data
 
@@ -266,8 +340,8 @@ class ZoneSetAdmin(admin.ModelAdmin):
     )
     fields = (
         'name', 'description', 'partner_field', 'value_property',
-        'geojson_file', 'zone_summary', 'active', 'uuid', 'created_at',
-        'updated_at',
+        'geojson_file', 'upload_mode', 'zone_summary', 'active', 'uuid',
+        'created_at', 'updated_at',
     )
 
     def changelist_view(self, request, extra_context=None):
@@ -373,26 +447,38 @@ class ZoneSetAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         """
-        Save the set, then swap in the uploaded zones if there are any.
+        Save the set, then store the uploaded zones if there are any:
+        in place of the stored ones, or after them in add mode.
 
         Django wraps the whole admin save in one transaction, and
-        `replace_zones` is atomic on its own as well, so the old zones
-        keep serving right up until the new ones are committed. The
-        search-side membership (`FacilityIndex.zone_set_ids`) is
-        recomputed in the background once they are (see
-        `ZoneSet.replace_zones`), so staff are told the two surfaces
-        will disagree briefly.
+        `replace_zones` / `add_zones` are atomic on their own as well,
+        so the old zones keep serving right up until the new ones are
+        committed. The search-side membership
+        (`FacilityIndex.zone_set_ids`) is recomputed in the background
+        once they are (see `ZoneSet.replace_zones`), so staff are told
+        the two surfaces will disagree briefly.
         """
         super().save_model(request, obj, form, change)
-        if form.parsed_zones is not None:
+        if form.parsed_zones is None:
+            return
+        if form.adds_to_existing:
+            first = obj.add_zones(form.parsed_zones)
+            added = len({p['feature_index'] for p in form.parsed_zones})
+            saved = (
+                f'{added} zone(s) added to the set as feature(s) '
+                f'{first}–{first + added - 1}; the set now holds '
+                f'{obj.feature_count}.'
+            )
+        else:
             obj.replace_zones(form.parsed_zones)
-            messages.info(request, (
-                'Zones saved. Which locations the search filter returns '
-                'for this dataset is being recomputed in the background '
-                '(a pass over every indexed location); until it finishes, '
-                'Spotlight Partners search results reflect the previous '
-                'zones. Location pages show the new zones at once.'
-            ))
+            saved = 'Zones saved.'
+        messages.info(request, (
+            f'{saved} Which locations the search filter returns '
+            'for this dataset is being recomputed in the background '
+            '(a pass over every indexed location); until it finishes, '
+            'Spotlight Partners search results reflect the previous '
+            'zones. Location pages show the new zones at once.'
+        ))
 
 
 class ZoneAdmin(admin.ModelAdmin):

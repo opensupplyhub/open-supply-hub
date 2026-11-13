@@ -2,7 +2,7 @@ import uuid
 
 from django.contrib.gis.db import models as gis_models
 from django.db import models, transaction
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.db.models.fields.json import KeyTransform
 
 from api.helpers.geojson_zones import is_usable_zone_value
@@ -38,16 +38,24 @@ class ZoneSet(models.Model):
     edited where every other Spotlight field's presentation lives.
 
     Zones are uploaded in the Django admin from a GeoJSON
-    FeatureCollection (see `api.models.zone_set_admin`). Re-uploading
-    replaces the set's zones atomically: the old zones keep serving
+    FeatureCollection (see `api.models.zone_set_admin`). A file either
+    replaces the set's zones atomically (the old zones keep serving
     until the new file has fully validated, then they are swapped in
-    one transaction (see `replace_zones`).
+    one transaction, see `replace_zones`) or is added after them
+    (`add_zones`, OSDEV-3812), so a dataset too large for one file
+    under the upload cap can be loaded as several files into one set
+    and still show as one Spotlight field with one attribution line.
+    Added features continue `Zone.feature_index` after the stored
+    maximum, so every zone keeps a position in one sequence across
+    uploads.
 
     Overlapping zones: if a location falls inside more than one zone
     of the same set, the zone that appeared FIRST in the uploaded
-    file wins (lowest `Zone.feature_index`). This is deterministic
-    and under the uploader's control — sort the features by severity
-    before export to get "most severe wins". See `resolve_zone`.
+    file wins (lowest `Zone.feature_index`); across several uploads,
+    the earlier upload wins. This is deterministic and under the
+    uploader's control — sort the features by severity before export
+    (and upload the most severe file first) to get "most severe
+    wins". See `resolve_zone`.
 
     Storage: each uploaded feature is cut into pieces of a bounded
     vertex count before it is saved (`api.helpers.zone_subdivision`,
@@ -260,11 +268,59 @@ class ZoneSet(models.Model):
                 `geom`, `label` and `properties`.
         """
         self.zones.all().delete()
+        self._store_pieces(pieces, first_feature_index=0)
+        schedule_zone_set_ids_recompute()
+
+    @transaction.atomic
+    def add_zones(self, pieces):
+        """
+        Add the given pieces to this set after the zones already
+        stored, in one transaction (OSDEV-3812).
+
+        The counterpart of `replace_zones` for a dataset that does not
+        fit in one file under the upload cap: each file is validated
+        and cut exactly as a replacement is, then its features are
+        stored with `feature_index` continuing after the set's current
+        maximum, so the `(zone_set, feature_index, piece_index)`
+        constraint holds and the pieces of one feature stay together.
+        Nothing already stored is touched; the stored zones keep
+        serving while the inserts run and the new ones appear with
+        them when the transaction commits. Overlap precedence follows
+        `feature_index`, so a location covered by zones from two
+        uploads resolves to the earlier upload (see `resolve_zone`).
+
+        The set's row is locked for the transaction so two adds to the
+        same set cannot read the same maximum and collide on
+        `feature_index`. The `zone_set_ids` recompute is scheduled
+        exactly as after a replace.
+
+        Args:
+            pieces: As for `replace_zones`: the new file's pieces, with
+                `feature_index` counted from 0 within that file.
+
+        Returns:
+            The `feature_index` the first added feature was stored
+            under (0 for a set that had no zones).
+        """
+        ZoneSet.objects.select_for_update().get(pk=self.pk)
+        current_max = self.zones.aggregate(
+            n=Max('feature_index')
+        )['n']
+        first_feature_index = 0 if current_max is None else current_max + 1
+        self._store_pieces(pieces, first_feature_index=first_feature_index)
+        schedule_zone_set_ids_recompute()
+        return first_feature_index
+
+    def _store_pieces(self, pieces, first_feature_index):
+        """
+        Insert one `Zone` row per piece, offsetting each piece's
+        `feature_index` by `first_feature_index`.
+        """
         Zone.objects.bulk_create(
             [
                 Zone(
                     zone_set=self,
-                    feature_index=piece['feature_index'],
+                    feature_index=first_feature_index + piece['feature_index'],
                     piece_index=piece['piece_index'],
                     geom=piece['geom'],
                     value={
@@ -276,7 +332,6 @@ class ZoneSet(models.Model):
             ],
             batch_size=500,
         )
-        schedule_zone_set_ids_recompute()
 
 
 class Zone(models.Model):
@@ -286,7 +341,12 @@ class Zone(models.Model):
     budget is a single piece; a larger one is several rows that share
     its `feature_index` and value and differ in `piece_index` (see
     `api.helpers.zone_subdivision`). Rows are created only by
-    `ZoneSet.replace_zones`; they are not edited individually.
+    `ZoneSet.replace_zones` and `ZoneSet.add_zones`; they are not
+    edited individually. A set loaded from several files holds one
+    `feature_index` sequence across them: the features of a file added
+    to the set are numbered after the stored maximum, so the index is
+    a feature's position across the set's uploads, not within its own
+    file.
 
     Every piece of a feature stores a copy of the feature's `value`
     (label plus all source properties), so a feature cut into N pieces
