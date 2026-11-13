@@ -10,13 +10,18 @@ import FacilitiesMap from './FacilitiesMap';
 import FacilitiesMapErrorMessage from './FacilitiesMapErrorMessage';
 import FeatureFlag from './FeatureFlag';
 import VectorTileFacilitiesMap from './VectorTileFacilitiesMap';
+import CountryMap from './CountryMap/CountryMap';
 
 import '../styles/css/Map.css';
 
 import withQueryStringSync from '../util/withQueryStringSync';
 
 import { logErrorToRollbar } from './../util/util';
-import { VECTOR_TILE, USER_DEFAULT_STATE } from '../util/constants';
+import {
+    COUNTRY_MAP,
+    VECTOR_TILE,
+    USER_DEFAULT_STATE,
+} from '../util/constants';
 
 const homepageStyles = theme =>
     Object.freeze({
@@ -59,14 +64,28 @@ class Homepage extends Component {
                         style={{ position: 'relative' }}
                         className="map-container"
                     >
+                        {/* /map is the URL we publicise, so it has to
+                            follow the search page onto the country map
+                            rather than keep serving green dots to anyone
+                            arriving from outside. Same three-way nesting
+                            as Map.jsx. See OSDEV-3802. */}
                         {!hasError && (
                             <FeatureFlag
-                                flag={VECTOR_TILE}
+                                flag={COUNTRY_MAP}
                                 alternative={
-                                    <Route component={FacilitiesMap} />
+                                    <FeatureFlag
+                                        flag={VECTOR_TILE}
+                                        alternative={
+                                            <Route component={FacilitiesMap} />
+                                        }
+                                    >
+                                        <Route
+                                            component={VectorTileFacilitiesMap}
+                                        />
+                                    </FeatureFlag>
                                 }
                             >
-                                <Route component={VectorTileFacilitiesMap} />
+                                <Route component={CountryMap} />
                             </FeatureFlag>
                         )}
                         {hasError && <FacilitiesMapErrorMessage />}
