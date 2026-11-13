@@ -70,6 +70,60 @@ describe('single-result search redirect', () => {
     });
 
     /*
+     * The country map reuses this action to apply its country filter, and
+     * seven countries hold exactly one production location. Filtering to one
+     * of them must leave the user on the map, so the map opts out of the
+     * redirect while still pushing the route the back button needs.
+     * See OSDEV-3802 and OSDEV-3810.
+     */
+    test('skips the redirect when redirectOnSingleResult is false', async () => {
+        apiRequest.get.mockResolvedValue({ data: collection('IN2021006BBQ8E5') });
+        const pushNewRoute = jest.fn();
+
+        await mockStore(state()).dispatch(
+            fetchFacilities({ pushNewRoute, redirectOnSingleResult: false }),
+        );
+
+        expect(pushNewRoute).not.toHaveBeenCalled();
+    });
+
+    test('opting out still fetches and completes the search', async () => {
+        apiRequest.get.mockResolvedValue({ data: collection('IN2021006BBQ8E5') });
+        const store = mockStore(state());
+
+        await store.dispatch(
+            fetchFacilities({
+                pushNewRoute: jest.fn(),
+                redirectOnSingleResult: false,
+            }),
+        );
+
+        const types = store.getActions().map(action => action.type);
+        expect(types).toContain('COMPLETE_FETCH_FACILITIES');
+        expect(types).not.toContain('FAIL_FETCH_FACILITIES');
+    });
+
+    test('redirects by default when the option is omitted', async () => {
+        apiRequest.get.mockResolvedValue({ data: collection('IN2021006BBQ8E5') });
+        const pushNewRoute = jest.fn();
+
+        await mockStore(state()).dispatch(fetchFacilities({ pushNewRoute }));
+
+        expect(pushNewRoute).toHaveBeenCalledTimes(1);
+    });
+
+    test('redirects when the option is explicitly true', async () => {
+        apiRequest.get.mockResolvedValue({ data: collection('IN2021006BBQ8E5') });
+        const pushNewRoute = jest.fn();
+
+        await mockStore(state()).dispatch(
+            fetchFacilities({ pushNewRoute, redirectOnSingleResult: true }),
+        );
+
+        expect(pushNewRoute).toHaveBeenCalledTimes(1);
+    });
+
+    /*
      * The regression this guards. `withQueryStringSync` passed `...push`,
      * spreading a function, which contributes no own enumerable properties;
      * `pushNewRoute` therefore fell back to its noop default and a search

@@ -318,19 +318,29 @@ function mapStateToProps({
 }
 
 /*
- * Rerunning the search is the same two steps the sidebar's own search
- * button takes: update the filters, then put the resulting query string in
- * the URL. Going through the URL rather than fetching directly keeps the
- * back button and shareable links working.
- */
-/*
  * fetchFacilities already builds the query string from the filters,
  * requests the results and pushes the new route, which is how the sidebar
  * and the sort dropdown run a search. Reusing it keeps the map on exactly
  * the same path as every other way of searching, back button included.
+ *
+ * The one difference is the single-result redirect: seven countries hold
+ * exactly one production location, and clicking one of them should filter
+ * the map, not navigate away from it (OSDEV-3802, OSDEV-3810).
+ *
+ * `pushNewRoute` is passed only so this reads like every other caller:
+ * inside fetchFacilities it is used for nothing but that jump, so opting
+ * out means it is never called. The URL and the back button keep working
+ * because withQueryStringSync writes the query string from the filter
+ * state, not because of anything this dispatch does.
  */
 function mapDispatchToProps(dispatch, { history: { push } }) {
-    const runSearch = () => dispatch(fetchFacilities({ pushNewRoute: push }));
+    const runSearch = () =>
+        dispatch(
+            fetchFacilities({
+                pushNewRoute: push,
+                redirectOnSingleResult: false,
+            }),
+        );
 
     return {
         fetchCountries: () => dispatch(fetchCountryOptionsIfNeeded()),

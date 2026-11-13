@@ -41,6 +41,13 @@ export const resetSingleFacility = createAction('RESET_SINGLE_FACILITY');
 
 let nextSingleFacilityRequestToken = 0;
 
+/*
+ * `redirectOnSingleResult` defaults to true because jumping straight to the
+ * only matching location is long-standing search behavior (OSDEV-3810).
+ * Callers that filter in place rather than search, such as the country map
+ * (OSDEV-3802), opt out so a country holding one location keeps the user
+ * where they are.
+ */
 export function fetchFacilities({
     pageSize = FACILITIES_REQUEST_PAGE_SIZE,
     pushNewRoute = noop,
@@ -48,6 +55,7 @@ export function fetchFacilities({
     detail = false,
     onSuccess = null,
     onFailure = null,
+    redirectOnSingleResult = true,
 }) {
     return (dispatch, getState) => {
         dispatch(fetchCurrentTileCacheKey());
@@ -67,7 +75,7 @@ export function fetchFacilities({
                 const responseHasOnlyOneFacility =
                     get(data, 'features', []).length === 1;
 
-                if (responseHasOnlyOneFacility) {
+                if (responseHasOnlyOneFacility && redirectOnSingleResult) {
                     const facilityID = get(data, 'features[0].id', null);
 
                     if (!facilityID) {
