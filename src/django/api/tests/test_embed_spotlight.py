@@ -428,4 +428,6 @@ class EmbedSpotlightTest(APITestCase):
         entry = self._details_partner_fields()["env_assessment"][0]
 
         self.assertEqual("Partner", entry["contributor_name"])
-        self.assertEqual(self.partner.id, entry["contributor_id"])
+        # A contribution's `contributor_id` is the id of the contributor's
+        # admin user, which is what a profile link is built from.
+        self.assertEqual(self.partner.admin.id, entry["contributor_id"])
