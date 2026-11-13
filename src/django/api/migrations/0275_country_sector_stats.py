@@ -15,7 +15,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0272_index_sector_search'),
+        ('api', '0274_add_country_map_switch'),
     ]
 
     operations = [

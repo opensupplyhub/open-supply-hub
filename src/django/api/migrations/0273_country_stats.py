@@ -5,7 +5,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0268_index_zone_set_ids_search'),
+        ('api', '0272_index_sector_search'),
     ]
 
     operations = [

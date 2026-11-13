@@ -22,7 +22,7 @@ def delete_country_map_switch(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0269_country_stats'),
+        ('api', '0273_country_stats'),
     ]
 
     operations = [

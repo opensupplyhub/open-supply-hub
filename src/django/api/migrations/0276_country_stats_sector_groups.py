@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0273_country_sector_stats'),
+        ('api', '0275_country_sector_stats'),
     ]
 
     operations = [
