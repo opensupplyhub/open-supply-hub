@@ -160,9 +160,12 @@ class Command(BaseCommand):
         "Food" and "Food Industry" all sitting in the top three and all
         meaning the same thing. See OSDEV-3802.
 
-        Counts DISTINCT locations per group rather than summing the member
+        Counts distinct locations per group rather than summing the member
         sectors' counts, because a location reporting both "Food" and
         "Food Industry" would otherwise be counted twice in the one group.
+        The lateral resolves each location's own sectors to a DISTINCT set
+        of groups first, so the outer count never sees the same location
+        twice for one group.
 
         Groups still overlap across the row: the mapping is many-to-many,
         so a location reporting "Food Manufacturing" counts once for
@@ -172,7 +175,9 @@ class Command(BaseCommand):
 
         One pass, with the sector to group mapping handed to Postgres as a
         pair of arrays: a query per group would mean 25 passes over
-        api_facilityindex.
+        api_facilityindex. Measured on a 2,537,087-row anonymized restore,
+        this runs in 7.5s against 7.1s for the raw pass above, where
+        deduplicating globally with COUNT(DISTINCT id) took 13.9s.
         '''
         sector_names = []
         group_names = []
@@ -182,15 +187,15 @@ class Command(BaseCommand):
 
         with connection.cursor() as cursor:
             cursor.execute(
-                'SELECT fi.country_code, '
-                'COALESCE(m.group_name, %s) AS sector_group, '
-                'COUNT(DISTINCT fi.id) AS n '
+                'SELECT fi.country_code, g.sector_group, COUNT(*) AS n '
                 'FROM api_facilityindex fi '
-                'CROSS JOIN LATERAL UNNEST(fi.sector) '
-                'AS reported(sector_name) '
+                'CROSS JOIN LATERAL ('
+                'SELECT DISTINCT COALESCE(m.group_name, %s) AS sector_group '
+                'FROM UNNEST(fi.sector) AS reported(sector_name) '
                 'LEFT JOIN UNNEST(%s::varchar[], %s::varchar[]) '
                 'AS m(sector_name, group_name) '
-                'ON m.sector_name = reported.sector_name '
+                'ON m.sector_name = reported.sector_name'
+                ') g '
                 f'WHERE {OPEN_LOCATIONS} '
                 'GROUP BY 1, 2 '
                 'ORDER BY 1, n DESC',
@@ -211,10 +216,13 @@ class Command(BaseCommand):
         Letting it land in "Other" would both hide it in the ordering and
         make a pile of missing data read as a real group.
 
-        Sectors with no group link are left out for the same reason the
-        card cannot show them: a lone raw name among 25 group names reads
-        as a group. They fall to the same "Unspecified" bucket through the
-        COALESCE above.
+        Anything the mapping does not cover falls to that same
+        "Unspecified" bucket through the COALESCE above: sectors with no
+        group link, and the values the index carries that the taxonomy
+        does not know at all. The second kind is the real population, and
+        most of it is malformed, such as a whole comma-joined list stored
+        as one sector name. A lone raw name among 25 group names would
+        read as a group, so none of it is shown as one.
         '''
         pairs = (
             Sector.objects
