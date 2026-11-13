@@ -304,6 +304,114 @@ export const getChainGroups = chain => {
     }));
 };
 
+// --- Building a chain in the settings ---
+
+export const DEFAULT_CHAIN_COLOR = '#c0392b';
+export const MAX_CHAIN_LOCATIONS = 60;
+export const CHAIN_STAGE_SUGGESTIONS = Object.freeze([
+    'Raw material',
+    'Material production',
+    'Processing',
+    'Final assembly',
+]);
+
+export const makeEmptyChain = () => ({
+    name: '',
+    description: '',
+    product_url: '',
+    color: DEFAULT_CHAIN_COLOR,
+    is_published: false,
+    nodes: [],
+    links: [],
+});
+
+// Whether following "supplies" links from a location ever leads back to it.
+export const chainLinksLoop = links => {
+    const customers = {};
+    links.forEach(([supplier, customer]) => {
+        customers[supplier] = [...(customers[supplier] || []), customer];
+    });
+    const done = new Set();
+    const visit = (osId, path) => {
+        if (path.has(osId)) return true;
+        if (done.has(osId)) return false;
+        const nextPath = new Set(path).add(osId);
+        const looped = (customers[osId] || []).some(id => visit(id, nextPath));
+        done.add(osId);
+        return looped;
+    };
+    return Object.keys(customers).some(id => visit(id, new Set()));
+};
+
+export const addChainLocation = (chain, { osId, name }) =>
+    chain.nodes.some(node => node.os_id === osId)
+        ? chain
+        : {
+              ...chain,
+              nodes: [...chain.nodes, { os_id: osId, name, stage: '' }],
+          };
+
+// Removing a location also removes the links to and from it.
+export const removeChainLocation = (chain, osId) => ({
+    ...chain,
+    nodes: chain.nodes.filter(node => node.os_id !== osId),
+    links: chain.links.filter(link => !link.includes(osId)),
+});
+
+export const setChainLocationStage = (chain, osId, stage) => ({
+    ...chain,
+    nodes: chain.nodes.map(node =>
+        node.os_id === osId ? { ...node, stage } : node,
+    ),
+});
+
+export const addChainLink = (chain, supplier, customer) =>
+    chain.links.some(([s, c]) => s === supplier && c === customer)
+        ? chain
+        : { ...chain, links: [...chain.links, [supplier, customer]] };
+
+export const removeChainLink = (chain, supplier, customer) => ({
+    ...chain,
+    links: chain.links.filter(([s, c]) => !(s === supplier && c === customer)),
+});
+
+// The locations `supplier` could be set to supply: any other location it
+// does not already supply, where the link would not make the chain loop.
+export const getPossibleCustomers = (chain, supplier) =>
+    chain.nodes.filter(
+        node =>
+            node.os_id !== supplier &&
+            !chain.links.some(([s, c]) => s === supplier && c === node.os_id) &&
+            !chainLinksLoop([...chain.links, [supplier, node.os_id]]),
+    );
+
+// What the builder sends to the API: names are for display only.
+export const formatChainForAPI = chain => ({
+    name: chain.name.trim(),
+    description: chain.description.trim(),
+    product_url: chain.product_url.trim(),
+    color: chain.color,
+    is_published: chain.is_published,
+    nodes: chain.nodes.map(node => ({
+        os_id: node.os_id,
+        stage: node.stage || '',
+    })),
+    links: chain.links,
+});
+
+// Every message in an API error response, whichever field it is about.
+export const getChainErrorMessages = data => {
+    if (!data || typeof data !== 'object') {
+        return ['The supply chain could not be saved.'];
+    }
+    const messages = Object.values(data).flatMap(value =>
+        Array.isArray(value) ? value.map(String) : [String(value)],
+    );
+    return messages.length
+        ? messages
+        : ['The supply chain could not be saved.'];
+};
+
 // Only http(s) links are ever shown to visitors.
 export const getSafeProductUrl = url =>
     /^https?:\/\/[^\s"<>]+$/i.test((url || '').trim()) ? url.trim() : '';

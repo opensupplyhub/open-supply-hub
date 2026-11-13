@@ -117,6 +117,25 @@ class EmbedSupplyChainsTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         return json.loads(response.content)["supply_chains"]
 
+    def test_locations_are_returned_with_their_names(self):
+        self._login()
+        created = json.loads(self._post().content)
+
+        self.assertEqual(
+            ["Factory", "Mill", "Spinner"],
+            [node["name"] for node in created["nodes"]],
+        )
+        # Names are not stored, and are ignored when sent back.
+        response = self.client.put(
+            "{}{}/".format(self.url, created["id"]), created, format="json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        chain = EmbedSupplyChain.objects.get(id=created["id"])
+        self.assertEqual(
+            {"os_id": self.factory.id, "stage": "Final assembly"},
+            chain.nodes[0],
+        )
+
     # ------------------------------------------------------------------ #
     # who can use it                                                      #
     # ------------------------------------------------------------------ #

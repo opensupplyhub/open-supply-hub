@@ -11,6 +11,7 @@ import { EmbeddedMapInfoLink, USER_DEFAULT_STATE } from '../util/constants';
 
 import EmbeddedMapFieldsConfig from './EmbeddedMapFieldsConfig';
 import EmbeddedMapListOrderConfig from './EmbeddedMapListOrderConfig';
+import EmbeddedMapSupplyChainsConfig from './EmbeddedMapSupplyChainsConfig';
 import EmbeddedMapThemeConfig from './EmbeddedMapThemeConfig';
 import EmbeddedMapSizeConfig from './EmbeddedMapSizeConfig';
 import EmbeddedMapCode from './EmbeddedMapCode';
@@ -87,6 +88,9 @@ const SECTIONS = [
     { id: 'fields', label: 'Fields' },
     { id: 'code', label: 'Size and embed code' },
 ];
+// Supply chains are part of the Embed Deluxe package.
+const SUPPLY_CHAINS_SECTION = { id: 'chains', label: 'Supply chains' };
+const DELUXE_EMBED_LEVEL = 3;
 
 // The preview shows the map as a visitor sees it on a desktop screen: the
 // filters, the list and the map side by side. The map only lays itself out
@@ -165,6 +169,9 @@ function EmbeddedMapConfig({
     timestamp,
 }) {
     const [section, setSection] = useState(SECTIONS[0].id);
+    // Supply chains are saved on their own, apart from the other settings;
+    // the preview is refreshed when one changes.
+    const [chainsSavedAt, setChainsSavedAt] = useState(0);
 
     // The values of the field the markers are colored by come from the saved
     // config, so they are fetched again after each save (`timestamp`).
@@ -200,9 +207,17 @@ function EmbeddedMapConfig({
         height,
         fullWidth,
         contributor: [user?.contributor_id],
-        timestamp,
+        timestamp: Math.max(timestamp, chainsSavedAt),
         minimumConfigurationIsComplete,
     };
+    const sections =
+        user.embed_level === DELUXE_EMBED_LEVEL
+            ? [
+                  ...SECTIONS.slice(0, 2),
+                  SUPPLY_CHAINS_SECTION,
+                  ...SECTIONS.slice(2),
+              ]
+            : SECTIONS;
 
     return (
         <div style={styles.page}>
@@ -255,7 +270,7 @@ function EmbeddedMapConfig({
                 <Grid item xs={12} md={5} lg={4}>
                     <div style={styles.settingsPanel}>
                         <div style={styles.nav} role="tablist">
-                            {SECTIONS.map(({ id, label }) => (
+                            {sections.map(({ id, label }) => (
                                 <button
                                     key={id}
                                     type="button"
@@ -353,6 +368,12 @@ function EmbeddedMapConfig({
                                 )}
                                 errors={errors}
                                 userEmbedLevel={user.embed_level}
+                            />
+                        ) : null}
+                        {section === 'chains' ? (
+                            <EmbeddedMapSupplyChainsConfig
+                                contributorId={user?.contributor_id}
+                                onSaved={() => setChainsSavedAt(Date.now())}
                             />
                         ) : null}
                         {section === 'code' ? (

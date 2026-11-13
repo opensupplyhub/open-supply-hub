@@ -1,4 +1,14 @@
 import {
+    addChainLink,
+    addChainLocation,
+    chainLinksLoop,
+    formatChainForAPI,
+    getChainErrorMessages,
+    getPossibleCustomers,
+    makeEmptyChain,
+    removeChainLink,
+    removeChainLocation,
+    setChainLocationStage,
     findEmbedSupplyChain,
     getChainDepths,
     getChainGroups,
@@ -111,6 +121,113 @@ describe('embedded map supply chains', () => {
             expect(getSafeProductUrl(['javascript', 'alert(1)'].join(':'))).toBe('');
             expect(getSafeProductUrl('')).toBe('');
             expect(getSafeProductUrl(undefined)).toBe('');
+        });
+    });
+
+    describe('building a chain', () => {
+        const build = () => {
+            let draft = makeEmptyChain();
+            draft = addChainLocation(draft, { osId: 'F', name: 'Factory' });
+            draft = addChainLocation(draft, { osId: 'M', name: 'Mill' });
+            draft = addChainLocation(draft, { osId: 'S', name: 'Spinner' });
+            draft = addChainLink(draft, 'M', 'F');
+            return addChainLink(draft, 'S', 'M');
+        };
+
+        it('adds each location once', () => {
+            const draft = addChainLocation(build(), {
+                osId: 'F',
+                name: 'Factory',
+            });
+
+            expect(draft.nodes.map(n => n.os_id)).toEqual(['F', 'M', 'S']);
+        });
+
+        it('adds each link once and removes it', () => {
+            const draft = addChainLink(build(), 'M', 'F');
+
+            expect(draft.links).toEqual([
+                ['M', 'F'],
+                ['S', 'M'],
+            ]);
+            expect(removeChainLink(draft, 'M', 'F').links).toEqual([
+                ['S', 'M'],
+            ]);
+        });
+
+        it('removes a location along with its links', () => {
+            const draft = removeChainLocation(build(), 'M');
+
+            expect(draft.nodes.map(n => n.os_id)).toEqual(['F', 'S']);
+            expect(draft.links).toEqual([]);
+        });
+
+        it('sets what happens at a location', () => {
+            const draft = setChainLocationStage(build(), 'M', 'Weaving');
+
+            expect(draft.nodes[1].stage).toBe('Weaving');
+            expect(draft.nodes[0].stage).toBe('');
+        });
+
+        it('spots links that loop', () => {
+            expect(chainLinksLoop(build().links)).toBe(false);
+            expect(chainLinksLoop([...build().links, ['F', 'S']])).toBe(true);
+            expect(
+                chainLinksLoop([
+                    ['A', 'C'],
+                    ['B', 'C'],
+                    ['A', 'B'],
+                ]),
+            ).toBe(false);
+        });
+
+        it('only offers links that are new and would not loop', () => {
+            const draft = build();
+            const offered = osId =>
+                getPossibleCustomers(draft, osId).map(n => n.os_id);
+
+            // The spinner already supplies the mill; it could also supply
+            // the factory directly.
+            expect(offered('S')).toEqual(['F']);
+            // The factory is the end of the chain: supplying either of the
+            // others would loop.
+            expect(offered('F')).toEqual([]);
+        });
+
+        it('sends the API the chain without display names', () => {
+            const draft = {
+                ...setChainLocationStage(build(), 'F', 'Sewing'),
+                name: ' Jacket ',
+            };
+
+            expect(formatChainForAPI(draft)).toEqual({
+                name: 'Jacket',
+                description: '',
+                product_url: '',
+                color: '#c0392b',
+                is_published: false,
+                nodes: [
+                    { os_id: 'F', stage: 'Sewing' },
+                    { os_id: 'M', stage: '' },
+                    { os_id: 'S', stage: '' },
+                ],
+                links: [
+                    ['M', 'F'],
+                    ['S', 'M'],
+                ],
+            });
+        });
+
+        it('collects every message from an API error', () => {
+            expect(
+                getChainErrorMessages({
+                    non_field_errors: ['The links cannot loop.'],
+                    product_url: ['Enter a web address.'],
+                }),
+            ).toEqual(['The links cannot loop.', 'Enter a web address.']);
+            expect(getChainErrorMessages(undefined)).toEqual([
+                'The supply chain could not be saved.',
+            ]);
         });
     });
 
