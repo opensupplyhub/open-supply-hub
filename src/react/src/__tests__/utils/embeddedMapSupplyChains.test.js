@@ -8,7 +8,6 @@ import {
     getSchematicLayout,
     moveChain,
     clickChainLocation,
-    guessLinkDirection,
     reverseChainLink,
     formatChainForAPI,
     getChainErrorMessages,
@@ -312,19 +311,13 @@ describe('embedded map supply chains', () => {
                 expect(result.selectedId).toBe('S');
             });
 
-            it('lets the tiers decide which way a link runs', () => {
-                const tiers = { F: '1', M: '2' };
-                // Built from the mill towards the factory this time.
+            it('links the same way whatever tiers the facilities have', () => {
+                // Built from the mill towards the factory: the factory is
+                // clicked second, so it is the supplier, as the click says.
                 let result = clickChainLocation(makeEmptyChain(), null, mill);
-                result = clickChainLocation(result.chain, 'M', factory, tiers);
+                result = clickChainLocation(result.chain, 'M', factory);
 
-                expect(result.chain.links).toEqual([['M', 'F']]);
-                expect(
-                    guessLinkDirection(
-                        { osId: 'F', tier: 'unknown' },
-                        { osId: 'M', tier: '2' },
-                    ),
-                ).toEqual(['M', 'F']);
+                expect(result.chain.links).toEqual([['F', 'M']]);
             });
 
             it('deselects the selected location when it is clicked again', () => {
@@ -341,15 +334,15 @@ describe('embedded map supply chains', () => {
                 expect(result.chain.links).toEqual(build().links);
             });
 
-            it('links the other way round when the likely way would loop', () => {
-                // S -> M -> F; with the factory selected, the spinner is
-                // clicked: "spinner supplies factory" is fine.
-                // With the spinner selected and the factory clicked, "factory
-                // supplies spinner" would loop, so it runs the other way.
-                const result = clickChainLocation(build(), 'S', factory);
+            it('refuses a link that would loop, and does not reverse it', () => {
+                // S -> M -> F. With the spinner selected, the factory is
+                // clicked: "factory supplies spinner" would loop.
+                const before = build();
+                const result = clickChainLocation(before, 'S', factory);
 
-                expect(result.chain.links).toContainEqual(['S', 'F']);
-                expect(result.message).toBe('');
+                expect(result.chain).toBe(before);
+                expect(result.selectedId).toBe('S');
+                expect(result.message).toMatch(/Factory cannot supply/);
             });
 
             it('refuses a facility once the chain is full', () => {
