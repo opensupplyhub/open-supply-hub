@@ -9,6 +9,9 @@ import { Link } from 'react-router-dom';
 
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
+import BestProofBox from '../../../Shared/BestProofBox/BestProofBox';
+import FieldWithTip from '../../../Shared/FieldWithTip/FieldWithTip';
+import { COMPANY_ADDRESS_BEST_PROOF } from '../../../Shared/BestProofBox/constants';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
@@ -234,21 +237,24 @@ const BusinessStep = ({
                     />
                 </div>
             )}
-            <div className={classes.formFieldContainer}>
-                <FormFieldTitle
-                    label="Company Address Verification"
-                    classes={{ title: classes.formLabel }}
-                    required
-                />
-                <Typography
-                    variant="body1"
-                    className={classes.sectionDescription}
-                >
-                    Select one item below. Best: a utility bill or business
-                    registration that shows your company name and address. A
-                    LinkedIn page may not be accepted and can significantly
-                    delay approval.
-                </Typography>
+            <FieldWithTip
+                heading={
+                    <>
+                        <FormFieldTitle
+                            label="Company Address Verification"
+                            classes={{ title: classes.formLabel }}
+                            required
+                        />
+                        <Typography
+                            variant="body1"
+                            className={classes.sectionDescription}
+                        >
+                            Select one item below.
+                        </Typography>
+                    </>
+                }
+                tip={<BestProofBox {...COMPANY_ADDRESS_BEST_PROOF} />}
+            >
                 <StyledSelect
                     id="locationAddressVerificationMethod"
                     name="locationAddressVerificationMethod"
@@ -279,7 +285,7 @@ const BusinessStep = ({
                         />
                     </div>
                 )}
-            </div>
+            </FieldWithTip>
             <div className={classes.documentUploadContainer}>
                 {showDocumentUpload && (
                     <Grid item xs={12}>

@@ -35,10 +35,6 @@ const contactInfoStepStyles = theme =>
             fontSize: '18px',
             marginBottom: '10px',
         }),
-        fieldHelperText: Object.freeze({
-            fontSize: '16px',
-            marginTop: '8px',
-        }),
         sectionTitleContainer: Object.freeze({
             display: 'flex',
             justifyContent: 'flex-start',

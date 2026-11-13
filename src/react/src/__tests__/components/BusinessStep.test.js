@@ -399,14 +399,30 @@ describe('BusinessStep component', () => {
         );
     });
 
-    test('tells the claimant which address proof is best', () => {
+    test('shows the best proof box at the address verification question', () => {
         renderComponent();
 
-        expect(
-            screen.getByText(
-                'Select one item below. Best: a utility bill or business registration that shows your company name and address. A LinkedIn page may not be accepted and can significantly delay approval.'
-            )
-        ).toBeInTheDocument();
+        expect(screen.getByText('Select one item below.')).toBeInTheDocument();
+
+        const boxLines = Array.from(
+            screen.getByTestId('best-proof-box').querySelectorAll('p'),
+        ).map(line => line.textContent);
+
+        expect(boxLines).toEqual([
+            'Best: an official document.',
+            'Utility bill. Business registration. Tax document. Business license.',
+            'A company website link can delay approval.',
+            'A LinkedIn page may not be accepted and can significantly delay approval.',
+        ]);
+
+        // The tip comes after its control, so on narrow screens it reads
+        // field first, then tip.
+        const inPageOrder = Array.from(
+            document.querySelectorAll('[data-testid="verification-select"], [data-testid="best-proof-box"]'),
+        );
+        expect(inPageOrder.indexOf(screen.getByTestId('verification-select'))).toBeLessThan(
+            inPageOrder.indexOf(screen.getByTestId('best-proof-box')),
+        );
     });
 
     test('upload box says claims with a document are approved fastest', () => {

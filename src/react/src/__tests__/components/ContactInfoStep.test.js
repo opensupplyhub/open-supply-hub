@@ -171,21 +171,55 @@ describe('ContactInfoStep component', () => {
 
         expect(screen.getByText('Your Work Email')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('name@yourcompany.com')).toBeInTheDocument();
-        expect(
-            screen.getByText(
-                'Use your work email. A personal email may not be accepted and can significantly delay approval.',
-            ),
-        ).toBeInTheDocument();
+
+        const [emailBox] = screen.getAllByTestId('best-proof-box');
+        const boxLines = Array.from(emailBox.querySelectorAll('p')).map(
+            line => line.textContent,
+        );
+
+        expect(boxLines).toEqual([
+            'Use your work email.',
+            'Example: name@yourcompany.com',
+            'A personal email may not be accepted and can significantly delay approval.',
+            'No work email? Upload a document with your name and your company.',
+        ]);
+
+        // The tip comes after its control, so on narrow screens it reads
+        // field first, then tip.
+        const inPageOrder = Array.from(
+            document.querySelectorAll('input[placeholder="name@yourcompany.com"], [data-testid="best-proof-box"]'),
+        );
+        expect(inPageOrder.indexOf(screen.getByPlaceholderText('name@yourcompany.com'))).toBeLessThan(
+            inPageOrder.indexOf(emailBox),
+        );
     });
 
-    test('tells the claimant which employment proof is best', () => {
+    test('shows the best proof box at the employment verification question', () => {
         renderComponent();
 
-        expect(
-            screen.getByText(
-                'Select one item below. Best: a business card, employment letter or ID badge that shows your name and your company. A LinkedIn link may not be accepted and can significantly delay approval.',
-            ),
-        ).toBeInTheDocument();
+        expect(screen.getByText('Select one item below.')).toBeInTheDocument();
+
+        const boxes = screen.getAllByTestId('best-proof-box');
+        expect(boxes).toHaveLength(2);
+
+        const boxLines = Array.from(boxes[1].querySelectorAll('p')).map(
+            line => line.textContent,
+        );
+
+        expect(boxLines).toEqual([
+            'Best: a document with your name and your company.',
+            'Business card. Employment letter. ID badge.',
+            'A LinkedIn link may not be accepted and can significantly delay approval.',
+        ]);
+
+        // The tip comes after its control, so on narrow screens it reads
+        // field first, then tip.
+        const inPageOrder = Array.from(
+            document.querySelectorAll('[data-testid="employment-verification-select"], [data-testid="best-proof-box"]'),
+        );
+        expect(inPageOrder.indexOf(screen.getByTestId('employment-verification-select'))).toBeLessThan(
+            inPageOrder.indexOf(boxes[1]),
+        );
     });
 
     test('shows the note on the LinkedIn option only, in the same order as before', () => {
