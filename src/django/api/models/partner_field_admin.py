@@ -162,9 +162,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
         problems = [
             f'{missing} of {total} zone(s) have no value for the required '
             f'property "{key}"'
-            for key, missing in (
-                (key, zone_set.features_lacking(key)) for key in required
-            )
+            for key, missing in zone_set.features_lacking(required).items()
             if missing
         ]
         if problems:

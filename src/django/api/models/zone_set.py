@@ -1,8 +1,11 @@
 import uuid
 
 from django.contrib.gis.db import models as gis_models
-from django.db import connection, models, transaction
+from django.db import models, transaction
 from django.db.models import Count
+from django.db.models.fields.json import KeyTransform
+
+from api.helpers.geojson_zones import is_usable_zone_value
 
 from api.facility_index_backfill.zone_set_ids_recompute import (
     schedule_zone_set_ids_recompute,
@@ -159,37 +162,46 @@ class ZoneSet(models.Model):
             n=Count('feature_index', distinct=True)
         )['n']
 
-    def features_lacking(self, key):
+    def features_lacking(self, keys):
         """
-        How many of the set's uploaded features have no usable stored
-        value for the feature property `key`.
+        For each feature property in `keys`, how many of the set's
+        uploaded features have no usable stored value for it.
 
-        "Usable" is what the provider serves and the upload check
-        demands (`api.helpers.geojson_zones.is_usable_zone_value`): the
-        property is present and is a non-blank string, a number or a
-        boolean, not null, an object or a list. Counted per feature,
-        not per piece, so the number matches the upload messages.
+        "Usable" is decided by the same function the provider serves
+        by and the upload check demands
+        (`api.helpers.geojson_zones.is_usable_zone_value`), applied in
+        Python to the stored values rather than re-stated in SQL, so
+        the three can never disagree (a tab-only string, say, is blank
+        to all of them). One row per feature is read, carrying just the
+        requested properties, so pieces of the same feature are not
+        counted twice and the numbers match the upload messages.
 
         Used by the partner field admin to refuse a schema change that
         makes a property required when the zones already stored were
         never read for it (OSDEV-3659).
+
+        Args:
+            keys: The property names to count.
+
+        Returns:
+            Dict of key to the number of features lacking it.
         """
-        with connection.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT count(DISTINCT feature_index)
-                FROM api_zone
-                WHERE zone_set_id = %s AND (
-                    value -> 'properties' IS NULL
-                    OR NOT jsonb_exists(value -> 'properties', %s)
-                    OR jsonb_typeof(value -> 'properties' -> %s)
-                        IN ('null', 'object', 'array')
-                    OR btrim(value -> 'properties' ->> %s) = ''
-                )
-                """,
-                [self.pk, key, key, key],
-            )
-            (missing,) = cursor.fetchone()
+        keys = list(keys)
+        missing = dict.fromkeys(keys, 0)
+        if not keys:
+            return missing
+        rows = (
+            self.zones.order_by('feature_index')
+            .distinct('feature_index')
+            .values_list('feature_index', *[
+                KeyTransform(key, KeyTransform('properties', 'value'))
+                for key in keys
+            ])
+        )
+        for row in rows:
+            for key, value in zip(keys, row[1:]):
+                if not is_usable_zone_value(value):
+                    missing[key] += 1
         return missing
 
     def resolve_zone(self, point):

@@ -21,8 +21,9 @@ SCHEMA = {
 }
 
 WEST = {'bws_label': 'High', 'bwd_label': 'Low', 'pfaf_id': 1,
-        'note': 'basin 1'}
-EAST = {'bws_label': 'Low', 'bwd_label': 'Low', 'pfaf_id': 2, 'note': ''}
+        'note': 'basin 1', 'scope': 'Annual'}
+EAST = {'bws_label': 'Low', 'bwd_label': 'Low', 'pfaf_id': 2, 'note': '',
+        'scope': '\t\n '}
 
 
 def with_required(schema, *keys, **properties):
@@ -94,6 +95,19 @@ class PartnerFieldAdminFormZoneSetTest(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('1 of 2 zone(s) have no value for the required '
                       'property &quot;note&quot;',
+                      str(form.errors['json_schema']))
+
+    def test_whitespace_only_stored_value_counts_as_missing(self):
+        """EAST carries `scope` as tabs, a newline and a space. The
+        provider strips it to nothing and omits it, so the check must
+        count it as lacking too: the same `is_usable_zone_value`
+        decides both, rather than a SQL restatement of it."""
+        form = self._form(json_schema=with_required(
+            SCHEMA, 'scope', scope={'type': 'string'},
+        ))
+        self.assertFalse(form.is_valid())
+        self.assertIn('1 of 2 zone(s) have no value for the required '
+                      'property &quot;scope&quot;',
                       str(form.errors['json_schema']))
 
     def test_every_failing_required_key_is_reported_at_once(self):
@@ -193,6 +207,25 @@ class PartnerFieldAdminFormZoneSetTest(TestCase):
 
     def test_features_lacking_counts_features_not_pieces(self):
         self.assertEqual(self.zone_set.feature_count, 2)
-        self.assertEqual(self.zone_set.features_lacking('bws_label'), 0)
-        self.assertEqual(self.zone_set.features_lacking('note'), 1)
-        self.assertEqual(self.zone_set.features_lacking('drr_label'), 2)
+        self.assertEqual(
+            self.zone_set.features_lacking(
+                ['bws_label', 'note', 'scope', 'drr_label', 'pfaf_id']
+            ),
+            {'bws_label': 0, 'note': 1, 'scope': 1, 'drr_label': 2,
+             'pfaf_id': 0},
+        )
+        self.assertEqual(self.zone_set.features_lacking([]), {})
+
+    def test_features_lacking_agrees_with_what_the_provider_serves(self):
+        """Every stored value the check accepts is one the provider
+        serves, and vice versa, because both use the same test."""
+        from api.helpers.geojson_zones import is_usable_zone_value
+        for properties in (WEST, EAST):
+            for key, value in properties.items():
+                lacking = self.zone_set.features_lacking([key])[key]
+                self.assertEqual(
+                    lacking,
+                    sum(not is_usable_zone_value(p.get(key))
+                        for p in (WEST, EAST)),
+                    key,
+                )
