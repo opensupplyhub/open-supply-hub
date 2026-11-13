@@ -407,6 +407,16 @@ CACHES = {
         'LOCATION': MEMCACHED_LOCATION,
         'KEY_PREFIX': 'waffle',
     },
+    'candidate_lists': {
+        # Ordered OS ID lists of the candidate list endpoint when it sorts
+        # or filters on nearby confirmed facilities (OSDEV-3754): the
+        # ordering query probes the location index once per candidate,
+        # so the result is shared across processes rather than recomputed
+        # on every page.
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'candidate_lists',
+    },
 }
 
 WAFFLE_CACHE_NAME = 'waffle'
@@ -711,6 +721,9 @@ if TESTING:
     CACHES["waffle"] = {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
+    CACHES["candidate_lists"] = {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
 
 # Use filesystem for "default" when running tests (so tests never use S3/MinIO) or
 # when DEBUG and no S3 endpoint (local without MinIO). Use S3 when not DEBUG or
@@ -843,6 +856,14 @@ CANDIDATE_AUTO_RETIRE = (
 # api/services/candidate_matches.py; nothing is stored.
 CANDIDATE_SUGGESTION_RADIUS_M = _env_int('CANDIDATE_SUGGESTION_RADIUS_M', 500)
 CANDIDATE_SUGGESTION_LIMIT = _env_int('CANDIDATE_SUGGESTION_LIMIT', 5)
+# How long the candidate list endpoint keeps the ordered OS IDs of a
+# nearby-sorted or nearby-filtered request (OSDEV-3754). Within this window
+# a vote that changes a candidate's state can leave it on a state-filtered
+# nearby-sorted page it no longer belongs to; the row itself is always
+# served live. 0 disables the cache.
+CANDIDATE_LIST_ORDER_CACHE_SECONDS = _env_int(
+    'CANDIDATE_LIST_ORDER_CACHE_SECONDS', 600
+)
 
 # Earth Index API (OSDEV-3244): the service hosting Earth Genome's deep
 # searches. `ingest_satellite_detections --project` exports a project's

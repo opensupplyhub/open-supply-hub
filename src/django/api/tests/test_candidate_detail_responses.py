@@ -572,7 +572,6 @@ class CandidateDetailResponsesTest(APITestCase):
 
     def test_bbox_bad_requests_are_400(self):
         cases = {
-            'missing bbox': self._bbox_url(),
             'three numbers': self._bbox_url('0,0,1'),
             'not numeric': self._bbox_url('a,b,c,d'),
             'nan': self._bbox_url('nan,0,1,1'),
@@ -608,8 +607,21 @@ class CandidateDetailResponsesTest(APITestCase):
 
     def test_bbox_route_is_not_shadowed_by_detail_lookup(self):
         # 'candidates' must resolve to the collection action, not to a
-        # retrieve of an OS ID literally named "candidates".
+        # retrieve of an OS ID literally named "candidates". With no bbox
+        # the action answers the paged list (OSDEV-3754).
         response = self.client.get('/api/v1/production-locations/candidates/')
 
-        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
-        self.assertEqual('bbox', response.data['errors'][0]['field'])
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(3, response.data['count'])
+
+    def test_bbox_only_request_keeps_the_map_contract(self):
+        # A bbox-and-limit request is the map mode: no paging envelope,
+        # no list-only properties, so the OSDEV-3247 layer is unaffected.
+        response = self.client.get(
+            self._bbox_url('-0.5,-0.5,1.5,1.5', limit=50)
+        )
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(['type', 'features'], list(response.data.keys()))
+        for feature in response.data['features']:
+            self.assertNotIn('nearby_count', feature['properties'])
