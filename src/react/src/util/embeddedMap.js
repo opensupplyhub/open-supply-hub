@@ -1,5 +1,6 @@
 import sortBy from 'lodash/sortBy';
 import isNil from 'lodash/isNil';
+import get from 'lodash/get';
 
 import { OARFont, DEFAULT_SEARCH_TEXT } from './constants';
 
@@ -357,6 +358,17 @@ export const getEmbedStyle = (embed, config) => {
             : Number(config.corner_radius),
     };
 };
+
+// The switches two changes to every embedded map sit behind, whatever its
+// package: drawing facilities as dots, and opening a location on the
+// production location page layout. Both are off until turned on.
+export const EMBED_FACILITY_DOTS_SWITCH = 'embed_facility_dots';
+
+// Whether an embedded map draws its facilities as dots at every zoom level,
+// in place of the grouped grid and pins.
+export const embedDrawsDots = (embed, featureFlags) =>
+    !!embed &&
+    !!get(featureFlags, `flags.${EMBED_FACILITY_DOTS_SWITCH}`, false);
 
 // Themes built outside App.jsx (in tests, for example) have no embed style.
 export const themeEmbedStyle = theme =>

@@ -23,6 +23,7 @@ import {
 } from '../util/constants';
 
 import { makeFacilityDetailLink, getIsMobile } from '../util/util';
+import { embedDrawsDots } from '../util/embeddedMap';
 
 import { resetSingleFacility } from '../actions/facilities';
 
@@ -62,6 +63,7 @@ function VectorTileFacilitiesMap({
     drawFilterActive,
     boundary,
     isEmbedded,
+    drawsDots,
     mapStyle = 'silver',
     navigateToFacilities,
     isMobile,
@@ -145,9 +147,9 @@ function VectorTileFacilitiesMap({
             <Control position="bottomleft">
                 <EmbedColorLegend />
             </Control>
-            {/* An embedded map draws every facility as its own dot at every
-                zoom level, so it has no grouped grid and no grid legend. */}
-            {!isEmbedded && (
+            {/* An embedded map that draws every facility as its own dot at
+                every zoom level has no grouped grid and no grid legend. */}
+            {!drawsDots && (
                 <Control position="bottomleft">
                     <VectorTileGridLegend
                         currentZoomLevel={currentMapZoomLevel}
@@ -161,11 +163,11 @@ function VectorTileFacilitiesMap({
                 handleFacilityClick={handleFacilityClick}
                 osID={osID}
                 pushRoute={push}
-                minZoom={isEmbedded ? 1 : maxVectorTileFacilitiesGridZoom + 1}
+                minZoom={drawsDots ? 1 : maxVectorTileFacilitiesGridZoom + 1}
                 maxZoom={22}
-                asDots={!!isEmbedded}
+                asDots={drawsDots}
             />
-            {!isEmbedded &&
+            {!drawsDots &&
                 currentMapZoomLevel <= maxVectorTileFacilitiesGridZoom && (
                     <VectorTileFacilityGridLayer
                         handleCellClick={handleCellClick}
@@ -231,6 +233,7 @@ function mapStateToProps({
     vectorTileLayer: { gridColorRamp },
     filters: { boundary },
     embeddedMap: { embed: isEmbedded, config },
+    featureFlags,
 }) {
     return {
         resetButtonClickCount,
@@ -241,6 +244,7 @@ function mapStateToProps({
         drawFilterActive,
         boundary,
         isEmbedded,
+        drawsDots: embedDrawsDots(isEmbedded, featureFlags),
         mapStyle: config.map_style,
         isMobile: getIsMobile(windowInnerWidth),
     };
