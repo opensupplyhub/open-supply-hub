@@ -89,6 +89,23 @@ class EmbedConfig(models.Model):
         validators=[validate_color_by_colors],
         help_text='The marker color for each value of color_by_field, as '
                   '{value: hex color}.')
+    default_sort = models.CharField(
+        max_length=220,
+        null=True,
+        blank=True,
+        validators=[RegexValidator(
+            regex=r'^(name_asc|name_desc|-?field:.+)$',
+            message='Sort by name_asc, name_desc, field:<column> or '
+                    '-field:<column>.',
+        )],
+        help_text='The order of the facility list on the embedded map: '
+                  'name_asc, name_desc, field:<column name> or '
+                  '-field:<column name> for descending. The list is sorted '
+                  'by name when this is not set.')
+    allow_visitor_sort = models.BooleanField(
+        default=False,
+        help_text='Whether visitors to the embedded map can change the '
+                  'order of the facility list.')
     prefer_contributor_name = models.BooleanField(
         null=True,
         blank=True,

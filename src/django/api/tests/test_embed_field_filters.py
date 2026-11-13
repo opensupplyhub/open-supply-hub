@@ -16,8 +16,10 @@ from api.services.embed_field_filters import (
     apply_embed_filters,
     embed_color_by_column,
     embed_color_value_subquery,
+    embed_field_sort,
     embed_filter_options,
     parse_embed_filters,
+    resolve_embed_sort,
 )
 from api.tiler import get_facilities_vector_tile
 from rest_framework import status
@@ -383,3 +385,127 @@ class EmbedFieldFiltersTest(APITestCase):
 
         self.assertIsNone(content["color_by_field"])
         self.assertEqual([], content["color_by_options"])
+
+    # ------------------------------------------------------------------ #
+    # list order                                                          #
+    # ------------------------------------------------------------------ #
+    def _listed_names(self, sort_by):
+        index_facilities_new(
+            list(Facility.objects.values_list("id", flat=True))
+        )
+        FacilityIndex.objects.update(contributors_id=[self.contributor.id])
+        response = self.client.get(
+            "/api/facilities/?embed=1&contributors={}&sort_by={}".format(
+                self.contributor.id, sort_by
+            )
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return [
+            feature["properties"]["name"]
+            for feature in json.loads(response.content)["features"]
+        ]
+
+    def test_embed_default_sort_is_by_name_until_one_is_chosen(self):
+        params = self._tile_params()
+
+        self.assertEqual(
+            "name_asc", resolve_embed_sort(params, "embed_default")
+        )
+        self.assertEqual("name_desc", resolve_embed_sort(params, "name_desc"))
+        self.assertIsNone(resolve_embed_sort(params, None))
+
+    def test_embed_default_sort_uses_the_contributors_choice(self):
+        config = self.contributor.embed_config
+        config.default_sort = "-field:tier"
+        config.save()
+
+        self.assertEqual(
+            "-field:tier",
+            resolve_embed_sort(self._tile_params(), "embed_default"),
+        )
+        self.assertEqual(
+            "name_asc",
+            resolve_embed_sort(
+                QueryDict("contributors={}".format(self.contributor.id)),
+                "embed_default",
+            ),
+        )
+
+    def test_only_a_visible_field_can_order_the_list(self):
+        params = self._tile_params()
+
+        self.assertEqual(
+            ("tier", False), embed_field_sort(params, "field:tier")
+        )
+        self.assertEqual(
+            ("tier", True), embed_field_sort(params, "-field:tier")
+        )
+        self.assertIsNone(embed_field_sort(params, "field:unknown"))
+        self.assertIsNone(embed_field_sort(params, "name_asc"))
+        self.assertIsNone(
+            embed_field_sort(
+                QueryDict("contributors={}".format(self.contributor.id)),
+                "field:tier",
+            )
+        )
+
+        EmbedField.objects.filter(column_name="tier").update(visible=False)
+        self.assertIsNone(embed_field_sort(params, "field:tier"))
+
+    def test_list_is_ordered_by_a_field_with_numbers_as_numbers(self):
+        self._facility("Big Factory", {"tier": "10"})
+        self._facility("No Tier Factory", {"project": "RISE"})
+
+        self.assertEqual(
+            [
+                "Health Factory",
+                "Plain Factory",
+                "Sunrise Mill",
+                "Big Factory",
+                "No Tier Factory",
+            ],
+            self._listed_names("field:tier"),
+        )
+        self.assertEqual(
+            [
+                "Big Factory",
+                "Sunrise Mill",
+                "Health Factory",
+                "Plain Factory",
+                "No Tier Factory",
+            ],
+            self._listed_names("-field:tier"),
+        )
+
+    def test_list_uses_the_contributors_default_order(self):
+        config = self.contributor.embed_config
+        config.default_sort = "-field:tier"
+        config.save()
+
+        self.assertEqual(
+            ["Sunrise Mill", "Health Factory", "Plain Factory"],
+            self._listed_names("embed_default"),
+        )
+
+    def test_list_is_ordered_by_name_without_a_default_order(self):
+        self.assertEqual(
+            ["Health Factory", "Plain Factory", "Sunrise Mill"],
+            self._listed_names("embed_default"),
+        )
+
+    def test_default_sort_is_validated(self):
+        def errors(value):
+            serializer = EmbedConfigSerializer(
+                self.contributor.embed_config,
+                data={"default_sort": value},
+                partial=True,
+            )
+            serializer.is_valid()
+            return serializer.errors
+
+        for value in ("name_asc", "name_desc", "field:tier", "-field:tier"):
+            with self.subTest(value=value):
+                self.assertEqual({}, errors(value))
+        for value in ("random", "field:", "contributors_desc"):
+            with self.subTest(value=value):
+                self.assertIn("default_sort", errors(value))

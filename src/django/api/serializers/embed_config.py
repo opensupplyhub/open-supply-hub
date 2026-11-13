@@ -21,7 +21,8 @@ class EmbedConfigSerializer(ModelSerializer):
         model = EmbedConfig
         fields = ('id', 'width', 'height', 'color', 'font', 'accent_color',
                   'heading_font', 'corner_radius', 'color_by_field',
-                  'color_by_colors', 'contributor',
+                  'color_by_colors', 'default_sort',
+                  'allow_visitor_sort', 'contributor',
                   'embed_fields', 'prefer_contributor_name',
                   'contributor_name', 'text_search_label', 'map_style',
                   'extended_fields', 'hide_sector_data')

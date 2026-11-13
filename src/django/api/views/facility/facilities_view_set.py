@@ -62,6 +62,11 @@ from api.services.claim_campaign_service import (
     resolve_claim_campaign,
 )
 from api.models.embed_field import EmbedField
+from api.services.embed_field_filters import (
+    embed_field_sort,
+    order_by_embed_field,
+    resolve_embed_sort,
+)
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.models import (
     Contributor,
@@ -564,8 +569,13 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_processing_filter=facility_processing_filter,
             )
         )
-        sort_by = params.validated_data['sort_by']
+        sort_by = resolve_embed_sort(
+            request.query_params, params.validated_data['sort_by']
+        )
         order_list = []
+        # An embedded map's list can be ordered by one of its contributor's
+        # own fields.
+        field_sort = embed_field_sort(request.query_params, sort_by)
 
         if (sort_by is None) or (sort_by == 'contributors_desc'):
             order_list = ['-contributors_count', 'name']
@@ -583,7 +593,16 @@ class FacilitiesViewSet(ListModelMixin,
             order_list.insert(0, '-_fp_relevance')
         order_list.append('id')
 
-        queryset = queryset.extra(order_by=order_list)
+        if field_sort is not None:
+            queryset, field_ordering = order_by_embed_field(
+                queryset, request.query_params, *field_sort
+            )
+            relevance = ['-_fp_relevance'] if has_fp_relevance else []
+            queryset = queryset.order_by(
+                *relevance, *field_ordering, 'name', 'id'
+            )
+        else:
+            queryset = queryset.extra(order_by=order_list)
 
         page_queryset = self.paginate_queryset(queryset)
 

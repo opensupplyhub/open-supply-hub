@@ -12,8 +12,16 @@ when it equals any one of them, ignoring case.
 """
 import re
 
-from django.db.models import OuterRef, Subquery
+from django.db.models import (
+    Case,
+    F,
+    FloatField,
+    OuterRef,
+    Subquery,
+    When,
+)
 from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Lower, Trim
 
 EMBED_FILTERS_PARAM = 'embed_filters'
 COLOR_BY_PARAM = 'color_by'
@@ -190,3 +198,82 @@ def embed_color_value_subquery(params, column):
         .order_by('-id')
         .values('embed_value')[:1]
     )
+
+
+# --------------------------------------------------------------------------
+# List order
+# --------------------------------------------------------------------------
+# An embedded map asks for its list with `sort_by=embed_default`; the
+# contributor's saved choice decides what that means.
+EMBED_DEFAULT_SORT = 'embed_default'
+FIELD_SORT_PREFIX = 'field:'
+NUMBER_PATTERN = r'^\s*[0-9]+(\.[0-9]+)?\s*$'
+
+
+def resolve_embed_sort(params, sort_by):
+    """Replace `embed_default` with the contributor's chosen list order."""
+    from api.models.embed_config import EmbedConfig
+
+    if sort_by != EMBED_DEFAULT_SORT:
+        return sort_by
+    contributor_id = _embed_contributor_id(params)
+    chosen = None
+    if params.get('embed') == '1' and contributor_id is not None:
+        chosen = (
+            EmbedConfig.objects.filter(contributor__id=contributor_id)
+            .values_list('default_sort', flat=True)
+            .first()
+        )
+    return chosen or 'name_asc'
+
+
+def embed_field_sort(params, sort_by):
+    """
+    Return `(column, descending)` when `sort_by` asks to order an embedded
+    map's list by one of the contributor's visible fields, else None.
+    """
+    from api.models.embed_field import EmbedField
+
+    if not sort_by or params.get('embed') != '1':
+        return None
+    descending = sort_by.startswith('-')
+    key = sort_by[1:] if descending else sort_by
+    if not key.startswith(FIELD_SORT_PREFIX):
+        return None
+    column = key[len(FIELD_SORT_PREFIX):]
+    contributor_id = _embed_contributor_id(params)
+    if not column or contributor_id is None:
+        return None
+    is_visible = EmbedField.objects.filter(
+        embed_config__contributor__id=contributor_id,
+        column_name=column,
+        visible=True,
+    ).exists()
+    return (column, descending) if is_visible else None
+
+
+def order_by_embed_field(queryset, params, column, descending):
+    """
+    Order facilities by their value in one of the contributor's columns.
+    Values that are plain numbers sort as numbers, ahead of text; facilities
+    with no value come last either way. Name breaks ties.
+    """
+    queryset = queryset.annotate(
+        embed_sort_value=embed_color_value_subquery(params, column),
+    ).annotate(
+        embed_sort_number=Case(
+            When(
+                embed_sort_value__regex=NUMBER_PATTERN,
+                then=Cast(Trim(F('embed_sort_value')), FloatField()),
+            ),
+            default=None,
+            output_field=FloatField(),
+        ),
+    )
+    number = F('embed_sort_number')
+    value = Lower(F('embed_sort_value'))
+    if descending:
+        ordering = [number.desc(nulls_last=True), value.desc(nulls_last=True)]
+    else:
+        ordering = [number.asc(nulls_last=True), value.asc(nulls_last=True)]
+    return queryset, ordering
