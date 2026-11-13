@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_404_NOT_FOUND
 from rest_framework.viewsets import ViewSet
 
+from api.models.country_sector_stats import CountrySectorStats
 from api.models.country_stats import CountryStats
 from api.models.partner_field import PartnerField
 
@@ -12,7 +13,9 @@ from api.models.partner_field import PartnerField
 # nothing in freshness and keeps the map off the database entirely. The
 # response is identical for every caller, which is the whole advantage
 # over the vector tiles this replaces: those varied per filter and so
-# could never really be cached.
+# could never really be cached. This is a Cache-Control header rather than
+# a server-side page cache, so the `sector` parameter separates entries by
+# itself: a shared cache keys on the full URL, query string included.
 CACHE_SECONDS = 60 * 60
 
 
@@ -22,6 +25,8 @@ class CountryStatsViewSet(ViewSet):
 
     `list` returns every country with its location count and nothing else:
     that is the payload that draws the whole map, and it is a few kilobytes.
+    Passing `?sector=` shades the same map for one sector, read from the
+    precomputed cube so that a broad sector costs no more than a narrow one.
     `retrieve` returns one country's sector breakdown and the Spotlight
     partner fields holding data for it, fetched only when someone clicks.
     '''
@@ -30,6 +35,10 @@ class CountryStatsViewSet(ViewSet):
 
     @method_decorator(cache_control(max_age=CACHE_SECONDS, public=True))
     def list(self, request):
+        sector = request.query_params.get('sector')
+        if sector:
+            return self.__sector_list(sector)
+
         rows = CountryStats.objects.values_list(
             'country_code', 'location_count', 'computed_at'
         )
@@ -46,6 +55,45 @@ class CountryStatsViewSet(ViewSet):
             'computed_at': rows[0][2] if rows else None,
             'countries': countries,
         })
+
+    def __sector_list(self, sector):
+        '''
+        The same map payload, counting only locations that report this
+        sector, read straight from the precomputed cube. Grouping this live
+        costs seconds for a broad sector such as Apparel, which is the
+        ordinary case rather than the edge one. See OSDEV-3802.
+
+        Matched verbatim, as the sector facet is everywhere else on the
+        site: the values come from a controlled taxonomy, so a name that
+        does not match exactly is a name we hold no locations for.
+        '''
+        rows = CountrySectorStats.objects.filter(sector=sector).values_list(
+            'country_code', 'location_count', 'computed_at'
+        )
+
+        countries = [
+            {'country_code': country_code, 'location_count': location_count}
+            for country_code, location_count, _ in rows
+        ]
+
+        return Response({
+            'count': len(countries),
+            # A sector we hold nothing for is an empty answer, not a stale
+            # one, so fall back to the rollup's own timestamp rather than
+            # reporting null and making a healthy rebuild look stalled.
+            'computed_at': (
+                rows[0][2] if rows else self.__last_computed_at()
+            ),
+            'countries': countries,
+        })
+
+    @staticmethod
+    def __last_computed_at():
+        return (
+            CountryStats.objects
+            .values_list('computed_at', flat=True)
+            .first()
+        )
 
     @method_decorator(cache_control(max_age=CACHE_SECONDS, public=True))
     def retrieve(self, request, country_code=None):

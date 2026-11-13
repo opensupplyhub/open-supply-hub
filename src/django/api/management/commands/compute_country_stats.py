@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from django.db import connection, transaction
 from django.utils import timezone
 
+from api.models.country_sector_stats import CountrySectorStats
 from api.models.country_stats import CountryStats
 from api.models.facility.facility_index import FacilityIndex
 from api.models.contributor.contributor import Contributor
@@ -22,8 +23,9 @@ OPEN_LOCATIONS = 'is_closed IS NOT TRUE'
 class Command(BaseCommand):
     help = (
         'Rebuild the per-country rollup behind the country map: open '
-        'location counts, the sectors represented, and which Spotlight '
-        'partner fields hold data for at least one location.'
+        'location counts, the sectors represented, which Spotlight '
+        'partner fields hold data for at least one location, and the '
+        'country x sector cube the sector-filtered map reads.'
     )
 
     def add_arguments(self, parser):
@@ -70,17 +72,44 @@ class Command(BaseCommand):
             for country_code, location_count in counts.items()
         ]
 
-        # Replace wholesale. The table is derived data and small enough that
-        # a diff would cost more than it saves, and a country that drops to
-        # zero locations has to disappear rather than keep a stale row.
+        cube_rows = self.__cube_rows(sectors, computed_at)
+
+        # Replace wholesale. The tables are derived data and small enough
+        # that a diff would cost more than it saves, and a country that
+        # drops to zero locations has to disappear rather than keep a stale
+        # row. Both tables move in one transaction so a failed rebuild never
+        # leaves the map and its sector filter on different vintages.
         with transaction.atomic():
             CountryStats.objects.all().delete()
             CountryStats.objects.bulk_create(rows, batch_size=500)
+            CountrySectorStats.objects.all().delete()
+            CountrySectorStats.objects.bulk_create(cube_rows, batch_size=500)
 
         elapsed = (timezone.now() - started).total_seconds()
         self.stdout.write(self.style.SUCCESS(
-            f'Wrote {len(rows)} country rows in {elapsed:.1f}s.'
+            f'Wrote {len(rows)} country rows and {len(cube_rows)} '
+            f'country/sector rows in {elapsed:.1f}s.'
         ))
+
+    @staticmethod
+    def __cube_rows(sectors, computed_at):
+        '''
+        The country x sector cube the sector-filtered map reads, built from
+        the rollup pass rather than from a second query: the per-country
+        sector breakdown is already grouped by exactly these two keys and
+        carries the same open-locations filter, so re-querying would scan
+        api_facilityindex twice for identical numbers. See OSDEV-3802.
+        '''
+        return [
+            CountrySectorStats(
+                country_code=country_code,
+                sector=entry['sector'],
+                location_count=entry['count'],
+                computed_at=computed_at,
+            )
+            for country_code, entries in sectors.items()
+            for entry in entries
+        ]
 
     def __location_counts(self):
         with connection.cursor() as cursor:
