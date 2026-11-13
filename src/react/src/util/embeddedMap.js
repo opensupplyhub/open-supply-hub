@@ -44,6 +44,10 @@ export const formatExistingConfig = embedConfig => {
             defaultSort: '',
             blurbsFirst: false,
             allowVisitorSort: false,
+            showSpotlight: false,
+            spotlightHighlight: false,
+            spotlightFilter: false,
+            spotlightGroups: [],
         };
     }
     return {
@@ -73,6 +77,11 @@ export const formatExistingConfig = embedConfig => {
         defaultSort: embedConfig.default_sort || '',
         blurbsFirst: !!embedConfig.blurbs_first,
         allowVisitorSort: !!embedConfig.allow_visitor_sort,
+        // Spotlight is partner data: off unless the contributor turns it on.
+        showSpotlight: !!embedConfig.show_spotlight,
+        spotlightHighlight: !!embedConfig.spotlight_highlight,
+        spotlightFilter: !!embedConfig.spotlight_filter,
+        spotlightGroups: embedConfig.spotlight_groups || [],
     };
 };
 
@@ -185,6 +194,10 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
     default_sort: embedConfig.defaultSort || null,
     blurbs_first: !!embedConfig.blurbsFirst,
     allow_visitor_sort: !!embedConfig.allowVisitorSort,
+    show_spotlight: !!embedConfig.showSpotlight,
+    spotlight_highlight: !!embedConfig.spotlightHighlight,
+    spotlight_filter: !!embedConfig.spotlightFilter,
+    spotlight_groups: embedConfig.spotlightGroups || [],
     marker_color: embedConfig.markerColor || null,
     color_by_field: embedConfig.colorByField || null,
     color_by_colors: embedConfig.colorByField
@@ -305,6 +318,62 @@ export const getChainGroups = chain => {
         nodes: withSupplies.filter(node => keyOf(node) === key),
     }));
 };
+
+// ---------------------------------------------------------------------------
+// Spotlight: partner data on an embedded map
+// ---------------------------------------------------------------------------
+// `config.spotlight`, when the contributor shows Spotlight data, is
+// { highlight, filter, count, groups: [{ uuid, name, count, field_names }] }.
+
+// The pseudo-column the Spotlight filter is kept under among an embedded
+// map's filters. It travels as `embed_spotlight=<value>`, not as a column.
+export const EMBED_SPOTLIGHT_FILTER = '__spotlight__';
+export const ANY_SPOTLIGHT = 'any';
+
+export const getEmbedSpotlight = (embed, config) =>
+    embed && config && config.spotlight ? config.spotlight : null;
+
+// The Spotlight filter's choices, or none when it is not offered or no
+// facility has data.
+export const getSpotlightFilterOptions = spotlight => {
+    if (!spotlight || !spotlight.filter || !spotlight.count) return [];
+    return [
+        {
+            value: ANY_SPOTLIGHT,
+            label: `Any partner data (${spotlight.count})`,
+        },
+        ...spotlight.groups
+            .filter(group => group.count > 0)
+            .map(group => ({
+                value: group.uuid,
+                label: `${group.name} (${group.count})`,
+            })),
+    ];
+};
+
+// Whether a facility's details carry any partner data. An embedded map is
+// only ever sent the kinds its contributor shows.
+export const hasPartnerData = data =>
+    Object.values((data && data.properties.partner_fields) || {}).some(
+        values => Array.isArray(values) && values.length > 0 && !!values[0],
+    );
+
+// Changes when what the map's tiles should flag changes, so they are
+// fetched again. Empty when facilities with Spotlight data are not ringed.
+export const getSpotlightTileKey = spotlight =>
+    spotlight && spotlight.highlight
+        ? spotlight.groups.map(group => group.uuid.slice(0, 8)).join('.')
+        : '';
+
+// The ring around a facility that has Spotlight data: the map's accent
+// color, or its primary color.
+export const getSpotlightRingColor = config =>
+    (config && (config.accent_color || config.color)) || '#0D1128';
+
+export const toggleSpotlightGroup = (groups, uuid, checked) =>
+    checked
+        ? [...groups.filter(group => group !== uuid), uuid]
+        : groups.filter(group => group !== uuid);
 
 // --- Building a chain in the settings ---
 

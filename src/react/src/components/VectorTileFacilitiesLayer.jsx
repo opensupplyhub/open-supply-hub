@@ -12,7 +12,13 @@ import isEqual from 'lodash/isEqual';
 import intersection from 'lodash/intersection';
 import sortBy from 'lodash/sortBy';
 
-import { getEmbedColorLegend, splitTagValues } from '../util/embeddedMap';
+import {
+    getEmbedColorLegend,
+    splitTagValues,
+    getEmbedSpotlight,
+    getSpotlightRingColor,
+    getSpotlightTileKey,
+} from '../util/embeddedMap';
 import { SelectedMarkerColor } from '../util/constants';
 import FacilitiesMapPopup from './FacilitiesMapPopup';
 
@@ -219,6 +225,7 @@ const VectorTileFacilitiesLayer = ({
     colorLegendKey,
     asDots,
     dotColor,
+    spotlightRingColor,
 }) => {
     // One marker color, and one pin icon, per value of the field the embed
     // is colored by.
@@ -329,6 +336,21 @@ const VectorTileFacilitiesLayer = ({
                         // An embedded map draws each facility as a dot, in
                         // its field color or the map's primary color.
                         if (asDots) {
+                            // A facility with Spotlight data is ringed,
+                            // when the contributor has asked for that.
+                            const isRinged =
+                                !!spotlightRingColor &&
+                                !!get(properties, 'embed_has_spotlight', false);
+                            if (isRinged && !isSelected) {
+                                return {
+                                    radius: 8,
+                                    fill: true,
+                                    fillColor: colorHexes[colorKey] || dotColor,
+                                    fillOpacity: 0.9,
+                                    color: spotlightRingColor,
+                                    weight: 3.5,
+                                };
+                            }
                             return {
                                 radius: isSelected ? 9 : 6,
                                 fill: true,
@@ -407,9 +429,16 @@ function mapStateToProps({
         filters,
         embed,
     );
-    const querystring = colorByField
+    const colorQuerystring = colorByField
         ? `${filtersQuerystring}&color_by=${encodeURIComponent(colorByField)}`
         : filtersQuerystring;
+    // An embed that rings facilities with Spotlight data gets tiles that say
+    // which have it; the key makes them load again when the choice changes.
+    const spotlight = getEmbedSpotlight(!!embed, config);
+    const spotlightTileKey = getSpotlightTileKey(spotlight);
+    const querystring = spotlightTileKey
+        ? `${colorQuerystring}&spotlight=${spotlightTileKey}`
+        : colorQuerystring;
     const tileCacheKey = createTileCacheKeyWithEncodedFilters(filters, key);
     const tileURL = createTileURLWithQueryString(
         querystring,
@@ -429,6 +458,9 @@ function mapStateToProps({
             (embed && config.marker_color) ||
             config.color ||
             SelectedMarkerColor,
+        spotlightRingColor: spotlightTileKey
+            ? getSpotlightRingColor(config)
+            : '',
         // A string, so the icons are only rebuilt when the colors change.
         colorLegendKey: JSON.stringify(
             getEmbedColorLegend(embed ? config : null),

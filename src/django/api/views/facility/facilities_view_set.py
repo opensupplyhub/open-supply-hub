@@ -62,6 +62,7 @@ from api.services.claim_campaign_service import (
     resolve_claim_campaign,
 )
 from api.models.embed_field import EmbedField
+from api.services.embed_spotlight import embed_has_spotlight
 from api.services.embed_field_filters import (
     embed_field_sort,
     embed_has_blurb,
@@ -158,10 +159,14 @@ from api.views.facility.facility_parameters import (
 log = logging.getLogger(__name__)
 
 
-def facilities_list_cache_token(request):
+def facilities_cache_token(request):
     """
-    What a cached facility list varies by, beyond its query: who is asking
-    and, for an embedded map, the version of its contributor's settings.
+    What a cached facility list, or a cached facility's details, varies by
+    beyond its query: who is asking and, for an embedded map, the version
+    of its contributor's settings. Those settings decide what an embedded
+    map is sent (its contributor's fields, any Spotlight data they have
+    chosen to show), so a cached response has to stop being served once
+    they change.
     """
     return '{}|{}'.format(
         facilities_visibility_token(request),
@@ -191,7 +196,12 @@ def embed_list_shows_contributor_fields(request):
     ).exists()
 
 
-def cache_page_by_auth_tier(timeout, cache):
+def is_embed_request(request):
+    """Whether a request comes from an embedded map."""
+    return request.GET.get('embed') == '1'
+
+
+def cache_page_by_auth_tier(timeout, cache, skip_when=None):
     """Cache the view response, collapsing ``Authorization`` to two buckets.
 
     Masking on paid surfaces depends only on *whether* the caller is a token
@@ -201,6 +211,10 @@ def cache_page_by_auth_tier(timeout, cache):
     value the cache key is derived from to ``paid`` / ``regular`` - at most two
     entries per URL - while still emitting ``Vary: Authorization`` on the
     response so downstream caches (CDN/browser) stay correct.
+
+    This cache is keyed by the URL alone, so it cannot follow anything else a
+    response depends on. Requests for which `skip_when` is true bypass it and
+    are left to the caches that can.
     """
     def decorator(view_method):
         cached = method_decorator([
@@ -210,6 +224,8 @@ def cache_page_by_auth_tier(timeout, cache):
 
         @wraps(view_method)
         def wrapper(self, request, *args, **kwargs):
+            if skip_when is not None and skip_when(request):
+                return view_method(self, request, *args, **kwargs)
             real_auth = request.META.get('HTTP_AUTHORIZATION')
             if real_auth is not None:
                 # request.auth is already resolved by DRF authentication in
@@ -256,7 +272,7 @@ class FacilitiesViewSet(ListModelMixin,
     @swagger_auto_schema(manual_parameters=facilities_list_parameters)
     @cache_view_response(
         'facilities_list',
-        vary_on=facilities_list_cache_token,
+        vary_on=facilities_cache_token,
     )
     def list(self, request):
         """
@@ -614,6 +630,12 @@ class FacilitiesViewSet(ListModelMixin,
             queryset = queryset.annotate(embed_has_blurb=has_blurb)
             blurbs_first = ['-embed_has_blurb']
 
+        # An embedded map that shows Spotlight data marks the facilities
+        # that have it.
+        has_spotlight = embed_has_spotlight(request.query_params)
+        if has_spotlight is not None:
+            queryset = queryset.annotate(embed_has_spotlight=has_spotlight)
+
         if field_sort is not None:
             queryset, field_ordering = order_by_embed_field(
                 queryset, request.query_params, *field_sort
@@ -729,13 +751,20 @@ class FacilitiesViewSet(ListModelMixin,
     # the cached response is split into just two buckets - paid (union names
     # masked) and regular (names shown) - instead of one per token. See
     # cache_page_by_auth_tier.
+    #
+    # What an embedded map is sent for a facility depends on its
+    # contributor's settings, which the URL does not carry: the page cache
+    # is skipped for those requests, and the response cache below varies by
+    # the version of those settings, so a change (turning Spotlight off, for
+    # one) takes effect at once.
     @cache_page_by_auth_tier(
         settings.MEMCACHED_VIEW_CACHE_TIMEOUT_SECONDS,
         cache="view_cache",
+        skip_when=is_embed_request,
     )
     @cache_view_response(
         'facility_detail',
-        vary_on=facilities_visibility_token,
+        vary_on=facilities_cache_token,
     )
     def retrieve(self, request, pk=None):
         """

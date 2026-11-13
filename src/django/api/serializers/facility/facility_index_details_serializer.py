@@ -11,6 +11,7 @@ from api.identity_record_switches import IDENTITY_RESOLVER_SWITCH
 from api.constants import FacilityClaimStatuses, MASKED_CONTRIBUTOR_LABEL
 from api.partner_fields.registry import system_partner_field_registry
 from api.models.partner_field import PartnerField
+from api.services.embed_spotlight import embed_spotlight_field_names
 from api.serializers.facility.partner_field_helper import (
     get_cached_all_partner_fields,
 )
@@ -455,6 +456,19 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             all_extended_fields,
             request
         )
+        # An embedded map only carries its own contributor's data, except
+        # the Spotlight data its contributor has chosen to show.
+        spotlight_names = (
+            embed_spotlight_field_names(request.query_params)
+            if request is not None else set()
+        )
+        if spotlight_names:
+            kept = {id(field) for field in fields}
+            fields = list(fields) + [
+                field for field in all_extended_fields
+                if field.get('field_name') in spotlight_names
+                and id(field) not in kept
+            ]
 
         grouped_fields = defaultdict(list)
 
@@ -474,7 +488,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             embed_mode_active,
             use_main_created_at,
             date_field_to_sort,
-            masked
+            masked,
+            spotlight_names,
         )
 
     def __serialize_and_sort_partner_fields(
@@ -485,7 +500,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         embed_mode_active: bool,
         use_main_created_at: bool,
         date_field_to_sort: str,
-        masked: List[int]
+        masked: List[int],
+        spotlight_names=frozenset(),
     ) -> Dict[str, List[Dict[str, Any]]]:
         import logging
         logger = logging.getLogger(__name__)
@@ -508,7 +524,13 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                     fields,
                     context={
                         'user_can_see_detail': user_can_see_detail,
-                        'embed_mode_active': embed_mode_active,
+                        # An embedded map hides who contributed its
+                        # data, but Spotlight data is credited to the
+                        # partner it comes from, as it is on OS Hub.
+                        'embed_mode_active': (
+                            embed_mode_active
+                            and field_name not in spotlight_names
+                        ),
                         'masked_contributor_ids': masked,
                         'source_by': source_by,
                         'unit': unit,

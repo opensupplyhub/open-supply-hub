@@ -4,7 +4,12 @@ import { connect } from 'react-redux';
 
 import StyledSelect from './Filters/StyledSelect';
 import { updateEmbedFilter } from '../actions/filters';
-import { getEmbedFieldFilters } from '../util/embeddedMap';
+import {
+    getEmbedFieldFilters,
+    EMBED_SPOTLIGHT_FILTER,
+    getEmbedSpotlight,
+    getSpotlightFilterOptions,
+} from '../util/embeddedMap';
 
 /*
 The filters a contributor has made from their own columns, shown on their
@@ -19,10 +24,11 @@ function EmbedFieldFilters({
     updateFilter,
     disabled,
     isSideBarSearch,
+    spotlightOptions,
 }) {
     if (!embed) return null;
 
-    return getEmbedFieldFilters(embedFields, filterOptions).map(
+    const fieldFilters = getEmbedFieldFilters(embedFields, filterOptions).map(
         ({ columnName, label, options }) => (
             <div className="form__field" key={columnName}>
                 <StyledSelect
@@ -49,6 +55,43 @@ function EmbedFieldFilters({
             </div>
         ),
     );
+
+    // Partner data the contributor has chosen to show and to offer as a
+    // filter.
+    const spotlightFilter = spotlightOptions.length ? (
+        <div className="form__field" key={EMBED_SPOTLIGHT_FILTER}>
+            <StyledSelect
+                label="Spotlight Data"
+                id="embed-filter-spotlight"
+                name="embed-filter-spotlight"
+                isMulti={false}
+                isClearable
+                options={spotlightOptions}
+                value={
+                    spotlightOptions.find(
+                        option =>
+                            option.value ===
+                            embedFilters[EMBED_SPOTLIGHT_FILTER],
+                    ) || null
+                }
+                onChange={option =>
+                    updateFilter({
+                        column: EMBED_SPOTLIGHT_FILTER,
+                        value: option ? option.value : '',
+                    })
+                }
+                disabled={disabled}
+                isSideBarSearch={isSideBarSearch}
+            />
+        </div>
+    ) : null;
+
+    return (
+        <>
+            {fieldFilters}
+            {spotlightFilter}
+        </>
+    );
 }
 
 EmbedFieldFilters.propTypes = {
@@ -59,6 +102,7 @@ EmbedFieldFilters.propTypes = {
     updateFilter: func.isRequired,
     disabled: bool,
     isSideBarSearch: bool,
+    spotlightOptions: arrayOf(object),
 };
 
 EmbedFieldFilters.defaultProps = {
@@ -67,6 +111,7 @@ EmbedFieldFilters.defaultProps = {
     embedFilters: {},
     disabled: false,
     isSideBarSearch: false,
+    spotlightOptions: [],
 };
 
 function mapStateToProps({
@@ -77,6 +122,9 @@ function mapStateToProps({
         embed: !!embed,
         embedFields: config?.embed_fields,
         filterOptions: config?.filter_options,
+        spotlightOptions: getSpotlightFilterOptions(
+            getEmbedSpotlight(!!embed, config),
+        ),
         embedFilters,
     };
 }
