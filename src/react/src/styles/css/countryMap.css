@@ -6,8 +6,16 @@
  * country is filled purple instead of shaded by its count. The ramp is held
  * in custom properties rather than literals so it can follow a dark ground
  * later without the densest countries disappearing into it.
+ *
+ * Tokens are declared on both roots because the card is rendered in two
+ * places: inside the map, and in the results column above the list. Custom
+ * properties inherit from ancestors, so when the card moved out of
+ * .country-map every var() in it silently resolved to nothing — the sector
+ * bars lost their fill entirely and read as empty tracks of identical
+ * length, which is how the break was spotted.
  */
-.country-map {
+.country-map,
+.country-map__card-slot {
     --osh-purple: #8428fa;
     --osh-black: #0d1128;
     --osh-white: #f9f7f7;
@@ -34,7 +42,9 @@
     --osh-rule: #e3dee8;
     --osh-ink-2: #4a4e66;
     --osh-ink-3: #7c8099;
+}
 
+.country-map {
     display: flex;
     flex-direction: column;
     height: 100%;
