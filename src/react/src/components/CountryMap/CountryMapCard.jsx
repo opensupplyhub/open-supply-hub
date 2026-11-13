@@ -8,9 +8,13 @@ const SECTORS_SHOWN = 3;
 const PARTNERS_SHOWN = 3;
 
 /*
- * The detail panel, floated over the map on the far side of whatever was
- * clicked so the selection stays visible. Sectors and partners collapse to
- * a few rows so the card fits without scrolling.
+ * The detail panel for one country. Sectors and partners collapse to a few
+ * rows so it fits without scrolling.
+ *
+ * `side` says where it is being rendered: 'panel' sits in the results
+ * column above the list, which is where it lives now; 'left' and 'right'
+ * are the older in-map placements, kept because the embedded map may still
+ * want to float it.
  *
  * It deliberately carries no headline count. Clicking a country sets the
  * country filter, so the results list alongside already states the count
@@ -165,7 +169,7 @@ CountryMapCard.propTypes = {
     countryCode: string.isRequired,
     name: string.isRequired,
     onClose: func.isRequired,
-    side: oneOf(['left', 'right']).isRequired,
+    side: oneOf(['left', 'right', 'panel']).isRequired,
 };
 
 export default CountryMapCard;

@@ -2,9 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { arrayOf, func, number, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 
-import CountryMapCard from './CountryMapCard';
 import { useCountryMapData, useZoomPan } from './hooks';
-import { BINS, binFor, VIEW_WIDTH } from './utils';
+import { BINS, binFor } from './utils';
 import { fetchCountryOptionsIfNeeded } from '../../actions/filterOptions';
 import { updateCountryFilter } from '../../actions/filters';
 import { fetchFacilities } from '../../actions/facilities';
@@ -116,14 +115,12 @@ const CountryMap = ({
         );
     }
 
-    // Every filtered country gets a ring; the card describes the one
-    // country if the filter names exactly one.
+    // Every filtered country is filled; the card describing it now lives
+    // above the results list, so the map keeps its full width.
     const ringed = selectedCodes
         .map(code => shapeByCode[code])
         .filter(Boolean);
     const single = selectedCodes.length === 1 ? selectedCodes[0] : null;
-    const singleShape = single ? shapeByCode[single] : null;
-    const cardOnLeft = singleShape && singleShape.anchor.x >= VIEW_WIDTH / 2;
 
     return (
         <div className="country-map" style={height ? { height } : undefined}>
@@ -248,18 +245,6 @@ const CountryMap = ({
                         />
                     ))}
                 </svg>
-
-                {/* byCode still gates the card: a country with no data has
-                    nothing to describe, even though the card no longer
-                    renders its count. */}
-                {single && byCode[single] && (
-                    <CountryMapCard
-                        countryCode={single}
-                        name={nameFor(single)}
-                        onClose={clearCountry}
-                        side={cardOnLeft ? 'left' : 'right'}
-                    />
-                )}
 
                 <div className="country-map__zoom">
                     <button

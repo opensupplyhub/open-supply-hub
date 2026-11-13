@@ -373,3 +373,20 @@
         max-width: 40%;
     }
 }
+
+/* ---- card in the results column (layout B) ----
+   The overlay variants above pin the card over the map. This one sits in
+   the normal flow above the results list, so the map is never covered. The
+   slot carries the surrounding padding, matching the list header it sits
+   under. */
+.country-map__card-slot {
+    padding: 12px 16px 0;
+}
+
+.country-map__card--panel {
+    position: static;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+}

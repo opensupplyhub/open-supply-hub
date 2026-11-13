@@ -29,6 +29,7 @@ import {
 } from '../actions/ui';
 
 import { fetchNextPageOfFacilities } from '../actions/facilities';
+import CountryMapCardPanel from './CountryMap/CountryMapCardPanel';
 
 import {
     updateMergeTargetFacilityOSID,
@@ -39,7 +40,7 @@ import {
 
 import { facilityCollectionPropType, userPropType } from '../util/propTypes';
 
-import { REPORT_A_FACILITY } from '../util/constants';
+import { COUNTRY_MAP, REPORT_A_FACILITY } from '../util/constants';
 
 import {
     makeFacilityDetailLink,
@@ -396,6 +397,12 @@ function FilterSidebarFacilitiesTab({
     return (
         <>
             {listHeaderInsetComponent}
+            {/* The country card lives here rather than over the map: it
+                describes the country the list is already filtered to, and
+                floating it covered a third of the map. See OSDEV-3802. */}
+            <FeatureFlag flag={COUNTRY_MAP}>
+                <CountryMapCardPanel />
+            </FeatureFlag>
             <div style={filterSidebarStyles.controlPanelContentStyles}>
                 <List component="div">
                     <InfiniteAnyHeight
