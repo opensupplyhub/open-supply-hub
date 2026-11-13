@@ -52,6 +52,7 @@ const makeResponse = (overrides = {}) => ({
     score: {
         value: 0.627,
         level: 2,
+        level_name: 'Enhanced',
         max_level: 3,
         components: makeComponents(componentValues),
         scorer_version: 'v111126',
@@ -60,6 +61,7 @@ const makeResponse = (overrides = {}) => ({
     classifier: {
         tier: 'high',
         level: 3,
+        level_name: 'Extensive',
         agreement_tier: 'best',
         field_tier: 'high',
         model: 'model-1.0',
@@ -130,7 +132,10 @@ describe('ProductionLocation profile completeness preview', () => {
         expect(indicator).toHaveTextContent('Profile completeness');
         expect(indicator).toHaveAttribute(
             'aria-label',
-            expect.stringContaining('Level 2 of 3'),
+            expect.stringContaining('Enhanced (level 2 of 3)'),
+        );
+        expect(getByTestId('profile-completeness-level-name')).toHaveTextContent(
+            'Enhanced',
         );
         expect(getAllByTestId('profile-completeness-bar-filled')).toHaveLength(
             2,
@@ -178,7 +183,7 @@ describe('ProductionLocation profile completeness preview', () => {
         expect(
             getByTestId('profile-completeness-comparison'),
         ).toHaveTextContent(
-            'Different: score is level 2 of 3, classification is level 3',
+            'Different: the score gives Enhanced (level 2 of 3), the classification corresponds to Extensive (level 3 of 3)',
         );
     });
 
@@ -188,6 +193,7 @@ describe('ProductionLocation profile completeness preview', () => {
                 classifier: {
                     tier: 'medium',
                     level: 2,
+                    level_name: 'Enhanced',
                     agreement_tier: 'medium',
                     field_tier: 'high',
                     model: 'model-1.0',
@@ -200,7 +206,7 @@ describe('ProductionLocation profile completeness preview', () => {
 
         expect(
             await findByTestId('profile-completeness-comparison'),
-        ).toHaveTextContent('Same level (Level 2 of 3)');
+        ).toHaveTextContent('Same level: Enhanced (level 2 of 3)');
     });
 
     test('shows the classification alone when there is no score', async () => {

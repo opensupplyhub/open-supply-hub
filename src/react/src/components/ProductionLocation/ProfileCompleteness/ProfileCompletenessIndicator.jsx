@@ -1,5 +1,5 @@
 import React from 'react';
-import { func, number, object, shape } from 'prop-types';
+import { func, number, object, shape, string } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
 import { PROFILE_COMPLETENESS_LABEL } from './constants';
@@ -16,7 +16,7 @@ const ProfileCompletenessIndicator = ({ classes, score, onClick }) => {
         return null;
     }
 
-    const { level, max_level: maxLevel } = score;
+    const { level, level_name: levelName, max_level: maxLevel } = score;
     const bars = Array.from({ length: maxLevel }, (_, index) => index + 1);
 
     return (
@@ -25,8 +25,7 @@ const ProfileCompletenessIndicator = ({ classes, score, onClick }) => {
             className={classes.indicator}
             onClick={onClick}
             aria-label={`${PROFILE_COMPLETENESS_LABEL}: ${formatLevel(
-                level,
-                maxLevel,
+                score,
             )}. Show how it is calculated.`}
             data-testid="profile-completeness-indicator"
         >
@@ -52,6 +51,14 @@ const ProfileCompletenessIndicator = ({ classes, score, onClick }) => {
             <span className={classes.indicatorLabel}>
                 {PROFILE_COMPLETENESS_LABEL}
             </span>
+            {levelName && (
+                <span
+                    className={classes.levelName}
+                    data-testid="profile-completeness-level-name"
+                >
+                    {levelName}
+                </span>
+            )}
         </button>
     );
 };
@@ -60,6 +67,7 @@ ProfileCompletenessIndicator.propTypes = {
     classes: object.isRequired,
     score: shape({
         level: number,
+        level_name: string,
         max_level: number,
     }),
     onClick: func,

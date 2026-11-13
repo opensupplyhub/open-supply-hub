@@ -3,6 +3,7 @@ import os
 import tempfile
 from datetime import date
 from io import StringIO
+from unittest.mock import patch
 
 from django.contrib.auth.models import Group
 from django.contrib.gis.geos import Point
@@ -146,6 +147,7 @@ class ProfileCompletenessEndpointTest(ProfileCompletenessTestBase):
         self.assertEqual(data['os_id'], self.facility.id)
         self.assertEqual(data['score']['value'], 0.627)
         self.assertEqual(data['score']['level'], 2)
+        self.assertEqual(data['score']['level_name'], 'Enhanced')
         self.assertEqual(data['score']['max_level'], 3)
         self.assertEqual(data['score']['scorer_version'], 'v111126')
         self.assertEqual(data['score']['run_date'], '2026-11-11')
@@ -160,6 +162,7 @@ class ProfileCompletenessEndpointTest(ProfileCompletenessTestBase):
         self.assertEqual(data['classifier'], {
             'tier': 'high',
             'level': 3,
+            'level_name': 'Extensive',
             'agreement_tier': 'best',
             'field_tier': 'high',
             'model': 'model-1.0',
@@ -274,7 +277,8 @@ class LoadProfileCompletenessCommandTest(ProfileCompletenessTestBase):
         self.assertEqual(run.classifier_agreement_tier, 'best')
         self.assertEqual(run.classifier_field_tier, 'high')
         self.assertEqual(run.classifier_model, 'model-1.0')
-        self.assertIn('Loaded 1 rows', output)
+        self.assertIn('1 match a production location here, 1 do not', output)
+        self.assertIn('Loaded for 2026-11-12', output)
         self.assertIn('XX0000000UNKNOWN', output)
 
     def test_same_run_date_updates_and_new_run_date_adds(self):
@@ -289,10 +293,31 @@ class LoadProfileCompletenessCommandTest(ProfileCompletenessTestBase):
         self.assertEqual(run.score, 0.627)
         self.assertEqual(run.classifier_tier, 'high')
 
+        # Reloading scores alone keeps the stored classification.
+        self._run(
+            scores_file=self._scores_file(),
+            scorer_version='v2',
+            run_date=date(2026, 11, 11),
+        )
+        run = FacilityProfileCompleteness.objects.get()
+        self.assertEqual(run.scorer_version, 'v2')
+        self.assertEqual(run.classifier_tier, 'high')
+
         self._run(
             scores_file=self._scores_file(), run_date=date(2026, 12, 1)
         )
         self.assertEqual(FacilityProfileCompleteness.objects.count(), 2)
+
+    def test_loads_files_larger_than_one_batch(self):
+        with patch(
+            'api.management.commands.load_profile_completeness.BATCH_SIZE',
+            1,
+        ):
+            self._run(
+                scores_file=self._scores_file(),
+                run_date=date(2026, 11, 11),
+            )
+        self.assertEqual(FacilityProfileCompleteness.objects.count(), 1)
 
     def test_dry_run_changes_nothing(self):
         output = self._run(scores_file=self._scores_file(), dry_run=True)

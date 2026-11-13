@@ -71,6 +71,15 @@ export default theme => {
             fontWeight: 600,
             color: theme.palette.text.secondary,
         }),
+        levelName: Object.freeze({
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            color: ACCENT,
+            backgroundColor: ACCENT_TINT,
+            borderRadius: '4px',
+            padding: '1px 7px',
+            whiteSpace: 'nowrap',
+        }),
         bars: Object.freeze({
             display: 'inline-flex',
             alignItems: 'flex-end',

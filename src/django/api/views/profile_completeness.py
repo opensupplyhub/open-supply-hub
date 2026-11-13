@@ -8,6 +8,7 @@ from api.profile_completeness import (
     COMPONENTS,
     MAX_LEVEL,
     PROFILE_COMPLETENESS_FLAG,
+    level_name,
 )
 
 
@@ -17,6 +18,7 @@ def _serialize_score(run):
     return {
         'value': run.score,
         'level': run.level,
+        'level_name': level_name(run.level),
         'max_level': MAX_LEVEL,
         'components': [
             {
@@ -37,6 +39,7 @@ def _serialize_classifier(run):
     return {
         'tier': run.classifier_tier,
         'level': run.classifier_level,
+        'level_name': level_name(run.classifier_level),
         'agreement_tier': run.classifier_agreement_tier,
         'field_tier': run.classifier_field_tier,
         'model': run.classifier_model,
@@ -64,6 +67,7 @@ def profile_completeness(request, os_id):
             "score": {
                 "value": 0.63,
                 "level": 2,
+                "level_name": "Enhanced",
                 "max_level": 3,
                 "components": [
                     {
@@ -78,6 +82,7 @@ def profile_completeness(request, os_id):
             "classifier": {
                 "tier": "high",
                 "level": 3,
+                "level_name": "Extensive",
                 "agreement_tier": "high",
                 "field_tier": "high",
                 "model": "model-name-1.0",

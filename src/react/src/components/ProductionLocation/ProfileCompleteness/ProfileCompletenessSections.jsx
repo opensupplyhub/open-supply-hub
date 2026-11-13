@@ -57,10 +57,9 @@ const ProfileCompletenessSections = ({
                     <>
                         {score && (
                             <span className={classes.headerMeta}>
-                                {`${formatLevel(
-                                    score.level,
-                                    score.max_level,
-                                )} · score ${formatScore(score.value)}`}
+                                {`${formatLevel(score)} · score ${formatScore(
+                                    score.value,
+                                )}`}
                             </span>
                         )}
                         <span className={classes.adminChip}>
@@ -167,6 +166,7 @@ ProfileCompletenessSections.propTypes = {
         score: shape({
             value: number,
             level: number,
+            level_name: string,
             max_level: number,
             components: arrayOf(
                 shape({

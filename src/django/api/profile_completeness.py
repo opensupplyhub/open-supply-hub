@@ -30,6 +30,8 @@ COMPONENT_KEYS = tuple(key for key, _ in COMPONENTS)
 # over the whole population. Lower bound of level 2, then of level 3.
 LEVEL_CUTOFFS = (0.45, 0.70)
 MAX_LEVEL = len(LEVEL_CUTOFFS) + 1
+# What each level is called on the page, lowest first.
+LEVEL_NAMES = ('Essential', 'Enhanced', 'Extensive')
 
 
 def level_for_score(score):
@@ -37,6 +39,10 @@ def level_for_score(score):
     if score is None:
         return None
     return 1 + sum(1 for cutoff in LEVEL_CUTOFFS if score >= cutoff)
+
+
+def level_name(level):
+    return LEVEL_NAMES[level - 1] if level else None
 
 
 class ClassifierTiers:

@@ -18,7 +18,11 @@ export const formatRunDate = date => {
     return parsed.isValid() ? parsed.format('LL') : null;
 };
 
-export const formatLevel = (level, maxLevel) => `Level ${level} of ${maxLevel}`;
+// "Enhanced (level 2 of 3)": the word leads, the number backs it up.
+export const formatLevel = ({ level, level_name: name, max_level: maxLevel }) =>
+    name
+        ? `${name} (level ${level} of ${maxLevel})`
+        : `Level ${level} of ${maxLevel}`;
 
 export const formatTier = tier => CLASSIFIER_TIER_LABELS[tier] || tier || '–';
 

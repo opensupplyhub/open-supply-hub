@@ -53,16 +53,15 @@ const ClassifierComparison = ({ classes, score, classifier }) => {
                             data-testid="profile-completeness-comparison"
                         >
                             {agrees
-                                ? `Same level (${formatLevel(
-                                      score.level,
-                                      score.max_level,
-                                  )})`
-                                : `Different: score is ${formatLevel(
-                                      score.level,
-                                      score.max_level,
-                                  ).toLowerCase()}, classification is level ${
-                                      classifier.level
-                                  }`}
+                                ? `Same level: ${formatLevel(score)}`
+                                : `Different: the score gives ${formatLevel(
+                                      score,
+                                  )}, the classification corresponds to ${formatLevel(
+                                      {
+                                          ...classifier,
+                                          max_level: score.max_level,
+                                      },
+                                  )}`}
                         </dd>
                     </div>
                 )}
@@ -80,11 +79,13 @@ ClassifierComparison.propTypes = {
     classes: object.isRequired,
     score: shape({
         level: number,
+        level_name: string,
         max_level: number,
     }),
     classifier: shape({
         tier: string,
         level: number,
+        level_name: string,
         agreement_tier: string,
         field_tier: string,
         model: string,
