@@ -654,13 +654,13 @@ def _check_decision(suggestion, decision, value):
             'This row is an exact repeat of another; it was removed when '
             'the list was uploaded and cannot be put back.')
     if suggestion.kind == S.ISSUE:
-        # A flagged row can be fixed in place (EDITED), dropped (REMOVED)
-        # or left as it is (REJECTED). It cannot be "accepted": there is
-        # no suggested value to accept.
+        # An issue can be fixed in place (EDITED), its row dropped
+        # (REMOVED) or its original value kept (REJECTED). It cannot be
+        # "accepted": there is no fix to accept.
         if decision == S.ACCEPTED:
             raise DecisionError(
-                'A flagged row has no suggested value to accept; edit it, '
-                'remove it or leave it as it is.')
+                'This issue has no fix to accept; fix the value, remove '
+                'the row or keep the original value.')
         if suggestion.severity == S.INTERNAL_NOTE:
             raise DecisionError('Moderator notes cannot be decided.')
     if decision != S.EDITED:
