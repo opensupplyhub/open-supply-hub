@@ -22,7 +22,7 @@ class EmbedConfigSerializer(ModelSerializer):
         fields = ('id', 'width', 'height', 'color', 'font', 'accent_color',
                   'heading_font', 'corner_radius', 'marker_color',
                   'color_by_field',
-                  'color_by_colors', 'default_sort',
+                  'color_by_colors', 'default_sort', 'blurbs_first',
                   'allow_visitor_sort', 'contributor',
                   'embed_fields', 'prefer_contributor_name',
                   'contributor_name', 'text_search_label', 'map_style',

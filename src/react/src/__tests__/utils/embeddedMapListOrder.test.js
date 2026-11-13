@@ -4,6 +4,7 @@ import {
     formatEmbedConfigForServer,
     formatExistingConfig,
     getDefaultSortOptions,
+    hasBlurbField,
 } from '../../util/embeddedMap';
 import FiltersReducer from '../../reducers/FiltersReducer';
 import { resetAllFilters, updateSortAlgorithm } from '../../actions/filters';
@@ -36,6 +37,52 @@ describe('embedded map list order', () => {
         expect(getDefaultSortOptions(fields)[2].label).toBe(
             'Tier, lowest first',
         );
+    });
+
+    describe('blurbs', () => {
+        const withBlurb = [
+            ...fields,
+            {
+                columnName: 'brand_note',
+                displayName: 'Brand note',
+                visible: true,
+                hasData: true,
+                displayAs: 'blurb',
+            },
+        ];
+
+        it('does not offer a blurb as a field to sort by', () => {
+            const values = getDefaultSortOptions(withBlurb).map(o => o.value);
+
+            expect(values).not.toContain('field:brand_note');
+            expect(values).toContain('field:tier');
+        });
+
+        it('knows whether there is a blurb to put first', () => {
+            expect(hasBlurbField(withBlurb)).toBe(true);
+            expect(hasBlurbField(fields)).toBe(false);
+            expect(
+                hasBlurbField([{ ...withBlurb[3], visible: false }]),
+            ).toBe(false);
+            expect(hasBlurbField(undefined)).toBe(false);
+        });
+
+        it('maps the blurbs-first setting, off by default', () => {
+            expect(formatExistingConfig({ width: '600' }).blurbsFirst).toBe(
+                false,
+            );
+            const config = formatExistingConfig({
+                width: '600',
+                blurbs_first: true,
+            });
+            expect(config.blurbsFirst).toBe(true);
+            expect(
+                formatEmbedConfigForServer(
+                    { ...config, fullWidth: false, height: '400' },
+                    [],
+                ).blurbs_first,
+            ).toBe(true);
+        });
     });
 
     it('offers name order alone without fields', () => {

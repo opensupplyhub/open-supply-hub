@@ -509,3 +509,55 @@ class EmbedFieldFiltersTest(APITestCase):
         for value in ("random", "field:", "contributors_desc"):
             with self.subTest(value=value):
                 self.assertIn("default_sort", errors(value))
+
+    # ------------------------------------------------------------------ #
+    # blurbed facilities first                                            #
+    # ------------------------------------------------------------------ #
+    def _blurb_setup(self, blurbs_first=True):
+        self._add_field("note", order=3, filterable=False)
+        EmbedField.objects.filter(column_name="note").update(
+            display_as=EmbedField.BLURB
+        )
+        config = self.contributor.embed_config
+        config.blurbs_first = blurbs_first
+        config.save()
+        self._facility("Zebra Factory", {"tier": "3", "note": "A note."})
+        self._facility("Empty Note Factory", {"tier": "3", "note": "  "})
+
+    def test_blurbed_facilities_are_listed_first(self):
+        self._blurb_setup()
+
+        self.assertEqual(
+            [
+                "Zebra Factory",
+                "Empty Note Factory",
+                "Health Factory",
+                "Plain Factory",
+                "Sunrise Mill",
+            ],
+            self._listed_names("embed_default"),
+        )
+
+    def test_blurbs_first_applies_on_top_of_a_field_order(self):
+        self._blurb_setup()
+        self._facility("Alpha Factory", {"tier": "9", "note": "Another."})
+
+        self.assertEqual(
+            ["Alpha Factory", "Zebra Factory", "Empty Note Factory"],
+            self._listed_names("-field:tier")[:3],
+        )
+
+    def test_blurbs_are_not_listed_first_unless_chosen(self):
+        self._blurb_setup(blurbs_first=False)
+
+        self.assertEqual(
+            "Empty Note Factory", self._listed_names("embed_default")[0]
+        )
+
+    def test_blurbs_first_needs_a_visible_blurb_field(self):
+        self._blurb_setup()
+        EmbedField.objects.filter(column_name="note").update(visible=False)
+
+        self.assertEqual(
+            "Empty Note Factory", self._listed_names("embed_default")[0]
+        )

@@ -14,9 +14,11 @@ import re
 
 from django.db.models import (
     Case,
+    Exists,
     F,
     FloatField,
     OuterRef,
+    Q,
     Subquery,
     When,
 )
@@ -277,3 +279,43 @@ def order_by_embed_field(queryset, params, column, descending):
     else:
         ordering = [number.asc(nulls_last=True), value.asc(nulls_last=True)]
     return queryset, ordering
+
+
+def embed_has_blurb(params):
+    """
+    For an embedded map whose contributor lists blurbed facilities first:
+    an expression that is true for a facility with text in any of the
+    contributor's visible blurb fields. None when that does not apply.
+    """
+    from api.models.embed_config import EmbedConfig
+    from api.models.embed_field import EmbedField
+
+    contributor_id = _embed_contributor_id(params)
+    if params.get('embed') != '1' or contributor_id is None:
+        return None
+    if not EmbedConfig.objects.filter(
+        contributor__id=contributor_id, blurbs_first=True
+    ).exists():
+        return None
+    columns = list(
+        EmbedField.objects.filter(
+            embed_config__contributor__id=contributor_id,
+            visible=True,
+            display_as=EmbedField.BLURB,
+        ).values_list('column_name', flat=True)
+    )
+    if not columns:
+        return None
+
+    items = _contributor_items(contributor_id).filter(
+        facility=OuterRef('pk')
+    )
+    has_text = Q()
+    for position, column in enumerate(columns):
+        alias = 'embed_blurb_{}'.format(position)
+        # Trimmed, so a cell holding only spaces does not count as a blurb.
+        items = items.annotate(
+            **{alias: Trim(KeyTextTransform(column, 'raw_json'))}
+        )
+        has_text |= Q(**{alias + '__isnull': False}) & ~Q(**{alias: ''})
+    return Exists(items.filter(has_text))

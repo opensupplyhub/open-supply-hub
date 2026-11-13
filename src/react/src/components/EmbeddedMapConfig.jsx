@@ -155,6 +155,7 @@ function EmbeddedMapConfig({
         colorByColors,
         defaultSort,
         allowVisitorSort,
+        blurbsFirst,
         markerColor,
     },
     setEmbedConfig,
@@ -319,6 +320,10 @@ function EmbeddedMapConfig({
                                 defaultSort={defaultSort}
                                 setDefaultSort={updateEmbedConfig(
                                     'defaultSort',
+                                )}
+                                blurbsFirst={blurbsFirst}
+                                setBlurbsFirst={updateEmbedConfig(
+                                    'blurbsFirst',
                                 )}
                                 allowVisitorSort={allowVisitorSort}
                                 setAllowVisitorSort={updateEmbedConfig(

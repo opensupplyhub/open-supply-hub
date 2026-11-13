@@ -64,6 +64,7 @@ from api.services.claim_campaign_service import (
 from api.models.embed_field import EmbedField
 from api.services.embed_field_filters import (
     embed_field_sort,
+    embed_has_blurb,
     order_by_embed_field,
     resolve_embed_sort,
 )
@@ -593,14 +594,24 @@ class FacilitiesViewSet(ListModelMixin,
             order_list.insert(0, '-_fp_relevance')
         order_list.append('id')
 
+        # An embedded map can list its blurbed facilities first, ahead of
+        # whichever order applies.
+        has_blurb = embed_has_blurb(request.query_params)
+        blurbs_first = []
+        if has_blurb is not None:
+            queryset = queryset.annotate(embed_has_blurb=has_blurb)
+            blurbs_first = ['-embed_has_blurb']
+
         if field_sort is not None:
             queryset, field_ordering = order_by_embed_field(
                 queryset, request.query_params, *field_sort
             )
             relevance = ['-_fp_relevance'] if has_fp_relevance else []
             queryset = queryset.order_by(
-                *relevance, *field_ordering, 'name', 'id'
+                *blurbs_first, *relevance, *field_ordering, 'name', 'id'
             )
+        elif blurbs_first:
+            queryset = queryset.order_by(*blurbs_first, *order_list)
         else:
             queryset = queryset.extra(order_by=order_list)
 

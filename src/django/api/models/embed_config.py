@@ -110,6 +110,10 @@ class EmbedConfig(models.Model):
                   'name_asc, name_desc, field:<column name> or '
                   '-field:<column name> for descending. The list is sorted '
                   'by name when this is not set.')
+    blurbs_first = models.BooleanField(
+        default=False,
+        help_text='Whether facilities that have a blurb are listed first '
+                  'on the embedded map, ahead of the chosen list order.')
     allow_visitor_sort = models.BooleanField(
         default=False,
         help_text='Whether visitors to the embedded map can change the '

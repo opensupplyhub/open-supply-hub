@@ -8,10 +8,11 @@ export const DEFAULT_WIDTH = '1000';
 // Must be kept in sync with EmbedField.DISPLAY_AS_CHOICES in
 // django/api/models/embed_field.py
 export const DISPLAY_AS_TEXT = 'text';
+export const DISPLAY_AS_BLURB = 'blurb';
 export const DISPLAY_AS_OPTIONS = [
     { value: DISPLAY_AS_TEXT, label: 'Text' },
     { value: 'tags', label: 'Tags' },
-    { value: 'blurb', label: 'Blurb' },
+    { value: DISPLAY_AS_BLURB, label: 'Blurb' },
 ];
 export const DEFAULT_HEIGHT = '800';
 
@@ -40,6 +41,7 @@ export const formatExistingConfig = embedConfig => {
             colorByColors: {},
             markerColor: '',
             defaultSort: '',
+            blurbsFirst: false,
             allowVisitorSort: false,
         };
     }
@@ -68,6 +70,7 @@ export const formatExistingConfig = embedConfig => {
         markerColor: embedConfig.marker_color || '',
         // '' means the list is sorted by name.
         defaultSort: embedConfig.default_sort || '',
+        blurbsFirst: !!embedConfig.blurbs_first,
         allowVisitorSort: !!embedConfig.allow_visitor_sort,
     };
 };
@@ -179,6 +182,7 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
     heading_font: embedConfig.headingFont || null,
     corner_radius: formatCornerRadiusForServer(embedConfig.cornerRadius),
     default_sort: embedConfig.defaultSort || null,
+    blurbs_first: !!embedConfig.blurbsFirst,
     allow_visitor_sort: !!embedConfig.allowVisitorSort,
     marker_color: embedConfig.markerColor || null,
     color_by_field: embedConfig.colorByField || null,
@@ -266,14 +270,23 @@ export const EMBED_VISITOR_SORT_OPTIONS = Object.freeze([
     { value: 'name_desc', label: 'Z to A' },
 ]);
 
+// A field shown as a blurb the contributor has data for and includes.
+const isShownBlurb = f =>
+    f.visible && f.hasData !== false && f.displayAs === DISPLAY_AS_BLURB;
+
+// Whether "blurbed facilities first" has anything to act on.
+export const hasBlurbField = fields => (fields || []).some(isShownBlurb);
+
 // The orders a contributor can choose for their list: by name, or by any
-// field they show, in either direction. `fields` are the settings-screen
-// fields ({ columnName, displayName, visible, hasData }).
+// field they show, in either direction. A blurb is not offered: a facility
+// either has one or not, which "blurbed facilities first" covers. `fields`
+// are the settings-screen fields ({ columnName, displayName, visible,
+// hasData, displayAs }).
 export const getDefaultSortOptions = fields => [
     { value: '', label: 'Name, A to Z' },
     { value: 'name_desc', label: 'Name, Z to A' },
     ...(fields || [])
-        .filter(f => f.visible && f.hasData !== false)
+        .filter(f => f.visible && f.hasData !== false && !isShownBlurb(f))
         .flatMap(f => [
             {
                 value: `field:${f.columnName}`,

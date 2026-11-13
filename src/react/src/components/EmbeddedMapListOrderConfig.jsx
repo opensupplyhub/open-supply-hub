@@ -4,7 +4,7 @@ import Typography from '@material-ui/core/Typography';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-import { getDefaultSortOptions } from '../util/embeddedMap';
+import { getDefaultSortOptions, hasBlurbField } from '../util/embeddedMap';
 
 const styles = {
     section: {
@@ -24,6 +24,11 @@ const styles = {
     checkbox: {
         color: 'rgb(0, 0, 0)',
     },
+    hint: {
+        margin: '-6px 0 4px 32px',
+        fontSize: '13px',
+        color: 'rgba(0, 0, 0, 0.6)',
+    },
 };
 
 /*
@@ -36,8 +41,11 @@ function EmbeddedMapListOrderConfig({
     setDefaultSort,
     allowVisitorSort,
     setAllowVisitorSort,
+    blurbsFirst,
+    setBlurbsFirst,
     errors,
 }) {
+    const canPutBlurbsFirst = hasBlurbField(fields);
     const options = getDefaultSortOptions(fields);
     // A field that is no longer shown can no longer order the list.
     const value = options.some(option => option.value === defaultSort)
@@ -68,6 +76,25 @@ function EmbeddedMapListOrderConfig({
                     </option>
                 ))}
             </select>
+            <div>
+                <FormControlLabel
+                    label="Show facilities with a blurb first"
+                    control={
+                        <Checkbox
+                            checked={blurbsFirst && canPutBlurbsFirst}
+                            onChange={e => setBlurbsFirst(e.target.checked)}
+                            disabled={!canPutBlurbsFirst}
+                            style={styles.checkbox}
+                        />
+                    }
+                />
+            </div>
+            {canPutBlurbsFirst ? null : (
+                <Typography style={styles.hint}>
+                    Available once one of the fields you include is shown as a
+                    blurb.
+                </Typography>
+            )}
             <FormControlLabel
                 label="Let visitors change the order"
                 control={
@@ -88,6 +115,8 @@ EmbeddedMapListOrderConfig.propTypes = {
     setDefaultSort: func.isRequired,
     allowVisitorSort: bool,
     setAllowVisitorSort: func.isRequired,
+    blurbsFirst: bool,
+    setBlurbsFirst: func.isRequired,
     errors: object,
 };
 
@@ -95,6 +124,7 @@ EmbeddedMapListOrderConfig.defaultProps = {
     fields: [],
     defaultSort: '',
     allowVisitorSort: false,
+    blurbsFirst: false,
     errors: null,
 };
 
