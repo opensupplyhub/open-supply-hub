@@ -30,6 +30,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from waffle import switch_is_active
 
@@ -37,6 +38,7 @@ from api.constants import (
     FacilityClaimLiveCheckStatuses,
     FacilityClaimStatuses,
 )
+from api.mail import send_claim_live_check_not_passed_email
 from api.models.facility.facility_claim import FacilityClaim
 from api.models.facility.facility_claim_attachments import (
     FacilityClaimAttachments,
@@ -57,6 +59,7 @@ from api.services.claim_live_review_trigger import (
     is_live_review_configured,
     trigger_live_review,
 )
+from api.models.user import User
 from api.services.facility_claim_status_service import (
     AUTOMATED_REVIEW_MARKER,
     is_claims_automation_account,
@@ -81,6 +84,11 @@ LIVE_CHECK_TIMEOUT_SECONDS = 60
 # approve the claim. It posts the note first and approves after, so a
 # note with this decision is not an outcome yet.
 REVIEW_DECISION_VALIDATED = 'VALIDATED'
+
+# A page that is waiting on a check asks for it every few seconds. One
+# that has not asked for this long has been left, and a result that
+# arrives then is emailed to the claimant instead.
+PAGE_LEFT_AFTER_SECONDS = 10
 
 # The local development stub (settings.CLAIMS_LIVE_REVIEW_DEV_STUB).
 STUB_PASS = 'pass'
@@ -298,7 +306,85 @@ def get_live_check_state(claim: FacilityClaim) -> Dict:
     check = _latest_check(claim)
     if check is not None:
         _resolve(claim, check)
+        if check.status == FacilityClaimLiveCheckStatuses.CHECKING:
+            # The claimant's page is still waiting on this check.
+            check.last_polled_at = timezone.now()
+            check.save(update_fields=['last_polled_at'])
     return _state(claim, check)
+
+
+def _page_is_waiting(check: FacilityClaimLiveCheck) -> bool:
+    if check.last_polled_at is None:
+        return False
+    waited = timezone.now() - check.last_polled_at
+    return waited < timedelta(seconds=PAGE_LEFT_AFTER_SECONDS)
+
+
+def _settle_from_review(request, claim: FacilityClaim, review: Dict) -> None:
+    check = _latest_check(claim)
+    if (check is None
+            or check.status != FacilityClaimLiveCheckStatuses.CHECKING):
+        return
+    fixes = _fixes_for(claim, review)
+    if not fixes:
+        _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
+        return
+    page_is_waiting = _page_is_waiting(check)
+    _finish(check, FacilityClaimLiveCheckStatuses.NOT_PASSED, fixes)
+    if page_is_waiting:
+        return
+    send_claim_live_check_not_passed_email(
+        request,
+        claim,
+        fixes,
+        check_again=_checks_left(claim) > 0,
+    )
+    check.emailed_at = timezone.now()
+    check.save(update_fields=['emailed_at', 'updated_at'])
+
+
+def record_live_check_review(
+    request,
+    claim: FacilityClaim,
+    user: User,
+    note: str,
+) -> None:
+    '''
+    Called when an internal note is posted on a claim. If it is the
+    pipeline's review of a claim whose live check is still waiting, and
+    the pipeline held the claim, the check is settled here, at once,
+    rather than on the claimant's next poll. That is what lets the
+    result reach a claimant who has left the page: when their page has
+    stopped asking, they are emailed the preset fixes and a link back
+    to the claim. A claimant whose page is still asking sees the result
+    there and gets no email.
+
+    One email at most per check: only a CHECKING check is settled, and
+    settling it ends that. A pass sends nothing from here, because the
+    approval that follows sends the usual approval email.
+
+    Never raises and never undoes the note: a failure in here is logged
+    and the check is left for the next poll or the timeout.
+    '''
+    try:
+        if not is_claim_live_check_active() or get_dev_stub():
+            return
+        if claim.status != FacilityClaimStatuses.PENDING:
+            return
+        if not is_claims_automation_account(user):
+            return
+        review = read_automated_review(note)
+        if (review is None
+                or review.get('decision') == REVIEW_DECISION_VALIDATED):
+            return
+        with transaction.atomic():
+            _settle_from_review(request, claim, review)
+    except Exception:
+        logger.exception(
+            'Live claim check: the review of claim %s could not be '
+            'recorded or emailed.',
+            claim.id,
+        )
 
 
 def start_live_check(claim: FacilityClaim) -> Dict:
@@ -334,7 +420,10 @@ def start_live_check(claim: FacilityClaim) -> Dict:
     if not _is_available():
         return _state(claim, None)
 
-    check = FacilityClaimLiveCheck.objects.create(claim=claim)
+    check = FacilityClaimLiveCheck.objects.create(
+        claim=claim,
+        last_polled_at=timezone.now(),
+    )
     if not get_dev_stub() and not trigger_live_review(claim.id):
         _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
     logger.info(

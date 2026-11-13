@@ -7,6 +7,7 @@ from rest_framework.test import APITestCase
 from waffle.testutils import override_switch
 
 from django.contrib.gis.geos import Point
+from django.core import mail
 from django.test import SimpleTestCase, override_settings
 from django.utils import timezone
 
@@ -40,6 +41,7 @@ from api.services.claim_live_check_fixes import (
     FIX_NAME_AND_COMPANY_DOCUMENT,
     FIX_UNREADABLE_DOCUMENT,
     FIX_UPLOAD_DOCUMENT,
+    FIX_TEXTS,
     FIX_WORK_EMAIL,
     FIXES,
     failed_checks,
@@ -50,6 +52,7 @@ from api.services.claim_live_check_service import (
     CLAIM_LIVE_CHECK_SWITCH,
     LIVE_CHECK_TIMEOUT_SECONDS,
     MAX_LIVE_CHECKS_PER_CLAIM,
+    PAGE_LEFT_AFTER_SECONDS,
     STUB_DELAY_SECONDS,
     get_dev_stub,
 )
@@ -195,6 +198,13 @@ class ClaimLiveCheckFixesTest(SimpleTestCase):
     def test_every_fix_is_one_of_the_six_presets(self):
         self.assertEqual(len(FIXES), 6)
         self.assertEqual(len(set(FIXES)), 6)
+
+    def test_every_fix_has_its_preset_line(self):
+        self.assertEqual(set(FIX_TEXTS), set(FIXES))
+        self.assertEqual(
+            FIX_TEXTS[FIX_WORK_EMAIL],
+            'Use a work email, not a personal email.',
+        )
 
     def test_no_failed_check_gives_no_fixes(self):
         self.assertEqual(self.fixes([]), [])
@@ -839,3 +849,237 @@ class ClaimLiveCheckCreateClaimResponseTest(ClaimLiveCheckTestBase):
             body = self.create_claim()
 
         self.assertEqual(set(body), {'approved', 'pending'})
+
+
+NOT_PASSED_SUBJECT = 'Your claim on Open Supply Hub needs one more step'
+APPROVED_SUBJECT = (
+    'Your request to claim a profile on Open Supply Hub has been approved!'
+)
+
+
+class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
+    '''A claimant who left the page gets the result by email.'''
+
+    def setUp(self):
+        super().setUp()
+        self.note_url = f'/api/facility-claims/{self.claim.id}/note/'
+        mail.outbox = []
+
+    def leave_page(self):
+        '''The claimant's page stopped asking some time ago.'''
+        self.checks().update(
+            last_polled_at=timezone.now() - timedelta(
+                seconds=PAGE_LEFT_AFTER_SECONDS
+            )
+        )
+
+    def pipeline_posts(self, block, user=None):
+        '''The review note arrives through the API, as it really does.'''
+        self.login(user or self.bot)
+        response = self.client.post(
+            self.note_url, {'note': review_note(block)}
+        )
+        self.login(self.claimant)
+        return response
+
+    def pipeline_approves(self):
+        self.login(self.bot)
+        response = self.client.post(
+            f'/api/facility-claims/{self.claim.id}/approve/'
+        )
+        self.login(self.claimant)
+        return response
+
+    def test_claimant_who_left_is_emailed_the_fixes_and_a_way_back(self):
+        self.start()
+        self.leave_page()
+
+        response = self.pipeline_posts(
+            review_block([CHECK_ADDRESS, CHECK_AFFILIATION])
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [WORK_EMAIL])
+        self.assertEqual(email.subject, NOT_PASSED_SUBJECT)
+        link = '/claimed/pending/{}?fix={}&check=1'.format(
+            self.claim.id, FIX_UPLOAD_DOCUMENT
+        )
+        html = email.alternatives[0][0]
+        for fix in (
+            FIX_UPLOAD_DOCUMENT,
+            FIX_NAME_AND_COMPANY_DOCUMENT,
+            FIX_COMPANY_ADDRESS_DOCUMENT,
+        ):
+            self.assertIn(FIX_TEXTS[fix], email.body)
+            self.assertIn(FIX_TEXTS[fix], html)
+        self.assertNotIn(FIX_TEXTS[FIX_WORK_EMAIL], email.body)
+        self.assertIn(link, email.body)
+        self.assertIn(link.replace('&', '&amp;'), html)
+        self.assertIn('The claim did not pass the automatic check.',
+                      email.body)
+        self.assertIn(self.facility.name, email.body)
+        self.assertIn('The OS Hub Claims Team', email.body)
+
+        check = self.checks().get()
+        self.assertEqual(check.status, NOT_PASSED)
+        self.assertIsNotNone(check.emailed_at)
+        self.assertEqual(self.poll()['status'], NOT_PASSED)
+
+    def test_email_carries_no_score_or_model_text(self):
+        self.start()
+        self.leave_page()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        email = mail.outbox[0]
+        for content in (email.body, email.alternatives[0][0]):
+            self.assertNotIn('Model reasoning', content)
+            self.assertNotIn(str(FAIL_SCORE), content)
+            self.assertNotIn(str(THRESHOLD), content)
+
+    def test_claimant_still_on_the_page_is_not_emailed(self):
+        self.start()
+        self.poll()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(mail.outbox, [])
+        check = self.checks().get()
+        self.assertEqual(check.status, NOT_PASSED)
+        self.assertIsNone(check.emailed_at)
+        self.assertEqual(self.poll()['status'], NOT_PASSED)
+
+    def test_one_check_is_emailed_at_most_once(self):
+        self.start()
+        self.leave_page()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+        self.pipeline_posts(review_block([CHECK_NAME]))
+        self.poll()
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_last_allowed_check_links_back_without_another_check(self):
+        for _ in range(MAX_LIVE_CHECKS_PER_CLAIM - 1):
+            self.start()
+            self.post_review(review_block([CHECK_ADDRESS]))
+            self.poll()
+            self.claimant_edits()
+        self.start()
+        self.leave_page()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        body = mail.outbox[0].body
+        self.assertIn('?fix={}'.format(FIX_UPLOAD_DOCUMENT), body)
+        self.assertNotIn('check=1', body)
+
+    def test_switch_off_sends_nothing(self):
+        self.start()
+        self.leave_page()
+
+        with override_switch(CLAIM_LIVE_CHECK_SWITCH, active=False):
+            response = self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.checks().get().status, CHECKING)
+
+    def test_claim_without_a_live_check_sends_nothing(self):
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(mail.outbox, [])
+        self.assertFalse(self.checks().exists())
+
+    def test_timed_out_check_sends_nothing(self):
+        self.start()
+        self.age_checks(LIVE_CHECK_TIMEOUT_SECONDS)
+        self.assertEqual(self.poll()['status'], UNAVAILABLE)
+        self.leave_page()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.checks().get().status, UNAVAILABLE)
+
+    def test_held_for_an_unknown_reason_sends_nothing(self):
+        self.start()
+        self.leave_page()
+
+        self.pipeline_posts(
+            review_block(decision='NOT_VALIDATED', reasoning={})
+        )
+
+        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.checks().get().status, UNAVAILABLE)
+
+    def test_lookalike_note_from_a_moderator_sends_nothing(self):
+        self.start()
+        self.leave_page()
+
+        self.pipeline_posts(
+            review_block([CHECK_ADDRESS]), user=self.moderator
+        )
+
+        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.checks().get().status, CHECKING)
+
+    def test_claimant_still_cannot_post_a_note(self):
+        self.start()
+        self.leave_page()
+
+        response = self.pipeline_posts(
+            review_block([CHECK_ADDRESS]), user=self.claimant
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(mail.outbox, [])
+
+    @override_settings(DEBUG=True, CLAIMS_LIVE_REVIEW_DEV_STUB='pass')
+    def test_dev_stub_sends_nothing(self):
+        self.start()
+        self.leave_page()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(mail.outbox, [])
+
+    def test_failed_email_does_not_fail_the_note(self):
+        self.start()
+        self.leave_page()
+
+        with patch('api.mail.send_mail', side_effect=RuntimeError('smtp')):
+            response = self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            FacilityClaimReviewNote.objects.filter(claim=self.claim).count(),
+            1,
+        )
+        check = self.checks().get()
+        self.assertEqual(check.status, CHECKING)
+        self.assertIsNone(check.emailed_at)
+
+    def test_pass_sends_only_the_existing_approval_email(self):
+        self.start()
+        self.leave_page()
+
+        self.pipeline_posts(review_block())
+        self.assertEqual(mail.outbox, [])
+
+        response = self.pipeline_approves()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # The claimant in this fixture also contributed the location,
+        # so the usual notice to contributors reaches them too.
+        subjects = [
+            email.subject for email in mail.outbox
+            if email.to == [WORK_EMAIL]
+        ]
+        self.assertEqual(subjects.count(APPROVED_SUBJECT), 1)
+        self.assertNotIn(NOT_PASSED_SUBJECT, subjects)
+        self.assertEqual(self.poll()['status'], PASSED)
+        self.assertIsNone(self.checks().get().emailed_at)

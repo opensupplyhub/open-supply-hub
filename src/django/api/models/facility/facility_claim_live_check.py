@@ -45,6 +45,18 @@ class FacilityClaimLiveCheck(models.Model):
         blank=True,
         help_text=('Keys of the preset fixes shown to the claimant when '
                    'the check did not pass. Empty otherwise.'))
+    last_polled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=('When the claim form last asked for this check. A '
+                   'result that arrives after the form has stopped '
+                   'asking is emailed to the claimant instead.'))
+    emailed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=('When the result of this check was emailed to the '
+                   'claimant. Empty when they saw it on the page or '
+                   'there was nothing to send.'))
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

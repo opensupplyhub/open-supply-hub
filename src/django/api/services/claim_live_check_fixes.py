@@ -49,6 +49,30 @@ FIXES = (
 
 MAX_FIXES = 5
 
+# The line a claimant reads for each fix, word for word what the claim
+# form shows (ClaimLiveCheck/constants.js). Kept here as well because
+# the result can also reach the claimant by email.
+FIX_TEXTS = {
+    FIX_WORK_EMAIL: 'Use a work email, not a personal email.',
+    FIX_UPLOAD_DOCUMENT: (
+        'Upload a document. Claims with a document are approved fastest.'
+    ),
+    FIX_UNREADABLE_DOCUMENT: (
+        'A document could not be read. Upload a clearer photo or a PDF.'
+    ),
+    FIX_NAME_AND_COMPANY_DOCUMENT: (
+        'Add a document that shows your name and your company. For '
+        'example a business card, employment letter or ID badge.'
+    ),
+    FIX_COMPANY_NAME_DOCUMENT: (
+        'Add an official document that shows the company name.'
+    ),
+    FIX_COMPANY_ADDRESS_DOCUMENT: (
+        'Add an official document that shows the company address. For '
+        'example a utility bill or business registration.'
+    ),
+}
+
 # Mailbox providers anyone can sign up with. An address at one of these
 # says nothing about where its owner works.
 FREE_MAIL_DOMAINS = frozenset({

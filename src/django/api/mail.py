@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from rest_framework.request import Request
 from django.core.exceptions import FieldDoesNotExist
 from django.core.mail import send_mail
@@ -16,6 +18,7 @@ from api.constants import (
     FacilityClaimReviewNoteTypes,
     FacilityClaimStatuses,
 )
+from api.services.claim_live_check_fixes import FIX_TEXTS
 from api.services.facility_claim_review_note_service import (
     create_review_note,
 )
@@ -208,6 +211,63 @@ def send_claim_facility_approval_email(request, facility_claim):
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
         html_message=html_template.render(approval_dictionary)
+    )
+
+
+def make_pending_claim_edit_url(request, facility_claim, fix=None,
+                                check_again=False):
+    '''
+    The pending claim edit page for a claim, optionally opened at the
+    field a live check fix is about and set to check again on save
+    (the query string the page reads, OSDEV-3805).
+    '''
+    url = '{}/claimed/pending/{}'.format(
+        make_oshub_url(request), facility_claim.id
+    )
+    params = {}
+    if fix:
+        params['fix'] = fix
+    if check_again:
+        params['check'] = '1'
+    return '{}?{}'.format(url, urlencode(params)) if params else url
+
+
+def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
+                                           check_again):
+    '''
+    Tell a claimant who is no longer on the claim form that the live
+    check of their claim did not pass (OSDEV-3804), with the same preset
+    lines the form would have shown and a link back to the claim.
+    `fixes` are keys from claim_live_check_fixes; only their preset
+    texts are ever sent.
+    '''
+    subj_template = get_template(
+        'mail/claim_live_check_not_passed_subject.txt'
+    )
+    text_template = get_template('mail/claim_live_check_not_passed_body.txt')
+    html_template = get_template('mail/claim_live_check_not_passed_body.html')
+
+    facility = facility_claim.facility
+    dictionary = {
+        'production_location_name': facility.name,
+        'production_location_address': facility.address,
+        'production_location_country': COUNTRY_NAMES[facility.country_code],
+        'production_location_url': make_facility_url(request, facility),
+        'fixes': [FIX_TEXTS[fix] for fix in fixes],
+        'fix_url': make_pending_claim_edit_url(
+            request,
+            facility_claim,
+            fix=fixes[0] if fixes else None,
+            check_again=check_again,
+        ),
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(dictionary),
+        settings.CLAIM_FROM_EMAIL,
+        [facility_claim.contributor.admin.email],
+        html_message=html_template.render(dictionary)
     )
 
 
