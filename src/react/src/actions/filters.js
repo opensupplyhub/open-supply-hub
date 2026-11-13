@@ -7,7 +7,7 @@ import {
     restoreExactProcessingTypeLabels,
     updateListWithLabels,
 } from '../util/util';
-import { optionsForSortingResults } from '../util/constants';
+import { EMBED_DEFAULT_SORT_OPTION } from '../util/embeddedMap';
 
 import { setEmbeddedMapStatusFromQueryString } from '../actions/embeddedMap';
 
@@ -155,8 +155,10 @@ export function setFiltersFromQueryString(qs = '') {
 
         payload = embed
             ? update(payload, {
+                  // An embedded map lists facilities in the order its
+                  // contributor chose (by name unless they chose another).
                   sortAlgorithm: {
-                      $set: optionsForSortingResults[0],
+                      $set: EMBED_DEFAULT_SORT_OPTION,
                   },
               })
             : payload;

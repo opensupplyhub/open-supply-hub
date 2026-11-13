@@ -6,6 +6,7 @@ import { get } from 'lodash';
 
 import FacilityIcon from './FacilityIcon';
 import ResultsSortDropdown from './ResultsSortDropdown';
+import { EMBED_VISITOR_SORT_OPTIONS } from '../util/embeddedMap';
 import ShowOnly from './ShowOnly';
 import DownloadLimitInfo from './DownloadLimitInfo';
 import FeatureFlag from './FeatureFlag';
@@ -18,6 +19,7 @@ const FilterSidebarHeader = ({
     facilitiesCount,
     classes,
     embed,
+    embedVisitorSort,
     user,
     isSameContributor,
     hasAppliedFilters,
@@ -33,6 +35,11 @@ const FilterSidebarHeader = ({
             <ShowOnly when={!embed}>
                 <Grid item>
                     <ResultsSortDropdown />
+                </Grid>
+            </ShowOnly>
+            <ShowOnly when={!!embed && embedVisitorSort}>
+                <Grid item>
+                    <ResultsSortDropdown options={EMBED_VISITOR_SORT_OPTIONS} />
                 </Grid>
             </ShowOnly>
         </Grid>
@@ -70,7 +77,7 @@ FilterSidebarHeader.propTypes = {
 };
 
 const mapStateToProps = ({
-    embeddedMap: { embed },
+    embeddedMap: { embed, config },
     facilities: {
         facilities: { data: facilities, hasAppliedFilters },
     },
@@ -79,6 +86,7 @@ const mapStateToProps = ({
     },
 }) => ({
     embed,
+    embedVisitorSort: !!config?.allow_visitor_sort,
     facilitiesCount: get(facilities, 'count', null),
     user,
     isSameContributor: get(facilities, 'is_same_contributor', false),

@@ -191,6 +191,12 @@ export default createReducer(
                         ? state.contributors
                         : initialState.contributors,
                 },
+                // An embedded map keeps its list order through a reset.
+                sortAlgorithm: {
+                    $set: isEmbedded
+                        ? state.sortAlgorithm
+                        : initialState.sortAlgorithm,
+                },
             }),
         [resetDrawerFilters]: state =>
             update(initialState, {

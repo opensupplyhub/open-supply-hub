@@ -15,6 +15,7 @@ import {
 
 import AppGrid from './AppGrid';
 import EmbeddedMapFieldsConfig from './EmbeddedMapFieldsConfig';
+import EmbeddedMapListOrderConfig from './EmbeddedMapListOrderConfig';
 import EmbeddedMapThemeConfig from './EmbeddedMapThemeConfig';
 import EmbeddedMapSizeConfig from './EmbeddedMapSizeConfig';
 import EmbeddedMapCode from './EmbeddedMapCode';
@@ -136,6 +137,8 @@ function EmbeddedMapConfig({
         cornerRadius,
         colorByField,
         colorByColors,
+        defaultSort,
+        allowVisitorSort,
     },
     setEmbedConfig,
     fields,
@@ -275,6 +278,18 @@ function EmbeddedMapConfig({
                             }
                             errors={errors}
                             embedLevel={user.embed_level}
+                        />
+                    ) : null}
+                    {section === 'fields' ? (
+                        <EmbeddedMapListOrderConfig
+                            fields={fields}
+                            defaultSort={defaultSort}
+                            setDefaultSort={updateEmbedConfig('defaultSort')}
+                            allowVisitorSort={allowVisitorSort}
+                            setAllowVisitorSort={updateEmbedConfig(
+                                'allowVisitorSort',
+                            )}
+                            errors={errors}
                         />
                     ) : null}
                     {section === 'fields' ? (

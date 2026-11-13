@@ -38,6 +38,8 @@ export const formatExistingConfig = embedConfig => {
             cornerRadius: '',
             colorByField: '',
             colorByColors: {},
+            defaultSort: '',
+            allowVisitorSort: false,
         };
     }
     return {
@@ -61,6 +63,9 @@ export const formatExistingConfig = embedConfig => {
         // '' means every marker shares one color.
         colorByField: embedConfig.color_by_field || '',
         colorByColors: embedConfig.color_by_colors || {},
+        // '' means the list is sorted by name.
+        defaultSort: embedConfig.default_sort || '',
+        allowVisitorSort: !!embedConfig.allow_visitor_sort,
     };
 };
 
@@ -170,6 +175,8 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
     accent_color: embedConfig.accentColor || null,
     heading_font: embedConfig.headingFont || null,
     corner_radius: formatCornerRadiusForServer(embedConfig.cornerRadius),
+    default_sort: embedConfig.defaultSort || null,
+    allow_visitor_sort: !!embedConfig.allowVisitorSort,
     color_by_field: embedConfig.colorByField || null,
     color_by_colors: embedConfig.colorByField
         ? embedConfig.colorByColors || {}
@@ -238,6 +245,42 @@ export const getEmbedFieldFilters = (embedFields, filterOptions) =>
             ),
         }))
         .filter(f => f.options.length > 0);
+
+// An embedded map asks for its list in the contributor's chosen order with
+// this sort value; the server resolves it.
+export const EMBED_DEFAULT_SORT = 'embed_default';
+
+export const EMBED_DEFAULT_SORT_OPTION = Object.freeze({
+    value: EMBED_DEFAULT_SORT,
+    label: 'Default order',
+});
+
+// What a visitor can pick when the contributor lets them change the order.
+export const EMBED_VISITOR_SORT_OPTIONS = Object.freeze([
+    EMBED_DEFAULT_SORT_OPTION,
+    { value: 'name_asc', label: 'A to Z' },
+    { value: 'name_desc', label: 'Z to A' },
+]);
+
+// The orders a contributor can choose for their list: by name, or by any
+// field they show, in either direction. `fields` are the settings-screen
+// fields ({ columnName, displayName, visible, hasData }).
+export const getDefaultSortOptions = fields => [
+    { value: '', label: 'Name, A to Z' },
+    { value: 'name_desc', label: 'Name, Z to A' },
+    ...(fields || [])
+        .filter(f => f.visible && f.hasData !== false)
+        .flatMap(f => [
+            {
+                value: `field:${f.columnName}`,
+                label: `${f.displayName}, lowest first`,
+            },
+            {
+                value: `-field:${f.columnName}`,
+                label: `${f.displayName}, highest first`,
+            },
+        ]),
+];
 
 // Marker colors used for a field's values until the contributor picks their
 // own, in the order the values are listed.
