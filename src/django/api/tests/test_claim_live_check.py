@@ -9,6 +9,7 @@ from waffle.testutils import override_switch
 from django.contrib.gis.geos import Point
 from django.core import mail
 from django.test import SimpleTestCase, override_settings
+from oar.settings import claims_live_review_dev_stub
 from django.utils import timezone
 
 from api.constants import (
@@ -50,6 +51,7 @@ from api.services.claim_live_check_fixes import (
 )
 from api.services.claim_live_check_service import (
     CLAIM_LIVE_CHECK_SWITCH,
+    LATE_RESULT_WINDOW,
     LIVE_CHECK_TIMEOUT_SECONDS,
     MAX_LIVE_CHECKS_PER_CLAIM,
     PAGE_LEFT_AFTER_SECONDS,
@@ -296,6 +298,13 @@ class ClaimLiveCheckDevStubSettingTest(SimpleTestCase):
     def test_stub_is_ignored_with_debug_off(self):
         self.assertEqual(get_dev_stub(), '')
 
+    def test_setting_is_empty_whenever_debug_is_off(self):
+        # What settings.py does with the environment variable. DEBUG is
+        # on in the Local environment alone, so no deployed environment
+        # can carry a stub instruction.
+        self.assertEqual(claims_live_review_dev_stub(False, 'pass'), '')
+        self.assertEqual(claims_live_review_dev_stub(True, 'pass'), 'pass')
+
 
 @override_settings(
     CLAIMS_AUTOMATION_ACCOUNT_EMAIL=BOT_EMAIL,
@@ -515,6 +524,30 @@ class ClaimLiveCheckOutcomeTest(ClaimLiveCheckTestBase):
         after = FacilityClaim.objects.values().get(pk=self.claim.pk)
         self.assertEqual(before, after)
 
+    def test_read_settles_a_waiting_check(self):
+        self.start()
+        self.assertEqual(self.checks().get().status, CHECKING)
+        self.post_review(review_block([CHECK_ADDRESS]))
+
+        state = self.poll()
+
+        check = self.checks().get()
+        self.assertEqual(check.status, NOT_PASSED)
+        self.assertEqual(check.fixes, state['fixes'])
+        self.assertIsNone(check.emailed_at)
+
+    def test_every_answer_has_exactly_three_keys(self):
+        keys = {'status', 'fixes', 'checks_left'}
+        self.assertEqual(set(self.poll()), keys)
+        self.assertEqual(set(self.start()), keys)
+        self.assertEqual(set(self.poll()), keys)
+        self.post_review(review_block([CHECK_ADDRESS]))
+        self.assertEqual(set(self.poll()), keys)
+        response = self.client.post(self.url, {'timed_out': True})
+        self.assertEqual(set(response.json()), keys)
+        self.approve()
+        self.assertEqual(set(self.poll()), keys)
+
     def test_approved_claim_passes(self):
         self.start()
         self.approve()
@@ -674,7 +707,7 @@ class ClaimLiveCheckFailOpenTest(ClaimLiveCheckTestBase):
         self.assertEqual(self.start()['status'], CHECKING)
         self.assertEqual(self.checks().count(), 2)
 
-    def test_unexpected_error_is_answered_as_unavailable(self):
+    def test_error_while_requesting_the_review_is_unavailable(self):
         self.trigger.side_effect = RuntimeError('boom')
 
         response = self.client.post(self.url)
@@ -683,11 +716,37 @@ class ClaimLiveCheckFailOpenTest(ClaimLiveCheckTestBase):
         self.assertEqual(response.json(), {
             'status': UNAVAILABLE,
             'fixes': [],
+            'checks_left': MAX_LIVE_CHECKS_PER_CLAIM - 1,
+        })
+        self.assertEqual(self.checks().get().status, UNAVAILABLE)
+        self.claim.refresh_from_db()
+        self.assertEqual(self.claim.status, FacilityClaimStatuses.PENDING)
+
+    def test_unexpected_error_on_start_is_answered_as_unavailable(self):
+        with patch(
+            'api.views.facility.facility_claim_view_set.start_live_check',
+            side_effect=RuntimeError('boom'),
+        ):
+            response = self.client.post(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), {
+            'status': UNAVAILABLE,
+            'fixes': [],
             'checks_left': 0,
         })
         self.assertFalse(self.checks().exists())
-        self.claim.refresh_from_db()
-        self.assertEqual(self.claim.status, FacilityClaimStatuses.PENDING)
+        self.trigger.assert_not_called()
+
+    def test_review_is_requested_only_after_the_check_is_recorded(self):
+        seen = []
+        self.trigger.side_effect = (
+            lambda claim_id: seen.append(self.checks().count()) or True
+        )
+
+        self.assertEqual(self.start()['status'], CHECKING)
+
+        self.assertEqual(seen, [1])
 
     def test_unexpected_error_on_read_is_answered_as_unavailable(self):
         self.start()
@@ -876,9 +935,10 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
     def pipeline_posts(self, block, user=None):
         '''The review note arrives through the API, as it really does.'''
         self.login(user or self.bot)
-        response = self.client.post(
-            self.note_url, {'note': review_note(block)}
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                self.note_url, {'note': review_note(block)}
+            )
         self.login(self.claimant)
         return response
 
@@ -1030,13 +1090,17 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.claimant_edits()
         self.assertEqual(self.start()['status'], CHECKING)
 
-    def test_late_not_pass_after_a_failed_trigger_is_emailed_too(self):
+    def test_check_whose_review_was_never_requested_sends_nothing(self):
         self.trigger.return_value = False
         self.assertEqual(self.start()['status'], UNAVAILABLE)
 
+        # The pipeline's scheduled run reviews the claim later.
         self.pipeline_posts(review_block([CHECK_ADDRESS]))
 
-        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox, [])
+        check = self.checks().get()
+        self.assertEqual(check.status, UNAVAILABLE)
+        self.assertIsNone(check.emailed_at)
 
     def test_late_pass_sends_only_the_existing_approval_email(self):
         self.time_out_on_the_page()
@@ -1082,8 +1146,9 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertEqual(self.start()['status'], CHECKING)
         self.age_checks(STUB_DELAY_SECONDS)
 
-        state = self.poll()
-        self.poll()
+        with self.captureOnCommitCallbacks(execute=True):
+            state = self.poll()
+            self.poll()
 
         self.assertEqual(state['status'], UNAVAILABLE)
         self.assertEqual(len(mail.outbox), 1)
@@ -1092,7 +1157,7 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertIn('localhost:6543/claimed/pending/', mail.outbox[0].body)
         self.trigger.assert_not_called()
 
-    def test_held_for_an_unknown_reason_sends_nothing(self):
+    def test_held_for_an_unknown_reason_emails_a_neutral_line(self):
         self.start()
         self.leave_page()
 
@@ -1100,8 +1165,20 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
             review_block(decision='NOT_VALIDATED', reasoning={})
         )
 
-        self.assertEqual(mail.outbox, [])
-        self.assertEqual(self.checks().get().status, UNAVAILABLE)
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.subject, NOT_PASSED_SUBJECT)
+        html = email.alternatives[0][0]
+        for content in (email.body, html):
+            self.assertIn('A person will review your claim.', content)
+            self.assertNotIn('Fix this:', content)
+        self.assertIn(
+            '/claimed/pending/{}'.format(self.claim.id), email.body
+        )
+        self.assertNotIn('?fix=', email.body)
+        check = self.checks().get()
+        self.assertEqual(check.status, UNAVAILABLE)
+        self.assertIsNotNone(check.emailed_at)
 
     def test_lookalike_note_from_a_moderator_sends_nothing(self):
         self.start()
@@ -1146,9 +1223,84 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
             FacilityClaimReviewNote.objects.filter(claim=self.claim).count(),
             1,
         )
+        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.checks().get().status, NOT_PASSED)
+
+    def test_email_waits_for_the_note_to_commit(self):
+        self.start()
+        self.leave_page()
+        self.login(self.bot)
+
+        with self.captureOnCommitCallbacks() as callbacks:
+            self.client.post(
+                self.note_url,
+                {'note': review_note(review_block([CHECK_ADDRESS]))},
+            )
+
+        # Nothing was sent inside the request: a note that is rolled
+        # back takes its email with it.
+        self.assertEqual(mail.outbox, [])
+        self.assertEqual(len(callbacks), 1)
+
+    def test_page_past_its_minute_is_emailed_without_a_final_call(self):
+        self.start()
+        self.poll()
+        self.age_checks(LIVE_CHECK_TIMEOUT_SECONDS)
+        self.checks().update(last_polled_at=timezone.now())
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_page_that_says_it_timed_out_is_emailed_a_late_result(self):
+        self.start()
+        self.poll()
+
+        response = self.client.post(self.url, {'timed_out': True})
+
+        self.assertEqual(response.json()['status'], UNAVAILABLE)
+        self.assertEqual(self.checks().count(), 1)
+        self.trigger.assert_called_once()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(self.checks().get().status, NOT_PASSED)
+
+    def test_timed_out_call_returns_a_result_that_is_already_there(self):
+        self.start()
+        self.post_review(review_block([CHECK_ADDRESS]))
+
+        response = self.client.post(self.url, {'timed_out': True})
+
+        self.assertEqual(response.json()['status'], NOT_PASSED)
+        self.assertEqual(mail.outbox, [])
+
+    def test_timed_out_call_without_a_check_starts_nothing(self):
+        response = self.client.post(self.url, {'timed_out': True})
+
+        self.assertEqual(response.json()['status'], UNAVAILABLE)
+        self.assertFalse(self.checks().exists())
+        self.trigger.assert_not_called()
+
+    def test_result_after_the_late_window_sends_nothing(self):
+        self.time_out_on_the_page()
+        self.age_checks(LATE_RESULT_WINDOW.total_seconds())
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(mail.outbox, [])
         check = self.checks().get()
-        self.assertEqual(check.status, CHECKING)
+        self.assertEqual(check.status, UNAVAILABLE)
         self.assertIsNone(check.emailed_at)
+
+    def test_result_just_inside_the_late_window_is_emailed(self):
+        self.time_out_on_the_page()
+        self.age_checks(LATE_RESULT_WINDOW.total_seconds() - 3600)
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_pass_sends_only_the_existing_approval_email(self):
         self.start()

@@ -9,13 +9,15 @@ You submitted a request to claim this production location on Open Supply Hub (OS
 
 The claim did not pass the automatic check.
 
-Fix this:
+{% if fixes %}Fix this:
 {% for fix in fixes %}
 - {{ fix }}{% endfor %}
 
 Fix your claim: {{ fix_url|safe }}
 
-You can also leave the claim as it is. A person will review it. Approval can be significantly delayed.
+You can also leave the claim as it is. A person will review it. Approval can be significantly delayed.{% else %}A person will review your claim. Approval can be significantly delayed.
+
+You can update your claim here: {{ fix_url|safe }}{% endif %}
 
 Best Regards,
 

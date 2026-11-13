@@ -27,6 +27,7 @@
         <p>
             The claim did not pass the automatic check.
         </p>
+        {% if fixes %}
         <p>
             Fix this:
         </p>
@@ -44,6 +45,15 @@
             You can also leave the claim as it is. A person will review it.
             Approval can be significantly delayed.
         </p>
+        {% else %}
+        <p>
+            A person will review your claim. Approval can be significantly
+            delayed.
+        </p>
+        <p>
+            <a href="{{ fix_url }}">You can update your claim here</a>
+        </p>
+        {% endif %}
         <p>
             Best Regards,
         </p>
