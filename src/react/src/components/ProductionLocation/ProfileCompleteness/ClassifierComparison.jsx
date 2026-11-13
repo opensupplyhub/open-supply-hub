@@ -1,8 +1,19 @@
 import React from 'react';
 import { number, object, shape, string } from 'prop-types';
 
-import { CLASSIFIER_NOTE, CLASSIFIER_TITLE } from './constants';
-import { compareLevels, formatLevel, formatRunDate, formatTier } from './utils';
+import {
+    CLASSIFIER_NOTE,
+    CLASSIFIER_TITLE,
+    CORROBORATION_LABEL,
+    PLACEHOLDER_DATA_LABEL,
+} from './constants';
+import {
+    compareLevels,
+    formatLevel,
+    formatPlaceholderData,
+    formatRunDate,
+    formatTier,
+} from './utils';
 
 /*
 The model-backed classification of the same profile, next to the numeric
@@ -31,16 +42,18 @@ const ClassifierComparison = ({ classes, score, classifier }) => {
             <dl className={classes.classifierList}>
                 <div>
                     <dt className={classes.classifierTerm}>
-                        Contributor agreement
+                        {CORROBORATION_LABEL}
                     </dt>
                     <dd className={classes.classifierDefinition}>
                         {formatTier(classifier.agreement_tier)}
                     </dd>
                 </div>
                 <div>
-                    <dt className={classes.classifierTerm}>Field data</dt>
+                    <dt className={classes.classifierTerm}>
+                        {PLACEHOLDER_DATA_LABEL}
+                    </dt>
                     <dd className={classes.classifierDefinition}>
-                        {formatTier(classifier.field_tier)}
+                        {formatPlaceholderData(classifier.field_tier)}
                     </dd>
                 </div>
                 {agrees !== null && (

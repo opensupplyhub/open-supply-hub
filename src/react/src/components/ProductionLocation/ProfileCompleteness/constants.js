@@ -85,3 +85,17 @@ export const CLASSIFIER_TIER_LABELS = Object.freeze({
     high: 'High',
     best: 'Best',
 });
+
+/*
+The classification's two checks. Corroboration is how many contributors
+there are and how far they agree. The second check only looks at whether
+entries are placeholders or junk ("Site 2", "#N/A", a city for an address),
+never at whether they are correct, and a missing field does not count.
+*/
+export const CORROBORATION_LABEL = 'Corroboration';
+export const PLACEHOLDER_DATA_LABEL = 'Placeholder data';
+export const PLACEHOLDER_DATA_VALUES = Object.freeze({
+    high: 'Little or none',
+    medium: 'In some fields',
+    low: 'In name or address',
+});

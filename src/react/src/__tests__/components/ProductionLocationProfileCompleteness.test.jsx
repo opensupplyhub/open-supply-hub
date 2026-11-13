@@ -178,7 +178,10 @@ describe('ProductionLocation profile completeness preview', () => {
         );
         expect(classifier).toHaveTextContent('Model classification');
         expect(classifier).toHaveTextContent('High');
-        expect(classifier).toHaveTextContent('Best');
+        expect(classifier).toHaveTextContent('CorroborationBest');
+        expect(classifier).toHaveTextContent(
+            'Placeholder dataLittle or none',
+        );
         expect(classifier).toHaveTextContent('model-1.0');
         expect(
             getByTestId('profile-completeness-comparison'),

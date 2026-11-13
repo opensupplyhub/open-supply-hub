@@ -3,6 +3,7 @@ import moment from 'moment';
 import {
     CLASSIFIER_TIER_LABELS,
     MAX_STRENGTHEN_STEPS,
+    PLACEHOLDER_DATA_VALUES,
     STRENGTHEN_STEPS,
 } from './constants';
 
@@ -25,6 +26,9 @@ export const formatLevel = ({ level, level_name: name, max_level: maxLevel }) =>
         : `Level ${level} of ${maxLevel}`;
 
 export const formatTier = tier => CLASSIFIER_TIER_LABELS[tier] || tier || '–';
+
+export const formatPlaceholderData = tier =>
+    PLACEHOLDER_DATA_VALUES[tier] || '–';
 
 const componentsByKey = components =>
     (components || []).reduce(
