@@ -24,7 +24,11 @@ import {
     facilityClaimStatusChoicesEnum,
     facilityDetailsActions,
 } from '../../../util/constants';
-import { hasPartnerData, withoutHiddenSector } from '../../../util/embeddedMap';
+import {
+    getEmbedLocationPageCss,
+    hasPartnerData,
+    withoutHiddenSector,
+} from '../../../util/embeddedMap';
 import { makeProductionLocationPageLink } from '../../../util/util';
 import { getCandidateFromFacilityPayload } from '../../../util/candidates';
 
@@ -156,6 +160,9 @@ const ProductionLocationDetailsContent = ({
                 </Grid>
                 {embed ? (
                     <>
+                        {/* The contributor's accent color, heading font and
+                        corner style, applied to this page. */}
+                        <style>{getEmbedLocationPageCss(embedConfig)}</style>
                         {/* The contributor's own fields, then whatever else
                         they have chosen to show. */}
                         <EmbedLocationFields

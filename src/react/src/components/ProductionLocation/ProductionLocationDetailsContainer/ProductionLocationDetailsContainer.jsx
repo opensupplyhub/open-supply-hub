@@ -33,6 +33,7 @@ import {
 import { resetSectionNavigation } from '../../../actions/sectionNavigation';
 
 import productionLocationDetailsContainerStyles from './styles';
+import { EMBED_LOCATION_PAGE_CLASS } from '../../../util/embeddedMap';
 
 // On an embedded map the page has no side navigation, so "Back to search
 // results" sits above the location, which takes the full width.
@@ -156,7 +157,11 @@ function ProductionLocationDetailsContainer({
     return (
         <Grid
             container
-            className={classes.root}
+            className={
+                embed
+                    ? `${classes.root} ${EMBED_LOCATION_PAGE_CLASS}`
+                    : classes.root
+            }
             style={embed ? embedRootStyle : undefined}
         >
             <Grid

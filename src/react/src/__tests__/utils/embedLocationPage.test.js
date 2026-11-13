@@ -1,5 +1,6 @@
 import {
     getEmbedLocationFields,
+    getEmbedLocationPageCss,
     withoutHiddenSector,
 } from '../../util/embeddedMap';
 
@@ -91,6 +92,42 @@ describe("a location's page on an embedded map", () => {
             expect(withoutHiddenSector(null, { hide_sector_data: true })).toBe(
                 null,
             );
+        });
+    });
+
+    describe("the contributor's style", () => {
+        it('sets the heading font, accent color and corners', () => {
+            const css = getEmbedLocationPageCss({
+                accent_color: '#1386c6',
+                heading_font: 'Georgia, serif',
+                corner_radius: 12,
+            });
+
+            expect(css).toContain(
+                '.embed-location-page h1, .embed-location-page h2, .embed-location-page h3 { font-family: Georgia, serif !important; }',
+            );
+            expect(css).toContain('color: #1386c6 !important;');
+            expect(css).toContain('border-radius: 12px;');
+            expect(css).toContain(
+                '.embed-location-page button { border-radius: 12px !important; }',
+            );
+        });
+
+        it('adds nothing for settings that are not set', () => {
+            expect(getEmbedLocationPageCss({})).toBe('');
+            expect(getEmbedLocationPageCss(null)).toBe('');
+            expect(getEmbedLocationPageCss({ corner_radius: 0 })).toContain(
+                'border-radius: 0px;',
+            );
+        });
+
+        it('ignores values that could break out of a rule', () => {
+            expect(
+                getEmbedLocationPageCss({
+                    accent_color: 'red; } body { display: none',
+                    heading_font: 'Arial; } body { display: none',
+                }),
+            ).toBe('');
         });
     });
 });
