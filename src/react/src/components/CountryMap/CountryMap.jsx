@@ -6,7 +6,6 @@ import { useCountryMapData, useZoomPan } from './hooks';
 import { BINS, binFor } from './utils';
 import { fetchCountryOptionsIfNeeded } from '../../actions/filterOptions';
 import { updateCountryFilter } from '../../actions/filters';
-import { fetchFacilities } from '../../actions/facilities';
 
 import '../../styles/css/countryMap.css';
 
@@ -348,40 +347,29 @@ function mapStateToProps({
 }
 
 /*
- * fetchFacilities already builds the query string from the filters,
- * requests the results and pushes the new route, which is how the sidebar
- * and the sort dropdown run a search. Reusing it keeps the map on exactly
- * the same path as every other way of searching, back button included.
+ * Selecting a country sets the country filter and stops there. It does not
+ * run the search.
  *
- * The one difference is the single-result redirect: seven countries hold
- * exactly one production location, and clicking one of them should filter
- * the map, not navigate away from it (OSDEV-3802, OSDEV-3810).
+ * It used to, and on a country holding hundreds of thousands of locations
+ * that meant a click fired a count, a page and a map extent before the UI
+ * could settle, so the sidebar visibly lagged. It was also the odd one out:
+ * every other filter on the page waits for the Search button, and the map
+ * had no business being different.
  *
- * `pushNewRoute` is passed only so this reads like every other caller:
- * inside fetchFacilities it is used for nothing but that jump, so opting
- * out means it is never called. The URL and the back button keep working
- * because withQueryStringSync writes the query string from the filter
- * state, not because of anything this dispatch does.
+ * The feedback that matters is still immediate, because it does not depend
+ * on the search: the country fills, its chip appears in the sidebar, and
+ * the card opens from the daily rollup. Only the expensive part waits.
+ *
+ * The URL still follows, because withQueryStringSync writes the query
+ * string from the filter state rather than from anything dispatched here.
+ *
+ * See OSDEV-3802.
  */
-function mapDispatchToProps(dispatch, { history: { push } }) {
-    const runSearch = () =>
-        dispatch(
-            fetchFacilities({
-                pushNewRoute: push,
-                redirectOnSingleResult: false,
-            }),
-        );
-
+function mapDispatchToProps(dispatch) {
     return {
         fetchCountries: () => dispatch(fetchCountryOptionsIfNeeded()),
-        selectCountry: option => {
-            dispatch(updateCountryFilter([option]));
-            return runSearch();
-        },
-        clearCountry: () => {
-            dispatch(updateCountryFilter([]));
-            return runSearch();
-        },
+        selectCountry: option => dispatch(updateCountryFilter([option])),
+        clearCountry: () => dispatch(updateCountryFilter([])),
     };
 }
 

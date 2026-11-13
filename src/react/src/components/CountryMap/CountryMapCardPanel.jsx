@@ -1,11 +1,9 @@
 import React from 'react';
 import { arrayOf, func, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
 
 import CountryMapCard from './CountryMapCard';
 import { updateCountryFilter } from '../../actions/filters';
-import { fetchFacilities } from '../../actions/facilities';
 
 import '../../styles/css/countryMap.css';
 
@@ -72,29 +70,15 @@ function mapStateToProps({
 }
 
 /*
- * Closing the card clears the country filter and reruns the search, the same
- * two steps the map takes. `redirectOnSingleResult` is off for the same
- * reason it is off there: clearing a filter should not navigate anywhere.
+ * Closing the card clears the country filter and stops there, matching the
+ * map: the search waits for the Search button like every other filter.
  */
-function mapDispatchToProps(dispatch, { history: { push } }) {
+function mapDispatchToProps(dispatch) {
     return {
-        clearCountry: () => {
-            dispatch(updateCountryFilter([]));
-            return dispatch(
-                fetchFacilities({
-                    pushNewRoute: push,
-                    redirectOnSingleResult: false,
-                }),
-            );
-        },
+        clearCountry: () => dispatch(updateCountryFilter([])),
     };
 }
 
-/*
- * withRouter, because this is mounted inside the results list rather than
- * by a Route, so it is handed no history of its own and mapDispatchToProps
- * reads push off ownProps.
- */
-export default withRouter(
-    connect(mapStateToProps, mapDispatchToProps)(CountryMapCardPanel),
+export default connect(mapStateToProps, mapDispatchToProps)(
+    CountryMapCardPanel,
 );
