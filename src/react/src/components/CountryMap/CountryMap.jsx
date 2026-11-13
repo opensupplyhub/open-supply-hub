@@ -26,6 +26,7 @@ const CountryMap = ({
     selectedCodes,
     selectCountry,
     clearCountry,
+    shadedSector,
 }) => {
     const svgRef = useRef(null);
 
@@ -33,7 +34,9 @@ const CountryMap = ({
         fetchCountries();
     }, [fetchCountries]);
 
-    const { shapes, byCode, computedAt, loading, error } = useCountryMapData();
+    const { shapes, byCode, computedAt, loading, error } = useCountryMapData(
+        shadedSector,
+    );
     const {
         viewBox,
         view,
@@ -143,7 +146,12 @@ const CountryMap = ({
                 </select>
 
                 <div className="country-map__legend" aria-hidden="true">
-                    <span className="country-map__legend-label">Locations</span>
+                    {/* Naming the sector here is what tells you the map
+                        reshaded; without it a filtered map and an
+                        unfiltered one look like the same picture. */}
+                    <span className="country-map__legend-label">
+                        {shadedSector ? `${shadedSector} locations` : 'Locations'}
+                    </span>
                     {BINS.map(bin => (
                         <span className="country-map__swatch" key={bin.label}>
                             <i style={{ background: bin.fill }} />
@@ -159,7 +167,11 @@ const CountryMap = ({
                     className="country-map__svg"
                     viewBox={viewBox}
                     role="img"
-                    aria-label="World map shaded by number of production locations per country"
+                    aria-label={
+                        shadedSector
+                            ? `World map shaded by number of ${shadedSector} production locations per country`
+                            : 'World map shaded by number of production locations per country'
+                    }
                     onWheel={onWheel}
                     onMouseDown={onMouseDown}
                     style={{ cursor: isZoomed ? 'grab' : 'default' }}
@@ -285,7 +297,10 @@ const CountryMap = ({
 
             {computedAt && (
                 <div className="country-map__asof">
-                    Closed locations excluded &middot; recalculated{' '}
+                    {shadedSector
+                        ? `Shaded by ${shadedSector} locations`
+                        : 'Shaded by all production locations'}{' '}
+                    &middot; closed locations excluded &middot; recalculated{' '}
                     {new Date(computedAt).toLocaleDateString()}
                 </div>
             )}
@@ -296,6 +311,7 @@ const CountryMap = ({
 CountryMap.defaultProps = {
     height: null,
     countryOptions: null,
+    shadedSector: null,
 };
 
 CountryMap.propTypes = {
@@ -303,17 +319,27 @@ CountryMap.propTypes = {
     countryOptions: arrayOf(shape({ value: string, label: string })),
     fetchCountries: func.isRequired,
     selectedCodes: arrayOf(string).isRequired,
+    shadedSector: string,
     selectCountry: func.isRequired,
     clearCountry: func.isRequired,
 };
 
 function mapStateToProps({
     filterOptions: { countries },
-    filters: { countries: selected },
+    filters: { countries: selected, sectors },
 }) {
+    /*
+     * The shading follows one sector at a time, because the rollup it reads
+     * is keyed on a single sector. Picking several is a union the cube
+     * cannot answer in one lookup, so the map falls back to all-sectors
+     * totals rather than showing one of the chosen sectors and implying it
+     * is all of them. See OSDEV-3802.
+     */
+    const chosen = sectors || [];
     return {
         countryOptions: countries.data,
         selectedCodes: (selected || []).map(option => option.value),
+        shadedSector: chosen.length === 1 ? chosen[0].value : null,
     };
 }
 

@@ -31,8 +31,13 @@ const pointCount = ({ geometry: { type, coordinates } }) =>
 /*
  * The two payloads behind the map. Counts come from the daily rollup, which
  * is a few kilobytes for the whole world; borders are a one-off download.
+ *
+ * They are fetched separately rather than together because the counts now
+ * change with the sector filter while the borders never do: fetching them
+ * as a pair would re-download 198kB of geometry every time somebody picked
+ * a different sector.
  */
-export const useCountryMapData = () => {
+export const useCountryMapData = sector => {
     const [borders, setBorders] = useState(null);
     const [stats, setStats] = useState(null);
     const [error, setError] = useState(null);
@@ -40,16 +45,12 @@ export const useCountryMapData = () => {
     useEffect(() => {
         let cancelled = false;
 
-        Promise.all([
-            apiRequest.get(BORDERS_URL),
-            apiRequest.get(STATS_URL),
-        ])
-            .then(([bordersResponse, statsResponse]) => {
-                if (cancelled) {
-                    return;
+        apiRequest
+            .get(BORDERS_URL)
+            .then(response => {
+                if (!cancelled) {
+                    setBorders(response.data);
                 }
-                setBorders(bordersResponse.data);
-                setStats(statsResponse.data);
             })
             .catch(requestError => {
                 if (!cancelled) {
@@ -61,6 +62,32 @@ export const useCountryMapData = () => {
             cancelled = true;
         };
     }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+        const url = sector
+            ? `${STATS_URL}?sector=${encodeURIComponent(sector)}`
+            : STATS_URL;
+
+        apiRequest
+            .get(url)
+            // The previous counts stay on screen until the new ones land, so
+            // changing sector reshades the map rather than blanking it.
+            .then(response => {
+                if (!cancelled) {
+                    setStats(response.data);
+                }
+            })
+            .catch(requestError => {
+                if (!cancelled) {
+                    setError(requestError);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [sector]);
 
     const byCode = useMemo(() => {
         if (!stats) {
