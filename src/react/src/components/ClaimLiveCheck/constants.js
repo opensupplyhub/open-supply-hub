@@ -62,6 +62,8 @@ export const CHECKING_PROGRESS_LINES = Object.freeze([
 ]);
 export const CHECKING_STAY_TEXT =
     'Stay on this page. This takes up to one minute.';
+export const CHECKING_EMAIL_TEXT =
+    'If you leave this page, the result is sent to you by email.';
 
 export const PASSED_TITLE = 'Your claim is approved.';
 
@@ -80,6 +82,12 @@ export const LEAVE_HELPER_TEXT =
 export const UNAVAILABLE_TITLE = 'The pre-check is not available right now.';
 export const UNAVAILABLE_TEXT =
     'Your claim is submitted. A person will review it.';
+export const UNAVAILABLE_EMAIL_TEXT =
+    'You will get an email when the claim is reviewed.';
+
+// Space kept between the site's fixed top menu and the result panel
+// when the panel is scrolled into view.
+export const PANEL_SCROLL_MARGIN_PX = 24;
 
 export const LEFT_FOR_REVIEW_TITLE =
     'Your claim is waiting for a person to review it.';

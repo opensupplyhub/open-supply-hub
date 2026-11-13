@@ -54,6 +54,7 @@ describe('ClaimLiveCheck component', () => {
         jest.clearAllMocks();
         history = { push: jest.fn() };
         setReducedMotion(false);
+        window.scrollTo = jest.fn();
         apiRequest.post.mockResolvedValue(answer('CHECKING'));
         apiRequest.get.mockResolvedValue(answer('CHECKING'));
     });
@@ -78,6 +79,35 @@ describe('ClaimLiveCheck component', () => {
         expect(apiRequest.post).toHaveBeenCalledTimes(1);
         expect(apiRequest.post).toHaveBeenCalledWith(CHECK_URL);
         expect(apiRequest.get).not.toHaveBeenCalled();
+    });
+
+    test('says the result also comes by email', async () => {
+        const { getByText } = renderCheck();
+        expect(
+            getByText(
+                'If you leave this page, the result is sent to you by email.',
+            ),
+        ).toBeInTheDocument();
+
+        apiRequest.get.mockResolvedValue(answer('UNAVAILABLE', [], 2));
+        await settle();
+        await advance(POLL_INTERVAL_MS);
+
+        expect(
+            getByText('You will get an email when the claim is reviewed.'),
+        ).toBeInTheDocument();
+    });
+
+    test('brings the panel into view when it appears and when it changes', async () => {
+        apiRequest.post.mockResolvedValue(answer('PASSED', [], 0));
+        renderCheck();
+
+        expect(window.scrollTo).toHaveBeenCalledTimes(1);
+        expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
+
+        await settle();
+
+        expect(window.scrollTo).toHaveBeenCalledTimes(2);
     });
 
     test('moves the progress line on while it waits', async () => {

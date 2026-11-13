@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     arrayOf,
     func,
@@ -20,9 +20,14 @@ import {
     resetClaimLiveCheck,
     runClaimLiveCheck,
 } from '../../actions/claimLiveCheck';
-import { claimedFacilitiesRoute, mapRoute } from '../../util/constants';
+import {
+    claimedFacilitiesRoute,
+    mapRoute,
+    HEADER_HEIGHT,
+} from '../../util/constants';
 import {
     CHECKING_PROGRESS_LINES,
+    CHECKING_EMAIL_TEXT,
     CHECKING_STAY_TEXT,
     CHECK_TIMEOUT_MS,
     CHOOSE_ONE_LABEL,
@@ -36,9 +41,11 @@ import {
     LEAVE_HELPER_TEXT,
     LEFT_FOR_REVIEW_TITLE,
     NOT_PASSED_TITLE,
+    PANEL_SCROLL_MARGIN_PX,
     PASSED_TITLE,
     POLL_INTERVAL_MS,
     PROGRESS_LINE_INTERVAL_MS,
+    UNAVAILABLE_EMAIL_TEXT,
     UNAVAILABLE_TEXT,
     UNAVAILABLE_TITLE,
 } from './constants';
@@ -69,6 +76,7 @@ const ClaimLiveCheck = ({
     const [timedOut, setTimedOut] = useState(false);
     const [leftForReview, setLeftForReview] = useState(false);
     const [progressLine, setProgressLine] = useState(0);
+    const panelRef = useRef(null);
 
     useEffect(() => {
         runCheck(claimID);
@@ -83,6 +91,23 @@ const ClaimLiveCheck = ({
     // on its way; it is shown as checking too.
     const waiting = !timedOut && (status === null || status === CHECKING);
     const polling = !timedOut && status === CHECKING;
+
+    // The panel replaces a long form, and the page can be scrolled so
+    // that its headline sits under the site's fixed top menu. Bring it
+    // into view just below the menu when it appears and whenever what
+    // it shows changes.
+    useEffect(() => {
+        const panel = panelRef.current;
+        if (!panel || typeof window.scrollTo !== 'function') {
+            return;
+        }
+        const top =
+            panel.getBoundingClientRect().top +
+            (window.pageYOffset || 0) -
+            HEADER_HEIGHT -
+            PANEL_SCROLL_MARGIN_PX;
+        window.scrollTo(0, Math.max(0, top));
+    }, [waiting, leftForReview]);
 
     useEffect(() => {
         if (!polling) {
@@ -132,6 +157,7 @@ const ClaimLiveCheck = ({
         return (
             <div
                 className={classes.panel}
+                ref={panelRef}
                 role="status"
                 data-testid="claim-live-check-checking"
             >
@@ -145,13 +171,20 @@ const ClaimLiveCheck = ({
                 <Typography className={classes.text}>
                     {CHECKING_STAY_TEXT}
                 </Typography>
+                <Typography className={classes.text}>
+                    {CHECKING_EMAIL_TEXT}
+                </Typography>
             </div>
         );
     }
 
     if (leftForReview) {
         return (
-            <div className={classes.panelUnavailable} role="status">
+            <div
+                className={classes.panelUnavailable}
+                ref={panelRef}
+                role="status"
+            >
                 <Typography className={classes.title}>
                     {LEFT_FOR_REVIEW_TITLE}
                 </Typography>
@@ -162,7 +195,7 @@ const ClaimLiveCheck = ({
 
     if (status === PASSED) {
         return (
-            <div className={classes.panelPassed} role="status">
+            <div className={classes.panelPassed} ref={panelRef} role="status">
                 <Confetti />
                 <Typography className={classes.title}>
                     {PASSED_TITLE}
@@ -175,7 +208,11 @@ const ClaimLiveCheck = ({
     if (status === NOT_PASSED) {
         const canCheckAgain = checksLeft > 0;
         return (
-            <div className={classes.panelNotPassed} role="status">
+            <div
+                className={classes.panelNotPassed}
+                ref={panelRef}
+                role="status"
+            >
                 <Typography className={classes.title}>
                     {NOT_PASSED_TITLE}
                 </Typography>
@@ -229,11 +266,14 @@ const ClaimLiveCheck = ({
     }
 
     return (
-        <div className={classes.panelUnavailable} role="status">
+        <div className={classes.panelUnavailable} ref={panelRef} role="status">
             <Typography className={classes.title}>
                 {UNAVAILABLE_TITLE}
             </Typography>
             <Typography className={classes.text}>{UNAVAILABLE_TEXT}</Typography>
+            <Typography className={classes.text}>
+                {UNAVAILABLE_EMAIL_TEXT}
+            </Typography>
             {exits}
         </div>
     );
