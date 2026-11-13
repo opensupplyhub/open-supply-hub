@@ -122,3 +122,24 @@ class FacilityNameSearchIndexTest(TestCase):
             ["Interloop Limited (Hosiery Division I)"],
             self.search("Interloop Hosiery"),
         )
+
+    def test_short_only_query_avoids_the_unusable_index(self):
+        # A GIN trigram index extracts nothing from a string shorter than
+        # three characters, so it matches every row and rechecks all of
+        # them. Django's STABLE `unaccent()` cannot be indexed, which is
+        # what steers the planner back to the scan this query wants.
+        sql = self.query_sql("07").upper()
+        self.assertIn("UNACCENT(", sql)
+        self.assertNotIn("IMMUTABLE_UNACCENT", sql)
+
+    def test_one_long_token_keeps_the_index(self):
+        # The long token narrows the bitmap, so the short one costs nothing.
+        sql = self.query_sql("shahi 07")
+        self.assertIn("public.immutable_unaccent", sql)
+
+    def test_short_only_query_returns_the_same_rows(self):
+        # The guard changes the plan, never the answer.
+        self.assertEqual(
+            ["OZEN AYBA TEKSTIL", "ÖZEN DÜĞME SAN VE TURZ.TİC LTD ŞT"],
+            self.search("ze"),
+        )
