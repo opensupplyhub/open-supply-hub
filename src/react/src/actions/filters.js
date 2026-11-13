@@ -7,7 +7,7 @@ import {
     restoreExactProcessingTypeLabels,
     updateListWithLabels,
 } from '../util/util';
-import { optionsForSortingResults } from '../util/constants';
+import { EMBED_DEFAULT_SORT_OPTION } from '../util/embeddedMap';
 
 import { setEmbeddedMapStatusFromQueryString } from '../actions/embeddedMap';
 
@@ -30,6 +30,8 @@ export const updateSectorFilter = createAction('UPDATE_SECTOR_FILTER');
 export const updateParentCompanyFilter = createAction(
     'UPDATE_PARENT_COMPANY_FILTER',
 );
+// Payload: { column, value }. An empty value clears that column's filter.
+export const updateEmbedFilter = createAction('UPDATE_EMBED_FILTER');
 export const updateFacilityTypeFilter = createAction(
     'UPDATE_FACILITY_TYPE_FILTER',
 );
@@ -153,8 +155,10 @@ export function setFiltersFromQueryString(qs = '') {
 
         payload = embed
             ? update(payload, {
+                  // An embedded map lists facilities in the order its
+                  // contributor chose (by name unless they chose another).
                   sortAlgorithm: {
-                      $set: optionsForSortingResults[0],
+                      $set: EMBED_DEFAULT_SORT_OPTION,
                   },
               })
             : payload;

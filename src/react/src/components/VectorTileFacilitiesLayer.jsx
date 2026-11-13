@@ -12,6 +12,7 @@ import isEqual from 'lodash/isEqual';
 import intersection from 'lodash/intersection';
 import sortBy from 'lodash/sortBy';
 
+import { getEmbedColorLegend, splitTagValues } from '../util/embeddedMap';
 import { SelectedMarkerColor } from '../util/constants';
 import FacilitiesMapPopup from './FacilitiesMapPopup';
 
@@ -215,7 +216,22 @@ const VectorTileFacilitiesLayer = ({
     minZoom,
     maxZoom,
     iconColor,
+    colorLegendKey,
+    asDots,
+    dotColor,
 }) => {
+    // One marker color, and one pin icon, per value of the field the embed
+    // is colored by.
+    const [colorIcons, colorHexes] = useMemo(() => {
+        const icons = {};
+        const hexes = {};
+        JSON.parse(colorLegendKey).forEach(({ value, color }) => {
+            icons[value.toLowerCase()] = createMarkerIcon(color);
+            hexes[value.toLowerCase()] = color;
+        });
+        return [icons, hexes];
+    }, [colorLegendKey]);
+
     const [multipleFacilitiesAtPoint, setMultipleFacilitiesAtPoint] = useState(
         null,
     );
@@ -302,12 +318,32 @@ const VectorTileFacilitiesLayer = ({
                 vectorTileLayerStyles={{
                     facilities(properties) {
                         const facilityID = get(properties, 'id', null);
+                        const [colorValue] = splitTagValues(
+                            get(properties, 'embed_color_value', '') || '',
+                        );
+                        const colorKey = colorValue
+                            ? colorValue.toLowerCase()
+                            : null;
+                        const isSelected = osID && facilityID === osID;
 
+                        // An embedded map draws each facility as a dot, in
+                        // its field color or the map's primary color.
+                        if (asDots) {
+                            return {
+                                radius: isSelected ? 9 : 6,
+                                fill: true,
+                                fillColor: colorHexes[colorKey] || dotColor,
+                                fillOpacity: 0.9,
+                                color: isSelected ? '#0D1128' : '#ffffff',
+                                weight: isSelected ? 3 : 1.5,
+                            };
+                        }
+
+                        if (isSelected) {
+                            return { icon: selectedMarkerIcon };
+                        }
                         return {
-                            icon:
-                                osID && facilityID === osID
-                                    ? selectedMarkerIcon
-                                    : unselectedMarkerIcon,
+                            icon: colorIcons[colorKey] || unselectedMarkerIcon,
                         };
                     },
                 }}
@@ -365,7 +401,15 @@ function mapStateToProps({
     vectorTileLayer: { key },
     embeddedMap: { config, embed },
 }) {
-    const querystring = createQueryStringFromSearchFilters(filters, embed);
+    // An embed colored by a field asks for that field's value on each marker.
+    const colorByField = embed ? config.color_by_field : null;
+    const filtersQuerystring = createQueryStringFromSearchFilters(
+        filters,
+        embed,
+    );
+    const querystring = colorByField
+        ? `${filtersQuerystring}&color_by=${encodeURIComponent(colorByField)}`
+        : filtersQuerystring;
     const tileCacheKey = createTileCacheKeyWithEncodedFilters(filters, key);
     const tileURL = createTileURLWithQueryString(
         querystring,
@@ -380,6 +424,15 @@ function mapStateToProps({
         resetButtonClickCount,
         iconColor:
             config.selectedMarkerColor || config.color || SelectedMarkerColor,
+        // The contributor's marker color, or the map's primary color.
+        dotColor:
+            (embed && config.marker_color) ||
+            config.color ||
+            SelectedMarkerColor,
+        // A string, so the icons are only rebuilt when the colors change.
+        colorLegendKey: JSON.stringify(
+            getEmbedColorLegend(embed ? config : null),
+        ),
     };
 }
 
