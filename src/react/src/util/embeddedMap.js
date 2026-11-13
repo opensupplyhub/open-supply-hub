@@ -424,6 +424,89 @@ export const toggleSpotlightGroup = (groups, uuid, checked) =>
         ? [...groups.filter(group => group !== uuid), uuid]
         : groups.filter(group => group !== uuid);
 
+// ---------------------------------------------------------------------------
+// The Embed settings screen: what each section is for, and the tour of it
+// ---------------------------------------------------------------------------
+
+// One line under each section's tab. Some sections do more with the Embed
+// Deluxe package, so those have a line for each.
+const SECTION_DESCRIPTIONS = Object.freeze({
+    style: Object.freeze({
+        standard: "Choose your map's color, font and map style.",
+        deluxe:
+            'Set how your map looks: colors, fonts, corner style, the map style and how markers are colored.',
+    }),
+    fields: Object.freeze({
+        standard:
+            'Choose which of your data fields appear on your map, and in what order.',
+        deluxe:
+            'Choose which of your data fields appear, how each is shown, searched and filtered, the order of the list, and explain what your fields and values mean.',
+    }),
+    spotlight: Object.freeze({
+        deluxe:
+            "Spotlight is data about your locations from OS Hub's data partners. You choose whether your map shows it.",
+    }),
+    chains: Object.freeze({
+        deluxe:
+            'Show visitors how a product is made: pick the facilities involved and say which supplies which.',
+    }),
+    code: Object.freeze({
+        standard:
+            'Set the size of your map and copy the code to add it to your website.',
+    }),
+});
+
+export const getEmbedSectionDescription = (sectionId, isDeluxe) => {
+    const lines = SECTION_DESCRIPTIONS[sectionId] || {};
+    return (isDeluxe && lines.deluxe) || lines.standard || lines.deluxe || '';
+};
+
+// The tour's steps: a welcome, one step per section the contributor has,
+// then the preview. `sections` is the screen's own list ({ id, label }).
+export const getEmbedSettingsTourSteps = (sections, isDeluxe) => [
+    {
+        id: 'welcome',
+        section: null,
+        title: 'Set up your map',
+        body:
+            'This is where you set up the map for your website. This short tour shows what each section is for.',
+    },
+    ...sections.map(({ id, label }) => ({
+        id,
+        section: id,
+        title: label,
+        body: getEmbedSectionDescription(id, isDeluxe),
+    })),
+    {
+        id: 'preview',
+        section: null,
+        title: 'Preview',
+        body:
+            'Your map as visitors will see it. Your changes save by themselves, and the preview refreshes each time.',
+    },
+];
+
+// Whether the tour has been shown in this browser. Browser storage can be
+// unavailable (private windows, blocked site data); the tour then simply
+// offers itself again next time.
+const EMBED_SETTINGS_TOUR_KEY = 'osh-embed-settings-tour-seen';
+
+export const hasSeenEmbedSettingsTour = storage => {
+    try {
+        return storage.getItem(EMBED_SETTINGS_TOUR_KEY) === '1';
+    } catch (error) {
+        return false;
+    }
+};
+
+export const markEmbedSettingsTourSeen = storage => {
+    try {
+        storage.setItem(EMBED_SETTINGS_TOUR_KEY, '1');
+    } catch (error) {
+        // Nothing to do: the tour will offer itself again.
+    }
+};
+
 // --- Building a chain in the settings ---
 
 export const DEFAULT_CHAIN_COLOR = '#c0392b';

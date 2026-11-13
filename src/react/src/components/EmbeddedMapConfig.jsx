@@ -11,6 +11,13 @@ import { EmbeddedMapInfoLink, USER_DEFAULT_STATE } from '../util/constants';
 
 import EmbeddedMapFieldsConfig from './EmbeddedMapFieldsConfig';
 import EmbeddedMapListOrderConfig from './EmbeddedMapListOrderConfig';
+import EmbeddedMapSettingsTour from './EmbeddedMapSettingsTour';
+import {
+    getEmbedSectionDescription,
+    getEmbedSettingsTourSteps,
+    hasSeenEmbedSettingsTour,
+    markEmbedSettingsTourSeen,
+} from '../util/embeddedMap';
 import EmbeddedMapSpotlightConfig from './EmbeddedMapSpotlightConfig';
 import EmbeddedMapSupplyChainsConfig from './EmbeddedMapSupplyChainsConfig';
 import EmbeddedMapThemeConfig from './EmbeddedMapThemeConfig';
@@ -63,6 +70,25 @@ const styles = {
         borderBottomColor: 'rgb(0, 0, 0)',
     },
     // The settings and the preview each sit in their own panel.
+    sectionIntro: {
+        margin: '16px 0 0',
+        color: 'rgba(0, 0, 0, 0.7)',
+    },
+    tourLink: {
+        padding: 0,
+        border: 0,
+        background: 'none',
+        fontFamily: 'inherit',
+        fontSize: 'inherit',
+        fontWeight: 700,
+        textDecoration: 'underline',
+        cursor: 'pointer',
+    },
+    // Marks what the current step of the tour is about.
+    tourHighlight: {
+        outline: '3px solid rgb(13, 17, 40)',
+        outlineOffset: '2px',
+    },
     settingsPanel: {
         background: 'rgb(247, 248, 250)',
         border: '1px solid rgb(214, 216, 221)',
@@ -222,6 +248,18 @@ function EmbeddedMapConfig({
             .catch(() => setSpotlightShownCount(0));
     }, [contributorId, timestamp]);
 
+    // The tour of this screen: offered once, the first time the screen is
+    // opened in this browser, and again whenever it is asked for.
+    const [tourStep, setTourStep] = useState(null);
+    useEffect(() => {
+        if (
+            user.embed_level &&
+            !hasSeenEmbedSettingsTour(window.localStorage)
+        ) {
+            setTourStep(0);
+        }
+    }, [user.embed_level]);
+
     if (!user.embed_level) return <EmbeddedMapUnauthorized isSettings />;
 
     const updateEmbedConfig = field => value =>
@@ -240,6 +278,7 @@ function EmbeddedMapConfig({
         timestamp: Math.max(timestamp, chainsSavedAt),
         minimumConfigurationIsComplete,
     };
+    const isDeluxe = user.embed_level === DELUXE_EMBED_LEVEL;
     const sections =
         user.embed_level === DELUXE_EMBED_LEVEL
             ? [
@@ -250,9 +289,35 @@ function EmbeddedMapConfig({
               ]
             : SECTIONS;
 
+    const tourSteps = getEmbedSettingsTourSteps(sections, isDeluxe);
+    // Moving to a step opens the section it is about.
+    const goToTourStep = index => {
+        const step = tourSteps[index];
+        if (step && step.section) setSection(step.section);
+        setTourStep(index);
+    };
+    const closeTour = () => {
+        markEmbedSettingsTourSeen(window.localStorage);
+        setTourStep(null);
+    };
+    const currentTourStep = tourStep === null ? null : tourSteps[tourStep];
+    let tourOn = null;
+    if (currentTourStep) {
+        tourOn = currentTourStep.id === 'preview' ? 'preview' : 'settings';
+    }
+
     return (
         <div style={styles.page}>
             <div style={styles.intro}>
+                <Typography paragraph>
+                    <button
+                        type="button"
+                        style={styles.tourLink}
+                        onClick={() => goToTourStep(0)}
+                    >
+                        Take a tour of these settings
+                    </button>
+                </Typography>
                 <Typography paragraph>
                     Generate a customized OS Hub Embedded Map for your website.
                 </Typography>
@@ -299,7 +364,24 @@ function EmbeddedMapConfig({
             </div>
             <Grid container spacing={40}>
                 <Grid item xs={12} md={5} lg={4}>
-                    <div style={styles.settingsPanel}>
+                    <div
+                        style={
+                            tourOn === 'settings'
+                                ? {
+                                      ...styles.settingsPanel,
+                                      ...styles.tourHighlight,
+                                  }
+                                : styles.settingsPanel
+                        }
+                    >
+                        {tourStep === null ? null : (
+                            <EmbeddedMapSettingsTour
+                                steps={tourSteps}
+                                stepIndex={tourStep}
+                                onStep={goToTourStep}
+                                onClose={closeTour}
+                            />
+                        )}
                         <div style={styles.nav} role="tablist">
                             {sections.map(({ id, label }) => (
                                 <button
@@ -324,6 +406,9 @@ function EmbeddedMapConfig({
                                 </button>
                             ))}
                         </div>
+                        <Typography style={styles.sectionIntro}>
+                            {getEmbedSectionDescription(section, isDeluxe)}
+                        </Typography>
                         {section === 'style' ? (
                             <EmbeddedMapThemeConfig
                                 color={color}
@@ -464,7 +549,16 @@ function EmbeddedMapConfig({
                 </Grid>
                 <Grid item xs={12} md={7} lg={8}>
                     <div style={styles.previewColumn}>
-                        <div style={styles.preview}>
+                        <div
+                            style={
+                                tourOn === 'preview'
+                                    ? {
+                                          ...styles.preview,
+                                          ...styles.tourHighlight,
+                                      }
+                                    : styles.preview
+                            }
+                        >
                             <Typography style={styles.previewHeader}>
                                 Preview
                             </Typography>

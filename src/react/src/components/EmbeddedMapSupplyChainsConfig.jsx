@@ -439,11 +439,6 @@ function EmbeddedMapSupplyChainsConfig({
                 <Typography style={styles.sectionHeader}>
                     Supply chains
                 </Typography>
-                <Typography>
-                    Show visitors how a product is made. Pick the facilities
-                    involved and say which supplies which; visitors can then
-                    follow the chain on your map.
-                </Typography>
                 {loadError && (
                     <Typography style={styles.error}>{loadError}</Typography>
                 )}
