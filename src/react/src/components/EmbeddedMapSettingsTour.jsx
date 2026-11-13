@@ -3,6 +3,8 @@ import { arrayOf, func, number, shape, string } from 'prop-types';
 
 const styles = {
     card: {
+        // Clear of the site's header when the card is scrolled into view.
+        scrollMarginTop: '130px',
         margin: '12px 0 4px',
         padding: '14px 16px 12px',
         background: 'rgb(13, 17, 40)',
@@ -56,11 +58,20 @@ const styles = {
 };
 
 /*
-A short tour of the Embed settings: one card that steps through what each
-section is for. The settings screen switches section as the tour moves on,
-and marks what the current step is about.
+A card that steps through a short tour or tutorial on the Embed settings
+screen: the tour of what each section is for, and the tutorial on building
+a supply chain. Whatever shows the card moves to, and marks, what the
+current step is about.
 */
-function EmbeddedMapSettingsTour({ steps, stepIndex, onStep, onClose }) {
+function EmbeddedMapSettingsTour({
+    steps,
+    stepIndex,
+    onStep,
+    onClose,
+    label,
+    skipLabel,
+    testId,
+}) {
     const cardRef = useRef(null);
     const step = steps[stepIndex];
 
@@ -83,8 +94,8 @@ function EmbeddedMapSettingsTour({ steps, stepIndex, onStep, onClose }) {
             ref={cardRef}
             style={styles.card}
             role="dialog"
-            aria-label="Tour of the Embed settings"
-            data-testid="embed-settings-tour"
+            aria-label={label}
+            data-testid={testId}
         >
             <div style={styles.step}>
                 Step {stepIndex + 1} of {steps.length}
@@ -110,7 +121,7 @@ function EmbeddedMapSettingsTour({ steps, stepIndex, onStep, onClose }) {
                 </button>
                 {isLast ? null : (
                     <button type="button" style={styles.skip} onClick={onClose}>
-                        Skip the tour
+                        {skipLabel}
                     </button>
                 )}
             </div>
@@ -125,6 +136,15 @@ EmbeddedMapSettingsTour.propTypes = {
     stepIndex: number.isRequired,
     onStep: func.isRequired,
     onClose: func.isRequired,
+    label: string,
+    skipLabel: string,
+    testId: string,
+};
+
+EmbeddedMapSettingsTour.defaultProps = {
+    label: 'Tour of the Embed settings',
+    skipLabel: 'Skip the tour',
+    testId: 'embed-settings-tour',
 };
 
 export default EmbeddedMapSettingsTour;

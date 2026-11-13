@@ -25,6 +25,10 @@ import EmbeddedMapSizeConfig from './EmbeddedMapSizeConfig';
 import EmbeddedMapCode from './EmbeddedMapCode';
 import EmbeddedMapUnauthorized from './EmbeddedMapUnauthorized';
 
+// Where something that stays in view while the page scrolls should sit:
+// just below the site's header, which stays in view too.
+export const STICKY_TOP = 126;
+
 const styles = {
     page: {
         padding: '0 24px 120px',
@@ -96,10 +100,11 @@ const styles = {
     },
     // Stays in view beside the settings; scrolls on its own when the preview
     // and the schematic together are taller than the window.
+    // It sits below the site's header, which also stays in view.
     previewColumn: {
         position: 'sticky',
-        top: '20px',
-        maxHeight: 'calc(100vh - 40px)',
+        top: `${STICKY_TOP}px`,
+        maxHeight: `calc(100vh - ${STICKY_TOP + 16}px)`,
         overflowY: 'auto',
     },
     preview: {

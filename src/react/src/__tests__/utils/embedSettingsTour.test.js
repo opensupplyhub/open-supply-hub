@@ -1,4 +1,7 @@
 import {
+    SUPPLY_CHAIN_TUTORIAL_STEPS,
+    hasSeenSupplyChainTutorial,
+    markSupplyChainTutorialSeen,
     getEmbedSectionDescription,
     getEmbedSettingsTourSteps,
     hasSeenEmbedSettingsTour,
@@ -103,4 +106,50 @@ describe('the tour of the Embed settings', () => {
             expect(() => markEmbedSettingsTourSeen(blocked)).not.toThrow();
         });
     });
+
+describe('the tutorial on building a supply chain', () => {
+    it('follows the order a chain is built in', () => {
+        expect(SUPPLY_CHAIN_TUTORIAL_STEPS.map(step => step.id)).toEqual([
+            'name',
+            'first',
+            'link',
+            'branch',
+            'fix',
+            'describe',
+            'schematic',
+            'publish',
+        ]);
+    });
+
+    it('points each step at a part of the builder', () => {
+        const parts = [
+            'name',
+            'map',
+            'undo',
+            'locations',
+            'schematic',
+            'publish',
+        ];
+        SUPPLY_CHAIN_TUTORIAL_STEPS.forEach(step => {
+            expect(parts).toContain(step.target);
+            expect(step.title).toBeTruthy();
+            expect(step.body).toBeTruthy();
+        });
+    });
+
+    it('is remembered apart from the tour of the settings', () => {
+        const values = {};
+        const storage = {
+            getItem: key => (key in values ? values[key] : null),
+            setItem: (key, value) => {
+                values[key] = value;
+            },
+        };
+
+        markSupplyChainTutorialSeen(storage);
+
+        expect(hasSeenSupplyChainTutorial(storage)).toBe(true);
+        expect(hasSeenEmbedSettingsTour(storage)).toBe(false);
+    });
+});
 });

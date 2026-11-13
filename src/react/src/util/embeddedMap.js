@@ -486,26 +486,104 @@ export const getEmbedSettingsTourSteps = (sections, isDeluxe) => [
     },
 ];
 
-// Whether the tour has been shown in this browser. Browser storage can be
+// Whether a tour has been shown in this browser. Browser storage can be
 // unavailable (private windows, blocked site data); the tour then simply
 // offers itself again next time.
 const EMBED_SETTINGS_TOUR_KEY = 'osh-embed-settings-tour-seen';
+const SUPPLY_CHAIN_TUTORIAL_KEY = 'osh-embed-supply-chain-tutorial-seen';
 
-export const hasSeenEmbedSettingsTour = storage => {
+const hasSeen = (storage, key) => {
     try {
-        return storage.getItem(EMBED_SETTINGS_TOUR_KEY) === '1';
+        return storage.getItem(key) === '1';
     } catch (error) {
         return false;
     }
 };
 
-export const markEmbedSettingsTourSeen = storage => {
+const markSeen = (storage, key) => {
     try {
-        storage.setItem(EMBED_SETTINGS_TOUR_KEY, '1');
+        storage.setItem(key, '1');
     } catch (error) {
         // Nothing to do: the tour will offer itself again.
     }
 };
+
+export const hasSeenEmbedSettingsTour = storage =>
+    hasSeen(storage, EMBED_SETTINGS_TOUR_KEY);
+
+export const markEmbedSettingsTourSeen = storage =>
+    markSeen(storage, EMBED_SETTINGS_TOUR_KEY);
+
+export const hasSeenSupplyChainTutorial = storage =>
+    hasSeen(storage, SUPPLY_CHAIN_TUTORIAL_KEY);
+
+export const markSupplyChainTutorialSeen = storage =>
+    markSeen(storage, SUPPLY_CHAIN_TUTORIAL_KEY);
+
+// The tutorial on building a supply chain, in the order a chain is built.
+// `target` names the part of the builder the step is about, which the
+// builder marks with a matching `data-tutorial` attribute.
+export const SUPPLY_CHAIN_TUTORIAL_STEPS = Object.freeze([
+    {
+        id: 'name',
+        target: 'name',
+        title: 'Name your supply chain',
+        body:
+            'Give it the name visitors will see, such as the product it makes. A description and a product link are optional.',
+    },
+    {
+        id: 'first',
+        target: 'map',
+        title: 'Add the first location',
+        body:
+            'Click a dot on the map, or search for one of your facilities by name. Starting with the final factory works well.',
+    },
+    {
+        id: 'link',
+        target: 'map',
+        title: 'Link the next location',
+        body:
+            'The selected location has a dark ring. Click another facility: it joins the chain as a supplier of the selected one, then becomes the selected one, so you can keep clicking back up the chain.',
+    },
+    {
+        id: 'branch',
+        target: 'locations',
+        title: 'Add a second supplier',
+        body:
+            'To give a location another supplier, select it again, on the map or with its Select button, then click the new facility.',
+    },
+    {
+        id: 'fix',
+        target: 'undo',
+        title: 'Fix a mistake',
+        body:
+            'Undo steps back one change at a time. In the list of locations, ⇄ reverses a link, × removes it, and Remove takes a location out of the chain.',
+    },
+    {
+        id: 'describe',
+        target: 'locations',
+        title: 'Say what happens at each location',
+        body:
+            'Fill in "What happens here" for each location, such as Spinning or Final assembly. Visitors see it above the location\'s name.',
+    },
+    {
+        id: 'schematic',
+        target: 'schematic',
+        title: 'Check the shape of the chain',
+        body:
+            'The Schematic view, below the preview, shows the chain from start to end. Click a box there to select that location.',
+    },
+    {
+        id: 'publish',
+        target: 'publish',
+        title: 'Publish and save',
+        body:
+            'Tick Published when visitors should see the chain, then Save supply chain. Leave it unticked to keep working on a draft.',
+    },
+]);
+
+export const SUPPLY_CHAIN_TUTORIAL_HIGHLIGHT =
+    'outline: 3px solid rgb(13, 17, 40); outline-offset: 3px;';
 
 // --- Building a chain in the settings ---
 
