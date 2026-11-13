@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0272_show_organization_name_in_facility_index'),
+        ('api', '0274_show_organization_name_in_facility_index'),
     ]
 
     operations = [

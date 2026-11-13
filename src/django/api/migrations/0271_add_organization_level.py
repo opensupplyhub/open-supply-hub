@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0268_index_zone_set_ids_search'),
+        ('api', '0270_claim_campaign_supplier_roster'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

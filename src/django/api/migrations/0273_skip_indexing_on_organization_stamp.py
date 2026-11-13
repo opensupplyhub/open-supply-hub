@@ -27,7 +27,7 @@ class Migration(Migration):
     """
 
     dependencies = [
-        ('api', '0270_index_organization_columns'),
+        ('api', '0272_index_organization_columns'),
     ]
 
     operations = [

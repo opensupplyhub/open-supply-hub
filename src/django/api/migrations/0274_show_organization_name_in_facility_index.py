@@ -103,7 +103,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0271_skip_indexing_on_organization_stamp'),
+        ('api', '0273_skip_indexing_on_organization_stamp'),
     ]
 
     operations = [

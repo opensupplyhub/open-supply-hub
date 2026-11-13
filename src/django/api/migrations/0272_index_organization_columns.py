@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0269_add_organization_level'),
+        ('api', '0271_add_organization_level'),
     ]
 
     operations = [
