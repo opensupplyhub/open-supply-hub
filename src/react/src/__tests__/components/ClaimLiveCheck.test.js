@@ -37,9 +37,13 @@ describe('ClaimLiveCheck component', () => {
 
     let now;
 
-    const renderCheck = (location = {}) =>
+    const renderCheck = (location = {}, props = {}) =>
         renderWithProviders(
-            <ClaimLiveCheck claimID={CLAIM_ID} history={history} />,
+            <ClaimLiveCheck
+                claimID={CLAIM_ID}
+                history={history}
+                {...props}
+            />,
             {
                 preloadedState: {
                     contributeProductionLocation: {
@@ -243,7 +247,7 @@ describe('ClaimLiveCheck component', () => {
         await flush();
         const fact = () => getByTestId('claim-live-check-fact');
 
-        expect(fact()).toHaveAttribute('aria-live', 'polite');
+        expect(fact()).toHaveAttribute('aria-live', 'off');
         expect(fact()).toHaveTextContent(
             'About this location4 organisations have shared data about Example Textiles on Open Supply Hub.',
         );
@@ -288,14 +292,86 @@ describe('ClaimLiveCheck component', () => {
         );
     });
 
-    test('only the fact box is a live region while waiting', async () => {
+    test('nothing is announced over and over while waiting', async () => {
         const { container, getByTestId } = renderCheck();
         await flush();
         const panel = getByTestId('claim-live-check-checking');
 
-        expect(panel.querySelectorAll('[aria-live]')).toHaveLength(1);
-        expect(panel.querySelector('[role="status"]')).toBeNull();
+        expect(getByTestId('claim-live-check-fact')).toHaveAttribute(
+            'aria-live',
+            'off',
+        );
+        expect(panel.querySelector('[aria-live="polite"]')).toBeNull();
+        expect(panel.querySelector('[aria-live="assertive"]')).toBeNull();
         expect(container.querySelector('[role="status"]')).toBeNull();
+    });
+
+    test('every result has a real heading and is announced once', async () => {
+        apiRequest.post.mockResolvedValue(
+            answer('NOT_PASSED', ['upload_document']),
+        );
+        const { getByRole, container } = renderCheck();
+        await settle();
+
+        expect(
+            getByRole('heading', {
+                name: 'Your claim did not pass the pre-check.',
+            }),
+        ).toBeInTheDocument();
+        expect(container.querySelectorAll('[role="status"]')).toHaveLength(1);
+    });
+
+    test('a check that could not start hands back to the caller and promises nothing', async () => {
+        apiRequest.post.mockResolvedValue(answer('UNAVAILABLE', [], 3));
+        const onNotStarted = jest.fn();
+        const { container } = renderCheck({}, { onNotStarted });
+        await settle();
+
+        expect(onNotStarted).toHaveBeenCalledTimes(1);
+        expect(container).toBeEmptyDOMElement();
+        await advance(POLL_INTERVAL_MS * 2);
+        expect(apiRequest.get).not.toHaveBeenCalled();
+    });
+
+    test('a failed request to start hands back to the caller too', async () => {
+        apiRequest.post.mockRejectedValue(new Error('network'));
+        const onNotStarted = jest.fn();
+        const { container } = renderCheck({}, { onNotStarted });
+        await settle();
+
+        expect(onNotStarted).toHaveBeenCalledTimes(1);
+        expect(container).toBeEmptyDOMElement();
+    });
+
+    test('a check that started and then became unavailable stays on the page', async () => {
+        apiRequest.get.mockResolvedValue(answer('UNAVAILABLE', [], 2));
+        const onNotStarted = jest.fn();
+        const { getByText } = renderCheck({}, { onNotStarted });
+        await settle();
+        await advance(POLL_INTERVAL_MS);
+
+        expect(onNotStarted).not.toHaveBeenCalled();
+        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
+        expect(
+            getByText('You will get an email when the claim is reviewed.'),
+        ).toBeInTheDocument();
+    });
+
+    test('tells the API once when it gives up after one minute', async () => {
+        const onNotStarted = jest.fn();
+        const { getByText } = renderCheck({}, { onNotStarted });
+        await settle();
+        apiRequest.post.mockResolvedValue(answer('UNAVAILABLE', [], 2));
+
+        await advance(CHECK_TIMEOUT_MS);
+        await advance(POLL_INTERVAL_MS * 3);
+
+        expect(apiRequest.post).toHaveBeenCalledTimes(2);
+        expect(apiRequest.post).toHaveBeenLastCalledWith(CHECK_URL, {
+            timed_out: true,
+        });
+        expect(onNotStarted).not.toHaveBeenCalled();
+        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
     });
 
     test('with reduced motion nothing is animated, facts still change and the result is not held back', async () => {

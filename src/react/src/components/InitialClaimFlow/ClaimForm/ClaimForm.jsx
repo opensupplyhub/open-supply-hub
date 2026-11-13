@@ -179,7 +179,11 @@ const ClaimForm = ({
     useClaimFormCleanup(resetFilters, resetProductionLocation);
 
     // Handle form state cleanup and success submission dialog.
-    const { dialogIsOpen, liveCheckClaimId } = useClaimFormSubmission(
+    const {
+        dialogIsOpen,
+        liveCheckClaimId,
+        skipLiveCheck,
+    } = useClaimFormSubmission(
         submissionFetching,
         submissionError,
         osID,
@@ -262,6 +266,7 @@ const ClaimForm = ({
                         <ClaimLiveCheck
                             claimID={liveCheckClaimId}
                             history={history}
+                            onNotStarted={skipLiveCheck}
                         />
                     </Paper>
                 </div>

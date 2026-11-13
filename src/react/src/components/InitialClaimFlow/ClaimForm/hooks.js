@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
@@ -213,10 +213,18 @@ export const useClaimFormSubmission = (
         submittedClaimId,
     ]);
 
+    // The live check could not be started, so the submission ends the
+    // way it always has: with the thank-you dialog.
+    const skipLiveCheck = useCallback(() => {
+        setLiveCheckClaimId(null);
+        setDialogIsOpen(true);
+    }, []);
+
     return {
         dialogIsOpen,
         setDialogIsOpen,
         liveCheckClaimId,
+        skipLiveCheck,
     };
 };
 

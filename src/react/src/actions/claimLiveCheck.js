@@ -29,6 +29,13 @@ export function runClaimLiveCheck(claimID) {
     };
 }
 
+// The page has waited its minute and is showing "not available". Tell
+// the API, so a result that arrives from now on is emailed to the
+// claimant rather than assumed to have been seen.
+export function giveUpClaimLiveCheck(claimID) {
+    return request(claimID, url => apiRequest.post(url, { timed_out: true }));
+}
+
 export function pollClaimLiveCheck(claimID) {
     return request(claimID, url => apiRequest.get(url));
 }

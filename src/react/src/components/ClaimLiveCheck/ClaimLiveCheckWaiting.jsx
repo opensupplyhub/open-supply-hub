@@ -36,9 +36,11 @@ const STEP_STATE_LABELS = Object.freeze({
  * as finished on its own: that only happens when `done` says the
  * result has arrived.
  *
- * Only the fact box is a live region. The bar and the steps change
- * several times a second and would flood a screen reader; the result
- * itself is announced by the panel that replaces this one.
+ * Nothing in here is a live region. The bar and the steps change
+ * several times a second and the facts every few seconds, which would
+ * flood a screen reader; the facts are marked `aria-live="off"` so
+ * that is explicit. A screen reader user can still read all of it, and
+ * the result is announced by the panel that replaces this one.
  */
 const ClaimLiveCheckWaiting = ({
     classes,
@@ -144,7 +146,7 @@ const ClaimLiveCheckWaiting = ({
             </ul>
             <div
                 className={classes.fact}
-                aria-live="polite"
+                aria-live="off"
                 data-testid="claim-live-check-fact"
             >
                 <span className={classes.factLabel}>{fact.label}</span>

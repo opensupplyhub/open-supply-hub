@@ -16,6 +16,7 @@ import { withStyles } from '@material-ui/core/styles';
 import ClaimLiveCheckWaiting from './ClaimLiveCheckWaiting';
 import Confetti from './Confetti';
 import {
+    giveUpClaimLiveCheck,
     pollClaimLiveCheck,
     resetClaimLiveCheck,
     runClaimLiveCheck,
@@ -74,9 +75,14 @@ const ClaimLiveCheck = ({
     contributorCount,
     runCheck,
     pollCheck,
+    giveUpCheck,
     resetCheck,
+    onNotStarted,
 }) => {
     const [timedOut, setTimedOut] = useState(false);
+    // Whether a review was really started for this check. Until then
+    // nothing may be promised about it.
+    const [started, setStarted] = useState(false);
     const [leftForReview, setLeftForReview] = useState(false);
     const [resultShown, setResultShown] = useState(false);
     const panelRef = useRef(null);
@@ -89,6 +95,31 @@ const ClaimLiveCheck = ({
             resetCheck();
         };
     }, [claimID, runCheck, resetCheck]);
+
+    useEffect(() => {
+        if (status === CHECKING || status === PASSED || status === NOT_PASSED) {
+            setStarted(true);
+        }
+    }, [status]);
+
+    // The check could not be started: it is switched off on the server,
+    // not set up, or the request failed. Nothing is being reviewed
+    // right now, so the claimant must not be told about a check or an
+    // email. The caller shows its usual "submitted" outcome instead.
+    const notStarted = !started && (status === UNAVAILABLE || timedOut);
+    useEffect(() => {
+        if (notStarted && onNotStarted) {
+            onNotStarted();
+        }
+    }, [notStarted, onNotStarted]);
+
+    // The page has given up on a check that is still running.
+    const gaveUp = timedOut && status === CHECKING;
+    useEffect(() => {
+        if (gaveUp) {
+            giveUpCheck(claimID);
+        }
+    }, [gaveUp, claimID, giveUpCheck]);
 
     // A null status is the request that starts the check still being
     // on its way; it is shown as checking too.
@@ -141,6 +172,10 @@ const ClaimLiveCheck = ({
         return () => clearTimeout(hold);
     }, [hasAnswer]);
 
+    if (notStarted && onNotStarted) {
+        return null;
+    }
+
     const exits = (
         <div className={classes.actions}>
             <Button
@@ -179,7 +214,7 @@ const ClaimLiveCheck = ({
                 ref={panelRef}
                 role="status"
             >
-                <Typography className={classes.title}>
+                <Typography component="h2" className={classes.title}>
                     {LEFT_FOR_REVIEW_TITLE}
                 </Typography>
                 {exits}
@@ -191,7 +226,7 @@ const ClaimLiveCheck = ({
         return (
             <div className={classes.panelPassed} ref={panelRef} role="status">
                 <Confetti />
-                <Typography className={classes.title}>
+                <Typography component="h2" className={classes.title}>
                     {PASSED_TITLE}
                 </Typography>
                 {exits}
@@ -207,7 +242,7 @@ const ClaimLiveCheck = ({
                 ref={panelRef}
                 role="status"
             >
-                <Typography className={classes.title}>
+                <Typography component="h2" className={classes.title}>
                     {NOT_PASSED_TITLE}
                 </Typography>
                 <Typography className={classes.label}>
@@ -261,7 +296,7 @@ const ClaimLiveCheck = ({
 
     return (
         <div className={classes.panelUnavailable} ref={panelRef} role="status">
-            <Typography className={classes.title}>
+            <Typography component="h2" className={classes.title}>
                 {UNAVAILABLE_TITLE}
             </Typography>
             <Typography className={classes.text}>{UNAVAILABLE_TEXT}</Typography>
@@ -275,6 +310,7 @@ const ClaimLiveCheck = ({
 
 ClaimLiveCheck.defaultProps = {
     status: null,
+    onNotStarted: null,
     locationName: '',
     contributorCount: null,
 };
@@ -290,6 +326,8 @@ ClaimLiveCheck.propTypes = {
     contributorCount: number,
     runCheck: func.isRequired,
     pollCheck: func.isRequired,
+    giveUpCheck: func.isRequired,
+    onNotStarted: func,
     resetCheck: func.isRequired,
 };
 
@@ -311,6 +349,7 @@ const mapStateToProps = ({
 const mapDispatchToProps = dispatch => ({
     runCheck: claimID => dispatch(runClaimLiveCheck(claimID)),
     pollCheck: claimID => dispatch(pollClaimLiveCheck(claimID)),
+    giveUpCheck: claimID => dispatch(giveUpClaimLiveCheck(claimID)),
     resetCheck: () => dispatch(resetClaimLiveCheck()),
 });
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { useFormik } from 'formik';
@@ -124,7 +124,11 @@ function PendingClaimEdit({
     // the feature off, this page behaves as it always has.
     const search = location ? location.search : '';
     const { fix, checkAgain } = useMemo(() => parseFixParams(search), [search]);
-    const checksAfterSave = isLiveCheckEnabled && checkAgain;
+    // Set when the check after a save could not be started; the save
+    // then ends with the usual thank-you dialog.
+    const [checkSkipped, setCheckSkipped] = useState(false);
+    const skipCheck = useCallback(() => setCheckSkipped(true), []);
+    const checksAfterSave = isLiveCheckEnabled && checkAgain && !checkSkipped;
     // Latched locally so a stray Redux state change can never close the
     // dialog once a save has succeeded; it closes only by navigating
     // away (both dialog actions navigate, and unmount resets the slice).
@@ -245,7 +249,11 @@ function PendingClaimEdit({
                     Edit your pending claim
                 </Typography>
                 <Paper className={classes.section}>
-                    <ClaimLiveCheck claimID={claimID} history={history} />
+                    <ClaimLiveCheck
+                        claimID={claimID}
+                        history={history}
+                        onNotStarted={skipCheck}
+                    />
                 </Paper>
             </div>
         );

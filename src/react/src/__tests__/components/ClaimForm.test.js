@@ -1138,6 +1138,31 @@ describe('ClaimForm component', () => {
             ).toBeNull();
         });
 
+        test('a check that cannot start ends with the thank-you dialog and no promise of an email', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { status: 'UNAVAILABLE', fixes: [], checks_left: 3 },
+            });
+            const { reduxStore, getByText, queryByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: true }, submitting),
+            );
+
+            await completeSubmission(reduxStore, {
+                approved: [],
+                pending: [mockOsID],
+                claim_id: 77,
+            });
+
+            await waitFor(() => {
+                expect(
+                    getByText('Thank you for submitting your claim request!'),
+                ).toBeInTheDocument();
+            });
+            expect(
+                queryByText('The pre-check is not available right now.'),
+            ).toBeNull();
+            expect(queryByText(/email/i)).toBeNull();
+        });
+
         test('a response without a claim id falls back to the thank-you dialog', async () => {
             const { reduxStore, getByText } = renderComponent(
                 stateOnLastStep({ claim_live_check: true }, submitting),
