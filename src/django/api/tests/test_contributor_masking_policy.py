@@ -711,6 +711,7 @@ class FacilitiesListAnonymisedOnlyKeyTest(TestCase):
             mock_params.return_value.validated_data = {
                 'sort_by': None,
                 'detail': False,
+                'detail_provenance_data': False,
                 'number_of_public_contributors': False,
             }
             mock_ser.return_value.data = []
