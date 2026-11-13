@@ -7,7 +7,13 @@ ST_UnaryUnion of a feature's pieces removes the cut lines and gives
 back the feature's coverage; the result can differ from the uploaded
 geometry by floating-point noise along the former cut lines. Features
 stored as a single piece are left untouched.
+
+The table lock keeps a zone upload from committing between the copy and
+the DELETE below, where its rows would be deleted and never re-inserted
+(see 0272_subdivide_zones.sql). It blocks writers only; reads go on.
 */
+
+LOCK TABLE api_zone IN SHARE ROW EXCLUSIVE MODE;
 
 CREATE TEMP TABLE zone_merge_sources ON COMMIT DROP AS
 SELECT

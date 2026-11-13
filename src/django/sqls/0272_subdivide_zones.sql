@@ -14,9 +14,19 @@ keeps its feature's value, feature_index and created_at, so the location
 page and the search column see the same coverage and labels as before;
 only row ids change.
 
-The temp table is a full copy of api_zone taken in this transaction, so
-the DELETE below empties the table; readers on other connections keep
-seeing the old rows until this transaction commits.
+The temp table is a full copy of api_zone taken in this transaction and
+the DELETE below removes exactly the rows it copied; readers on other
+connections keep seeing the old rows until this transaction commits.
+
+The copy and the DELETE are separate statements, and under READ
+COMMITTED each sees what has committed by the time it runs: a zone
+upload (ZoneSet.replace_zones) committing between the two would have its
+rows deleted and never re-inserted. The table lock below closes that
+window. SHARE ROW EXCLUSIVE blocks INSERT, UPDATE and DELETE from other
+transactions until this one commits, and replace_zones is the only
+writer, so at worst an admin upload waits a few seconds; it conflicts
+with no read, so the facility indexing trigger, location pages and the
+zone_set_ids recompute are not held up.
 
 piece_index is numbered per (zone_set, feature_index) over every piece
 of every source row, not from ST_Subdivide's ordinality alone, so the
@@ -24,11 +34,14 @@ file does not assume one row per feature: run against rows that are
 already pieces it renumbers them and changes nothing else.
 */
 
+LOCK TABLE api_zone IN SHARE ROW EXCLUSIVE MODE;
+
 CREATE TEMP TABLE zone_subdivide_sources ON COMMIT DROP AS
-SELECT zone_set_id, feature_index, piece_index, geom, value, created_at
+SELECT id, zone_set_id, feature_index, piece_index, geom, value, created_at
 FROM api_zone;
 
-DELETE FROM api_zone;
+DELETE FROM api_zone
+WHERE id IN (SELECT id FROM zone_subdivide_sources);
 
 INSERT INTO api_zone
     (zone_set_id, feature_index, piece_index, geom, value, created_at)

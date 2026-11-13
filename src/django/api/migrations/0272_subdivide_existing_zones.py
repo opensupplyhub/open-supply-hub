@@ -28,11 +28,14 @@ class Migration(migrations.Migration):
     such location, so FacilityIndex.zone_set_ids is not recomputed.
 
     Runs in a transaction of its own, after 0271 has committed the
-    schema change, so the DELETE and INSERT take only row locks and the
-    readers of api_zone (the facility indexing trigger, location pages,
-    the zone_set_ids recompute) see the old rows until commit and the
-    new rows after it, never a gap and never a wait. See 0271 for why
-    the two steps are not one migration.
+    schema change, under a SHARE ROW EXCLUSIVE lock on api_zone: that
+    blocks other writers (only ZoneSet.replace_zones) so an upload
+    cannot commit between the copy and the DELETE and be lost, and
+    conflicts with no read, so the readers of api_zone (the facility
+    indexing trigger, location pages, the zone_set_ids recompute) see
+    the old rows until commit and the new rows after it, never a gap
+    and never a wait. See 0271 for why the two steps are not one
+    migration.
 
     The reverse merges each feature's pieces back into one row (see
     0272_revert_subdivide_zones.sql for the floating-point caveat);
