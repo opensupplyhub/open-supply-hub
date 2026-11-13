@@ -18,12 +18,12 @@ describe('ListCleaningTour', () => {
         expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
         expect(screen.getByText('1 of 3')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        expect(screen.getByText('Fixed for you')).toBeInTheDocument();
+        expect(screen.getByText('Automatic fixes')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Back' }));
         expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-        expect(screen.getByText('Blockers first, then the rest')).toBeInTheDocument();
+        expect(screen.getByText('Required fixes first, then recommended')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
         expect(onDone).toHaveBeenCalledTimes(1);
     });

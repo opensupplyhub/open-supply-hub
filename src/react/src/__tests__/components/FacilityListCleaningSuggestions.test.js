@@ -67,12 +67,12 @@ describe('ReadinessTracker', () => {
         );
         expect(screen.getByText('Your review is 0% done')).toBeInTheDocument();
         expect(
-            screen.getByText(/1 row block approval · 2 with recommended fixes only/),
+            screen.getByText(/1 with required fixes · 2 with recommended fixes/),
         ).toBeInTheDocument();
         expect(
-            screen.getByText(/will be made automatically on 2 rows/),
+            screen.getByText(/fixed automatically \(2 automatic fixes\)/),
         ).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: /View fixes/ }));
+        fireEvent.click(screen.getByRole('button', { name: /View automatic fixes/ }));
         expect(onViewFixes).toHaveBeenCalled();
         expect(screen.getByRole('progressbar')).toHaveAttribute('value', '0');
     });
@@ -87,16 +87,16 @@ describe('ReadinessTracker', () => {
             />,
         );
         expect(
-            screen.getByText('Review done: submit your list for human review'),
+            screen.getByText('Review done: submit your list for manual review'),
         ).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Hide fixes/ })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Hide automatic fixes/ })).toBeInTheDocument();
         rerender(
             <ReadinessTracker
                 summary={{ ...SUMMARY, rows_pending_review: 0, changes_unapplied: 0 }}
                 applied
             />,
         );
-        expect(screen.getByText('Submitted for human review')).toBeInTheDocument();
+        expect(screen.getByText('Submitted for manual review')).toBeInTheDocument();
         expect(screen.getByText(/3 rows reviewed/)).toBeInTheDocument();
     });
 });
@@ -170,14 +170,14 @@ describe('row components', () => {
         render(<Issue suggestion={fixedRow} canAct busy={false} onDecide={onDecide} />);
         fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
         expect(onDecide).toHaveBeenLastCalledWith('PENDING');
-        fireEvent.click(screen.getByRole('button', { name: 'Leave as uploaded' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Keep original' }));
         expect(onDecide).toHaveBeenLastCalledWith('REJECTED');
     });
 
     test('an undecided flagged row has nothing to undo', () => {
         render(<Issue suggestion={SUGGESTIONS.poBox} canAct busy={false} onDecide={jest.fn()} />);
         expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
-        expect(screen.getByRole('button', { name: 'Leave as uploaded' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Keep original' })).toBeInTheDocument();
     });
 });
 
@@ -203,10 +203,10 @@ describe('GroupTabs', () => {
 
     test('splits the chips into blockers and recommended fixes', () => {
         renderTabs();
-        expect(screen.getByText('Needs you (3 rows)')).toBeInTheDocument();
-        expect(screen.getByText('Blocks approval')).toBeInTheDocument();
-        expect(screen.getByText('Recommended')).toBeInTheDocument();
-        expect(screen.queryByText('Automatic')).toBeNull();
+        expect(screen.getByText('Needs review (3)')).toBeInTheDocument();
+        expect(screen.getByText('Required fixes')).toBeInTheDocument();
+        expect(screen.getByText('Recommended fixes')).toBeInTheDocument();
+        expect(screen.queryByText('Automatic fixes')).toBeNull();
         // the Needs-you tab lists every row with something to decide
         expect(screen.getByText('Row 2')).toBeInTheDocument();
         expect(screen.getByText('Row 3')).toBeInTheDocument();
@@ -215,14 +215,14 @@ describe('GroupTabs', () => {
 
     test('a selected type shows its guidance and acts on the whole type', () => {
         const { decideGroup } = renderTabs();
-        fireEvent.click(screen.getByRole('tab', { name: /address is a PO Box/ }));
-        expect(screen.getByText('Blocks approval', { selector: 'span[data-tier]' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('tab', { name: /Address is a PO Box/ }));
+        expect(screen.getByText('Required fix', { selector: 'span[data-tier]' })).toBeInTheDocument();
         expect(screen.getByText(/PO Box in the address/)).toBeInTheDocument();
-        expect(screen.getByText('Why it matters')).toBeInTheDocument();
+        expect(screen.getByText('Why this matters')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: /^Remove 1 row$/ }));
         expect(decideGroup).toHaveBeenCalledWith('ISSUE:address_po_box:address', 'REMOVED', false);
         fireEvent.click(screen.getByRole('tab', { name: /same name at several addresses/ }));
-        expect(screen.getByText('Worth a look')).toBeInTheDocument();
+        expect(screen.getByText('Recommended fix', { selector: 'span[data-tier]' })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('tab', { name: /worker count formatted/ }));
         fireEvent.click(screen.getByRole('button', { name: /^Accept all 1$/ }));
         expect(decideGroup).toHaveBeenLastCalledWith(
@@ -232,11 +232,11 @@ describe('GroupTabs', () => {
 
     test('the Needs-you tab accepts every suggested fix or keeps everything', () => {
         const { decideGroup } = renderTabs();
-        fireEvent.click(screen.getByRole('button', { name: /Accept all 1 suggested fix/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Accept all 1 fix/ }));
         expect(decideGroup).toHaveBeenCalledWith(
             ['CORRECTION:workers_format:number_of_workers'], 'ACCEPTED', false,
         );
-        fireEvent.click(screen.getByRole('button', { name: /Keep everything as uploaded/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Keep all original values/ }));
         const [keys, decision] = decideGroup.mock.calls[1];
         expect(keys).toHaveLength(3);
         expect(decision).toBe('REJECTED');
@@ -246,7 +246,7 @@ describe('GroupTabs', () => {
         const { decide } = renderTabs();
         fireEvent.click(screen.getByLabelText('Select all rows shown'));
         expect(screen.getByText('3 rows selected:')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: /Keep as uploaded/ }));
+        fireEvent.click(screen.getByRole('button', { name: /^Keep original values$/ }));
         expect(decide).toHaveBeenCalledTimes(1);
         const sent = decide.mock.calls[0][0];
         expect(sent.map(d => d.decision)).toEqual(['REJECTED', 'REJECTED', 'REJECTED']);
@@ -258,11 +258,11 @@ describe('GroupTabs', () => {
 
     test('the automatic row opens from the tracker and can be hidden', () => {
         const { onShowAuto } = renderTabs({ showAuto: true });
-        expect(screen.getByText('Automatic')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('tab', { name: 'All automatic (2 rows)' }));
+        expect(screen.getByText('Automatic fixes')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('tab', { name: 'All automatic fixes (2)' }));
         expect(screen.getByText('Row 4')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('tab', { name: /country converted/ }));
-        expect(screen.getByText('Done automatically')).toBeInTheDocument();
+        expect(screen.getByText('Automatic fix', { selector: 'span[data-tier]' })).toBeInTheDocument();
         expect(screen.getByText('What was done')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Hide' }));
         expect(onShowAuto).toHaveBeenCalledWith(false);

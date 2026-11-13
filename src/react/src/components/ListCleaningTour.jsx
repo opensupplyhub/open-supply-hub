@@ -25,44 +25,45 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
         text:
             'Your review is one step of the upload: after you submit, a ' +
             'human moderator still checks the list before it goes live. ' +
-            'This bar counts the rows that still need you. It fills as ' +
+            'This bar counts the rows that still need your review. It fills as ' +
             'you work through them, and the next steps show how to make ' +
             'those decisions here, with no need to re-upload.',
     }),
     Object.freeze({
         anchor: 'automatic',
-        title: 'Fixed for you',
+        title: 'Automatic fixes',
         text:
-            'Formatting that needs no judgment, like country names and ' +
-            'worker counts, is ready to go on when you submit. View ' +
-            'fixes shows each type, and you can turn one off if we got ' +
-            'it wrong.',
+            'Formatting issues that needed no input from you, like country ' +
+            'codes and worker counts, were fixed automatically and go on ' +
+            'when you submit. View automatic fixes shows each type, and ' +
+            'you can undo one if we got it wrong.',
     }),
     Object.freeze({
         anchor: 'chips',
-        title: 'Blockers first, then the rest',
+        title: 'Required fixes first, then recommended',
         text:
             'The same mistake usually repeats through a file, so rows are ' +
-            'grouped by type. The top row is what blocks approval, such ' +
-            'as personal information or a PO Box; the next is recommended ' +
-            'fixes that help but will not stop the list. Pick a chip to ' +
-            'see why it matters and just those rows.',
+            'grouped by type. Required fixes come first: they must be made ' +
+            'before your list can be approved, such as personal ' +
+            'information or a PO Box. Recommended fixes improve your data ' +
+            'but will not stop approval. Pick a chip to see why it matters ' +
+            'and just those rows.',
     }),
     Object.freeze({
         anchor: 'rows',
         title: 'Decide by type or row by row',
         text:
-            'Accept or keep every suggested fix at once, or pick a type ' +
+            'Accept or keep every recommended fix at once, or pick a type ' +
             'to accept, keep or remove all of its rows in one go. Rows ' +
             'you fix or remove one by one keep your decision.',
     }),
     Object.freeze({
         anchor: 'apply',
-        title: 'Submit when you are done',
+        title: 'Apply and submit when you are done',
         text:
-            'One click submits the list with every decision you made ' +
-            'here, and you can download the fixed list first. This is ' +
-            'the one submission: after it, or once the hour is up, ' +
+            'One click applies every decision you made here and submits ' +
+            'the list, and you can download the current list first. This ' +
+            'is the one submission: after it, or once the hour is up, ' +
             'nothing changes and a human moderator takes over.',
     }),
 ]);

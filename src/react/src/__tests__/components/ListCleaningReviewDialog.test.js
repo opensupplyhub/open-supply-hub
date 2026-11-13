@@ -80,17 +80,17 @@ describe('ListCleaningReviewDialog', () => {
 
     test('the review step shows the journey, the tracker, the tiers and the one submission', () => {
         renderDialog(reviewData());
-        expect(screen.getByText('Submitted for review')).toBeInTheDocument();
-        expect(screen.getByText('Human moderation')).toBeInTheDocument();
+        expect(screen.getByText('Review issues')).toBeInTheDocument();
+        expect(screen.getByText('Submit for manual review')).toBeInTheDocument();
         expect(screen.getByText(/Submit within 30 min/)).toBeInTheDocument();
         // the walkthrough opens with the review
         expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
         closeTour();
         expect(screen.getByRole('button', { name: /Show me around/ })).toBeInTheDocument();
-        expect(screen.getByText(/A few changes would make your list/)).toBeInTheDocument();
+        expect(screen.getByText(/A few issues in your list need your review/)).toBeInTheDocument();
         expect(screen.getByText('Your review is 0% done')).toBeInTheDocument();
-        expect(screen.getByText('Needs you (3 rows)')).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /Submit list with 2 changes/ })).toBeInTheDocument();
+        expect(screen.getByText('Needs review (3)')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Apply 2 changes and submit/ })).toBeInTheDocument();
         expect(recordFacilityListCleaningEvent).toHaveBeenCalledWith(
             42, 'opened', expect.objectContaining({ seconds_left: 1800 }),
         );
@@ -116,7 +116,7 @@ describe('ListCleaningReviewDialog', () => {
     test('a user who has closed the walkthrough before starts without it', () => {
         renderDialog(reviewData({ tour_seen: true }));
         expect(screen.queryByText('Where you are in the upload')).toBeNull();
-        expect(screen.getByText(/A few changes would make your list/)).toBeInTheDocument();
+        expect(screen.getByText(/A few issues in your list need your review/)).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: /Show me around/ }));
         expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
         closeTour();
@@ -128,14 +128,14 @@ describe('ListCleaningReviewDialog', () => {
     test('decisions go through the actions with the list id', () => {
         renderDialog(reviewData());
         closeTour();
-        fireEvent.click(screen.getByRole('button', { name: /Accept all 1 suggested fix/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Accept all 1 fix/ }));
         expect(submitFacilityListCleaningGroupDecisions).toHaveBeenCalledWith(42, [
             { key: 'CORRECTION:workers_format:number_of_workers', decision: 'ACCEPTED' },
         ]);
-        fireEvent.click(screen.getByRole('tab', { name: /address is a PO Box/ }));
+        fireEvent.click(screen.getByRole('tab', { name: /Address is a PO Box/ }));
         fireEvent.click(screen.getByRole('button', { name: /^Remove 1 row$/ }));
         fireEvent.click(screen.getByLabelText('Select row 3'));
-        fireEvent.click(screen.getByRole('button', { name: /Keep as uploaded/ }));
+        fireEvent.click(screen.getByRole('button', { name: /^Keep original values$/ }));
         expect(submitFacilityListCleaningDecisions).toHaveBeenCalledWith(42, [
             { id: 3, decision: 'REJECTED' },
         ]);
@@ -144,15 +144,15 @@ describe('ListCleaningReviewDialog', () => {
     test('submitting as uploaded warns while anything is still flagged', () => {
         renderDialog(reviewData());
         closeTour();
-        fireEvent.click(screen.getByRole('button', { name: /Submit as uploaded instead/ }));
-        expect(screen.getByText('Submit without any changes?')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: /^Go back$/ }));
-        expect(screen.queryByText('Submit without any changes?')).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: /Continue with no changes/ }));
+        expect(screen.getByText('We may not be able to approve your list')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /Go back and fix/ }));
+        expect(screen.queryByText('We may not be able to approve your list')).toBeNull();
         expect(applyFacilityListCleaning).not.toHaveBeenCalled();
         // the closing warning briefly hides the rest of the page from
         // the accessibility tree, so find the button by its text
-        fireEvent.click(screen.getByText('Submit as uploaded instead'));
-        fireEvent.click(screen.getByRole('button', { name: /Submit without changes/ }));
+        fireEvent.click(screen.getByText('Continue with no changes'));
+        fireEvent.click(screen.getByRole('button', { name: /Continue anyway/ }));
         expect(applyFacilityListCleaning).toHaveBeenCalledWith(42, { asUploaded: true });
     });
 
@@ -160,18 +160,18 @@ describe('ListCleaningReviewDialog', () => {
         // 1 flagged row of 6 is over the 15% share
         renderDialog(reviewData());
         closeTour();
-        fireEvent.click(screen.getByRole('button', { name: /Submit list with 2 changes/ }));
-        expect(screen.getByText(/1 row still has a problem that blocks approval/)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: /Apply 2 changes and submit/ }));
+        expect(screen.getByText(/1 row still has a required fix/)).toBeInTheDocument();
         expect(screen.getByText(/That is 17% of your list/)).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: /Submit anyway/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Continue anyway/ }));
         expect(applyFacilityListCleaning).toHaveBeenCalledWith(42, {});
     });
 
     test('a safe submission goes straight through', () => {
         renderDialog(reviewData({ summary: { rows_flagged_unresolved: 0, rows_total: 500 } }));
         closeTour();
-        fireEvent.click(screen.getByRole('button', { name: /Submit list with 2 changes/ }));
-        expect(screen.queryByText(/blocks approval$/)).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: /Apply 2 changes and submit/ }));
+        expect(screen.queryByText(/still has a required fix/)).toBeNull();
         expect(applyFacilityListCleaning).toHaveBeenCalledWith(42, {});
     });
 
@@ -190,10 +190,13 @@ describe('ListCleaningReviewDialog', () => {
             reviewData({ summary: { rows_removed: 1, rows_flagged_unresolved: 1 } }),
             { lastApplied: { applied: 2, reverted: 0 } },
         );
-        expect(screen.getByText('Your list has been submitted for human review')).toBeInTheDocument();
-        expect(screen.getByText(/2 changes were applied to your list, including 1 row removed/)).toBeInTheDocument();
-        expect(screen.getByText(/1 row still has a flagged problem/)).toBeInTheDocument();
-        expect(screen.getByText(/15 business days, or 5 business days for paid accounts/)).toBeInTheDocument();
+        expect(screen.getByText('Your list has been submitted for review')).toBeInTheDocument();
+        expect(screen.getByText(/2 fixes were applied to your list, including 1 row removed/)).toBeInTheDocument();
+        expect(screen.getByText(/1 row still has a required fix/)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'standard processing times' })).toHaveAttribute(
+            'href',
+            'https://info.opensupplyhub.org/resources/data-processing-timelines',
+        );
         expect(screen.getByRole('button', { name: /Go to my list/ })).toBeInTheDocument();
     });
 

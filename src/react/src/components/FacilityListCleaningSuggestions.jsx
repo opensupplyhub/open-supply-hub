@@ -64,10 +64,24 @@ export const tierOf = group => {
     return TIER.RECOMMENDED;
 };
 
+// The badge on one issue, the heading over a tier of them, and the
+// one-line reason under that heading.
 export const TIER_LABELS = Object.freeze({
-    [TIER.BLOCKS]: 'Blocks approval',
-    [TIER.RECOMMENDED]: 'Recommended',
-    [TIER.AUTO]: 'Done automatically',
+    [TIER.BLOCKS]: 'Required fix',
+    [TIER.RECOMMENDED]: 'Recommended fix',
+    [TIER.AUTO]: 'Automatic fix',
+});
+
+export const TIER_HEADINGS = Object.freeze({
+    [TIER.BLOCKS]: 'Required fixes',
+    [TIER.RECOMMENDED]: 'Recommended fixes',
+    [TIER.AUTO]: 'Automatic fixes',
+});
+
+export const TIER_NOTES = Object.freeze({
+    [TIER.BLOCKS]: 'Must be updated before your list can be approved',
+    [TIER.RECOMMENDED]: "improve data quality, won't stop approval",
+    [TIER.AUTO]: 'made for you; undo any that are wrong',
 });
 
 export const FIELD_LABELS = Object.freeze({
@@ -90,7 +104,7 @@ export const CODE_LABELS = Object.freeze({
     separators: 'separators standardised',
     workers_format: 'worker count formatted as a number',
     casing: 'capitalisation fixed',
-    country_in_address: 'country name removed from the end of the address',
+    country_in_address: 'country name removed from the end',
     name_in_address: 'facility name removed from the address',
     business_name_in_address: 'other business name removed from the address',
     duplicate: 'duplicate of another row',
@@ -101,17 +115,24 @@ export const CODE_LABELS = Object.freeze({
     missing_name: 'facility name is missing',
     missing_address: 'address is missing',
     too_long: 'value is too long',
-    address_po_box: 'address is a PO Box, not a street address',
+    address_po_box: 'PO Box, not a street address',
     address_too_few: 'address has too little detail',
     name_incomplete: 'name looks incomplete',
     repeated_names: 'same name at several addresses',
     empty_row: 'blank row',
 });
 
-// What a contributor can do about each must-fix flag, in their words.
+// What a contributor can do about each required fix, in their words.
+// An entry is one message, or one per field with a default.
 const CODE_HELP = Object.freeze({
-    pii:
-        'OS Hub does not publish personal names, email addresses or phone numbers. Edit the row to remove the personal details, or remove the row.',
+    pii: {
+        name:
+            "This name includes personal information. OS Hub is public, so we can't publish it. Edit the value so only the facility name is left, or remove the row.",
+        parent_company:
+            "This field includes personal information. OS Hub is public, so we can't publish it. Edit the value so only the parent company name is left, or remove the row.",
+        default:
+            "This value includes personal information. OS Hub is public, so we can't publish it. Edit the value to remove the personal details, or remove the row.",
+    },
     missing_country:
         'Every facility needs a country. Type the country, or remove the row.',
     unknown_country:
@@ -123,10 +144,15 @@ const CODE_HELP = Object.freeze({
     too_long:
         'Shorten the value to 200 characters or fewer, or remove the row.',
     address_po_box:
-        'A PO Box cannot be placed on the map. Type the street address, or remove the row.',
+        "A PO Box can't be placed on the map. Type the street address of the facility, or remove the row.",
 });
 
-export const codeHelp = code => CODE_HELP[(code || '').split('+')[0]] || '';
+export const codeHelp = (code, field) => {
+    const help = CODE_HELP[(code || '').split('+')[0]];
+    if (!help) return '';
+    if (typeof help === 'string') return help;
+    return help[field] || help.default;
+};
 /*
  * The guidance shown under a selected error type: what is wrong, why it
  * matters for everyone's data, and how to fix it. Wording follows the
@@ -141,7 +167,8 @@ const CODE_GUIDE = Object.freeze({
         title: 'PO Box in the address',
         problem:
             'The address appears to be a PO Box rather than the place where the facility is.',
-        why: GEOCODE_WHY,
+        why:
+            "We place every facility on the map from its street address. A PO Box points to a post office, not the facility, so it can't be mapped or matched with other records of the same facility.",
         fix: [
             'Replace the PO Box with the street address of the facility: street number (or cross streets, neighbourhood or industrial zone), town or city, state or province, and postal code if there is one.',
             'If you only have a PO Box, remove the row rather than publish a location that cannot be mapped.',
@@ -264,7 +291,11 @@ const CODE_GUIDE = Object.freeze({
         problem:
             "This looks like an individual's name or personal contact details rather than a business.",
         why:
-            "OS Hub does not publish individual people's names, email addresses or phone numbers, because doing so risks violating their privacy. Rows that contain them cannot be approved.",
+            "Everything on OS Hub is public. To protect people's privacy, we can't publish names, phone numbers or email addresses of individuals.",
+        whyByField: {
+            parent_company:
+                'Everything on OS Hub is public. The parent company field should name a company, not a person, and must not include contact details.',
+        },
         fix: [
             'Replace the personal details with the business name, or remove them from the row.',
             'If the value really is the business name, keep it and send confirming documentation to data@opensupplyhub.org.',
@@ -363,14 +394,14 @@ const CODE_GUIDE = Object.freeze({
         title: 'Extra spaces removed',
         problem: 'The value had leading, trailing or doubled spaces.',
         why:
-            "Stray spaces stop values matching other contributors' spelling of the same name or address.",
+            'Extra spaces can make the same facility look like two different ones. Removing them helps us match your facility to existing records instead of creating a duplicate.',
         fix: ['Nothing to do; the spaces have been trimmed for you.'],
     },
     casing: {
         title: 'Capitalisation fixed',
         problem: 'The name was in all capitals.',
         why:
-            "Names are published as written; consistent capitalisation reads better and matches other contributors' entries.",
+            'Names in all capitals are harder to read. Consistent capitalisation makes facility profiles easier to read and search for everyone using OS Hub.',
         fix: [
             'Nothing to do; the name has been recased for you. Keep the original if the company writes it in capitals.',
         ],
@@ -387,7 +418,7 @@ const CODE_GUIDE = Object.freeze({
         problem:
             'The address ended with the country name, which is already in the country column.',
         why:
-            'The geocoder works best with the address alone; the country is supplied separately.',
+            'The country already has its own column. Repeating it in the address can make the facility harder to place on the map accurately.',
         fix: [
             'Accept the trimmed address, or keep the original if the country is part of a place name.',
         ],
@@ -562,6 +593,11 @@ export const styles = Object.freeze({
     }),
     error: Object.freeze({
         color: 'red',
+    }),
+    requiredWarning: Object.freeze({
+        color: '#B3261E',
+        fontSize: '0.85rem',
+        marginTop: '4px',
     }),
     headerIssues: Object.freeze({
         margin: '4px 0 12px 0',
@@ -768,23 +804,20 @@ const trackerTitles = ({ ready, applied, percent, changesUnapplied }) => {
     }
     if (changesUnapplied > 0) {
         return {
-            title: 'Review done: submit your list for human review',
+            title: 'Review done: submit your list for manual review',
             shortTitle: 'Review done: press Submit',
         };
     }
     return {
-        title: applied ? 'Submitted for human review' : 'Review done',
+        title: applied ? 'Submitted for manual review' : 'Review done',
         shortTitle: 'Review done',
     };
 };
 
 const pendingSplit = (blocking, recommended) => {
     const parts = [];
-    if (blocking > 0) parts.push(`${plural(blocking, 'row')} block approval`);
-    if (recommended > 0) {
-        const only = blocking > 0 ? ' only' : '';
-        parts.push(`${recommended} with recommended fixes${only}`);
-    }
+    if (blocking > 0) parts.push(`${blocking} with required fixes`);
+    if (recommended > 0) parts.push(`${recommended} with recommended fixes`);
     return parts.length ? `: ${parts.join(' · ')}` : '';
 };
 
@@ -870,7 +903,8 @@ export const ReadinessTracker = ({
         changesUnapplied: summary.changes_unapplied,
     });
     const colour = ready ? GREEN : PURPLE;
-    const blockingNote = blocking > 0 ? ` · ${blocking} block approval` : '';
+    const blockingNote =
+        blocking > 0 ? ` · ${blocking} with required fixes` : '';
     const compactMeta = ready
         ? `${plural(total, 'row')} reviewed`
         : `${plural(pending, 'row')} to go${blockingNote}`;
@@ -941,15 +975,12 @@ export const ReadinessTracker = ({
                     {auto > 0 && (
                         <div style={trackerStyles.figure} data-tour="automatic">
                             <span>
-                                <b>
-                                    {plural(
-                                        auto,
-                                        'formatting fix',
-                                        'formatting fixes',
-                                    )}
-                                </b>{' '}
-                                will be made automatically on{' '}
-                                {plural(autoRows, 'row')} when you submit.
+                                <b>{plural(autoRows, 'row')}</b>{' '}
+                                {`fixed automatically (${plural(
+                                    auto,
+                                    'automatic fix',
+                                    'automatic fixes',
+                                )}). You can undo any of them.`}
                             </span>
                             {onViewFixes && (
                                 <Button
@@ -958,7 +989,9 @@ export const ReadinessTracker = ({
                                     style={trackerStyles.viewFixes}
                                     onClick={onViewFixes}
                                 >
-                                    {showingAuto ? 'Hide fixes' : 'View fixes'}
+                                    {showingAuto
+                                        ? 'Hide automatic fixes'
+                                        : 'View automatic fixes'}
                                 </Button>
                             )}
                         </div>
@@ -998,7 +1031,7 @@ export const Correction = ({ suggestion, canAct, busy, onDecide }) => {
         switch (suggestion.decision) {
             case DECISION.ACCEPTED:
                 if (suggestion.applied) return 'Applied';
-                return isAuto(suggestion) ? 'Accepted (automatic)' : 'Accepted';
+                return isAuto(suggestion) ? 'Fixed automatically' : 'Accepted';
             case DECISION.EDITED:
                 return suggestion.applied ? 'Applied (edited)' : 'Edited';
             case DECISION.REJECTED:
@@ -1006,13 +1039,15 @@ export const Correction = ({ suggestion, canAct, busy, onDecide }) => {
             case DECISION.REMOVED:
                 return 'Row will be removed';
             default:
-                return 'Needs your decision';
+                return 'Needs review';
         }
     })();
 
     return (
         <div style={styles.suggestion}>
-            <Tag style={styles.correctionTag}>Suggested fix</Tag>
+            <Tag style={styles.correctionTag}>
+                {isAuto(suggestion) ? 'Automatic fix' : 'Recommended fix'}
+            </Tag>
             <div style={styles.valueBlock}>
                 <div style={styles.fieldName}>
                     {fieldLabel(suggestion.field)}:{' '}
@@ -1107,8 +1142,19 @@ Correction.propTypes = {
     onDecide: func.isRequired,
 };
 
+const issueTag = suggestion => {
+    if (suggestion.severity === SEVERITY.INTERNAL_NOTE) return 'Moderator note';
+    if (suggestion.severity === SEVERITY.MUST_FIX) return 'Required fix';
+    return 'Recommended fix';
+};
+
 export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
     const internal = suggestion.severity === SEVERITY.INTERNAL_NOTE;
+    const required = suggestion.severity === SEVERITY.MUST_FIX;
+    // The row still needs the fix: not fixed in place and not removed.
+    const unresolved =
+        suggestion.decision !== DECISION.EDITED &&
+        suggestion.decision !== DECISION.REMOVED;
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState(
         suggestion.decided_value || suggestion.original_value || '',
@@ -1123,16 +1169,16 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
             case DECISION.REMOVED:
                 return 'Row will be removed';
             case DECISION.REJECTED:
-                return 'Left as uploaded';
+                return 'Original kept';
             default:
-                return internal ? '' : 'Needs your attention';
+                return internal ? '' : 'Needs review';
         }
     })();
 
     return (
         <div style={styles.suggestion}>
             <Tag style={internal ? styles.internalTag : styles.mustFixTag}>
-                {internal ? 'Moderator note' : 'Needs your attention'}
+                {issueTag(suggestion)}
             </Tag>
             <div style={styles.valueBlock}>
                 <div style={styles.fieldName}>
@@ -1167,8 +1213,16 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
                     </div>
                 )}
                 <div style={styles.muted}>{suggestion.note}</div>
-                {!internal && codeHelp(suggestion.code) && (
-                    <div style={styles.muted}>{codeHelp(suggestion.code)}</div>
+                {!internal && codeHelp(suggestion.code, suggestion.field) && (
+                    <div style={styles.muted}>
+                        {codeHelp(suggestion.code, suggestion.field)}
+                    </div>
+                )}
+                {required && unresolved && (
+                    <div style={styles.requiredWarning}>
+                        Without this fix, the moderator won&rsquo;t be able to
+                        approve this row.
+                    </div>
                 )}
             </div>
             <div style={styles.decisionBlock}>
@@ -1223,7 +1277,7 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
                                 disabled={busy}
                                 onClick={() => onDecide(DECISION.REJECTED)}
                             >
-                                Leave as uploaded
+                                Keep original
                             </Button>
                         )}
                         {suggestion.decision !== DECISION.PENDING && (
@@ -1265,12 +1319,12 @@ export const Removal = ({ suggestion, canAct, busy, onDecide }) => {
             case DECISION.REMOVED:
                 return 'Will be removed';
             default:
-                return 'Needs your decision';
+                return 'Needs review';
         }
     })();
     return (
         <div style={styles.suggestion}>
-            <Tag style={styles.removalTag}>Suggested removal</Tag>
+            <Tag style={styles.removalTag}>Required fix</Tag>
             <div style={styles.valueBlock}>
                 <div style={styles.fieldName}>
                     {describeCode(suggestion.code)}
@@ -1438,6 +1492,26 @@ const groupTitle = group => {
     return `${fieldLabel(group.field)}: ${describeCode(group.code)}`;
 };
 
+/*
+ * The filter chips name the issue the way the copy guide does ("Address
+ * is a PO Box"); the row label (groupTitle) says what is wrong with the
+ * value ("Address: PO Box, not a street address").
+ */
+const CHIP_LABELS = Object.freeze({
+    address_po_box: () => 'Address is a PO Box',
+    pii: field => `Personal information in ${fieldLabel(field).toLowerCase()}`,
+    whitespace: field => `Extra spaces in ${fieldLabel(field).toLowerCase()}`,
+    casing: field => `${fieldLabel(field)} capitalisation`,
+    country_in_address: () => 'Country repeated in address',
+});
+
+export const chipTitle = group => {
+    const make =
+        group.kind !== KIND.REMOVAL &&
+        CHIP_LABELS[(group.code || '').split('+')[0]];
+    return make ? make(group.field) : groupTitle(group);
+};
+
 const groupStatus = group => {
     const parts = [];
     const fixed = group.fixed || 0;
@@ -1459,7 +1533,8 @@ const groupStatus = group => {
     }
     if (group.edited) parts.push(`${group.edited} fixed by you`);
     if (group.removed) parts.push(`${plural(group.removed, 'row')} to remove`);
-    if (group.rejected) parts.push(`${group.rejected} kept as uploaded`);
+    if (group.rejected)
+        parts.push(`${plural(group.rejected, 'original')} kept`);
     if (group.applied) parts.push(`${group.applied} applied`);
     return parts.join(' · ');
 };
@@ -1476,10 +1551,15 @@ const chipStyles = Object.freeze({
         marginBottom: '12px',
     }),
     tier: Object.freeze({
-        display: 'grid',
-        gridTemplateColumns: '118px 1fr',
-        alignItems: 'center',
-        gap: '8px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+    }),
+    tierHead: Object.freeze({
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'baseline',
+        gap: '4px 8px',
     }),
     tierChips: Object.freeze({
         display: 'flex',
@@ -1493,7 +1573,10 @@ const chipStyles = Object.freeze({
         fontWeight: 700,
         letterSpacing: '0.04em',
         textTransform: 'uppercase',
-        textAlign: 'right',
+    }),
+    tierNote: Object.freeze({
+        fontSize: '0.8rem',
+        color: 'rgba(0, 0, 0, 0.6)',
     }),
     dot: Object.freeze({
         display: 'inline-block',
@@ -1533,7 +1616,7 @@ const chipLabel = group => (
         <span
             style={{ ...chipStyles.dot, background: groupKindColour(group) }}
         />
-        {groupTitle(group)} ({group.count})
+        {chipTitle(group)} ({group.count})
     </span>
 );
 
@@ -1611,12 +1694,23 @@ const TierBadge = ({ tier, advisory }) => (
         }}
         data-tier={tier}
     >
-        {advisory ? 'Worth a look' : TIER_LABELS[tier]}
+        {TIER_LABELS[tier]}
     </span>
 );
 
 TierBadge.defaultProps = { advisory: false };
 TierBadge.propTypes = { tier: string.isRequired, advisory: bool };
+
+const TierHeading = ({ tier }) => (
+    <div style={chipStyles.tierHead}>
+        <span style={{ ...chipStyles.tierLabel, color: TIER_COLOURS[tier] }}>
+            {TIER_HEADINGS[tier]}
+        </span>
+        <span style={chipStyles.tierNote}>· {TIER_NOTES[tier]}</span>
+    </div>
+);
+
+TierHeading.propTypes = { tier: string.isRequired };
 
 /*
  * Why this type of problem matters and what to do about it, in the
@@ -1642,8 +1736,8 @@ const ErrorGuide = ({ group }) => {
                 </span>
             </div>
             <div>
-                <div style={guideStyles.label}>Why it matters</div>
-                <div>{guide.why}</div>
+                <div style={guideStyles.label}>Why this matters</div>
+                <div>{guide.whyByField?.[group.field] || guide.why}</div>
             </div>
             <div>
                 <div style={guideStyles.label}>
@@ -1704,14 +1798,14 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
     return (
         <div style={chipStyles.header}>
             <Typography variant="subheading">
-                {groupTitle(group)}: {plural(group.count, 'row')}
+                {chipTitle(group)}: {plural(group.count, 'row')}
             </Typography>
             {!internal && <ErrorGuide group={group} />}
             {group.auto && (
                 <div style={styles.muted}>
-                    Will be applied automatically when you submit. Keep all
-                    originals turns it off for every row of this type; use a
-                    row&rsquo;s own buttons for one.
+                    These fixes were made for you and are applied when you
+                    submit. Undo turns them off for every row of this type; use
+                    a row&rsquo;s own buttons for one.
                 </div>
             )}
             <div style={styles.decisionText}>{groupStatus(group)}</div>
@@ -1734,7 +1828,9 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                                 disabled={busy || allRejected}
                                 onClick={() => onGroup(DECISION.REJECTED)}
                             >
-                                Keep {others} originals
+                                {group.auto
+                                    ? `Undo ${others} fixes`
+                                    : `Keep ${others} original values`}
                             </Button>
                         </>
                     )}
@@ -1763,7 +1859,7 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                             >
                                 {isRemoval
                                     ? `Keep ${otherRows}`
-                                    : `Leave ${others} as uploaded`}
+                                    : `Keep ${others} original values`}
                             </Button>
                         </>
                     )}
@@ -1772,8 +1868,8 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
                     )}
                     {isIssue && group.severity === SEVERITY.MUST_FIX && (
                         <span style={styles.muted}>
-                            Left as uploaded, a human moderator will remove
-                            these rows.
+                            Without these fixes, the moderator won&rsquo;t be
+                            able to approve these rows.
                         </span>
                     )}
                 </div>
@@ -1828,7 +1924,7 @@ const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
                     }
                 >
                     Accept {partial ? 'the other' : 'all'}{' '}
-                    {plural(fixCount, 'suggested fix', 'suggested fixes')}
+                    {plural(fixCount, 'fix', 'fixes')}
                 </Button>
                 <Button
                     size="small"
@@ -1842,11 +1938,11 @@ const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
                         )
                     }
                 >
-                    Keep {partial ? 'the rest' : 'everything'} as uploaded
+                    Keep {partial ? 'the other' : 'all'} original values
                 </Button>
                 <span style={styles.muted}>
                     {flagged > 0 &&
-                        'Flagged rows have nothing to accept: fix or remove them by type or by row. '}
+                        'Issues without a ready fix need a new value or the row removed, by type or by row. '}
                     Or pick a type above.
                 </span>
             </div>
@@ -1908,8 +2004,7 @@ const BulkBar = ({ rows, selected, busy, decide, onClear }) => {
                     disabled={busy}
                     onClick={() => send(fixes, DECISION.ACCEPTED)}
                 >
-                    Accept{' '}
-                    {plural(fixes.length, 'suggested fix', 'suggested fixes')}
+                    Accept {plural(fixes.length, 'fix', 'fixes')}
                 </Button>
             )}
             <Button
@@ -1918,7 +2013,7 @@ const BulkBar = ({ rows, selected, busy, decide, onClear }) => {
                 disabled={busy}
                 onClick={() => send(suggestions, DECISION.REJECTED)}
             >
-                Keep as uploaded
+                Keep original values
             </Button>
             <Button
                 size="small"
@@ -2021,33 +2116,22 @@ export const GroupTabs = ({
         <div>
             <div style={chipStyles.tiers} role="tablist" data-tour="chips">
                 <div style={chipStyles.tier}>
-                    <span style={chipStyles.tierLabel} />
                     <div style={chipStyles.tierChips}>
                         <Chip
-                            label={`Needs you (${plural(
-                                attentionRows,
-                                'row',
-                            )})`}
+                            label={`Needs review (${attentionRows})`}
                             onClick={() => select(ALL)}
                             {...chipProps(ALL, active)}
                         />
                         {!attention.length && (
                             <span style={styles.muted}>
-                                Nothing needs your decision.
+                                Nothing needs your review.
                             </span>
                         )}
                     </div>
                 </div>
                 {blockers.length > 0 && (
                     <div style={chipStyles.tier}>
-                        <span
-                            style={{
-                                ...chipStyles.tierLabel,
-                                color: TIER_COLOURS[TIER.BLOCKS],
-                            }}
-                        >
-                            {TIER_LABELS[TIER.BLOCKS]}
-                        </span>
+                        <TierHeading tier={TIER.BLOCKS} />
                         <div style={chipStyles.tierChips}>
                             {blockers.map(chip)}
                         </div>
@@ -2055,14 +2139,7 @@ export const GroupTabs = ({
                 )}
                 {recommended.length > 0 && (
                     <div style={chipStyles.tier}>
-                        <span
-                            style={{
-                                ...chipStyles.tierLabel,
-                                color: TIER_COLOURS[TIER.RECOMMENDED],
-                            }}
-                        >
-                            {TIER_LABELS[TIER.RECOMMENDED]}
-                        </span>
+                        <TierHeading tier={TIER.RECOMMENDED} />
                         <div style={chipStyles.tierChips}>
                             {recommended.map(chip)}
                         </div>
@@ -2070,13 +2147,10 @@ export const GroupTabs = ({
                 )}
                 {showAuto && automatic.length > 0 && (
                     <div style={chipStyles.tier} data-tour="automatic-row">
-                        <span style={chipStyles.tierLabel}>Automatic</span>
+                        <TierHeading tier={TIER.AUTO} />
                         <div style={chipStyles.tierChips}>
                             <Chip
-                                label={`All automatic (${plural(
-                                    autoRows,
-                                    'row',
-                                )})`}
+                                label={`All automatic fixes (${autoRows})`}
                                 onClick={() => select(AUTO)}
                                 {...chipProps(AUTO, active)}
                             />

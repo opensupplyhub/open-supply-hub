@@ -64,29 +64,25 @@ const countdown = seconds => {
 const POLL_INTERVAL_MS = 3000;
 const MAX_WAIT_MS = 3 * 60 * 1000;
 
-// The whole journey, so the review reads as one step of it: after the
-// contributor submits, a human moderator still checks the list before
-// it goes live.
+// The upload as four steps, so the review reads as one of them; the
+// note under the bar says a human moderator still checks the list after
+// the contributor submits.
 const STEPS = Object.freeze([
     'Upload file',
     'Automatic checks',
-    'Your review',
-    'Submitted for review',
-    'Human moderation',
-    'Live on OS Hub',
+    'Review issues',
+    'Submit for manual review',
 ]);
 
-// Published processing times, quoted on the done screen.
-const PROCESSING_DAYS = 15;
-const PROCESSING_DAYS_PAID = 5;
+// Published processing times, linked from the done screen.
+const PROCESSING_TIMES_URL =
+    'https://info.opensupplyhub.org/resources/data-processing-timelines';
 
 const STEP = Object.freeze({
     UPLOAD: 0,
     CHECKS: 1,
     REVIEW: 2,
     SUBMIT: 3,
-    MODERATION: 4,
-    LIVE: 5,
 });
 
 // Warn before a submission that leaves many rows a human moderator would
@@ -134,8 +130,8 @@ const styles = Object.freeze({
         fontWeight: 700,
         marginBottom: '4px',
     }),
-    nextList: Object.freeze({
-        margin: 0,
+    introList: Object.freeze({
+        margin: '8px 0',
         padding: '0 0 0 20px',
     }),
     doneList: Object.freeze({
@@ -211,14 +207,14 @@ const Checking = ({ timedOut, onContinue }) => (
                 : 'Checking your list for problems'}
         </Typography>
         <Typography>
-            Your file has been uploaded. We are looking for formatting fixes and
-            rows that need your attention before a human moderator reviews it.
-            This usually takes a few minutes.
+            Your file has been uploaded. We are checking every row for issues
+            that need your review before a human moderator sees it. This usually
+            takes a few minutes.
         </Typography>
         {timedOut && (
             <Typography>
                 This is taking longer than usual. You can continue to your list
-                now and the suggestions will appear there when they are ready.
+                now and the issues will appear there when they are ready.
             </Typography>
         )}
         <Button
@@ -269,19 +265,22 @@ Clean.propTypes = { onContinue: func.isRequired };
 const WhatHappensNext = () => (
     <div style={styles.next}>
         <Typography style={styles.nextTitle}>What happens next</Typography>
-        <ol style={styles.nextList}>
-            <li>
-                A member of our moderation team reviews your list by hand. Our
-                standard processing time is {PROCESSING_DAYS} business days, or{' '}
-                {PROCESSING_DAYS_PAID} business days for paid accounts.
-            </li>
-            <li>
-                If anything needs further changes, we will contact you at the
-                email address registered to this account and ask for a corrected
-                upload.
-            </li>
-            <li>Approved facilities go live on the OS Hub map.</li>
-        </ol>
+        <Typography>
+            A member of our moderation team will review your list manually
+            before it is published on OS Hub. See our{' '}
+            <a
+                href={PROCESSING_TIMES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                standard processing times
+            </a>
+            .
+        </Typography>
+        <Typography>
+            We&rsquo;ll email you at the address registered to this account when
+            your list is approved, or sooner if anything needs to change.
+        </Typography>
     </div>
 );
 
@@ -293,31 +292,29 @@ const Done = ({ listID, summary, lastApplied, asUploaded, onContinue }) => {
     return (
         <div style={styles.centred}>
             <Typography style={styles.heading}>
-                Your list has been submitted for human review
+                Your list has been submitted for review
             </Typography>
             <ul style={styles.doneList}>
                 {!asUploaded && lastApplied && (
                     <li>
                         {lastApplied.applied}{' '}
-                        {lastApplied.applied === 1
-                            ? 'change was'
-                            : 'changes were'}{' '}
-                        applied to your list{removedNote}. The original values
-                        are kept with your uploaded file.
+                        {lastApplied.applied === 1 ? 'fix was' : 'fixes were'}{' '}
+                        applied to your list{removedNote}. Your original values
+                        are still in the file you uploaded.
                     </li>
                 )}
                 {asUploaded && (
                     <li>
-                        It went exactly as uploaded; none of the suggested
-                        changes were made.
+                        It went exactly as uploaded; none of the fixes were
+                        applied.
                     </li>
                 )}
                 {flagged > 0 && (
                     <li>
                         {flagged}{' '}
                         {flagged === 1
-                            ? 'row still has a flagged problem'
-                            : 'rows still have flagged problems'}{' '}
+                            ? 'row still has a required fix'
+                            : 'rows still have required fixes'}{' '}
                         and went through as uploaded. The moderator will decide
                         on {flagged === 1 ? 'it' : 'them'}, and may ask you for
                         a corrected upload.
@@ -406,13 +403,12 @@ const SubmitWarning = ({ warn, summary, busy, onClose, onConfirm }) => (
                         id="list-cleaning-submit-warning"
                         style={styles.warnTitle}
                     >
-                        Submit without any changes?
+                        We may not be able to approve your list
                     </Typography>
                     <Typography>
-                        We may not be able to approve your list until the
-                        flagged errors are fixed. If you continue without
-                        changes, our team will probably contact you to request
-                        the fixes before your list can be published to OS Hub.
+                        If you continue without making the required changes, we
+                        may not be able to approve your list and publish your
+                        data to OS Hub.
                     </Typography>
                 </>
             ) : (
@@ -421,11 +417,9 @@ const SubmitWarning = ({ warn, summary, busy, onClose, onConfirm }) => (
                         id="list-cleaning-submit-warning"
                         style={styles.warnTitle}
                     >
-                        {summary.rows_flagged_unresolved}{' '}
                         {summary.rows_flagged_unresolved === 1
-                            ? 'row still has'
-                            : 'rows still have'}{' '}
-                        a problem that blocks approval
+                            ? '1 row still has a required fix'
+                            : `${summary.rows_flagged_unresolved} rows still have required fixes`}
                     </Typography>
                     <Typography>
                         That is{' '}
@@ -434,20 +428,21 @@ const SubmitWarning = ({ warn, summary, busy, onClose, onConfirm }) => (
                                 Math.max(1, summary.rows_total),
                         )}
                         % of your list: personal information, PO Box addresses,
-                        missing or unreadable details. A human moderator would
-                        have to remove those rows, and lists with this many are
-                        much less likely to be approved as a whole. Fixing or
-                        removing them here first takes a minute per type.
+                        missing or unreadable details. Without these fixes, the
+                        moderator won&rsquo;t be able to approve those rows, and
+                        lists with this many are much less likely to be approved
+                        as a whole. Fixing or removing them here first takes a
+                        minute per type.
                     </Typography>
                 </>
             )}
         </DialogContent>
         <DialogActions>
             <Button disabled={busy} onClick={onConfirm}>
-                {warn?.asUploaded ? 'Submit without changes' : 'Submit anyway'}
+                Continue anyway
             </Button>
             <Button variant="contained" color="primary" onClick={onClose}>
-                {warn?.asUploaded ? 'Go back' : 'Go back and fix them'}
+                Go back and fix
             </Button>
         </DialogActions>
     </Dialog>
@@ -486,19 +481,43 @@ const ReviewStep = ({ review }) => {
         tour,
         dismissTour,
     } = review;
-    const submitLabel =
-        summary.changes_unapplied > 0
-            ? `Submit list with ${plural(summary.changes_unapplied, 'change')}`
-            : 'Submit list as uploaded';
+    const submitLabel = `Apply ${plural(
+        summary.changes_unapplied || 0,
+        'change',
+    )} and submit`;
     return (
         <>
+            <Typography style={styles.muted}>
+                After you submit, a human moderator from our team reviews your
+                list before it is published.
+            </Typography>
             <Typography style={styles.heading}>
-                A few changes would make your list more likely to be approved
+                A few issues in your list need your review
             </Typography>
             <Typography>
-                Pick a type below to see its rows, then accept, fix or remove
-                them. Problems that block approval come first. You can submit
-                once, by {timeOfDay(run.review_until)}.
+                We ran automated checks on every row of your list and found some
+                issues that need your review before you submit.
+            </Typography>
+            <ul style={styles.introList}>
+                <li>
+                    Formatting issues that didn&rsquo;t need your input were
+                    fixed automatically. You can undo any of those fixes.
+                </li>
+                <li>
+                    Required fixes must be made before we can approve your list.
+                </li>
+                <li>
+                    Recommended fixes improve your data but won&rsquo;t stop
+                    approval.
+                </li>
+                <li>
+                    Accept a fix only if it is correct for that facility. We
+                    never change facility names or addresses automatically.
+                </li>
+            </ul>
+            <Typography>
+                Nothing changes on your list until you press Apply. You can
+                submit once, by {timeOfDay(run.review_until)}.
             </Typography>
             <ReadinessTracker
                 summary={summary}
@@ -534,7 +553,7 @@ const ReviewStep = ({ review }) => {
                         disabled={busy}
                         onClick={() => trySubmit(true)}
                     >
-                        Submit as uploaded instead
+                        Continue with no changes
                     </Button>
                 )}
                 <Button
@@ -546,12 +565,10 @@ const ReviewStep = ({ review }) => {
                     {submitLabel}
                 </Button>
                 <span style={styles.finalNote}>
-                    These are automated suggestions: accept a fix only if it is
-                    correct for that facility. Names and addresses are never
-                    changed automatically. This is your one submission; you can
-                    come back and review until {deadlineText(run.review_until)},
-                    after which the list goes to a human moderator with whatever
-                    you have decided by then.
+                    This is your one submission. You can come back and review
+                    until {deadlineText(run.review_until)}; after that, the list
+                    goes to a human moderator with whatever you have decided by
+                    then.
                 </span>
             </div>
             {tour && <ListCleaningTour onDone={dismissTour} />}
@@ -782,7 +799,7 @@ const ListCleaningReviewDialog = ({
     } else if (runStatus === RUN_STATUS.FAILED || !data || !run) {
         content = <Unavailable onContinue={onContinue} />;
     } else if (finished) {
-        activeStep = STEP.MODERATION;
+        activeStep = STEP.SUBMIT;
         content = (
             <Done
                 listID={listID}
@@ -793,10 +810,10 @@ const ListCleaningReviewDialog = ({
             />
         );
     } else if (nothingFound) {
-        activeStep = STEP.MODERATION;
+        activeStep = STEP.SUBMIT;
         content = <Clean onContinue={onContinue} />;
     } else if (!windowOpen) {
-        activeStep = STEP.MODERATION;
+        activeStep = STEP.SUBMIT;
         content = (
             <Closed run={run} summary={summary} onContinue={onContinue} />
         );
