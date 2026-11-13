@@ -94,6 +94,9 @@ PAGE_LEFT_AFTER_SECONDS = 10
 STUB_PASS = 'pass'
 STUB_TIMEOUT = 'timeout'
 STUB_NOT_PASS = 'not_pass'
+# The page is told the check is not available, and the "did not pass"
+# email is sent as it would be for a result that arrived too late.
+STUB_LATE_NOT_PASS = 'late_not_pass'
 # How long the stub pretends the pipeline takes.
 STUB_DELAY_SECONDS = 5
 
@@ -208,6 +211,12 @@ def _resolve_with_stub(
             FacilityClaimLiveCheckStatuses.NOT_PASSED,
             _stub_fixes(instruction),
         )
+    elif kind == STUB_LATE_NOT_PASS:
+        # The page gives up, then the result "arrives" and is emailed.
+        # The check stays UNAVAILABLE, which is what the page is shown;
+        # the email goes to the console in local development.
+        _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
+        _email_not_passed(None, check.claim, check, _stub_fixes(instruction))
     elif _timed_out(check):
         # `timeout`, and anything unrecognised, never answers.
         _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
@@ -320,19 +329,12 @@ def _page_is_waiting(check: FacilityClaimLiveCheck) -> bool:
     return waited < timedelta(seconds=PAGE_LEFT_AFTER_SECONDS)
 
 
-def _settle_from_review(request, claim: FacilityClaim, review: Dict) -> None:
-    check = _latest_check(claim)
-    if (check is None
-            or check.status != FacilityClaimLiveCheckStatuses.CHECKING):
-        return
-    fixes = _fixes_for(claim, review)
-    if not fixes:
-        _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
-        return
-    page_is_waiting = _page_is_waiting(check)
-    _finish(check, FacilityClaimLiveCheckStatuses.NOT_PASSED, fixes)
-    if page_is_waiting:
-        return
+def _email_not_passed(
+    request,
+    claim: FacilityClaim,
+    check: FacilityClaimLiveCheck,
+    fixes: List[str],
+) -> None:
     send_claim_live_check_not_passed_email(
         request,
         claim,
@@ -343,6 +345,36 @@ def _settle_from_review(request, claim: FacilityClaim, review: Dict) -> None:
     check.save(update_fields=['emailed_at', 'updated_at'])
 
 
+def _settle_from_review(request, claim: FacilityClaim, review: Dict) -> None:
+    '''
+    Settle the claim's newest check from the pipeline's review, and
+    email the claimant unless their page is still waiting to show it.
+
+    Two kinds of check take a result: one still CHECKING, and one that
+    already ended UNAVAILABLE, which is a check the page gave up on
+    (the pipeline often needs longer than the page waits). The second
+    is the common case for the email: the claimant was told the check
+    was not available and that an email would follow. A check that
+    has an answer, or that was already emailed, is left alone, so one
+    check never sends two emails.
+    '''
+    check = _latest_check(claim)
+    if check is None or check.emailed_at is not None:
+        return
+    waiting = check.status == FacilityClaimLiveCheckStatuses.CHECKING
+    gave_up = check.status == FacilityClaimLiveCheckStatuses.UNAVAILABLE
+    if not waiting and not gave_up:
+        return
+    fixes = _fixes_for(claim, review)
+    if not fixes:
+        _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
+        return
+    page_is_waiting = waiting and _page_is_waiting(check)
+    _finish(check, FacilityClaimLiveCheckStatuses.NOT_PASSED, fixes)
+    if not page_is_waiting:
+        _email_not_passed(request, claim, check, fixes)
+
+
 def record_live_check_review(
     request,
     claim: FacilityClaim,
@@ -351,17 +383,18 @@ def record_live_check_review(
 ) -> None:
     '''
     Called when an internal note is posted on a claim. If it is the
-    pipeline's review of a claim whose live check is still waiting, and
-    the pipeline held the claim, the check is settled here, at once,
-    rather than on the claimant's next poll. That is what lets the
-    result reach a claimant who has left the page: when their page has
-    stopped asking, they are emailed the preset fixes and a link back
+    pipeline's review of a claim whose live check is still waiting or
+    has already timed out, and the pipeline held the claim, the check
+    is settled here, at once, rather than on the claimant's next poll.
+    That is what lets the result reach a claimant whose page is no
+    longer showing it: when their page has stopped asking, or gave up
+    after its minute, they are emailed the preset fixes and a link back
     to the claim. A claimant whose page is still asking sees the result
     there and gets no email.
 
-    One email at most per check: only a CHECKING check is settled, and
-    settling it ends that. A pass sends nothing from here, because the
-    approval that follows sends the usual approval email.
+    One email at most per check (see _settle_from_review). A pass sends
+    nothing from here, because the approval that follows sends the
+    usual approval email, however late it comes.
 
     Never raises and never undoes the note: a failure in here is logged
     and the check is left for the next poll or the timeout.

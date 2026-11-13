@@ -994,16 +994,103 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertEqual(mail.outbox, [])
         self.assertFalse(self.checks().exists())
 
-    def test_timed_out_check_sends_nothing(self):
+    def time_out_on_the_page(self):
+        '''The page waited its minute and was told "not available".'''
         self.start()
         self.age_checks(LIVE_CHECK_TIMEOUT_SECONDS)
         self.assertEqual(self.poll()['status'], UNAVAILABLE)
-        self.leave_page()
+
+    def test_timed_out_check_with_no_result_sends_nothing(self):
+        self.time_out_on_the_page()
+
+        self.assertEqual(mail.outbox, [])
+        self.assertIsNone(self.checks().get().emailed_at)
+
+    def test_late_not_pass_after_timeout_sends_exactly_one_email(self):
+        self.time_out_on_the_page()
+
+        self.pipeline_posts(review_block([CHECK_ADDRESS]))
+        self.pipeline_posts(review_block([CHECK_NAME]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [WORK_EMAIL])
+        self.assertEqual(email.subject, NOT_PASSED_SUBJECT)
+        self.assertIn(FIX_TEXTS[FIX_COMPANY_ADDRESS_DOCUMENT], email.body)
+        self.assertNotIn(FIX_TEXTS[FIX_COMPANY_NAME_DOCUMENT], email.body)
+        self.assertIn(
+            '/claimed/pending/{}?fix='.format(self.claim.id), email.body
+        )
+        check = self.checks().get()
+        self.assertEqual(check.status, NOT_PASSED)
+        self.assertIsNotNone(check.emailed_at)
+        # Coming back from the email shows the result, and an edit
+        # earns a fresh check.
+        self.assertEqual(self.poll()['status'], NOT_PASSED)
+        self.claimant_edits()
+        self.assertEqual(self.start()['status'], CHECKING)
+
+    def test_late_not_pass_after_a_failed_trigger_is_emailed_too(self):
+        self.trigger.return_value = False
+        self.assertEqual(self.start()['status'], UNAVAILABLE)
 
         self.pipeline_posts(review_block([CHECK_ADDRESS]))
 
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_late_pass_sends_only_the_existing_approval_email(self):
+        self.time_out_on_the_page()
+
+        self.pipeline_posts(review_block())
+        self.assertEqual(mail.outbox, [])
+        response = self.pipeline_approves()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        subjects = [
+            email.subject for email in mail.outbox
+            if email.to == [WORK_EMAIL]
+        ]
+        self.assertEqual(subjects.count(APPROVED_SUBJECT), 1)
+        self.assertNotIn(NOT_PASSED_SUBJECT, subjects)
+        self.assertIsNone(self.checks().get().emailed_at)
+
+    def test_late_result_with_the_switch_off_sends_nothing(self):
+        self.time_out_on_the_page()
+
+        with override_switch(CLAIM_LIVE_CHECK_SWITCH, active=False):
+            self.pipeline_posts(review_block([CHECK_ADDRESS]))
+
         self.assertEqual(mail.outbox, [])
         self.assertEqual(self.checks().get().status, UNAVAILABLE)
+
+    def test_result_after_an_answered_check_sends_nothing(self):
+        self.start()
+        self.post_review(review_block([CHECK_ADDRESS]))
+        self.assertEqual(self.poll()['status'], NOT_PASSED)
+        self.leave_page()
+
+        self.pipeline_posts(review_block([CHECK_NAME]))
+
+        self.assertEqual(mail.outbox, [])
+
+    @override_settings(
+        DEBUG=True,
+        CLAIMS_LIVE_REVIEW_FUNCTION='',
+        CLAIMS_LIVE_REVIEW_DEV_STUB='late_not_pass:work_email',
+    )
+    def test_dev_stub_can_show_not_available_and_send_the_email(self):
+        self.assertEqual(self.start()['status'], CHECKING)
+        self.age_checks(STUB_DELAY_SECONDS)
+
+        state = self.poll()
+        self.poll()
+
+        self.assertEqual(state['status'], UNAVAILABLE)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, NOT_PASSED_SUBJECT)
+        self.assertIn(FIX_TEXTS[FIX_WORK_EMAIL], mail.outbox[0].body)
+        self.assertIn('localhost:6543/claimed/pending/', mail.outbox[0].body)
+        self.trigger.assert_not_called()
 
     def test_held_for_an_unknown_reason_sends_nothing(self):
         self.start()

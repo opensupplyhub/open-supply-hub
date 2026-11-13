@@ -93,7 +93,8 @@ CLAIMS_LIVE_REVIEW_FUNCTION = os.getenv('CLAIMS_LIVE_REVIEW_FUNCTION', '')
 
 # Local development only: answer live claim checks without calling
 # anything, so the flow can be clicked through without AWS. One of
-# `pass`, `timeout` or `not_pass:<fix>,<fix>` (see
+# `pass`, `timeout`, `not_pass:<fix>,<fix>` or
+# `late_not_pass:<fix>,<fix>` (see
 # api/services/claim_live_check_service.py). Read only when DEBUG is
 # on, which is the Local environment alone, so no deployed environment
 # can turn it on.
