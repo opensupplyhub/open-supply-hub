@@ -1127,7 +1127,7 @@ describe('ClaimForm component', () => {
 
             await waitFor(() => {
                 expect(
-                    getByText('Stay on this page. This takes up to one minute.'),
+                    getByText('This takes up to one minute. Stay on this page.'),
                 ).toBeInTheDocument();
             });
             expect(apiRequest.post).toHaveBeenCalledWith(
@@ -1190,7 +1190,7 @@ describe('ClaimForm component', () => {
 
             expect(getByText('Check and submit my claim')).toBeInTheDocument();
             expect(
-                queryByText('Stay on this page. This takes up to one minute.'),
+                queryByText('This takes up to one minute. Stay on this page.'),
             ).toBeNull();
             expect(apiRequest.post).not.toHaveBeenCalled();
         });

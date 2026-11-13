@@ -1,9 +1,89 @@
 import { makePendingClaimEditLink } from '../../util/util';
 import {
+    CHECKING_BAR_ANCHOR_MS,
+    CHECKING_BAR_ANCHOR_PERCENT,
+    CHECKING_BAR_MAX_PERCENT,
+    CHECKING_FACTS,
+    CHECKING_STEPS,
     CHECK_AGAIN_QUERY_PARAM,
     CLAIM_LIVE_CHECK_FIXES,
+    FACT_LABEL_LOCATION,
     FIX_QUERY_PARAM,
 } from './constants';
+
+export const prefersReducedMotion = () =>
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * How full the progress bar is, as a whole percentage. It follows the
+ * time passed on a curve that slows as it goes and stops short of
+ * full; only `done` (the result has arrived) fills it.
+ */
+export const getCheckingProgress = (elapsedMs, done) => {
+    if (done) {
+        return 100;
+    }
+    const rate =
+        -Math.log(1 - CHECKING_BAR_ANCHOR_PERCENT / 100) /
+        CHECKING_BAR_ANCHOR_MS;
+    const percent = 100 * (1 - Math.exp(-rate * Math.max(0, elapsedMs)));
+    return Math.min(CHECKING_BAR_MAX_PERCENT, Math.round(percent));
+};
+
+export const STEP_STATES = Object.freeze({
+    DONE: 'done',
+    NOW: 'now',
+    WAITING: 'waiting',
+});
+
+/**
+ * The state of each step in CHECKING_STEPS after `elapsedMs`. A step
+ * is finished once the next one has started, so the last step is only
+ * ever finished by `done`.
+ */
+export const getCheckingStepStates = (elapsedMs, done) =>
+    CHECKING_STEPS.map((step, index) => {
+        const next = CHECKING_STEPS[index + 1];
+        if (done || index === 0 || (next && elapsedMs >= next.startsAtMs)) {
+            return STEP_STATES.DONE;
+        }
+        return elapsedMs >= step.startsAtMs
+            ? STEP_STATES.NOW
+            : STEP_STATES.WAITING;
+    });
+
+/**
+ * The facts to rotate through while the check runs. The fact about the
+ * location is only included when the data the claim form already
+ * loaded has both its name and how many organisations contributed to
+ * it, which the public profile shows too.
+ */
+export const getCheckingFacts = (locationName, contributorCount) => {
+    const name = typeof locationName === 'string' ? locationName.trim() : '';
+    if (!name || !Number.isInteger(contributorCount) || contributorCount < 1) {
+        return CHECKING_FACTS;
+    }
+    const text =
+        contributorCount === 1
+            ? `1 organisation has shared data about ${name} on Open Supply Hub.`
+            : `${contributorCount} organisations have shared data about ${name} on Open Supply Hub.`;
+    return [{ label: FACT_LABEL_LOCATION, text }, ...CHECKING_FACTS];
+};
+
+/**
+ * How many organisations contributed to a production location, from
+ * the public production location payload, or null when it does not
+ * say.
+ */
+export const getContributorCount = location => {
+    if (Number.isInteger(location?.number_of_contributors)) {
+        return location.number_of_contributors;
+    }
+    return Array.isArray(location?.contributors)
+        ? location.contributors.length
+        : null;
+};
 
 const isKnownFix = fix =>
     typeof fix === 'string' &&

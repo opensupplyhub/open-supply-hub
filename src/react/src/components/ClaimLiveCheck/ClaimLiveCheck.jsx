@@ -10,10 +10,10 @@ import {
 } from 'prop-types';
 import { connect } from 'react-redux';
 import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
+import ClaimLiveCheckWaiting from './ClaimLiveCheckWaiting';
 import Confetti from './Confetti';
 import {
     pollClaimLiveCheck,
@@ -26,9 +26,6 @@ import {
     HEADER_HEIGHT,
 } from '../../util/constants';
 import {
-    CHECKING_PROGRESS_LINES,
-    CHECKING_EMAIL_TEXT,
-    CHECKING_STAY_TEXT,
     CHECK_TIMEOUT_MS,
     CHOOSE_ONE_LABEL,
     CLAIM_LIVE_CHECK_FIXES,
@@ -44,13 +41,17 @@ import {
     PANEL_SCROLL_MARGIN_PX,
     PASSED_TITLE,
     POLL_INTERVAL_MS,
-    PROGRESS_LINE_INTERVAL_MS,
+    RESULT_HOLD_MS,
     UNAVAILABLE_EMAIL_TEXT,
     UNAVAILABLE_TEXT,
     UNAVAILABLE_TITLE,
 } from './constants';
-import { claimLiveCheckStyles, SPINNER_SIZE_PX } from './styles';
-import { makeFixLink } from './utils';
+import { claimLiveCheckStyles } from './styles';
+import {
+    getContributorCount,
+    makeFixLink,
+    prefersReducedMotion,
+} from './utils';
 
 const { CHECKING, PASSED, NOT_PASSED, UNAVAILABLE } = CLAIM_LIVE_CHECK_STATUSES;
 
@@ -69,13 +70,15 @@ const ClaimLiveCheck = ({
     status,
     fixes,
     checksLeft,
+    locationName,
+    contributorCount,
     runCheck,
     pollCheck,
     resetCheck,
 }) => {
     const [timedOut, setTimedOut] = useState(false);
     const [leftForReview, setLeftForReview] = useState(false);
-    const [progressLine, setProgressLine] = useState(0);
+    const [resultShown, setResultShown] = useState(false);
     const panelRef = useRef(null);
 
     useEffect(() => {
@@ -89,7 +92,12 @@ const ClaimLiveCheck = ({
 
     // A null status is the request that starts the check still being
     // on its way; it is shown as checking too.
-    const waiting = !timedOut && (status === null || status === CHECKING);
+    // An answer is held back for a moment so the claimant sees the bar
+    // fill and the last step tick before the result replaces them.
+    const hasAnswer = status === PASSED || status === NOT_PASSED;
+    const waiting =
+        !timedOut &&
+        (status === null || status === CHECKING || (hasAnswer && !resultShown));
     const polling = !timedOut && status === CHECKING;
 
     // The panel replaces a long form, and the page can be scrolled so
@@ -121,18 +129,17 @@ const ClaimLiveCheck = ({
     }, [polling, claimID, pollCheck]);
 
     useEffect(() => {
-        if (!waiting) {
+        if (!hasAnswer) {
+            setResultShown(false);
             return undefined;
         }
-        const interval = setInterval(
-            () =>
-                setProgressLine(line =>
-                    Math.min(line + 1, CHECKING_PROGRESS_LINES.length - 1),
-                ),
-            PROGRESS_LINE_INTERVAL_MS,
-        );
-        return () => clearInterval(interval);
-    }, [waiting]);
+        if (prefersReducedMotion()) {
+            setResultShown(true);
+            return undefined;
+        }
+        const hold = setTimeout(() => setResultShown(true), RESULT_HOLD_MS);
+        return () => clearTimeout(hold);
+    }, [hasAnswer]);
 
     const exits = (
         <div className={classes.actions}>
@@ -155,25 +162,12 @@ const ClaimLiveCheck = ({
 
     if (waiting) {
         return (
-            <div
-                className={classes.panel}
-                ref={panelRef}
-                role="status"
-                data-testid="claim-live-check-checking"
-            >
-                <Typography className={classes.progress}>
-                    <CircularProgress
-                        size={SPINNER_SIZE_PX}
-                        className={classes.spinner}
-                    />
-                    {CHECKING_PROGRESS_LINES[progressLine]}
-                </Typography>
-                <Typography className={classes.text}>
-                    {CHECKING_STAY_TEXT}
-                </Typography>
-                <Typography className={classes.text}>
-                    {CHECKING_EMAIL_TEXT}
-                </Typography>
+            <div ref={panelRef}>
+                <ClaimLiveCheckWaiting
+                    done={hasAnswer}
+                    locationName={locationName}
+                    contributorCount={contributorCount}
+                />
             </div>
         );
     }
@@ -281,6 +275,8 @@ const ClaimLiveCheck = ({
 
 ClaimLiveCheck.defaultProps = {
     status: null,
+    locationName: '',
+    contributorCount: null,
 };
 
 ClaimLiveCheck.propTypes = {
@@ -290,17 +286,26 @@ ClaimLiveCheck.propTypes = {
     status: oneOf([CHECKING, PASSED, NOT_PASSED, UNAVAILABLE]),
     fixes: arrayOf(oneOf(Object.keys(CLAIM_LIVE_CHECK_FIXES))).isRequired,
     checksLeft: number.isRequired,
+    locationName: string,
+    contributorCount: number,
     runCheck: func.isRequired,
     pollCheck: func.isRequired,
     resetCheck: func.isRequired,
 };
 
+// The fact about the location uses what the claim form (or the pending
+// claim edit page) already loaded for it. Nothing is fetched here.
 const mapStateToProps = ({
     claimLiveCheck: { status, fixes, checksLeft },
+    contributeProductionLocation: {
+        singleProductionLocation: { data: location },
+    },
 }) => ({
     status,
     fixes,
     checksLeft,
+    locationName: location?.name || '',
+    contributorCount: getContributorCount(location),
 });
 
 const mapDispatchToProps = dispatch => ({

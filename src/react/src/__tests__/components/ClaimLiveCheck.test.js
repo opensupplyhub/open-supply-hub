@@ -6,8 +6,9 @@ import ClaimLiveCheck from '../../components/ClaimLiveCheck/ClaimLiveCheck';
 import apiRequest from '../../util/apiRequest';
 import {
     CHECK_TIMEOUT_MS,
+    FACT_INTERVAL_MS,
     POLL_INTERVAL_MS,
-    PROGRESS_LINE_INTERVAL_MS,
+    RESULT_HOLD_MS,
 } from '../../components/ClaimLiveCheck/constants';
 
 jest.mock('../../util/apiRequest', () => ({
@@ -17,7 +18,7 @@ jest.mock('../../util/apiRequest', () => ({
 
 const CLAIM_ID = 77;
 const CHECK_URL = `/api/facility-claims/${CLAIM_ID}/live-check/`;
-const STAY = 'Stay on this page. This takes up to one minute.';
+const STAY = 'This takes up to one minute. Stay on this page.';
 const UNAVAILABLE = 'The pre-check is not available right now.';
 const WORK_EMAIL = 'Use a work email, not a personal email.';
 const COMPANY_ADDRESS =
@@ -34,24 +35,57 @@ const setReducedMotion = matches => {
 describe('ClaimLiveCheck component', () => {
     let history;
 
-    const renderCheck = () =>
+    let now;
+
+    const renderCheck = (location = {}) =>
         renderWithProviders(
             <ClaimLiveCheck claimID={CLAIM_ID} history={history} />,
+            {
+                preloadedState: {
+                    contributeProductionLocation: {
+                        singleProductionLocation: {
+                            data: location,
+                            fetching: false,
+                            error: null,
+                        },
+                    },
+                },
+            },
         );
 
     // Let the pending request promises settle.
-    const settle = () => act(() => Promise.resolve());
+    const flush = () => act(() => Promise.resolve());
 
+    // The legacy fake timers do not move the clock, and the waiting
+    // screen measures the time passed with it, so move both together.
     const advance = async ms => {
         await act(async () => {
+            now += ms;
             jest.advanceTimersByTime(ms);
         });
-        await settle();
+        await flush();
     };
+
+    // Let the requests settle, then wait out the moment an answer is
+    // held back while the bar fills.
+    const settle = async () => {
+        await flush();
+        await advance(RESULT_HOLD_MS);
+    };
+
+    const bar = getByRole => getByRole('progressbar');
+    const barValue = getByRole =>
+        Number(bar(getByRole).getAttribute('aria-valuenow'));
+    const stepStates = container =>
+        Array.from(container.querySelectorAll('[data-step-state]')).map(
+            step => step.getAttribute('data-step-state'),
+        );
 
     beforeEach(() => {
         jest.useFakeTimers();
         jest.clearAllMocks();
+        now = 1700000000000;
+        jest.spyOn(Date, 'now').mockImplementation(() => now);
         history = { push: jest.fn() };
         setReducedMotion(false);
         window.scrollTo = jest.fn();
@@ -66,12 +100,13 @@ describe('ClaimLiveCheck component', () => {
         cleanup();
         jest.clearAllTimers();
         jest.useRealTimers();
+        Date.now.mockRestore();
     });
 
     test('starts the check once and tells the claimant to stay', async () => {
         const { getByText } = renderCheck();
 
-        expect(getByText('Checking your email.')).toBeInTheDocument();
+        expect(getByText('Checking your claim')).toBeInTheDocument();
         expect(getByText(STAY)).toBeInTheDocument();
 
         await settle();
@@ -81,15 +116,9 @@ describe('ClaimLiveCheck component', () => {
         expect(apiRequest.get).not.toHaveBeenCalled();
     });
 
-    test('says the result also comes by email', async () => {
-        const { getByText } = renderCheck();
-        expect(
-            getByText(
-                'If you leave this page, the result is sent to you by email.',
-            ),
-        ).toBeInTheDocument();
-
+    test('the not-available screen says an email follows', async () => {
         apiRequest.get.mockResolvedValue(answer('UNAVAILABLE', [], 2));
+        const { getByText } = renderCheck();
         await settle();
         await advance(POLL_INTERVAL_MS);
 
@@ -110,17 +139,187 @@ describe('ClaimLiveCheck component', () => {
         expect(window.scrollTo).toHaveBeenCalledTimes(2);
     });
 
-    test('moves the progress line on while it waits', async () => {
-        const { getByText } = renderCheck();
-        await settle();
+    test('the steps tick off as time passes, the last one only at the result', async () => {
+        const { container } = renderCheck();
+        await flush();
 
-        await advance(PROGRESS_LINE_INTERVAL_MS);
-        expect(getByText('Reading your documents.')).toBeInTheDocument();
-
-        await advance(PROGRESS_LINE_INTERVAL_MS * 5);
         expect(
-            getByText('Checking the company name and address.'),
-        ).toBeInTheDocument();
+            Array.from(container.querySelectorAll('[data-step-state]')).map(
+                step => step.textContent,
+            ),
+        ).toEqual([
+            '\u2713Claim submitted (Done)',
+            'Reading your documents (In progress)',
+            'Checking the company name and address (Not started)',
+            'Checking your link to the company (Not started)',
+        ]);
+
+        await advance(12000);
+        expect(stepStates(container)).toEqual([
+            'done',
+            'done',
+            'now',
+            'waiting',
+        ]);
+
+        await advance(18000);
+        expect(stepStates(container)).toEqual(['done', 'done', 'done', 'now']);
+
+        await advance(25000);
+        expect(stepStates(container)).toEqual(['done', 'done', 'done', 'now']);
+
+        apiRequest.get.mockResolvedValue(answer('PASSED', [], 0));
+        await advance(POLL_INTERVAL_MS);
+    });
+
+    test('the bar moves fast then slow and never fills before the result', async () => {
+        const { getByRole } = renderCheck();
+        await flush();
+
+        expect(bar(getByRole)).toHaveAttribute(
+            'aria-label',
+            'Checking your claim',
+        );
+        expect(bar(getByRole)).toHaveAttribute('aria-valuemin', '0');
+        expect(bar(getByRole)).toHaveAttribute('aria-valuemax', '100');
+        expect(barValue(getByRole)).toBe(0);
+
+        await advance(10000);
+        const early = barValue(getByRole);
+        await advance(10000);
+        const middle = barValue(getByRole);
+        expect(early).toBeGreaterThan(30);
+        expect(middle - early).toBeLessThan(early);
+
+        await advance(25000);
+        expect(barValue(getByRole)).toBe(90);
+
+        await advance(14000);
+        expect(barValue(getByRole)).toBeLessThan(100);
+        expect(barValue(getByRole)).toBeLessThanOrEqual(95);
+    });
+
+    test('the bar fills and every step ticks when the result arrives, then the result shows', async () => {
+        const { container, getByRole, getByText, queryByText } = renderCheck();
+        await flush();
+        apiRequest.get.mockResolvedValue(answer('PASSED', [], 0));
+
+        await act(async () => {
+            now += POLL_INTERVAL_MS;
+            jest.advanceTimersByTime(POLL_INTERVAL_MS);
+        });
+        await flush();
+
+        expect(barValue(getByRole)).toBe(100);
+        expect(stepStates(container)).toEqual(['done', 'done', 'done', 'done']);
+        expect(queryByText('Your claim is approved.')).toBeNull();
+
+        await advance(RESULT_HOLD_MS);
+
+        expect(getByText('Your claim is approved.')).toBeInTheDocument();
+        expect(queryByText('Checking your claim')).toBeNull();
+    });
+
+    test('a check that is not available never shows the bar as full', async () => {
+        const { getByText, queryByRole } = renderCheck();
+        await flush();
+        apiRequest.get.mockResolvedValue(answer('UNAVAILABLE', [], 2));
+
+        await act(async () => {
+            now += POLL_INTERVAL_MS;
+            jest.advanceTimersByTime(POLL_INTERVAL_MS);
+        });
+        await flush();
+
+        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
+        expect(queryByRole('progressbar')).toBeNull();
+    });
+
+    test('facts change every five seconds and start with the location', async () => {
+        const { getByTestId } = renderCheck({
+            name: 'Example Textiles',
+            number_of_contributors: 4,
+        });
+        await flush();
+        const fact = () => getByTestId('claim-live-check-fact');
+
+        expect(fact()).toHaveAttribute('aria-live', 'polite');
+        expect(fact()).toHaveTextContent(
+            'About this location4 organisations have shared data about Example Textiles on Open Supply Hub.',
+        );
+
+        await advance(FACT_INTERVAL_MS);
+        expect(fact()).toHaveTextContent(
+            'When your claim is approvedYour profile shows a Claimed badge. Buyers can see the details come from you.',
+        );
+
+        await advance(FACT_INTERVAL_MS);
+        expect(fact()).toHaveTextContent(
+            'When your claim is approvedYou can add your certifications, number of workers and product types.',
+        );
+
+        await advance(FACT_INTERVAL_MS);
+        expect(fact()).toHaveTextContent(
+            'Good to knowYou can leave this page. The result is also sent by email.',
+        );
+
+        await advance(FACT_INTERVAL_MS);
+        expect(fact()).toHaveTextContent('About this location');
+    });
+
+    test('one organisation is written in the singular', async () => {
+        const { getByTestId } = renderCheck({
+            name: 'Example Textiles',
+            contributors: [{ id: 1, name: 'Example Brand' }],
+        });
+        await flush();
+
+        expect(getByTestId('claim-live-check-fact')).toHaveTextContent(
+            '1 organisation has shared data about Example Textiles on Open Supply Hub.',
+        );
+    });
+
+    test('the location fact is left out when its data is missing', async () => {
+        const { getByTestId } = renderCheck({ name: 'Example Textiles' });
+        await flush();
+
+        expect(getByTestId('claim-live-check-fact')).toHaveTextContent(
+            'Your profile shows a Claimed badge.',
+        );
+    });
+
+    test('only the fact box is a live region while waiting', async () => {
+        const { container, getByTestId } = renderCheck();
+        await flush();
+        const panel = getByTestId('claim-live-check-checking');
+
+        expect(panel.querySelectorAll('[aria-live]')).toHaveLength(1);
+        expect(panel.querySelector('[role="status"]')).toBeNull();
+        expect(container.querySelector('[role="status"]')).toBeNull();
+    });
+
+    test('with reduced motion nothing is animated, facts still change and the result is not held back', async () => {
+        setReducedMotion(true);
+        const { getByTestId, getByText } = renderCheck();
+        await flush();
+
+        expect(getByTestId('claim-live-check-checking')).toHaveAttribute(
+            'data-reduced-motion',
+            'true',
+        );
+        await advance(FACT_INTERVAL_MS);
+        expect(getByTestId('claim-live-check-fact')).toHaveTextContent(
+            'You can add your certifications',
+        );
+
+        apiRequest.get.mockResolvedValue(answer('PASSED', [], 0));
+        await act(async () => {
+            now += POLL_INTERVAL_MS;
+            jest.advanceTimersByTime(POLL_INTERVAL_MS);
+        });
+        await flush();
+
+        expect(getByText('Your claim is approved.')).toBeInTheDocument();
     });
 
     test('polls while checking and stops at the answer', async () => {
@@ -134,6 +333,7 @@ describe('ClaimLiveCheck component', () => {
 
         apiRequest.get.mockResolvedValue(answer('PASSED', [], 0));
         await advance(POLL_INTERVAL_MS);
+        await advance(RESULT_HOLD_MS);
 
         expect(getByText('Your claim is approved.')).toBeInTheDocument();
         expect(queryByText(STAY)).toBeNull();
@@ -324,8 +524,12 @@ describe('ClaimLiveCheck component', () => {
         await settle();
         await advance(POLL_INTERVAL_MS);
         const polls = apiRequest.get.mock.calls.length;
+        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
         unmount();
+        // The poll, the bar and steps, and the facts each had a timer.
+        expect(clearIntervalSpy.mock.calls.length).toBeGreaterThanOrEqual(3);
+        clearIntervalSpy.mockRestore();
         await advance(POLL_INTERVAL_MS * 5);
 
         expect(apiRequest.get).toHaveBeenCalledTimes(polls);

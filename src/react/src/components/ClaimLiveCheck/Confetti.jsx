@@ -4,6 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import COLOURS from '../../util/COLOURS';
 import { confettiStyles } from './styles';
+import { prefersReducedMotion } from './utils';
 
 const PIECE_COUNT = 60;
 const SHOW_FOR_MS = 4200;
@@ -14,10 +15,6 @@ const PIECE_COLOURS = Object.freeze([
     COLOURS.JET_BLACK,
     COLOURS.RED,
 ]);
-
-const prefersReducedMotion = () =>
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /*
  * A short burst of falling paper for an approved claim (OSDEV-3805).
