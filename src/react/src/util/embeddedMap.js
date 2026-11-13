@@ -326,9 +326,8 @@ export const getChainDepths = chain => {
 
 // A chain's locations in groups, upstream first, for the list. Each group is
 // { label, nodes }, and each node gains `supplies`, the names of the locations
-// it feeds. Every group is a tier: the contributor's tier value when every
-// location has one and those values agree with the links, otherwise the
-// location's position counted from the end of the chain.
+// it feeds. Every group is a tier, by the location's position counted from
+// the end of the chain.
 export const getChainGroups = chain => {
     const names = {};
     chain.nodes.forEach(node => {
@@ -341,31 +340,18 @@ export const getChainGroups = chain => {
             .map(([, customer]) => names[customer]),
     }));
 
-    // Tiers are only used when they agree with the links: every supplier in
-    // a higher tier than the location it supplies. Otherwise the chain would
-    // read out of order.
-    const tierOf = {};
-    withSupplies.forEach(node => {
-        tierOf[node.os_id] = parseFloat(node.tier);
-    });
-    const hasTiers =
-        withSupplies.every(node => hasValue(node.tier)) &&
-        chain.links.every(([supplier, customer]) => {
-            const from = tierOf[supplier];
-            const to = tierOf[customer];
-            return Number.isNaN(from) || Number.isNaN(to) || from > to;
-        });
+    // DECISION (2026-11-12, may be revisited): in a supply chain built with
+    // this tool, a location's tier is its position in the chain, counted
+    // from the end: the final location is tier 1, what supplies it tier 2,
+    // and so on. The contributor's own tier column is ignored here, even
+    // when it has a value for every location, so the headings always agree
+    // with the links the contributor drew. To use the column instead, group
+    // by `node.tier` (the embed config still sends it on each location).
     const depths = getChainDepths(chain);
-    const keyOf = node => (hasTiers ? String(node.tier) : depths[node.os_id]);
-    const keys = [...new Set(withSupplies.map(keyOf))].sort((a, b) =>
-        hasTiers
-            ? String(b).localeCompare(String(a), undefined, { numeric: true })
-            : b - a,
-    );
+    const keyOf = node => depths[node.os_id];
+    const keys = [...new Set(withSupplies.map(keyOf))].sort((a, b) => b - a);
 
     return keys.map(key => ({
-        // Without usable tier values the tier is the location's position:
-        // the end of the chain is tier 1, what supplies it tier 2, and so on.
         label: `Tier ${key}`,
         nodes: withSupplies.filter(node => keyOf(node) === key),
     }));
