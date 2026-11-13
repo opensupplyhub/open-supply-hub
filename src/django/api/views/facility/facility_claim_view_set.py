@@ -34,8 +34,10 @@ from ...services.claim_contribution_service import (
 )
 from ...services.claim_live_check_service import (
     get_live_check_state,
+    give_up_live_check,
     is_claim_live_check_active,
     record_live_check_review,
+    request_review,
     start_live_check,
     unavailable_state,
 )
@@ -939,7 +941,9 @@ class FacilityClaimViewSet(ModelViewSet):
         The live check of the requesting claimant's own claim
         (OSDEV-3804). POST asks the claims automation pipeline to
         review the claim now and returns at once; GET reports where
-        that check stands, and is what the claim form polls. Both
+        that check stands, and is what the claim form polls. A POST
+        with `timed_out` set starts nothing: it records that the page
+        has stopped waiting, so a later result is emailed. All
         return {status, fixes, checks_left}: status is CHECKING, PASSED,
         NOT_PASSED or UNAVAILABLE, fixes are the keys of the preset
         lines to show when the claim did not pass, and checks_left is
@@ -962,14 +966,21 @@ class FacilityClaimViewSet(ModelViewSet):
 
         starting = request.method == 'POST'
         try:
+            to_request = None
             with transaction.atomic():
                 claim = self.__get_owned_claim(
                     request, pk, for_update=starting
                 )
-                state = (
-                    start_live_check(claim) if starting
-                    else get_live_check_state(claim)
-                )
+                if not starting:
+                    state = get_live_check_state(claim)
+                elif request.data.get('timed_out'):
+                    state = give_up_live_check(claim)
+                else:
+                    state, to_request = start_live_check(claim)
+            # Outside the transaction: the claim's row lock is released
+            # and the new check is committed before anything is sent.
+            if to_request is not None:
+                state = request_review(claim, to_request)
         except NotFound:
             raise
         except Exception:
