@@ -76,6 +76,14 @@ class EmbedConfig(models.Model):
         help_text='The corner radius, in pixels, of buttons and inputs '
                   'in the embedded map. Each element keeps its own '
                   'corner style when this is not set.')
+    marker_color = models.CharField(
+        max_length=7,
+        null=True,
+        blank=True,
+        validators=[hex_color_validator],
+        help_text='The color of the facility markers on the embedded map '
+                  'when they are not colored by a field. The primary color '
+                  'is used when this is not set.')
     color_by_field = models.CharField(
         max_length=200,
         null=True,

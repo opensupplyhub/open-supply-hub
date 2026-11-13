@@ -139,6 +139,7 @@ function EmbeddedMapConfig({
         colorByColors,
         defaultSort,
         allowVisitorSort,
+        markerColor,
     },
     setEmbedConfig,
     fields,
@@ -269,6 +270,8 @@ function EmbeddedMapConfig({
                             colorByField={colorByField}
                             colorByColors={colorByColors}
                             colorByOptions={colorByOptions}
+                            markerColor={markerColor}
+                            setMarkerColor={updateEmbedConfig('markerColor')}
                             setColorBy={({ field, colors }) =>
                                 setEmbedConfig(config => ({
                                     ...config,

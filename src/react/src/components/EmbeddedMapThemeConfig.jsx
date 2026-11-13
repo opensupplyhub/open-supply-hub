@@ -114,6 +114,8 @@ function EmbeddedMapThemeConfig({
     setColorBy,
     colorByColors,
     colorByOptions,
+    markerColor,
+    setMarkerColor,
 }) {
     const colorLegend = getColorByLegend(colorByOptions, colorByColors);
     const colorFields = fields.filter(f => f.visible && f.hasData !== false);
@@ -322,9 +324,9 @@ function EmbeddedMapThemeConfig({
                         Marker Colors
                     </Typography>
                     <Typography>
-                        Color each location&apos;s marker by one of the fields
-                        you show, such as a tier. Colors appear once a visitor
-                        zooms in to individual locations.
+                        Choose one color for every location&apos;s marker, or
+                        color each marker by one of the fields you show, such as
+                        a tier.
                     </Typography>
                     {errors?.color_by_colors && (
                         <Typography style={{ color: 'red' }}>
@@ -346,6 +348,28 @@ function EmbeddedMapThemeConfig({
                             </option>
                         ))}
                     </select>
+                    {!colorByField ? (
+                        <div style={styles.colorContainer}>
+                            <input
+                                type="color"
+                                aria-label="Marker color"
+                                value={markerColor || color}
+                                onChange={e => setMarkerColor(e.target.value)}
+                                style={{ marginRight: '10px' }}
+                            />
+                            <Typography>
+                                {markerColor || 'Same as primary color'}
+                            </Typography>
+                            {markerColor ? (
+                                <Button
+                                    onClick={() => setMarkerColor('')}
+                                    style={{ marginLeft: '10px' }}
+                                >
+                                    Use primary color
+                                </Button>
+                            ) : null}
+                        </div>
+                    ) : null}
                     {colorByField && colorLegend.length === 0 ? (
                         <Typography style={styles.colorByNote}>
                             The values of this field will be listed here once
@@ -439,6 +463,8 @@ EmbeddedMapThemeConfig.propTypes = {
     setColorBy: func,
     colorByColors: object,
     colorByOptions: arrayOf(object),
+    markerColor: string,
+    setMarkerColor: func,
 };
 
 EmbeddedMapThemeConfig.defaultProps = {
@@ -453,6 +479,8 @@ EmbeddedMapThemeConfig.defaultProps = {
     setColorBy: () => {},
     colorByColors: {},
     colorByOptions: [],
+    markerColor: '',
+    setMarkerColor: () => {},
 };
 
 export default EmbeddedMapThemeConfig;

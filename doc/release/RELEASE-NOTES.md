@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0273_embedfield_filterable.py` - Adds `filterable` (`boolean`, default false) to `api_embedfield`. No existing embed gains a filter. See OSDEV-TBD.
 * `0274_embedconfig_color_by_field.py` - Adds `color_by_field` (`varchar(200)`, NULL) and `color_by_colors` (`jsonb`, default `{}`) to `api_embedconfig`. Not set on existing rows, so no embed changes. See OSDEV-TBD.
 * `0275_embedconfig_list_order.py` - Adds `default_sort` (`varchar(220)`, NULL) and `allow_visitor_sort` (`boolean`, default false) to `api_embedconfig`. Not set on existing rows, so every embed keeps its list sorted by name. See OSDEV-TBD.
+* `0276_embedconfig_marker_color.py` - Adds `marker_color` (`varchar(7)`, NULL) to `api_embedconfig`. Not set on existing rows, so markers keep the primary color. See OSDEV-TBD.
 
 #### Schema changes
 * [OSDEV-3723](https://opensupplyhub.atlassian.net/browse/OSDEV-3723) - New `AnnouncementBanner` model: `is_active`, rich-text `content`, timestamps; a single row managed in the Django admin.
@@ -88,6 +89,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `POST /api/claim-campaigns/{id}/close/` closes one of the requester's own campaigns (no self-serve flag needed; another brand's campaign is a 404). A closed campaign stops attributing new claims.
 
 ### What's new
+* OSDEV-TBD - Contributors on the Embed Deluxe level can choose one color for the facility markers on their embedded map, separate from the map's primary color, under Marker Colors on the Embed settings screen. It applies when markers are not colored by a field.
 * OSDEV-TBD - Embedded maps now draw every facility as its own dot at every zoom level, in the color of its field value when the contributor colors markers by a field, or the map's primary color otherwise. The grouped green circles and their "# FACILITIES" legend no longer appear on embedded maps; the main map is unchanged.
 * OSDEV-TBD - Contributors can choose the order of the facility list on their embedded map from the Embed settings screen: by name, or by any field they show, lowest or highest first. They can also let visitors change the order, which adds a sort dropdown (default order, A to Z, Z to A) above the list. Embeds that have not chosen an order stay sorted by name.
 * OSDEV-TBD - Contributors on the Embed Deluxe level can color the markers on their embedded map by one of the fields they show, such as a tier. They choose the field under Marker Colors on the Embed settings screen and can pick a color for each of its values. The map shows a legend, and the colors appear on individual facility markers once a visitor zooms in past the grouped view.

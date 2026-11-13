@@ -96,6 +96,24 @@ describe('coloring embedded map markers by a field', () => {
             expect(payload.color_by_colors).toEqual({ 1: '#111111' });
         });
 
+        it('maps a single marker color, defaulting to not set', () => {
+            expect(formatExistingConfig({ width: '600' }).markerColor).toBe('');
+            expect(
+                formatExistingConfig({ width: '600', marker_color: '#c0392b' })
+                    .markerColor,
+            ).toBe('#c0392b');
+            expect(
+                formatEmbedConfigForServer(
+                    { ...base, markerColor: '#c0392b' },
+                    [],
+                ).marker_color,
+            ).toBe('#c0392b');
+            expect(
+                formatEmbedConfigForServer({ ...base, markerColor: '' }, [])
+                    .marker_color,
+            ).toBeNull();
+        });
+
         it('sends no colors when no field is chosen', () => {
             const payload = formatEmbedConfigForServer(
                 { ...base, colorByField: '', colorByColors: { 1: '#111111' } },

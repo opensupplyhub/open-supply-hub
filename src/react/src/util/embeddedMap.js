@@ -38,6 +38,7 @@ export const formatExistingConfig = embedConfig => {
             cornerRadius: '',
             colorByField: '',
             colorByColors: {},
+            markerColor: '',
             defaultSort: '',
             allowVisitorSort: false,
         };
@@ -63,6 +64,8 @@ export const formatExistingConfig = embedConfig => {
         // '' means every marker shares one color.
         colorByField: embedConfig.color_by_field || '',
         colorByColors: embedConfig.color_by_colors || {},
+        // '' means the markers use the primary color.
+        markerColor: embedConfig.marker_color || '',
         // '' means the list is sorted by name.
         defaultSort: embedConfig.default_sort || '',
         allowVisitorSort: !!embedConfig.allow_visitor_sort,
@@ -177,6 +180,7 @@ export const formatEmbedConfigForServer = (embedConfig, embedFields) => ({
     corner_radius: formatCornerRadiusForServer(embedConfig.cornerRadius),
     default_sort: embedConfig.defaultSort || null,
     allow_visitor_sort: !!embedConfig.allowVisitorSort,
+    marker_color: embedConfig.markerColor || null,
     color_by_field: embedConfig.colorByField || null,
     color_by_colors: embedConfig.colorByField
         ? embedConfig.colorByColors || {}

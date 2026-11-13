@@ -218,6 +218,7 @@ const VectorTileFacilitiesLayer = ({
     iconColor,
     colorLegendKey,
     asDots,
+    dotColor,
 }) => {
     // One marker color, and one pin icon, per value of the field the embed
     // is colored by.
@@ -331,7 +332,7 @@ const VectorTileFacilitiesLayer = ({
                             return {
                                 radius: isSelected ? 9 : 6,
                                 fill: true,
-                                fillColor: colorHexes[colorKey] || iconColor,
+                                fillColor: colorHexes[colorKey] || dotColor,
                                 fillOpacity: 0.9,
                                 color: isSelected ? '#0D1128' : '#ffffff',
                                 weight: isSelected ? 3 : 1.5,
@@ -423,6 +424,11 @@ function mapStateToProps({
         resetButtonClickCount,
         iconColor:
             config.selectedMarkerColor || config.color || SelectedMarkerColor,
+        // The contributor's marker color, or the map's primary color.
+        dotColor:
+            (embed && config.marker_color) ||
+            config.color ||
+            SelectedMarkerColor,
         // A string, so the icons are only rebuilt when the colors change.
         colorLegendKey: JSON.stringify(
             getEmbedColorLegend(embed ? config : null),

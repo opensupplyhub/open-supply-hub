@@ -430,3 +430,26 @@ class EmbedConfigSerializerTest(TestCase):
                 )
                 self.assertFalse(serializer.is_valid())
                 self.assertIn("corner_radius", serializer.errors)
+
+    def test_marker_color_defaults_to_not_set_and_is_validated(self):
+        self.assertIsNone(self._serialize()["marker_color"])
+
+        valid = EmbedConfigSerializer(
+            self.embed_config, data={"marker_color": "#c0392b"}, partial=True
+        )
+        self.assertTrue(valid.is_valid(), valid.errors)
+        valid.save()
+        self.assertEqual(self._serialize()["marker_color"], "#c0392b")
+
+        invalid = EmbedConfigSerializer(
+            self.embed_config, data={"marker_color": "red"}, partial=True
+        )
+        self.assertFalse(invalid.is_valid())
+        self.assertIn("marker_color", invalid.errors)
+
+        cleared = EmbedConfigSerializer(
+            self.embed_config, data={"marker_color": None}, partial=True
+        )
+        self.assertTrue(cleared.is_valid(), cleared.errors)
+        cleared.save()
+        self.assertIsNone(self._serialize()["marker_color"])
