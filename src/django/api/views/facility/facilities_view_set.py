@@ -119,6 +119,9 @@ from api.throttles import (
 from api.serializers.facility.utils import (
     is_same_contributor_from_url_param,
 )
+from api.services.claim_live_check_service import (
+    is_claim_live_check_active,
+)
 from api.services.claim_quality_check_service import (
     SOURCE_CLAIM_FORM,
     check_claim_quality,
@@ -2575,6 +2578,12 @@ class FacilitiesViewSet(ListModelMixin,
                 ).values_list('facility__id', flat=True)
                 for key, value in statuses.items()
             }
+
+            # The claim form needs the new claim's id to run the live
+            # check on it (OSDEV-3804). Sent only while that feature is
+            # on, so the response is unchanged otherwise.
+            if is_claim_live_check_active():
+                results['claim_id'] = facility_claim.id
 
             return Response(results)
 
