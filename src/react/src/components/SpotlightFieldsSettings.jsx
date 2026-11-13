@@ -253,8 +253,8 @@ function SpotlightFieldsSettings() {
                     Preview
                 </Typography>
                 <Typography variant="caption" gutterBottom>
-                    How your fields will look on a production location page
-                    once they are live. The values shown are examples.
+                    How your fields will look on a production location page once
+                    they are live. The values shown are examples.
                 </Typography>
                 <div
                     style={{

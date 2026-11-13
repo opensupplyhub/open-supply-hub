@@ -110,7 +110,7 @@ describe('SpotlightFieldsSettings', () => {
     it('blocks a bad internal name with a clear message and does not post', async () => {
         apiRequest.get.mockResolvedValue({ data: baseSummary });
         renderWithProviders(<SpotlightFieldsSettings />);
-        await screen.findByText(/Add a field/i);
+        await screen.findByText('Add a field');
         fireEvent.change(screen.getByLabelText(/Internal name/i), {
             target: { value: 'Bad Name' },
         });
@@ -134,7 +134,7 @@ describe('SpotlightFieldsSettings', () => {
             },
         });
         renderWithProviders(<SpotlightFieldsSettings />);
-        await screen.findByText(/Add a field/i);
+        await screen.findByText('Add a field');
         fireEvent.change(screen.getByLabelText(/Internal name/i), {
             target: { value: 'certification_status' },
         });
@@ -200,7 +200,7 @@ describe('SpotlightFieldsSettings', () => {
             data: { ...baseSummary, fields: [field()] },
         });
         const { unmount } = renderWithProviders(<SpotlightFieldsSettings />);
-        await screen.findByText(/Your fields/i);
+        await screen.findByText('Your fields');
         expect(screen.queryByText(/delete/i, { selector: 'button' })).toBeNull();
         expect(screen.queryByText(/Show in the API/i)).toBeNull();
         unmount();
