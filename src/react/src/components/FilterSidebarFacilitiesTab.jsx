@@ -51,10 +51,14 @@ import COLOURS from '../util/COLOURS';
 import {
     embedButtonCornerStyle,
     embedHeadingFont,
+    findEmbedSupplyChain,
+    getEmbedSupplyChains,
     getListFields,
     themeEmbedStyle,
 } from '../util/embeddedMap';
 import EmbedFieldValue from './EmbedFieldValue';
+import EmbedSupplyChainList from './EmbedSupplyChainList';
+import { selectEmbedSupplyChain } from '../actions/filters';
 
 import { filterSidebarStyles } from '../util/styles';
 import BadgeClaimed from './BadgeClaimed';
@@ -212,6 +216,8 @@ function FilterSidebarFacilitiesTab({
     scrollTop,
     embed,
     embedFields,
+    supplyChain,
+    closeSupplyChain,
     updateToMergeOSID,
     fetchToMergeFacility,
     updateTargetOSID,
@@ -340,6 +346,17 @@ function FilterSidebarFacilitiesTab({
     const progress = facilitiesCount
         ? (get(downloadData, 'results.rows', []).length * 100) / facilitiesCount
         : 0;
+
+    // A visitor following a supply chain sees its locations in place of the
+    // search results.
+    if (supplyChain) {
+        return (
+            <EmbedSupplyChainList
+                chain={supplyChain}
+                onClose={closeSupplyChain}
+            />
+        );
+    }
 
     const listHeaderInsetComponent = (
         <Grid
@@ -610,6 +627,8 @@ function FilterSidebarFacilitiesTab({
 
 FilterSidebarFacilitiesTab.defaultProps = {
     embedFields: [],
+    supplyChain: null,
+    closeSupplyChain: () => {},
     user: {
         isAnon: true,
     },
@@ -630,6 +649,8 @@ FilterSidebarFacilitiesTab.propTypes = {
     isInfiniteLoading: bool.isRequired,
     embed: bool.isRequired,
     embedFields: arrayOf(object),
+    supplyChain: object,
+    closeSupplyChain: func,
     targetFacilityOSID: string.isRequired,
     facilityToMergeOSID: string.isRequired,
     updateToMergeOSID: func.isRequired,
@@ -660,9 +681,14 @@ function mapStateToProps({
         facilities: { data: downloadData },
     },
     embeddedMap: { embed, config },
+    filters: { embedSupplyChainId },
 }) {
     return {
         embedFields: config?.embed_fields,
+        supplyChain: findEmbedSupplyChain(
+            getEmbedSupplyChains(!!embed, config),
+            embedSupplyChainId,
+        ),
         user,
         data,
         downloadData,
@@ -690,6 +716,7 @@ function mapDispatchToProps(dispatch) {
         fetchToMergeFacility: () => dispatch(fetchFacilityToMerge()),
         updateToMergeOSID: osID => dispatch(updateFacilityToMergeOSID(osID)),
         fetchTargetFacility: () => dispatch(fetchMergeTargetFacility()),
+        closeSupplyChain: () => dispatch(selectEmbedSupplyChain(null)),
     };
 }
 

@@ -12,6 +12,7 @@ import {
     updateSectorFilter,
     updateParentCompanyFilter,
     updateEmbedFilter,
+    selectEmbedSupplyChain,
     updateFacilityTypeFilter,
     updateProcessingTypeFilter,
     updateIsic4Filter,
@@ -58,6 +59,9 @@ const initialState = Object.freeze({
     parentCompany: Object.freeze([]),
     // Filters on an embedded map contributor's own columns: { column: value }
     embedFilters: Object.freeze({}),
+    // The supply chain a visitor is following on an embedded map. It changes
+    // what the list and map show, not which facilities are searched for.
+    embedSupplyChainId: null,
     facilityType: Object.freeze([]),
     processingType: Object.freeze([]),
     isic4: Object.freeze([]),
@@ -121,6 +125,10 @@ export default createReducer(
         [updateParentCompanyFilter]: (state, payload) =>
             update(state, {
                 parentCompany: { $set: payload },
+            }),
+        [selectEmbedSupplyChain]: (state, payload) =>
+            update(state, {
+                embedSupplyChainId: { $set: payload || null },
             }),
         [updateEmbedFilter]: (state, { column, value }) =>
             update(state, {

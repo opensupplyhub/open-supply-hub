@@ -12,6 +12,7 @@ import VectorTileFacilitiesLayer from './VectorTileFacilitiesLayer';
 import VectorTileFacilityGridLayer from './VectorTileFacilityGridLayer';
 import VectorTileGridLegend from './VectorTileGridLegend';
 import EmbedColorLegend from './EmbedColorLegend';
+import EmbedSupplyChainLayer from './EmbedSupplyChainLayer';
 import SearchControls from './SearchControls';
 import PolygonalSearchControl from './PolygonalSearchControl';
 
@@ -176,6 +177,7 @@ function VectorTileFacilitiesMap({
                         zoomLevel={currentMapZoomLevel}
                     />
                 )}
+            <EmbedSupplyChainLayer />
             {drawFilterActive && (
                 <PolygonalSearchControl
                     navigateToFacilities={navigateToFacilities}

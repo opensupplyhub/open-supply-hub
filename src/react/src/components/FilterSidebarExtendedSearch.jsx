@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 import EmbedFieldFilters from './EmbedFieldFilters';
+import EmbedSupplyChainPicker from './EmbedSupplyChainPicker';
 import ShowOnly from './ShowOnly';
 import StyledSelect from './Filters/StyledSelect';
 import ProcessingTypeSearch from './Filters/ProcessingTypeSearch';
@@ -126,6 +127,7 @@ const FilterSidebarExtendedSearch = forwardRef((props, ref) => {
                 disabled={fetchingExtendedOptions || fetchingFacilities}
                 isSideBarSearch={isSideBarSearch}
             />
+            <EmbedSupplyChainPicker />
             <ShowOnly when={!embed}>
                 <div className="form__field">
                     <StyledSelect

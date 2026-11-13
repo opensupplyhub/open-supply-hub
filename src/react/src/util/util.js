@@ -354,6 +354,19 @@ export const makeUpdateFacilityLocationURL = osID =>
 
 export const makeEmbedConfigURL = id =>
     `/api/embed-configs/${id ? `${id}/` : ''}`;
+export const makeEmbedSupplyChainsURL = id =>
+    `/api/embed-supply-chains/${id ? `${id}/` : ''}`;
+
+export const makeEmbedSupplyChainLocationsURL = () =>
+    '/api/embed-supply-chains/locations/';
+
+export const makeOwnFacilitiesSearchURL = (contributorId, text) =>
+    `/api/facilities/?${querystring.stringify({
+        contributors: contributorId,
+        q: text,
+        pageSize: 8,
+    })}`;
+
 export const makeContributorEmbedConfigURL = contributorId =>
     `/api/contributor-embed-configs/${contributorId}/`;
 export const makeNonStandardFieldsURL = () => '/api/nonstandard-fields/';

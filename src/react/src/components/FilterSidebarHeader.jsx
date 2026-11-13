@@ -23,47 +23,54 @@ const FilterSidebarHeader = ({
     user,
     isSameContributor,
     hasAppliedFilters,
-}) => (
-    <div className={`${classes.header} results-height-subtract`}>
-        <h1 className={classes.headerText}>
-            <FacilityIcon /> Facilities
-        </h1>
-        <Grid container justify="space-between">
-            <Grid item className={multiLine ? classes.numberResults : ''}>
-                {facilitiesCount} results
+    followingSupplyChain,
+}) =>
+    // The count and sort describe the search results, which a supply chain's
+    // locations replace while a visitor follows one.
+    followingSupplyChain ? null : (
+        <div className={`${classes.header} results-height-subtract`}>
+            <h1 className={classes.headerText}>
+                <FacilityIcon /> Facilities
+            </h1>
+            <Grid container justify="space-between">
+                <Grid item className={multiLine ? classes.numberResults : ''}>
+                    {facilitiesCount} results
+                </Grid>
+                <ShowOnly when={!embed}>
+                    <Grid item>
+                        <ResultsSortDropdown />
+                    </Grid>
+                </ShowOnly>
+                <ShowOnly when={!!embed && embedVisitorSort}>
+                    <Grid item>
+                        <ResultsSortDropdown
+                            options={EMBED_VISITOR_SORT_OPTIONS}
+                        />
+                    </Grid>
+                </ShowOnly>
             </Grid>
-            <ShowOnly when={!embed}>
-                <Grid item>
-                    <ResultsSortDropdown />
-                </Grid>
-            </ShowOnly>
-            <ShowOnly when={!!embed && embedVisitorSort}>
-                <Grid item>
-                    <ResultsSortDropdown options={EMBED_VISITOR_SORT_OPTIONS} />
-                </Grid>
-            </ShowOnly>
-        </Grid>
-        <ShowOnly
-            when={
-                !embed &&
-                !user.isAnon &&
-                facilitiesCount > user.allowed_records_number &&
-                hasAppliedFilters
-            }
-        >
-            <FeatureFlag
-                flag={PRIVATE_INSTANCE}
-                isSameContributor={isSameContributor}
-                alternative={<DownloadLimitInfo />}
+            <ShowOnly
+                when={
+                    !embed &&
+                    !user.isAnon &&
+                    facilitiesCount > user.allowed_records_number &&
+                    hasAppliedFilters
+                }
             >
-                <></>
-            </FeatureFlag>
-        </ShowOnly>
-    </div>
-);
+                <FeatureFlag
+                    flag={PRIVATE_INSTANCE}
+                    isSameContributor={isSameContributor}
+                    alternative={<DownloadLimitInfo />}
+                >
+                    <></>
+                </FeatureFlag>
+            </ShowOnly>
+        </div>
+    );
 
 FilterSidebarHeader.defaultProps = {
     hasAppliedFilters: false,
+    followingSupplyChain: false,
 };
 
 FilterSidebarHeader.propTypes = {
@@ -74,10 +81,12 @@ FilterSidebarHeader.propTypes = {
     user: userPropType.isRequired,
     isSameContributor: bool.isRequired,
     hasAppliedFilters: bool,
+    followingSupplyChain: bool,
 };
 
 const mapStateToProps = ({
     embeddedMap: { embed, config },
+    filters: { embedSupplyChainId },
     facilities: {
         facilities: { data: facilities, hasAppliedFilters },
     },
@@ -91,6 +100,10 @@ const mapStateToProps = ({
     user,
     isSameContributor: get(facilities, 'is_same_contributor', false),
     hasAppliedFilters,
+    followingSupplyChain:
+        !!embed &&
+        embedSupplyChainId !== null &&
+        embedSupplyChainId !== undefined,
 });
 
 export default withStyles(filterSidebarHeaderStyles)(
