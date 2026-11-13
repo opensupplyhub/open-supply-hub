@@ -17,9 +17,14 @@ import {
 } from '../util/constants';
 
 import { getFilteredSearchForEmbed, getLastPathParameter } from '../util/util';
+import { embedUsesProductionLocationPage } from '../util/embeddedMap';
 import UserProfile from './UserProfile';
 
-const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
+const Facilities = ({
+    fetchingFeatureFlags,
+    isEmbedded,
+    usesProductionLocationPage,
+}) => {
     if (fetchingFeatureFlags) {
         return <CircularProgress />;
     }
@@ -38,11 +43,14 @@ const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
                         location?.pathname || '',
                     );
 
-                    // An embedded map shows a location on the production
-                    // location page, in its embed form, at this address.
+                    // An embedded map shows a location at this address: on
+                    // the production location page in its embed form while
+                    // that switch is on, otherwise on the older details view.
                     if (isEmbedded) {
-                        return (
+                        return usesProductionLocationPage ? (
                             <ProductionLocationDetailsContainer {...props} />
+                        ) : (
+                            <FacilityDetails {...props} />
                         );
                     }
 
@@ -74,11 +82,15 @@ const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
     );
 };
 
-function mapStateToProps({
-    featureFlags: { fetching: fetchingFeatureFlags },
-    embeddedMap: { embed },
-}) {
-    return { fetchingFeatureFlags, isEmbedded: !!embed };
+function mapStateToProps({ featureFlags, embeddedMap: { embed } }) {
+    return {
+        fetchingFeatureFlags: featureFlags.fetching,
+        isEmbedded: !!embed,
+        usesProductionLocationPage: embedUsesProductionLocationPage(
+            embed,
+            featureFlags,
+        ),
+    };
 }
 
 export default connect(mapStateToProps)(withQueryStringSync(Facilities));

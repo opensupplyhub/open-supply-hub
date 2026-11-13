@@ -867,6 +867,19 @@ export const getEmbedStyle = (embed, config) => {
 // production location page layout. Both are off until turned on.
 export const EMBED_FACILITY_DOTS_SWITCH = 'embed_facility_dots';
 
+export const EMBED_PRODUCTION_LOCATION_PAGE_SWITCH =
+    'embed_production_location_page';
+
+// Whether an embedded map opens a location on the production location page
+// layout, in its embed form, in place of the older details view.
+export const embedUsesProductionLocationPage = (embed, featureFlags) =>
+    !!embed &&
+    !!get(
+        featureFlags,
+        `flags.${EMBED_PRODUCTION_LOCATION_PAGE_SWITCH}`,
+        false,
+    );
+
 // Whether an embedded map draws its facilities as dots at every zoom level,
 // in place of the grouped grid and pins.
 export const embedDrawsDots = (embed, featureFlags) =>

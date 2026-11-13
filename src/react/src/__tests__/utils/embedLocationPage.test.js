@@ -1,4 +1,5 @@
 import {
+    embedUsesProductionLocationPage,
     getEmbedLocationFields,
     getEmbedLocationPageCss,
     withoutHiddenSector,
@@ -72,6 +73,25 @@ describe("a location's page on an embedded map", () => {
                 getEmbedLocationFields(embedConfig, { properties: {} }),
             ).toEqual([]);
         });
+    });
+
+    it('is only used by an embedded map while its switch is on', () => {
+        const on = { flags: { embed_production_location_page: true } };
+
+        expect(embedUsesProductionLocationPage('1', on)).toBe(true);
+        expect(
+            embedUsesProductionLocationPage('1', {
+                flags: { embed_production_location_page: false },
+            }),
+        ).toBe(false);
+        // The main site's own switch for the page does not turn it on.
+        expect(
+            embedUsesProductionLocationPage('1', {
+                flags: { enable_production_location_page: true },
+            }),
+        ).toBe(false);
+        expect(embedUsesProductionLocationPage('', on)).toBe(false);
+        expect(embedUsesProductionLocationPage('1', undefined)).toBe(false);
     });
 
     describe('sector data', () => {
