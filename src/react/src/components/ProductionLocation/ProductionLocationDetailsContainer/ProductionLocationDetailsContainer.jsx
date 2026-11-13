@@ -34,6 +34,20 @@ import { resetSectionNavigation } from '../../../actions/sectionNavigation';
 
 import productionLocationDetailsContainerStyles from './styles';
 
+// On an embedded map the page has no side navigation, so "Back to search
+// results" sits above the location, which takes the full width.
+const embedRootStyle = Object.freeze({
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+    padding: '16px 3% 48px 3%',
+});
+const embedSidebarStyle = Object.freeze({
+    minWidth: 0,
+    border: 0,
+    margin: 0,
+    padding: '0 0 8px 0',
+});
+
 function ProductionLocationDetailsContainer({
     classes,
     history,
@@ -46,6 +60,7 @@ function ProductionLocationDetailsContainer({
     contributors,
     useProductionLocationPage,
     embed,
+    embedConfig,
     fetchFacility,
     clearFacility,
     getPartnerFieldGroups,
@@ -62,7 +77,7 @@ function ProductionLocationDetailsContainer({
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
-        fetchFacility(normalizedOsID, contributors);
+        fetchFacility(normalizedOsID, contributors, !!embed);
     }, [normalizedOsID]);
 
     useEffect(() => {
@@ -139,12 +154,24 @@ function ProductionLocationDetailsContainer({
     }
 
     return (
-        <Grid container className={classes.root}>
-            <Grid item xs={12} md={2} className={classes.sidebarContainer}>
+        <Grid
+            container
+            className={classes.root}
+            style={embed ? embedRootStyle : undefined}
+        >
+            <Grid
+                item
+                xs={12}
+                md={embed ? 12 : 2}
+                className={classes.sidebarContainer}
+                style={embed ? embedSidebarStyle : undefined}
+            >
                 <div className={classes.backToSearch}>
                     <BackToSearch history={history} />
                 </div>
-                {!isCandidate && (
+                {/* The page's own navigation and the ways to contribute
+                    belong to Open Supply Hub, not to an embedded map. */}
+                {!isCandidate && !embed && (
                     <Grid className={classes.sidebar}>
                         <div className={classes.navBar}>
                             <NavBar />
@@ -154,10 +181,11 @@ function ProductionLocationDetailsContainer({
                     </Grid>
                 )}
             </Grid>
-            <Grid item xs={12} md={10}>
+            <Grid item xs={12} md={embed ? 12 : 10}>
                 <ProductionLocationDetailsContent
                     data={data}
                     embed={!!embed}
+                    embedConfig={embed ? embedConfig : null}
                     clearFacility={clearFacility}
                     useProductionLocationPage={useProductionLocationPage}
                     location={location}
@@ -173,9 +201,10 @@ const mapStateToProps = ({
     },
     filters: { contributors },
     featureFlags,
-    embeddedMap: { embed },
+    embeddedMap: { embed, config: embedConfig },
     partnerFieldGroups: { data: partnerFieldGroupsData },
 }) => ({
+    embedConfig,
     data,
     fetching,
     error,
@@ -187,11 +216,14 @@ const mapStateToProps = ({
 });
 
 const mapDispatchToProps = dispatch => ({
-    fetchFacility: (id, contributorId) => {
+    fetchFacility: (id, contributorId, embedded) => {
         const hasContributors =
             isArray(contributorId) && !isEmpty(contributorId);
         const contributors = hasContributors ? contributorId : null;
-        return dispatch(fetchSingleFacility(id, 0, contributors, true));
+        // An embedded map asks for the location as its contributor shows
+        // it: their own data, and any Spotlight data they have chosen.
+        const embed = embedded && hasContributors ? 1 : 0;
+        return dispatch(fetchSingleFacility(id, embed, contributors, true));
     },
     clearFacility: () => dispatch(resetSingleFacility()),
     resetNavigation: () => dispatch(resetSectionNavigation()),

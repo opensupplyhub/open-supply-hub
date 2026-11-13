@@ -704,6 +704,39 @@ export const moveChain = (chains, id, direction) => {
 export const getSafeProductUrl = url =>
     /^https?:\/\/[^\s"<>]+$/i.test((url || '').trim()) ? url.trim() : '';
 
+// The contributor's own fields to show on a location's page: each visible
+// field the location has a value for, in the contributor's order.
+// `data` is the location's details.
+export const getEmbedLocationFields = (embedConfig, data) => {
+    const contributorFields =
+        (data && data.properties && data.properties.contributor_fields) || [];
+    return sortBy(
+        ((embedConfig && embedConfig.embed_fields) || []).filter(
+            f => f.visible,
+        ),
+        f => f.order,
+    )
+        .map(f => {
+            const match = contributorFields.find(
+                cf => cf.fieldName === f.column_name,
+            );
+            return {
+                columnName: f.column_name,
+                label: f.display_name,
+                value: match ? match.value : null,
+                displayAs: f.display_as || DISPLAY_AS_TEXT,
+            };
+        })
+        .filter(f => hasValue(f.value));
+};
+
+// A location's details without its sectors, for an embedded map whose
+// contributor hides sector data. Unchanged otherwise.
+export const withoutHiddenSector = (data, embedConfig) =>
+    data && embedConfig && embedConfig.hide_sector_data
+        ? { ...data, properties: { ...data.properties, sector: [] } }
+        : data;
+
 // The dropdown filters an embedded map offers: the contributor's visible,
 // filterable fields that have at least one value, in the contributor's order.
 // `filterOptions` is `filter_options` from the embed config:

@@ -5,6 +5,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import FeatureFlag from './FeatureFlag';
 import FacilityDetails from './FacilityDetails';
+import ProductionLocationDetailsContainer from './ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
 import MapAndSidebar from './MapAndSidebar';
 
 import withQueryStringSync from '../util/withQueryStringSync';
@@ -37,8 +38,12 @@ const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
                         location?.pathname || '',
                     );
 
+                    // An embedded map shows a location on the production
+                    // location page, in its embed form, at this address.
                     if (isEmbedded) {
-                        return <FacilityDetails {...props} />;
+                        return (
+                            <ProductionLocationDetailsContainer {...props} />
+                        );
                     }
 
                     return (
