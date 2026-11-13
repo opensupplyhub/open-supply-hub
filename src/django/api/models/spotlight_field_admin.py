@@ -56,9 +56,9 @@ class SpotlightFieldPropertyInline(admin.TabularInline):
     form = SpotlightFieldPropertyInlineForm
     extra = 0
     can_delete = False
-    fields = ('name', 'display_name', 'approved', 'active',
+    fields = ('name', 'display_name', 'field_type', 'approved', 'active',
               'last_partner_edit_at')
-    readonly_fields = ('name', 'last_partner_edit_at')
+    readonly_fields = ('name', 'field_type', 'last_partner_edit_at')
 
     def has_add_permission(self, request, obj=None):
         """Partners create fields; admins only approve and activate them."""

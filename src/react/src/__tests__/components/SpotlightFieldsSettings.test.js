@@ -7,13 +7,26 @@ import {
     validateSpotlightInternalName,
     validateSpotlightDisplayName,
     getSpotlightFieldStatus,
+    getSpotlightExampleValue,
+    getSpotlightPreviewRows,
 } from '../../util/spotlightFields';
 import apiRequest from '../../util/apiRequest';
 
 jest.mock('../../util/apiRequest');
 jest.mock('react-toastify', () => ({ toast: { error: jest.fn() } }));
 
+const FIELD_TYPES = [
+    { value: 'text', label: 'Text' },
+    { value: 'date', label: 'Date' },
+    { value: 'number', label: 'Number' },
+    { value: 'yes_no', label: 'Yes/No' },
+    { value: 'score', label: 'Score / Rating' },
+    { value: 'url', label: 'URL' },
+];
+
 const baseSummary = {
+    contributor_name: 'Example Partner',
+    field_types: FIELD_TYPES,
     go_live_date: null,
     go_live_pending: false,
     can_control_visibility: false,
@@ -25,6 +38,7 @@ const baseSummary = {
 const field = (overrides = {}) => ({
     name: 'certification_status',
     display_name: 'Certification Status',
+    field_type: 'text',
     approved: true,
     active: false,
     ...overrides,
@@ -47,6 +61,27 @@ describe('Spotlight name rules', () => {
         expect(validateSpotlightDisplayName('Certification Status')).toBeNull();
         expect(validateSpotlightDisplayName('x'.repeat(51))).toMatch(/50/);
         expect(validateSpotlightDisplayName('   ')).toMatch(/enter/i);
+    });
+
+    it('gives each type an example value for the preview', () => {
+        expect(getSpotlightExampleValue('date')).toBe('June 15, 2026');
+        expect(getSpotlightExampleValue('yes_no')).toBe('Yes');
+        expect(getSpotlightExampleValue('unknown')).toBe('Example text');
+    });
+
+    it('builds preview rows from saved fields plus the field being typed', () => {
+        const rows = getSpotlightPreviewRows(
+            [field({ display_name: 'Assessment date', field_type: 'date' })],
+            { displayName: ' Score ', fieldType: 'score' },
+        );
+        expect(rows.map(r => [r.label, r.value])).toEqual([
+            ['Assessment date', 'June 15, 2026'],
+            ['Score', '4.5 / 5'],
+        ]);
+        expect(rows[1].isDraft).toBe(true);
+        expect(
+            getSpotlightPreviewRows([], { displayName: '  ', fieldType: 'text' }),
+        ).toEqual([]);
     });
 
     it('describes each status in plain words', () => {
@@ -113,6 +148,7 @@ describe('SpotlightFieldsSettings', () => {
                 {
                     name: 'certification_status',
                     display_name: 'Certification Status',
+                    field_type: 'text',
                 },
             ),
         );
@@ -174,5 +210,80 @@ describe('SpotlightFieldsSettings', () => {
         });
         renderWithProviders(<SpotlightFieldsSettings />);
         expect(await screen.findByText(/Show in the API/i)).toBeInTheDocument();
+    });
+    it('offers every type and sends the chosen one', async () => {
+        apiRequest.get.mockResolvedValue({ data: baseSummary });
+        apiRequest.post.mockResolvedValue({ data: baseSummary });
+        renderWithProviders(<SpotlightFieldsSettings />);
+        const select = await screen.findByLabelText('Type');
+        expect(
+            Array.from(select.options).map(option => option.textContent),
+        ).toEqual([
+            'Text',
+            'Date',
+            'Number',
+            'Yes/No',
+            'Score / Rating',
+            'URL',
+        ]);
+        fireEvent.change(screen.getByLabelText('Internal name'), {
+            target: { value: 'assessment_date' },
+        });
+        fireEvent.change(screen.getByLabelText('Display name'), {
+            target: { value: 'Assessment date' },
+        });
+        fireEvent.change(select, { target: { value: 'date' } });
+        fireEvent.click(screen.getByRole('button', { name: /Submit field/i }));
+        await waitFor(() =>
+            expect(apiRequest.post).toHaveBeenCalledWith(
+                '/api/spotlight-fields/',
+                {
+                    name: 'assessment_date',
+                    display_name: 'Assessment date',
+                    field_type: 'date',
+                },
+            ),
+        );
+    });
+
+    it('previews saved fields and the one being typed, with example values', async () => {
+        apiRequest.get.mockResolvedValue({
+            data: {
+                ...baseSummary,
+                fields: [
+                    field({
+                        display_name: 'Assessment date',
+                        field_type: 'date',
+                    }),
+                ],
+            },
+        });
+        renderWithProviders(<SpotlightFieldsSettings />);
+        expect(
+            await screen.findByText('Assessment date: June 15, 2026'),
+        ).toBeInTheDocument();
+        expect(screen.getByText('Example Partner')).toBeInTheDocument();
+        fireEvent.change(screen.getByLabelText('Display name'), {
+            target: { value: 'Living wage' },
+        });
+        fireEvent.change(screen.getByLabelText('Type'), {
+            target: { value: 'number' },
+        });
+        expect(
+            screen.getByText('Living wage: 42 (new)'),
+        ).toBeInTheDocument();
+    });
+
+    it('shows each saved field type in the table', async () => {
+        apiRequest.get.mockResolvedValue({
+            data: {
+                ...baseSummary,
+                fields: [field({ field_type: 'yes_no' })],
+            },
+        });
+        renderWithProviders(<SpotlightFieldsSettings />);
+        expect(
+            await screen.findByRole('cell', { name: 'Yes/No' }),
+        ).toBeInTheDocument();
     });
 });

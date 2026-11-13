@@ -14,6 +14,29 @@ NAME_RULES = (
 )
 DISPLAY_NAME_RULES = 'Keep the display name to 50 characters or fewer.'
 
+FIELD_TYPE_TEXT = 'text'
+FIELD_TYPE_CHOICES = (
+    (FIELD_TYPE_TEXT, 'Text'),
+    ('date', 'Date'),
+    ('number', 'Number'),
+    ('yes_no', 'Yes/No'),
+    ('score', 'Score / Rating'),
+    ('url', 'URL'),
+)
+FIELD_TYPE_HELP = (
+    'The kind of value this field holds. Cannot change once saved.'
+)
+# How each type is written into the partner field's JSON schema, so the value
+# a field holds can be validated the standard way.
+SCHEMA_FOR_TYPE = {
+    'text': {'type': 'string'},
+    'date': {'type': 'string', 'format': 'date'},
+    'number': {'type': 'number'},
+    'yes_no': {'type': 'boolean'},
+    'score': {'type': 'number'},
+    'url': {'type': 'string', 'format': 'uri'},
+}
+
 
 def validate_internal_name(value):
     """
@@ -119,6 +142,8 @@ class SpotlightField(models.Model):
         for prop in self.properties.order_by('id'):
             properties[prop.name] = {
                 'title': prop.display_name,
+                **SCHEMA_FOR_TYPE[prop.field_type],
+                'spotlight_type': prop.field_type,
                 'approved': prop.approved,
                 'active': prop.active,
             }
@@ -189,6 +214,12 @@ class SpotlightFieldProperty(models.Model):
         max_length=NAME_MAX_LENGTH,
         help_text=f'Name shown on OS Hub. {DISPLAY_NAME_RULES}',
     )
+    field_type = models.CharField(
+        max_length=20,
+        choices=FIELD_TYPE_CHOICES,
+        default=FIELD_TYPE_TEXT,
+        help_text=FIELD_TYPE_HELP,
+    )
     approved = models.BooleanField(
         default=False,
         help_text='New fields need admin approval before they can be active.',
@@ -228,25 +259,27 @@ class SpotlightFieldProperty(models.Model):
                 'A field must be approved by an admin before it can be '
                 'active.'
             )
-        if self.pk is not None:
-            original = SpotlightFieldProperty.objects.filter(
-                pk=self.pk
-            ).first()
-            if original is not None and original.name != self.name:
-                raise ValidationError(
-                    'The internal name cannot be changed once saved.'
-                )
+        self._check_locked_fields()
+
+    def _check_locked_fields(self):
+        """Refuse to change the internal name or type of a saved field."""
+        if self.pk is None:
+            return
+        original = SpotlightFieldProperty.objects.filter(pk=self.pk).first()
+        if original is None:
+            return
+        if original.name != self.name:
+            raise ValidationError(
+                'The internal name cannot be changed once saved.'
+            )
+        if original.field_type != self.field_type:
+            raise ValidationError(
+                'The field type cannot be changed once saved.'
+            )
 
     def save(self, *args, sync=True, **kwargs):
         """Save, then keep the partner field's JSON in step."""
-        if self.pk is not None:
-            original = SpotlightFieldProperty.objects.filter(
-                pk=self.pk
-            ).first()
-            if original is not None and original.name != self.name:
-                raise ValidationError(
-                    'The internal name cannot be changed once saved.'
-                )
+        self._check_locked_fields()
         if self.active and not self.approved:
             raise ValidationError(
                 'A field must be approved by an admin before it can be '

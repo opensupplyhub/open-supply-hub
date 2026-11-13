@@ -13,6 +13,17 @@ NAME_RULES = (
 DISPLAY_NAME_RULES = 'Keep the display name to 50 characters or fewer.'
 NAME_HELP = f'Internal name. Cannot change once saved. {NAME_RULES}'
 DISPLAY_NAME_HELP = f'Name shown on OS Hub. {DISPLAY_NAME_RULES}'
+FIELD_TYPE_HELP = (
+    'The kind of value this field holds. Cannot change once saved.'
+)
+FIELD_TYPE_CHOICES = [
+    ('text', 'Text'),
+    ('date', 'Date'),
+    ('number', 'Number'),
+    ('yes_no', 'Yes/No'),
+    ('score', 'Score / Rating'),
+    ('url', 'URL'),
+]
 APPROVED_HELP = (
     'New fields need admin approval before they can be active.'
 )
@@ -148,6 +159,9 @@ class Migration(migrations.Migration):
                     ])),
                 ('display_name', models.CharField(
                     help_text=DISPLAY_NAME_HELP, max_length=50)),
+                ('field_type', models.CharField(
+                    choices=FIELD_TYPE_CHOICES, default='text',
+                    help_text=FIELD_TYPE_HELP, max_length=20)),
                 ('approved', models.BooleanField(
                     default=False, help_text=APPROVED_HELP)),
                 ('approved_at', models.DateTimeField(
@@ -187,6 +201,9 @@ class Migration(migrations.Migration):
                     ])),
                 ('display_name', models.CharField(
                     help_text=DISPLAY_NAME_HELP, max_length=50)),
+                ('field_type', models.CharField(
+                    choices=FIELD_TYPE_CHOICES, default='text',
+                    help_text=FIELD_TYPE_HELP, max_length=20)),
                 ('approved', models.BooleanField(
                     default=False, help_text=APPROVED_HELP)),
                 ('approved_at', models.DateTimeField(

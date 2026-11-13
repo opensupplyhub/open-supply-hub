@@ -45,3 +45,60 @@ export const getSpotlightFieldStatus = field => {
     if (!field.approved) return 'Waiting for approval';
     return field.active ? 'Active' : 'Approved, inactive';
 };
+
+export const SPOTLIGHT_DEFAULT_FIELD_TYPE = 'text';
+
+export const SPOTLIGHT_FIELD_TYPE_HELP =
+    'What kind of value this field holds. It cannot be changed after you ' +
+    'save.';
+
+// Example values shown in the preview, so a partner can see how each type
+// of field reads on a production location page.
+const EXAMPLE_VALUES = {
+    text: 'Example text',
+    date: '2026-06-15',
+    number: '42',
+    yes_no: 'Yes',
+    score: '4.5 / 5',
+    url: 'https://example.org',
+};
+
+// Turns a type into the example value the preview shows for it.
+export const getSpotlightExampleValue = fieldType => {
+    const example = EXAMPLE_VALUES[fieldType] || EXAMPLE_VALUES.text;
+    if (fieldType === 'date') {
+        return new Date(example).toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            timeZone: 'UTC',
+        });
+    }
+    return example;
+};
+
+// Looks up the label for a type, such as "Yes/No" for yes_no.
+export const getSpotlightFieldTypeLabel = (fieldTypes, value) => {
+    const match = (fieldTypes || []).find(type => type.value === value);
+    return match ? match.label : value;
+};
+
+// The lines of the preview: the partner's saved fields, then the field they
+// are typing now (when it has a display name), each with an example value.
+export const getSpotlightPreviewRows = (fields, draft) => {
+    const rows = fields.map(field => ({
+        key: field.name,
+        label: field.display_name,
+        value: getSpotlightExampleValue(field.field_type),
+    }));
+    const draftLabel = ((draft && draft.displayName) || '').trim();
+    if (draftLabel) {
+        rows.push({
+            key: '__draft__',
+            label: draftLabel,
+            value: getSpotlightExampleValue(draft.fieldType),
+            isDraft: true,
+        });
+    }
+    return rows;
+};

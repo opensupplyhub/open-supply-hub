@@ -13,6 +13,8 @@ from rest_framework.viewsets import GenericViewSet
 from ..models.contributor.contributor import Contributor
 from ..models.spotlight_field import (
     DISPLAY_NAME_RULES,
+    FIELD_TYPE_CHOICES,
+    FIELD_TYPE_TEXT,
     NAME_MAX_LENGTH,
     NAME_RULES,
     SpotlightField,
@@ -37,6 +39,7 @@ def serialize_property(prop):
     return {
         'name': prop.name,
         'display_name': prop.display_name,
+        'field_type': prop.field_type,
         'approved': prop.approved,
         'active': prop.active,
     }
@@ -77,6 +80,7 @@ class SpotlightFieldsViewSet(GenericViewSet):
         properties = spotlight.properties.all() if spotlight else []
         partner_field = spotlight.partner_field if spotlight else None
         return {
+            'contributor_name': contributor.name,
             'go_live_date': (
                 spotlight.go_live_date.isoformat()
                 if spotlight and spotlight.go_live_date else None
@@ -97,6 +101,10 @@ class SpotlightFieldsViewSet(GenericViewSet):
                 'display_name': DISPLAY_NAME_RULES,
                 'max_length': NAME_MAX_LENGTH,
             },
+            'field_types': [
+                {'value': value, 'label': label}
+                for value, label in FIELD_TYPE_CHOICES
+            ],
             'fields': [serialize_property(p) for p in properties],
         }
 
@@ -113,8 +121,14 @@ class SpotlightFieldsViewSet(GenericViewSet):
         contributor = self._partner(request)
         name = (request.data.get('name') or '').strip()
         display_name = (request.data.get('display_name') or '').strip()
+        field_type = request.data.get('field_type') or FIELD_TYPE_TEXT
 
         errors = {}
+        if field_type not in dict(FIELD_TYPE_CHOICES):
+            errors['field_type'] = [
+                'Choose a type from the list: ' + ', '.join(
+                    label for _, label in FIELD_TYPE_CHOICES) + '.'
+            ]
         try:
             validate_internal_name(name)
         except DjangoValidationError as exc:
@@ -137,6 +151,7 @@ class SpotlightFieldsViewSet(GenericViewSet):
             spotlight_field=spotlight,
             name=name,
             display_name=display_name,
+            field_type=field_type,
         )
         prop._history_user = request.user
         prop.save()
@@ -154,6 +169,11 @@ class SpotlightFieldsViewSet(GenericViewSet):
         if 'name' in request.data:
             raise ValidationError(
                 {'name': ['The internal name cannot be changed once saved.']}
+            )
+        if 'field_type' in request.data:
+            raise ValidationError(
+                {'field_type': ['The field type cannot be changed once '
+                                'saved.']}
             )
         spotlight = SpotlightField.objects.filter(
             contributor=contributor).first()

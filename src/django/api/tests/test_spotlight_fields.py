@@ -112,8 +112,8 @@ class SpotlightApiTest(TestCase):
         schema = spotlight.partner_field.json_schema
         self.assertEqual(
             schema['properties']['certification_status'],
-            {'title': 'Certification Status', 'approved': False,
-             'active': False},
+            {'title': 'Certification Status', 'type': 'string',
+             'spotlight_type': 'text', 'approved': False, 'active': False},
         )
         self.assertEqual(spotlight.partner_field.type, 'object')
         self.assertTrue(
@@ -132,6 +132,53 @@ class SpotlightApiTest(TestCase):
         """Internal names are unique within a partner."""
         self._create()
         self.assertEqual(self._create().status_code, 400)
+
+    def test_type_is_saved_and_written_into_the_json(self):
+        """A chosen type is stored and mirrored as JSON schema keywords."""
+        response = self.client.post(
+            URL,
+            {'name': 'assessment_date', 'display_name': 'Assessment date',
+             'field_type': 'date'},
+            format='json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data['fields'][0]['field_type'], 'date')
+        schema = self.contributor.spotlight_field.partner_field.json_schema
+        prop = schema['properties']['assessment_date']
+        self.assertEqual(prop['type'], 'string')
+        self.assertEqual(prop['format'], 'date')
+        self.assertEqual(prop['spotlight_type'], 'date')
+
+    def test_type_defaults_to_text_and_lists_the_choices(self):
+        """Leaving the type out gives Text; the API lists every type."""
+        self._create()
+        data = self.client.get(URL).data
+        self.assertEqual(data['fields'][0]['field_type'], 'text')
+        self.assertEqual(
+            [t['label'] for t in data['field_types']],
+            ['Text', 'Date', 'Number', 'Yes/No', 'Score / Rating', 'URL'])
+
+    def test_unknown_type_is_rejected(self):
+        """A type outside the list is refused with a clear message."""
+        response = self.client.post(
+            URL,
+            {'name': 'x_field', 'display_name': 'X', 'field_type': 'blob'},
+            format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Choose a type', response.data['field_type'][0])
+        self.assertFalse(SpotlightFieldProperty.objects.exists())
+
+    def test_type_cannot_change_once_saved(self):
+        """Like the internal name, the type is locked after saving."""
+        self._create()
+        response = self.client.patch(
+            f'{URL}certification_status/', {'field_type': 'date'},
+            format='json')
+        self.assertEqual(response.status_code, 400)
+        prop = SpotlightFieldProperty.objects.get()
+        self.assertEqual(prop.field_type, 'text')
+        prop.field_type = 'date'
+        with self.assertRaises(ValidationError):
+            prop.save()
 
     def test_internal_name_cannot_change_but_display_name_can(self):
         """Only the display name is editable after saving."""

@@ -24,6 +24,10 @@ import {
     validateSpotlightInternalName,
     validateSpotlightDisplayName,
     getSpotlightFieldStatus,
+    getSpotlightFieldTypeLabel,
+    getSpotlightPreviewRows,
+    SPOTLIGHT_DEFAULT_FIELD_TYPE,
+    SPOTLIGHT_FIELD_TYPE_HELP,
 } from '../util/spotlightFields';
 
 const sectionStyle = { marginBottom: 32 };
@@ -53,6 +57,7 @@ function SpotlightFieldsSettings() {
     const [summary, setSummary] = useState(null);
     const [name, setName] = useState('');
     const [displayName, setDisplayName] = useState('');
+    const [fieldType, setFieldType] = useState(SPOTLIGHT_DEFAULT_FIELD_TYPE);
     const [formErrors, setFormErrors] = useState({});
     const [notice, setNotice] = useState(null);
     const [edits, setEdits] = useState({});
@@ -91,12 +96,14 @@ function SpotlightFieldsSettings() {
             .post(makeSpotlightFieldsURL(), {
                 name,
                 display_name: displayName.trim(),
+                field_type: fieldType,
             })
             .then(({ data }) => {
                 setSummary(data);
                 setNotice(data.message);
                 setName('');
                 setDisplayName('');
+                setFieldType(SPOTLIGHT_DEFAULT_FIELD_TYPE);
             })
             .catch(error => setFormErrors(handleError(error)))
             .finally(() => setLoading(false));
@@ -139,6 +146,11 @@ function SpotlightFieldsSettings() {
             </AppGrid>
         );
     }
+
+    const previewRows = getSpotlightPreviewRows(summary.fields, {
+        displayName,
+        fieldType,
+    });
 
     return (
         <AppGrid title="Spotlight">
@@ -187,6 +199,7 @@ function SpotlightFieldsSettings() {
                     onChange={e => setName(e.target.value)}
                     error={Boolean(formErrors.name)}
                     helperText={formErrors.name || SPOTLIGHT_NAME_RULES}
+                    placeholder="e.g. assessment_date"
                     fullWidth
                     margin="normal"
                     inputProps={{ maxLength: 50 }}
@@ -200,10 +213,31 @@ function SpotlightFieldsSettings() {
                     helperText={
                         formErrors.display_name || SPOTLIGHT_DISPLAY_NAME_RULES
                     }
+                    placeholder="e.g. Assessment date"
                     fullWidth
                     margin="normal"
                     inputProps={{ maxLength: 50 }}
                 />
+                <TextField
+                    id="spotlight-field-type"
+                    select
+                    label="Type"
+                    value={fieldType}
+                    onChange={e => setFieldType(e.target.value)}
+                    error={Boolean(formErrors.field_type)}
+                    helperText={
+                        formErrors.field_type || SPOTLIGHT_FIELD_TYPE_HELP
+                    }
+                    SelectProps={{ native: true }}
+                    fullWidth
+                    margin="normal"
+                >
+                    {summary.field_types.map(type => (
+                        <option key={type.value} value={type.value}>
+                            {type.label}
+                        </option>
+                    ))}
+                </TextField>
                 <Button
                     type="submit"
                     variant="contained"
@@ -213,6 +247,50 @@ function SpotlightFieldsSettings() {
                     Submit field
                 </Button>
             </form>
+
+            <div style={sectionStyle} aria-label="Preview of your fields">
+                <Typography variant="title" gutterBottom>
+                    Preview
+                </Typography>
+                <Typography variant="caption" gutterBottom>
+                    How your fields will look on a production location page
+                    once they are live. The values shown are examples.
+                </Typography>
+                <div
+                    style={{
+                        border: '1px solid #e0e0e0',
+                        borderTop: '2px solid #7c3aed',
+                        borderRadius: 4,
+                        marginTop: 8,
+                        padding: 16,
+                    }}
+                >
+                    <Typography
+                        variant="subheading"
+                        style={{
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                        }}
+                    >
+                        {summary.contributor_name}
+                    </Typography>
+                    {previewRows.length === 0 ? (
+                        <Typography style={{ fontStyle: 'italic' }}>
+                            Add a field to see the preview.
+                        </Typography>
+                    ) : (
+                        previewRows.map(row => (
+                            <Typography
+                                key={row.key}
+                                style={{ opacity: row.isDraft ? 0.6 : 1 }}
+                            >
+                                {row.label}: {row.value}
+                                {row.isDraft ? ' (new)' : ''}
+                            </Typography>
+                        ))
+                    )}
+                </div>
+            </div>
 
             <div style={sectionStyle}>
                 <Typography variant="title" gutterBottom>
@@ -226,6 +304,7 @@ function SpotlightFieldsSettings() {
                             <TableRow>
                                 <TableCell>Display name</TableCell>
                                 <TableCell>Internal name</TableCell>
+                                <TableCell>Type</TableCell>
                                 <TableCell>Status</TableCell>
                                 <TableCell>Active</TableCell>
                             </TableRow>
@@ -297,6 +376,12 @@ function SpotlightFieldsSettings() {
                                         </TableCell>
                                         <TableCell>
                                             <code>{field.name}</code>
+                                        </TableCell>
+                                        <TableCell>
+                                            {getSpotlightFieldTypeLabel(
+                                                summary.field_types,
+                                                field.field_type,
+                                            )}
                                         </TableCell>
                                         <TableCell>
                                             {getSpotlightFieldStatus(field)}
