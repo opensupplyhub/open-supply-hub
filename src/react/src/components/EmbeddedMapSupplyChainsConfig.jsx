@@ -371,14 +371,9 @@ function EmbeddedMapSupplyChainsConfig({
     };
 
     // Clicking a facility, on the map or in the search results, adds it to
-    // the chain and links it to the selected location.
+    // the chain as a supplier of the selected location.
     const pickLocation = ({ osId, name }) => {
-        const result = clickChainLocation(
-            draft,
-            selectedId,
-            { osId, name },
-            tiers,
-        );
+        const result = clickChainLocation(draft, selectedId, { osId, name });
         setDraft(result.chain);
         setSelectedId(result.selectedId);
         setClickMessage(result.message);
@@ -617,7 +612,7 @@ function EmbeddedMapSupplyChainsConfig({
     let locationsHint =
         'Click a dot, or search below, to add the first location. Starting with the final factory works well.';
     if (selectedName) {
-        locationsHint = `${selectedName} is selected. Click another facility to link it to this one, or click it again to deselect it.`;
+        locationsHint = `${selectedName} is selected. Click a facility that supplies it, or click it again to deselect it.`;
     } else if (draft.nodes.length) {
         locationsHint =
             'Click a location in the chain to select it, then click another facility to link the two.';
