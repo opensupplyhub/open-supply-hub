@@ -1,6 +1,11 @@
 import json
 
-from django.contrib.gis.geos import GEOSException, GEOSGeometry, MultiPolygon
+from django.contrib.gis.geos import (
+    GeometryCollection,
+    GEOSException,
+    GEOSGeometry,
+    MultiPolygon,
+)
 
 
 class InvalidPolygonGeoJSON(ValueError):
@@ -224,18 +229,26 @@ def _combine_polygons(polygons):
                 f'Geometry is not valid: {polygon.valid_reason}'
             )
 
-    combined = polygons[0]
-    for polygon in polygons[1:]:
-        combined = combined.union(polygon)
-
-    if combined.geom_type == 'Polygon':
-        combined = MultiPolygon(combined)
-    combined.srid = 4326
+    # One cascaded union rather than folding `union` over the list.
+    # Folding re-processes the growing result for every piece, which
+    # is quadratic or worse in the number of parts: a dissolved layer
+    # whose features have thousands of parts each took hours to parse.
+    # The cascaded union merges touching pieces the same way.
+    combined = GeometryCollection(*polygons).unary_union
 
     if combined.empty or combined.num_coords == 0:
         raise InvalidPolygonGeoJSON(
             'The GeoJSON contains no polygon coordinates.'
         )
+
+    if combined.geom_type == 'Polygon':
+        combined = MultiPolygon(combined)
+    elif combined.geom_type != 'MultiPolygon':
+        raise InvalidPolygonGeoJSON(
+            'Expected polygon geometry after merging the pieces, got '
+            f'{combined.geom_type}.'
+        )
+    combined.srid = 4326
 
     if not combined.valid:
         raise InvalidPolygonGeoJSON(
