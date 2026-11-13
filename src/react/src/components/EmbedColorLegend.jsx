@@ -2,7 +2,13 @@ import React from 'react';
 import { arrayOf, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 
-import { getEmbedColorLabel, getEmbedColorLegend } from '../util/embeddedMap';
+import {
+    getEmbedColorLabel,
+    getEmbedColorLegend,
+    getEmbedSpotlight,
+    getSpotlightRingColor,
+    getSpotlightTileKey,
+} from '../util/embeddedMap';
 
 const styles = {
     legend: {
@@ -35,18 +41,30 @@ const styles = {
 The key to the marker colors on an embedded map whose contributor colors
 markers by one of their fields. Renders nothing on any other map.
 */
-function EmbedColorLegend({ label, legend }) {
-    if (!legend.length) return null;
+function EmbedColorLegend({ label, legend, spotlightRingColor }) {
+    if (!legend.length && !spotlightRingColor) return null;
 
     return (
         <div style={styles.legend} data-testid="embed-color-legend">
-            <div style={styles.title}>{label}</div>
+            {legend.length ? <div style={styles.title}>{label}</div> : null}
             {legend.map(({ value, color }) => (
                 <div key={value} style={styles.row}>
                     <span style={{ ...styles.swatch, background: color }} />
                     {value}
                 </div>
             ))}
+            {spotlightRingColor ? (
+                <div style={styles.row}>
+                    <span
+                        style={{
+                            ...styles.swatch,
+                            background: 'none',
+                            border: `3px solid ${spotlightRingColor}`,
+                        }}
+                    />
+                    Has Spotlight data
+                </div>
+            ) : null}
         </div>
     );
 }
@@ -54,11 +72,13 @@ function EmbedColorLegend({ label, legend }) {
 EmbedColorLegend.propTypes = {
     label: string,
     legend: arrayOf(shape({ value: string, color: string })),
+    spotlightRingColor: string,
 };
 
 EmbedColorLegend.defaultProps = {
     label: '',
     legend: [],
+    spotlightRingColor: '',
 };
 
 function mapStateToProps({ embeddedMap: { embed, config } }) {
@@ -66,6 +86,11 @@ function mapStateToProps({ embeddedMap: { embed, config } }) {
     return {
         label: getEmbedColorLabel(embedConfig),
         legend: getEmbedColorLegend(embedConfig),
+        spotlightRingColor: getSpotlightTileKey(
+            getEmbedSpotlight(!!embed, config),
+        )
+            ? getSpotlightRingColor(config)
+            : '',
     };
 }
 

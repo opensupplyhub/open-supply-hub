@@ -16,6 +16,7 @@ import FacilityDetailsInteractiveMap from './FacilityDetailsInteractiveMap';
 import FacilityDetailsLocationFields from './FacilityDetailsLocationFields';
 import FacilityDetailsGeneralFields from './FacilityDetailsGeneralFields';
 import PartnerFieldsSection from './PartnerFields/PartnerFieldsSection/PartnerFieldsSection';
+import { keepShownPartnerFields } from '../util/embeddedMap';
 import FacilityDetailsContributors from './FacilityDetailsContributors';
 import ShowOnly from './ShowOnly';
 
@@ -251,6 +252,16 @@ const FacilityDetailsContent = ({
                     hideSectorData={hideSectorData}
                     isClaimed={isClaimed}
                 />
+                {/* An embedded map shows partner data only when its
+                    contributor has chosen to, and only the kinds chosen. */}
+                <ShowOnly when={embed && !!embedConfig?.spotlight}>
+                    <PartnerFieldsSection
+                        data={keepShownPartnerFields(
+                            data,
+                            embedConfig?.spotlight,
+                        )}
+                    />
+                </ShowOnly>
                 <ShowOnly when={!embed}>
                     <PartnerFieldsSection data={data} />
                     <FacilityDetailsContributors
