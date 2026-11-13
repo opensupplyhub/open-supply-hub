@@ -35,6 +35,7 @@ from ...services.claim_contribution_service import (
 from ...services.claim_live_check_service import (
     get_live_check_state,
     is_claim_live_check_active,
+    record_live_check_review,
     start_live_check,
     unavailable_state,
 )
@@ -560,6 +561,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 FacilityClaimReviewNoteTypes.INTERNAL,
             )
             record_ai_review(claim, request.user, note)
+            record_live_check_review(request, claim, request.user, note)
 
             response_data = FacilityClaimDetailsSerializer(claim).data
             return Response(response_data)

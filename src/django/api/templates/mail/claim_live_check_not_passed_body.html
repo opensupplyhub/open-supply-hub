@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>
+            Your claim on Open Supply Hub needs one more step
+        </title>
+    </head>
+    <body>
+        <p>
+            Hello,
+        </p>
+        <p>
+            You submitted a request to claim this production location on
+            Open Supply Hub (OS Hub):
+        </p>
+        <ul>
+            <li>
+                Name of Production Location: {{ production_location_name }}
+            </li>
+            <li>
+                Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
+            </li>
+            <li>
+                OS Hub Profile: <a href="{{ production_location_url }}">{{ production_location_url }}</a>
+            </li>
+        </ul>
+        <p>
+            The claim did not pass the automatic check.
+        </p>
+        <p>
+            Fix this:
+        </p>
+        <ul>
+            {% for fix in fixes %}
+            <li>
+                {{ fix }}
+            </li>
+            {% endfor %}
+        </ul>
+        <p>
+            <a href="{{ fix_url }}">Fix your claim</a>
+        </p>
+        <p>
+            You can also leave the claim as it is. A person will review it.
+            Approval can be significantly delayed.
+        </p>
+        <p>
+            Best Regards,
+        </p>
+        {% include "mail/claims_team_signature_block.html" %}
+    </body>
+</html>

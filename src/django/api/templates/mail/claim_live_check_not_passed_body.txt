@@ -1,0 +1,23 @@
+{% block content %}
+Hello,
+
+You submitted a request to claim this production location on Open Supply Hub (OS Hub):
+
+- Name of Production Location: {{ production_location_name }}
+- Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
+- OS Hub Profile: {{ production_location_url }}
+
+The claim did not pass the automatic check.
+
+Fix this:
+{% for fix in fixes %}
+- {{ fix }}{% endfor %}
+
+Fix your claim: {{ fix_url|safe }}
+
+You can also leave the claim as it is. A person will review it. Approval can be significantly delayed.
+
+Best Regards,
+
+{% include "mail/claims_team_signature_block.txt" %}
+{% endblock content %}
