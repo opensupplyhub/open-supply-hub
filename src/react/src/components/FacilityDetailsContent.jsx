@@ -16,7 +16,9 @@ import FacilityDetailsInteractiveMap from './FacilityDetailsInteractiveMap';
 import FacilityDetailsLocationFields from './FacilityDetailsLocationFields';
 import FacilityDetailsGeneralFields from './FacilityDetailsGeneralFields';
 import PartnerFieldsSection from './PartnerFields/PartnerFieldsSection/PartnerFieldsSection';
-import { keepShownPartnerFields } from '../util/embeddedMap';
+import PartnerDataContainer from './ProductionLocation/PartnerSection/PartnerDataContainer/PartnerDataContainer';
+import { fetchPartnerFieldGroups } from '../actions/partnerFieldGroups';
+import { hasPartnerData } from '../util/embeddedMap';
 import FacilityDetailsContributors from './FacilityDetailsContributors';
 import ShowOnly from './ShowOnly';
 
@@ -100,6 +102,9 @@ const filterByUniqueField = (data, extendedFieldName) =>
         item => item.primary + item.secondary,
     );
 
+// Room around the Spotlight section inside an embedded map's details.
+const embedSpotlightStyle = Object.freeze({ padding: '0 16px 16px' });
+
 const FacilityDetailsContent = ({
     classes,
     data,
@@ -108,6 +113,7 @@ const FacilityDetailsContent = ({
     embed,
     contributors,
     fetchFacility,
+    fetchPartnerGroups,
     clearFacility,
     history: { push },
     location,
@@ -129,6 +135,13 @@ const FacilityDetailsContent = ({
         fetchFacility(normalizedOsID, Number(embed), contributors);
         /* eslint-disable react-hooks/exhaustive-deps */
     }, [normalizedOsID]);
+
+    // An embedded map that shows Spotlight data presents it as Open Supply
+    // Hub does, grouped by kind, which needs the groups' names and notes.
+    const showsSpotlight = !!embed && !!embedConfig?.spotlight;
+    useEffect(() => {
+        if (showsSpotlight) fetchPartnerGroups();
+    }, [showsSpotlight]);
 
     // Clears the selected facility when unmounted
     useEffect(() => () => clearFacility(), []);
@@ -254,13 +267,10 @@ const FacilityDetailsContent = ({
                 />
                 {/* An embedded map shows partner data only when its
                     contributor has chosen to, and only the kinds chosen. */}
-                <ShowOnly when={embed && !!embedConfig?.spotlight}>
-                    <PartnerFieldsSection
-                        data={keepShownPartnerFields(
-                            data,
-                            embedConfig?.spotlight,
-                        )}
-                    />
+                <ShowOnly when={showsSpotlight && hasPartnerData(data)}>
+                    <div style={embedSpotlightStyle}>
+                        <PartnerDataContainer />
+                    </div>
                 </ShowOnly>
                 <ShowOnly when={!embed}>
                     <PartnerFieldsSection data={data} />
@@ -344,6 +354,7 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch) {
     return {
+        fetchPartnerGroups: () => dispatch(fetchPartnerFieldGroups()),
         fetchFacility: (id, embed, contributorId) => {
             const contributorValue = get(contributorId, ['0', 'value']);
             const isEmbedded = embed && contributorValue ? embed : 0;

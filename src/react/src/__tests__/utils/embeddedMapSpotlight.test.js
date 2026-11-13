@@ -4,11 +4,10 @@ import {
     formatEmbedConfigForServer,
     formatExistingConfig,
     getEmbedSpotlight,
-    getSpotlightFieldNames,
     getSpotlightFilterOptions,
     getSpotlightRingColor,
     getSpotlightTileKey,
-    keepShownPartnerFields,
+    hasPartnerData,
     toggleSpotlightGroup,
 } from '../../util/embeddedMap';
 import {
@@ -120,32 +119,19 @@ describe('Spotlight on an embedded map', () => {
         });
     });
 
-    describe('a facility\'s details', () => {
-        it('keep only the partner data the map shows', () => {
-            const data = {
-                properties: {
-                    name: 'Factory',
-                    partner_fields: {
-                        env_assessment: [{ value: 'Done' }],
-                        other_partner_field: [{ value: 'Hidden' }],
-                    },
-                },
-            };
-
-            expect(getSpotlightFieldNames(spotlight)).toEqual([
-                'env_assessment',
-                'worker_voice',
-                'helpline',
-            ]);
-            expect(
-                keepShownPartnerFields(data, spotlight).properties,
-            ).toEqual({
-                name: 'Factory',
-                partner_fields: { env_assessment: [{ value: 'Done' }] },
+    describe("a facility's details", () => {
+        it('show the Spotlight section only when there is partner data', () => {
+            const details = partnerFields => ({
+                properties: { partner_fields: partnerFields },
             });
+
             expect(
-                keepShownPartnerFields(data, null).properties.partner_fields,
-            ).toEqual({});
+                hasPartnerData(details({ env_assessment: [{ value: 'Done' }] })),
+            ).toBe(true);
+            expect(hasPartnerData(details({ env_assessment: [] }))).toBe(false);
+            expect(hasPartnerData(details({}))).toBe(false);
+            expect(hasPartnerData({ properties: {} })).toBe(false);
+            expect(hasPartnerData(null)).toBe(false);
         });
     });
 

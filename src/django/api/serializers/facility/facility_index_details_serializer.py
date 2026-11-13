@@ -488,7 +488,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             embed_mode_active,
             use_main_created_at,
             date_field_to_sort,
-            masked
+            masked,
+            spotlight_names,
         )
 
     def __serialize_and_sort_partner_fields(
@@ -499,7 +500,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
         embed_mode_active: bool,
         use_main_created_at: bool,
         date_field_to_sort: str,
-        masked: List[int]
+        masked: List[int],
+        spotlight_names=frozenset(),
     ) -> Dict[str, List[Dict[str, Any]]]:
         import logging
         logger = logging.getLogger(__name__)
@@ -522,7 +524,13 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                     fields,
                     context={
                         'user_can_see_detail': user_can_see_detail,
-                        'embed_mode_active': embed_mode_active,
+                        # An embedded map hides who contributed its
+                        # data, but Spotlight data is credited to the
+                        # partner it comes from, as it is on OS Hub.
+                        'embed_mode_active': (
+                            embed_mode_active
+                            and field_name not in spotlight_names
+                        ),
                         'masked_contributor_ids': masked,
                         'source_by': source_by,
                         'unit': unit,

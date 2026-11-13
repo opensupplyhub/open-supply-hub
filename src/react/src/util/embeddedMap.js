@@ -362,27 +362,12 @@ export const getSpotlightFilterOptions = spotlight => {
     ];
 };
 
-// The names of the partner fields an embedded map shows on a facility.
-export const getSpotlightFieldNames = spotlight =>
-    spotlight ? spotlight.groups.flatMap(group => group.field_names) : [];
-
-// A facility's details with only the partner data the embedded map shows.
-export const keepShownPartnerFields = (data, spotlight) => {
-    const partnerFields = (data && data.properties.partner_fields) || {};
-    const shown = getSpotlightFieldNames(spotlight);
-    return {
-        ...data,
-        properties: {
-            ...data.properties,
-            partner_fields: Object.keys(partnerFields)
-                .filter(name => shown.includes(name))
-                .reduce(
-                    (kept, name) => ({ ...kept, [name]: partnerFields[name] }),
-                    {},
-                ),
-        },
-    };
-};
+// Whether a facility's details carry any partner data. An embedded map is
+// only ever sent the kinds its contributor shows.
+export const hasPartnerData = data =>
+    Object.values((data && data.properties.partner_fields) || {}).some(
+        values => Array.isArray(values) && values.length > 0 && !!values[0],
+    );
 
 // Changes when what the map's tiles should flag changes, so they are
 // fetched again. Empty when facilities with Spotlight data are not ringed.

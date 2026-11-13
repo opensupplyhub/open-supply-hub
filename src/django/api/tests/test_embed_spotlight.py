@@ -421,3 +421,11 @@ class EmbedSpotlightTest(APITestCase):
 
         self.assertIn("env_assessment", shown)
         self.assertNotIn("social_audit", shown)
+
+    def test_details_credit_the_partner(self):
+        self._show([self.environment])
+
+        entry = self._details_partner_fields()["env_assessment"][0]
+
+        self.assertEqual("Partner", entry["contributor_name"])
+        self.assertEqual(self.partner.id, entry["contributor_id"])
