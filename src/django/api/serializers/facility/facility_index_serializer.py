@@ -107,6 +107,16 @@ class FacilityIndexSerializer(GeoFeatureModelSerializer):
             for field_name in exclude_fields:
                 self.fields.pop(field_name, None)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # A list for an embedded map that shows Spotlight data says which
+        # facilities have it (see `embed_has_spotlight`).
+        if hasattr(instance, 'embed_has_spotlight'):
+            data['properties']['has_spotlight'] = bool(
+                instance.embed_has_spotlight
+            )
+        return data
+
     def get_location(self, facility):
         return facility.location
 

@@ -11,6 +11,7 @@ from api.identity_record_switches import IDENTITY_RESOLVER_SWITCH
 from api.constants import FacilityClaimStatuses, MASKED_CONTRIBUTOR_LABEL
 from api.partner_fields.registry import system_partner_field_registry
 from api.models.partner_field import PartnerField
+from api.services.embed_spotlight import embed_spotlight_field_names
 from api.serializers.facility.partner_field_helper import (
     get_cached_all_partner_fields,
 )
@@ -455,6 +456,19 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             all_extended_fields,
             request
         )
+        # An embedded map only carries its own contributor's data, except
+        # the Spotlight data its contributor has chosen to show.
+        spotlight_names = (
+            embed_spotlight_field_names(request.query_params)
+            if request is not None else set()
+        )
+        if spotlight_names:
+            kept = {id(field) for field in fields}
+            fields = list(fields) + [
+                field for field in all_extended_fields
+                if field.get('field_name') in spotlight_names
+                and id(field) not in kept
+            ]
 
         grouped_fields = defaultdict(list)
 

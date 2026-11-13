@@ -62,6 +62,7 @@ from api.services.claim_campaign_service import (
     resolve_claim_campaign,
 )
 from api.models.embed_field import EmbedField
+from api.services.embed_spotlight import embed_has_spotlight
 from api.services.embed_field_filters import (
     embed_field_sort,
     embed_has_blurb,
@@ -613,6 +614,12 @@ class FacilitiesViewSet(ListModelMixin,
         if has_blurb is not None:
             queryset = queryset.annotate(embed_has_blurb=has_blurb)
             blurbs_first = ['-embed_has_blurb']
+
+        # An embedded map that shows Spotlight data marks the facilities
+        # that have it.
+        has_spotlight = embed_has_spotlight(request.query_params)
+        if has_spotlight is not None:
+            queryset = queryset.annotate(embed_has_spotlight=has_spotlight)
 
         if field_sort is not None:
             queryset, field_ordering = order_by_embed_field(
