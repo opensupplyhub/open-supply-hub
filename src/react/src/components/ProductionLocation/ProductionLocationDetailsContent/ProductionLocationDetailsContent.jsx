@@ -23,6 +23,10 @@ import { getCandidateFromFacilityPayload } from '../../../util/candidates';
 
 import productionLocationDetailsContentStyles from './styles';
 import OsIdBadge from '../Heading/OsIdBadge/OsIdBadge';
+import ProfileCompletenessIndicator from '../ProfileCompleteness/ProfileCompletenessIndicator';
+import ProfileCompletenessSections from '../ProfileCompleteness/ProfileCompletenessSections';
+import useProfileCompleteness from '../ProfileCompleteness/hooks';
+import { PROFILE_COMPLETENESS_SECTION_ID } from '../ProfileCompleteness/constants';
 
 const ProductionLocationDetailsContent = ({
     classes,
@@ -42,6 +46,21 @@ const ProductionLocationDetailsContent = ({
     ]);
     // Suggested match the voter is comparing on the map (OSDEV-3247).
     const [highlightedMatchOsId, setHighlightedMatchOsId] = useState(null);
+    // Admin-only preview: null for everyone the flag is not on for.
+    const profileCompleteness = useProfileCompleteness(osId, {
+        skip: !!embed || !!candidate,
+    });
+    const [isCalculationOpen, setIsCalculationOpen] = useState(false);
+    const [isStrengthenOpen, setIsStrengthenOpen] = useState(false);
+    const showCalculation = () => {
+        setIsCalculationOpen(true);
+        const section = document.getElementById(
+            PROFILE_COMPLETENESS_SECTION_ID,
+        );
+        if (section && typeof section.scrollIntoView === 'function') {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
 
     // Satellite-detected candidate (OSDEV-3247): no contributors, claims
     // or extended fields exist yet, so those sections are replaced by the
@@ -96,6 +115,10 @@ const ProductionLocationDetailsContent = ({
                 facilityName={data?.properties?.name}
                 isClosed={!!data?.properties?.is_closed}
             />
+            <ProfileCompletenessIndicator
+                score={profileCompleteness?.score}
+                onClick={showCalculation}
+            />
             <Grid container className={classes.containerItem} spacing={16}>
                 <Grid item xs={12} lg={7} className={classes.identityRowItem}>
                     <OsIdBadge osId={osId} />
@@ -109,6 +132,18 @@ const ProductionLocationDetailsContent = ({
                 clearFacility={clearFacility}
                 useProductionLocationPage={useProductionLocationPage}
                 search={location?.search || ''}
+            />
+            <ProfileCompletenessSections
+                className={classes.containerItem}
+                profileCompleteness={profileCompleteness}
+                isCalculationOpen={isCalculationOpen}
+                onToggleCalculation={() =>
+                    setIsCalculationOpen(isOpen => !isOpen)
+                }
+                isStrengthenOpen={isStrengthenOpen}
+                onToggleStrengthen={() =>
+                    setIsStrengthenOpen(isOpen => !isOpen)
+                }
             />
             <Grid container className={classes.containerItem} spacing={16}>
                 <Grid

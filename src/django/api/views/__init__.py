@@ -80,6 +80,7 @@ from .sectors import sectors
 from .isic_taxonomy import IsicTaxonomyView
 from .claim_statuses import claim_statuses
 from .claim_profile_options import claim_profile_options
+from .profile_completeness import profile_completeness
 from .partner_fields.partner_fields_view_set import PartnerFieldsViewSet
 from .partner_field_groups.partner_field_groups_view_set import (
     PartnerFieldGroupsViewSet,
