@@ -217,19 +217,19 @@ const VectorTileFacilitiesLayer = ({
     maxZoom,
     iconColor,
     colorLegendKey,
+    asDots,
 }) => {
-    // One marker icon per value of the field the embed is colored by.
-    const colorIcons = useMemo(
-        () =>
-            JSON.parse(colorLegendKey).reduce(
-                (icons, { value, color }) => ({
-                    ...icons,
-                    [value.toLowerCase()]: createMarkerIcon(color),
-                }),
-                {},
-            ),
-        [colorLegendKey],
-    );
+    // One marker color, and one pin icon, per value of the field the embed
+    // is colored by.
+    const [colorIcons, colorHexes] = useMemo(() => {
+        const icons = {};
+        const hexes = {};
+        JSON.parse(colorLegendKey).forEach(({ value, color }) => {
+            icons[value.toLowerCase()] = createMarkerIcon(color);
+            hexes[value.toLowerCase()] = color;
+        });
+        return [icons, hexes];
+    }, [colorLegendKey]);
 
     const [multipleFacilitiesAtPoint, setMultipleFacilitiesAtPoint] = useState(
         null,
@@ -320,14 +320,30 @@ const VectorTileFacilitiesLayer = ({
                         const [colorValue] = splitTagValues(
                             get(properties, 'embed_color_value', '') || '',
                         );
-                        const colorIcon = colorValue
-                            ? colorIcons[colorValue.toLowerCase()]
+                        const colorKey = colorValue
+                            ? colorValue.toLowerCase()
                             : null;
+                        const isSelected = osID && facilityID === osID;
 
-                        if (osID && facilityID === osID) {
+                        // An embedded map draws each facility as a dot, in
+                        // its field color or the map's primary color.
+                        if (asDots) {
+                            return {
+                                radius: isSelected ? 9 : 6,
+                                fill: true,
+                                fillColor: colorHexes[colorKey] || iconColor,
+                                fillOpacity: 0.9,
+                                color: isSelected ? '#0D1128' : '#ffffff',
+                                weight: isSelected ? 3 : 1.5,
+                            };
+                        }
+
+                        if (isSelected) {
                             return { icon: selectedMarkerIcon };
                         }
-                        return { icon: colorIcon || unselectedMarkerIcon };
+                        return {
+                            icon: colorIcons[colorKey] || unselectedMarkerIcon,
+                        };
                     },
                 }}
                 subdomains=""

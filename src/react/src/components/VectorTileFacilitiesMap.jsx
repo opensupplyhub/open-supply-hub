@@ -145,29 +145,35 @@ function VectorTileFacilitiesMap({
             <Control position="bottomleft">
                 <EmbedColorLegend />
             </Control>
-            <Control position="bottomleft">
-                <VectorTileGridLegend
-                    currentZoomLevel={currentMapZoomLevel}
-                    gridColorRamp={gridColorRamp}
-                />
-            </Control>
+            {/* An embedded map draws every facility as its own dot at every
+                zoom level, so it has no grouped grid and no grid legend. */}
+            {!isEmbedded && (
+                <Control position="bottomleft">
+                    <VectorTileGridLegend
+                        currentZoomLevel={currentMapZoomLevel}
+                        gridColorRamp={gridColorRamp}
+                    />
+                </Control>
+            )}
             <ZoomControl position="bottomright" />
             <VectorTileFacilitiesLayer
                 handleMarkerClick={handleMarkerClick}
                 handleFacilityClick={handleFacilityClick}
                 osID={osID}
                 pushRoute={push}
-                minZoom={maxVectorTileFacilitiesGridZoom + 1}
+                minZoom={isEmbedded ? 1 : maxVectorTileFacilitiesGridZoom + 1}
                 maxZoom={22}
+                asDots={!!isEmbedded}
             />
-            {currentMapZoomLevel <= maxVectorTileFacilitiesGridZoom && (
-                <VectorTileFacilityGridLayer
-                    handleCellClick={handleCellClick}
-                    minZoom={1}
-                    maxZoom={maxVectorTileFacilitiesGridZoom}
-                    zoomLevel={currentMapZoomLevel}
-                />
-            )}
+            {!isEmbedded &&
+                currentMapZoomLevel <= maxVectorTileFacilitiesGridZoom && (
+                    <VectorTileFacilityGridLayer
+                        handleCellClick={handleCellClick}
+                        minZoom={1}
+                        maxZoom={maxVectorTileFacilitiesGridZoom}
+                        zoomLevel={currentMapZoomLevel}
+                    />
+                )}
             {drawFilterActive && (
                 <PolygonalSearchControl
                     navigateToFacilities={navigateToFacilities}
