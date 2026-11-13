@@ -288,8 +288,9 @@ export const getChainDepths = chain => {
 
 // A chain's locations in groups, upstream first, for the list. Each group is
 // { label, nodes }, and each node gains `supplies`, the names of the locations
-// it feeds. Grouped by the contributor's tier value when every location has
-// one, otherwise by position in the chain.
+// it feeds. Every group is a tier: the contributor's tier value when every
+// location has one and those values agree with the links, otherwise the
+// location's position counted from the end of the chain.
 export const getChainGroups = chain => {
     const names = {};
     chain.nodes.forEach(node => {
@@ -325,7 +326,9 @@ export const getChainGroups = chain => {
     );
 
     return keys.map(key => ({
-        label: hasTiers ? `Tier ${key}` : `Step ${keys.indexOf(key) + 1}`,
+        // Without usable tier values the tier is the location's position:
+        // the end of the chain is tier 1, what supplies it tier 2, and so on.
+        label: `Tier ${key}`,
         nodes: withSupplies.filter(node => keyOf(node) === key),
     }));
 };
