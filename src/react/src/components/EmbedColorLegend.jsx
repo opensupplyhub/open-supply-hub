@@ -3,6 +3,7 @@ import { arrayOf, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 
 import {
+    embedDrawsDots,
     getEmbedColorLabel,
     getEmbedColorLegend,
     getEmbedSpotlight,
@@ -81,16 +82,19 @@ EmbedColorLegend.defaultProps = {
     spotlightRingColor: '',
 };
 
-function mapStateToProps({ embeddedMap: { embed, config } }) {
+function mapStateToProps({ embeddedMap: { embed, config }, featureFlags }) {
     const embedConfig = embed ? config : null;
+    // Only dots can be ringed, so the legend only mentions the ring when the
+    // map draws its facilities as dots.
+    const drawsDots = embedDrawsDots(embed, featureFlags);
     return {
         label: getEmbedColorLabel(embedConfig),
         legend: getEmbedColorLegend(embedConfig),
-        spotlightRingColor: getSpotlightTileKey(
-            getEmbedSpotlight(!!embed, config),
-        )
-            ? getSpotlightRingColor(config)
-            : '',
+        spotlightRingColor:
+            drawsDots &&
+            getSpotlightTileKey(getEmbedSpotlight(!!embed, config))
+                ? getSpotlightRingColor(config)
+                : '',
     };
 }
 
