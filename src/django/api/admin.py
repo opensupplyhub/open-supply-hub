@@ -708,6 +708,35 @@ class AnnouncementBannerAdmin(admin.ModelAdmin):
         return False
 
 
+class FacilityProfileCompletenessAdmin(admin.ModelAdmin):
+    """
+    Read-only list of loaded runs, for comparing the numeric score's
+    level with the model-backed classification. Rows come from the
+    load_profile_completeness command.
+    """
+    list_display = (
+        'facility_id',
+        'run_date',
+        'score',
+        'level',
+        'classifier_tier',
+        'classifier_agreement_tier',
+        'classifier_field_tier',
+        'scorer_version',
+        'classifier_model',
+    )
+    list_filter = ('run_date', 'classifier_tier', 'scorer_version')
+    search_fields = ('facility__id',)
+    raw_id_fields = ('facility',)
+    readonly_fields = ('created_at', 'updated_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 class USCountyTigerlineAdmin(admin.ModelAdmin):
     list_display = ('geoid', 'name')
     search_fields = ('geoid', 'name')
@@ -831,6 +860,9 @@ admin_site.register(
 )
 admin_site.register(AnnouncementBanner, AnnouncementBannerAdmin)
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
+admin_site.register(
+    models.FacilityProfileCompleteness, FacilityProfileCompletenessAdmin
+)
 admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(ZoneSet, ZoneSetAdmin)
 admin_site.register(Zone, ZoneAdmin)
