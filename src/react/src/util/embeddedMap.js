@@ -234,6 +234,80 @@ export const getListFields = (embedFields, contributorFields) =>
         })
         .filter(f => hasValue(f.value));
 
+// ---------------------------------------------------------------------------
+// Supply chains
+// ---------------------------------------------------------------------------
+// A published chain, as the embed config returns it:
+// { id, name, description, product_url, color,
+//   nodes: [{ os_id, name, address, country_name, lat, lng, stage, tier }],
+//   links: [[supplier os_id, customer os_id]] }
+
+export const getEmbedSupplyChains = (embed, config) =>
+    embed && config && Array.isArray(config.supply_chains)
+        ? config.supply_chains.filter(chain => chain.nodes.length > 0)
+        : [];
+
+export const findEmbedSupplyChain = (chains, id) =>
+    (chains || []).find(chain => String(chain.id) === String(id)) || null;
+
+// How many links a location is from the end of the chain: 1 for a location
+// that supplies nothing further, 2 for one that supplies it, and so on. Used
+// to group a chain's locations when the contributor has no tier field.
+export const getChainDepths = chain => {
+    const customers = {};
+    chain.links.forEach(([supplier, customer]) => {
+        customers[supplier] = [...(customers[supplier] || []), customer];
+    });
+    const depths = {};
+    const depthOf = (osId, seen) => {
+        if (depths[osId]) return depths[osId];
+        if (seen.has(osId)) return 1;
+        seen.add(osId);
+        const next = customers[osId] || [];
+        depths[osId] = next.length
+            ? 1 + Math.max(...next.map(id => depthOf(id, seen)))
+            : 1;
+        return depths[osId];
+    };
+    chain.nodes.forEach(node => depthOf(node.os_id, new Set()));
+    return depths;
+};
+
+// A chain's locations in groups, upstream first, for the list. Each group is
+// { label, nodes }, and each node gains `supplies`, the names of the locations
+// it feeds. Grouped by the contributor's tier value when every location has
+// one, otherwise by position in the chain.
+export const getChainGroups = chain => {
+    const names = {};
+    chain.nodes.forEach(node => {
+        names[node.os_id] = node.name;
+    });
+    const withSupplies = chain.nodes.map(node => ({
+        ...node,
+        supplies: chain.links
+            .filter(([supplier]) => supplier === node.os_id)
+            .map(([, customer]) => names[customer]),
+    }));
+
+    const hasTiers = withSupplies.every(node => hasValue(node.tier));
+    const depths = getChainDepths(chain);
+    const keyOf = node => (hasTiers ? String(node.tier) : depths[node.os_id]);
+    const keys = [...new Set(withSupplies.map(keyOf))].sort((a, b) =>
+        hasTiers
+            ? String(b).localeCompare(String(a), undefined, { numeric: true })
+            : b - a,
+    );
+
+    return keys.map(key => ({
+        label: hasTiers ? `Tier ${key}` : `Step ${keys.indexOf(key) + 1}`,
+        nodes: withSupplies.filter(node => keyOf(node) === key),
+    }));
+};
+
+// Only http(s) links are ever shown to visitors.
+export const getSafeProductUrl = url =>
+    /^https?:\/\/[^\s"<>]+$/i.test((url || '').trim()) ? url.trim() : '';
+
 // The dropdown filters an embedded map offers: the contributor's visible,
 // filterable fields that have at least one value, in the contributor's order.
 // `filterOptions` is `filter_options` from the embed config:
