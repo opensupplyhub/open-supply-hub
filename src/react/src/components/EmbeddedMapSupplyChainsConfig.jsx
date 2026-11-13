@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { func, number, object, oneOfType, string } from 'prop-types';
+import { createPortal } from 'react-dom';
+import { bool, func, number, object, oneOfType, string } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import EmbeddedMapSupplyChainMap from './EmbeddedMapSupplyChainMap';
+import EmbedSupplyChainSchematic from './EmbedSupplyChainSchematic';
 import apiRequest from '../util/apiRequest';
 import {
     makeEmbedSupplyChainsURL,
@@ -15,12 +17,13 @@ import {
     CHAIN_STAGE_SUGGESTIONS,
     MAX_CHAIN_LOCATIONS,
     addChainLink,
+    chainHasChanges,
     clickChainLocation,
     formatChainForAPI,
-    getChainDepths,
     getChainErrorMessages,
     getPossibleCustomers,
     makeEmptyChain,
+    moveChain,
     removeChainLink,
     reverseChainLink,
     removeChainLocation,
@@ -155,6 +158,27 @@ const styles = {
         background: 'white',
         border: BORDER,
     },
+    moveButton: {
+        padding: '6px 8px',
+        border: '1px solid rgb(13, 17, 40)',
+        background: 'white',
+        fontFamily: 'inherit',
+        fontSize: '13px',
+        fontWeight: 700,
+        cursor: 'pointer',
+    },
+    schematicPanel: {
+        marginBottom: '16px',
+        padding: '16px 20px 20px',
+        background: 'rgb(255, 255, 255)',
+        border: BORDER,
+    },
+    schematicHeader: {
+        color: 'rgb(0, 0, 0)',
+        fontSize: '18px',
+        fontWeight: 700,
+        marginBottom: '2px',
+    },
     footer: {
         display: 'flex',
         gap: '8px',
@@ -162,110 +186,24 @@ const styles = {
     },
 };
 
-const BOX_WIDTH = 150;
-const BOX_HEIGHT = 34;
-const COLUMN_GAP = 46;
-const ROW_GAP = 12;
-
-const shorten = (text, length = 22) =>
-    text.length > length ? `${text.slice(0, length - 1)}…` : text;
-
-/*
-A sketch of a chain: its locations in columns, the start of the chain on the
-left, with a line from each supplier to each location it supplies.
-*/
-export function SupplyChainDiagram({ chain }) {
-    if (!chain.nodes.length) return null;
-
-    const depths = getChainDepths(chain);
-    const maxDepth = Math.max(...Object.values(depths));
-    const columns = {};
-    const position = {};
-    chain.nodes.forEach(node => {
-        const column = maxDepth - depths[node.os_id];
-        const row = columns[column] || 0;
-        columns[column] = row + 1;
-        position[node.os_id] = {
-            x: column * (BOX_WIDTH + COLUMN_GAP),
-            y: row * (BOX_HEIGHT + ROW_GAP),
-        };
-    });
-    const width = maxDepth * (BOX_WIDTH + COLUMN_GAP) - COLUMN_GAP;
-    const height =
-        Math.max(...Object.values(columns)) * (BOX_HEIGHT + ROW_GAP) - ROW_GAP;
-
-    return (
-        <div style={styles.diagram}>
-            <svg
-                viewBox={`0 0 ${width + 2} ${height + 2}`}
-                style={{
-                    display: 'block',
-                    width: '100%',
-                    maxWidth: `${width + 2}px`,
-                }}
-                role="img"
-                aria-label="Diagram of the supply chain"
-            >
-                <g transform="translate(1, 1)">
-                    {chain.links.map(([supplier, customer]) => {
-                        const from = position[supplier];
-                        const to = position[customer];
-                        if (!from || !to) return null;
-                        return (
-                            <line
-                                key={`${supplier}-${customer}`}
-                                x1={from.x + BOX_WIDTH}
-                                y1={from.y + BOX_HEIGHT / 2}
-                                x2={to.x}
-                                y2={to.y + BOX_HEIGHT / 2}
-                                stroke={chain.color}
-                                strokeWidth="2"
-                            />
-                        );
-                    })}
-                    {chain.nodes.map(node => (
-                        <g
-                            key={node.os_id}
-                            transform={`translate(${position[node.os_id].x}, ${
-                                position[node.os_id].y
-                            })`}
-                        >
-                            <rect
-                                width={BOX_WIDTH}
-                                height={BOX_HEIGHT}
-                                fill="white"
-                                stroke={chain.color}
-                                strokeWidth="2"
-                            />
-                            <text
-                                x={BOX_WIDTH / 2}
-                                y={BOX_HEIGHT / 2 + 4}
-                                textAnchor="middle"
-                                fontSize="11"
-                            >
-                                {shorten(node.name || node.os_id)}
-                            </text>
-                        </g>
-                    ))}
-                </g>
-            </svg>
-        </div>
-    );
-}
-
-SupplyChainDiagram.propTypes = {
-    chain: object.isRequired,
-};
-
 /*
 Lets a contributor put together supply chains from their own facilities, to
 show on their embedded map: which locations are in a chain, which supplies
 which, and whether visitors can see it yet.
 */
-function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
+function EmbeddedMapSupplyChainsConfig({
+    contributorId,
+    onSaved,
+    onUnsavedChange,
+    active,
+    schematicContainer,
+}) {
     const [chains, setChains] = useState([]);
     const [loadError, setLoadError] = useState('');
     const [draft, setDraft] = useState(null);
+    // The chain as it was when opened, to tell whether there is unsaved work.
+    const [original, setOriginal] = useState(null);
+    const [confirmingDiscard, setConfirmingDiscard] = useState(false);
     const [errors, setErrors] = useState([]);
     const [saving, setSaving] = useState(false);
     const [confirmingDelete, setConfirmingDelete] = useState(null);
@@ -284,13 +222,41 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
             .catch(() => setLocations([]));
     }, []);
 
-    const tiers = useMemo(() => {
-        const lookup = {};
+    const [tiers, countries] = useMemo(() => {
+        const tierLookup = {};
+        const countryLookup = {};
         locations.forEach(location => {
-            lookup[location.os_id] = location.tier;
+            tierLookup[location.os_id] = location.tier;
+            countryLookup[location.os_id] = location.country_name;
         });
-        return lookup;
+        return [tierLookup, countryLookup];
     }, [locations]);
+
+    const hasUnsavedWork = !!draft && chainHasChanges(draft, original);
+
+    // Unsaved work is kept while the other settings are open (this section
+    // stays mounted), flagged on the section's tab, and the browser asks
+    // before the page is closed or reloaded.
+    useEffect(() => {
+        onUnsavedChange(hasUnsavedWork);
+    }, [hasUnsavedWork]);
+    useEffect(() => {
+        if (!hasUnsavedWork) return undefined;
+        const warn = event => {
+            event.preventDefault();
+            // eslint-disable-next-line no-param-reassign
+            event.returnValue = '';
+        };
+        window.addEventListener('beforeunload', warn);
+        return () => window.removeEventListener('beforeunload', warn);
+    }, [hasUnsavedWork]);
+
+    const openEditor = chain => {
+        setConfirmingDelete(null);
+        setConfirmingDiscard(false);
+        setOriginal(chain);
+        setDraft(chain);
+    };
 
     // Clicking a facility, on the map or in the search results, adds it to
     // the chain and links it to the selected location.
@@ -352,6 +318,8 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
 
     const closeEditor = () => {
         setDraft(null);
+        setOriginal(null);
+        setConfirmingDiscard(false);
         setSelectedId(null);
         setClickMessage('');
         setErrors([]);
@@ -369,10 +337,11 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                   makeEmbedSupplyChainsURL(draft.id),
                   formatChainForAPI(draft),
               )
-            : apiRequest.post(
-                  makeEmbedSupplyChainsURL(),
-                  formatChainForAPI(draft),
-              );
+            : apiRequest.post(makeEmbedSupplyChainsURL(), {
+                  ...formatChainForAPI(draft),
+                  // A new chain goes last.
+                  order: chains.length,
+              });
         request
             .then(() => {
                 closeEditor();
@@ -397,6 +366,31 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                 setLoadError('The supply chain could not be deleted.'),
             );
 
+    // Move a chain up or down the list visitors see, and save the new order.
+    const move = (id, direction) => {
+        const moved = moveChain(chains, id, direction);
+        if (moved === chains) return;
+        setChains(moved.map((chain, order) => ({ ...chain, order })));
+        Promise.all(
+            moved
+                .map((chain, order) => ({ chain, order }))
+                .filter(({ chain, order }) => chain.order !== order)
+                .map(({ chain, order }) =>
+                    apiRequest.patch(makeEmbedSupplyChainsURL(chain.id), {
+                        order,
+                    }),
+                ),
+        )
+            .then(() => {
+                setLoadError('');
+                onSaved();
+            })
+            .catch(() => {
+                setLoadError('The new order could not be saved.');
+                loadChains();
+            });
+    };
+
     if (!draft) {
         return (
             <div style={styles.section}>
@@ -411,7 +405,12 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                 {loadError && (
                     <Typography style={styles.error}>{loadError}</Typography>
                 )}
-                {chains.map(chain => (
+                {chains.length > 1 && (
+                    <Typography style={styles.hint}>
+                        Visitors see your published supply chains in this order.
+                    </Typography>
+                )}
+                {chains.map((chain, index) => (
                     <div key={chain.id} style={styles.row}>
                         <span style={styles.rowName}>
                             <span
@@ -432,11 +431,28 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                         <span style={styles.actions}>
                             <button
                                 type="button"
+                                style={styles.moveButton}
+                                aria-label={`Move ${chain.name} up`}
+                                title="Move up"
+                                disabled={index === 0}
+                                onClick={() => move(chain.id, -1)}
+                            >
+                                ↑
+                            </button>
+                            <button
+                                type="button"
+                                style={styles.moveButton}
+                                aria-label={`Move ${chain.name} down`}
+                                title="Move down"
+                                disabled={index === chains.length - 1}
+                                onClick={() => move(chain.id, 1)}
+                            >
+                                ↓
+                            </button>
+                            <button
+                                type="button"
                                 style={styles.button}
-                                onClick={() => {
-                                    setConfirmingDelete(null);
-                                    setDraft(chain);
-                                }}
+                                onClick={() => openEditor(chain)}
                             >
                                 Edit
                             </button>
@@ -460,7 +476,7 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                     <button
                         type="button"
                         style={{ ...styles.button, ...styles.primaryButton }}
-                        onClick={() => setDraft(makeEmptyChain())}
+                        onClick={() => openEditor(makeEmptyChain())}
                     >
                         New supply chain
                     </button>
@@ -479,6 +495,18 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
     const selectedName = draft.nodes.some(node => node.os_id === selectedId)
         ? nameOf(selectedId)
         : '';
+    const schematicChain = {
+        ...draft,
+        nodes: draft.nodes.map(node => ({
+            ...node,
+            tier: tiers[node.os_id],
+            country_name: countries[node.os_id],
+        })),
+    };
+    const toggleSelected = osId => {
+        setClickMessage('');
+        setSelectedId(osId === selectedId ? null : osId);
+    };
     let locationsHint =
         'Click a dot, or search below, to add the first location. Starting with the final factory works well.';
     if (selectedName) {
@@ -777,15 +805,6 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                 );
             })}
 
-            {draft.nodes.length > 1 && (
-                <>
-                    <Typography style={styles.subHeader}>
-                        How it fits together
-                    </Typography>
-                    <SupplyChainDiagram chain={draft} />
-                </>
-            )}
-
             <div style={{ marginTop: '16px' }}>
                 <FormControlLabel
                     control={
@@ -823,11 +842,41 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                     type="button"
                     style={styles.button}
                     disabled={saving}
-                    onClick={closeEditor}
+                    onClick={() =>
+                        hasUnsavedWork && !confirmingDiscard
+                            ? setConfirmingDiscard(true)
+                            : closeEditor()
+                    }
                 >
-                    Cancel
+                    {confirmingDiscard ? 'Discard changes' : 'Cancel'}
                 </button>
             </div>
+            {confirmingDiscard && (
+                <Typography style={styles.hint}>
+                    This supply chain has changes that are not saved.
+                </Typography>
+            )}
+            {active &&
+                schematicContainer &&
+                createPortal(
+                    <div style={styles.schematicPanel}>
+                        <Typography style={styles.schematicHeader}>
+                            Schematic view
+                        </Typography>
+                        <Typography
+                            style={{ ...styles.hint, marginBottom: '8px' }}
+                        >
+                            The same supply chain without the geography, read
+                            left to right. Click a location to select it.
+                        </Typography>
+                        <EmbedSupplyChainSchematic
+                            chain={schematicChain}
+                            selectedId={selectedId}
+                            onSelect={toggleSelected}
+                        />
+                    </div>,
+                    schematicContainer,
+                )}
         </div>
     );
 }
@@ -835,11 +884,17 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
 EmbeddedMapSupplyChainsConfig.defaultProps = {
     contributorId: null,
     onSaved: () => {},
+    onUnsavedChange: () => {},
+    active: true,
+    schematicContainer: null,
 };
 
 EmbeddedMapSupplyChainsConfig.propTypes = {
     contributorId: oneOfType([number, string]),
     onSaved: func,
+    onUnsavedChange: func,
+    active: bool,
+    schematicContainer: object,
 };
 
 export default EmbeddedMapSupplyChainsConfig;

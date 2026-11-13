@@ -1,7 +1,10 @@
 import {
     addChainLink,
     addChainLocation,
+    chainHasChanges,
     chainLinksLoop,
+    getSchematicLayout,
+    moveChain,
     clickChainLocation,
     guessLinkDirection,
     reverseChainLink,
@@ -111,8 +114,79 @@ describe('embedded map supply chains', () => {
             expect(groups[2].nodes.map(n => n.name)).toEqual(['Factory']);
         });
 
+        it('falls back to position when the tiers disagree with the links', () => {
+            // The spinner is marked tier 1 but supplies a tier 2 mill.
+            const muddled = {
+                ...chain,
+                nodes: chain.nodes.map(n =>
+                    n.os_id === 'S' ? { ...n, tier: '1' } : n,
+                ),
+            };
+
+            expect(getChainGroups(muddled).map(g => g.label)).toEqual([
+                'Step 1',
+                'Step 2',
+                'Step 3',
+            ]);
+        });
+
         it('measures depth from the end of the chain', () => {
             expect(getChainDepths(chain)).toEqual({ F: 1, M1: 2, M2: 2, S: 3 });
+        });
+    });
+
+    describe('getSchematicLayout', () => {
+        const layout = getSchematicLayout(chain);
+        const boxOf = osId => layout.boxes.find(b => b.osId === osId);
+
+        it('puts the start of the chain on the left under its heading', () => {
+            expect(layout.headers.map(h => h.label)).toEqual([
+                'Tier 3',
+                'Tier 2',
+                'Tier 1',
+            ]);
+            expect(boxOf('S').x).toBeLessThan(boxOf('M1').x);
+            expect(boxOf('M1').x).toBe(boxOf('M2').x);
+            expect(boxOf('M1').x).toBeLessThan(boxOf('F').x);
+            expect(boxOf('S').x).toBe(layout.headers[0].x);
+        });
+
+        it('stacks a column and centres the shorter ones beside it', () => {
+            expect(boxOf('M1').y).toBeLessThan(boxOf('M2').y);
+            expect(boxOf('F').y).toBe((boxOf('M1').y + boxOf('M2').y) / 2);
+        });
+
+        it('draws one line per link and labels each location', () => {
+            expect(layout.edges.map(e => e.key)).toEqual([
+                'M1-F',
+                'M2-F',
+                'S-M1',
+            ]);
+            expect(boxOf('F')).toMatchObject({
+                name: 'Factory',
+                sub: 'Vietnam',
+            });
+        });
+
+        it('orders a column by where its customers sit', () => {
+            // Two factories; the mill listed first supplies the second one.
+            const crossed = {
+                ...chain,
+                nodes: [
+                    node('F1', 'Factory One', '1'),
+                    node('F2', 'Factory Two', '1'),
+                    node('MA', 'Mill A', '2'),
+                    node('MB', 'Mill B', '2'),
+                ],
+                links: [
+                    ['MA', 'F2'],
+                    ['MB', 'F1'],
+                ],
+            };
+            const {boxes} = getSchematicLayout(crossed);
+            const y = osId => boxes.find(b => b.osId === osId).y;
+
+            expect(y('MB')).toBeLessThan(y('MA'));
         });
     });
 
@@ -290,6 +364,28 @@ describe('embedded map supply chains', () => {
                 expect(result.chain).toBe(full);
                 expect(result.message).toMatch(/at most 60/);
             });
+        });
+
+        it('knows when a chain has unsaved changes', () => {
+            const opened = build();
+
+            expect(chainHasChanges({ ...opened }, opened)).toBe(false);
+            expect(
+                chainHasChanges({ ...opened, name: 'Jacket' }, opened),
+            ).toBe(true);
+            expect(
+                chainHasChanges(removeChainLink(opened, 'S', 'M'), opened),
+            ).toBe(true);
+        });
+
+        it('moves a chain up or down the list', () => {
+            const chains = [{ id: 1 }, { id: 2 }, { id: 3 }];
+            const ids = list => list.map(c => c.id);
+
+            expect(ids(moveChain(chains, 3, -1))).toEqual([1, 3, 2]);
+            expect(ids(moveChain(chains, 1, 1))).toEqual([2, 1, 3]);
+            expect(moveChain(chains, 1, -1)).toBe(chains);
+            expect(moveChain(chains, 3, 1)).toBe(chains);
         });
 
         it('sends the API the chain without display names', () => {

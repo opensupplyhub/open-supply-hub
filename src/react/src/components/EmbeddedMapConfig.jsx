@@ -67,9 +67,11 @@ const styles = {
         border: '1px solid rgb(214, 216, 221)',
         padding: '8px 20px 28px',
     },
-    preview: {
+    previewColumn: {
         position: 'sticky',
         top: '20px',
+    },
+    preview: {
         background: 'rgb(255, 255, 255)',
         border: '1px solid rgb(214, 216, 221)',
         padding: '16px 20px 20px',
@@ -172,6 +174,10 @@ function EmbeddedMapConfig({
     // Supply chains are saved on their own, apart from the other settings;
     // the preview is refreshed when one changes.
     const [chainsSavedAt, setChainsSavedAt] = useState(0);
+    const [chainHasUnsavedWork, setChainHasUnsavedWork] = useState(false);
+    // The schematic of the chain being built is drawn beside the settings,
+    // above the preview, where there is room to read it.
+    const [schematicContainer, setSchematicContainer] = useState(null);
 
     // The values of the field the markers are colored by come from the saved
     // config, so they are fetched again after each save (`timestamp`).
@@ -287,6 +293,9 @@ function EmbeddedMapConfig({
                                     }
                                 >
                                     {label}
+                                    {id === 'chains' && chainHasUnsavedWork
+                                        ? ' (unsaved)'
+                                        : ''}
                                 </button>
                             ))}
                         </div>
@@ -370,11 +379,23 @@ function EmbeddedMapConfig({
                                 userEmbedLevel={user.embed_level}
                             />
                         ) : null}
-                        {section === 'chains' ? (
-                            <EmbeddedMapSupplyChainsConfig
-                                contributorId={user?.contributor_id}
-                                onSaved={() => setChainsSavedAt(Date.now())}
-                            />
+                        {/* Kept mounted so a chain being built is not lost
+                            while the other settings are open. */}
+                        {user.embed_level === DELUXE_EMBED_LEVEL ? (
+                            <div
+                                style={{
+                                    display:
+                                        section === 'chains' ? 'block' : 'none',
+                                }}
+                            >
+                                <EmbeddedMapSupplyChainsConfig
+                                    contributorId={user?.contributor_id}
+                                    onSaved={() => setChainsSavedAt(Date.now())}
+                                    onUnsavedChange={setChainHasUnsavedWork}
+                                    active={section === 'chains'}
+                                    schematicContainer={schematicContainer}
+                                />
+                            </div>
                         ) : null}
                         {section === 'code' ? (
                             <>
@@ -396,27 +417,30 @@ function EmbeddedMapConfig({
                     </div>
                 </Grid>
                 <Grid item xs={12} md={7} lg={8}>
-                    <div style={styles.preview}>
-                        <Typography style={styles.previewHeader}>
-                            Preview
-                        </Typography>
-                        {minimumConfigurationIsComplete ? (
-                            <>
-                                <EmbeddedMapPreview
-                                    src={getEmbeddedMapSrc(mapSettings)}
-                                />
-                                <Typography style={styles.previewNote}>
-                                    Shown as on a desktop screen, scaled to fit.
-                                    The size you choose under Size and embed
-                                    code applies on your own website.
-                                </Typography>
-                            </>
-                        ) : (
-                            <Typography paragraph>
-                                Choose a color and enter a width and height to
-                                see a preview.
+                    <div style={styles.previewColumn}>
+                        <div ref={setSchematicContainer} />
+                        <div style={styles.preview}>
+                            <Typography style={styles.previewHeader}>
+                                Preview
                             </Typography>
-                        )}
+                            {minimumConfigurationIsComplete ? (
+                                <>
+                                    <EmbeddedMapPreview
+                                        src={getEmbeddedMapSrc(mapSettings)}
+                                    />
+                                    <Typography style={styles.previewNote}>
+                                        Shown as on a desktop screen, scaled to
+                                        fit. The size you choose under Size and
+                                        embed code applies on your own website.
+                                    </Typography>
+                                </>
+                            ) : (
+                                <Typography paragraph>
+                                    Choose a color and enter a width and height
+                                    to see a preview.
+                                </Typography>
+                            )}
+                        </div>
                     </div>
                 </Grid>
             </Grid>

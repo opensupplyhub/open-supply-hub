@@ -289,7 +289,20 @@ export const getChainGroups = chain => {
             .map(([, customer]) => names[customer]),
     }));
 
-    const hasTiers = withSupplies.every(node => hasValue(node.tier));
+    // Tiers are only used when they agree with the links: every supplier in
+    // a higher tier than the location it supplies. Otherwise the chain would
+    // read out of order.
+    const tierOf = {};
+    withSupplies.forEach(node => {
+        tierOf[node.os_id] = parseFloat(node.tier);
+    });
+    const hasTiers =
+        withSupplies.every(node => hasValue(node.tier)) &&
+        chain.links.every(([supplier, customer]) => {
+            const from = tierOf[supplier];
+            const to = tierOf[customer];
+            return Number.isNaN(from) || Number.isNaN(to) || from > to;
+        });
     const depths = getChainDepths(chain);
     const keyOf = node => (hasTiers ? String(node.tier) : depths[node.os_id]);
     const keys = [...new Set(withSupplies.map(keyOf))].sort((a, b) =>
@@ -494,6 +507,110 @@ export const getChainErrorMessages = data => {
     return messages.length
         ? messages
         : ['The supply chain could not be saved.'];
+};
+
+// --- The schematic: a chain without the geography ---
+
+const SCHEMATIC_BOX = Object.freeze({ width: 172, height: 38 });
+const SCHEMATIC_GAP = Object.freeze({ x: 64, y: 12 });
+const SCHEMATIC_HEADER = 26;
+
+const shortenText = (text, length) =>
+    text.length > length ? `${text.slice(0, length - 1)}…` : text;
+
+// Where everything in a chain's schematic goes: its locations in columns,
+// the start of the chain on the left, each column headed by its tier or
+// step. Within a column, locations are ordered by where the locations they
+// supply sit, to keep the lines from crossing.
+export const getSchematicLayout = chain => {
+    const { width: W, height: H } = SCHEMATIC_BOX;
+    const columns = getChainGroups(chain);
+    const rowOf = {};
+    for (let k = columns.length - 1; k >= 0; k -= 1) {
+        const rank = node =>
+            Math.min(
+                99,
+                ...chain.links
+                    .filter(([supplier]) => supplier === node.os_id)
+                    .map(([, customer]) =>
+                        rowOf[customer] === undefined ? 99 : rowOf[customer],
+                    ),
+            );
+        columns[k].nodes = sortBy(columns[k].nodes, rank);
+        columns[k].nodes.forEach((node, row) => {
+            rowOf[node.os_id] = row;
+        });
+    }
+    const rows = Math.max(...columns.map(column => column.nodes.length));
+    const rowHeight = H + SCHEMATIC_GAP.y;
+
+    const position = {};
+    const boxes = [];
+    columns.forEach((column, k) => {
+        const x = k * (W + SCHEMATIC_GAP.x) + 2;
+        const offset = ((rows - column.nodes.length) * rowHeight) / 2;
+        column.nodes.forEach((node, row) => {
+            const y = SCHEMATIC_HEADER + row * rowHeight + offset;
+            position[node.os_id] = { x, y };
+            const fullName = node.name || node.os_id;
+            boxes.push({
+                osId: node.os_id,
+                x,
+                y,
+                fullName,
+                name: shortenText(fullName, 25),
+                sub: shortenText(
+                    [node.stage, node.country_name].filter(Boolean).join(' · '),
+                    30,
+                ),
+            });
+        });
+    });
+
+    const edges = chain.links
+        .filter(
+            ([supplier, customer]) => position[supplier] && position[customer],
+        )
+        .map(([supplier, customer]) => {
+            const from = position[supplier];
+            const to = position[customer];
+            const x1 = from.x + W;
+            const y1 = from.y + H / 2;
+            const x2 = to.x - 7;
+            const y2 = to.y + H / 2;
+            const middle = (x1 + x2) / 2;
+            return {
+                key: `${supplier}-${customer}`,
+                d: `M${x1} ${y1} C${middle} ${y1} ${middle} ${y2} ${x2} ${y2}`,
+            };
+        });
+
+    return {
+        width: columns.length * W + (columns.length - 1) * SCHEMATIC_GAP.x + 4,
+        height: rows * rowHeight + SCHEMATIC_HEADER + 4,
+        box: SCHEMATIC_BOX,
+        headers: columns.map((column, k) => ({
+            label: column.label,
+            x: k * (W + SCHEMATIC_GAP.x) + 2,
+        })),
+        boxes,
+        edges,
+    };
+};
+
+// Whether the chain being edited differs from the one that was opened.
+export const chainHasChanges = (draft, original) =>
+    JSON.stringify(formatChainForAPI(draft)) !==
+    JSON.stringify(formatChainForAPI(original));
+
+// The chains with one moved up (-1) or down (1) a place.
+export const moveChain = (chains, id, direction) => {
+    const from = chains.findIndex(chain => chain.id === id);
+    const to = from + direction;
+    if (from < 0 || to < 0 || to >= chains.length) return chains;
+    const moved = [...chains];
+    moved.splice(to, 0, moved.splice(from, 1)[0]);
+    return moved;
 };
 
 // Only http(s) links are ever shown to visitors.
