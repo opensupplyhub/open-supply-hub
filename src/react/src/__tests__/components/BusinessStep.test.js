@@ -414,6 +414,15 @@ describe('BusinessStep component', () => {
             'A company website link can delay approval.',
             'A LinkedIn page may not be accepted and can significantly delay approval.',
         ]);
+
+        // The tip comes after its control, so on narrow screens it reads
+        // field first, then tip.
+        const inPageOrder = Array.from(
+            document.querySelectorAll('[data-testid="verification-select"], [data-testid="best-proof-box"]'),
+        );
+        expect(inPageOrder.indexOf(screen.getByTestId('verification-select'))).toBeLessThan(
+            inPageOrder.indexOf(screen.getByTestId('best-proof-box')),
+        );
     });
 
     test('upload box says claims with a document are approved fastest', () => {

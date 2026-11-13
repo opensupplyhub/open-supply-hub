@@ -1,14 +1,15 @@
 import COLOURS from '../../../../util/COLOURS';
 
+// Light purple, so green stays for the upload area and red for the
+// Important notes. Placement is left to the parent (see FieldWithTip).
 const styles = theme =>
     Object.freeze({
         box: Object.freeze({
             boxSizing: 'border-box',
             width: '100%',
-            backgroundColor: COLOURS.WHITE,
-            border: `2px solid ${COLOURS.MATERIAL_GREEN}`,
+            backgroundColor: COLOURS.PURPLE_TINT,
+            border: `1px solid ${COLOURS.LIGHT_PURPLE}`,
             padding: theme.spacing.unit * 1.5,
-            margin: '8px 0 12px 0',
         }),
         title: Object.freeze({
             fontSize: '18px',

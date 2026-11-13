@@ -30,6 +30,7 @@ import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import BestProofBox from '../../../Shared/BestProofBox/BestProofBox';
+import FieldWithTip from '../../../Shared/FieldWithTip/FieldWithTip';
 import {
     EMAIL_BEST_PROOF,
     EMPLOYMENT_BEST_PROOF,
@@ -114,12 +115,16 @@ const ContactInfoStep = ({
     return (
         <Grid container>
             <Grid item>
-                <div className={classes.fieldContainer}>
-                    <FormFieldTitle
-                        label="Your Work Email"
-                        classes={{ title: classes.formLabelRoot }}
-                        required
-                    />
+                <FieldWithTip
+                    heading={
+                        <FormFieldTitle
+                            label="Your Work Email"
+                            classes={{ title: classes.formLabelRoot }}
+                            required
+                        />
+                    }
+                    tip={<BestProofBox {...EMAIL_BEST_PROOF} />}
+                >
                     <TextField
                         fullWidth
                         value={userEmail || ''}
@@ -136,8 +141,7 @@ const ContactInfoStep = ({
                         className={classes.textField}
                         placeholder="name@yourcompany.com"
                     />
-                    <BestProofBox {...EMAIL_BEST_PROOF} />
-                </div>
+                </FieldWithTip>
                 <div className={classes.fieldContainer}>
                     <FormFieldTitle
                         label="Your Name"
@@ -201,19 +205,24 @@ const ContactInfoStep = ({
                 <div className={classes.importantNoteWrapper}>
                     <ImportantNote text="Your name and job title must match the person associated with the email address provided above." />
                 </div>
-                <div className={classes.fieldContainer}>
-                    <FormFieldTitle
-                        label="Employment Verification"
-                        classes={{ title: classes.formLabel }}
-                        required
-                    />
-                    <Typography
-                        variant="body1"
-                        className={classes.sectionDescription}
-                    >
-                        Select one item below.
-                    </Typography>
-                    <BestProofBox {...EMPLOYMENT_BEST_PROOF} />
+                <FieldWithTip
+                    heading={
+                        <>
+                            <FormFieldTitle
+                                label="Employment Verification"
+                                classes={{ title: classes.formLabel }}
+                                required
+                            />
+                            <Typography
+                                variant="body1"
+                                className={classes.sectionDescription}
+                            >
+                                Select one item below.
+                            </Typography>
+                        </>
+                    }
+                    tip={<BestProofBox {...EMPLOYMENT_BEST_PROOF} />}
+                >
                     <StyledSelect
                         id="claimantEmploymentVerificationMethod"
                         name="claimantEmploymentVerificationMethod"
@@ -248,7 +257,7 @@ const ContactInfoStep = ({
                                 />
                             </div>
                         )}
-                </div>
+                </FieldWithTip>
                 <div className={classes.fieldContainer}>
                     {showUrlInput && (
                         <FormFieldTitle
