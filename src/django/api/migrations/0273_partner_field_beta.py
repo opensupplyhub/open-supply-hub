@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0270_claim_campaign_supplier_roster'),
+        ('api', '0272_subdivide_existing_zones'),
     ]
 
     operations = [
