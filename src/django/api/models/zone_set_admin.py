@@ -23,9 +23,12 @@ class ZoneSetForm(forms.ModelForm):
     Admin form for creating and editing zone sets.
 
     Zones are not edited as rows: staff upload a GeoJSON
-    FeatureCollection and name the feature property that supplies
-    each zone's value. The whole file is parsed, validated and cut
-    into storage pieces here, in `clean`, before anything is saved — a
+    FeatureCollection and, for a set feeding a string field, name the
+    feature property that supplies each zone's value; a set feeding an
+    object field reads one feature property per key of the field's
+    JSON schema instead (OSDEV-3659). The whole file is parsed,
+    validated and cut into storage pieces here, in `clean`, before
+    anything is saved — a
     bad file, or a feature PostGIS cannot cut, becomes an ordinary red
     form error and the set's existing zones are left untouched. The
     pieces are handed to `ZoneSetAdmin.save_model`, which swaps them
@@ -43,7 +46,10 @@ class ZoneSetForm(forms.ModelForm):
             'comes first in the file wins. Large features are stored '
             'as several small pieces that share the feature\'s value, '
             'so a dissolved layer performs the same as one of many '
-            'small features.'
+            'small features. For an "object" partner field, each '
+            'feature must carry a property named after every key the '
+            'field\'s JSON schema lists as required; other schema keys '
+            'are served when present.'
         ),
     )
 
@@ -78,19 +84,32 @@ class ZoneSetForm(forms.ModelForm):
         """
         Check the linked field can carry a zone value.
 
-        The provider emits a plain string (`raw_value`), so the field
-        must be string-typed: an object/int/float field would serve a
-        mis-shaped value to the API and the downloads. And it must not
-        be a field one of the hard-wired providers already serves, or
-        the registry would yield two providers for one name.
+        The provider emits a plain string (`raw_value`) for a string
+        field and one value per schema key (`raw_values`) for an
+        object field, so the field must be one of those two: an
+        int/float field would serve a mis-shaped value to the API, and
+        an object field without a schema gives the page nothing to
+        render by and the upload nothing to validate against. And it
+        must not be a field one of the hard-wired providers already
+        serves, or the registry would yield two providers for one name.
         """
         partner_field = self.cleaned_data.get('partner_field')
         if partner_field is None:
             return partner_field
-        if partner_field.type != PartnerField.STRING:
+        if partner_field.type == PartnerField.OBJECT:
+            if not partner_field.object_schema_properties():
+                raise forms.ValidationError(
+                    f'"{partner_field.name}" is an "{PartnerField.OBJECT}" '
+                    'field without a JSON schema. A zone set fills an '
+                    'object field one feature property per schema '
+                    'property, so the schema is required: give the field '
+                    'a schema with a "properties" map first.'
+                )
+        elif partner_field.type != PartnerField.STRING:
             raise forms.ValidationError(
                 f'A zone set can only feed a "{PartnerField.STRING}" '
-                f'partner field; "{partner_field.name}" is '
+                f'partner field or an "{PartnerField.OBJECT}" field with '
+                f'a JSON schema; "{partner_field.name}" is '
                 f'"{partner_field.type}".'
             )
         if partner_field.name in (
@@ -109,11 +128,36 @@ class ZoneSetForm(forms.ModelForm):
         A new set must come with a file. An existing set may be edited
         without one, in which case its zones are kept — unless the
         value property changed, because the stored labels were read
-        with the old key and would no longer match; re-uploading makes
-        the change explicit.
+        with the old key and would no longer match, or the set moved
+        to, from or between object fields, because the stored zones
+        were validated against (and are served by) the old field's
+        schema; re-uploading makes the change explicit.
+
+        The value property is required only for a string field: an
+        object field reads one feature property per schema key, so
+        whatever was typed is cleared rather than stored as a stale
+        setting.
         """
         cleaned_data = super().clean()
         geojson_file = cleaned_data.get('geojson_file')
+        partner_field = cleaned_data.get('partner_field')
+        feeds_object = (
+            partner_field is not None
+            and partner_field.type == PartnerField.OBJECT
+        )
+
+        if feeds_object:
+            cleaned_data['value_property'] = None
+        elif (
+            not cleaned_data.get('value_property')
+            and 'partner_field' not in self.errors
+        ):
+            self.add_error(
+                'value_property',
+                'Choose which feature property supplies the zone value. '
+                'Only a set that feeds an "object" partner field can '
+                'leave this empty.'
+            )
         value_property = cleaned_data.get('value_property')
 
         if not geojson_file:
@@ -121,9 +165,12 @@ class ZoneSetForm(forms.ModelForm):
                 raise forms.ValidationError(
                     'Upload a GeoJSON FeatureCollection file.'
                 )
+            if not self.instance.zones.exists():
+                return cleaned_data
             if (
                 'value_property' in self.changed_data
-                and self.instance.zones.exists()
+                and 'value_property' not in self.errors
+                and not feeds_object
             ):
                 self.add_error(
                     'value_property',
@@ -131,6 +178,18 @@ class ZoneSetForm(forms.ModelForm):
                     'property, so every zone is re-read with the new '
                     'key.'
                 )
+            if self._field_change_needs_reupload(partner_field):
+                self.add_error(
+                    'partner_field',
+                    'Upload the file again when linking an "object" '
+                    'partner field or replacing one, so every zone is '
+                    're-read against the new field\'s schema.'
+                )
+            return cleaned_data
+
+        if 'value_property' in self.errors:
+            # The file cannot be read by a key that is missing; the
+            # error above already says what to fix.
             return cleaned_data
 
         if geojson_file.size > self.GEOJSON_FILE_MAX_BYTES:
@@ -153,13 +212,43 @@ class ZoneSetForm(forms.ModelForm):
         # file, instead of surfacing after validation as a server
         # error once the set itself has been saved.
         try:
-            self.parsed_zones = subdivide_zone_records(
-                parse_zone_features(raw, value_property)
-            )
+            if feeds_object:
+                records = parse_zone_features(
+                    raw, schema=partner_field.json_schema
+                )
+            else:
+                records = parse_zone_features(raw, value_property)
+            self.parsed_zones = subdivide_zone_records(records)
         except InvalidPolygonGeoJSON as exc:
             raise forms.ValidationError(str(exc)) from exc
 
         return cleaned_data
+
+    def _field_change_needs_reupload(self, partner_field):
+        """
+        Whether swapping the linked field invalidates the stored zones.
+
+        Zones feeding an object field were validated against that
+        field's schema and are served by its keys; zones feeding a
+        string field carry one label. So a set that has zones and
+        moves to an object field, away from one, or from one object
+        field to another must be re-read from the file. Moving between
+        string fields (or from no field to a string field) keeps the
+        same shape and needs nothing.
+
+        Args:
+            partner_field: The field the form is about to link, or
+                None. The instance still holds the saved field, since
+                the model form only copies cleaned data onto it after
+                `clean` returns.
+        """
+        if 'partner_field' not in self.changed_data:
+            return False
+        original = self.instance.partner_field
+        return any(
+            field is not None and field.type == PartnerField.OBJECT
+            for field in (original, partner_field)
+        )
 
 
 class ZoneSetAdmin(admin.ModelAdmin):
@@ -256,6 +345,16 @@ class ZoneSetAdmin(admin.ModelAdmin):
         )
         if counts['pieces'] == 0:
             return '(no zones saved yet)'
+        if obj.feeds_object_field:
+            # An object field is served one value per schema key, so
+            # the keys are what staff need to check against the
+            # field's schema and the page; the label is only the first
+            # required property and says little on its own.
+            return (
+                f'{counts["features"]} zone(s) stored as '
+                f'{counts["pieces"]} piece(s); serving schema keys: '
+                f'{", ".join(obj.schema_keys)}'
+            )
         # Distinct labels straight from the database: pulling every
         # zone's full JSON (label plus all source properties) into
         # Python just to dedupe it is slow on large uploads.

@@ -8,10 +8,11 @@ from django.urls import reverse
 from waffle.testutils import override_switch
 
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
+from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models import PartnerField, User, Zone, ZoneSet
 from api.models.zone_set_admin import ZoneSetAdmin, ZoneSetForm
 from api.partner_fields.registry import ZONE_SETS_SWITCH
-from api.tests.zone_fixtures import DISC, feature, upload
+from api.tests.zone_fixtures import DISC, feature, records, upload
 
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
@@ -24,6 +25,35 @@ BASE_DATA = {
     'value_property': 'bws_label',
     'active': True,
 }
+
+# Data for a set feeding an object field: no value property, the
+# feature properties are read by the schema's keys instead.
+OBJECT_DATA = {
+    'name': 'water_risk',
+    'description': 'Aqueduct water risk, several values per basin.',
+    'active': True,
+}
+
+SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'bws_label': {'type': 'string', 'title': 'Water stress, today'},
+        'bwd_label': {'type': 'string', 'title': 'Drought risk'},
+        'atlas_url': {
+            'type': 'string', 'format': 'uri',
+            'title': 'Aqueduct Water Risk Atlas',
+        },
+    },
+    'required': ['bws_label', 'bwd_label'],
+}
+
+
+def object_field(schema=SCHEMA, name='aqueduct_water_risk'):
+    """An object-type partner field with the given JSON schema."""
+    return PartnerField.objects.create(
+        name=name, type=PartnerField.OBJECT, label='Water risk',
+        json_schema=schema,
+    )
 
 
 class ZoneSetFormTest(TestCase):
@@ -184,11 +214,10 @@ class ZoneSetFormTest(TestCase):
 
         self.assertTrue(form.is_valid(), form.errors)
 
-    def test_non_string_partner_field_is_rejected(self):
-        """The provider emits a plain string, so an object/int/float
-        field would serve a mis-shaped value."""
-        for field_type in (PartnerField.OBJECT, PartnerField.INT,
-                           PartnerField.FLOAT):
+    def test_int_and_float_partner_fields_are_rejected(self):
+        """The provider emits a string or a keyed object, so an
+        int/float field would serve a mis-shaped value."""
+        for field_type in (PartnerField.INT, PartnerField.FLOAT):
             with self.subTest(field_type=field_type):
                 field = PartnerField.objects.create(
                     name=f'{field_type}_field', type=field_type,
@@ -198,6 +227,153 @@ class ZoneSetFormTest(TestCase):
                 self.assertFalse(form.is_valid())
                 self.assertIn('partner_field', form.errors)
                 self.assertIn(field_type, str(form.errors['partner_field']))
+
+    # --- object fields (OSDEV-3659) --------------------------------
+
+    def _object_form(self, partner_field, *features, data=None,
+                     instance=None):
+        return ZoneSetForm(
+            data={**OBJECT_DATA, 'partner_field': partner_field.pk,
+                  **(data or {})},
+            files={'geojson_file': upload(*features)} if features else None,
+            instance=instance,
+        )
+
+    def test_object_field_with_schema_is_accepted(self):
+        """No value property is needed: each zone is read one feature
+        property per schema key, labelled by the first required one."""
+        form = self._object_form(
+            object_field(),
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            feature(RIGHT, {'bws_label': 'Low', 'bwd_label': 'Medium',
+                            'atlas_url': 'https://example.org/r'}),
+        )
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIsNone(form.cleaned_data['value_property'])
+        self.assertEqual(
+            [zone['label'] for zone in form.parsed_zones], ['High', 'Low']
+        )
+
+    def test_object_field_without_schema_is_rejected(self):
+        """AC #4: an object field gives the page nothing to render by
+        and the upload nothing to validate against until it has a
+        schema with a properties map."""
+        for index, schema in enumerate(
+            (None, {}, {'type': 'object'}, {'properties': {}},
+             {'properties': 'bws_label'})
+        ):
+            with self.subTest(schema=schema):
+                field = object_field(schema=schema, name=f'no_schema_{index}')
+                form = self._object_form(
+                    field, feature(LEFT, {'bws_label': 'High'})
+                )
+                self.assertFalse(form.is_valid())
+                self.assertIn('schema is required',
+                              str(form.errors['partner_field']))
+
+    def test_value_property_is_required_for_a_string_field(self):
+        """The column is optional for object sets only; a string set,
+        linked or not, still needs the key to read labels by."""
+        string_field = PartnerField.objects.create(
+            name='bands', type=PartnerField.STRING, label='Bands',
+        )
+        for partner_field in (None, string_field.pk):
+            with self.subTest(partner_field=partner_field):
+                form = ZoneSetForm(
+                    data={**OBJECT_DATA, 'partner_field': partner_field},
+                    files={'geojson_file': upload(
+                        feature(LEFT, {'bws_label': 'High'}),
+                    )},
+                )
+                self.assertFalse(form.is_valid())
+                self.assertIn('value_property', form.errors)
+                self.assertIsNone(form.parsed_zones)
+
+    def test_value_property_is_cleared_for_an_object_field(self):
+        """Whatever was typed is ignored for an object field, and
+        cleared rather than saved as a stale setting."""
+        form = self._object_form(
+            object_field(),
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            data={'value_property': 'bws_label'},
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertIsNone(form.cleaned_data['value_property'])
+
+    def test_upload_missing_a_required_key_is_rejected(self):
+        """AC #3: the error names the key and the number of features
+        lacking it; keys outside `required` may be absent."""
+        form = self._object_form(
+            object_field(),
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            feature(RIGHT, {'bws_label': 'Low'}),
+            feature(FAR, {'bws_label': 'Low', 'bwd_label': ''}),
+        )
+
+        self.assertFalse(form.is_valid())
+        message = str(form.errors)
+        self.assertIn('2 of 3 feature(s) are missing the', message)
+        self.assertIn('bwd_label', message)
+        self.assertNotIn('atlas_url', message)
+        self.assertIsNone(form.parsed_zones)
+
+    def test_switching_to_an_object_field_without_a_file_is_refused(self):
+        """A set with zones that moves to, from or between object
+        fields must be re-read from the file: the stored zones were
+        validated against (and are served by) the old field's schema.
+        Moving between string fields keeps the same shape."""
+        string_a = PartnerField.objects.create(
+            name='string_a', type=PartnerField.STRING, label='A',
+        )
+        string_b = PartnerField.objects.create(
+            name='string_b', type=PartnerField.STRING, label='B',
+        )
+        object_a = object_field(name='object_a')
+        object_b = object_field(name='object_b')
+        zone_set = ZoneSet.objects.create(
+            name='water_stress', description='x',
+            partner_field=string_a, value_property='bws_label',
+        )
+        zone_set.replace_zones(subdivide_zone_records(records(
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+        )))
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, 'partner_field': string_b.pk},
+            instance=zone_set,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, 'partner_field': object_a.pk},
+            instance=zone_set,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('Upload the file again',
+                      str(form.errors['partner_field']))
+
+        zone_set.partner_field = object_a
+        zone_set.value_property = None
+        zone_set.save()
+        for target in (object_b, string_a, None):
+            with self.subTest(target=target):
+                form = ZoneSetForm(
+                    data={**OBJECT_DATA,
+                          'partner_field': target.pk if target else None,
+                          'value_property': 'bws_label'},
+                    instance=zone_set,
+                )
+                self.assertFalse(form.is_valid())
+                self.assertIn('partner_field', form.errors)
+
+        # Leaving the object field as it is needs nothing.
+        form = ZoneSetForm(
+            data={**OBJECT_DATA, 'partner_field': object_a.pk,
+                  'description': 'Edited.'},
+            instance=zone_set,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
 
     def test_partner_field_of_a_hard_wired_provider_is_rejected(self):
         """Linking e.g. `mit_living_wage` would give the registry two
@@ -469,6 +645,77 @@ class ZoneSetAdminSaveTest(TestCase):
             f'2 zone(s) stored as {pieces} piece(s)',
             self.model_admin.zone_summary(zone_set),
         )
+
+    def test_object_upload_stores_label_and_properties(self):
+        """A set feeding an object field stores the first required
+        property as the label and the whole feature as properties, in
+        the same `Zone.value` shape as a string set (no new column)."""
+        zone_set = self._save(
+            {**OBJECT_DATA, 'partner_field': object_field().pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low',
+                               'atlas_url': 'https://example.org/l',
+                               'pfaf_id': 1}),
+            )},
+        )
+
+        zone_set.refresh_from_db()
+        self.assertIsNone(zone_set.value_property)
+        [zone] = zone_set.zones.all()
+        self.assertEqual(zone.value, {
+            'label': 'High',
+            'properties': {'bws_label': 'High', 'bwd_label': 'Low',
+                           'atlas_url': 'https://example.org/l',
+                           'pfaf_id': 1},
+        })
+        self.assertEqual(
+            zone_set.resolve_zone(Point(2, 5, srid=4326)).label, 'High'
+        )
+
+    def test_failed_object_reupload_leaves_old_zones_serving(self):
+        """AC #3: a replacement file lacking a required key is refused
+        before any row changes."""
+        zone_set = self._save(
+            {**OBJECT_DATA, 'partner_field': object_field().pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            )},
+        )
+        before = list(zone_set.zones.values_list('id', 'value'))
+
+        form = ZoneSetForm(
+            data={**OBJECT_DATA, 'partner_field': zone_set.partner_field.pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+                feature(RIGHT, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn('1 of 2 feature(s)', str(form.errors))
+        self.assertEqual(
+            list(zone_set.zones.values_list('id', 'value')), before
+        )
+
+    def test_zone_summary_lists_schema_keys_for_an_object_field(self):
+        """Staff check an object set against the keys it serves, not
+        a label that is only the first required property."""
+        zone_set = self._save(
+            {**OBJECT_DATA, 'partner_field': object_field().pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+                feature(RIGHT, {'bws_label': 'Low', 'bwd_label': 'Low'}),
+            )},
+        )
+
+        summary = self.model_admin.zone_summary(zone_set)
+
+        self.assertIn('2 zone(s) stored as 2 piece(s)', summary)
+        self.assertIn(
+            'serving schema keys: bws_label, bwd_label, atlas_url', summary
+        )
+        self.assertNotIn('labels:', summary)
 
 
 # The admin templates call `{% static %}`, and the project's manifest

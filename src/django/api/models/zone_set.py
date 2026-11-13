@@ -2,6 +2,10 @@ import uuid
 
 from django.contrib.gis.db import models as gis_models
 from django.db import models, transaction
+from django.db.models import Count
+from django.db.models.fields.json import KeyTransform
+
+from api.helpers.geojson_zones import is_usable_zone_value
 
 from api.facility_index_backfill.zone_set_ids_recompute import (
     schedule_zone_set_ids_recompute,
@@ -19,6 +23,12 @@ class ZoneSet(models.Model):
     location's coordinates fall inside one of the set's zones, that
     zone's value is shown on the location page under the linked
     field, resolved at request time with a point-in-polygon query.
+    A string field gets one value per zone, read from the feature
+    property named by `value_property`. An object field gets one
+    value per key of its JSON schema, each read from the feature
+    property of the same name, so one upload serves several data
+    points per zone as one block on the page (OSDEV-3659); see
+    `feeds_object_field` and `schema_keys`.
     Search is served differently: `FacilityIndex.zone_set_ids` holds
     the ids of the sets covering each location, refreshed on every
     facility save and recomputed for the whole table after
@@ -89,10 +99,14 @@ class ZoneSet(models.Model):
     )
     value_property = models.CharField(
         max_length=200,
+        blank=True,
+        null=True,
         help_text=(
-            'The GeoJSON feature property that supplies each zone\'s '
-            'displayed value (e.g. "bws_label"). Every feature in an '
-            'upload must carry it.'
+            'For a "string" partner field: the GeoJSON feature property '
+            'that supplies each zone\'s displayed value (e.g. '
+            '"bws_label"). Every feature in an upload must carry it. '
+            'Leave empty for an "object" field, which reads one feature '
+            'property per key of its JSON schema instead.'
         ),
     )
     active = models.BooleanField(
@@ -112,6 +126,83 @@ class ZoneSet(models.Model):
     def __str__(self):
         """A zone set is identified by its name."""
         return self.name
+
+    @property
+    def feeds_object_field(self):
+        """
+        Whether the linked partner field is object-typed.
+
+        Decides the shape of what each zone carries and what the
+        provider serves: a single label read from `value_property` for
+        a string field, or one value per top-level key of the field's
+        JSON schema for an object field (OSDEV-3659). A set with no
+        field linked counts as a string set.
+        """
+        field = self.partner_field
+        return field is not None and field.type == field.OBJECT
+
+    @property
+    def schema_keys(self):
+        """
+        The top-level keys of the linked object field's JSON schema, in
+        schema order: the feature properties an upload is read by and
+        the only ones the provider serves. Empty for a string field, a
+        set with no field, or an object field without a usable schema
+        (which the admin form refuses to link).
+        """
+        field = self.partner_field
+        if field is None:
+            return []
+        return list(field.object_schema_properties().keys())
+
+    @property
+    def feature_count(self):
+        """How many uploaded features the set stores (not pieces)."""
+        return self.zones.aggregate(
+            n=Count('feature_index', distinct=True)
+        )['n']
+
+    def features_lacking(self, keys):
+        """
+        For each feature property in `keys`, how many of the set's
+        uploaded features have no usable stored value for it.
+
+        "Usable" is decided by the same function the provider serves
+        by and the upload check demands
+        (`api.helpers.geojson_zones.is_usable_zone_value`), applied in
+        Python to the stored values rather than re-stated in SQL, so
+        the three can never disagree (a tab-only string, say, is blank
+        to all of them). One row per feature is read, carrying just the
+        requested properties, so pieces of the same feature are not
+        counted twice and the numbers match the upload messages.
+
+        Used by the partner field admin to refuse a schema change that
+        makes a property required when the zones already stored were
+        never read for it (OSDEV-3659).
+
+        Args:
+            keys: The property names to count.
+
+        Returns:
+            Dict of key to the number of features lacking it.
+        """
+        keys = list(keys)
+        missing = dict.fromkeys(keys, 0)
+        if not keys:
+            return missing
+        rows = (
+            self.zones.order_by('feature_index')
+            .distinct('feature_index')
+            .values_list('feature_index', *[
+                KeyTransform(key, KeyTransform('properties', 'value'))
+                for key in keys
+            ])
+        )
+        for row in rows:
+            for key, value in zip(keys, row[1:]):
+                if not is_usable_zone_value(value):
+                    missing[key] += 1
+        return missing
 
     def resolve_zone(self, point):
         """
@@ -236,7 +327,10 @@ class Zone(models.Model):
     value = models.JSONField(
         help_text=(
             'The zone\'s value: {"label": <displayed value>, '
-            '"properties": {<every property of the source feature>}}.'
+            '"properties": {<every property of the source feature>}}. '
+            'For a set feeding an object field the label is the first '
+            'required schema property (or empty) and the served values '
+            'are read from "properties" by schema key.'
         ),
     )
     created_at = models.DateTimeField(auto_now_add=True)
