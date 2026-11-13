@@ -53,6 +53,14 @@ class FacilityIndexExtendedFieldListSerializer:
             'json_schema',
             'beta',
         }
+        # Metadata every entry carries even when neither the context nor
+        # the stored row provides it. `beta` is a per-partner-field flag
+        # (OSDEV-3778): the non-partner path (FacilityIndexSerializer)
+        # passes no context for it and the index rows never store it, so
+        # fall back to the documented `false` rather than emit null.
+        defaults = {
+            'beta': False,
+        }
 
         for extended_field in self.extended_field_list:
             serialized_extended_field = {}
@@ -71,7 +79,9 @@ class FacilityIndexExtendedFieldListSerializer:
                         serialized_extended_field[field] = context_value
                         continue
 
-                serialized_extended_field[field] = extended_field.get(field)
+                serialized_extended_field[field] = extended_field.get(
+                    field, defaults.get(field)
+                )
 
             self.data.append(serialized_extended_field)
 
