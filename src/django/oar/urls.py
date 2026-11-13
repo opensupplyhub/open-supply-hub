@@ -110,6 +110,8 @@ public_apis = [
          name='all_contributors'),
     path('api/contributor-embed-configs/<int:pk>/',
          views.contributor_embed_config, name='contributor-embed-config'),
+    path('api/embed-field-values/', views.embed_field_values,
+         name='embed-field-values'),
     path('api/embed-spotlight-options/', views.embed_spotlight_options,
          name='embed-spotlight-options'),
     path('api/contributor-types/', views.all_contributor_types,

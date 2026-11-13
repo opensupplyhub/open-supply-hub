@@ -277,6 +277,8 @@ class EmbedConfigSerializerTest(TestCase):
                 "show_in_list": False,
                 "display_as": "text",
                 "filterable": False,
+                "description": "",
+                "value_descriptions": {},
             },
         )
         self.assertEqual(
@@ -290,6 +292,8 @@ class EmbedConfigSerializerTest(TestCase):
                 "show_in_list": False,
                 "display_as": "text",
                 "filterable": False,
+                "description": "",
+                "value_descriptions": {},
             },
         )
 

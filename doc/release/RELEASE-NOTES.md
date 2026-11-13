@@ -31,6 +31,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * `0277_embedconfig_blurbs_first.py` - Adds `blurbs_first` (`boolean`, default false) to `api_embedconfig`. Off on existing rows, so no embed changes its list order. See OSDEV-TBD.
 * `0278_embedsupplychain.py` - Creates the `api_embedsupplychain` table: a contributor's supply chains for their embedded map. See OSDEV-TBD.
 * `0279_embedconfig_spotlight.py` - Adds `show_spotlight`, `spotlight_highlight`, `spotlight_filter` (`boolean`, default false) and `spotlight_groups` (`jsonb`, default empty list) to `api_embedconfig`. All off on existing rows, so no embed starts showing partner data. See OSDEV-TBD.
+* `0280_embedfield_explanations.py` - Adds `description` (`varchar(300)`, default empty) and `value_descriptions` (`jsonb`, default empty object) to `api_embedfield`. Empty on existing rows, so no embed changes. See OSDEV-TBD.
 
 #### Schema changes
 * OSDEV-TBD - New `EmbedSupplyChain` model: `contributor`, `name`, `description`, `product_url`, `color`, `is_published`, `order`, `nodes` (`[{os_id, stage}]`) and `links` (`[[supplier OS ID, customer OS ID]]`), with timestamps.
