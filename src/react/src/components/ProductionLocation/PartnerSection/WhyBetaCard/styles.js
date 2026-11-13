@@ -1,6 +1,6 @@
 import COLOURS from '../../../../util/COLOURS';
 
-export default theme => {
+const whyBetaCardStyles = theme => {
     const spacing = theme.spacing.unit ?? 8;
     return Object.freeze({
         root: Object.freeze({
@@ -40,3 +40,5 @@ export default theme => {
         }),
     });
 };
+
+export default whyBetaCardStyles;

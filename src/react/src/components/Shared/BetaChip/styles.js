@@ -1,6 +1,6 @@
 import COLOURS from '../../../util/COLOURS';
 
-export default () =>
+const betaChipStyles = () =>
     Object.freeze({
         chip: Object.freeze({
             display: 'inline-flex',
@@ -18,3 +18,5 @@ export default () =>
             backgroundImage: `linear-gradient(to right, ${COLOURS.PURPLE_GRADIENT_FROM}, ${COLOURS.PINK_GRADIENT_TO})`,
         }),
     });
+
+export default betaChipStyles;

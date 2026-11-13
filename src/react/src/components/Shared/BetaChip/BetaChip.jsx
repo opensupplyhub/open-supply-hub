@@ -12,11 +12,11 @@ export const BETA_CHIP_TEXT = 'Beta';
  * and anything derived from it such as analytics event names, is
  * unchanged.
  */
-const BetaChip = ({ classes, className }) => (
-    <span className={`${classes.chip}${className ? ` ${className}` : ''}`}>
-        {BETA_CHIP_TEXT}
-    </span>
-);
+const BetaChip = ({ classes, className }) => {
+    const chipClassName = [classes.chip, className].filter(Boolean).join(' ');
+
+    return <span className={chipClassName}>{BETA_CHIP_TEXT}</span>;
+};
 
 BetaChip.propTypes = {
     classes: object.isRequired,
