@@ -1,0 +1,402 @@
+/*
+ * Country map.
+ *
+ * Green carries the data and nothing else; purple is the interface, and
+ * selection counts as interface rather than data, which is why a selected
+ * country is filled purple instead of shaded by its count. The ramp is held
+ * in custom properties rather than literals so it can follow a dark ground
+ * later without the densest countries disappearing into it.
+ *
+ * Tokens are declared on both roots because the card is rendered in two
+ * places: inside the map, and in the results column above the list. Custom
+ * properties inherit from ancestors, so when the card moved out of
+ * .country-map every var() in it silently resolved to nothing — the sector
+ * bars lost their fill entirely and read as empty tracks of identical
+ * length, which is how the break was spotted.
+ */
+.country-map,
+.country-map__card-slot {
+    --osh-purple: #8428fa;
+    --osh-black: #0d1128;
+    --osh-white: #f9f7f7;
+    /* Selection fills the country rather than outlining it. An outline has
+       to contrast with all six greens at once and nothing does: yellow
+       measured 1.00:1 against the no-data grey, so the ring disappeared on
+       exactly the countries with no data. A fill only has to differ from
+       its neighbours and the sea, which is a far easier problem, and purple
+       ties the selected country to the card describing it. The count is in
+       that card, so nothing is lost by covering the density colour. */
+    --osh-select: #8428fa;
+    --osh-select-edge: #4c128f;
+
+    --osh-bin-1: #e8f7ec;
+    --osh-bin-2: #aedfba;
+    --osh-bin-3: #62cc74;
+    --osh-bin-4: #36984b;
+    --osh-bin-5: #1c6b33;
+    --osh-bin-6: #0b3d1c;
+
+    --osh-sea: #dcdae0;
+    --osh-nodata: #c6c2cc;
+    --osh-nodata-line: #aaa5b2;
+    --osh-rule: #e3dee8;
+    --osh-ink-2: #4a4e66;
+    --osh-ink-3: #7c8099;
+}
+
+.country-map {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+}
+
+.country-map--message {
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    color: var(--osh-ink-2);
+}
+
+.country-map__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--osh-rule);
+}
+
+.country-map__find {
+    font-size: 13.5px;
+    color: var(--osh-ink-2);
+}
+
+.country-map__toolbar select {
+    font: inherit;
+    font-size: 13.5px;
+    padding: 4px 8px;
+    color: var(--osh-black);
+    background: #fff;
+    border: 1px solid var(--osh-rule);
+    border-radius: 3px;
+}
+
+.country-map__legend {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-left: auto;
+}
+
+.country-map__legend-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--osh-ink-3);
+    margin-right: 8px;
+}
+
+.country-map__swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.country-map__swatch i {
+    display: block;
+    width: 40px;
+    height: 12px;
+}
+
+.country-map__swatch span {
+    font-size: 9.5px;
+    color: var(--osh-ink-3);
+}
+
+/* The pane is usually taller than a world map is, so the map sits in it
+   rather than stretching to fill. Keeping the sea inside the map's own
+   rectangle means the leftover space reads as page, not as empty ocean. */
+.country-map__body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    background: #fff;
+}
+
+.country-map__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    background: var(--osh-sea);
+}
+
+.country-map__country {
+    stroke: var(--osh-sea);
+    stroke-width: 0.35;
+    vector-effect: non-scaling-stroke;
+    cursor: pointer;
+}
+
+.country-map__country:hover {
+    stroke: var(--osh-black);
+    stroke-width: 1.1;
+}
+
+.country-map__country:focus {
+    outline: none;
+    stroke: var(--osh-black);
+    stroke-width: 1.4;
+}
+
+.country-map__country--empty {
+    stroke: var(--osh-nodata-line);
+    cursor: default;
+}
+
+.country-map__country--empty:hover {
+    stroke: var(--osh-nodata-line);
+    stroke-width: 0.35;
+}
+
+/* Drawn over the country's own shape, so the fill replaces the bin colour.
+   pointer-events stay off so a click still reaches the shape underneath and
+   can toggle the selection back off. */
+.country-map__selected {
+    fill: var(--osh-select);
+    stroke: var(--osh-select-edge);
+    stroke-width: 1.2;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+}
+
+/* ---- detail card ---- */
+.country-map__card {
+    position: absolute;
+    top: 14px;
+    width: 318px;
+    max-height: calc(100% - 28px);
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid var(--osh-rule);
+    border-radius: 5px;
+    padding: 16px 18px;
+    box-shadow: 0 6px 24px rgba(13, 17, 40, 0.14);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.country-map__card--left {
+    left: 14px;
+}
+
+.country-map__card--right {
+    right: 14px;
+}
+
+.country-map__card-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--osh-ink-2);
+    background: #f1edf5;
+    border: 1px solid var(--osh-rule);
+    border-radius: 3px;
+}
+
+.country-map__card-name {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    padding-right: 28px;
+}
+
+.country-map__card-loading {
+    font-size: 12.5px;
+    color: var(--osh-ink-2);
+}
+
+.country-map__card-section {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    border-top: 1px solid var(--osh-rule);
+    padding-top: 11px;
+}
+
+.country-map__card-section h3 {
+    margin: 0;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.country-map__pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 9px;
+    color: var(--osh-purple);
+    background: #f1e8fe;
+}
+
+.country-map__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.country-map__chip {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    color: var(--osh-purple);
+    background: #f1e8fe;
+}
+
+.country-map__sector {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.country-map__sector-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13.5px;
+}
+
+.country-map__sector-count {
+    font-variant-numeric: tabular-nums;
+    color: var(--osh-ink-2);
+}
+
+.country-map__unspecified {
+    color: var(--osh-ink-3);
+    font-style: italic;
+}
+
+.country-map__bar {
+    height: 5px;
+    border-radius: 2px;
+    overflow: hidden;
+    background: #f1edf5;
+}
+
+.country-map__bar i {
+    display: block;
+    height: 100%;
+    background: var(--osh-purple);
+}
+
+.country-map__more {
+    align-self: flex-start;
+    padding: 2px 0;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--osh-purple);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.country-map__note {
+    margin: 0;
+    font-size: 12px;
+    color: var(--osh-ink-3);
+}
+
+/* ---- controls ---- */
+.country-map__zoom {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    display: flex;
+    gap: 4px;
+}
+
+.country-map__zoom button {
+    min-width: 26px;
+    padding: 4px 8px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.1;
+    cursor: pointer;
+    color: var(--osh-ink-2);
+    background: #fff;
+    border: 1px solid var(--osh-rule);
+    border-radius: 3px;
+}
+
+.country-map__zoom button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.country-map__asof {
+    padding: 7px 16px;
+    font-size: 11.5px;
+    color: var(--osh-ink-3);
+    border-top: 1px solid var(--osh-rule);
+}
+
+@media (max-width: 760px) {
+    .country-map__card {
+        position: static;
+        width: auto;
+        max-height: none;
+        margin: 14px;
+        box-shadow: none;
+    }
+}
+
+/*
+ * Give the map more of the page than the shared layout does.
+ *
+ * Map.css caps the sidebar at 50% for every map, which was the right split
+ * when the right-hand pane was a viewport you panned around. The country
+ * map is a single fixed picture of the whole world, so it reads better
+ * wider, and the results list loses little by being narrower.
+ *
+ * Scoped with :has so this applies only while the country map is on the
+ * page: the vector tile map keeps the layout it was built for. A browser
+ * without :has simply keeps the 50% split, which is the current behavior.
+ */
+@media (min-width: 600px) {
+    .map-sidebar-container:has(.country-map) #sidebar-container {
+        max-width: 40%;
+    }
+}
+
+/* ---- card in the results column (layout B) ----
+   The overlay variants above pin the card over the map. This one sits in
+   the normal flow above the results list, so the map is never covered. The
+   slot carries the surrounding padding, matching the list header it sits
+   under. */
+.country-map__card-slot {
+    padding: 12px 16px 0;
+}
+
+.country-map__card--panel {
+    position: static;
+    width: auto;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+}

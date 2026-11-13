@@ -21,6 +21,7 @@ from api.views.v1.production_locations \
      import ProductionLocations
 from api.views.v1.moderation_events \
      import ModerationEvents
+from api.views.v1.country_stats import CountryStatsViewSet
 from api.views.v1.candidate_retirement_requests \
      import CandidateRetirementRequests
 from api.views.v1.link_type_vocabulary \
@@ -80,6 +81,11 @@ v1_router.register(
     URLNames.CANDIDATE_RETIREMENT_REQUESTS,
     CandidateRetirementRequests,
     basename=URLNames.CANDIDATE_RETIREMENT_REQUESTS
+)
+v1_router.register(
+    URLNames.COUNTRY_STATS,
+    CountryStatsViewSet,
+    basename=URLNames.COUNTRY_STATS
 )
 
 v1_custom_routes = [

@@ -12,6 +12,8 @@ from .api.api_limit import (
   HistoricalApiLimit,
 )
 from .announcement_banner import AnnouncementBanner
+from .country_stats import CountryStats
+from .country_sector_stats import CountrySectorStats
 from .claim_profile_option import (
   ClaimAffiliation,
   ClaimCertification,
