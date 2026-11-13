@@ -15,6 +15,24 @@ from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 
 
+def build_name_token_filter(text):
+    """
+    Match every whitespace-separated word in ``text`` against ``name``.
+
+    A single ``ILIKE`` on the whole typed string required the words to
+    appear in that order with nothing between them, so "Interloop Hosiery"
+    missed "Interloop Limited (Hosiery Division I)". See OSDEV-3790.
+    """
+    tokens = text.split()
+    if not tokens:
+        return Q(name__unaccent__icontains=text)
+
+    name_filter = Q()
+    for token in tokens:
+        name_filter &= Q(name__unaccent__icontains=token)
+    return name_filter
+
+
 class FacilityIndexNewManager(models.Manager):
     def without_candidates(self):
         """
@@ -141,7 +159,7 @@ class FacilityIndexNewManager(models.Manager):
             facilities_qs = facilities_qs.filter(id=id)
 
         if free_text_query is not None:
-            name_filter = Q(name__unaccent__icontains=free_text_query)
+            name_filter = build_name_token_filter(free_text_query)
             if embed is not None:
                 custom_text = (
                     format_custom_text(contributors[0], free_text_query)
