@@ -102,10 +102,6 @@ function EmbeddedMapSpotlightConfig({
     return (
         <div style={styles.section}>
             <Typography style={styles.sectionHeader}>Spotlight</Typography>
-            <Typography>
-                Spotlight is data about your locations from OS Hub&apos;s data
-                partners. You choose whether your map shows it.
-            </Typography>
             {options && (
                 <Typography style={styles.summary}>
                     <strong>{options.count}</strong> of your {options.total}{' '}

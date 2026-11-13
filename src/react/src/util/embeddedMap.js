@@ -413,6 +413,167 @@ export const toggleSpotlightGroup = (groups, uuid, checked) =>
         ? [...groups.filter(group => group !== uuid), uuid]
         : groups.filter(group => group !== uuid);
 
+// ---------------------------------------------------------------------------
+// The Embed settings screen: what each section is for, and the tour of it
+// ---------------------------------------------------------------------------
+
+// One line under each section's tab. Some sections do more with the Embed
+// Deluxe package, so those have a line for each.
+const SECTION_DESCRIPTIONS = Object.freeze({
+    style: Object.freeze({
+        standard: "Choose your map's color, font and map style.",
+        deluxe:
+            'Set how your map looks: colors, fonts, corner style, the map style and how markers are colored.',
+    }),
+    fields: Object.freeze({
+        standard:
+            'Choose which of your data fields appear on your map, and in what order.',
+        deluxe:
+            'Choose which of your data fields appear, how each is shown, searched and filtered, the order of the list, and explain what your fields and values mean.',
+    }),
+    spotlight: Object.freeze({
+        deluxe:
+            "Spotlight is data about your locations from OS Hub's data partners. You choose whether your map shows it.",
+    }),
+    chains: Object.freeze({
+        deluxe:
+            'Show visitors how a product is made: pick the facilities involved and say which supplies which.',
+    }),
+    code: Object.freeze({
+        standard:
+            'Set the size of your map and copy the code to add it to your website.',
+    }),
+});
+
+export const getEmbedSectionDescription = (sectionId, isDeluxe) => {
+    const lines = SECTION_DESCRIPTIONS[sectionId] || {};
+    return (isDeluxe && lines.deluxe) || lines.standard || lines.deluxe || '';
+};
+
+// The tour's steps: a welcome, one step per section the contributor has,
+// then the preview. `sections` is the screen's own list ({ id, label }).
+export const getEmbedSettingsTourSteps = (sections, isDeluxe) => [
+    {
+        id: 'welcome',
+        section: null,
+        title: 'Set up your map',
+        body:
+            'This is where you set up the map for your website. This short tour shows what each section is for.',
+    },
+    ...sections.map(({ id, label }) => ({
+        id,
+        section: id,
+        title: label,
+        body: getEmbedSectionDescription(id, isDeluxe),
+    })),
+    {
+        id: 'preview',
+        section: null,
+        title: 'Preview',
+        body:
+            'Your map as visitors will see it. Your changes save by themselves, and the preview refreshes each time.',
+    },
+];
+
+// Whether a tour has been shown in this browser. Browser storage can be
+// unavailable (private windows, blocked site data); the tour then simply
+// offers itself again next time.
+const EMBED_SETTINGS_TOUR_KEY = 'osh-embed-settings-tour-seen';
+const SUPPLY_CHAIN_TUTORIAL_KEY = 'osh-embed-supply-chain-tutorial-seen';
+
+const hasSeen = (storage, key) => {
+    try {
+        return storage.getItem(key) === '1';
+    } catch (error) {
+        return false;
+    }
+};
+
+const markSeen = (storage, key) => {
+    try {
+        storage.setItem(key, '1');
+    } catch (error) {
+        // Nothing to do: the tour will offer itself again.
+    }
+};
+
+export const hasSeenEmbedSettingsTour = storage =>
+    hasSeen(storage, EMBED_SETTINGS_TOUR_KEY);
+
+export const markEmbedSettingsTourSeen = storage =>
+    markSeen(storage, EMBED_SETTINGS_TOUR_KEY);
+
+export const hasSeenSupplyChainTutorial = storage =>
+    hasSeen(storage, SUPPLY_CHAIN_TUTORIAL_KEY);
+
+export const markSupplyChainTutorialSeen = storage =>
+    markSeen(storage, SUPPLY_CHAIN_TUTORIAL_KEY);
+
+// The tutorial on building a supply chain, in the order a chain is built.
+// `target` names the part of the builder the step is about, which the
+// builder marks with a matching `data-tutorial` attribute.
+export const SUPPLY_CHAIN_TUTORIAL_STEPS = Object.freeze([
+    {
+        id: 'name',
+        target: 'name',
+        title: 'Name your supply chain',
+        body:
+            'Give it the name visitors will see, such as the product it makes. A description and a product link are optional.',
+    },
+    {
+        id: 'first',
+        target: 'map',
+        title: 'Add the first location',
+        body:
+            'Click a dot on the map, or search for one of your facilities by name. Starting with the final factory works well.',
+    },
+    {
+        id: 'link',
+        target: 'map',
+        title: 'Link the next location',
+        body:
+            'The selected location has a dark ring. Click another facility: it joins the chain as a supplier of the selected one, then becomes the selected one, so you can keep clicking back up the chain.',
+    },
+    {
+        id: 'branch',
+        target: 'locations',
+        title: 'Add a second supplier',
+        body:
+            'To give a location another supplier, select it again, on the map or with its Select button, then click the new facility.',
+    },
+    {
+        id: 'fix',
+        target: 'undo',
+        title: 'Fix a mistake',
+        body:
+            'Undo steps back one change at a time. In the list of locations, ⇄ reverses a link, × removes it, and Remove takes a location out of the chain.',
+    },
+    {
+        id: 'describe',
+        target: 'locations',
+        title: 'Say what happens at each location',
+        body:
+            'Fill in "What happens here" for each location, such as Spinning or Final assembly. Visitors see it above the location\'s name.',
+    },
+    {
+        id: 'schematic',
+        target: 'schematic',
+        title: 'Check the shape of the chain',
+        body:
+            'The Schematic view, below the preview, shows the chain from start to end. Click a box there to select that location.',
+    },
+    {
+        id: 'publish',
+        target: 'publish',
+        title: 'Publish and save',
+        body:
+            'Tick Published when visitors should see the chain, then Save supply chain. Leave it unticked to keep working on a draft.',
+    },
+]);
+
+export const SUPPLY_CHAIN_TUTORIAL_HIGHLIGHT =
+    'outline: 3px solid rgb(13, 17, 40); outline-offset: 3px;';
+
 // --- Building a chain in the settings ---
 
 export const DEFAULT_CHAIN_COLOR = '#c0392b';

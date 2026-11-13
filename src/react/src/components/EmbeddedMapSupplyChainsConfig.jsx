@@ -7,6 +7,7 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 
 import EmbeddedMapSupplyChainMap from './EmbeddedMapSupplyChainMap';
 import EmbedSupplyChainSchematic from './EmbedSupplyChainSchematic';
+import EmbeddedMapSettingsTour from './EmbeddedMapSettingsTour';
 import apiRequest from '../util/apiRequest';
 import {
     makeEmbedSupplyChainsURL,
@@ -16,6 +17,10 @@ import {
 import {
     CHAIN_STAGE_SUGGESTIONS,
     MAX_CHAIN_LOCATIONS,
+    SUPPLY_CHAIN_TUTORIAL_HIGHLIGHT,
+    SUPPLY_CHAIN_TUTORIAL_STEPS,
+    hasSeenSupplyChainTutorial,
+    markSupplyChainTutorialSeen,
     addChainLink,
     chainHasChanges,
     chainStructureKey,
@@ -33,6 +38,9 @@ import {
 } from '../util/embeddedMap';
 
 const BORDER = '1px solid rgb(214, 216, 221)';
+// Where the tutorial's card sits while the builder is scrolled: just below
+// the site's header, which stays in view too.
+const TUTORIAL_STICKY_TOP = 122;
 
 const styles = {
     section: {
@@ -159,6 +167,23 @@ const styles = {
         overflowX: 'auto',
         background: 'white',
         border: BORDER,
+    },
+    // Stays in view while the builder is scrolled, above the map.
+    // (Below the site's header, which stays in view too.)
+    tutorial: {
+        position: 'sticky',
+        top: `${TUTORIAL_STICKY_TOP}px`,
+        zIndex: 1100,
+    },
+    tutorialLink: {
+        padding: 0,
+        border: 0,
+        background: 'none',
+        fontFamily: 'inherit',
+        fontSize: '14px',
+        fontWeight: 700,
+        textDecoration: 'underline',
+        cursor: 'pointer',
     },
     mapTools: {
         display: 'flex',
@@ -291,6 +316,51 @@ function EmbeddedMapSupplyChainsConfig({
         setDraft(chain => restoreChainStructure(chain, step));
         setSelectedId(step.selectedId);
         setClickMessage('');
+    };
+
+    // The tutorial on building a chain: offered the first time the builder
+    // is opened in this browser, and whenever it is asked for.
+    const [tutorialStep, setTutorialStep] = useState(null);
+    const isEditing = !!draft;
+    useEffect(() => {
+        if (!isEditing) {
+            setTutorialStep(null);
+        } else if (!hasSeenSupplyChainTutorial(window.localStorage)) {
+            setTutorialStep(0);
+        }
+    }, [isEditing]);
+    const tutorialTarget =
+        tutorialStep === null
+            ? null
+            : SUPPLY_CHAIN_TUTORIAL_STEPS[tutorialStep].target;
+    // Bring what the step is about into view: just below the tutorial's
+    // card when it is in the builder, which the card stays on top of.
+    useEffect(() => {
+        if (!tutorialTarget) return;
+        const element = document.querySelector(
+            `[data-tutorial="${tutorialTarget}"]`,
+        );
+        const card = document.querySelector(
+            '[data-testid="supply-chain-tutorial"]',
+        );
+        if (!element || !card || !element.scrollIntoView) return;
+        const builder = card.parentElement.parentElement;
+        if (builder && builder.contains(element)) {
+            // Where the card will be once the page has scrolled: stuck
+            // below the site's header.
+            const cardBottom =
+                TUTORIAL_STICKY_TOP + card.getBoundingClientRect().height;
+            window.scrollBy({
+                top: element.getBoundingClientRect().top - cardBottom - 16,
+                behavior: 'smooth',
+            });
+        } else {
+            element.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }, [tutorialStep, tutorialTarget]);
+    const closeTutorial = () => {
+        markSupplyChainTutorialSeen(window.localStorage);
+        setTutorialStep(null);
     };
 
     const openEditor = chain => {
@@ -434,11 +504,6 @@ function EmbeddedMapSupplyChainsConfig({
                 <Typography style={styles.sectionHeader}>
                     Supply chains
                 </Typography>
-                <Typography>
-                    Show visitors how a product is made. Pick the facilities
-                    involved and say which supplies which; visitors can then
-                    follow the chain on your map.
-                </Typography>
                 {loadError && (
                     <Typography style={styles.error}>{loadError}</Typography>
                 )}
@@ -555,15 +620,42 @@ function EmbeddedMapSupplyChainsConfig({
 
     return (
         <div style={styles.section}>
+            {tutorialStep === null ? null : (
+                <div style={styles.tutorial}>
+                    {/* Marks the part of the builder the step is about. */}
+                    <style>
+                        {`[data-tutorial="${tutorialTarget}"] { ${SUPPLY_CHAIN_TUTORIAL_HIGHLIGHT} }`}
+                    </style>
+                    <EmbeddedMapSettingsTour
+                        steps={SUPPLY_CHAIN_TUTORIAL_STEPS}
+                        stepIndex={tutorialStep}
+                        onStep={setTutorialStep}
+                        onClose={closeTutorial}
+                        label="How to build a supply chain"
+                        skipLabel="Close the tutorial"
+                        testId="supply-chain-tutorial"
+                    />
+                </div>
+            )}
             <Typography style={styles.sectionHeader}>
                 {draft.id ? 'Edit supply chain' : 'New supply chain'}
             </Typography>
+            {tutorialStep === null ? (
+                <button
+                    type="button"
+                    style={styles.tutorialLink}
+                    onClick={() => setTutorialStep(0)}
+                >
+                    How to build a supply chain
+                </button>
+            ) : null}
 
             <label style={styles.label} htmlFor="chain-name">
                 Name
             </label>
             <input
                 id="chain-name"
+                data-tutorial="name"
                 style={styles.input}
                 maxLength={200}
                 placeholder="e.g. Trail Rain Jacket"
@@ -607,7 +699,7 @@ function EmbeddedMapSupplyChainsConfig({
             {clickMessage && (
                 <Typography style={styles.error}>{clickMessage}</Typography>
             )}
-            <div style={styles.mapTools}>
+            <div style={styles.mapTools} data-tutorial="undo">
                 <button
                     type="button"
                     style={styles.button}
@@ -618,14 +710,19 @@ function EmbeddedMapSupplyChainsConfig({
                     ↶ Undo
                 </button>
             </div>
-            <EmbeddedMapSupplyChainMap
-                chain={draft}
-                locations={locations}
-                selectedId={selectedId}
-                onLocationClick={location =>
-                    pickLocation({ osId: location.os_id, name: location.name })
-                }
-            />
+            <div data-tutorial="map">
+                <EmbeddedMapSupplyChainMap
+                    chain={draft}
+                    locations={locations}
+                    selectedId={selectedId}
+                    onLocationClick={location =>
+                        pickLocation({
+                            osId: location.os_id,
+                            name: location.name,
+                        })
+                    }
+                />
+            </div>
             <div style={{ height: '10px' }} />
             <input
                 aria-label="Search your facilities"
@@ -670,190 +767,199 @@ function EmbeddedMapSupplyChainsConfig({
                 );
             })}
 
-            {draft.nodes.length ? (
-                <Typography style={styles.subHeader}>
-                    In this supply chain
-                </Typography>
-            ) : (
-                <Typography style={styles.hint}>
-                    No locations yet. Search above to add the first.
-                </Typography>
-            )}
-            <datalist id="chain-stage-suggestions">
-                {CHAIN_STAGE_SUGGESTIONS.map(stage => (
-                    <option key={stage} value={stage}>
-                        {stage}
-                    </option>
-                ))}
-            </datalist>
-            {draft.nodes.map(node => {
-                const customers = draft.links
-                    .filter(([supplier]) => supplier === node.os_id)
-                    .map(([, customer]) => customer);
-                const possible = getPossibleCustomers(draft, node.os_id);
-                return (
-                    <div
-                        key={node.os_id}
-                        style={
-                            node.os_id === selectedId
-                                ? {
-                                      ...styles.location,
-                                      ...styles.locationSelected,
-                                  }
-                                : styles.location
-                        }
-                    >
-                        <div style={styles.locationHeader}>
-                            <span style={{ minWidth: 0 }}>
-                                <strong>{node.name || node.os_id}</strong>
-                                <div style={styles.osId}>{node.os_id}</div>
-                            </span>
-                            <span style={styles.actions}>
-                                <button
-                                    type="button"
-                                    style={styles.button}
-                                    aria-pressed={node.os_id === selectedId}
-                                    onClick={() => {
-                                        setClickMessage('');
-                                        setSelectedId(
-                                            node.os_id === selectedId
-                                                ? null
-                                                : node.os_id,
-                                        );
-                                    }}
-                                >
-                                    {node.os_id === selectedId
-                                        ? 'Selected'
-                                        : 'Select'}
-                                </button>
-                                <button
-                                    type="button"
-                                    style={styles.button}
-                                    onClick={() => {
-                                        if (node.os_id === selectedId) {
-                                            setSelectedId(null);
-                                        }
-                                        setDraft(chain =>
-                                            removeChainLocation(
-                                                chain,
-                                                node.os_id,
-                                            ),
-                                        );
-                                    }}
-                                >
-                                    Remove
-                                </button>
-                            </span>
-                        </div>
-                        <label
-                            style={styles.label}
-                            htmlFor={`stage-${node.os_id}`}
+            <div data-tutorial="locations">
+                {draft.nodes.length ? (
+                    <Typography style={styles.subHeader}>
+                        In this supply chain
+                    </Typography>
+                ) : (
+                    <Typography style={styles.hint}>
+                        No locations yet. Search above to add the first.
+                    </Typography>
+                )}
+                <datalist id="chain-stage-suggestions">
+                    {CHAIN_STAGE_SUGGESTIONS.map(stage => (
+                        <option key={stage} value={stage}>
+                            {stage}
+                        </option>
+                    ))}
+                </datalist>
+                {draft.nodes.map(node => {
+                    const customers = draft.links
+                        .filter(([supplier]) => supplier === node.os_id)
+                        .map(([, customer]) => customer);
+                    const possible = getPossibleCustomers(draft, node.os_id);
+                    return (
+                        <div
+                            key={node.os_id}
+                            style={
+                                node.os_id === selectedId
+                                    ? {
+                                          ...styles.location,
+                                          ...styles.locationSelected,
+                                      }
+                                    : styles.location
+                            }
                         >
-                            What happens here
-                        </label>
-                        <input
-                            id={`stage-${node.os_id}`}
-                            style={styles.input}
-                            list="chain-stage-suggestions"
-                            maxLength={60}
-                            placeholder="e.g. Final assembly"
-                            value={node.stage || ''}
-                            onChange={event => {
-                                const { value } = event.target;
-                                setDraft(chain =>
-                                    setChainLocationStage(
-                                        chain,
-                                        node.os_id,
-                                        value,
-                                    ),
-                                );
-                            }}
-                        />
-                        <div style={styles.label}>Supplies</div>
-                        {customers.map(customer => (
-                            <span key={customer} style={styles.chip}>
-                                {nameOf(customer)}
-                                <button
-                                    type="button"
-                                    style={styles.chipRemove}
-                                    title="Reverse this link"
-                                    aria-label={`Reverse the link to ${nameOf(
-                                        customer,
-                                    )}`}
-                                    onClick={() =>
-                                        setDraft(chain =>
-                                            reverseChainLink(
-                                                chain,
-                                                node.os_id,
-                                                customer,
-                                            ),
-                                        )
-                                    }
-                                >
-                                    ⇄
-                                </button>
-                                <button
-                                    type="button"
-                                    style={styles.chipRemove}
-                                    title="Remove this link"
-                                    aria-label={`Stop supplying ${nameOf(
-                                        customer,
-                                    )}`}
-                                    onClick={() =>
-                                        setDraft(chain =>
-                                            removeChainLink(
-                                                chain,
-                                                node.os_id,
-                                                customer,
-                                            ),
-                                        )
-                                    }
-                                >
-                                    ×
-                                </button>
-                            </span>
-                        ))}
-                        {possible.length ? (
-                            <select
-                                aria-label={`Add a location ${
-                                    node.name || node.os_id
-                                } supplies`}
-                                style={{ ...styles.input, marginTop: '6px' }}
-                                value=""
+                            <div style={styles.locationHeader}>
+                                <span style={{ minWidth: 0 }}>
+                                    <strong>{node.name || node.os_id}</strong>
+                                    <div style={styles.osId}>{node.os_id}</div>
+                                </span>
+                                <span style={styles.actions}>
+                                    <button
+                                        type="button"
+                                        style={styles.button}
+                                        aria-pressed={node.os_id === selectedId}
+                                        onClick={() => {
+                                            setClickMessage('');
+                                            setSelectedId(
+                                                node.os_id === selectedId
+                                                    ? null
+                                                    : node.os_id,
+                                            );
+                                        }}
+                                    >
+                                        {node.os_id === selectedId
+                                            ? 'Selected'
+                                            : 'Select'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        style={styles.button}
+                                        onClick={() => {
+                                            if (node.os_id === selectedId) {
+                                                setSelectedId(null);
+                                            }
+                                            setDraft(chain =>
+                                                removeChainLocation(
+                                                    chain,
+                                                    node.os_id,
+                                                ),
+                                            );
+                                        }}
+                                    >
+                                        Remove
+                                    </button>
+                                </span>
+                            </div>
+                            <label
+                                style={styles.label}
+                                htmlFor={`stage-${node.os_id}`}
+                            >
+                                What happens here
+                            </label>
+                            <input
+                                id={`stage-${node.os_id}`}
+                                style={styles.input}
+                                list="chain-stage-suggestions"
+                                maxLength={60}
+                                placeholder="e.g. Final assembly"
+                                value={node.stage || ''}
                                 onChange={event => {
                                     const { value } = event.target;
-                                    if (!value) return;
                                     setDraft(chain =>
-                                        addChainLink(chain, node.os_id, value),
+                                        setChainLocationStage(
+                                            chain,
+                                            node.os_id,
+                                            value,
+                                        ),
                                     );
                                 }}
-                            >
-                                <option value="">
-                                    Add a location it supplies…
-                                </option>
-                                {possible.map(option => (
-                                    <option
-                                        key={option.os_id}
-                                        value={option.os_id}
+                            />
+                            <div style={styles.label}>Supplies</div>
+                            {customers.map(customer => (
+                                <span key={customer} style={styles.chip}>
+                                    {nameOf(customer)}
+                                    <button
+                                        type="button"
+                                        style={styles.chipRemove}
+                                        title="Reverse this link"
+                                        aria-label={`Reverse the link to ${nameOf(
+                                            customer,
+                                        )}`}
+                                        onClick={() =>
+                                            setDraft(chain =>
+                                                reverseChainLink(
+                                                    chain,
+                                                    node.os_id,
+                                                    customer,
+                                                ),
+                                            )
+                                        }
                                     >
-                                        {option.name || option.os_id}
+                                        ⇄
+                                    </button>
+                                    <button
+                                        type="button"
+                                        style={styles.chipRemove}
+                                        title="Remove this link"
+                                        aria-label={`Stop supplying ${nameOf(
+                                            customer,
+                                        )}`}
+                                        onClick={() =>
+                                            setDraft(chain =>
+                                                removeChainLink(
+                                                    chain,
+                                                    node.os_id,
+                                                    customer,
+                                                ),
+                                            )
+                                        }
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                            {possible.length ? (
+                                <select
+                                    aria-label={`Add a location ${
+                                        node.name || node.os_id
+                                    } supplies`}
+                                    style={{
+                                        ...styles.input,
+                                        marginTop: '6px',
+                                    }}
+                                    value=""
+                                    onChange={event => {
+                                        const { value } = event.target;
+                                        if (!value) return;
+                                        setDraft(chain =>
+                                            addChainLink(
+                                                chain,
+                                                node.os_id,
+                                                value,
+                                            ),
+                                        );
+                                    }}
+                                >
+                                    <option value="">
+                                        Add a location it supplies…
                                     </option>
-                                ))}
-                            </select>
-                        ) : (
-                            !customers.length && (
-                                <Typography style={styles.hint}>
-                                    {draft.nodes.length > 1
-                                        ? 'The chain ends here: every other location already leads to this one.'
-                                        : 'Add another location to link this one to.'}
-                                </Typography>
-                            )
-                        )}
-                    </div>
-                );
-            })}
+                                    {possible.map(option => (
+                                        <option
+                                            key={option.os_id}
+                                            value={option.os_id}
+                                        >
+                                            {option.name || option.os_id}
+                                        </option>
+                                    ))}
+                                </select>
+                            ) : (
+                                !customers.length && (
+                                    <Typography style={styles.hint}>
+                                        {draft.nodes.length > 1
+                                            ? 'The chain ends here: every other location already leads to this one.'
+                                            : 'Add another location to link this one to.'}
+                                    </Typography>
+                                )
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
 
-            <div style={{ marginTop: '16px' }}>
+            <div style={{ marginTop: '16px' }} data-tutorial="publish">
                 <FormControlLabel
                     control={
                         <Checkbox
@@ -907,7 +1013,10 @@ function EmbeddedMapSupplyChainsConfig({
             {active &&
                 schematicContainer &&
                 createPortal(
-                    <div style={styles.schematicPanel}>
+                    <div
+                        style={styles.schematicPanel}
+                        data-tutorial="schematic"
+                    >
                         <Typography style={styles.schematicHeader}>
                             Schematic view
                         </Typography>

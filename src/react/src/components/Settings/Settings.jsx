@@ -60,7 +60,7 @@ function Settings({
                     tabs={tabs}
                 />
             </AppGrid>
-            <AppOverflow>
+            <AppOverflow scrollsWithPage={tabs[activeTabIndex] === EMBED_TAB}>
                 {tabs[activeTabIndex] === PROFILE_TAB && (
                     <UserProfile allowEdits id={user.id.toString()} />
                 )}
