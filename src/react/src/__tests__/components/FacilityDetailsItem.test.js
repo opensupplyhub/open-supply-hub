@@ -15,6 +15,15 @@ const renderItemWithRouter = (props = {}) =>
 
 describe('FacilityDetailsItem component', () => {
     describe('basic rendering', () => {
+        test('renders a label adornment beside the label without changing it', () => {
+            renderItem({
+                labelAdornment: <span>Tag</span>,
+            });
+
+            expect(screen.getByText('Tag')).toBeInTheDocument();
+            expect(screen.getByText('Test Label')).toBeInTheDocument();
+        });
+
         test('renders label and primary value', () => {
             renderItem();
 

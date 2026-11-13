@@ -1,5 +1,4 @@
 import uuid
-import logging
 
 from django.db import models
 from django.core.cache import cache
@@ -8,8 +7,6 @@ from django_ckeditor_5.fields import CKEditor5Field
 from api.constants import PARTNER_FIELD_LIST_KEY
 from api.fields import JSONTextField
 from api.models.partner_field_manager import PartnerFieldManager
-
-logger = logging.getLogger(__name__)
 
 
 class PartnerField(models.Model):
@@ -112,6 +109,15 @@ class PartnerField(models.Model):
             "Indicates if this partner field is available in data downloads."
         ),
     )
+    beta = models.BooleanField(
+        default=False,
+        help_text=(
+            'Shows a "Beta" tag beside this field\'s title on the '
+            'production location page, for datasets that are still '
+            'provisional. The tag is not part of the label, so analytics '
+            'event names and the contributions drawer title are unchanged.'
+        ),
+    )
     polygon = models.ForeignKey(
         'Polygon',
         null=True,
@@ -142,27 +148,17 @@ class PartnerField(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        """Save partner field and invalidate cache if needed."""
+        """Save partner field and invalidate the cached field list.
+
+        The cache holds whole rows, so every saved change must drop it,
+        not only an activation flip: a `beta`, `label` or `display_text`
+        edit would otherwise keep serving the old value until the
+        entry's TTL expired (OSDEV-3778).
+        """
         self.clean()
-        if self._state.adding:
-            self.__invalidate_cache()
-            return super().save(*args, **kwargs)
-
-        try:
-            original = PartnerField.objects \
-                .get_all_including_inactive() \
-                .get(pk=self.pk)
-
-            if original.active != self.active:
-                self.__invalidate_cache()
-        except PartnerField.DoesNotExist:
-            logger.warning(
-                f"Partner field `{self.pk}` not found. "
-                "System field must exist in database."
-            )
-            self.__invalidate_cache()
-
-        return super().save(*args, **kwargs)
+        result = super().save(*args, **kwargs)
+        self.__invalidate_cache()
+        return result
 
     def delete(self, *args, **kwargs):
         """Delete partner field and invalidate cache."""

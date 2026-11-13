@@ -13,6 +13,7 @@ import { getIconURL } from '../../Sidebar/NavBar/utils.js';
 import { toggleSectionOpen } from '../../../../actions/sectionNavigation.js';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
+import WhyBetaCard from '../WhyBetaCard/WhyBetaCard.jsx';
 import {
     useScrollToSection,
     transitionDurationMs,
@@ -42,6 +43,13 @@ const PartnerSectionItem = ({
             right: group.partnerFields.slice(mid),
         };
     }, [group]);
+
+    // The "Why beta?" card explains the chip once per section, in the
+    // right column after the fields, where the mockup places it.
+    const hasBetaField = useMemo(
+        () => (group.partnerFields || []).some(field => field.beta),
+        [group],
+    );
 
     const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
 
@@ -164,6 +172,11 @@ const PartnerSectionItem = ({
                                             />
                                         </div>
                                     ))}
+                                    {hasBetaField && (
+                                        <div className={classes.fieldItem}>
+                                            <WhyBetaCard />
+                                        </div>
+                                    )}
                                 </Grid>
                             </Grid>
                         )}
@@ -203,6 +216,7 @@ const partnerFieldForGroupPropType = PropTypes.shape({
     formatValue: PropTypes.func,
     label: PropTypes.string.isRequired,
     partnerConfigFields: partnerConfigFieldsPropType,
+    beta: PropTypes.bool,
 });
 
 PartnerSectionItem.propTypes = {

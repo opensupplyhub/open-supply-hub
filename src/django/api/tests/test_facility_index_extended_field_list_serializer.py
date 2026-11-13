@@ -104,3 +104,33 @@ class IsFromClaimTest(SimpleTestCase):
             context_overrides={'claimant_contributor_id': 10},
         )
         self.assertFalse(data['is_from_claim'])
+
+
+class BetaFlagTest(SimpleTestCase):
+    """Every entry carries `beta` (OSDEV-3778). Partner fields pass it
+    through the context; everything else gets the documented `false`
+    rather than null, so the API examples and the page can rely on a
+    boolean."""
+
+    def test_defaults_to_false_without_context_or_stored_value(self):
+        # The non-partner path (FacilityIndexSerializer) passes no
+        # `beta` context and index rows never store the key.
+        data = serialize_one(make_extended_field())
+
+        self.assertIs(data['beta'], False)
+
+    def test_context_true_is_passed_through(self):
+        data = serialize_one(
+            make_extended_field(field_name='test_data_field'),
+            {'beta': True},
+        )
+
+        self.assertIs(data['beta'], True)
+
+    def test_context_false_is_passed_through(self):
+        data = serialize_one(
+            make_extended_field(field_name='test_data_field'),
+            {'beta': False},
+        )
+
+        self.assertIs(data['beta'], False)

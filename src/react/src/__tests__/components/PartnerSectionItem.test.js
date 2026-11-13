@@ -89,4 +89,51 @@ describe('PartnerSectionItem component', () => {
         );
         expect(getByText('Note')).toBeInTheDocument();
     });
+
+    describe('Why beta card (OSDEV-3778)', () => {
+        const openState = uuid => ({
+            sectionNavigation: {
+                scrollTargetId: null,
+                openSectionIds: { [uuid]: true },
+            },
+        });
+
+        test('renders the card when a field in the group is beta', () => {
+            const { getByRole } = renderComponent(
+                {
+                    group: makeGroup({
+                        uuid: 'beta-1',
+                        partnerFields: [
+                            { fieldName: 'plain', label: 'Plain', beta: false },
+                            { fieldName: 'provisional', label: 'Provisional', beta: true },
+                        ],
+                    }),
+                },
+                openState('beta-1'),
+            );
+
+            expect(
+                getByRole('heading', { name: 'Why beta?', level: 4 }),
+            ).toBeInTheDocument();
+        });
+
+        test('renders no card when no field in the group is beta', () => {
+            const { queryByRole } = renderComponent(
+                {
+                    group: makeGroup({
+                        uuid: 'plain-1',
+                        partnerFields: [
+                            { fieldName: 'plain', label: 'Plain', beta: false },
+                            { fieldName: 'other', label: 'Other' },
+                        ],
+                    }),
+                },
+                openState('plain-1'),
+            );
+
+            expect(
+                queryByRole('heading', { name: 'Why beta?', level: 4 }),
+            ).not.toBeInTheDocument();
+        });
+    });
 });

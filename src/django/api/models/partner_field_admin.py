@@ -45,6 +45,7 @@ class PartnerFieldAdminForm(forms.ModelForm):
             'json_schema',
             'polygon',
             'active',
+            'beta',
             'system_field',
             'available_in_api',
             'available_in_data_downloads',
@@ -104,6 +105,7 @@ class PartnerFieldAdmin(admin.ModelAdmin):
         "unit",
         "group",
         "active",
+        "beta",
         "system_field",
         "available_in_api",
         "available_in_data_downloads",
@@ -112,6 +114,7 @@ class PartnerFieldAdmin(admin.ModelAdmin):
     search_fields = ("name", "type", "label", "unit", "source_by")
     list_filter = (
         "active",
+        "beta",
         "system_field",
         "available_in_api",
         "available_in_data_downloads",
@@ -131,6 +134,7 @@ class PartnerFieldAdmin(admin.ModelAdmin):
         "display_text",
         "json_schema",
         "active",
+        "beta",
         "system_field",
         "available_in_api",
         "available_in_data_downloads",

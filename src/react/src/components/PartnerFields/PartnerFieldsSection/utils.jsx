@@ -55,6 +55,7 @@ export const preparePartnerFields = data => {
         const {
             base_url: baseUrl, // eslint-disable-line camelcase
             display_text: displayText, // eslint-disable-line camelcase
+            beta,
         } = firstEntry;
 
         const partnerConfigFields = { baseUrl, displayText };
@@ -66,6 +67,9 @@ export const preparePartnerFields = data => {
                 .replace(/\b\w/g, l => l.toUpperCase()),
             formatValue: formatPartnerFieldValue,
             partnerConfigFields,
+            // Set per partner field in the Django admin (OSDEV-3778). The
+            // chip is rendered beside the label, never folded into it.
+            beta: !!beta,
         };
     });
 };

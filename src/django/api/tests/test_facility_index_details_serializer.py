@@ -752,6 +752,62 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             {'raw_value': 'Transport Data'}
         )
 
+    def _index_with_test_data_field(self):
+        """Give the facility one `test_data_field` contribution and
+        return its refreshed FacilityIndex row."""
+        extended_field = ExtendedField.objects.create(
+            facility=self.facility,
+            field_name='test_data_field',
+            value={'raw_value': 'Transport Data'},
+            contributor=self.contrib_one
+        )
+        facility_index = FacilityIndex.objects.get(id=self.facility.id)
+        facility_index.extended_fields.append({
+            'id': extended_field.id,
+            'field_name': 'test_data_field',
+            'value': {'raw_value': 'Transport Data'},
+            'contributor': {
+                'id': self.contrib_one.id,
+                'name': self.contrib_one.name,
+                'is_verified': self.contrib_one.is_verified,
+            },
+            'created_at': extended_field.created_at.isoformat(),
+            'updated_at': extended_field.updated_at.isoformat(),
+            'is_verified': False,
+            'facility_list_item_id': None,
+            'should_display_association': True,
+            'value_count': 1,
+        })
+        facility_index.save()
+        facility_index.refresh_from_db()
+        return facility_index
+
+    def test_partner_fields_carry_beta_flag_when_checked(self):
+        # OSDEV-3778 AC #1: a field flagged beta in the admin tells the
+        # page so through the same per-field metadata as label and
+        # base_url. The label itself is untouched, so analytics names
+        # and the drawer title stay as they were.
+        self.partner_field_1.beta = True
+        self.partner_field_1.save()
+        facility_index = self._index_with_test_data_field()
+
+        data = FacilityIndexDetailsSerializer(facility_index).data
+        entry = data['properties']['partner_fields']['test_data_field'][0]
+
+        self.assertIs(entry['beta'], True)
+        self.assertEqual(entry['label'], 'Test Data Field')
+
+    def test_partner_fields_beta_flag_defaults_to_false(self):
+        # OSDEV-3778 AC #2: an unflagged field renders as before, with
+        # the flag present and off rather than missing, so the page
+        # never has to guess.
+        facility_index = self._index_with_test_data_field()
+
+        data = FacilityIndexDetailsSerializer(facility_index).data
+        entry = data['properties']['partner_fields']['test_data_field'][0]
+
+        self.assertIs(entry['beta'], False)
+
     def test_partner_fields_includes_source_by(self):
         self.partner_field_1.source_by = \
             '<strong>Climate TRACE</strong> source'

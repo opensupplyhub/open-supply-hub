@@ -82,4 +82,6 @@ export default {
     // Gradients helpers
     PURPLE_GRADIENT_FROM: '#a855f7',
     PINK_GRADIENT_TO: '#ec4899',
+    BETA_CARD_BG: '#13102d',
+    BETA_CARD_LINK: '#c4b5fd',
 };
