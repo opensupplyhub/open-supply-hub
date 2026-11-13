@@ -8,6 +8,7 @@ from waffle import switch_is_active
 
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
 from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.partner_field import PartnerField
 from api.models.polygon_admin import PolygonForm
 from api.models.zone_set import ZoneSet
@@ -23,11 +24,12 @@ class ZoneSetForm(forms.ModelForm):
 
     Zones are not edited as rows: staff upload a GeoJSON
     FeatureCollection and name the feature property that supplies
-    each zone's value. The whole file is parsed and validated here, in
-    `clean`, before anything is saved — a bad file becomes an ordinary
-    red form error and the set's existing zones are left untouched.
-    The parsed zones are handed to `ZoneSetAdmin.save_model`, which
-    swaps them in atomically.
+    each zone's value. The whole file is parsed, validated and cut
+    into storage pieces here, in `clean`, before anything is saved — a
+    bad file, or a feature PostGIS cannot cut, becomes an ordinary red
+    form error and the set's existing zones are left untouched. The
+    pieces are handed to `ZoneSetAdmin.save_model`, which swaps them
+    in atomically.
     """
 
     geojson_file = forms.FileField(
@@ -67,7 +69,8 @@ class ZoneSetForm(forms.ModelForm):
         self.fields['partner_field'].queryset = (
             PartnerField.objects.get_all_including_inactive()
         )
-        # Filled by clean() when a file is uploaded; None means "keep
+        # Filled by clean() when a file is uploaded with the pieces to
+        # store (see api.helpers.zone_subdivision); None means "keep
         # the existing zones".
         self.parsed_zones = None
 
@@ -101,7 +104,7 @@ class ZoneSetForm(forms.ModelForm):
 
     def clean(self):
         """
-        Parse the uploaded file (if any) into zone records.
+        Parse the uploaded file (if any) into the zone pieces to store.
 
         A new set must come with a file. An existing set may be edited
         without one, in which case its zones are kept — unless the
@@ -145,8 +148,14 @@ class ZoneSetForm(forms.ModelForm):
                 f'Could not read the file as UTF-8 text: {exc}'
             ) from exc
 
+        # Subdividing here rather than at save time means a feature
+        # PostGIS returns no piece for is reported like any other bad
+        # file, instead of surfacing after validation as a server
+        # error once the set itself has been saved.
         try:
-            self.parsed_zones = parse_zone_features(raw, value_property)
+            self.parsed_zones = subdivide_zone_records(
+                parse_zone_features(raw, value_property)
+            )
         except InvalidPolygonGeoJSON as exc:
             raise forms.ValidationError(str(exc)) from exc
 

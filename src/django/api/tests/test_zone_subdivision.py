@@ -1,51 +1,30 @@
-import json
-import math
 from unittest.mock import Mock, patch
 
 from django.contrib.gis.geos import Point
 from django.db import connection
 from django.test import TestCase
 
-from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
 from api.helpers.zone_subdivision import (
     ZONE_PIECE_MAX_VERTICES,
     subdivide_zone_records,
 )
 from api.migrations._migration_helper import MigrationHelper
 from api.models import Zone, ZoneSet
+from api.tests.zone_fixtures import DISC, feature, records
 
 SQUARE = [[[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]]
 EAST_SQUARE = [[[10, 0], [10, 10], [20, 10], [20, 0], [10, 0]]]
-INNER = [[[2, 2], [2, 4], [4, 4], [4, 2], [2, 2]]]
+
+# The budget 0272_subdivide_zones.sql has written into it: the value of
+# ZONE_PIECE_MAX_VERTICES when the migration was written. The migration
+# is frozen, so this stays 64 even if the constant moves.
+MIGRATION_BUDGET = 64
 
 
-def ring(center_x, center_y, radius, vertices):
-    """A closed ring approximating a circle with the given vertex count."""
-    coords = [
-        [
-            center_x + radius * math.cos(2 * math.pi * i / vertices),
-            center_y + radius * math.sin(2 * math.pi * i / vertices),
-        ]
-        for i in range(vertices)
-    ]
-    return coords + [coords[0]]
-
-
-# A single feature well over the vertex budget: a 600-vertex disc.
-DISC = [ring(50, 50, 20, 600)]
-
-
-def feature(coordinates, properties):
-    return {
-        'type': 'Feature',
-        'properties': properties,
-        'geometry': {'type': 'Polygon', 'coordinates': coordinates},
-    }
-
-
-def records(*features):
-    raw = json.dumps({'type': 'FeatureCollection', 'features': features})
-    return parse_zone_features(raw, 'bws_label')
+def pieces(*features):
+    """The storage pieces for the features, as replace_zones takes them."""
+    return subdivide_zone_records(records(*features))
 
 
 def grid_points(xmin, ymin, xmax, ymax, step):
@@ -152,7 +131,9 @@ class SubdivideZoneRecordsTest(TestCase):
         with patch(
             'api.helpers.zone_subdivision.connection', connection_mock
         ):
-            with self.assertRaisesRegex(ValueError, r'position\(s\) \[0\]'):
+            with self.assertRaisesRegex(
+                InvalidPolygonGeoJSON, r'position\(s\) \[0\]'
+            ):
                 subdivide_zone_records([record])
 
     def test_empty_input(self):
@@ -170,7 +151,7 @@ class ReplaceZonesSubdividesTest(TestCase):
         )
 
     def test_pieces_are_stored_with_the_feature_value(self):
-        self.zone_set.replace_zones(records(
+        self.zone_set.replace_zones(pieces(
             feature(DISC, {'bws_label': 'High', 'bws_cat': 3}),
         ))
 
@@ -194,7 +175,7 @@ class ReplaceZonesSubdividesTest(TestCase):
         resolves to the label the whole feature would have given it,
         and points outside resolve to nothing (AC #1)."""
         [record] = records(feature(DISC, {'bws_label': 'High'}))
-        self.zone_set.replace_zones([record])
+        self.zone_set.replace_zones(subdivide_zone_records([record]))
         # Points on cut lines: the pieces' bounding-box edges are the
         # cut lines, so probe the middle of each piece's extent edges.
         on_cuts = []
@@ -218,7 +199,7 @@ class ReplaceZonesSubdividesTest(TestCase):
         file, not the piece order (AC #3)."""
         # A big disc first, then a square overlapping it, then a square
         # touching the disc's bounding region only along x = 70.
-        self.zone_set.replace_zones(records(
+        self.zone_set.replace_zones(pieces(
             feature(DISC, {'bws_label': 'High'}),
             feature([[[60, 40], [60, 60], [80, 60], [80, 40], [60, 40]]],
                     {'bws_label': 'Low'}),
@@ -233,7 +214,7 @@ class ReplaceZonesSubdividesTest(TestCase):
             self.zone_set.resolve_zone(Point(75, 45, srid=4326)).label, 'Low'
         )
         # Reverse the file order: the square wins the overlap.
-        self.zone_set.replace_zones(records(
+        self.zone_set.replace_zones(pieces(
             feature([[[60, 40], [60, 60], [80, 60], [80, 40], [60, 40]]],
                     {'bws_label': 'Low'}),
             feature(DISC, {'bws_label': 'High'}),
@@ -243,7 +224,7 @@ class ReplaceZonesSubdividesTest(TestCase):
         )
 
     def test_shared_edge_between_two_features(self):
-        self.zone_set.replace_zones(records(
+        self.zone_set.replace_zones(pieces(
             feature(EAST_SQUARE, {'bws_label': 'Low'}),
             feature(SQUARE, {'bws_label': 'High'}),
         ))
@@ -252,12 +233,12 @@ class ReplaceZonesSubdividesTest(TestCase):
         )
 
     def test_reupload_replaces_every_piece(self):
-        self.zone_set.replace_zones(records(
+        self.zone_set.replace_zones(pieces(
             feature(DISC, {'bws_label': 'High'}),
         ))
         old_ids = set(self.zone_set.zones.values_list('id', flat=True))
 
-        self.zone_set.replace_zones(records(
+        self.zone_set.replace_zones(pieces(
             feature(SQUARE, {'bws_label': 'Low'}),
         ))
 
@@ -265,7 +246,7 @@ class ReplaceZonesSubdividesTest(TestCase):
         self.assertEqual(self.zone_set.zones.count(), 1)
 
     def test_str_names_feature_and_piece(self):
-        self.zone_set.replace_zones(records(
+        self.zone_set.replace_zones(pieces(
             feature(SQUARE, {'bws_label': 'Low'}),
         ))
         self.assertEqual(
@@ -274,7 +255,7 @@ class ReplaceZonesSubdividesTest(TestCase):
 
 
 class SubdivideExistingZonesMigrationTest(TestCase):
-    """Tests for the 0269 data step that re-cuts zones saved before
+    """Tests for the 0272 data step that re-cuts zones saved before
     subdivision existed, and its reverse."""
 
     def setUp(self):
@@ -312,7 +293,7 @@ class SubdivideExistingZonesMigrationTest(TestCase):
         before = self._labels_on_grid()
         legacy_created_at = self.zone_set.zones.get(feature_index=0).created_at
 
-        self.helper.run_sql_file('0269_subdivide_zones.sql')
+        self.helper.run_sql_file('0272_subdivide_zones.sql')
 
         disc_pieces = self.zone_set.zones.filter(feature_index=0)
         self.assertGreater(disc_pieces.count(), 1)
@@ -333,16 +314,20 @@ class SubdivideExistingZonesMigrationTest(TestCase):
         self.assertEqual(self._labels_on_grid(), before)
 
     def test_forward_matches_a_fresh_upload(self):
-        """The migration and replace_zones cut a feature identically."""
-        self.helper.run_sql_file('0269_subdivide_zones.sql')
+        """The migration and the helper cut a feature identically at
+        the migration's budget."""
+        self.helper.run_sql_file('0272_subdivide_zones.sql')
         migrated = [
             (zone.feature_index, zone.piece_index, zone.geom.ewkt)
             for zone in self.zone_set.zones.all()
         ]
 
-        self.zone_set.replace_zones(records(
-            feature(DISC, {'bws_label': 'High'}),
-            feature(SQUARE, {'bws_label': 'Low'}),
+        self.zone_set.replace_zones(subdivide_zone_records(
+            records(
+                feature(DISC, {'bws_label': 'High'}),
+                feature(SQUARE, {'bws_label': 'Low'}),
+            ),
+            max_vertices=MIGRATION_BUDGET,
         ))
         uploaded = [
             (zone.feature_index, zone.piece_index, zone.geom.ewkt)
@@ -353,9 +338,9 @@ class SubdivideExistingZonesMigrationTest(TestCase):
 
     def test_reverse_merges_pieces_back_to_one_row_per_feature(self):
         original_area = self.zone_set.zones.get(feature_index=0).geom.area
-        self.helper.run_sql_file('0269_subdivide_zones.sql')
+        self.helper.run_sql_file('0272_subdivide_zones.sql')
 
-        self.helper.run_sql_file('0269_revert_subdivide_zones.sql')
+        self.helper.run_sql_file('0272_revert_subdivide_zones.sql')
 
         zones = list(self.zone_set.zones.all())
         self.assertEqual(

@@ -6,7 +6,6 @@ from django.db import models, transaction
 from api.facility_index_backfill.zone_set_ids_recompute import (
     schedule_zone_set_ids_recompute,
 )
-from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.polygon import variable_style_name_validator
 
 
@@ -41,8 +40,9 @@ class ZoneSet(models.Model):
     before export to get "most severe wins". See `resolve_zone`.
 
     Storage: each uploaded feature is cut into pieces of a bounded
-    vertex count before it is saved (`api.helpers.zone_subdivision`),
-    so a dissolved layer of a few enormous multipolygons costs the
+    vertex count before it is saved (`api.helpers.zone_subdivision`,
+    run by the admin form while it validates the file), so a
+    dissolved layer of a few enormous multipolygons costs the
     point-in-polygon test no more than a layer of many small ones.
     Every piece carries the feature's value and `feature_index`, so
     nothing above this paragraph changes; `Zone.piece_index` only
@@ -137,22 +137,22 @@ class ZoneSet(models.Model):
         )
 
     @transaction.atomic
-    def replace_zones(self, zone_records):
+    def replace_zones(self, pieces):
         """
-        Replace every zone in this set with the given records, in one
+        Replace every zone in this set with the given pieces, in one
         transaction.
 
-        Callers validate the whole upload BEFORE calling this (see
-        `api.helpers.geojson_zones.parse_zone_features`), so by the
-        time any row is touched the new data is known to be good. The
+        Callers validate and cut the whole upload BEFORE calling this
+        (`api.helpers.geojson_zones.parse_zone_features`, then
+        `api.helpers.zone_subdivision.subdivide_zone_records`; the
+        admin form runs both in `clean`), so by the time any row is
+        touched the new data is known to be good and a feature that
+        could not be cut has already been refused as a form error. The
         delete and the inserts commit together: readers either see the
         complete old set or the complete new set, never a mix or a gap.
 
-        Each record is stored as one or more `Zone` rows: its geometry
-        is cut into pieces of at most `ZONE_PIECE_MAX_VERTICES`
-        vertices (see `api.helpers.zone_subdivision`), and every piece
-        carries the record's label, properties and position in the
-        file. The subdivision runs inside this transaction too.
+        Each piece becomes one `Zone` row carrying its source feature's
+        label, properties and position in the file.
 
         New zones change which locations the set covers without
         touching any facility row, so once the transaction commits a
@@ -164,11 +164,10 @@ class ZoneSet(models.Model):
         the new ones at once.
 
         Args:
-            zone_records: Dicts with `geom`, `label` and `properties`
-                keys, in file order (the order defines
-                `feature_index`).
+            pieces: Dicts as returned by `subdivide_zone_records`, in
+                (feature, piece) order: `feature_index`, `piece_index`,
+                `geom`, `label` and `properties`.
         """
-        pieces = subdivide_zone_records(zone_records)
         self.zones.all().delete()
         Zone.objects.bulk_create(
             [
@@ -197,6 +196,16 @@ class Zone(models.Model):
     its `feature_index` and value and differ in `piece_index` (see
     `api.helpers.zone_subdivision`). Rows are created only by
     `ZoneSet.replace_zones`; they are not edited individually.
+
+    Every piece of a feature stores a copy of the feature's `value`
+    (label plus all source properties), so a feature cut into N pieces
+    stores its JSON N times. That is deliberate for now: the admin and
+    the migration that re-cut existing zones stay one-table changes,
+    and the cost is bounded (the upload cap is 10 MB and a piece's
+    JSON is small next to its geometry). If per-feature data grows or
+    needs editing, the value belongs on a ZoneFeature row that the
+    pieces point at, with uniqueness of `feature_index` falling out of
+    that key.
     """
 
     zone_set = models.ForeignKey(

@@ -1,55 +1,21 @@
-import json
-import math
 from unittest.mock import Mock, patch
 
 from django.conf import settings
 from django.contrib.admin.sites import AdminSite
 from django.contrib.gis.geos import Point
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from waffle.testutils import override_switch
 
+from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
 from api.models import PartnerField, User, Zone, ZoneSet
 from api.models.zone_set_admin import ZoneSetAdmin, ZoneSetForm
 from api.partner_fields.registry import ZONE_SETS_SWITCH
+from api.tests.zone_fixtures import DISC, feature, upload
 
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
 FAR = [[[20, 20], [20, 30], [30, 30], [30, 20], [20, 20]]]
-
-
-def ring(center_x, center_y, radius, vertices):
-    """A closed ring approximating a circle with the given vertex count."""
-    coords = [
-        [
-            center_x + radius * math.cos(2 * math.pi * i / vertices),
-            center_y + radius * math.sin(2 * math.pi * i / vertices),
-        ]
-        for i in range(vertices)
-    ]
-    return coords + [coords[0]]
-
-
-# A single feature well over the vertex budget, stored as several
-# pieces (see api.helpers.zone_subdivision).
-DISC = [ring(50, 50, 20, 600)]
-
-
-def feature(coordinates, properties):
-    return {
-        'type': 'Feature',
-        'properties': properties,
-        'geometry': {'type': 'Polygon', 'coordinates': coordinates},
-    }
-
-
-def upload(*features, name='zones.geojson'):
-    """Build an uploaded FeatureCollection file."""
-    raw = json.dumps({'type': 'FeatureCollection', 'features': features})
-    return SimpleUploadedFile(
-        name, raw.encode('utf-8'), content_type='application/geo+json'
-    )
 
 
 BASE_DATA = {
@@ -80,6 +46,47 @@ class ZoneSetFormTest(TestCase):
         self.assertEqual(
             [zone['label'] for zone in form.parsed_zones], ['High', 'Low']
         )
+
+    def test_large_feature_is_parsed_into_pieces(self):
+        """The form hands save_model storage pieces, not features: a
+        feature over the vertex budget arrives as several pieces that
+        all carry its label and position."""
+        form = ZoneSetForm(
+            data=BASE_DATA,
+            files={'geojson_file': upload(
+                feature(DISC, {'bws_label': 'High'}),
+                feature(LEFT, {'bws_label': 'Low'}),
+            )},
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertGreater(len(form.parsed_zones), 2)
+        self.assertEqual(
+            {(p['feature_index'], p['label']) for p in form.parsed_zones},
+            {(0, 'High'), (1, 'Low')},
+        )
+
+    def test_subdivision_refusal_is_a_form_error(self):
+        """A feature PostGIS returns no piece for is reported on the
+        form like any other bad file, not raised at save time."""
+        with patch(
+            'api.models.zone_set_admin.subdivide_zone_records',
+            side_effect=InvalidPolygonGeoJSON(
+                'ST_Subdivide returned no pieces for feature(s) at '
+                'position(s) [1]; the upload was refused rather than '
+                'saved without them.'
+            ),
+        ):
+            form = ZoneSetForm(
+                data=BASE_DATA,
+                files={'geojson_file': upload(
+                    feature(LEFT, {'bws_label': 'High'}),
+                    feature(RIGHT, {'bws_label': 'Low'}),
+                )},
+            )
+            self.assertFalse(form.is_valid())
+        self.assertIn('no pieces for feature(s) at position(s) [1]',
+                      str(form.errors))
+        self.assertIsNone(form.parsed_zones)
 
     def test_missing_value_property_is_a_form_error_with_a_count(self):
         form = ZoneSetForm(

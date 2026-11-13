@@ -31,6 +31,8 @@ undivided feature.
 from django.contrib.gis.geos import GEOSGeometry
 from django.db import connection
 
+from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
+
 # Vertices per piece. Chosen by timing the `ST_Covers` probe for 20,000
 # facility points against the real Aqueduct 4.0 layer (68,506 basins,
 # 13.3M vertices) stored three ways: raw, dissolved per country and
@@ -80,6 +82,13 @@ def subdivide_zone_records(zone_records, max_vertices=ZONE_PIECE_MAX_VERTICES):
             - `label` and `properties`: copied from the source record
         A record whose geometry already fits the budget comes back as
         its single piece 0, unchanged.
+
+    Raises:
+        InvalidPolygonGeoJSON: If PostGIS returns no piece for a
+            record (the message names the positions), so an upload is
+            refused rather than saved without it. The same type as
+            `parse_zone_features` raises, so the admin form shows it
+            as a form error.
     """
     if not zone_records:
         return []
@@ -95,13 +104,15 @@ def subdivide_zone_records(zone_records, max_vertices=ZONE_PIECE_MAX_VERTICES):
     # Every feature must come back as at least one piece. ST_Subdivide
     # drops empty and lower-dimensional parts, so a record it returns
     # nothing for would otherwise vanish from the set without any
-    # error, and nothing in the admin would show which one.
+    # error, and nothing in the admin would show which one. Parsing
+    # already refuses empty and invalid geometry, so this is a guard
+    # against a PostGIS surprise rather than an expected path.
     returned = {feature_index for feature_index, _, _ in rows}
     missing = [
         index for index in range(len(zone_records)) if index not in returned
     ]
     if missing:
-        raise ValueError(
+        raise InvalidPolygonGeoJSON(
             'ST_Subdivide returned no pieces for feature(s) at '
             f'position(s) {missing}; the upload was refused rather '
             'than saved without them.'
