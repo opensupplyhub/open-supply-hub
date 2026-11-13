@@ -18,6 +18,7 @@ from api.constants import JS_MAX_SAFE_INTEGER
 from api.helpers.claim_attachments import validate_attachment_files
 from api.helpers.helpers import validate_workers_count
 from api.serializers.facility.utils import add_http_prefix_to_url
+from api.services.claim_campaign_service import normalize_campaign_code
 from api.services.claim_quality_warnings import DismissedWarningsField
 
 
@@ -124,6 +125,14 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
         max_length=200,
         required=False,
         allow_blank=True,
+    )
+    # No max_length: a malformed or over-long code from a claim link must
+    # not block the claim. validate_campaign drops it instead, and the
+    # claim falls back to roster attribution.
+    campaign = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        trim_whitespace=True,
     )
     point_of_contact_person_name = serializers.CharField(
         max_length=200,
@@ -389,6 +398,11 @@ class FacilityCreateClaimSerializer(serializers.Serializer):
 
     def validate_business_linkedin_profile(self, value):
         return validate_url_field("business_linkedin_profile", value)
+
+    def validate_campaign(self, value):
+        # Canonical code, or '' for anything that can't be one (bad
+        # format, too long); never a validation error.
+        return normalize_campaign_code(value) or ''
 
     def validate_facility_affiliations(self, value):
         return validate_claim_profile_options(ClaimAffiliation, value)
