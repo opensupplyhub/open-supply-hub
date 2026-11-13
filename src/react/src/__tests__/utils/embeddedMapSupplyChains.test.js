@@ -99,7 +99,7 @@ describe('embedded map supply chains', () => {
             expect(tier1.nodes[0].supplies).toEqual([]);
         });
 
-        it('groups by position in the chain without tiers', () => {
+        it('numbers tiers by position in the chain without tier values', () => {
             const untiered = {
                 ...chain,
                 nodes: chain.nodes.map(n => ({ ...n, tier: null })),
@@ -107,9 +107,9 @@ describe('embedded map supply chains', () => {
             const groups = getChainGroups(untiered);
 
             expect(groups.map(g => g.label)).toEqual([
-                'Step 1',
-                'Step 2',
-                'Step 3',
+                'Tier 3',
+                'Tier 2',
+                'Tier 1',
             ]);
             expect(groups[0].nodes.map(n => n.name)).toEqual(['Spinner']);
             expect(groups[2].nodes.map(n => n.name)).toEqual(['Factory']);
@@ -125,9 +125,9 @@ describe('embedded map supply chains', () => {
             };
 
             expect(getChainGroups(muddled).map(g => g.label)).toEqual([
-                'Step 1',
-                'Step 2',
-                'Step 3',
+                'Tier 3',
+                'Tier 2',
+                'Tier 1',
             ]);
         });
 
