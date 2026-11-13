@@ -38,9 +38,15 @@ class CountryStats(Model):
     sectors = JSONField(
         default=list,
         help_text=(
-            'Sectors represented, as [{"sector": str, "count": int}] sorted '
-            'by count descending. A location can report several sectors, so '
-            'these counts sum to more than location_count.'
+            'Sector groups represented, as [{"sector": str, "count": int}] '
+            'sorted by count descending. The key stays "sector" because the '
+            'card reads it that way; the value is a sector group name, '
+            'rolled up from the raw sectors because the raw list runs to '
+            '141 near-duplicate names for a country such as India. Each '
+            'count is distinct locations reporting any sector in that '
+            'group, so a location naming two sectors in one group counts '
+            'once. A sector can belong to several groups, so these counts '
+            'still sum to more than location_count. See OSDEV-3802.'
         ),
     )
 

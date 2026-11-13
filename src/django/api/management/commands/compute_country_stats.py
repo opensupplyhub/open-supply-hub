@@ -9,6 +9,7 @@ from api.models.country_stats import CountryStats
 from api.models.facility.facility_index import FacilityIndex
 from api.models.contributor.contributor import Contributor
 from api.models.partner_field import PartnerField
+from api.models.sector import Sector
 from api.models.facility.partner_contributor_filter import (
     apply_partner_fields_or_filter,
 )
@@ -23,7 +24,7 @@ OPEN_LOCATIONS = 'is_closed IS NOT TRUE'
 class Command(BaseCommand):
     help = (
         'Rebuild the per-country rollup behind the country map: open '
-        'location counts, the sectors represented, which Spotlight '
+        'location counts, the sector groups represented, which Spotlight '
         'partner fields hold data for at least one location, and the '
         'country x sector cube the sector-filtered map reads.'
     )
@@ -47,8 +48,15 @@ class Command(BaseCommand):
             f'{len(counts)} countries.'
         )
 
-        sectors = self.__sectors_by_country()
-        self.stdout.write(f'Rolled up sectors for {len(sectors)} countries.')
+        raw_sectors = self.__raw_sectors_by_country()
+        self.stdout.write(
+            f'Counted raw sectors for {len(raw_sectors)} countries.'
+        )
+
+        sector_groups = self.__sector_groups_by_country()
+        self.stdout.write(
+            f'Rolled up sector groups for {len(sector_groups)} countries.'
+        )
 
         if options['skip_partner_fields']:
             partners = {}
@@ -65,14 +73,14 @@ class Command(BaseCommand):
             CountryStats(
                 country_code=country_code,
                 location_count=location_count,
-                sectors=sectors.get(country_code, []),
+                sectors=sector_groups.get(country_code, []),
                 partner_fields=sorted(partners.get(country_code, set())),
                 computed_at=computed_at,
             )
             for country_code, location_count in counts.items()
         ]
 
-        cube_rows = self.__cube_rows(sectors, computed_at)
+        cube_rows = self.__cube_rows(raw_sectors, computed_at)
 
         # Replace wholesale. The tables are derived data and small enough
         # that a diff would cost more than it saves, and a country that
@@ -92,13 +100,17 @@ class Command(BaseCommand):
         ))
 
     @staticmethod
-    def __cube_rows(sectors, computed_at):
+    def __cube_rows(raw_sectors, computed_at):
         '''
         The country x sector cube the sector-filtered map reads, built from
-        the rollup pass rather than from a second query: the per-country
-        sector breakdown is already grouped by exactly these two keys and
-        carries the same open-locations filter, so re-querying would scan
-        api_facilityindex twice for identical numbers. See OSDEV-3802.
+        the raw-sector pass rather than from a third query: that pass is
+        already grouped by exactly these two keys and carries the same
+        open-locations filter, so re-querying would scan api_facilityindex
+        again for identical numbers.
+
+        Keyed on raw sector names on purpose. The cube feeds the search
+        page's sector filter, which filters on raw sectors, so it must not
+        follow the card's rollup to sector groups. See OSDEV-3802.
         '''
         return [
             CountrySectorStats(
@@ -107,7 +119,7 @@ class Command(BaseCommand):
                 location_count=entry['count'],
                 computed_at=computed_at,
             )
-            for country_code, entries in sectors.items()
+            for country_code, entries in raw_sectors.items()
             for entry in entries
         ]
 
@@ -121,8 +133,11 @@ class Command(BaseCommand):
             )
             return {code: count for code, count in cursor.fetchall()}
 
-    def __sectors_by_country(self):
+    def __raw_sectors_by_country(self):
         '''
+        Per-country counts for raw sector names, which feed the country x
+        sector cube only. The card reads the grouped rollup below.
+
         `sector` is a text array, so one row can contribute to several
         sectors. These counts therefore sum to more than the location count,
         which is why they are reported per sector rather than as a share.
@@ -135,13 +150,97 @@ class Command(BaseCommand):
                 'GROUP BY country_code, sector_name '
                 'ORDER BY country_code, n DESC'
             )
-            by_country = defaultdict(list)
-            for country_code, sector_name, count in cursor.fetchall():
-                by_country[country_code].append({
-                    'sector': sector_name,
-                    'count': count,
-                })
-            return dict(by_country)
+            return self.__by_country(cursor.fetchall())
+
+    def __sector_groups_by_country(self):
+        '''
+        Per-country counts rolled up to sector groups, which is what the
+        country card lists. Raw sector names are too many and too redundant
+        to read: India alone reports 141 of them, with "Agriculture",
+        "Food" and "Food Industry" all sitting in the top three and all
+        meaning the same thing. See OSDEV-3802.
+
+        Counts DISTINCT locations per group rather than summing the member
+        sectors' counts, because a location reporting both "Food" and
+        "Food Industry" would otherwise be counted twice in the one group.
+
+        Groups still overlap across the row: the mapping is many-to-many,
+        so a location reporting "Food Manufacturing" counts once for
+        "Agriculture, Food & Beverage" and once for "Manufacturing". That
+        is the same behavior the card's own note already describes, and the
+        reason these counts still sum to more than location_count.
+
+        One pass, with the sector to group mapping handed to Postgres as a
+        pair of arrays: a query per group would mean 25 passes over
+        api_facilityindex.
+        '''
+        sector_names = []
+        group_names = []
+        for sector_name, group_name in self.__sector_group_pairs():
+            sector_names.append(sector_name)
+            group_names.append(group_name)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                'SELECT fi.country_code, '
+                'COALESCE(m.group_name, %s) AS sector_group, '
+                'COUNT(DISTINCT fi.id) AS n '
+                'FROM api_facilityindex fi '
+                'CROSS JOIN LATERAL UNNEST(fi.sector) '
+                'AS reported(sector_name) '
+                'LEFT JOIN UNNEST(%s::varchar[], %s::varchar[]) '
+                'AS m(sector_name, group_name) '
+                'ON m.sector_name = reported.sector_name '
+                f'WHERE {OPEN_LOCATIONS} '
+                'GROUP BY 1, 2 '
+                'ORDER BY 1, n DESC',
+                [Sector.DEFAULT_SECTOR_NAME, sector_names, group_names],
+            )
+            return self.__by_country(cursor.fetchall())
+
+    @staticmethod
+    def __sector_group_pairs():
+        '''
+        Every (sector, group) link in the taxonomy, minus the ones that must
+        not be rolled up.
+
+        "Unspecified" is excluded even though the taxonomy files it under
+        "Other": it records the absence of a sector rather than a sector,
+        it outranks real ones on volume in several countries, and the card
+        pins it last and keeps it out of its bar scale by that exact name.
+        Letting it land in "Other" would both hide it in the ordering and
+        make a pile of missing data read as a real group.
+
+        Sectors with no group link are left out for the same reason the
+        card cannot show them: a lone raw name among 25 group names reads
+        as a group. They fall to the same "Unspecified" bucket through the
+        COALESCE above.
+        '''
+        pairs = (
+            Sector.objects
+            .exclude(name=Sector.DEFAULT_SECTOR_NAME)
+            .values_list('name', 'groups__name')
+        )
+        return [
+            (sector_name, group_name)
+            for sector_name, group_name in pairs
+            if group_name is not None
+        ]
+
+    @staticmethod
+    def __by_country(rows):
+        '''
+        Both rollups store the same {sector, count} shape, grouped by
+        country: the card renders one list and does not need to know which
+        pass produced it.
+        '''
+        by_country = defaultdict(list)
+        for country_code, name, count in rows:
+            by_country[country_code].append({
+                'sector': name,
+                'count': count,
+            })
+        return dict(by_country)
 
     def __partner_fields_by_country(self):
         '''

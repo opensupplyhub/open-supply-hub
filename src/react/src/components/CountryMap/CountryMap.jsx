@@ -91,13 +91,33 @@ const CountryMap = ({
                 return;
             }
             select(code);
-            const node = svgRef.current.querySelector(`[data-cc="${code}"]`);
-            if (node) {
-                focusOn(node.getBBox());
-            }
         },
-        [clearCountry, focusOn, select],
+        [clearCountry, select],
     );
+
+    const single = selectedCodes.length === 1 ? selectedCodes[0] : null;
+
+    /*
+     * Zoom to whichever country is selected, however it was selected: the
+     * picker, a click on the map, the sidebar filter, or a link someone
+     * shared. This used to hang off the picker's change handler alone,
+     * which meant it read the DOM in the same tick as the dispatch that
+     * changes it and left every other route in with no zoom at all.
+     *
+     * focusOn ignores anything already easy to see, so selecting Brazil
+     * does not yank the map about; it is small countries this is for.
+     * `shapes` is a dependency because on a first load with a country
+     * already in the URL the paths do not exist yet.
+     */
+    useEffect(() => {
+        if (!single || !svgRef.current) {
+            return;
+        }
+        const node = svgRef.current.querySelector(`[data-cc="${single}"]`);
+        if (node) {
+            focusOn(node.getBBox());
+        }
+    }, [single, shapes, focusOn]);
 
     const sortedCountries = useMemo(
         () =>
@@ -120,7 +140,6 @@ const CountryMap = ({
     const ringed = selectedCodes
         .map(code => shapeByCode[code])
         .filter(Boolean);
-    const single = selectedCodes.length === 1 ? selectedCodes[0] : null;
 
     return (
         <div className="country-map" style={height ? { height } : undefined}>

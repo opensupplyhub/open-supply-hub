@@ -29,6 +29,10 @@ class CountryStatsViewSet(ViewSet):
     precomputed cube so that a broad sector costs no more than a narrow one.
     `retrieve` returns one country's sector breakdown and the Spotlight
     partner fields holding data for it, fetched only when someone clicks.
+    That breakdown is rolled up to sector groups, while `?sector=` above
+    still takes a raw sector name: the two serve different things, the card
+    a readable summary and the filter the search page's own facet. Both are
+    read straight off the rollup, so neither needs anything here.
     '''
 
     lookup_field = 'country_code'
