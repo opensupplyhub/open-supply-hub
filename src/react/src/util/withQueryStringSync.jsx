@@ -175,10 +175,22 @@ export default function withQueryStringSync(WrappedComponent) {
             hydrateFiltersFromQueryString: qs => {
                 dispatch(setFiltersFromQueryString(qs));
             },
+            /*
+             * `...push` spread a function, which has no own enumerable
+             * properties, so `pushNewRoute` fell back to its noop default
+             * and a search restored from the URL never jumped to the
+             * location page the way a typed one does. The same query gave
+             * two different answers depending on whether you typed it or
+             * followed a link to it. See OSDEV-3810.
+             *
+             * Redirecting here cannot loop: mounting on /facilities/<os_id>
+             * leaves cleanPathname different from path, so
+             * componentDidMount does not fetch again.
+             */
             fetchFacilitiesForCurrentSearch: () =>
                 dispatch(
                     fetchFacilities({
-                        ...push,
+                        pushNewRoute: push,
                         activateFacilitiesTab: false,
                     }),
                 ),
