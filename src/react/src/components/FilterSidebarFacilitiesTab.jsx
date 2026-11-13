@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { arrayOf, bool, func, string } from 'prop-types';
+import { arrayOf, bool, func, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withRouter } from 'react-router';
 import { Link } from 'react-router-dom';
@@ -48,6 +48,13 @@ import {
 import { useMergeButtonClickHandler } from '../util/hooks';
 
 import COLOURS from '../util/COLOURS';
+import {
+    embedButtonCornerStyle,
+    embedHeadingFont,
+    getListFields,
+    themeEmbedStyle,
+} from '../util/embeddedMap';
+import EmbedFieldValue from './EmbedFieldValue';
 
 import { filterSidebarStyles } from '../util/styles';
 import BadgeClaimed from './BadgeClaimed';
@@ -130,6 +137,7 @@ const makeFacilitiesTabStyles = theme => ({
         border: '1px solid rgb(134, 65, 15)',
     }),
     copyLinkButton: {
+        ...embedButtonCornerStyle(theme),
         margin: '5px 16px 5px 0',
         height: '45px',
         fontSize: '16px',
@@ -158,6 +166,15 @@ const makeFacilitiesTabStyles = theme => ({
         '&[disabled]': {
             backgroundColor: 'rgba(0, 0, 0, 0.12)',
         },
+    },
+    facilityName: {
+        fontFamily: embedHeadingFont(theme),
+        fontWeight: 700,
+        fontSize: '26px',
+        letterSpacing: '-0.004em',
+    },
+    osId: {
+        color: themeEmbedStyle(theme).accentColor || 'inherit',
     },
     facilityDetailContainer: {
         marginLeft: '-16px',
@@ -194,6 +211,7 @@ function FilterSidebarFacilitiesTab({
     handleScroll,
     scrollTop,
     embed,
+    embedFields,
     updateToMergeOSID,
     fetchToMergeFacility,
     updateTargetOSID,
@@ -419,6 +437,7 @@ function FilterSidebarFacilitiesTab({
                                     os_id: osID,
                                     is_closed: isClosed,
                                     number_of_public_contributors: numberOfPublicContributors,
+                                    contributor_fields: contributorFields,
                                 },
                             }) => (
                                 <>
@@ -476,12 +495,9 @@ function FilterSidebarFacilitiesTab({
                                                 className={classes.linkStyles}
                                             >
                                                 <span
-                                                    style={{
-                                                        fontWeight: 700,
-                                                        fontSize: '26px',
-                                                        letterSpacing:
-                                                            '-0.004em',
-                                                    }}
+                                                    className={
+                                                        classes.facilityName
+                                                    }
                                                 >
                                                     {name}
                                                 </span>
@@ -493,9 +509,7 @@ function FilterSidebarFacilitiesTab({
                                                 >
                                                     <Grid
                                                         item
-                                                        className={
-                                                            classes.facilityDetailItem
-                                                        }
+                                                        className={`${classes.facilityDetailItem} ${classes.osId}`}
                                                     >{`OS ID: ${osID}`}</Grid>
                                                     <ShowOnly
                                                         when={
@@ -543,6 +557,27 @@ function FilterSidebarFacilitiesTab({
                                                     </ShowOnly>
                                                 </Grid>
                                                 {address}
+                                                {embed
+                                                    ? getListFields(
+                                                          embedFields,
+                                                          contributorFields,
+                                                      ).map(field => (
+                                                          <EmbedFieldValue
+                                                              key={
+                                                                  field.columnName
+                                                              }
+                                                              label={
+                                                                  field.label
+                                                              }
+                                                              value={
+                                                                  field.value
+                                                              }
+                                                              displayAs={
+                                                                  field.displayAs
+                                                              }
+                                                          />
+                                                      ))
+                                                    : null}
                                             </Link>
                                             {isClosed ? (
                                                 <FeatureFlag
@@ -574,6 +609,7 @@ function FilterSidebarFacilitiesTab({
 }
 
 FilterSidebarFacilitiesTab.defaultProps = {
+    embedFields: [],
     user: {
         isAnon: true,
     },
@@ -593,6 +629,7 @@ FilterSidebarFacilitiesTab.propTypes = {
     fetchNextPage: func.isRequired,
     isInfiniteLoading: bool.isRequired,
     embed: bool.isRequired,
+    embedFields: arrayOf(object),
     targetFacilityOSID: string.isRequired,
     facilityToMergeOSID: string.isRequired,
     updateToMergeOSID: func.isRequired,
@@ -622,9 +659,10 @@ function mapStateToProps({
     facilitiesDownload: {
         facilities: { data: downloadData },
     },
-    embeddedMap: { embed },
+    embeddedMap: { embed, config },
 }) {
     return {
+        embedFields: config?.embed_fields,
         user,
         data,
         downloadData,

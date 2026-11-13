@@ -1,4 +1,6 @@
+import isNil from 'lodash/isNil';
 import { OARColor, HEADER_HEIGHT } from './constants';
+import { embedCornerStyle, embedHeadingFont } from './embeddedMap';
 import COLOURS from './COLOURS';
 import { multiValueBackgroundHandler } from './util';
 
@@ -112,7 +114,7 @@ export const filterSidebarStyles = Object.freeze({
 export const makeFilterStyles = theme =>
     Object.freeze({
         inputLabelStyle: Object.freeze({
-            fontFamily: theme.typography.fontFamily,
+            fontFamily: embedHeadingFont(theme),
             fontSize: '18px',
             fontWeight: 700,
             color: '#000',
@@ -128,9 +130,11 @@ export const makeFilterStyles = theme =>
             paddingLeft: 0,
             borderRadius: 0,
             paddingRight: 0,
+            ...embedCornerStyle(theme),
         }),
         notchedOutline: Object.freeze({
             borderRadius: 0,
+            ...embedCornerStyle(theme),
         }),
         searchAdornment: Object.freeze({
             padding: 0,
@@ -248,7 +252,12 @@ export const makeFilterMultiValueChipStyles = (origin = null) =>
         }),
     });
 
-export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
+export const makeSelectFilterStyles = (
+    windowWidth,
+    origin,
+    color = OARColor,
+    cornerRadius = null,
+) =>
     Object.freeze({
         multiValue: Object.freeze((provided, state) => {
             const backgroundColor = multiValueBackgroundHandler(
@@ -279,7 +288,7 @@ export const makeSelectFilterStyles = (windowWidth, origin, color = OARColor) =>
             const isInUse = state.isFocused || state.menuIsOpen;
             return {
                 ...provided,
-                borderRadius: 0,
+                borderRadius: isNil(cornerRadius) ? 0 : `${cornerRadius}px`,
                 '*': {
                     boxShadow: 'none !important',
                 },
@@ -1891,7 +1900,7 @@ export const filterSidebarHeaderStyles = theme =>
             fontSize: '44px',
             margin: 0,
             lineHeight: '48px',
-            fontFamily: theme.typography.fontFamily,
+            fontFamily: embedHeadingFont(theme),
         }),
         numberResults: Object.freeze({
             fontWeight: 800,

@@ -10,6 +10,7 @@ import 'typeface-darker-grotesque';
 
 import './App.css';
 import COLOURS from './util/COLOURS';
+import { getEmbedStyle } from './util/embeddedMap';
 
 const configOrDefault = (configColor, defaultColor) =>
     !configColor || configColor === OARColor ? defaultColor : configColor;
@@ -48,6 +49,7 @@ function App({
                     fontWeightBold: 800,
                     fontWeightExtraBold: 900,
                 },
+                embed: getEmbedStyle(embed, config),
                 palette: {
                     primary: {
                         main: config.color || OARColor,
@@ -75,7 +77,7 @@ function App({
                     },
                 },
             }),
-        [config],
+        [config, embed],
     );
 
     if (embed && embedLoading) {

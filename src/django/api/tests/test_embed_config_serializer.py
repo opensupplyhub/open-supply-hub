@@ -22,6 +22,8 @@ class EmbedConfigSerializerTest(TestCase):
       * get_contributor_name - returns contributor.name (or None).
       * get_embed_fields - returns the embed config's EmbedField rows
         serialized and ordered by `order`.
+      * style settings (accent_color, heading_font, corner_radius) -
+        default to "not set", round-trip, and reject invalid values.
     """
 
     def setUp(self):
@@ -272,6 +274,8 @@ class EmbedConfigSerializerTest(TestCase):
                 "visible": True,
                 "order": 0,
                 "searchable": True,
+                "show_in_list": False,
+                "display_as": "text",
             },
         )
         self.assertEqual(
@@ -282,8 +286,20 @@ class EmbedConfigSerializerTest(TestCase):
                 "visible": False,
                 "order": 1,
                 "searchable": False,
+                "show_in_list": False,
+                "display_as": "text",
             },
         )
+
+    def test_embed_fields_include_display_options(self):
+        field = self._add_embed_field("note", order=0)
+        field.show_in_list = True
+        field.display_as = EmbedField.BLURB
+        field.save()
+
+        result = self._serialize()["embed_fields"]
+        self.assertEqual(result[0]["show_in_list"], True)
+        self.assertEqual(result[0]["display_as"], "blurb")
 
     def test_embed_fields_empty_when_no_rows(self):
         self.assertEqual(self._serialize()["embed_fields"], [])
@@ -311,3 +327,104 @@ class EmbedConfigSerializerTest(TestCase):
 
         result = self._serialize()["embed_fields"]
         self.assertEqual(len(result), 1)
+
+    # ------------------------------------------------------------------ #
+    # style settings                                                      #
+    # ------------------------------------------------------------------ #
+    def test_style_settings_default_to_not_set(self):
+        """
+        A config created before the style settings existed must serialize
+        as "not set", so the embedded map keeps its current look.
+        """
+        data = self._serialize()
+        self.assertIsNone(data["accent_color"])
+        self.assertIsNone(data["heading_font"])
+        self.assertIsNone(data["corner_radius"])
+
+    def test_style_settings_are_serialized(self):
+        self.embed_config.accent_color = "#f2a900"
+        self.embed_config.heading_font = "Georgia,serif"
+        self.embed_config.corner_radius = 4
+        self.embed_config.save()
+
+        data = self._serialize()
+        self.assertEqual(data["accent_color"], "#f2a900")
+        self.assertEqual(data["heading_font"], "Georgia,serif")
+        self.assertEqual(data["corner_radius"], 4)
+
+    def test_style_settings_are_saved_from_input(self):
+        serializer = EmbedConfigSerializer(
+            self.embed_config,
+            data={
+                "accent_color": "#F2A900",
+                "heading_font": "Georgia,serif",
+                "corner_radius": 16,
+            },
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+
+        self.embed_config.refresh_from_db()
+        self.assertEqual(self.embed_config.accent_color, "#F2A900")
+        self.assertEqual(self.embed_config.heading_font, "Georgia,serif")
+        self.assertEqual(self.embed_config.corner_radius, 16)
+
+    def test_style_settings_can_be_cleared(self):
+        self.embed_config.accent_color = "#f2a900"
+        self.embed_config.heading_font = "Georgia,serif"
+        self.embed_config.corner_radius = 8
+        self.embed_config.save()
+
+        serializer = EmbedConfigSerializer(
+            self.embed_config,
+            data={
+                "accent_color": None,
+                "heading_font": None,
+                "corner_radius": None,
+            },
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+
+        self.embed_config.refresh_from_db()
+        self.assertIsNone(self.embed_config.accent_color)
+        self.assertIsNone(self.embed_config.heading_font)
+        self.assertIsNone(self.embed_config.corner_radius)
+
+    def test_square_corners_are_distinct_from_not_set(self):
+        """0 means square corners; it must not be read as "not set"."""
+        serializer = EmbedConfigSerializer(
+            self.embed_config,
+            data={"corner_radius": 0},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+
+        self.embed_config.refresh_from_db()
+        self.assertEqual(self.embed_config.corner_radius, 0)
+        self.assertEqual(self._serialize()["corner_radius"], 0)
+
+    def test_accent_color_must_be_a_six_digit_hex_value(self):
+        for value in ("red", "#fff", "#12345g", "1386c6", "#1386c6; x"):
+            with self.subTest(value=value):
+                serializer = EmbedConfigSerializer(
+                    self.embed_config,
+                    data={"accent_color": value},
+                    partial=True,
+                )
+                self.assertFalse(serializer.is_valid())
+                self.assertIn("accent_color", serializer.errors)
+
+    def test_corner_radius_is_limited(self):
+        for value in (-1, 17, 1000):
+            with self.subTest(value=value):
+                serializer = EmbedConfigSerializer(
+                    self.embed_config,
+                    data={"corner_radius": value},
+                    partial=True,
+                )
+                self.assertFalse(serializer.is_valid())
+                self.assertIn("corner_radius", serializer.errors)

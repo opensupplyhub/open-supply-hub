@@ -5,6 +5,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import ReactSelect from 'react-select';
 import { withStyles } from '@material-ui/core/styles';
 import { makeFilterStyles, makeSelectFilterStyles } from '../../util/styles';
+import { themeEmbedStyle } from '../../util/embeddedMap';
 
 import CreatableInputOnly from '../CreatableInputOnly';
 import CustomDropdownIndicator from './CustomReactSelectComponents/CustomDropdownIndicator';
@@ -19,12 +20,16 @@ function StyledSelect({
     windowWidth,
     isSideBarSearch,
     origin,
+    // Taken out of `rest` so it is not passed to react-select, which has a
+    // `theme` prop of its own.
+    theme,
     ...rest
 }) {
     const selectFilterStyles = makeSelectFilterStyles(
         windowWidth,
         origin,
         color,
+        themeEmbedStyle(theme).cornerRadius,
     );
     return (
         <>
@@ -123,5 +128,5 @@ function mapStateToProps({
 }
 
 export default connect(mapStateToProps)(
-    withStyles(makeFilterStyles)(StyledSelect),
+    withStyles(makeFilterStyles, { withTheme: true })(StyledSelect),
 );

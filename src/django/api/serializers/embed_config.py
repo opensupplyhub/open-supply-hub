@@ -19,7 +19,8 @@ class EmbedConfigSerializer(ModelSerializer):
 
     class Meta:
         model = EmbedConfig
-        fields = ('id', 'width', 'height', 'color', 'font', 'contributor',
+        fields = ('id', 'width', 'height', 'color', 'font', 'accent_color',
+                  'heading_font', 'corner_radius', 'contributor',
                   'embed_fields', 'prefer_contributor_name',
                   'contributor_name', 'text_search_label', 'map_style',
                   'extended_fields', 'hide_sector_data')

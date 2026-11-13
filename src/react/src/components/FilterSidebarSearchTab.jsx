@@ -32,6 +32,11 @@ import {
 
 import { fetchFacilities } from '../actions/facilities';
 
+import {
+    embedButtonCornerStyle,
+    embedHeadingFont,
+    themeEmbedStyle,
+} from '../util/embeddedMap';
 import { recordSearchTabResetButtonClick } from '../actions/ui';
 
 import {
@@ -71,7 +76,7 @@ const filterSidebarSearchTabStyles = theme =>
             paddingLeft: '24px',
         }),
         headerStyle: Object.freeze({
-            fontFamily: theme.typography.fontFamily,
+            fontFamily: embedHeadingFont(theme),
             fontSize: '18px',
             fontWeight: 700,
             color: '#000',
@@ -82,7 +87,9 @@ const filterSidebarSearchTabStyles = theme =>
             fontFamily: theme.typography.fontFamily,
             fontSize: '14px',
             fontWeight: 500,
-            color: theme.palette.primary.main,
+            color:
+                themeEmbedStyle(theme).accentColor ||
+                theme.palette.primary.main,
             paddingTop: '0.5rem',
             paddingBottom: '0.5rem',
             paddingLeft: '24px',
@@ -107,6 +114,7 @@ const filterSidebarSearchTabStyles = theme =>
             },
             color: theme.palette.getContrastText(theme.palette.action.main),
             flex: 1,
+            ...embedButtonCornerStyle(theme),
         },
         ...filterSidebarStyles,
     });

@@ -24,10 +24,12 @@ import {
 } from '../util/constants';
 import { convertFeatureFlagsObjectToListOfActiveFlags } from '../util/util';
 import getTooltipForFacilitiesDownload from '../util/getTooltipForFacilitiesDownload';
+import { embedButtonCornerStyle } from '../util/embeddedMap';
 
 const downloadFacilitiesStyles = theme =>
     Object.freeze({
         listHeaderButtonStyles: Object.freeze({
+            ...embedButtonCornerStyle(theme),
             height: '45px',
             margin: '5px 0',
             marginRight: '1em',

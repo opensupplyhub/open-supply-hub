@@ -61,6 +61,8 @@ from api.services.claim_campaign_service import (
     move_campaign_suppliers,
     resolve_claim_campaign,
 )
+from api.models.embed_field import EmbedField
+from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.models import (
     Contributor,
     Facility,
@@ -147,6 +149,28 @@ from api.views.facility.facility_parameters import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def embed_list_shows_contributor_fields(request):
+    """
+    Whether the facility list for an embedded map should carry each
+    facility's contributor fields: only when the embed's contributor has
+    chosen to show at least one visible field in the list. Otherwise the
+    list stays as compact as it is for everyone else.
+    """
+    if request.query_params.get('embed') != '1':
+        return False
+    try:
+        contributor_id = int(
+            get_embed_contributor_id_from_query_params(request.query_params)
+        )
+    except (TypeError, ValueError):
+        return False
+    return EmbedField.objects.filter(
+        embed_config__contributor__id=contributor_id,
+        visible=True,
+        show_in_list=True,
+    ).exists()
 
 
 def cache_page_by_auth_tier(timeout, cache):
@@ -578,6 +602,8 @@ class FacilitiesViewSet(ListModelMixin,
                 'extended_fields',
                 'contributors',
                 'sector'])
+            if embed_list_shows_contributor_fields(request):
+                exclude_fields.remove('contributor_fields')
         if not should_serialize_number_of_public_contributors:
             exclude_fields.extend(['number_of_public_contributors'])
 
