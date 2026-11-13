@@ -37,7 +37,7 @@ class Migration(Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0268_index_zone_set_ids_search'),
+        ('api', '0270_claim_campaign_supplier_roster'),
     ]
 
     operations = [
