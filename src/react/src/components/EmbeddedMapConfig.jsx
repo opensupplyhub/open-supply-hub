@@ -67,9 +67,13 @@ const styles = {
         border: '1px solid rgb(214, 216, 221)',
         padding: '8px 20px 28px',
     },
+    // Stays in view beside the settings; scrolls on its own when the preview
+    // and the schematic together are taller than the window.
     previewColumn: {
         position: 'sticky',
         top: '20px',
+        maxHeight: 'calc(100vh - 40px)',
+        overflowY: 'auto',
     },
     preview: {
         background: 'rgb(255, 255, 255)',
@@ -176,7 +180,7 @@ function EmbeddedMapConfig({
     const [chainsSavedAt, setChainsSavedAt] = useState(0);
     const [chainHasUnsavedWork, setChainHasUnsavedWork] = useState(false);
     // The schematic of the chain being built is drawn beside the settings,
-    // above the preview, where there is room to read it.
+    // below the preview, where there is room to read it.
     const [schematicContainer, setSchematicContainer] = useState(null);
 
     // The values of the field the markers are colored by come from the saved
@@ -418,7 +422,6 @@ function EmbeddedMapConfig({
                 </Grid>
                 <Grid item xs={12} md={7} lg={8}>
                     <div style={styles.previewColumn}>
-                        <div ref={setSchematicContainer} />
                         <div style={styles.preview}>
                             <Typography style={styles.previewHeader}>
                                 Preview
@@ -441,6 +444,7 @@ function EmbeddedMapConfig({
                                 </Typography>
                             )}
                         </div>
+                        <div ref={setSchematicContainer} />
                     </div>
                 </Grid>
             </Grid>

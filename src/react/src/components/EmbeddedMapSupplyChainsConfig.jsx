@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { bool, func, number, object, oneOfType, string } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
@@ -18,6 +18,7 @@ import {
     MAX_CHAIN_LOCATIONS,
     addChainLink,
     chainHasChanges,
+    chainStructureKey,
     clickChainLocation,
     formatChainForAPI,
     getChainErrorMessages,
@@ -27,6 +28,7 @@ import {
     removeChainLink,
     reverseChainLink,
     removeChainLocation,
+    restoreChainStructure,
     setChainLocationStage,
 } from '../util/embeddedMap';
 
@@ -158,6 +160,11 @@ const styles = {
         background: 'white',
         border: BORDER,
     },
+    mapTools: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        marginTop: '8px',
+    },
     moveButton: {
         padding: '6px 8px',
         border: '1px solid rgb(13, 17, 40)',
@@ -168,7 +175,7 @@ const styles = {
         cursor: 'pointer',
     },
     schematicPanel: {
-        marginBottom: '16px',
+        marginTop: '16px',
         padding: '16px 20px 20px',
         background: 'rgb(255, 255, 255)',
         border: BORDER,
@@ -250,6 +257,41 @@ function EmbeddedMapSupplyChainsConfig({
         window.addEventListener('beforeunload', warn);
         return () => window.removeEventListener('beforeunload', warn);
     }, [hasUnsavedWork]);
+
+    // Each change to the chain's locations or links can be undone. The step
+    // before the latest change is remembered whenever the structure changes.
+    const [undoSteps, setUndoSteps] = useState([]);
+    const lastStructure = useRef(null);
+    const undoing = useRef(false);
+    useEffect(() => {
+        if (!draft) {
+            lastStructure.current = null;
+            setUndoSteps([]);
+            return;
+        }
+        const key = chainStructureKey(draft);
+        const last = lastStructure.current;
+        if (last && last.key !== key && !undoing.current) {
+            setUndoSteps(steps => [...steps.slice(-49), last]);
+        }
+        undoing.current = false;
+        lastStructure.current = {
+            key,
+            nodes: draft.nodes,
+            links: draft.links,
+            selectedId,
+        };
+    }, [draft, selectedId]);
+
+    const undo = () => {
+        const step = undoSteps[undoSteps.length - 1];
+        if (!step) return;
+        undoing.current = true;
+        setUndoSteps(steps => steps.slice(0, -1));
+        setDraft(chain => restoreChainStructure(chain, step));
+        setSelectedId(step.selectedId);
+        setClickMessage('');
+    };
 
     const openEditor = chain => {
         setConfirmingDelete(null);
@@ -570,6 +612,17 @@ function EmbeddedMapSupplyChainsConfig({
             {clickMessage && (
                 <Typography style={styles.error}>{clickMessage}</Typography>
             )}
+            <div style={styles.mapTools}>
+                <button
+                    type="button"
+                    style={styles.button}
+                    disabled={!undoSteps.length}
+                    title="Undo the last change to the locations or links"
+                    onClick={undo}
+                >
+                    ↶ Undo
+                </button>
+            </div>
             <EmbeddedMapSupplyChainMap
                 chain={draft}
                 locations={locations}

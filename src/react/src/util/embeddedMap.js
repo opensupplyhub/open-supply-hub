@@ -598,6 +598,24 @@ export const getSchematicLayout = chain => {
     };
 };
 
+// Undo in the builder steps back through the chain's structure: which
+// locations are in it and how they are linked. Text typed since (a name, what
+// happens at a location) is kept.
+export const chainStructureKey = chain =>
+    JSON.stringify([chain.nodes.map(node => node.os_id), chain.links]);
+
+export const restoreChainStructure = (chain, { nodes, links }) => {
+    const current = {};
+    chain.nodes.forEach(node => {
+        current[node.os_id] = node;
+    });
+    return {
+        ...chain,
+        nodes: nodes.map(node => current[node.os_id] || node),
+        links,
+    };
+};
+
 // Whether the chain being edited differs from the one that was opened.
 export const chainHasChanges = (draft, original) =>
     JSON.stringify(formatChainForAPI(draft)) !==

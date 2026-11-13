@@ -3,6 +3,8 @@ import {
     addChainLocation,
     chainHasChanges,
     chainLinksLoop,
+    chainStructureKey,
+    restoreChainStructure,
     getSchematicLayout,
     moveChain,
     clickChainLocation,
@@ -376,6 +378,32 @@ describe('embedded map supply chains', () => {
             expect(
                 chainHasChanges(removeChainLink(opened, 'S', 'M'), opened),
             ).toBe(true);
+        });
+
+        it('undoes a change to the structure and keeps text typed since', () => {
+            const before = build();
+            const step = { nodes: before.nodes, links: before.links };
+            // A location is removed, then another is described.
+            let after = removeChainLocation(before, 'S');
+            after = setChainLocationStage(after, 'M', 'Weaving');
+            after = { ...after, name: 'Jacket' };
+
+            const undone = restoreChainStructure(after, step);
+
+            expect(chainStructureKey(undone)).toBe(chainStructureKey(before));
+            expect(chainStructureKey(after)).not.toBe(
+                chainStructureKey(before),
+            );
+            expect(undone.nodes[1].stage).toBe('Weaving');
+            expect(undone.name).toBe('Jacket');
+        });
+
+        it('does not count typing as a change to the structure', () => {
+            const before = build();
+
+            expect(
+                chainStructureKey(setChainLocationStage(before, 'M', 'Weaving')),
+            ).toBe(chainStructureKey(before));
         });
 
         it('moves a chain up or down the list', () => {
