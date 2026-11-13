@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import { isEmpty } from 'lodash';
 import { getValidationSchemaForStep } from './validationSchemas';
@@ -170,9 +170,16 @@ export const useClaimFormSubmission = (
     submissionError,
     osID,
     resetForm,
+    submittedClaimId = null,
 ) => {
     const [submittingForm, setSubmittingForm] = useState(false);
     const [dialogIsOpen, setDialogIsOpen] = useState(false);
+    // The claim to run the live check on (OSDEV-3805). The API sends
+    // the new claim's id only while that feature is on, and it is
+    // latched here because resetting the form clears it from the
+    // store. Without an id the thank-you dialog opens as it always
+    // has.
+    const [liveCheckClaimId, setLiveCheckClaimId] = useState(null);
 
     // Show success dialog and reset form when submission completes.
     // submittingForm is cleared as soon as the request finishes, whether
@@ -190,14 +197,34 @@ export const useClaimFormSubmission = (
             if (!submissionError) {
                 sessionStorage.removeItem(`claim-form-access-${osID}`);
                 resetForm();
-                setDialogIsOpen(true);
+                if (submittedClaimId) {
+                    setLiveCheckClaimId(submittedClaimId);
+                } else {
+                    setDialogIsOpen(true);
+                }
             }
         }
-    }, [submittingForm, submissionFetching, submissionError, osID, resetForm]);
+    }, [
+        submittingForm,
+        submissionFetching,
+        submissionError,
+        osID,
+        resetForm,
+        submittedClaimId,
+    ]);
+
+    // The live check could not be started, so the submission ends the
+    // way it always has: with the thank-you dialog.
+    const skipLiveCheck = useCallback(() => {
+        setLiveCheckClaimId(null);
+        setDialogIsOpen(true);
+    }, []);
 
     return {
         dialogIsOpen,
         setDialogIsOpen,
+        liveCheckClaimId,
+        skipLiveCheck,
     };
 };
 

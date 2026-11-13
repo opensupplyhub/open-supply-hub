@@ -343,6 +343,8 @@ export const makeGetClaimedFacilitiesURL = statuses =>
 export const makeClaimedFacilityDetailsLink = claimID => `/claimed/${claimID}/`;
 export const makePendingClaimEditLink = claimID =>
     `/claimed/pending/${claimID}`;
+export const makeClaimLiveCheckURL = claimID =>
+    `/api/facility-claims/${encodeURIComponent(claimID)}/live-check/`;
 
 export const makeLogDownloadUrl = (path, recordCount) =>
     `/api/log-download/?path=${encodeURIComponent(
