@@ -667,6 +667,39 @@ export const moveChain = (chains, id, direction) => {
 export const getSafeProductUrl = url =>
     /^https?:\/\/[^\s"<>]+$/i.test((url || '').trim()) ? url.trim() : '';
 
+// The contributor's own fields to show on a location's page: each visible
+// field the location has a value for, in the contributor's order.
+// `data` is the location's details.
+export const getEmbedLocationFields = (embedConfig, data) => {
+    const contributorFields =
+        (data && data.properties && data.properties.contributor_fields) || [];
+    return sortBy(
+        ((embedConfig && embedConfig.embed_fields) || []).filter(
+            f => f.visible,
+        ),
+        f => f.order,
+    )
+        .map(f => {
+            const match = contributorFields.find(
+                cf => cf.fieldName === f.column_name,
+            );
+            return {
+                columnName: f.column_name,
+                label: f.display_name,
+                value: match ? match.value : null,
+                displayAs: f.display_as || DISPLAY_AS_TEXT,
+            };
+        })
+        .filter(f => hasValue(f.value));
+};
+
+// A location's details without its sectors, for an embedded map whose
+// contributor hides sector data. Unchanged otherwise.
+export const withoutHiddenSector = (data, embedConfig) =>
+    data && embedConfig && embedConfig.hide_sector_data
+        ? { ...data, properties: { ...data.properties, sector: [] } }
+        : data;
+
 // The dropdown filters an embedded map offers: the contributor's visible,
 // filterable fields that have at least one value, in the contributor's order.
 // `filterOptions` is `filter_options` from the embed config:
@@ -797,11 +830,71 @@ export const getEmbedStyle = (embed, config) => {
 // production location page layout. Both are off until turned on.
 export const EMBED_FACILITY_DOTS_SWITCH = 'embed_facility_dots';
 
+export const EMBED_PRODUCTION_LOCATION_PAGE_SWITCH =
+    'embed_production_location_page';
+
+// Whether an embedded map opens a location on the production location page
+// layout, in its embed form, in place of the older details view.
+export const embedUsesProductionLocationPage = (embed, featureFlags) =>
+    !!embed &&
+    !!get(
+        featureFlags,
+        `flags.${EMBED_PRODUCTION_LOCATION_PAGE_SWITCH}`,
+        false,
+    );
+
 // Whether an embedded map draws its facilities as dots at every zoom level,
 // in place of the grouped grid and pins.
 export const embedDrawsDots = (embed, featureFlags) =>
     !!embed &&
     !!get(featureFlags, `flags.${EMBED_FACILITY_DOTS_SWITCH}`, false);
+
+// The class the location page carries on an embedded map, which the
+// contributor's style rules below are scoped to.
+export const EMBED_LOCATION_PAGE_CLASS = 'embed-location-page';
+
+const EMBED_LOCATION_PAGE_CARDS = [
+    '[data-testid="production-location-details-general-fields"]',
+    '[data-testid="geographic-information-section"]',
+    '[data-testid="embed-location-fields"]',
+    '[data-testid="partner-group-section"] > div',
+    '.leaflet-container',
+];
+
+// The contributor's accent color, heading font and corner style as CSS for
+// the location page on their embedded map. The page's components are styled
+// one by one for Open Supply Hub, so the contributor's choices are layered
+// on top by rule. Values are checked before they go into a rule; a setting
+// that is not set, or does not look like what it should be, adds nothing.
+export const getEmbedLocationPageCss = config => {
+    const { accentColor, headingFont, cornerRadius } = getEmbedStyle(
+        true,
+        config,
+    );
+    const scope = `.${EMBED_LOCATION_PAGE_CLASS}`;
+    const rules = [];
+
+    if (headingFont && /^[\w\s,'"-]+$/.test(headingFont)) {
+        rules.push(
+            `${scope} h1, ${scope} h2, ${scope} h3 { font-family: ${headingFont} !important; }`,
+        );
+    }
+    if (accentColor && /^#[0-9a-f]{3,8}$/i.test(accentColor)) {
+        rules.push(
+            `${scope} a, ${scope} [data-testid="os-id"] { color: ${accentColor} !important; }`,
+        );
+    }
+    if (!isNil(cornerRadius) && Number.isFinite(cornerRadius)) {
+        const radius = `${Math.max(0, cornerRadius)}px`;
+        rules.push(
+            `${EMBED_LOCATION_PAGE_CARDS.map(card => `${scope} ${card}`).join(
+                ', ',
+            )} { border-radius: ${radius}; overflow: hidden; }`,
+            `${scope} button { border-radius: ${radius} !important; }`,
+        );
+    }
+    return rules.join('\n');
+};
 
 // Themes built outside App.jsx (in tests, for example) have no embed style.
 export const themeEmbedStyle = theme =>
