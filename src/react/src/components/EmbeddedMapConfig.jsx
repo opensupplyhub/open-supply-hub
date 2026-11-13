@@ -32,7 +32,7 @@ const styles = {
         marginTop: '40px',
     },
     previewHeader: {
-        marginBottom: '20px',
+        marginBottom: '12px',
         color: 'rgb(0, 0, 0)',
         fontSize: '24px',
     },
@@ -60,9 +60,18 @@ const styles = {
         color: 'rgb(0, 0, 0)',
         borderBottomColor: 'rgb(0, 0, 0)',
     },
+    // The settings and the preview each sit in their own panel.
+    settingsPanel: {
+        background: 'rgb(247, 248, 250)',
+        border: '1px solid rgb(214, 216, 221)',
+        padding: '8px 20px 28px',
+    },
     preview: {
         position: 'sticky',
         top: '20px',
+        background: 'rgb(255, 255, 255)',
+        border: '1px solid rgb(214, 216, 221)',
+        padding: '16px 20px 20px',
     },
     previewFrame: {
         width: '100%',
@@ -243,108 +252,122 @@ function EmbeddedMapConfig({
             </div>
             <Grid container spacing={40}>
                 <Grid item xs={12} md={5} lg={4}>
-                    <div style={styles.nav} role="tablist">
-                        {SECTIONS.map(({ id, label }) => (
-                            <button
-                                key={id}
-                                type="button"
-                                role="tab"
-                                aria-selected={section === id}
-                                onClick={() => setSection(id)}
-                                style={
-                                    section === id
-                                        ? {
-                                              ...styles.navButton,
-                                              ...styles.navButtonActive,
-                                          }
-                                        : styles.navButton
+                    <div style={styles.settingsPanel}>
+                        <div style={styles.nav} role="tablist">
+                            {SECTIONS.map(({ id, label }) => (
+                                <button
+                                    key={id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={section === id}
+                                    onClick={() => setSection(id)}
+                                    style={
+                                        section === id
+                                            ? {
+                                                  ...styles.navButton,
+                                                  ...styles.navButtonActive,
+                                              }
+                                            : styles.navButton
+                                    }
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                        {section === 'style' ? (
+                            <EmbeddedMapThemeConfig
+                                color={color}
+                                setColor={updateEmbedConfig('color')}
+                                font={font}
+                                setFont={updateEmbedConfig('font')}
+                                mapStyle={mapStyle}
+                                setMapStyle={updateEmbedConfig('mapStyle')}
+                                accentColor={accentColor}
+                                setAccentColor={updateEmbedConfig(
+                                    'accentColor',
+                                )}
+                                headingFont={headingFont}
+                                setHeadingFont={updateEmbedConfig(
+                                    'headingFont',
+                                )}
+                                cornerRadius={cornerRadius}
+                                setCornerRadius={updateEmbedConfig(
+                                    'cornerRadius',
+                                )}
+                                fields={fields}
+                                colorByField={colorByField}
+                                colorByColors={colorByColors}
+                                colorByOptions={colorByOptions}
+                                markerColor={markerColor}
+                                setMarkerColor={updateEmbedConfig(
+                                    'markerColor',
+                                )}
+                                setColorBy={({ field, colors }) =>
+                                    setEmbedConfig(config => ({
+                                        ...config,
+                                        colorByField: field,
+                                        colorByColors: colors,
+                                    }))
                                 }
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                    {section === 'style' ? (
-                        <EmbeddedMapThemeConfig
-                            color={color}
-                            setColor={updateEmbedConfig('color')}
-                            font={font}
-                            setFont={updateEmbedConfig('font')}
-                            mapStyle={mapStyle}
-                            setMapStyle={updateEmbedConfig('mapStyle')}
-                            accentColor={accentColor}
-                            setAccentColor={updateEmbedConfig('accentColor')}
-                            headingFont={headingFont}
-                            setHeadingFont={updateEmbedConfig('headingFont')}
-                            cornerRadius={cornerRadius}
-                            setCornerRadius={updateEmbedConfig('cornerRadius')}
-                            fields={fields}
-                            colorByField={colorByField}
-                            colorByColors={colorByColors}
-                            colorByOptions={colorByOptions}
-                            markerColor={markerColor}
-                            setMarkerColor={updateEmbedConfig('markerColor')}
-                            setColorBy={({ field, colors }) =>
-                                setEmbedConfig(config => ({
-                                    ...config,
-                                    colorByField: field,
-                                    colorByColors: colors,
-                                }))
-                            }
-                            errors={errors}
-                            embedLevel={user.embed_level}
-                        />
-                    ) : null}
-                    {section === 'fields' ? (
-                        <EmbeddedMapListOrderConfig
-                            fields={fields}
-                            defaultSort={defaultSort}
-                            setDefaultSort={updateEmbedConfig('defaultSort')}
-                            allowVisitorSort={allowVisitorSort}
-                            setAllowVisitorSort={updateEmbedConfig(
-                                'allowVisitorSort',
-                            )}
-                            errors={errors}
-                        />
-                    ) : null}
-                    {section === 'fields' ? (
-                        <EmbeddedMapFieldsConfig
-                            fields={fields}
-                            setFields={setFields}
-                            preferContributorName={preferContributorName}
-                            setPreferContributorName={updateEmbedConfig(
-                                'preferContributorName',
-                            )}
-                            hideSectorData={hideSectorData}
-                            setShowSectorData={updateEmbedConfig(
-                                'hideSectorData',
-                            )}
-                            textSearchLabel={textSearchLabel}
-                            setTextSearchLabel={updateEmbedConfig(
-                                'textSearchLabel',
-                            )}
-                            anyFieldSearchable={fields.some(
-                                field => field.searchable,
-                            )}
-                            errors={errors}
-                            userEmbedLevel={user.embed_level}
-                        />
-                    ) : null}
-                    {section === 'code' ? (
-                        <>
-                            <EmbeddedMapSizeConfig
-                                width={width}
-                                setWidth={updateEmbedConfig('width')}
-                                height={height}
-                                setHeight={updateEmbedConfig('height')}
-                                fullWidth={fullWidth}
-                                setFullWidth={updateEmbedConfig('fullWidth')}
+                                errors={errors}
+                                embedLevel={user.embed_level}
                             />
-                            <div style={styles.code}>
-                                <EmbeddedMapCode {...mapSettings} />
-                            </div>
-                        </>
-                    ) : null}
+                        ) : null}
+                        {section === 'fields' ? (
+                            <EmbeddedMapListOrderConfig
+                                fields={fields}
+                                defaultSort={defaultSort}
+                                setDefaultSort={updateEmbedConfig(
+                                    'defaultSort',
+                                )}
+                                allowVisitorSort={allowVisitorSort}
+                                setAllowVisitorSort={updateEmbedConfig(
+                                    'allowVisitorSort',
+                                )}
+                                errors={errors}
+                            />
+                        ) : null}
+                        {section === 'fields' ? (
+                            <EmbeddedMapFieldsConfig
+                                fields={fields}
+                                setFields={setFields}
+                                preferContributorName={preferContributorName}
+                                setPreferContributorName={updateEmbedConfig(
+                                    'preferContributorName',
+                                )}
+                                hideSectorData={hideSectorData}
+                                setShowSectorData={updateEmbedConfig(
+                                    'hideSectorData',
+                                )}
+                                textSearchLabel={textSearchLabel}
+                                setTextSearchLabel={updateEmbedConfig(
+                                    'textSearchLabel',
+                                )}
+                                anyFieldSearchable={fields.some(
+                                    field => field.searchable,
+                                )}
+                                errors={errors}
+                                userEmbedLevel={user.embed_level}
+                            />
+                        ) : null}
+                        {section === 'code' ? (
+                            <>
+                                <EmbeddedMapSizeConfig
+                                    width={width}
+                                    setWidth={updateEmbedConfig('width')}
+                                    height={height}
+                                    setHeight={updateEmbedConfig('height')}
+                                    fullWidth={fullWidth}
+                                    setFullWidth={updateEmbedConfig(
+                                        'fullWidth',
+                                    )}
+                                />
+                                <div style={styles.code}>
+                                    <EmbeddedMapCode {...mapSettings} />
+                                </div>
+                            </>
+                        ) : null}
+                    </div>
                 </Grid>
                 <Grid item xs={12} md={7} lg={8}>
                     <div style={styles.preview}>
