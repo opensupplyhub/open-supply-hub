@@ -12,8 +12,14 @@ class InvalidPolygonGeoJSON(ValueError):
     """Raised when a string cannot be parsed into a valid polygon."""
 
 
+# The EPSG code for WGS 84, the plain longitude/latitude system that
+# every geometry OS Hub stores uses. GEOS geometries parsed from text
+# carry no coordinate system, so the parsed boundary is tagged with
+# this code before it is handed to a PostGIS field declared with it.
+WGS84_SRID = 4326
+
 REEXPORT_ADVICE = (
-    'Please re-export the data in WGS 84 (EPSG:4326) and try again.'
+    f'Please re-export the data in WGS 84 (EPSG:{WGS84_SRID}) and try again.'
 )
 
 # The different ways a GeoJSON file might spell out "WGS 84" — the
@@ -248,7 +254,7 @@ def _combine_polygons(polygons):
             'Expected polygon geometry after merging the pieces, got '
             f'{combined.geom_type}.'
         )
-    combined.srid = 4326
+    combined.srid = WGS84_SRID
 
     if not combined.valid:
         raise InvalidPolygonGeoJSON(
