@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import WhyBetaCard from '../../components/ProductionLocation/PartnerSection/WhyBetaCard/WhyBetaCard';
+import { BETA_CHIP_TEXT } from '../../components/Shared/BetaChip/BetaChip';
 import {
     WHY_BETA_TITLE,
     WHY_BETA_BODY,
@@ -12,9 +13,10 @@ describe('WhyBetaCard component', () => {
     test('renders the chip, title, body and suggestions link', () => {
         render(<WhyBetaCard />);
 
-        expect(screen.getByTestId('why-beta-card')).toBeInTheDocument();
-        expect(screen.getByTestId('beta-chip')).toBeInTheDocument();
-        expect(screen.getByText(WHY_BETA_TITLE)).toBeInTheDocument();
+        expect(
+            screen.getByRole('heading', { name: WHY_BETA_TITLE, level: 4 }),
+        ).toBeInTheDocument();
+        expect(screen.getByText(BETA_CHIP_TEXT)).toBeInTheDocument();
         expect(screen.getByText(WHY_BETA_BODY)).toBeInTheDocument();
 
         const link = screen.getByRole('link', { name: WHY_BETA_LINK_TEXT });

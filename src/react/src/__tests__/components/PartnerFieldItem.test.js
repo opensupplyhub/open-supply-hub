@@ -168,7 +168,7 @@ describe('PartnerFieldItem component', () => {
                 />,
             );
 
-            expect(screen.getByTestId('beta-chip')).toBeInTheDocument();
+            expect(screen.getByText('Beta')).toBeInTheDocument();
             // The chip sits beside the label; the label text is untouched.
             expect(screen.getByText('Climate Data')).toBeInTheDocument();
             expect(screen.queryByText(/Climate Data.*Beta/)).toBeNull();
@@ -182,7 +182,7 @@ describe('PartnerFieldItem component', () => {
                 />,
             );
 
-            expect(screen.queryByTestId('beta-chip')).not.toBeInTheDocument();
+            expect(screen.queryByText('Beta')).not.toBeInTheDocument();
         });
 
         test('shows no chip when the flag is absent from the field', () => {
@@ -193,7 +193,7 @@ describe('PartnerFieldItem component', () => {
                 />,
             );
 
-            expect(screen.queryByTestId('beta-chip')).not.toBeInTheDocument();
+            expect(screen.queryByText('Beta')).not.toBeInTheDocument();
         });
 
         test('keeps the chip out of the contributions drawer', () => {
@@ -214,7 +214,6 @@ describe('PartnerFieldItem component', () => {
             );
 
             const drawer = screen.getByTestId('contributions-drawer');
-            expect(within(drawer).queryByTestId('beta-chip')).toBeNull();
             expect(within(drawer).getByText(/Climate Data/)).toBeInTheDocument();
             expect(within(drawer).queryByText(/Beta/)).toBeNull();
         });

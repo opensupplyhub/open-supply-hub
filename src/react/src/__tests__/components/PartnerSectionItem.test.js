@@ -99,7 +99,7 @@ describe('PartnerSectionItem component', () => {
         });
 
         test('renders the card when a field in the group is beta', () => {
-            const { getByTestId } = renderComponent(
+            const { getByRole } = renderComponent(
                 {
                     group: makeGroup({
                         uuid: 'beta-1',
@@ -112,11 +112,13 @@ describe('PartnerSectionItem component', () => {
                 openState('beta-1'),
             );
 
-            expect(getByTestId('why-beta-card')).toBeInTheDocument();
+            expect(
+                getByRole('heading', { name: 'Why beta?', level: 4 }),
+            ).toBeInTheDocument();
         });
 
         test('renders no card when no field in the group is beta', () => {
-            const { queryByTestId } = renderComponent(
+            const { queryByRole } = renderComponent(
                 {
                     group: makeGroup({
                         uuid: 'plain-1',
@@ -129,7 +131,9 @@ describe('PartnerSectionItem component', () => {
                 openState('plain-1'),
             );
 
-            expect(queryByTestId('why-beta-card')).not.toBeInTheDocument();
+            expect(
+                queryByRole('heading', { name: 'Why beta?', level: 4 }),
+            ).not.toBeInTheDocument();
         });
     });
 });

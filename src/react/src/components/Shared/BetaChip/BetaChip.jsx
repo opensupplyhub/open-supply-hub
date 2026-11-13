@@ -13,10 +13,7 @@ export const BETA_CHIP_TEXT = 'Beta';
  * unchanged.
  */
 const BetaChip = ({ classes, className }) => (
-    <span
-        className={`${classes.chip}${className ? ` ${className}` : ''}`}
-        data-testid="beta-chip"
-    >
+    <span className={`${classes.chip}${className ? ` ${className}` : ''}`}>
         {BETA_CHIP_TEXT}
     </span>
 );

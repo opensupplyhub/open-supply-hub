@@ -19,7 +19,7 @@ import {
  * two together.
  */
 const WhyBetaCard = ({ classes }) => (
-    <div className={classes.root} data-testid="why-beta-card">
+    <div className={classes.root}>
         <BetaChip className={classes.chip} />
         <div className={classes.card}>
             <Typography component="h4" className={classes.title}>
