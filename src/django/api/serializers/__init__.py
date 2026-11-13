@@ -43,6 +43,7 @@ from .moderation_events.merge_query_params_serializer import MergeQueryParamsSer
 
 from .api_block import ApiBlockSerializer
 from .embed_config import EmbedConfigSerializer
+from .embed_supply_chain import EmbedSupplyChainSerializer
 from .embed_fields import EmbedFieldsSerializer
 from .log_download_query_params import LogDownloadQueryParamsSerializer
 from .utils import (
