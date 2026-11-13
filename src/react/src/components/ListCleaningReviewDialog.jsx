@@ -431,8 +431,8 @@ const SubmitWarning = ({ warn, summary, busy, onClose, onConfirm }) => (
                         missing or unreadable details. Without these fixes, the
                         moderator won&rsquo;t be able to approve those rows, and
                         lists with this many are much less likely to be approved
-                        as a whole. Fixing or removing them here first takes a
-                        minute per type.
+                        as a whole. Resolve everything on the Needs review tab
+                        removes them in one click, or fix them by type.
                     </Typography>
                 </>
             )}
@@ -947,20 +947,24 @@ const mapDispatchToProps = (dispatch, { listID }) => ({
     clearCleaning: () => dispatch(resetFacilityListCleaning()),
     decide: decisions =>
         dispatch(submitFacilityListCleaningDecisions(listID, decisions)),
-    // One key or a list of keys; one request either way. RESET is not a
-    // decision: it clears that type's row-by-row decisions. With
-    // `everyRow`, the row-by-row decisions are cleared first so the
-    // decision covers every row of the type.
+    // One key or a list of keys; one request either way. `decision` is
+    // one decision for every key, or an object of decisions by key
+    // (Resolve everything accepts some types and removes others). RESET
+    // is not a decision: it clears that type's row-by-row decisions.
+    // With `everyRow`, the row-by-row decisions are cleared first so
+    // the decision covers every row of the type.
     decideGroup: (keys, decision, everyRow = false) =>
         dispatch(
             submitFacilityListCleaningGroupDecisions(
                 listID,
                 [keys].flat().reduce((acc, key) => {
-                    if (decision === RESET) {
+                    const chosen =
+                        typeof decision === 'string' ? decision : decision[key];
+                    if (chosen === RESET) {
                         return acc.concat({ key, reset: true });
                     }
                     if (everyRow) acc.push({ key, reset: true });
-                    return acc.concat({ key, decision });
+                    return acc.concat({ key, decision: chosen });
                 }, []),
             ),
         ),

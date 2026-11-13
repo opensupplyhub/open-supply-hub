@@ -1886,13 +1886,58 @@ GroupHeader.propTypes = {
 };
 
 /*
- * The Needs-you tab's own actions: every suggested fix at once, or
- * everything left as uploaded. Flags have no value to accept, so Accept
- * all only covers the corrections; rows decided one by one are left
- * alone, as with any group action.
+ * What "Resolve everything" would do: accept every recommended fix and
+ * remove every row that still carries a required fix (an issue with no
+ * value to accept, or a row to remove). Rows decided one by one are
+ * left alone, as with any group action, so a row the contributor fixed
+ * or kept by hand stays as they left it.
  */
-const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
+const resolvePlan = (groups, rows) => {
+    const open = s =>
+        !isAuto(s) && !s.extra?.by_row && !s.extra?.parser_removed;
+    const requiredIssue = s =>
+        s.kind === KIND.ISSUE && s.severity === SEVERITY.MUST_FIX;
+    const suggestions = rows.reduce((acc, r) => acc.concat(r.suggestions), []);
+    const fixes = suggestions.filter(
+        s =>
+            open(s) &&
+            s.kind === KIND.CORRECTION &&
+            s.decision !== DECISION.ACCEPTED,
+    ).length;
+    const removed = new Set(
+        suggestions
+            .filter(
+                s =>
+                    open(s) &&
+                    ((requiredIssue(s) && s.decision !== DECISION.REMOVED) ||
+                        (s.kind === KIND.REMOVAL &&
+                            s.decision !== DECISION.ACCEPTED)),
+            )
+            .map(s => s.row_number),
+    ).size;
+    const decisions = {};
+    groups.forEach(g => {
+        if (g.kind === KIND.CORRECTION) decisions[g.key] = DECISION.ACCEPTED;
+        else if (g.kind === KIND.REMOVAL) decisions[g.key] = DECISION.ACCEPTED;
+        else if (g.severity === SEVERITY.MUST_FIX) {
+            decisions[g.key] = DECISION.REMOVED;
+        }
+    });
+    const parts = [];
+    if (fixes) parts.push(`accept ${plural(fixes, 'fix', 'fixes')}`);
+    if (removed) parts.push(`remove ${plural(removed, 'row')}`);
+    return { decisions, label: parts.join(', '), anything: parts.length > 0 };
+};
+
+/*
+ * The Needs-review tab's own actions: resolve everything in one go,
+ * every recommended fix at once, or every original value kept. Issues
+ * have no value to accept, so Accept all only covers the corrections;
+ * rows decided one by one are left alone, as with any group action.
+ */
+const AllHeader = ({ groups, rows, canAct, busy, decideGroup }) => {
     const corrections = groups.filter(g => g.kind === KIND.CORRECTION);
+    const plan = resolvePlan(groups, rows);
     const sumRest = list =>
         list.reduce((n, g) => n + g.count - (g.by_row || 0), 0);
     const sumAll = list => list.reduce((n, g) => n + g.count, 0);
@@ -1909,6 +1954,30 @@ const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
     if (!canAct || !groups.length) return null;
     return (
         <div style={chipStyles.header}>
+            {plan.anything && (
+                <div style={chipStyles.headerActions} data-tour="resolve">
+                    <Button
+                        size="small"
+                        variant="contained"
+                        color="primary"
+                        disabled={busy}
+                        onClick={() =>
+                            decideGroup(
+                                Object.keys(plan.decisions),
+                                plan.decisions,
+                                false,
+                            )
+                        }
+                    >
+                        Resolve everything: {plan.label}
+                    </Button>
+                    <span style={styles.muted}>
+                        One click accepts every fix and removes the rows with
+                        required fixes you have not made yourself, so nothing
+                        left stops approval. You can undo any row below.
+                    </span>
+                </div>
+            )}
             <div style={chipStyles.headerActions}>
                 <Button
                     size="small"
@@ -1952,6 +2021,7 @@ const AllHeader = ({ groups, canAct, busy, decideGroup }) => {
 
 AllHeader.propTypes = {
     groups: arrayOf(object).isRequired,
+    rows: arrayOf(object).isRequired,
     canAct: bool.isRequired,
     busy: bool.isRequired,
     decideGroup: func.isRequired,
@@ -2178,6 +2248,7 @@ export const GroupTabs = ({
             {active === ALL && (
                 <AllHeader
                     groups={attention}
+                    rows={rows}
                     canAct={canAct}
                     busy={busy}
                     decideGroup={decideGroup}

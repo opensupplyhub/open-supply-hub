@@ -958,6 +958,27 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(summary['rows_blocking_pending'], 0)
         self.assertEqual(summary['rows_flagged_unresolved'], 1)
 
+    def test_one_request_can_accept_some_types_and_remove_others(self):
+        # "Resolve everything" on the review screen: every fix accepted
+        # and every row with a required fix removed, in one request,
+        # after which nothing is left that a moderator would remove.
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('decisions/'), {'groups': [
+            {'key': 'CORRECTION:country_in_address:address',
+             'decision': 'ACCEPTED'},
+            {'key': 'ISSUE:address_po_box:address', 'decision': 'REMOVED'},
+        ]}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        fix = run.suggestions.get(code='country_in_address')
+        flag = run.suggestions.get(code='address_po_box')
+        self.assertEqual(fix.decision, ListCleaningSuggestion.ACCEPTED)
+        self.assertEqual(flag.decision, ListCleaningSuggestion.REMOVED)
+        summary = response.data['summary']
+        self.assertEqual(summary['rows_blocking_pending'], 0)
+        self.assertEqual(summary['rows_flagged_unresolved'], 0)
+
     def test_submit_rejects_a_non_boolean_as_uploaded(self):
         run = self._ingested_run()
         self.client.force_login(self.user)

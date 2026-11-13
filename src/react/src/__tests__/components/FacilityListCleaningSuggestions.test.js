@@ -230,6 +230,36 @@ describe('GroupTabs', () => {
         );
     });
 
+    test('resolve everything accepts the fixes and removes the required rows in one go', () => {
+        const { decideGroup } = renderTabs();
+        fireEvent.click(
+            screen.getByRole('button', { name: 'Resolve everything: accept 1 fix, remove 1 row' }),
+        );
+        expect(decideGroup).toHaveBeenCalledWith(
+            ['ISSUE:address_po_box:address', 'CORRECTION:workers_format:number_of_workers'],
+            {
+                'ISSUE:address_po_box:address': 'REMOVED',
+                'CORRECTION:workers_format:number_of_workers': 'ACCEPTED',
+            },
+            false,
+        );
+    });
+
+    test('resolve everything leaves rows the contributor decided by hand alone', () => {
+        const byHand = ROWS.map(r => ({
+            ...r,
+            suggestions: r.suggestions.map(s =>
+                s.code === 'address_po_box'
+                    ? { ...s, decision: 'EDITED', extra: { by_row: true } }
+                    : s,
+            ),
+        }));
+        renderTabs({ rows: byHand });
+        expect(
+            screen.getByRole('button', { name: 'Resolve everything: accept 1 fix' }),
+        ).toBeInTheDocument();
+    });
+
     test('the Needs-you tab accepts every suggested fix or keeps everything', () => {
         const { decideGroup } = renderTabs();
         fireEvent.click(screen.getByRole('button', { name: /Accept all 1 fix/ }));

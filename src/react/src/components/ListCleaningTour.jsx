@@ -53,9 +53,11 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
         anchor: 'rows',
         title: 'Decide by type or row by row',
         text:
-            'Accept or keep every recommended fix at once, or pick a type ' +
-            'to accept, keep or remove all of its rows in one go. Rows ' +
-            'you fix or remove one by one keep your decision.',
+            'Resolve everything accepts every fix and removes the rows ' +
+            'with required fixes in one click, so nothing is left that ' +
+            'stops approval. Or pick a type to accept, keep or remove all ' +
+            'of its rows in one go. Rows you fix or remove one by one ' +
+            'keep your decision.',
     }),
     Object.freeze({
         anchor: 'apply',

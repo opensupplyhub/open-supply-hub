@@ -141,6 +141,16 @@ describe('ListCleaningReviewDialog', () => {
         ]);
     });
 
+    test('resolve everything sends one request that accepts fixes and removes rows', () => {
+        renderDialog(reviewData());
+        closeTour();
+        fireEvent.click(screen.getByRole('button', { name: /Resolve everything/ }));
+        expect(submitFacilityListCleaningGroupDecisions).toHaveBeenCalledWith(42, [
+            { key: 'ISSUE:address_po_box:address', decision: 'REMOVED' },
+            { key: 'CORRECTION:workers_format:number_of_workers', decision: 'ACCEPTED' },
+        ]);
+    });
+
     test('submitting as uploaded warns while anything is still flagged', () => {
         renderDialog(reviewData());
         closeTour();
