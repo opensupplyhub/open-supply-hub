@@ -112,6 +112,15 @@ class PartnerField(models.Model):
             "Indicates if this partner field is available in data downloads."
         ),
     )
+    beta = models.BooleanField(
+        default=False,
+        help_text=(
+            'Shows a "Beta" tag beside this field\'s title on the '
+            'production location page, for datasets that are still '
+            'provisional. The tag is not part of the label, so analytics '
+            'event names and the contributions drawer title are unchanged.'
+        ),
+    )
     polygon = models.ForeignKey(
         'Polygon',
         null=True,

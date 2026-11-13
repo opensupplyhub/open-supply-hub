@@ -7,6 +7,7 @@ import { GA_LINK_PLACEMENT } from '../../../../util/analytics/gaCustomEvents';
 import FacilityDetailsItem from '../../../FacilityDetailsItem.jsx';
 import PartnerFieldSchemaValue from '../../../PartnerFields/PartnerFieldSchemaValue/PartnerFieldSchemaValue.jsx';
 import ContributorLink from './ContributorLink';
+import BetaChip from '../../../Shared/BetaChip/BetaChip';
 
 const renderPartnerFieldValue = (
     formatted,
@@ -70,7 +71,7 @@ const toContributionCard = (
 };
 
 export default function PartnerFieldItem({
-    field: { fieldName, formatValue, label, partnerConfigFields },
+    field: { fieldName, formatValue, label, partnerConfigFields, beta },
     facilityData,
     partnerGroupName,
 }) {
@@ -143,6 +144,7 @@ export default function PartnerFieldItem({
         <FacilityDetailsItem
             {...topValue}
             label={resolvedLabel}
+            labelAdornment={beta ? <BetaChip /> : null}
             additionalContent={additionalContent}
             partnerConfigFields={partnerConfigFields}
             customDrawer
@@ -195,6 +197,7 @@ PartnerFieldItem.propTypes = {
         formatValue: PropTypes.func,
         label: PropTypes.string.isRequired,
         partnerConfigFields: partnerConfigFieldsPropType,
+        beta: PropTypes.bool,
     }).isRequired,
     facilityData: PropTypes.object,
     partnerGroupName: PropTypes.string,

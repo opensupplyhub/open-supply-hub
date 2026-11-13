@@ -25,7 +25,7 @@ class FacilityIndexExtendedFieldListSerializer:
                              'contributor_id', 'value_count', 'is_from_claim',
                              'field_name', 'verified_count', 'source_by',
                              'unit', 'label', 'base_url', 'display_text',
-                             'json_schema', 'provenance']
+                             'json_schema', 'beta', 'provenance']
         self.data: list = []
 
         if exclude_fields:
@@ -50,7 +50,8 @@ class FacilityIndexExtendedFieldListSerializer:
             'label',
             'base_url',
             'display_text',
-            'json_schema'
+            'json_schema',
+            'beta',
         }
 
         for extended_field in self.extended_field_list:

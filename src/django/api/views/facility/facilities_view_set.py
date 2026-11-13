@@ -349,6 +349,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -369,6 +370,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -392,6 +394,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -415,6 +418,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -435,6 +439,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -455,6 +460,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -769,6 +775,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -789,6 +796,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -812,6 +820,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -835,6 +844,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -855,6 +865,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -875,6 +886,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -962,6 +974,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Worldly",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Worldly Assessments Data Update",
@@ -1017,6 +1030,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "SLCP Assessment",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "SLCP Assessment",
@@ -1069,6 +1083,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Accord Inspections & Remediation Program",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Accord Inspections and Remediation Program",
@@ -1120,6 +1135,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "amfori Assessment & Audits",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Amfori Compliance Status",
@@ -1197,6 +1213,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Climate TRACE Emissions",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Climate TRACE Estimated Emissions",
@@ -1245,6 +1262,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Estimated Annual Activity",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -1265,6 +1283,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Estimated Annual Emissions",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -1294,6 +1313,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "WageIndicator: Minimum & Living Wages",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Wage indicator reference links",
@@ -1383,6 +1403,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Accord/RSC Grievance Mechanism",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "RSC Grievance Mechanism",
@@ -1444,6 +1465,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "WOVO",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Labor Solutions Grievance Mechanism",
@@ -1506,6 +1528,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Ulula Grievance Mechanism",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Ulula Grievance Mechanism",
@@ -1577,6 +1600,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "WRAP Certification",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "WRAP Certification",
@@ -1761,6 +1785,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1781,6 +1806,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1804,6 +1830,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1827,6 +1854,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1847,6 +1875,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1867,6 +1896,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1910,6 +1940,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": "Climate TRACE Emissions",
                                         "base_url": "",
                                         "display_text": "",
+                                        "beta": false,
                                         "json_schema": {
                                             "type": "object",
                                             "title": "Climate TRACE Estimated Emissions",

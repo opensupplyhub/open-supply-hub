@@ -499,6 +499,7 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
             base_url = field.base_url
             display_text = field.display_text
             json_schema = field.json_schema
+            beta = field.beta
             fields = grouped_fields.get(field_name, [])
             if not fields:
                 continue
@@ -515,7 +516,8 @@ class FacilityIndexDetailsSerializer(FacilityIndexSerializer):
                         'label': label,
                         'base_url': base_url,
                         'display_text': display_text,
-                        'json_schema': json_schema
+                        'json_schema': json_schema,
+                        'beta': beta,
                     },
                     exclude_fields=(
                         ['created_at'] if not use_main_created_at else []

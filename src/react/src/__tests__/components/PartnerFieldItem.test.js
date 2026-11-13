@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import PartnerFieldItem from '../../components/ProductionLocation/PartnerSection/PartnerSectionItem/PartnerFieldItem';
@@ -154,6 +154,69 @@ describe('PartnerFieldItem component', () => {
             expect(
                 screen.getByRole('button', { name: /2 more entries/i }),
             ).toBeInTheDocument();
+        });
+    });
+
+    describe('beta flag (OSDEV-3778)', () => {
+        const betaField = { ...defaultField, beta: true };
+
+        test('shows the Beta chip beside the label when the field is beta', () => {
+            renderWithProviders(
+                <PartnerFieldItem
+                    field={betaField}
+                    facilityData={makeFacilityData([makeValue()])}
+                />,
+            );
+
+            expect(screen.getByTestId('beta-chip')).toBeInTheDocument();
+            // The chip sits beside the label; the label text is untouched.
+            expect(screen.getByText('Climate Data')).toBeInTheDocument();
+            expect(screen.queryByText(/Climate Data.*Beta/)).toBeNull();
+        });
+
+        test('shows no chip when the field is not beta', () => {
+            renderWithProviders(
+                <PartnerFieldItem
+                    field={{ ...defaultField, beta: false }}
+                    facilityData={makeFacilityData([makeValue()])}
+                />,
+            );
+
+            expect(screen.queryByTestId('beta-chip')).not.toBeInTheDocument();
+        });
+
+        test('shows no chip when the flag is absent from the field', () => {
+            renderWithProviders(
+                <PartnerFieldItem
+                    field={defaultField}
+                    facilityData={makeFacilityData([makeValue()])}
+                />,
+            );
+
+            expect(screen.queryByTestId('beta-chip')).not.toBeInTheDocument();
+        });
+
+        test('keeps the chip out of the contributions drawer', () => {
+            renderWithProviders(
+                <MemoryRouter>
+                    <PartnerFieldItem
+                        field={betaField}
+                        facilityData={makeFacilityData([
+                            makeValue(),
+                            makeValue({ contributor_id: 2 }),
+                        ])}
+                    />
+                </MemoryRouter>,
+            );
+
+            fireEvent.click(
+                screen.getByRole('button', { name: /1 more entry/i }),
+            );
+
+            const drawer = screen.getByTestId('contributions-drawer');
+            expect(within(drawer).queryByTestId('beta-chip')).toBeNull();
+            expect(within(drawer).getByText(/Climate Data/)).toBeInTheDocument();
+            expect(within(drawer).queryByText(/Beta/)).toBeNull();
         });
     });
 });
