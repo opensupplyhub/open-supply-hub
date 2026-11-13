@@ -1,14 +1,25 @@
 import json
 
-from django.contrib.gis.geos import GEOSException, GEOSGeometry, MultiPolygon
+from django.contrib.gis.geos import (
+    GeometryCollection,
+    GEOSException,
+    GEOSGeometry,
+    MultiPolygon,
+)
 
 
 class InvalidPolygonGeoJSON(ValueError):
     """Raised when a string cannot be parsed into a valid polygon."""
 
 
+# The EPSG code for WGS 84, the plain longitude/latitude system that
+# every geometry OS Hub stores uses. GEOS geometries parsed from text
+# carry no coordinate system, so the parsed boundary is tagged with
+# this code before it is handed to a PostGIS field declared with it.
+WGS84_SRID = 4326
+
 REEXPORT_ADVICE = (
-    'Please re-export the data in WGS 84 (EPSG:4326) and try again.'
+    f'Please re-export the data in WGS 84 (EPSG:{WGS84_SRID}) and try again.'
 )
 
 # The different ways a GeoJSON file might spell out "WGS 84" — the
@@ -224,18 +235,26 @@ def _combine_polygons(polygons):
                 f'Geometry is not valid: {polygon.valid_reason}'
             )
 
-    combined = polygons[0]
-    for polygon in polygons[1:]:
-        combined = combined.union(polygon)
-
-    if combined.geom_type == 'Polygon':
-        combined = MultiPolygon(combined)
-    combined.srid = 4326
+    # One cascaded union rather than folding `union` over the list.
+    # Folding re-processes the growing result for every piece, which
+    # is quadratic or worse in the number of parts: a dissolved layer
+    # whose features have thousands of parts each took hours to parse.
+    # The cascaded union merges touching pieces the same way.
+    combined = GeometryCollection(*polygons).unary_union
 
     if combined.empty or combined.num_coords == 0:
         raise InvalidPolygonGeoJSON(
             'The GeoJSON contains no polygon coordinates.'
         )
+
+    if combined.geom_type == 'Polygon':
+        combined = MultiPolygon(combined)
+    elif combined.geom_type != 'MultiPolygon':
+        raise InvalidPolygonGeoJSON(
+            'Expected polygon geometry after merging the pieces, got '
+            f'{combined.geom_type}.'
+        )
+    combined.srid = WGS84_SRID
 
     if not combined.valid:
         raise InvalidPolygonGeoJSON(

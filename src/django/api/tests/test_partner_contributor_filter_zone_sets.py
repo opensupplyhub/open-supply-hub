@@ -23,7 +23,7 @@ from api.models.facility.partner_contributor_filter import (
 from api.models.partner_field import PartnerField
 from api.models.partner_field_group import PartnerFieldGroup
 from api.partner_fields.registry import ZONE_SETS_SWITCH
-from api.tests.test_zone_set_provider import EAST, WEST, feature, zone_records
+from api.tests.test_zone_set_provider import EAST, WEST, feature, zone_pieces
 
 # A band far from WEST and EAST, around the `outside` facility.
 FAR = [[[74.5, 19.5], [74.5, 20.5], [75.5, 20.5], [75.5, 19.5],
@@ -110,7 +110,7 @@ class ZoneSetPartnerFilterTest(TestCase):
             partner_field=self.partner_field,
             value_property='bws_label',
         )
-        self.zone_set.replace_zones(zone_records(
+        self.zone_set.replace_zones(zone_pieces(
             feature(WEST, {'bws_label': 'Extremely High'}),
             feature(EAST, {'bws_label': 'Low'}),
         ))
@@ -335,7 +335,7 @@ class ZoneSetPartnerFilterTest(TestCase):
         location page agree for every location (AC #3).
         """
         with self.captureOnCommitCallbacks(execute=True):
-            self.zone_set.replace_zones(zone_records(
+            self.zone_set.replace_zones(zone_pieces(
                 feature(FAR, {'bws_label': 'Medium'}),
             ))
 
