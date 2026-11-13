@@ -6,6 +6,7 @@ import logging
 
 from django import forms
 from django.contrib import admin, messages
+from django.core.exceptions import ObjectDoesNotExist
 from jsoneditor.forms import JSONEditor
 
 from .partner_field import PartnerField
@@ -88,7 +89,93 @@ class PartnerFieldAdminForm(forms.ModelForm):
                     'System field must exist in database.'
                 )
 
+        self._check_linked_zone_set(cleaned_data)
+
         return cleaned_data
+
+    def _check_linked_zone_set(self, cleaned_data):
+        """
+        Refuse a type or schema change that the linked zone set's
+        stored zones cannot serve.
+
+        A zone set's zones were validated against the field as it was
+        when they were uploaded, and the provider reads them by the
+        field's current type and schema (OSDEV-3659). So while a set
+        with zones is linked:
+
+        - the type cannot change: a string set carries one label, an
+          object set one value per schema key;
+        - an object field must keep a schema with a "properties" map,
+          as the zone set form requires to link one;
+        - a property may become required only if every stored feature
+          already carries a usable value for it. Properties outside the
+          schema are stored at upload, so the way to add a required
+          property is to upload a file carrying it first, then change
+          the schema. Any other schema edit (titles, formats, optional
+          properties, removing a property) is fine: the provider serves
+          the keys that exist.
+
+        A field with no zone set, or whose set has no zones, is not
+        checked. Nothing here touches the stored zones.
+        """
+        if not (self.instance and self.instance.pk):
+            return
+        if not {'type', 'json_schema'} & set(self.changed_data):
+            return
+        try:
+            zone_set = self.instance.zone_set
+        except ObjectDoesNotExist:
+            return
+        total = zone_set.feature_count
+        if not total:
+            return
+
+        if 'type' in self.changed_data:
+            self.add_error(
+                'type',
+                f'"{self.instance.name}" feeds zone set "{zone_set.name}", '
+                f'whose {total} zone(s) were read for a '
+                f'"{self.instance.type}" field. Delete the set\'s zones or '
+                'link it to another field before changing the type.'
+            )
+            return
+        if cleaned_data.get('type') != PartnerField.OBJECT:
+            return
+
+        schema = cleaned_data.get('json_schema')
+        properties = schema.get('properties') if isinstance(
+            schema, dict) else None
+        if not isinstance(properties, dict) or not properties:
+            self.add_error(
+                'json_schema',
+                f'"{self.instance.name}" feeds zone set "{zone_set.name}", '
+                'so it needs a JSON schema with a "properties" map: the '
+                'set reads and serves one feature property per schema '
+                'property.'
+            )
+            return
+
+        required = [
+            key for key in (schema.get('required') or [])
+            if isinstance(key, str)
+        ]
+        problems = [
+            f'{missing} of {total} zone(s) have no value for the required '
+            f'property "{key}"'
+            for key, missing in (
+                (key, zone_set.features_lacking(key)) for key in required
+            )
+            if missing
+        ]
+        if problems:
+            self.add_error(
+                'json_schema',
+                f'Zone set "{zone_set.name}" does not satisfy this schema: '
+                + '; '.join(problems)
+                + '. Upload a file that carries the property to the zone '
+                'set first (properties outside the schema are stored), '
+                'then change the schema.'
+            )
 
 
 class PartnerFieldAdmin(admin.ModelAdmin):

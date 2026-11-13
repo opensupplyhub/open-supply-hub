@@ -1,7 +1,8 @@
 import uuid
 
 from django.contrib.gis.db import models as gis_models
-from django.db import models, transaction
+from django.db import connection, models, transaction
+from django.db.models import Count
 
 from api.facility_index_backfill.zone_set_ids_recompute import (
     schedule_zone_set_ids_recompute,
@@ -150,6 +151,46 @@ class ZoneSet(models.Model):
         if field is None:
             return []
         return list(field.object_schema_properties().keys())
+
+    @property
+    def feature_count(self):
+        """How many uploaded features the set stores (not pieces)."""
+        return self.zones.aggregate(
+            n=Count('feature_index', distinct=True)
+        )['n']
+
+    def features_lacking(self, key):
+        """
+        How many of the set's uploaded features have no usable stored
+        value for the feature property `key`.
+
+        "Usable" is what the provider serves and the upload check
+        demands (`api.helpers.geojson_zones.is_usable_zone_value`): the
+        property is present and is a non-blank string, a number or a
+        boolean, not null, an object or a list. Counted per feature,
+        not per piece, so the number matches the upload messages.
+
+        Used by the partner field admin to refuse a schema change that
+        makes a property required when the zones already stored were
+        never read for it (OSDEV-3659).
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT count(DISTINCT feature_index)
+                FROM api_zone
+                WHERE zone_set_id = %s AND (
+                    value -> 'properties' IS NULL
+                    OR NOT jsonb_exists(value -> 'properties', %s)
+                    OR jsonb_typeof(value -> 'properties' -> %s)
+                        IN ('null', 'object', 'array')
+                    OR btrim(value -> 'properties' ->> %s) = ''
+                )
+                """,
+                [self.pk, key, key, key],
+            )
+            (missing,) = cursor.fetchone()
+        return missing
 
     def resolve_zone(self, point):
         """
