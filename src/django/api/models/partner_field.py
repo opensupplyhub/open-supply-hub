@@ -141,6 +141,24 @@ class PartnerField(models.Model):
     def __str__(self):
         return self.name
 
+    def object_schema_properties(self):
+        """
+        Return the top-level `properties` map of this field's JSON
+        schema, or an empty dict.
+
+        A consumer that fills an object field one value per schema key
+        (the zone set provider; the location page renders by the same
+        keys) can only do so when the schema is a dict with a
+        non-empty `properties` dict. Any other schema, and any
+        int/float/string field, gets `{}`.
+        """
+        if self.type != self.OBJECT or not isinstance(self.json_schema, dict):
+            return {}
+        properties = self.json_schema.get('properties')
+        if not isinstance(properties, dict) or not properties:
+            return {}
+        return properties
+
     def save(self, *args, **kwargs):
         """Save partner field and invalidate cache if needed."""
         self.clean()

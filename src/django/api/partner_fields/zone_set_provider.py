@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from django.db.models import Q
 from waffle import switch_is_active
 
+from api.helpers.geojson_zones import is_usable_zone_value
 from api.models.zone_set import Zone, ZoneSet
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
@@ -85,12 +86,15 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
     adding a polygon-based dataset needs no code: upload the zones,
     link a partner field, assign the field to a contributor.
 
-    The field's name is the linked partner field's name. The value is
-    the containing zone's label, emitted in the same `raw_value` shape
-    contributed string partner fields use, so both the location page
-    and the v1 production-locations endpoint render it unchanged. A
-    location outside every zone gets nothing — "match nothing, never
-    everything", as the India Labour Line provider puts it.
+    The field's name is the linked partner field's name. The value
+    takes the shape the field's type calls for (see `_value`): for a
+    string field the containing zone's label as `raw_value`, for an
+    object field one entry per schema key as `raw_values`, in each
+    case the shape contributed fields of that type use, so both the
+    location page and the v1 production-locations endpoint render it
+    unchanged. A location outside every zone gets nothing — "match
+    nothing, never everything", as the India Labour Line provider puts
+    it.
     """
 
     # "Outside every zone" is the normal case for a dataset that covers
@@ -138,13 +142,7 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
         uploaded_at = raw_data.created_at.isoformat()
         return {
             'id': None,
-            # `raw_value` (singular) is what keeps this field out of
-            # the facility downloads: `fetch_only_raw_values` on the
-            # base class returns None unless the value carries a
-            # `raw_values` dict. That is deliberate for now (downloads
-            # are a separate ticket), so a zone-set field missing from
-            # a download is this line, not the download serializer.
-            'value': {'raw_value': raw_data.label},
+            'value': self._value(raw_data),
             'created_at': uploaded_at,
             'updated_at': uploaded_at,
             'field_name': self._get_field_name(),
@@ -154,4 +152,36 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
             # Random ID for being not from a claim.
             'facility_list_item_id': 1111,
             'should_display_association': True,
+        }
+
+    def _value(self, zone: Zone) -> Dict[str, Any]:
+        """
+        The zone's value in the shape the linked field's type calls for.
+
+        A string field gets `{'raw_value': label}`. An object field
+        gets `{'raw_values': {key: value, ...}}` with one entry per
+        top-level key of the field's JSON schema that the zone's source
+        feature carried with a usable scalar value (OSDEV-3659), which
+        `PartnerFieldSchemaValue` on the location page renders one line
+        per key by the schema property's title, and the v1 endpoint
+        flattens by schema exactly as it does a contributed object
+        field. Null, blank and nested values are left out so the page
+        shows no empty line for an optional key, and feature properties
+        outside the schema are stored on the zone but never served.
+
+        Neither shape reaches the facility downloads: the download
+        helpers that call `fetch_only_raw_values` each hold their own
+        hard-wired provider and never consult a zone set, so whether a
+        zone-set field appears in a download is the downloads ticket's
+        call, not this method's.
+        """
+        if not self.zone_set.feeds_object_field:
+            return {'raw_value': zone.label}
+        properties = (zone.value or {}).get('properties') or {}
+        return {
+            'raw_values': {
+                key: properties[key]
+                for key in self.zone_set.schema_keys
+                if is_usable_zone_value(properties.get(key))
+            },
         }

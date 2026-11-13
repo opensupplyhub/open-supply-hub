@@ -51,16 +51,57 @@ def feature(coordinates, properties):
     }
 
 
-def zone_records(*features, value_property='bws_label'):
+def zone_records(*features, value_property='bws_label', schema=None):
     raw = json.dumps({'type': 'FeatureCollection', 'features': features})
-    return parse_zone_features(raw, value_property)
+    return parse_zone_features(raw, value_property, schema=schema)
 
 
-def zone_pieces(*features, value_property='bws_label'):
+def zone_pieces(*features, value_property='bws_label', schema=None):
     """The storage pieces for the features, as replace_zones takes them."""
     return subdivide_zone_records(
-        zone_records(*features, value_property=value_property)
+        zone_records(*features, value_property=value_property, schema=schema)
     )
+
+
+def make_facility(contributor, lon, lat, country_code='IN'):
+    """Create a Facility (with its list/source chain) at lon/lat."""
+    location = Point(lon, lat, srid=4326)
+    facility_list = FacilityList.objects.create(
+        header='header', file_name='test', name='Test List'
+    )
+    source = Source.objects.create(
+        facility_list=facility_list,
+        source_type=Source.LIST,
+        is_active=True,
+        is_public=True,
+        contributor=contributor,
+    )
+    list_item = FacilityListItem.objects.create(
+        name='Test Facility',
+        address='123 Test St',
+        country_code=country_code,
+        sector=['Apparel'],
+        row_index=0,
+        geocoded_point=location,
+        status=FacilityListItem.CONFIRMED_MATCH,
+        source=source,
+    )
+    facility = Facility.objects.create(
+        name='Test Facility',
+        address='123 Test St',
+        country_code=country_code,
+        location=location,
+        created_from=list_item,
+    )
+    FacilityMatch.objects.create(
+        status=FacilityMatch.CONFIRMED,
+        facility=facility,
+        results='',
+        facility_list_item=list_item,
+    )
+    list_item.facility = facility
+    list_item.save()
+    return facility
 
 
 @override_switch(ZONE_SETS_SWITCH, active=True)
@@ -103,44 +144,7 @@ class ZoneSetProviderTest(APITestCase):
         self.provider = ZoneSetProvider(self.zone_set)
 
     def _make_facility(self, lon, lat, country_code='IN'):
-        """Create a Facility (with its list/source chain) at lon/lat."""
-        location = Point(lon, lat, srid=4326)
-        facility_list = FacilityList.objects.create(
-            header='header', file_name='test', name='Test List'
-        )
-        source = Source.objects.create(
-            facility_list=facility_list,
-            source_type=Source.LIST,
-            is_active=True,
-            is_public=True,
-            contributor=self.contributor,
-        )
-        list_item = FacilityListItem.objects.create(
-            name='Test Facility',
-            address='123 Test St',
-            country_code=country_code,
-            sector=['Apparel'],
-            row_index=0,
-            geocoded_point=location,
-            status=FacilityListItem.CONFIRMED_MATCH,
-            source=source,
-        )
-        facility = Facility.objects.create(
-            name='Test Facility',
-            address='123 Test St',
-            country_code=country_code,
-            location=location,
-            created_from=list_item,
-        )
-        FacilityMatch.objects.create(
-            status=FacilityMatch.CONFIRMED,
-            facility=facility,
-            results='',
-            facility_list_item=list_item,
-        )
-        list_item.facility = facility
-        list_item.save()
-        return facility
+        return make_facility(self.contributor, lon, lat, country_code)
 
     # --- provider -------------------------------------------------
 
@@ -375,3 +379,165 @@ class ZoneSetProviderTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertNotIn('aqueduct_water_stress', response.data)
+
+
+# The Aqueduct water-risk block (OSDEV-3659): several values per basin
+# served as one object field. Two required labels, an optional link
+# and an optional note.
+AQUEDUCT_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'bws_label': {'type': 'string', 'title': 'Water stress, today'},
+        'bwd_label': {'type': 'string', 'title': 'Drought risk'},
+        'atlas_url': {
+            'type': 'string', 'format': 'uri',
+            'title': 'Aqueduct Water Risk Atlas',
+        },
+        'note': {'type': 'string', 'title': 'Note'},
+    },
+    'required': ['bws_label', 'bwd_label'],
+}
+
+
+@override_switch(ZONE_SETS_SWITCH, active=True)
+class ZoneSetProviderObjectFieldTest(APITestCase):
+    """Tests for serving a zone set as an object-type partner field:
+    one value per schema key, in the `raw_values` shape contributed
+    object fields use, so the location page renders the block with no
+    front-end change (OSDEV-3659). The string shape is covered by
+    `ZoneSetProviderTest` and must not change (AC #5)."""
+
+    def setUp(self):
+        cache.clear()
+        self.search_mock = unittest.mock.patch(OPEN_SEARCH_SERVICE).start()
+        self.addCleanup(unittest.mock.patch.stopall)
+
+        self.user = User.objects.create(email='wri@example.com')
+        self.contributor = Contributor.objects.create(
+            admin=self.user,
+            name='WRI',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        self.partner_field = PartnerField.objects.create(
+            name='aqueduct_water_risk',
+            type=PartnerField.OBJECT,
+            label='WRI Aqueduct 4.0 water risk',
+            source_by='<p>WRI Aqueduct 4.0</p>',
+            json_schema=AQUEDUCT_SCHEMA,
+        )
+        self.contributor.partner_fields.add(self.partner_field)
+
+        self.zone_set = ZoneSet.objects.create(
+            name='aqueduct_water_risk',
+            description='Aqueduct water risk per sub-basin.',
+            partner_field=self.partner_field,
+            value_property=None,
+        )
+        self.zone_set.replace_zones(zone_pieces(
+            feature(WEST, {
+                'bws_label': 'Extremely High', 'bwd_label': 'High',
+                'atlas_url': 'https://www.wri.org/aqueduct/atlas',
+                'pfaf_id': 4321,
+            }),
+            feature(EAST, {
+                'bws_label': 'Low', 'bwd_label': 'Low', 'note': '  ',
+                'atlas_url': None,
+            }),
+            schema=AQUEDUCT_SCHEMA,
+        ))
+        self.provider = ZoneSetProvider(self.zone_set)
+
+    def test_location_inside_a_zone_gets_one_value_per_schema_key(self):
+        """AC #2 at the provider: `raw_values` keyed by schema key, no
+        `raw_value`, and only the keys the feature carried."""
+        facility = make_facility(self.contributor, 76.9, 28.6)
+
+        data = self.provider.fetch_data(facility)
+
+        self.assertEqual(data['value'], {'raw_values': {
+            'bws_label': 'Extremely High',
+            'bwd_label': 'High',
+            'atlas_url': 'https://www.wri.org/aqueduct/atlas',
+        }})
+        self.assertEqual(data['field_name'], 'aqueduct_water_risk')
+        self.assertEqual(data['contributor']['name'], 'WRI')
+
+    def test_properties_outside_the_schema_are_not_served(self):
+        """`pfaf_id` is stored on the zone (for tracing a row back to
+        the source file) but is not in the schema, so it is not
+        emitted."""
+        facility = make_facility(self.contributor, 76.9, 28.6)
+        zone = self.zone_set.resolve_zone(facility.location)
+        self.assertEqual(zone.value['properties']['pfaf_id'], 4321)
+
+        data = self.provider.fetch_data(facility)
+
+        self.assertNotIn('pfaf_id', data['value']['raw_values'])
+
+    def test_blank_and_null_optional_keys_are_left_out(self):
+        """An optional key the feature left null or blank gets no
+        entry, so the page shows no empty line for it."""
+        facility = make_facility(self.contributor, 77.3, 28.6)
+
+        data = self.provider.fetch_data(facility)
+
+        self.assertEqual(data['value'], {'raw_values': {
+            'bws_label': 'Low', 'bwd_label': 'Low',
+        }})
+
+    def test_location_outside_every_zone_gets_nothing(self):
+        """AC #6."""
+        facility = make_facility(self.contributor, 80.0, 20.0)
+        self.assertIsNone(self.provider.fetch_data(facility))
+
+    def test_details_serializer_carries_raw_values_and_schema(self):
+        """AC #1 on the location page: one entry under the field's
+        label, with the values keyed as the schema names them and the
+        schema itself, which is all `PartnerFieldSchemaValue` needs to
+        render one line per property and the uri as a link."""
+        facility = make_facility(self.contributor, 76.9, 28.6)
+        facility_index = FacilityIndex.objects.get(id=facility.id)
+
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        entries = data['properties']['partner_fields']['aqueduct_water_risk']
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
+        self.assertEqual(entry['value'], {'raw_values': {
+            'bws_label': 'Extremely High',
+            'bwd_label': 'High',
+            'atlas_url': 'https://www.wri.org/aqueduct/atlas',
+        }})
+        self.assertEqual(entry['json_schema'], AQUEDUCT_SCHEMA)
+        self.assertEqual(entry['label'], 'WRI Aqueduct 4.0 water risk')
+        self.assertEqual(entry['source_by'], '<p>WRI Aqueduct 4.0</p>')
+
+    def test_details_serializer_omits_field_outside_zones(self):
+        facility = make_facility(self.contributor, 80.0, 20.0)
+        facility_index = FacilityIndex.objects.get(id=facility.id)
+
+        data = FacilityIndexDetailsSerializer(facility_index).data
+
+        self.assertNotIn(
+            'aqueduct_water_risk', data['properties']['partner_fields']
+        )
+
+    def test_v1_endpoint_flattens_raw_values_by_schema(self):
+        """AC #2 on the v1 endpoint: the field arrives as an object of
+        schema keys, as a contributed object field does."""
+        facility = make_facility(self.contributor, 76.9, 28.6)
+        self.search_mock.return_value.search_index.return_value = {
+            'count': 1,
+            'data': [{'os_id': facility.id, 'name': 'Test Facility'}],
+        }
+
+        response = self.client.get(
+            f'/api/v1/production-locations/{facility.id}/'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['aqueduct_water_risk'], {
+            'bws_label': 'Extremely High',
+            'bwd_label': 'High',
+            'atlas_url': 'https://www.wri.org/aqueduct/atlas',
+        })
