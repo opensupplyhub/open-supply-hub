@@ -385,6 +385,90 @@ export const getPossibleCustomers = (chain, supplier) =>
             !chainLinksLoop([...chain.links, [supplier, node.os_id]]),
     );
 
+// Reverse a link, unless that would make the chain loop.
+export const reverseChainLink = (chain, supplier, customer) => {
+    const others = chain.links.filter(
+        ([s, c]) => !(s === supplier && c === customer),
+    );
+    const reversed = [...others, [customer, supplier]];
+    return chainLinksLoop(reversed) ? chain : { ...chain, links: reversed };
+};
+
+const tierNumber = tier => {
+    const number = parseFloat(tier);
+    return Number.isFinite(number) ? number : null;
+};
+
+// Which way a new link between the selected location and a clicked one most
+// likely runs, as [supplier, customer]. Chains are usually built from the
+// final factory backwards, so the clicked location supplies the selected one
+// unless their tiers say otherwise (a higher tier supplies a lower one).
+export const guessLinkDirection = (selected, clicked) => {
+    const selectedTier = tierNumber(selected.tier);
+    const clickedTier = tierNumber(clicked.tier);
+    return selectedTier !== null &&
+        clickedTier !== null &&
+        clickedTier < selectedTier
+        ? [selected.osId, clicked.osId]
+        : [clicked.osId, selected.osId];
+};
+
+// What clicking a facility does in the builder. `clicked` and each entry of
+// `tiers` come from the contributor's locations: { osId, name, tier }.
+// Returns the chain, the location now selected, and a message when the
+// click could not do what was asked.
+//  - Nothing selected: the facility joins the chain and is selected.
+//  - The selected location: it is deselected.
+//  - Another facility: it joins the chain if need be, is linked to the
+//    selected location, and becomes the selected one, so a chain can be
+//    walked from one end to the other. If the two are already linked it is
+//    only selected.
+export const clickChainLocation = (chain, selectedId, clicked, tiers = {}) => {
+    const inChain = chain.nodes.some(node => node.os_id === clicked.osId);
+    if (!inChain && chain.nodes.length >= MAX_CHAIN_LOCATIONS) {
+        return {
+            chain,
+            selectedId,
+            message: `A supply chain can have at most ${MAX_CHAIN_LOCATIONS} locations.`,
+        };
+    }
+    if (clicked.osId === selectedId) {
+        return { chain, selectedId: null, message: '' };
+    }
+    const withLocation = addChainLocation(chain, clicked);
+    const hasSelected = chain.nodes.some(node => node.os_id === selectedId);
+    if (!hasSelected) {
+        return { chain: withLocation, selectedId: clicked.osId, message: '' };
+    }
+    const linked = chain.links.some(
+        link => link.includes(clicked.osId) && link.includes(selectedId),
+    );
+    if (linked) {
+        return { chain, selectedId: clicked.osId, message: '' };
+    }
+    const [supplier, customer] = guessLinkDirection(
+        { osId: selectedId, tier: tiers[selectedId] },
+        { osId: clicked.osId, tier: tiers[clicked.osId] },
+    );
+    const direction = [
+        [supplier, customer],
+        [customer, supplier],
+    ].find(link => !chainLinksLoop([...withLocation.links, link]));
+    if (!direction) {
+        return {
+            chain,
+            selectedId,
+            message:
+                'Linking those two would make the chain loop back on itself.',
+        };
+    }
+    return {
+        chain: addChainLink(withLocation, direction[0], direction[1]),
+        selectedId: clicked.osId,
+        message: '',
+    };
+};
+
 // What the builder sends to the API: names are for display only.
 export const formatChainForAPI = chain => ({
     name: chain.name.trim(),

@@ -357,6 +357,9 @@ export const makeEmbedConfigURL = id =>
 export const makeEmbedSupplyChainsURL = id =>
     `/api/embed-supply-chains/${id ? `${id}/` : ''}`;
 
+export const makeEmbedSupplyChainLocationsURL = () =>
+    '/api/embed-supply-chains/locations/';
+
 export const makeOwnFacilitiesSearchURL = (contributorId, text) =>
     `/api/facilities/?${querystring.stringify({
         contributors: contributorId,

@@ -126,6 +126,40 @@ def _tier_values(contributor, os_ids):
     return dict(rows)
 
 
+def contributor_locations(contributor):
+    """
+    Every facility the contributor has contributed, as the map in the
+    builder needs it: name, position, and the value of the field the
+    contributor colors markers by (their tier), used to suggest which way
+    a link runs.
+    """
+    os_ids = list(
+        FacilityListItem.objects.filter(
+            source__contributor_id=contributor.id,
+            source__is_active=True,
+            facility_id__isnull=False,
+        )
+        .values_list('facility_id', flat=True)
+        .distinct()
+    )
+    tiers = _tier_values(contributor, os_ids)
+    return [
+        {
+            'os_id': os_id,
+            'name': name,
+            'country_name': COUNTRY_NAMES.get(country_code, ''),
+            'lat': location.y,
+            'lng': location.x,
+            'tier': tiers.get(os_id),
+        }
+        for os_id, name, country_code, location in Facility.objects.filter(
+            id__in=os_ids
+        )
+        .order_by('name')
+        .values_list('id', 'name', 'country_code', 'location')
+    ]
+
+
 def published_supply_chains(contributor):
     """
     The contributor's published supply chains as a visitor's embedded map

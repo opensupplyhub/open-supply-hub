@@ -1,25 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { func, number, object, oneOfType, string } from 'prop-types';
 import Typography from '@material-ui/core/Typography';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 
+import EmbeddedMapSupplyChainMap from './EmbeddedMapSupplyChainMap';
 import apiRequest from '../util/apiRequest';
 import {
     makeEmbedSupplyChainsURL,
+    makeEmbedSupplyChainLocationsURL,
     makeOwnFacilitiesSearchURL,
 } from '../util/util';
 import {
     CHAIN_STAGE_SUGGESTIONS,
     MAX_CHAIN_LOCATIONS,
     addChainLink,
-    addChainLocation,
+    clickChainLocation,
     formatChainForAPI,
     getChainDepths,
     getChainErrorMessages,
     getPossibleCustomers,
     makeEmptyChain,
     removeChainLink,
+    reverseChainLink,
     removeChainLocation,
     setChainLocationStage,
 } from '../util/embeddedMap';
@@ -107,6 +110,9 @@ const styles = {
         marginTop: '8px',
         background: 'white',
         border: BORDER,
+    },
+    locationSelected: {
+        border: '2px solid rgb(13, 17, 40)',
     },
     locationHeader: {
         display: 'flex',
@@ -265,6 +271,40 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
     const [confirmingDelete, setConfirmingDelete] = useState(null);
     const [searchText, setSearchText] = useState('');
     const [searchResults, setSearchResults] = useState(null);
+    // The contributor's facilities, for the map; and the location in the
+    // chain that the next click will be linked to.
+    const [locations, setLocations] = useState([]);
+    const [selectedId, setSelectedId] = useState(null);
+    const [clickMessage, setClickMessage] = useState('');
+
+    useEffect(() => {
+        apiRequest
+            .get(makeEmbedSupplyChainLocationsURL())
+            .then(({ data }) => setLocations(data))
+            .catch(() => setLocations([]));
+    }, []);
+
+    const tiers = useMemo(() => {
+        const lookup = {};
+        locations.forEach(location => {
+            lookup[location.os_id] = location.tier;
+        });
+        return lookup;
+    }, [locations]);
+
+    // Clicking a facility, on the map or in the search results, adds it to
+    // the chain and links it to the selected location.
+    const pickLocation = ({ osId, name }) => {
+        const result = clickChainLocation(
+            draft,
+            selectedId,
+            { osId, name },
+            tiers,
+        );
+        setDraft(result.chain);
+        setSelectedId(result.selectedId);
+        setClickMessage(result.message);
+    };
 
     const loadChains = () =>
         apiRequest
@@ -312,6 +352,8 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
 
     const closeEditor = () => {
         setDraft(null);
+        setSelectedId(null);
+        setClickMessage('');
         setErrors([]);
         setSearchText('');
     };
@@ -434,6 +476,17 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
     const nameOf = osId =>
         (draft.nodes.find(node => node.os_id === osId) || {}).name || osId;
     const isFull = draft.nodes.length >= MAX_CHAIN_LOCATIONS;
+    const selectedName = draft.nodes.some(node => node.os_id === selectedId)
+        ? nameOf(selectedId)
+        : '';
+    let locationsHint =
+        'Click a dot, or search below, to add the first location. Starting with the final factory works well.';
+    if (selectedName) {
+        locationsHint = `${selectedName} is selected. Click another facility to link it to this one, or click it again to deselect it.`;
+    } else if (draft.nodes.length) {
+        locationsHint =
+            'Click a location in the chain to select it, then click another facility to link the two.';
+    }
 
     return (
         <div style={styles.section}>
@@ -485,6 +538,19 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
             />
 
             <Typography style={styles.subHeader}>Locations</Typography>
+            <Typography style={styles.hint}>{locationsHint}</Typography>
+            {clickMessage && (
+                <Typography style={styles.error}>{clickMessage}</Typography>
+            )}
+            <EmbeddedMapSupplyChainMap
+                chain={draft}
+                locations={locations}
+                selectedId={selectedId}
+                onLocationClick={location =>
+                    pickLocation({ osId: location.os_id, name: location.name })
+                }
+            />
+            <div style={{ height: '10px' }} />
             <input
                 aria-label="Search your facilities"
                 style={styles.input}
@@ -520,11 +586,7 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                             type="button"
                             style={styles.button}
                             disabled={added || isFull}
-                            onClick={() =>
-                                setDraft(chain =>
-                                    addChainLocation(chain, result),
-                                )
-                            }
+                            onClick={() => pickLocation(result)}
                         >
                             {added ? 'Added' : 'Add'}
                         </button>
@@ -554,23 +616,58 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                     .map(([, customer]) => customer);
                 const possible = getPossibleCustomers(draft, node.os_id);
                 return (
-                    <div key={node.os_id} style={styles.location}>
+                    <div
+                        key={node.os_id}
+                        style={
+                            node.os_id === selectedId
+                                ? {
+                                      ...styles.location,
+                                      ...styles.locationSelected,
+                                  }
+                                : styles.location
+                        }
+                    >
                         <div style={styles.locationHeader}>
                             <span style={{ minWidth: 0 }}>
                                 <strong>{node.name || node.os_id}</strong>
                                 <div style={styles.osId}>{node.os_id}</div>
                             </span>
-                            <button
-                                type="button"
-                                style={styles.button}
-                                onClick={() =>
-                                    setDraft(chain =>
-                                        removeChainLocation(chain, node.os_id),
-                                    )
-                                }
-                            >
-                                Remove
-                            </button>
+                            <span style={styles.actions}>
+                                <button
+                                    type="button"
+                                    style={styles.button}
+                                    aria-pressed={node.os_id === selectedId}
+                                    onClick={() => {
+                                        setClickMessage('');
+                                        setSelectedId(
+                                            node.os_id === selectedId
+                                                ? null
+                                                : node.os_id,
+                                        );
+                                    }}
+                                >
+                                    {node.os_id === selectedId
+                                        ? 'Selected'
+                                        : 'Select'}
+                                </button>
+                                <button
+                                    type="button"
+                                    style={styles.button}
+                                    onClick={() => {
+                                        if (node.os_id === selectedId) {
+                                            setSelectedId(null);
+                                        }
+                                        setDraft(chain =>
+                                            removeChainLocation(
+                                                chain,
+                                                node.os_id,
+                                            ),
+                                        );
+                                    }}
+                                >
+                                    Remove
+                                </button>
+                            </span>
                         </div>
                         <label
                             style={styles.label}
@@ -603,6 +700,26 @@ function EmbeddedMapSupplyChainsConfig({ contributorId, onSaved }) {
                                 <button
                                     type="button"
                                     style={styles.chipRemove}
+                                    title="Reverse this link"
+                                    aria-label={`Reverse the link to ${nameOf(
+                                        customer,
+                                    )}`}
+                                    onClick={() =>
+                                        setDraft(chain =>
+                                            reverseChainLink(
+                                                chain,
+                                                node.os_id,
+                                                customer,
+                                            ),
+                                        )
+                                    }
+                                >
+                                    ⇄
+                                </button>
+                                <button
+                                    type="button"
+                                    style={styles.chipRemove}
+                                    title="Remove this link"
                                     aria-label={`Stop supplying ${nameOf(
                                         customer,
                                     )}`}

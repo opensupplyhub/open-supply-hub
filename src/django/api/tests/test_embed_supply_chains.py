@@ -117,6 +117,38 @@ class EmbedSupplyChainsTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         return json.loads(response.content)["supply_chains"]
 
+    def test_lists_the_contributors_own_locations_for_the_builder(self):
+        config = self.contributor.embed_config
+        config.color_by_field = "tier"
+        config.save()
+        self._login()
+
+        response = self.client.get(self.url + "locations/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        locations = json.loads(response.content)
+        self.assertEqual(
+            ["Factory", "Mill", "Spinner"],
+            [location["name"] for location in locations],
+        )
+        self.assertEqual(
+            {
+                "os_id": self.factory.id,
+                "name": "Factory",
+                "country_name": "United States",
+                "lat": 5.0,
+                "lng": 10.0,
+                "tier": "1",
+            },
+            locations[0],
+        )
+
+    def test_locations_for_the_builder_require_login(self):
+        self.assertIn(
+            self.client.get(self.url + "locations/").status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
+
     def test_locations_are_returned_with_their_names(self):
         self._login()
         created = json.loads(self._post().content)

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { object } from 'prop-types';
+import { array, object, string } from 'prop-types';
 import { connect } from 'react-redux';
 import {
     CircleMarker,
@@ -23,11 +23,11 @@ const arrowIcon = (color, degrees) =>
     });
 
 /*
-Draws the supply chain a visitor is following on an embedded map: a line
-with an arrow from each supplier to the location it supplies, and a marker
-on each location. Fits the map to the chain when one is chosen.
+A line with an arrow from each supplier to the location it supplies.
+`positions` maps each location's OS ID to its [lat, lng]; a link to a
+location without a position is not drawn.
 */
-function EmbedSupplyChainLayer({ chain, leaflet }) {
+function ChainLinks({ links, positions, color, leaflet }) {
     const map = leaflet && leaflet.map;
     // Arrow angles are measured on screen, so they are redrawn after a zoom.
     const [, setZoomTick] = useState(0);
@@ -38,6 +38,60 @@ function EmbedSupplyChainLayer({ chain, leaflet }) {
         map.on('zoomend', redraw);
         return () => map.off('zoomend', redraw);
     }, [map]);
+
+    if (!map) return null;
+
+    return (
+        <>
+            {links.map(([supplier, customer]) => {
+                const from = positions[supplier];
+                const to = positions[customer];
+                if (!from || !to) return null;
+                const a = map.latLngToLayerPoint(from);
+                const b = map.latLngToLayerPoint(to);
+                const degrees =
+                    (Math.atan2(b.x - a.x, -(b.y - a.y)) * 180) / Math.PI;
+                const middle = map.layerPointToLatLng([
+                    a.x + (b.x - a.x) * 0.55,
+                    a.y + (b.y - a.y) * 0.55,
+                ]);
+                return (
+                    <React.Fragment key={`${supplier}-${customer}`}>
+                        <Polyline
+                            positions={[from, to]}
+                            color={color}
+                            weight={3}
+                            opacity={0.9}
+                            interactive={false}
+                        />
+                        <Marker
+                            position={middle}
+                            icon={arrowIcon(color, degrees)}
+                            interactive={false}
+                        />
+                    </React.Fragment>
+                );
+            })}
+        </>
+    );
+}
+
+ChainLinks.propTypes = {
+    links: array.isRequired,
+    positions: object.isRequired,
+    color: string.isRequired,
+    leaflet: object.isRequired,
+};
+
+export const SupplyChainLinks = withLeaflet(ChainLinks);
+
+/*
+Draws the supply chain a visitor is following on an embedded map: a line
+with an arrow from each supplier to the location it supplies, and a marker
+on each location. Fits the map to the chain when one is chosen.
+*/
+function EmbedSupplyChainLayer({ chain, leaflet }) {
+    const map = leaflet && leaflet.map;
 
     const chainId = chain ? chain.id : null;
     useEffect(() => {
@@ -60,34 +114,11 @@ function EmbedSupplyChainLayer({ chain, leaflet }) {
 
     return (
         <>
-            {chain.links.map(([supplier, customer]) => {
-                const from = position[supplier];
-                const to = position[customer];
-                const a = map.latLngToLayerPoint(from);
-                const b = map.latLngToLayerPoint(to);
-                const degrees =
-                    (Math.atan2(b.x - a.x, -(b.y - a.y)) * 180) / Math.PI;
-                const middle = map.layerPointToLatLng([
-                    a.x + (b.x - a.x) * 0.55,
-                    a.y + (b.y - a.y) * 0.55,
-                ]);
-                return (
-                    <React.Fragment key={`${supplier}-${customer}`}>
-                        <Polyline
-                            positions={[from, to]}
-                            color={chain.color}
-                            weight={3}
-                            opacity={0.9}
-                            interactive={false}
-                        />
-                        <Marker
-                            position={middle}
-                            icon={arrowIcon(chain.color, degrees)}
-                            interactive={false}
-                        />
-                    </React.Fragment>
-                );
-            })}
+            <SupplyChainLinks
+                links={chain.links}
+                positions={position}
+                color={chain.color}
+            />
             {chain.nodes.map(node => (
                 <CircleMarker
                     key={node.os_id}

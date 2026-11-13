@@ -1,8 +1,11 @@
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from ..models.embed_supply_chain import EmbedSupplyChain
 from ..serializers.embed_supply_chain import EmbedSupplyChainSerializer
+from ..services.embed_supply_chains import contributor_locations
 from .contributor.get_contributor import get_contributor
 
 DELUXE_EMBED_LEVEL = 3
@@ -40,3 +43,11 @@ class EmbedSupplyChainViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(contributor=self._contributor())
+
+    @action(detail=False, methods=['get'])
+    def locations(self, request):
+        """
+        Every facility the contributor can put in a supply chain, with its
+        position, for the map in the builder.
+        """
+        return Response(contributor_locations(self._contributor()))

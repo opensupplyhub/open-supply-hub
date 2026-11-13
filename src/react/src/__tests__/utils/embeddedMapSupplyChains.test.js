@@ -2,6 +2,9 @@ import {
     addChainLink,
     addChainLocation,
     chainLinksLoop,
+    clickChainLocation,
+    guessLinkDirection,
+    reverseChainLink,
     formatChainForAPI,
     getChainErrorMessages,
     getPossibleCustomers,
@@ -192,6 +195,101 @@ describe('embedded map supply chains', () => {
             // The factory is the end of the chain: supplying either of the
             // others would loop.
             expect(offered('F')).toEqual([]);
+        });
+
+        it('reverses a link unless that would loop', () => {
+            expect(reverseChainLink(build(), 'S', 'M').links).toEqual([
+                ['M', 'F'],
+                ['M', 'S'],
+            ]);
+
+            const direct = addChainLink(build(), 'S', 'F');
+            // S -> M -> F already: F -> S would loop.
+            expect(reverseChainLink(direct, 'S', 'F')).toBe(direct);
+        });
+
+        describe('clicking facilities', () => {
+            const factory = { osId: 'F', name: 'Factory' };
+            const mill = { osId: 'M', name: 'Mill' };
+            const spinner = { osId: 'S', name: 'Spinner' };
+
+            it('adds and selects the first facility clicked', () => {
+                const result = clickChainLocation(
+                    makeEmptyChain(),
+                    null,
+                    factory,
+                );
+
+                expect(result.chain.nodes.map(n => n.os_id)).toEqual(['F']);
+                expect(result.selectedId).toBe('F');
+            });
+
+            it('links the next facility clicked as a supplier and moves on to it', () => {
+                let result = clickChainLocation(makeEmptyChain(), null, factory);
+                result = clickChainLocation(result.chain, 'F', mill);
+                result = clickChainLocation(result.chain, 'M', spinner);
+
+                expect(result.chain.links).toEqual([
+                    ['M', 'F'],
+                    ['S', 'M'],
+                ]);
+                expect(result.selectedId).toBe('S');
+            });
+
+            it('lets the tiers decide which way a link runs', () => {
+                const tiers = { F: '1', M: '2' };
+                // Built from the mill towards the factory this time.
+                let result = clickChainLocation(makeEmptyChain(), null, mill);
+                result = clickChainLocation(result.chain, 'M', factory, tiers);
+
+                expect(result.chain.links).toEqual([['M', 'F']]);
+                expect(
+                    guessLinkDirection(
+                        { osId: 'F', tier: 'unknown' },
+                        { osId: 'M', tier: '2' },
+                    ),
+                ).toEqual(['M', 'F']);
+            });
+
+            it('deselects the selected location when it is clicked again', () => {
+                const result = clickChainLocation(build(), 'M', mill);
+
+                expect(result.selectedId).toBeNull();
+                expect(result.chain).toEqual(build());
+            });
+
+            it('only selects a location already linked to the selected one', () => {
+                const result = clickChainLocation(build(), 'M', factory);
+
+                expect(result.selectedId).toBe('F');
+                expect(result.chain.links).toEqual(build().links);
+            });
+
+            it('links the other way round when the likely way would loop', () => {
+                // S -> M -> F; with the factory selected, the spinner is
+                // clicked: "spinner supplies factory" is fine.
+                // With the spinner selected and the factory clicked, "factory
+                // supplies spinner" would loop, so it runs the other way.
+                const result = clickChainLocation(build(), 'S', factory);
+
+                expect(result.chain.links).toContainEqual(['S', 'F']);
+                expect(result.message).toBe('');
+            });
+
+            it('refuses a facility once the chain is full', () => {
+                const full = {
+                    ...makeEmptyChain(),
+                    nodes: Array.from({ length: 60 }, (_, i) => ({
+                        os_id: `N${i}`,
+                        name: `N${i}`,
+                        stage: '',
+                    })),
+                };
+                const result = clickChainLocation(full, 'N0', factory);
+
+                expect(result.chain).toBe(full);
+                expect(result.message).toMatch(/at most 60/);
+            });
         });
 
         it('sends the API the chain without display names', () => {
