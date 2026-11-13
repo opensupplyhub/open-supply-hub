@@ -319,3 +319,25 @@ def embed_has_blurb(params):
         )
         has_text |= Q(**{alias + '__isnull': False}) & ~Q(**{alias: ''})
     return Exists(items.filter(has_text))
+
+
+def embed_settings_version(params):
+    """
+    A token that changes whenever an embedded map's contributor saves their
+    embed settings, and is empty for any other request.
+
+    The facility list for an embedded map depends on those settings (the
+    list order, blurbs first, which fields each facility carries), so a
+    cached list has to stop being served once they change.
+    """
+    from api.models.embed_config import EmbedConfig
+
+    contributor_id = _embed_contributor_id(params)
+    if params.get('embed') != '1' or contributor_id is None:
+        return ''
+    updated_at = (
+        EmbedConfig.objects.filter(contributor__id=contributor_id)
+        .values_list('updated_at', flat=True)
+        .first()
+    )
+    return updated_at.isoformat() if updated_at else ''

@@ -65,6 +65,7 @@ from api.models.embed_field import EmbedField
 from api.services.embed_field_filters import (
     embed_field_sort,
     embed_has_blurb,
+    embed_settings_version,
     order_by_embed_field,
     resolve_embed_sort,
 )
@@ -157,6 +158,17 @@ from api.views.facility.facility_parameters import (
 log = logging.getLogger(__name__)
 
 
+def facilities_list_cache_token(request):
+    """
+    What a cached facility list varies by, beyond its query: who is asking
+    and, for an embedded map, the version of its contributor's settings.
+    """
+    return '{}|{}'.format(
+        facilities_visibility_token(request),
+        embed_settings_version(request.query_params),
+    )
+
+
 def embed_list_shows_contributor_fields(request):
     """
     Whether the facility list for an embedded map should carry each
@@ -244,7 +256,7 @@ class FacilitiesViewSet(ListModelMixin,
     @swagger_auto_schema(manual_parameters=facilities_list_parameters)
     @cache_view_response(
         'facilities_list',
-        vary_on=facilities_visibility_token,
+        vary_on=facilities_list_cache_token,
     )
     def list(self, request):
         """

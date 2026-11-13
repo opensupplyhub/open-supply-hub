@@ -18,6 +18,7 @@ from api.services.embed_field_filters import (
     embed_color_value_subquery,
     embed_field_sort,
     embed_filter_options,
+    embed_settings_version,
     parse_embed_filters,
     resolve_embed_sort,
 )
@@ -560,4 +561,41 @@ class EmbedFieldFiltersTest(APITestCase):
 
         self.assertEqual(
             "Empty Note Factory", self._listed_names("embed_default")[0]
+        )
+
+    # ------------------------------------------------------------------ #
+    # cached lists follow the settings                                    #
+    # ------------------------------------------------------------------ #
+    def test_settings_version_changes_when_the_settings_are_saved(self):
+        params = self._tile_params()
+        before = embed_settings_version(params)
+        self.assertTrue(before)
+
+        config = self.contributor.embed_config
+        config.blurbs_first = True
+        config.save()
+
+        self.assertNotEqual(before, embed_settings_version(params))
+
+    def test_settings_version_is_empty_outside_an_embedded_map(self):
+        self.assertEqual(
+            "",
+            embed_settings_version(
+                QueryDict("contributors={}".format(self.contributor.id))
+            ),
+        )
+        self.assertEqual("", embed_settings_version(QueryDict("embed=1")))
+
+    def test_cached_list_is_not_reused_after_the_settings_change(self):
+        self._blurb_setup(blurbs_first=False)
+        self.assertEqual(
+            "Empty Note Factory", self._listed_names("embed_default")[0]
+        )
+
+        config = self.contributor.embed_config
+        config.blurbs_first = True
+        config.save()
+
+        self.assertEqual(
+            "Zebra Factory", self._listed_names("embed_default")[0]
         )
