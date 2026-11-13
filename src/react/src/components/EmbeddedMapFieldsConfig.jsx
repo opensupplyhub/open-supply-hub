@@ -14,6 +14,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import EmbeddedMapSearchLabelConfig from './EmbeddedMapTextSearchLabelConfig';
+import EmbeddedMapFieldExplanations from './EmbeddedMapFieldExplanations';
 import { DISPLAY_AS_OPTIONS, DISPLAY_AS_TEXT } from '../util/embeddedMap';
 
 const styles = {
@@ -79,6 +80,10 @@ const styles = {
         alignItems: 'center',
         flexWrap: 'wrap',
         margin: '-2px 0 0 48px',
+    },
+    fieldExplanations: {
+        flexBasis: '100%',
+        paddingLeft: '48px',
     },
     fieldOptions: {
         display: 'flex',
@@ -225,6 +230,8 @@ function EmbeddedMapFieldsConfig({
             displayAs,
             hasData,
             filterable,
+            description,
+            valueDescriptions,
         },
         index,
     ) => (
@@ -399,6 +406,20 @@ function EmbeddedMapFieldsConfig({
                                 </>
                             ) : null}
                         </div>
+                        {userEmbedLevel === 3 ? (
+                            <div style={styles.fieldExplanations}>
+                                <EmbeddedMapFieldExplanations
+                                    columnName={columnName}
+                                    displayAs={displayAs}
+                                    description={description || ''}
+                                    valueDescriptions={valueDescriptions || {}}
+                                    disabled={!visible}
+                                    onChange={change =>
+                                        updateItem({ columnName, ...change })
+                                    }
+                                />
+                            </div>
+                        ) : null}
                     </li>
                 );
             }}

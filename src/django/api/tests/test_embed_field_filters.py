@@ -252,6 +252,29 @@ class EmbedFieldFiltersTest(APITestCase):
             [option["value"] for option in options["project"]],
         )
 
+    def test_contributor_can_list_a_columns_values_to_explain_them(self):
+        url = "/api/embed-field-values/?column=project"
+        self.assertIn(
+            self.client.get(url).status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
+
+        user = self.contributor.admin
+        user.set_password("example123")
+        user.save()
+        self.client.login(email=user.email, password="example123")
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            {"HERhealth", "RISE", "SUNRISE"},
+            {option["value"] for option in json.loads(response.content)},
+        )
+        self.assertEqual(
+            status.HTTP_400_BAD_REQUEST,
+            self.client.get("/api/embed-field-values/").status_code,
+        )
+
     def test_options_leave_out_fields_that_are_not_filterable(self):
         self.assertNotIn("secret", embed_filter_options(self.contributor))
 

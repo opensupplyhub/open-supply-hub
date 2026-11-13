@@ -95,6 +95,10 @@ export const formatExistingFields = (fields = []) =>
         showInList: !!field.show_in_list,
         displayAs: field.display_as || DISPLAY_AS_TEXT,
         filterable: !!field.filterable,
+        // The contributor's explanations: what the field means, and what
+        // each of its values means ({ value: explanation }).
+        description: field.description || '',
+        valueDescriptions: field.value_descriptions || {},
     }));
 
 const doesExist = (field, existingFields) =>
@@ -157,6 +161,19 @@ export const combineEmbedAndNonstandardFields = (
     ].map((f, i) => ({ ...f, order: i }));
 };
 
+// An explanation is plain text shown publicly, so it is capped.
+export const MAX_EXPLANATION_LENGTH = 300;
+
+// Only the explanations that say something are kept.
+export const cleanValueDescriptions = (valueDescriptions = {}) =>
+    Object.entries(valueDescriptions || {}).reduce(
+        (kept, [value, text]) =>
+            String(text || '').trim()
+                ? { ...kept, [value]: String(text).trim() }
+                : kept,
+        {},
+    );
+
 const formatEmbedFieldsForServer = fields =>
     sortBy(fields, f => f.order).map((f, i) => ({
         visible: f.visible,
@@ -167,6 +184,8 @@ const formatEmbedFieldsForServer = fields =>
         show_in_list: !!f.showInList,
         display_as: f.displayAs || DISPLAY_AS_TEXT,
         filterable: !!f.filterable,
+        description: (f.description || '').trim(),
+        value_descriptions: cleanValueDescriptions(f.valueDescriptions),
     }));
 
 // 0 is a real choice (square corners), so only '' and nil mean "not set".
@@ -225,6 +244,25 @@ export const splitTagValues = value =>
         .filter(Boolean);
 
 const hasValue = value => !isNil(value) && String(value).trim() !== '';
+
+// The explanations that apply to a field's value on one location: one per
+// value in the cell that the contributor has explained, in the cell's
+// order. Values are matched whatever their case.
+export const getValueExplanations = (value, valueDescriptions) => {
+    const explained = Object.entries(valueDescriptions || {}).reduce(
+        (byValue, [key, text]) => ({
+            ...byValue,
+            [key.trim().toLowerCase()]: text,
+        }),
+        {},
+    );
+    return splitTagValues(value)
+        .map(item => ({
+            value: item,
+            text: explained[item.trim().toLowerCase()],
+        }))
+        .filter(item => !!item.text);
+};
 
 // The fields to show on a facility in the search results list: visible
 // fields marked "In list" that have a value for this facility, in the
@@ -720,11 +758,19 @@ export const getEmbedLocationFields = (embedConfig, data) => {
             const match = contributorFields.find(
                 cf => cf.fieldName === f.column_name,
             );
+            const value = match ? match.value : null;
+            const displayAs = f.display_as || DISPLAY_AS_TEXT;
             return {
                 columnName: f.column_name,
                 label: f.display_name,
-                value: match ? match.value : null,
-                displayAs: f.display_as || DISPLAY_AS_TEXT,
+                value,
+                displayAs,
+                description: f.description || '',
+                // A blurb is free text, not a value to look up.
+                explanations:
+                    displayAs === DISPLAY_AS_BLURB || !hasValue(value)
+                        ? []
+                        : getValueExplanations(value, f.value_descriptions),
             };
         })
         .filter(f => hasValue(f.value));
