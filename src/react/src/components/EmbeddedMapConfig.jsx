@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Typography from '@material-ui/core/Typography';
 import Grid from '@material-ui/core/Grid';
 import { func, shape, string, bool } from 'prop-types';
@@ -7,13 +7,8 @@ import { Link } from 'react-router-dom';
 import { userPropType } from '../util/propTypes';
 import { getEmbeddedMapSrc, makeContributorEmbedConfigURL } from '../util/util';
 import apiRequest from '../util/apiRequest';
-import {
-    EmbeddedMapInfoLink,
-    minimum100PercentWidthEmbedHeight,
-    USER_DEFAULT_STATE,
-} from '../util/constants';
+import { EmbeddedMapInfoLink, USER_DEFAULT_STATE } from '../util/constants';
 
-import AppGrid from './AppGrid';
 import EmbeddedMapFieldsConfig from './EmbeddedMapFieldsConfig';
 import EmbeddedMapListOrderConfig from './EmbeddedMapListOrderConfig';
 import EmbeddedMapThemeConfig from './EmbeddedMapThemeConfig';
@@ -22,8 +17,16 @@ import EmbeddedMapCode from './EmbeddedMapCode';
 import EmbeddedMapUnauthorized from './EmbeddedMapUnauthorized';
 
 const styles = {
-    container: {
-        marginBottom: '200px',
+    page: {
+        padding: '0 24px 120px',
+    },
+    intro: {
+        maxWidth: '900px',
+        marginBottom: '24px',
+    },
+    previewNote: {
+        marginTop: '8px',
+        color: 'rgba(0, 0, 0, 0.6)',
     },
     section: {
         marginTop: '40px',
@@ -62,7 +65,8 @@ const styles = {
         top: '20px',
     },
     previewFrame: {
-        overflow: 'auto',
+        width: '100%',
+        overflow: 'hidden',
         border: '1px solid rgb(214, 216, 221)',
     },
 };
@@ -75,50 +79,53 @@ const SECTIONS = [
     { id: 'code', label: 'Size and embed code' },
 ];
 
-// This must be kept in sync with createIFrameHTML in util.js
-// We use a separate function to avoid using dangerouslySetInnerHTML
-const renderEmbeddedMap = ({ fullWidth, mapSettings, height, width }) =>
-    fullWidth ? (
-        <div>
-            <style>
-                {`\
-                #oar-embed-0d4dc3a7-e3cd-4acc-88f0-422f5aeefa48 {\
-                    position: relative;\
-                    padding-top: ${height}%;\
-                }\
-                @media (max-width: 600px) { /* mobile breakpoint */\
-                    #oar-embed-0d4dc3a7-e3cd-4acc-88f0-422f5aeefa48 {\
-                        padding-top: ${minimum100PercentWidthEmbedHeight}\
-                    }\
-                }`}
-            </style>
-            <div id="oar-embed-0d4dc3a7-e3cd-4acc-88f0-422f5aeefa48">
-                <iframe
-                    src={getEmbeddedMapSrc(mapSettings)}
-                    frameBorder="0"
-                    allowFullScreen
-                    style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                    }}
-                    title="embedded-map"
-                />
-            </div>
+// The preview shows the map as a visitor sees it on a desktop screen: the
+// filters, the list and the map side by side. The map only lays itself out
+// that way when it is wide enough, so it is rendered at a desktop width and
+// scaled down to fit the space beside the settings.
+const PREVIEW_WIDTH = 1280;
+const PREVIEW_HEIGHT = 780;
+
+function EmbeddedMapPreview({ src }) {
+    const frameRef = useRef(null);
+    const [scale, setScale] = useState(0.5);
+
+    useEffect(() => {
+        const fit = () => {
+            if (frameRef.current) {
+                setScale(
+                    Math.min(1, frameRef.current.offsetWidth / PREVIEW_WIDTH),
+                );
+            }
+        };
+        fit();
+        window.addEventListener('resize', fit);
+        return () => window.removeEventListener('resize', fit);
+    }, []);
+
+    return (
+        <div
+            ref={frameRef}
+            style={{ ...styles.previewFrame, height: PREVIEW_HEIGHT * scale }}
+        >
+            <iframe
+                src={src}
+                frameBorder="0"
+                title="embedded-map"
+                style={{
+                    width: `${PREVIEW_WIDTH}px`,
+                    height: `${PREVIEW_HEIGHT}px`,
+                    transform: `scale(${scale})`,
+                    transformOrigin: '0 0',
+                }}
+            />
         </div>
-    ) : (
-        <iframe
-            src={getEmbeddedMapSrc(mapSettings)}
-            frameBorder="0"
-            style={{
-                width: `${width}px`,
-                height: `${height}px`,
-            }}
-            title="embedded-map"
-        />
     );
+}
+
+EmbeddedMapPreview.propTypes = {
+    src: string.isRequired,
+};
 
 function EmbeddedMapConfig({
     user,
@@ -188,49 +195,54 @@ function EmbeddedMapConfig({
     };
 
     return (
-        <AppGrid style={styles.container} title="">
-            <Typography paragraph>
-                Generate a customized OS Hub Embedded Map for your website.
-            </Typography>
-            <Typography paragraph>
-                To begin,{' '}
-                <Link to="/contribute" className="inline-link">
-                    upload your supplier data
-                </Link>{' '}
-                (via upload or API) to OS Hub with all of the data fields you
-                wish to have displayed on your map using the template supplied
-                to you by the OS Hub Team.{' '}
-                <strong>
-                    This list must include any additional data points you would
-                    like to display on your customized map, such as facility
-                    type, number of workers etc.
-                </strong>{' '}
-                The Embedded Map will display all facilities included in your
-                lists.
-            </Typography>
-            <Typography paragraph>
-                Adjust the below settings to your liking, such as the map color
-                and size. Once complete, copy the Embed Code to add to your
-                website.
-            </Typography>
-            <Typography paragraph style={{ width: '100%' }}>
-                <strong>Have questions?</strong> Check out the FAQs on our{' '}
-                <a
-                    href={EmbeddedMapInfoLink}
-                    className="inline-link"
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    Embedded Map info page
-                </a>{' '}
-                or email{' '}
-                <a href="mailto:info@opensupplyhub.org" className="inline-link">
-                    info@opensupplyhub.org
-                </a>
-                .
-            </Typography>
+        <div style={styles.page}>
+            <div style={styles.intro}>
+                <Typography paragraph>
+                    Generate a customized OS Hub Embedded Map for your website.
+                </Typography>
+                <Typography paragraph>
+                    To begin,{' '}
+                    <Link to="/contribute" className="inline-link">
+                        upload your supplier data
+                    </Link>{' '}
+                    (via upload or API) to OS Hub with all of the data fields
+                    you wish to have displayed on your map using the template
+                    supplied to you by the OS Hub Team.{' '}
+                    <strong>
+                        This list must include any additional data points you
+                        would like to display on your customized map, such as
+                        facility type, number of workers etc.
+                    </strong>{' '}
+                    The Embedded Map will display all facilities included in
+                    your lists.
+                </Typography>
+                <Typography paragraph>
+                    Adjust the below settings to your liking, such as the map
+                    color and size. Once complete, copy the Embed Code to add to
+                    your website.
+                </Typography>
+                <Typography paragraph style={{ width: '100%' }}>
+                    <strong>Have questions?</strong> Check out the FAQs on our{' '}
+                    <a
+                        href={EmbeddedMapInfoLink}
+                        className="inline-link"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Embedded Map info page
+                    </a>{' '}
+                    or email{' '}
+                    <a
+                        href="mailto:info@opensupplyhub.org"
+                        className="inline-link"
+                    >
+                        info@opensupplyhub.org
+                    </a>
+                    .
+                </Typography>
+            </div>
             <Grid container spacing={40}>
-                <Grid item xs={12} md={6} lg={5}>
+                <Grid item xs={12} md={5} lg={4}>
                     <div style={styles.nav} role="tablist">
                         {SECTIONS.map(({ id, label }) => (
                             <button
@@ -334,20 +346,22 @@ function EmbeddedMapConfig({
                         </>
                     ) : null}
                 </Grid>
-                <Grid item xs={12} md={6} lg={7}>
+                <Grid item xs={12} md={7} lg={8}>
                     <div style={styles.preview}>
                         <Typography style={styles.previewHeader}>
                             Preview
                         </Typography>
                         {minimumConfigurationIsComplete ? (
-                            <div style={styles.previewFrame}>
-                                {renderEmbeddedMap({
-                                    fullWidth,
-                                    mapSettings,
-                                    height,
-                                    width,
-                                })}
-                            </div>
+                            <>
+                                <EmbeddedMapPreview
+                                    src={getEmbeddedMapSrc(mapSettings)}
+                                />
+                                <Typography style={styles.previewNote}>
+                                    Shown as on a desktop screen, scaled to fit.
+                                    The size you choose under Size and embed
+                                    code applies on your own website.
+                                </Typography>
+                            </>
                         ) : (
                             <Typography paragraph>
                                 Choose a color and enter a width and height to
@@ -357,7 +371,7 @@ function EmbeddedMapConfig({
                     </div>
                 </Grid>
             </Grid>
-        </AppGrid>
+        </div>
     );
 }
 
