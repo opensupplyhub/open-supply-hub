@@ -69,35 +69,63 @@ def clean_filters(filters: Any) -> Dict[str, list]:
             'Filters must be a JSON object, e.g. '
             '{"sector": ["Textiles"]}.'
         )
-    cleaned = {}
-    for field, values in filters.items():
-        if field not in FILTERABLE_FIELDS:
-            raise ValueError(
-                f'Unknown filter field "{field}". Allowed fields: '
-                f'{", ".join(sorted(FILTERABLE_FIELDS))}.'
-            )
-        if isinstance(values, str):
-            values = [values]
-        if not isinstance(values, (list, tuple)) or not values:
-            raise ValueError(
-                f'The "{field}" filter needs at least one value, e.g. '
-                f'{{"{field}": ["..."]}}. An empty list would match no '
-                'location.'
-            )
-        items = []
-        for value in values:
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(
-                    f'The "{field}" filter must list non-blank text '
-                    'values.'
-                )
-            items.append(value.strip())
-        if field == 'country':
-            items = [item.upper() for item in items]
-        elif field == 'product_type':
-            items = list(dict.fromkeys(item.lower() for item in items))
-        cleaned[field] = items
-    return cleaned
+    return {
+        field: _clean_field_values(field, values)
+        for field, values in filters.items()
+    }
+
+
+def _clean_field_values(field: str, values: Any) -> list:
+    """
+    Validate and normalize the values of ONE filter key.
+
+    Split out of `clean_filters` so each function stays small enough to
+    read at a glance. The rules and messages are exactly those described
+    in `clean_filters`.
+
+    Args:
+        field: The filter key, e.g. `sector`.
+        values: The value or list of values given for it.
+
+    Returns:
+        The cleaned list of values for that key.
+
+    Raises:
+        ValueError: For an unknown key, an empty list, or a blank or
+            non-text value.
+    """
+    if field not in FILTERABLE_FIELDS:
+        raise ValueError(
+            f'Unknown filter field "{field}". Allowed fields: '
+            f'{", ".join(sorted(FILTERABLE_FIELDS))}.'
+        )
+    if isinstance(values, str):
+        values = [values]
+    if not isinstance(values, (list, tuple)) or not values:
+        raise ValueError(
+            f'The "{field}" filter needs at least one value, e.g. '
+            f'{{"{field}": ["..."]}}. An empty list would match no '
+            'location.'
+        )
+    if any(not isinstance(value, str) or not value.strip()
+           for value in values):
+        raise ValueError(
+            f'The "{field}" filter must list non-blank text values.'
+        )
+    return _normalize_values(field, [value.strip() for value in values])
+
+
+def _normalize_values(field: str, items: list) -> list:
+    """
+    Apply the per-key normalization: country codes are upper-cased and
+    product types are lower-cased with repeats dropped (the search index
+    stores product types in lower case). Every other key is left as typed.
+    """
+    if field == 'country':
+        return [item.upper() for item in items]
+    if field == 'product_type':
+        return list(dict.fromkeys(item.lower() for item in items))
+    return items
 
 
 def build_filters_q(filters: Optional[Dict[str, list]]) -> Optional[Q]:
