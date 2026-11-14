@@ -6,6 +6,7 @@ from django.db.models import Count
 from django.db.models.fields.json import KeyTransform
 
 from api.helpers.geojson_zones import is_usable_zone_value
+from api.helpers.location_filters import build_filters_q
 
 from api.facility_index_backfill.zone_set_ids_recompute import (
     schedule_zone_set_ids_recompute,
@@ -36,6 +37,18 @@ class ZoneSet(models.Model):
     attribution text and source link are the linked partner field's
     `label`, `source_by` and `base_url`/`display_text`, so they are
     edited where every other Spotlight field's presentation lives.
+
+    Filters: a set may limit itself to locations matching `filters`
+    (sector, country, product type and the other polygon filter
+    fields; see `api.helpers.location_filters`). The filled-in boxes
+    combine with AND, and the values inside one box are alternatives.
+    Richer rules, such as OR between boxes, are future work and are
+    noted in that module. A location inside a zone that fails the
+    filters gets no value, on the location page, in the v1 endpoint,
+    in search and in the contributor-profile spotlight alike. The
+    filters are not stored with the zones: they are applied to each
+    location when it is served, so editing them needs no re-upload
+    and no recompute of `zone_set_ids`.
 
     Zones are uploaded in the Django admin from a GeoJSON
     FeatureCollection (see `api.models.zone_set_admin`). Re-uploading
@@ -107,6 +120,22 @@ class ZoneSet(models.Model):
             '"bws_label"). Every feature in an upload must carry it. '
             'Leave empty for an "object" field, which reads one feature '
             'property per key of its JSON schema instead.'
+        ),
+    )
+    filters = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            'Optional: only show this dataset on locations that match, '
+            'e.g. {"sector": ["Mining"]} or {"country": ["KH"], '
+            '"product_type": ["sugarcane"]}. Allowed keys: country, '
+            'sector, facility_type, processing_type, product_type, '
+            'parent_company (the same ones polygon filters use). Within '
+            'one key the values are alternatives; across keys a '
+            'location must match all. Sector and the other names must '
+            'be spelled exactly as they appear on locations; product '
+            'types are not case sensitive. Leave empty to show the '
+            'dataset on every location inside a zone.'
         ),
     )
     active = models.BooleanField(
@@ -225,6 +254,38 @@ class ZoneSet(models.Model):
             self.zones.filter(geom__covers=point)
             .order_by('feature_index', 'piece_index')
             .first()
+        )
+
+    def passes_filters(self, production_location):
+        """
+        Whether a location matches this set's `filters`.
+
+        A set with no filters passes every location. Otherwise the
+        location is looked up in the search index by id and tested
+        with the same condition search and the profile spotlight use
+        (`api.helpers.location_filters.build_filters_q`), as one
+        existence query. The index is used for both kinds of caller
+        because the location page passes a `FacilityIndex` (which
+        carries the filterable columns) while the v1 endpoint passes a
+        `Facility` (which does not); the two share an id.
+
+        The filters are applied to the location, not stored with the
+        zones, so changing them takes effect at once with no upload
+        and no recompute.
+
+        Args:
+            production_location: The Facility or FacilityIndex being
+                rendered.
+        """
+        condition = build_filters_q(self.filters)
+        if condition is None:
+            return True
+        from api.models.facility.facility_index import FacilityIndex
+        return (
+            FacilityIndex.objects
+            .filter(id=production_location.id)
+            .filter(condition)
+            .exists()
         )
 
     @transaction.atomic
