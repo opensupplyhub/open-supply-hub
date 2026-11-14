@@ -4,6 +4,10 @@ from django.contrib.gis.db import models as gis_models
 from django.core.validators import RegexValidator
 from django.db import models
 
+from api.helpers.location_filters import (
+    FILTERABLE_FIELDS as FILTERABLE_LOCATION_FIELDS,
+)
+
 
 # Polygon names are machine-friendly identifiers (other code looks
 # polygons up by name), so they follow identifier rules: letters,
@@ -80,25 +84,12 @@ class Polygon(models.Model):
 
     # The fields callers may pass as keys in the `filters` argument of
     # get_production_locations(), mapped to the FacilityIndex lookup
-    # that implements each one. Two kinds of lookup appear here because
-    # the underlying columns differ:
-    #   - `__in` fields hold ONE value per location (a location has
-    #     exactly one country), so the check is "is that value in the
-    #     requested list".
-    #   - `__overlap` fields are ARRAYS (a location can have several
-    #     sectors), so the check is "does the location's list share at
-    #     least one value with the requested list".
-    # To make a new field filterable, add an entry here — anything not
-    # in this allowlist is rejected with an error rather than silently
-    # ignored.
-    FILTERABLE_FIELDS = {
-        'country': 'country_code__in',
-        'sector': 'sector__overlap',
-        'facility_type': 'facility_type__overlap',
-        'processing_type': 'processing_type__overlap',
-        'product_type': 'product_type__overlap',
-        'parent_company': 'parent_company_name__overlap',
-    }
+    # that implements each one. The list lives in
+    # `api.helpers.location_filters` and is shared with zone sets, so a
+    # filter means the same thing on both. To make a new field
+    # filterable, add an entry there — anything not in the allowlist is
+    # rejected with an error rather than silently ignored.
+    FILTERABLE_FIELDS = FILTERABLE_LOCATION_FIELDS
 
     def get_production_locations(self, filters=None):
         """

@@ -1,5 +1,8 @@
+import json
+
 from django import forms
 from django.contrib import admin, messages
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import Count
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
@@ -8,9 +11,13 @@ from waffle import switch_is_active
 
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
 from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.location_filters import (
+    clean_filters as clean_location_filters,
+)
 from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.partner_field import PartnerField
 from api.models.polygon_admin import PolygonForm
+from api.models.sector import Sector
 from api.models.zone_set import ZoneSet
 from api.partner_fields.registry import (
     ZONE_SETS_SWITCH,
@@ -60,13 +67,87 @@ class ZoneSetForm(forms.ModelForm):
 
     class Meta:
         model = ZoneSet
+        # `filters` is deliberately not a form field: it is built from
+        # the three filter_* fields below (see `_post_clean`), so staff
+        # pick sectors from a list and type product names instead of
+        # editing JSON.
         fields = (
             'name', 'description', 'partner_field', 'value_property',
             'active',
         )
 
+    # The filter keys that have no dedicated field on this form. They
+    # stay editable as JSON in `filter_other` so a set keeps every
+    # filter polygons allow, without a screen per key.
+    OTHER_FILTER_KEYS = (
+        'country', 'facility_type', 'processing_type', 'parent_company',
+    )
+
+    filter_sectors = forms.MultipleChoiceField(
+        required=False,
+        label='Filter: sectors',
+        # The admin's own searchable picker (the one the sector group
+        # screen uses): every OS Hub sector on the left with a search
+        # box, the chosen ones on the right. Far easier to use than a
+        # plain list box with 100+ entries.
+        widget=FilteredSelectMultiple('sectors', is_stacked=False),
+        help_text=(
+            'Optional. Choose any number of sectors from the full OS '
+            'Hub sector list: search, then double-click a sector (or '
+            'use the arrow) to move it to "Chosen sectors". The '
+            'dataset shows only on locations in at least one chosen '
+            'sector. If product types (or another filter) are also '
+            'set, a location must match ALL of the filled boxes: the '
+            'boxes combine with AND, and the values inside one box are '
+            'alternatives. Leave the chosen box empty for no sector '
+            'filter.'
+        ),
+    )
+    filter_product_types = forms.CharField(
+        required=False,
+        max_length=10000,
+        label='Filter: product types',
+        widget=forms.Textarea(attrs={
+            'rows': 5,
+            'placeholder': 'sugar\nsugarcane\nsugar cane',
+        }),
+        help_text=(
+            'Optional. Type ONE product type per line: press Enter '
+            'between products. Do not use commas, semicolons or '
+            'bullets. Example (three lines): sugar / sugarcane / sugar '
+            'cane. A location that has ANY of the listed products '
+            'matches. Capital letters do not matter (Sugar Cane and '
+            'sugar cane are the same), but everything else must match: '
+            'spaces, hyphens and plurals, so sugarcane, sugar cane and '
+            'sugar-cane are three different entries and "sugar" does '
+            'not match "sugarcane". Extra spaces at the start or end '
+            'of a line and blank lines are ignored. If a sector is also '
+            'selected, a location must match both. Leave empty for no '
+            'product filter.'
+        ),
+    )
+    filter_other = forms.CharField(
+        required=False,
+        max_length=5000,
+        label='Filter: other (advanced)',
+        widget=forms.Textarea(attrs={
+            'rows': 3,
+            'placeholder': '{"country": ["KH", "ID"]}',
+        }),
+        help_text=(
+            'Optional, for developers and careful editors. JSON for the '
+            'remaining filters. Allowed keys: country (two-letter '
+            'codes), facility_type, processing_type, parent_company. '
+            'Each key takes a list in square brackets with each value '
+            'in double quotes and commas between values. Example: '
+            '{"country": ["KH", "ID"]}. Leave empty for none. Use the '
+            'two boxes above for sector and product type.'
+        ),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._init_filter_fields()
         # The default manager hides inactive partner fields, which
         # would make a set whose field was later deactivated impossible
         # to edit or retire (the saved choice is "not valid"), and
@@ -120,6 +201,122 @@ class ZoneSetForm(forms.ModelForm):
                 'provider and cannot be fed by a zone set.'
             )
         return partner_field
+
+    def _init_filter_fields(self):
+        """
+        Fill the filter fields: the sector choices, and, when editing a
+        saved set, what it already filters on.
+
+        The choices are the sector taxonomy, so a set can only be
+        limited to a sector name locations can carry. A sector a saved
+        set uses that is no longer in the taxonomy is kept as a choice,
+        so opening and saving the set does not silently drop it.
+        """
+        saved = (self.instance.filters or {}) if self.instance.pk else {}
+        sector_names = list(
+            Sector.objects.order_by('name').values_list('name', flat=True)
+        )
+        sector_names += [
+            name for name in saved.get('sector', [])
+            if name not in sector_names
+        ]
+        self.fields['filter_sectors'].choices = [
+            (name, name) for name in sector_names
+        ]
+        if self.instance.pk and not self.is_bound:
+            self.initial['filter_sectors'] = saved.get('sector', [])
+            self.initial['filter_product_types'] = '\n'.join(
+                saved.get('product_type', [])
+            )
+            other = {
+                key: value for key, value in saved.items()
+                if key in self.OTHER_FILTER_KEYS
+            }
+            self.initial['filter_other'] = (
+                json.dumps(other) if other else ''
+            )
+
+    def clean_filter_product_types(self):
+        """
+        Split the product box into one product type per line.
+
+        Blank lines are dropped and a repeated line is kept once. A
+        line with a comma or semicolon in it is refused rather than
+        guessed at: it almost always means several products typed on
+        one line, and splitting or keeping it would both quietly
+        filter on the wrong text (matching is exact apart from
+        capitals, which the shared filter helper lower-cases).
+        """
+        products = []
+        for line in self.cleaned_data['filter_product_types'].splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if ',' in line or ';' in line:
+                raise forms.ValidationError(
+                    f'"{line}" has a comma or semicolon. Put each '
+                    'product type on its own line (press Enter between '
+                    'them), without commas.'
+                )
+            if line not in products:
+                products.append(line)
+        return products
+
+    def clean_filter_other(self):
+        """
+        Parse the advanced box: JSON for the filters that have no field
+        of their own. Sector and product type must be set in their own
+        boxes so a value cannot be entered twice in two places.
+        """
+        raw = self.cleaned_data['filter_other'].strip()
+        if not raw:
+            return {}
+        try:
+            other = json.loads(raw)
+        except ValueError as exc:
+            raise forms.ValidationError(
+                f'Not valid JSON: {exc}. Example: {{"country": ["KH"]}}'
+            ) from exc
+        if not isinstance(other, dict):
+            raise forms.ValidationError(
+                'Use a JSON object, e.g. {"country": ["KH"]}.'
+            )
+        misplaced = [key for key in other if key not in self.OTHER_FILTER_KEYS]
+        if misplaced:
+            raise forms.ValidationError(
+                f'{", ".join(misplaced)} cannot be set here. Use the '
+                'sector and product type boxes for those; this box takes '
+                f'only: {", ".join(self.OTHER_FILTER_KEYS)}.'
+            )
+        return other
+
+    def _post_clean(self):
+        """
+        Combine the filter fields into the set's `filters` setting.
+
+        Runs after the model form has copied the other fields onto the
+        instance, so this assignment is the one that sticks. The result
+        goes through the same check polygons use
+        (`api.helpers.location_filters`), so an empty list or blank
+        value is a form error here, not a field that quietly never
+        shows. The filters are applied to each location when it is
+        served, not stored with the zones, so editing them needs no
+        re-upload.
+        """
+        super()._post_clean()
+        if self.errors:
+            return
+        filters = dict(self.cleaned_data.get('filter_other') or {})
+        if self.cleaned_data.get('filter_sectors'):
+            filters['sector'] = list(self.cleaned_data['filter_sectors'])
+        if self.cleaned_data.get('filter_product_types'):
+            filters['product_type'] = self.cleaned_data[
+                'filter_product_types'
+            ]
+        try:
+            self.instance.filters = clean_location_filters(filters)
+        except ValueError as exc:
+            self.add_error(None, str(exc))
 
     def clean(self):
         """
@@ -266,6 +463,7 @@ class ZoneSetAdmin(admin.ModelAdmin):
     )
     fields = (
         'name', 'description', 'partner_field', 'value_property',
+        'filter_sectors', 'filter_product_types', 'filter_other',
         'geojson_file', 'zone_summary', 'active', 'uuid', 'created_at',
         'updated_at',
     )
