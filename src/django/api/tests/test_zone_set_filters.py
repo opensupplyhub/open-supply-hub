@@ -5,8 +5,10 @@ from waffle.testutils import override_switch
 
 from api.helpers.location_filters import (
     FILTERABLE_FIELDS,
+    MAX_VALUES_PER_FILTER,
     build_filters_q,
     clean_filters,
+    has_filters,
 )
 from api.models import (
     Contributor,
@@ -83,6 +85,32 @@ class LocationFiltersHelperTest(SimpleTestCase):
             clean_filters({'sector': ['Home Textiles']}),
             {'sector': ['Home Textiles']},
         )
+
+    def test_only_none_and_empty_dict_mean_no_filters(self):
+        """Anything else, even something empty, is a filter setting that
+        has to be valid, so it can never be read as "no restriction"."""
+        self.assertFalse(has_filters(None))
+        self.assertFalse(has_filters({}))
+        for value in ([], '', 0, False, ['x'], 'text', {'sector': ['a']}):
+            self.assertTrue(has_filters(value), repr(value))
+
+    def test_empty_but_wrong_type_values_are_refused_not_ignored(self):
+        """An empty list, empty text or zero must not quietly mean "no
+        filters": that would show a dataset on every location."""
+        for value in ([], '', 0, False):
+            with self.assertRaises(ValueError, msg=repr(value)):
+                clean_filters(value)
+            with self.assertRaises(ValueError, msg=repr(value)):
+                build_filters_q(value)
+
+    def test_a_key_may_list_at_most_the_limit(self):
+        at_limit = [f'p{i}' for i in range(MAX_VALUES_PER_FILTER)]
+        self.assertEqual(
+            len(clean_filters({'sector': at_limit})['sector']),
+            MAX_VALUES_PER_FILTER,
+        )
+        with self.assertRaisesMessage(ValueError, 'the limit is'):
+            clean_filters({'sector': at_limit + ['one more']})
 
     def test_unknown_key_is_refused(self):
         """A typo must fail loudly, never filter nothing."""
@@ -482,6 +510,67 @@ class ZoneSetFiltersTest(TestCase):
             ids, {self.mine.id, self.textile.id, self.both.id}
         )
 
+    # --- unusable stored filters fail closed ----------------------
+
+    def test_unusable_stored_filters_match_nothing_on_the_page(self):
+        """A bad value can only get in outside the admin form. It must
+        not break the location page (no error), and must not widen what
+        is shown: the set matches nothing, and the problem is logged."""
+        self.zone_set.filters = {'sectr': ['Mining']}
+        self.zone_set.save()
+
+        with self.assertLogs('api.models.zone_set', level='ERROR') as logs:
+            data = self.provider.fetch_data(self.mine)
+
+        self.assertIsNone(data)
+        self.assertIn('cannot be used', logs.output[0])
+        self.assertIn(self.zone_set.name, logs.output[0])
+
+    def test_unusable_stored_filters_match_nothing_in_search(self):
+        """Search returns no location for the bad set instead of
+        raising, and a good set searched alongside it is unaffected."""
+        other_field = PartnerField.objects.create(
+            name='fwm_other', type=PartnerField.STRING, label='Other',
+            group=self.group, active=True,
+        )
+        other = ZoneSet.objects.create(
+            name='fwm_other', description='Unfiltered neighbour.',
+            partner_field=other_field, value_property='label',
+        )
+        with self.captureOnCommitCallbacks(execute=True):
+            other.replace_zones(zone_pieces(
+                feature(WEST, {'label': 'West other'}),
+                value_property='label',
+            ))
+        self.zone_set.filters = ['not', 'a', 'dict']
+        self.zone_set.save()
+
+        with self.assertLogs('api.models.zone_set', level='ERROR'):
+            both_sets = self._search_ids([self.zone_set, other])
+            bad_alone = self._search_ids([self.zone_set])
+
+        self.assertEqual(bad_alone, set())
+        # Only the unfiltered neighbour's west band contributes.
+        self.assertEqual(both_sets, {self.mine.id, self.textile.id})
+
+    def test_empty_but_wrong_type_stored_filters_are_not_no_filters(self):
+        """[], '' and 0 are not "no filters". They match nothing rather
+        than showing the dataset on every location in its zones."""
+        for bad in ([], '', 0):
+            self.zone_set.filters = bad
+            self.zone_set.save()
+            with self.assertLogs('api.models.zone_set', level='ERROR'):
+                self.assertIsNone(
+                    self.provider.fetch_data(self.textile), repr(bad)
+                )
+                self.assertEqual(self._search_ids(), set(), repr(bad))
+
+    def test_empty_dict_and_none_still_mean_no_filters(self):
+        for fine in ({}, None):
+            self.zone_set.filters = fine
+            self.assertIsNone(self.zone_set.filters_condition(), repr(fine))
+            self.assertTrue(self.zone_set.passes_filters(self.textile))
+
     # --- admin form -----------------------------------------------
 
     def _form(self, **filter_data):
@@ -620,6 +709,30 @@ class ZoneSetFiltersTest(TestCase):
         self.assertIn('ALL of the filled boxes', sector_help)
         self.assertIn('AND', sector_help)
         self.assertIn('must match both', product_help)
+
+    def test_product_box_refuses_too_many_values(self):
+        """One mistaken paste must not become an enormous filter."""
+        lines = '\n'.join(f'product {i}' for i in range(
+            MAX_VALUES_PER_FILTER + 1
+        ))
+        form = self._form(filter_product_types=lines)
+        self.assertFalse(form.is_valid())
+        self.assertIn('the limit is', str(form.non_field_errors()))
+
+    def test_product_box_accepts_exactly_the_limit(self):
+        lines = '\n'.join(f'product {i}' for i in range(
+            MAX_VALUES_PER_FILTER
+        ))
+        form = self._form(filter_product_types=lines)
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_filter_boxes_have_a_length_limit(self):
+        form = self._form(filter_product_types='a' * 10001)
+        self.assertFalse(form.is_valid())
+        self.assertIn('filter_product_types', form.errors)
+        form = self._form(filter_other='x' * 5001)
+        self.assertFalse(form.is_valid())
+        self.assertIn('filter_other', form.errors)
 
     def test_product_box_shows_the_format_to_staff(self):
         """The format has to be stated on the form itself."""

@@ -4,7 +4,6 @@ from django.db.models import Q
 from waffle import switch_is_active
 
 from api.helpers.geojson_zones import is_usable_zone_value
-from api.helpers.location_filters import build_filters_q
 from api.models.zone_set import Zone, ZoneSet
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
@@ -80,8 +79,11 @@ def build_zone_sets_covered_q(zone_sets):
     Returns:
         A `Q` against a queryset whose model carries `zone_set_ids`.
     """
+    conditions = {zone_set.id: zone_set.filters_condition()
+                  for zone_set in zone_sets}
     unfiltered_ids = [
-        zone_set.id for zone_set in zone_sets if not zone_set.filters
+        zone_set_id for zone_set_id, filters_q in conditions.items()
+        if filters_q is None
     ]
     condition = Q(zone_set_ids__overlap=unfiltered_ids)
     # A set with filters covers a location only when the location
@@ -89,12 +91,9 @@ def build_zone_sets_covered_q(zone_sets):
     # for the location page. Sets without filters keep sharing one
     # array overlap, so a search over unfiltered sets costs what it
     # did before filters existed.
-    for zone_set in zone_sets:
-        filters_q = build_filters_q(zone_set.filters)
+    for zone_set_id, filters_q in conditions.items():
         if filters_q is not None:
-            condition |= (
-                Q(zone_set_ids__overlap=[zone_set.id]) & filters_q
-            )
+            condition |= Q(zone_set_ids__overlap=[zone_set_id]) & filters_q
     return condition
 
 

@@ -25,6 +25,23 @@ FILTERABLE_FIELDS = {
     'parent_company': 'parent_company_name__overlap',
 }
 
+# The most values one key may list. Staff paste these by hand; a few hundred
+# is already far more than any real dataset needs, and a limit keeps one
+# mistaken paste from turning into an enormous query.
+MAX_VALUES_PER_FILTER = 200
+
+
+def has_filters(filters: Any) -> bool:
+    """
+    Whether a stored filter setting asks for any filtering.
+
+    Only `None` and `{}` mean "no filters". Anything else, including an
+    empty list or empty text that should never be stored, counts as a
+    filter setting so that `clean_filters` can refuse it; treating such a
+    value as "no filters" would quietly show a dataset on every location.
+    """
+    return filters is not None and filters != {}
+
 
 def clean_filters(filters: Any) -> Dict[str, list]:
     """
@@ -62,7 +79,7 @@ def clean_filters(filters: Any) -> Dict[str, list]:
         ValueError: With a message fit to show staff, when the setting
             is not usable.
     """
-    if filters in (None, {}):
+    if not has_filters(filters):
         return {}
     if not isinstance(filters, dict):
         raise ValueError(
@@ -106,6 +123,11 @@ def _clean_field_values(field: str, values: Any) -> list:
             f'The "{field}" filter needs at least one value, e.g. '
             f'{{"{field}": ["..."]}}. An empty list would match no '
             'location.'
+        )
+    if len(values) > MAX_VALUES_PER_FILTER:
+        raise ValueError(
+            f'The "{field}" filter lists {len(values)} values; the limit '
+            f'is {MAX_VALUES_PER_FILTER}.'
         )
     if any(not isinstance(value, str) or not value.strip()
            for value in values):
@@ -156,8 +178,14 @@ def build_filters_q(filters: Optional[Dict[str, list]]) -> Optional[Q]:
         A `Q` AND-ing one lookup per key, or `None` when there are no
         filters (callers treat that as "no restriction", never as a
         condition to add).
+
+    Raises:
+        ValueError: When the setting is not usable (see `clean_filters`).
+            Callers that serve data must not let this escape: see
+            `ZoneSet.filters_condition`, which turns it into "match
+            nothing".
     """
-    if not filters:
+    if not has_filters(filters):
         return None
     condition = Q()
     for field, values in clean_filters(filters).items():

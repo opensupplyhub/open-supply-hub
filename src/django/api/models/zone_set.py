@@ -1,17 +1,20 @@
+import logging
 import uuid
 
 from django.contrib.gis.db import models as gis_models
 from django.db import models, transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.fields.json import KeyTransform
 
 from api.helpers.geojson_zones import is_usable_zone_value
-from api.helpers.location_filters import build_filters_q
+from api.helpers.location_filters import build_filters_q, has_filters
 
 from api.facility_index_backfill.zone_set_ids_recompute import (
     schedule_zone_set_ids_recompute,
 )
 from api.models.polygon import variable_style_name_validator
+
+logger = logging.getLogger(__name__)
 
 
 class ZoneSet(models.Model):
@@ -256,6 +259,36 @@ class ZoneSet(models.Model):
             .first()
         )
 
+    def filters_condition(self):
+        """
+        The query condition for this set's `filters`, safe to serve with.
+
+        Returns `None` when the set has no filters (callers treat that
+        as "no restriction"). Returns the condition from
+        `build_filters_q` otherwise.
+
+        A stored value that is not usable (it can only get there outside
+        the admin form, which refuses it, for example a hand edit in the
+        database) must never break a location page or search, and must
+        never widen what is shown. So the error is logged and the set is
+        treated as matching nothing, the same "match nothing, never
+        everything" rule the India Labour Line provider follows. The
+        returned condition for that case, `Q(id__in=[])`, is the same
+        empty match the partner search filter uses when a polygon is
+        missing.
+        """
+        if not has_filters(self.filters):
+            return None
+        try:
+            return build_filters_q(self.filters)
+        except ValueError as exc:
+            logger.error(
+                'Zone set "%s" (id %s) has filters that cannot be used, '
+                'so it matches no location until they are fixed in the '
+                'admin: %s', self.name, self.pk, exc,
+            )
+            return Q(id__in=[])
+
     def passes_filters(self, production_location):
         """
         Whether a location matches this set's `filters`.
@@ -263,7 +296,7 @@ class ZoneSet(models.Model):
         A set with no filters passes every location. Otherwise the
         location is looked up in the search index by id and tested
         with the same condition search and the profile spotlight use
-        (`api.helpers.location_filters.build_filters_q`), as one
+        (`filters_condition`), as one
         existence query. The index is used for both kinds of caller
         because the location page passes a `FacilityIndex` (which
         carries the filterable columns) while the v1 endpoint passes a
@@ -277,7 +310,7 @@ class ZoneSet(models.Model):
             production_location: The Facility or FacilityIndex being
                 rendered.
         """
-        condition = build_filters_q(self.filters)
+        condition = self.filters_condition()
         if condition is None:
             return True
         from api.models.facility.facility_index import FacilityIndex

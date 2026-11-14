@@ -105,6 +105,7 @@ class ZoneSetForm(forms.ModelForm):
     )
     filter_product_types = forms.CharField(
         required=False,
+        max_length=10000,
         label='Filter: product types',
         widget=forms.Textarea(attrs={
             'rows': 5,
@@ -127,6 +128,7 @@ class ZoneSetForm(forms.ModelForm):
     )
     filter_other = forms.CharField(
         required=False,
+        max_length=5000,
         label='Filter: other (advanced)',
         widget=forms.Textarea(attrs={
             'rows': 3,
