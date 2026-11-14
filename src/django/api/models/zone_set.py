@@ -282,7 +282,7 @@ class ZoneSet(models.Model):
         try:
             return build_filters_q(self.filters)
         except ValueError as exc:
-            logger.error(
+            logger.exception(
                 'Zone set "%s" (id %s) has filters that cannot be used, '
                 'so it matches no location until they are fixed in the '
                 'admin: %s', self.name, self.pk, exc,
