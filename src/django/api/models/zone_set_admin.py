@@ -501,14 +501,17 @@ class ZoneSetForm(forms.ModelForm):
             # error above already says what to fix.
             return cleaned_data
 
-        if adding and self.instance.zones.exists():
+        if adding:
             # Every stored zone was validated against, and is served
             # by, the key or schema the set has now; an added file
             # read by a new one would leave the set half one way and
-            # half the other.
-            self._refuse_changes_needing_reupload(
-                partner_field, feeds_object, self.REPLACE_MESSAGES
-            )
+            # half the other. Lock the set first, so "now" cannot
+            # change under this save.
+            self._lock_set_for_add()
+            if self.instance.zones.exists():
+                self._refuse_changes_needing_reupload(
+                    partner_field, feeds_object, self.REPLACE_MESSAGES
+                )
             if self.errors:
                 return cleaned_data
 
@@ -519,6 +522,45 @@ class ZoneSetForm(forms.ModelForm):
         self.adds_to_existing = adding
 
         return cleaned_data
+
+    def _lock_set_for_add(self):
+        """
+        Lock the set's row for the rest of the save and refuse the add
+        if another save changed the set since this form was loaded.
+
+        The add-mode checks compare the submitted key and field with
+        the ones the stored zones were read by, taken from the
+        instance as it was loaded for this request. Without a lock,
+        another save could replace the zones under a different key or
+        field between that load and this save; the admin's own save
+        would then write the loaded values back over it and
+        `add_zones` would append zones read one way beside zones read
+        another. The admin runs the whole POST in one transaction, so
+        the lock taken here holds until the save commits: a competing
+        save either committed first, in which case the row no longer
+        matches what the form was loaded with and the add is refused,
+        or waits for this one and sees its result.
+
+        Only the key and field are compared: a competing replace under
+        the same key and field leaves zones this file can be added to.
+        """
+        stored = (
+            ZoneSet.objects.select_for_update()
+            .values('value_property', 'partner_field_id')
+            .get(pk=self.instance.pk)
+        )
+        if (
+            stored['value_property'] != self.instance.value_property
+            or stored['partner_field_id'] != self.instance.partner_field_id
+        ):
+            self.add_error(
+                None,
+                'This zone set was changed by another save while you '
+                'were editing it, so its zones may no longer be read '
+                'by the value property or partner field this page was '
+                'loaded with. Reload the page and upload the file '
+                'again.'
+            )
 
     def _clean_without_file(self, partner_field, feeds_object):
         """

@@ -1060,6 +1060,46 @@ class ZoneSetAddModeTest(TestCase):
         self.assertEqual(zone_set.partner_field, string_b)
         self.assertEqual(zone_set.feature_count, 2)
 
+    def test_add_is_refused_when_another_save_changed_the_set_meanwhile(
+        self
+    ):
+        """The add-mode checks compare against the key and field the
+        form was loaded with; if another save changed either since,
+        the add is refused rather than appended beside zones read a
+        different way, and nothing is stored."""
+        zone_set = self._string_set(
+            feature(LEFT, {'bws_label': 'High', 'bws_cat': 4}),
+        )
+        before = list(zone_set.zones.values_list('id', 'value'))
+
+        for stale in (
+            {'value_property': 'bws_cat'},
+            {'partner_field': object_field().pk},
+        ):
+            with self.subTest(stale=stale):
+                form = ZoneSetForm(
+                    data={**BASE_DATA, **ADD},
+                    files={'geojson_file': upload(
+                        feature(RIGHT, {'bws_label': 'Low', 'bws_cat': 1}),
+                    )},
+                    instance=ZoneSet.objects.get(pk=zone_set.pk),
+                )
+                # Another request replaces the set under a new key or
+                # field after this form was loaded.
+                ZoneSet.objects.filter(pk=zone_set.pk).update(**stale)
+
+                self.assertFalse(form.is_valid())
+                self.assertIn('changed by another save',
+                              str(form.non_field_errors()))
+                self.assertIsNone(form.parsed_zones)
+                self.assertEqual(
+                    list(zone_set.zones.values_list('id', 'value')),
+                    before,
+                )
+                ZoneSet.objects.filter(pk=zone_set.pk).update(
+                    value_property='bws_label', partner_field=None,
+                )
+
     def test_replace_after_several_adds_discards_them_all(self):
         """AC #5: replace mode is today's behaviour whatever the set
         was built from."""
