@@ -4,9 +4,11 @@ from django.db.models import Q
 
 # The fields a location filter may use, mapped to the FacilityIndex
 # lookup that implements each one. Polygons (`Polygon.get_production_
-# locations`) and zone sets share this one list, so a filter written
-# for one means the same thing in the other. Two kinds of lookup
-# appear because the underlying columns differ:
+# locations`) and zone sets share this one list AND the functions below
+# that validate and apply it (`clean_filters`, `build_filters_q`), so a
+# filter written for one means the same thing in the other.
+#
+# Two kinds of lookup appear because the underlying columns differ:
 #   - `__in` fields hold ONE value per location (a location has
 #     exactly one country), so the check is "is that value in the
 #     requested list".

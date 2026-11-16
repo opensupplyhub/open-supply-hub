@@ -6,6 +6,7 @@ from django.db import models
 
 from api.helpers.location_filters import (
     FILTERABLE_FIELDS as FILTERABLE_LOCATION_FIELDS,
+    build_filters_q,
 )
 
 
@@ -106,30 +107,32 @@ class Polygon(models.Model):
             filters: Optional dict narrowing the results by core
                 location fields, e.g.
                 `{'country': ['IN'], 'sector': ['Apparel']}`.
-                Keys must appear in the `FILTERABLE_FIELDS`
-                allowlist (an unknown key raises `ValueError`, so
-                typos can't silently return unfiltered results).
-                Values may be a list or a single string. Within
-                one key, values are OR'd ("US or IN"); across keys,
-                conditions are AND'd ("that country AND that
-                sector"). Country codes are upper-cased before
-                matching so `'in'` behaves the same as `'IN'`.
+                Within one key, values are OR'd ("US or IN"); across
+                keys, conditions are AND'd ("that country AND that
+                sector"). The setting is validated and normalized by
+                the same functions zone sets use
+                (`api.helpers.location_filters.clean_filters` and
+                `build_filters_q`), so a filter means the same thing
+                on a polygon as on a zone set: keys must appear in the
+                `FILTERABLE_FIELDS` allowlist, a single string counts
+                as a one-item list, values are trimmed, country codes
+                are upper-cased (`'in'` behaves like `'IN'`), product
+                types are lower-cased (the index stores them in lower
+                case), and a key may list at most 200 values. An
+                unknown key, an empty list, or a blank or non-text
+                value raises `ValueError`, so a typo can't silently
+                return unfiltered or empty results. `None` or `{}`
+                means no filtering.
 
         Returns:
             A `FacilityIndex` queryset of the matching locations.
+
+        Raises:
+            ValueError: When `filters` is not usable.
         """
         from .facility.facility_index import FacilityIndex
         queryset = FacilityIndex.objects.filter(location__within=self.geom)
-        for field, values in (filters or {}).items():
-            lookup = self.FILTERABLE_FIELDS.get(field)
-            if lookup is None:
-                raise ValueError(
-                    f'Unknown filter field "{field}". Allowed fields: '
-                    f'{", ".join(sorted(self.FILTERABLE_FIELDS))}.'
-                )
-            if isinstance(values, str):
-                values = [values]
-            if field == 'country':
-                values = [value.upper() for value in values]
-            queryset = queryset.filter(**{lookup: list(values)})
+        condition = build_filters_q(filters)
+        if condition is not None:
+            queryset = queryset.filter(condition)
         return queryset
