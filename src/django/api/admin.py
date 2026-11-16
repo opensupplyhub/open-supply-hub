@@ -708,6 +708,36 @@ class AnnouncementBannerAdmin(admin.ModelAdmin):
         return False
 
 
+class FacilityProfileCompletenessAdmin(admin.ModelAdmin):
+    """
+    Read-only list of loaded runs, for comparing the numeric score's
+    level with the model-backed classification. Rows come from the
+    load_profile_completeness command.
+    """
+    list_display = (
+        'facility_id',
+        'run_date',
+        'score',
+        'level',
+        'classifier_tier',
+        'classifier_agreement_tier',
+        'classifier_field_tier',
+        'scorer_version',
+        'classifier_model',
+    )
+    list_filter = ('run_date', 'classifier_tier', 'scorer_version')
+    search_fields = ('facility__id',)
+
+    def has_add_permission(self, request):
+        return False
+
+    # Every field is read-only rather than relying on change permission
+    # alone, so the Facility FK is never an editable form field (its
+    # choices cannot see candidate facilities).
+    def get_readonly_fields(self, request, obj=None):
+        return [field.name for field in self.model._meta.fields]
+
+
 class USCountyTigerlineAdmin(admin.ModelAdmin):
     list_display = ('geoid', 'name')
     search_fields = ('geoid', 'name')
@@ -831,6 +861,9 @@ admin_site.register(
 )
 admin_site.register(AnnouncementBanner, AnnouncementBannerAdmin)
 admin_site.register(USCountyTigerline, USCountyTigerlineAdmin)
+admin_site.register(
+    models.FacilityProfileCompleteness, FacilityProfileCompletenessAdmin
+)
 admin_site.register(Polygon, PolygonAdmin)
 admin_site.register(ZoneSet, ZoneSetAdmin)
 admin_site.register(Zone, ZoneAdmin)

@@ -4,6 +4,12 @@ import { render, screen } from '@testing-library/react';
 
 import ProductionLocationDetailsContent from '../../components/ProductionLocation/ProductionLocationDetailsContent/ProductionLocationDetailsContent';
 
+// The admin-only completeness preview reads the signed-in user from the
+// store, which this test renders without.
+jest.mock(
+    '../../components/ProductionLocation/ProfileCompleteness/hooks',
+    () => () => null,
+);
 jest.mock(
     '../../components/ProductionLocation/ProductionLocationDetailsMap/ProductionLocationDetailsMap',
     () => () => <div data-testid="details-map" />,

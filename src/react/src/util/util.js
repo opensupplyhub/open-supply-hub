@@ -233,6 +233,8 @@ export const makeGetNativeLanguageName = () => '/api/native_language_name/';
 export const makeGetClaimStatusesURL = () => '/api/claim-statuses/';
 export const makeGetClaimProfileOptionsURL = () =>
     '/api/claim-profile-options/';
+export const makeGetProfileCompletenessURL = osId =>
+    `/api/profile-completeness/${osId}/`;
 
 export const makeGetFacilitiesURL = () => '/api/facilities/';
 export const makeGetIdentityRecordURL = osId =>
