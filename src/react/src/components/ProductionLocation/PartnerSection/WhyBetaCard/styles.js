@@ -9,8 +9,8 @@ const whyBetaCardStyles = theme => {
             alignItems: 'flex-start',
             // Set apart from the data fields above it, as in the mockup.
             // This collapses with the section's own 16px between fields,
-            // so the larger value wins: 48px.
-            marginTop: spacing * 6,
+            // so the larger value wins: 40px.
+            marginTop: spacing * 5,
         }),
         chip: Object.freeze({
             marginBottom: spacing,
