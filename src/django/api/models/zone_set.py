@@ -302,6 +302,9 @@ class ZoneSet(models.Model):
         carries the filterable columns) while the v1 endpoint passes a
         `Facility` (which does not); the two share an id.
 
+        The cost is one primary-key EXISTS query, and none for a set
+        without filters.
+
         The filters are applied to the location, not stored with the
         zones, so changing them takes effect at once with no upload
         and no recompute.

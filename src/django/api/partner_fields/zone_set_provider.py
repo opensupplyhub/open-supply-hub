@@ -151,6 +151,14 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
         zone = self.zone_set.resolve_zone(production_location.location)
         if zone is None:
             return None
+        # One extra query per location page, by design. The filterable
+        # columns (sector, product type, ...) live on FacilityIndex, but
+        # this method may be handed a plain Facility (the v1 endpoint),
+        # which does not have them, so the check is a single indexed
+        # EXISTS lookup by id rather than a Python comparison. It runs
+        # only after the zone matched and only for sets that have
+        # filters (unfiltered sets return at once), so most locations
+        # never pay for it.
         if not self.zone_set.passes_filters(production_location):
             return None
         return zone
