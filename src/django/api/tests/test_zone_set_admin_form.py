@@ -272,6 +272,28 @@ class ZoneSetFormTest(TestCase):
                 self.assertIn('schema is required',
                               str(form.errors['partner_field']))
 
+    def test_required_key_outside_properties_is_rejected(self):
+        """A schema may require a key it never defines under
+        `properties`. The upload would demand it of every feature
+        while the provider serves only defined properties, so the
+        value could never reach the page; refuse the link and name
+        the keys."""
+        field = object_field(schema={
+            **SCHEMA, 'required': ['bws_label', 'atlas_link', 'scope'],
+        })
+        form = self._object_form(
+            field,
+            feature(LEFT, {'bws_label': 'High', 'atlas_link': 'x',
+                           'scope': 'Annual'}),
+        )
+
+        self.assertFalse(form.is_valid())
+        message = str(form.errors['partner_field'])
+        self.assertIn('&quot;atlas_link&quot;, &quot;scope&quot;', message)
+        self.assertIn('does not define them under', message)
+        self.assertNotIn('bws_label', message)
+        self.assertIsNone(form.parsed_zones)
+
     def test_value_property_is_required_for_a_string_field(self):
         """The column is optional for object sets only; a string set,
         linked or not, still needs the key to read labels by."""
@@ -716,6 +738,27 @@ class ZoneSetAdminSaveTest(TestCase):
             'serving schema keys: bws_label, bwd_label, atlas_url', summary
         )
         self.assertNotIn('labels:', summary)
+
+    def test_zone_summary_says_when_the_schema_has_no_keys(self):
+        """Only reachable by editing the field outside the admin (the
+        partner field form refuses it while zones exist), but the
+        summary should say so rather than end in a dangling colon."""
+        zone_set = self._save(
+            {**OBJECT_DATA, 'partner_field': object_field().pk},
+            files={'geojson_file': upload(
+                feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            )},
+        )
+        PartnerField.objects.filter(pk=zone_set.partner_field_id).update(
+            json_schema={'type': 'object'}
+        )
+        zone_set.refresh_from_db()
+
+        summary = self.model_admin.zone_summary(zone_set)
+
+        self.assertIn('1 zone(s) stored as 1 piece(s)', summary)
+        self.assertIn('serving no schema keys', summary)
+        self.assertNotIn('schema keys:', summary)
 
 
 # The admin templates call `{% static %}`, and the project's manifest

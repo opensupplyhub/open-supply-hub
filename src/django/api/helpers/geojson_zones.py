@@ -23,6 +23,47 @@ def is_usable_zone_value(value):
     return True
 
 
+def schema_required_keys(schema):
+    """
+    The property names a JSON schema's `required` list names, in
+    schema order. Entries that are not strings are ignored rather
+    than raised on, since a schema is staff-typed JSON. Anything that
+    is not a dict has no required keys.
+    """
+    if not isinstance(schema, dict):
+        return []
+    return [
+        key for key in (schema.get('required') or [])
+        if isinstance(key, str)
+    ]
+
+
+def required_keys_outside_properties(schema):
+    """
+    The keys a JSON schema lists as `required` without defining them
+    under `properties`, in schema order.
+
+    JSON Schema allows that, but a zone set cannot serve it: the
+    upload would demand the key of every feature (and label by it,
+    if first) while the provider serves only the properties the
+    schema defines, so the page would never show the value. Both
+    admin forms refuse such a schema (see `ZoneSetForm` and
+    `PartnerFieldAdminForm`), so the one definition lives here.
+    """
+    properties = schema.get('properties') if isinstance(schema, dict) else None
+    if not isinstance(properties, dict):
+        properties = {}
+    return [
+        key for key in schema_required_keys(schema)
+        if key not in properties
+    ]
+
+
+def quote_keys(keys):
+    """`"a", "b"`: schema keys named in an admin error message."""
+    return ', '.join(f'"{key}"' for key in keys)
+
+
 def parse_zone_features(raw, value_property=None, schema=None):
     """
     Parse a zoned GeoJSON FeatureCollection into zone records.
@@ -94,10 +135,7 @@ def parse_zone_features(raw, value_property=None, schema=None):
             for geom, properties in features
         ]
 
-    required = [
-        key for key in (schema.get('required') or [])
-        if isinstance(key, str)
-    ]
+    required = schema_required_keys(schema)
     problems = []
     for key in required:
         problem = _missing_property_message(features, key)

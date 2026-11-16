@@ -7,7 +7,11 @@ from api.helpers.geojson_polygon import (
     InvalidPolygonGeoJSON,
     parse_feature_collection_polygons,
 )
-from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.geojson_zones import (
+    parse_zone_features,
+    required_keys_outside_properties,
+    schema_required_keys,
+)
 
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
@@ -325,3 +329,33 @@ class ParseZoneFeaturesForObjectFieldTest(unittest.TestCase):
         )
         [zone] = parse_zone_features(raw, 'not_a_key', schema=SCHEMA)
         self.assertEqual(zone['label'], 'High')
+
+
+class SchemaRequiredKeysTest(unittest.TestCase):
+    """The one reading of a schema's `required` list that the parser
+    and both admin forms share."""
+
+    def test_required_keys_in_order_strings_only(self):
+        schema = {'required': ['b', 3, 'a', None]}
+        self.assertEqual(schema_required_keys(schema), ['b', 'a'])
+
+    def test_no_required_keys_for_a_missing_list_or_non_dict(self):
+        for schema in ({}, {'required': None}, None, 'required', []):
+            with self.subTest(schema=schema):
+                self.assertEqual(schema_required_keys(schema), [])
+
+    def test_required_keys_outside_properties(self):
+        schema = {
+            'properties': {'a': {}, 'b': {}},
+            'required': ['b', 'c', 'a', 'd'],
+        }
+        self.assertEqual(required_keys_outside_properties(schema), ['c', 'd'])
+
+    def test_every_required_key_is_outside_a_missing_properties_map(self):
+        for schema in ({'required': ['a']}, {'properties': 'a',
+                                             'required': ['a']}):
+            with self.subTest(schema=schema):
+                self.assertEqual(
+                    required_keys_outside_properties(schema), ['a']
+                )
+        self.assertEqual(required_keys_outside_properties(None), [])
