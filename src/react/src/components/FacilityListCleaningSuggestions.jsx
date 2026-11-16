@@ -120,6 +120,20 @@ export const CODE_LABELS = Object.freeze({
     name_incomplete: 'name looks incomplete',
     repeated_names: 'same name at several addresses',
     empty_row: 'blank row',
+    // The remaining codes the auto-lists-cleaning state machine emits.
+    duplicate_token: 'repeated words removed',
+    spelling: 'spelling corrected',
+    sector_mapping: 'sector matched to a supported value',
+    facility_type_mapping: 'facility type matched to a supported value',
+    address_too_many: 'address has details that are not the address',
+    multiple_addresses: 'more than one address',
+    country_address_mismatch: 'address does not match the country',
+    name_too_many: 'name has details that are not the name',
+    multiple_names: 'more than one name',
+    sector_unrecognized: 'sector not in the supported list',
+    non_roman_characters: 'non-Roman characters',
+    column_swap: 'values in the wrong column',
+    spelling_uncertain: 'possible misspelling',
 });
 
 // What a contributor can do about each required fix, in their words.
@@ -162,7 +176,7 @@ const GEOCODE_WHY =
     'OS Hub places every facility on a map and matches it against facilities other contributors have shared. A clear street address lets that happen accurately, so your facility is found, matched and counted correctly.';
 const NAME_WHY =
     'Names are how OS Hub matches your facility with the same facility shared by others. A precise, unique name means your data merges with theirs instead of creating a duplicate or a wrong match.';
-const CODE_GUIDE = Object.freeze({
+const GUIDE = {
     address_po_box: {
         title: 'PO Box in the address',
         problem:
@@ -423,7 +437,45 @@ const CODE_GUIDE = Object.freeze({
             'Accept the trimmed address, or keep the original if the country is part of a place name.',
         ],
     },
-});
+    duplicate_token: {
+        title: 'Repeated words',
+        problem:
+            'A word or place name is written twice in a row, for example "Madrid, Spain Spain".',
+        why: GEOCODE_WHY,
+        fix: [
+            'Accept the version with the repeat removed, or keep the original if the repeat is part of the place name (Walla Walla, Baden Baden).',
+        ],
+    },
+    business_name_in_address: {
+        title: 'Business name in the address',
+        problem:
+            "The address starts with a business name, the facility's own or another's.",
+        why: GEOCODE_WHY,
+        fix: [
+            'Accept the address without the name, or keep the original if the name is part of the street address (an industrial estate, a building).',
+        ],
+    },
+    sector_mapping: {
+        title: 'Sector or facility type matched',
+        problem:
+            'The value was written differently from the supported list, for example "apparels" or "Cut and sew".',
+        why:
+            'These columns feed the filters on OS Hub; a value outside the supported list cannot be searched.',
+        fix: [
+            'Accept the matched value, or keep the original if it means something different.',
+        ],
+    },
+};
+// The state machine's names for problems the guide already covers.
+GUIDE.name_in_address = GUIDE.business_name_in_address;
+GUIDE.facility_type_mapping = GUIDE.sector_mapping;
+GUIDE.country_address_mismatch = GUIDE.country_mismatch;
+GUIDE.sector_unrecognized = GUIDE.sector_values;
+GUIDE.column_swap = GUIDE.sector_values;
+GUIDE.non_roman_characters = GUIDE.encoding;
+GUIDE.spelling_uncertain = GUIDE.spelling;
+GUIDE.empty_row = GUIDE.empty;
+const CODE_GUIDE = Object.freeze(GUIDE);
 
 export const codeGuide = code => CODE_GUIDE[(code || '').split('+')[0]] || null;
 
@@ -1366,12 +1418,32 @@ Removal.propTypes = {
 
 /*
  * Whole-file findings. Exact duplicates are an automatic group and
- * repeated names an advisory one, so both live in the chips; only a
- * header problem, which has no rows to act on, is left to say here.
+ * repeated names an advisory one, so both live in the chips; a header
+ * problem, which has no rows to act on, is said here, and so is a run
+ * the judgment checks did not finish: the state machine still returns
+ * the formatting checks for those rows, and the contributor should
+ * know that is all they are seeing.
  */
-export const ListFindings = ({ filePass }) => {
+export const partialChecksNote = pipeline => {
+    const rows = (pipeline && pipeline.model_error_rows) || [];
+    if (pipeline && pipeline.degraded) {
+        return 'Part of the automatic checks was unavailable, so most rows show only the formatting checks. Our human moderator still reviews every row.';
+    }
+    if (rows.length) {
+        return `Part of the automatic checks could not run for ${plural(
+            rows.length,
+            'row',
+        )}, so ${
+            rows.length === 1 ? 'that row shows' : 'those rows show'
+        } only the formatting checks. Our human moderator still reviews every row.`;
+    }
+    return '';
+};
+
+export const ListFindings = ({ filePass, pipeline }) => {
     const headerIssues = filePass.header_issues || [];
-    if (!headerIssues.length) return null;
+    const partial = partialChecksNote(pipeline);
+    if (!headerIssues.length && !partial) return null;
     return (
         <div style={styles.headerIssues}>
             {headerIssues.map(issue => (
@@ -1379,11 +1451,13 @@ export const ListFindings = ({ filePass }) => {
                     {issue.note || `Header problem: ${issue.column}`}
                 </div>
             ))}
+            {partial && <div>{partial}</div>}
         </div>
     );
 };
 
-ListFindings.propTypes = { filePass: object.isRequired };
+ListFindings.defaultProps = { pipeline: {} };
+ListFindings.propTypes = { filePass: object.isRequired, pipeline: object };
 
 export const suggestionKey = s => `${s.kind}:${s.code}:${s.field}`;
 

@@ -1743,3 +1743,35 @@ variable "claim_attachments_reader_role_arns" {
   type    = list(string)
   default = []
 }
+
+# The auto-lists-cleaning Step Functions state machine (OSDEV-3724, in
+# the automated-single-location-contribution repo's auto-lists stack) that
+# the contributor-facing list review (OSDEV-3726) starts after a list is
+# parsed, and the stack's results bucket, where the application reads
+# results from lists/* and uploads the rows of a list too large for the
+# execution input to inbox/*. All three come from the stack's outputs
+# (StateMachineArn, ResultsBucketName) and the account it is deployed in.
+# Empty by default: the app then has no permission to start it, and the
+# feature stays behind its waffle switch. When the stack is in another
+# account, its ResultsReaderPrincipal parameter must name this
+# environment's app task role as well.
+variable "list_cleaning_state_machine_arn" {
+  type    = string
+  default = ""
+}
+
+variable "list_cleaning_results_bucket" {
+  type    = string
+  default = ""
+}
+
+variable "list_cleaning_results_bucket_owner" {
+  type    = string
+  default = ""
+}
+
+variable "list_cleaning_aws_region" {
+  type        = string
+  description = "Region the state machine and its results bucket are in; the auto-lists stack deploys to us-east-1."
+  default     = "us-east-1"
+}

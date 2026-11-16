@@ -525,7 +525,10 @@ const ReviewStep = ({ review }) => {
                 showingAuto={showAuto}
                 onViewFixes={() => setShowAuto(s => !s)}
             />
-            <ListFindings filePass={run.file_pass || {}} />
+            <ListFindings
+                filePass={run.file_pass || {}}
+                pipeline={run.pipeline || {}}
+            />
             <GroupTabs
                 groups={data.groups || []}
                 rows={rows}

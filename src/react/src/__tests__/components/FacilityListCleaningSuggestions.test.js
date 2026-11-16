@@ -116,6 +116,19 @@ describe('ListFindings', () => {
         expect(screen.getByText('Missing country column')).toBeInTheDocument();
         expect(screen.queryByText(/Findings about the whole file/)).toBeNull();
     });
+
+    test('says when rows had only the formatting checks', () => {
+        const { container, rerender } = render(
+            <ListFindings filePass={{}} pipeline={{ model_error_rows: [], degraded: false }} />,
+        );
+        expect(container).toBeEmptyDOMElement();
+        rerender(<ListFindings filePass={{}} pipeline={{ model_error_rows: [4] }} />);
+        expect(
+            screen.getByText(/could not run for 1 row, so that row shows only the formatting checks/),
+        ).toBeInTheDocument();
+        rerender(<ListFindings filePass={{}} pipeline={{ model_error_rows: [4, 5], degraded: true }} />);
+        expect(screen.getByText(/most rows show only the formatting checks/)).toBeInTheDocument();
+    });
 });
 
 describe('row components', () => {

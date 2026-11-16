@@ -7,7 +7,12 @@ start_run      -> create a ListCleaningRun and hand it to the configured
                   `enable_list_cleaning_feedback` switch is on.
 refresh_run    -> poll an asynchronous runner and ingest its result.
 ingest_result  -> turn the pipeline's aggregated {file_pass, records, usage}
-                  into ListCleaningSuggestion rows.
+                  into ListCleaningSuggestion rows. The state machine's
+                  records say which layer made each decision (`source`
+                  rules, model or rules+model), which rules flags the
+                  model withdrew, and which rows the model never judged
+                  (`model_error`); all of that is kept on the suggestion's
+                  `extra` and the run's `pipeline`.
 record_decisions -> log a contributor's accept / reject / edit / remove
                   per suggestion, or per error type across the list.
 submit_run     -> the one submission (v3): apply every accepted
@@ -59,6 +64,15 @@ log = logging.getLogger(__name__)
 
 SWITCH_NAME = 'enable_list_cleaning_feedback'
 ROW_OFFSET = 2  # FacilityListItem.row_index 0 is spreadsheet row 2
+
+# The pipeline files these for the moderator (internal_note); here they
+# are shown to the contributor as worth a look. One name at two addresses
+# is either two sites or one typed twice, and only the contributor knows.
+ADVISORY_CODES = ('repeated_names',)
+
+# What a state-machine record says about a change or issue beyond the
+# prompt's own shape, kept on the suggestion for the moderator report.
+RECORD_EXTRA_KEYS = ('source', 'rules_value')
 
 
 def feature_enabled():
@@ -198,6 +212,19 @@ def _original_value(item, field, change=None):
     return str(getattr(item, field, '') or '')
 
 
+def _severity(issue):
+    severity = issue.get('severity', '') or ''
+    if (issue.get('code') in ADVISORY_CODES
+            and severity == ListCleaningSuggestion.INTERNAL_NOTE):
+        return ListCleaningSuggestion.ADVISORY
+    return severity
+
+
+def _record_extra(entry):
+    return {k: entry[k] for k in RECORD_EXTRA_KEYS
+            if entry.get(k) is not None}
+
+
 def _default_decision(field, code):
     if field in ListCleaningSuggestion.PROTECTED_FIELDS:
         return ListCleaningSuggestion.PENDING
@@ -213,6 +240,9 @@ def _correction(item, change, common, now):
     code = change.get('reason', '')
     decision = _default_decision(field, code)
     auto = decision == ListCleaningSuggestion.ACCEPTED
+    extra = _record_extra(change)
+    if auto:
+        extra['auto'] = True
     return ListCleaningSuggestion(
         kind=ListCleaningSuggestion.CORRECTION,
         field=field,
@@ -222,7 +252,7 @@ def _correction(item, change, common, now):
         note=change.get('note', '') or '',
         decision=decision,
         decided_at=now if auto else None,
-        extra={'auto': True} if auto else {},
+        extra=extra,
         **common,
     )
 
@@ -233,9 +263,10 @@ def _issue(item, issue, common):
         kind=ListCleaningSuggestion.ISSUE,
         field=field,
         code=issue.get('code', ''),
-        severity=issue.get('severity', ''),
+        severity=_severity(issue),
         original_value=_original_value(item, field),
         note=issue.get('note', '') or '',
+        extra=_record_extra(issue),
         **common,
     )
 
@@ -272,15 +303,89 @@ def _removal(record, item, common, now):
     )
 
 
+def _attach_withdrawn(corrections, withdrawn):
+    """
+    A rules flag the model resolved (an unknown country the model named,
+    a sector it mapped) is not an issue any more, but the moderator
+    should still see that it was raised: it goes on the correction that
+    resolved it, matched by reason and, where given, field.
+    """
+    for entry in withdrawn or []:
+        resolved_by = entry.get('resolved_by', '')
+        match = next(
+            (c for c in corrections
+             if resolved_by in (c.code or '').split('+')
+             and (not entry.get('field') or c.field == entry['field'])),
+            None)
+        if match is None:
+            match = next(
+                (c for c in corrections
+                 if resolved_by in (c.code or '').split('+')), None)
+        if match is not None:
+            match.extra.setdefault('withdrawn', []).append(
+                {'code': entry.get('code', ''),
+                 'field': entry.get('field', '') or ''})
+
+
 def _record_suggestions(record, item, common, now):
     """Every suggestion one pipeline record carries for its row."""
-    out = [_correction(item, change, common, now)
-           for change in record.get('changes') or []]
-    out += [_issue(item, issue, common)
-            for issue in record.get('issues') or []]
+    corrections = [_correction(item, change, common, now)
+                   for change in record.get('changes') or []]
+    _attach_withdrawn(corrections, record.get('withdrawn'))
+    out = corrections + [_issue(item, issue, common)
+                         for issue in record.get('issues') or []]
     if record.get('status') == 'removed':
         out.append(_removal(record, item, common, now))
+    if record.get('model_error'):
+        # The row's batch never came back from the model, so these are
+        # the rules' findings alone.
+        for s in out:
+            s.extra['model_error'] = True
     return out
+
+
+def _header_note(issue):
+    """
+    The state machine reports a header problem as {column, expected,
+    issue}; the stub and prompt 01 wrote a sentence. Give every entry one.
+    """
+    if issue.get('note'):
+        return issue['note']
+    column = issue.get('column', '')
+    expected = issue.get('expected', '') or column
+    if issue.get('issue') == 'missing':
+        return (f'The required column "{expected}" is missing from the '
+                'file header.')
+    return (f'The column "{column}" was read as "{expected}"; the '
+            'template spells it that way.')
+
+
+def _file_pass(result):
+    file_pass = dict(result.get('file_pass') or {})
+    file_pass['header_issues'] = [
+        {**issue, 'note': _header_note(issue)}
+        for issue in file_pass.get('header_issues') or []
+    ]
+    return file_pass
+
+
+def _pipeline_meta(result, records):
+    """
+    What the state machine said about the run as a whole: how many
+    batches reached the model, which rows it never judged, and whether
+    the report is rules-only for half the list or more (`degraded`).
+    Empty counts for the stub and an imported file.
+    """
+    batches = result.get('batches') or {}
+    return {
+        'execution': result.get('execution') or '',
+        'batches_total': int(batches.get('total') or 0),
+        'batches_failed': int(batches.get('failed') or 0),
+        'model_error_rows': [r.get('row') for r in records
+                             if r.get('model_error')],
+        'degraded': bool(result.get('degraded')),
+        'rejected': sum(len(r.get('rejected') or []) for r in records),
+    }
 
 
 @transaction.atomic
@@ -304,8 +409,9 @@ def ingest_result(run, result):
     }
     run.suggestions.all().delete()
 
+    records = result.get('records') or []
     suggestions = []
-    for record in result.get('records') or []:
+    for record in records:
         row_number = record.get('row')
         item = items_by_row.get(row_number)
         common = {'run': run, 'facility_list_item': item,
@@ -314,13 +420,24 @@ def ingest_result(run, result):
 
     ListCleaningSuggestion.objects.bulk_create(suggestions)
 
-    run.file_pass = result.get('file_pass') or {}
+    run.file_pass = _file_pass(result)
     run.usage = result.get('usage') or {}
     run.prompt_version = str(result.get('prompt_version') or '')
+    run.pipeline = _pipeline_meta(result, records)
     run.status = ListCleaningRun.COMPLETE
     run.error = ''
     run.completed_at = now
     run.save()
+
+    # One line an alarm can watch: the state machine still SUCCEEDS when
+    # the model was unavailable, since a rules-only report beats none.
+    meta = run.pipeline
+    if meta['degraded'] or meta['model_error_rows']:
+        log.warning(
+            f'[List Cleaning] Run {run.id} is rules-only for '
+            f'{len(meta["model_error_rows"])} rows: '
+            f'{meta["batches_failed"]} of {meta["batches_total"]} batches '
+            f'failed (degraded={meta["degraded"]})')
 
     # v3: nothing goes onto the list until the contributor submits, the
     # automatic fixes included. They are pre-accepted, so a submission
