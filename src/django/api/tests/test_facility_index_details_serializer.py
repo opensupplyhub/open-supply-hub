@@ -236,10 +236,14 @@ class FacilityIndexDetailsSerializerTest(TestCase):
             'information_source_type': 'air quality permit',
             'date_of_source': '2024-06',
             'ai_usage_notes': 'AI-extracted; human reviewed',
+            'added_on_date': (
+                self.list_item_one.created_at.date().isoformat()
+            ),
         })
 
-    def test_extended_field_without_provenance_has_none(self):
-        # list_item_two carries no provenance data.
+    def test_extended_field_without_provenance_has_only_added_on_date(self):
+        # list_item_two carries no provenance data, so only the date it
+        # was added is returned (OSDEV-3751).
         ExtendedField.objects.create(
             contributor=self.contrib_two,
             facility=self.facility,
@@ -253,7 +257,11 @@ class FacilityIndexDetailsSerializerTest(TestCase):
 
         entries = data['properties']['extended_fields']['name_operator']
         self.assertEqual(len(entries), 1)
-        self.assertIsNone(entries[0]['provenance'])
+        self.assertEqual(entries[0]['provenance'], {
+            'added_on_date': (
+                self.list_item_two.created_at.date().isoformat()
+            ),
+        })
 
     def test_is_data_center_false_by_default(self):
         facility_index = FacilityIndex.objects.get(id=self.facility.id)
