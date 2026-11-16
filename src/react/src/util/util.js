@@ -357,6 +357,9 @@ export const makeEmbedConfigURL = id =>
 export const makeEmbedSupplyChainsURL = id =>
     `/api/embed-supply-chains/${id ? `${id}/` : ''}`;
 
+export const makeEmbedSpotlightOptionsURL = () =>
+    '/api/embed-spotlight-options/';
+
 export const makeEmbedSupplyChainLocationsURL = () =>
     '/api/embed-supply-chains/locations/';
 
@@ -461,9 +464,16 @@ export const createQueryStringFromModerationQueueFilters = (
 // filter travels as `embed_filters=<column>::<value>`.
 const EMBED_FILTER_SEPARATOR = '::';
 
+// The Spotlight filter is kept with them but travels on its own, as
+// `embed_spotlight=<value>`.
+const EMBED_SPOTLIGHT_FILTER = '__spotlight__';
+
 export const formatEmbedFiltersForQueryString = (embedFilters = {}) =>
     Object.entries(embedFilters)
-        .filter(([column, value]) => column && value)
+        .filter(
+            ([column, value]) =>
+                column && value && column !== EMBED_SPOTLIGHT_FILTER,
+        )
         .map(([column, value]) => `${column}${EMBED_FILTER_SEPARATOR}${value}`)
         .sort();
 
@@ -543,6 +553,9 @@ export const createQueryStringFromSearchFilters = (
         embed_filters: !withEmbed
             ? []
             : formatEmbedFiltersForQueryString(embedFilters),
+        embed_spotlight: !withEmbed
+            ? ''
+            : embedFilters[EMBED_SPOTLIGHT_FILTER] || '',
         detail: detail ? 'true' : undefined,
         partner_contributor: partnerContributors.map(c => c.value),
     });
@@ -629,6 +642,7 @@ export const createFiltersFromQueryString = qs => {
         sort_by: sortBy = '',
         partner_contributor: rawPartnerContributors = [],
         embed_filters: rawEmbedFilters = [],
+        embed_spotlight: rawEmbedSpotlight = '',
     } = querystring.parse(qsToParse);
 
     const normaliseStringArray = val => {
@@ -669,7 +683,12 @@ export const createFiltersFromQueryString = qs => {
         statuses: createSelectOptionsFromParams(statuses),
         sectors: createSelectOptionsFromParams(sectors),
         parentCompany: createSelectOptionsFromParams(parentCompany),
-        embedFilters: parseEmbedFiltersFromQueryString(rawEmbedFilters),
+        embedFilters: {
+            ...parseEmbedFiltersFromQueryString(rawEmbedFilters),
+            ...(rawEmbedSpotlight
+                ? { [EMBED_SPOTLIGHT_FILTER]: String(rawEmbedSpotlight) }
+                : {}),
+        },
         facilityType: createSelectOptionsFromParams(facilityType),
         processingType: hydratedProcessingTypes,
         isic4: createSelectOptionsFromParams(isic4),

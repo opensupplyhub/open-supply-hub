@@ -4,6 +4,7 @@ from api.services.embed_field_filters import (
     embed_color_by_column,
     embed_color_value_subquery,
 )
+from api.services.embed_spotlight import embed_has_spotlight
 import mercantile
 
 from django.contrib.gis.geos import Polygon
@@ -137,6 +138,13 @@ def get_facilities_vector_tile(params, layer, z, x, y):
             embed_color_value=embed_color_value_subquery(params, color_column)
         )
         fields.append("embed_color_value")
+
+    # An embedded map can ring the facilities that have Spotlight data;
+    # when it does, each marker says whether it has any.
+    has_spotlight = embed_has_spotlight(params, only_when_highlighted=True)
+    if has_spotlight is not None:
+        facilities = facilities.annotate(embed_has_spotlight=has_spotlight)
+        fields.append("embed_has_spotlight")
 
     query, params_for_sql = (
         facilities

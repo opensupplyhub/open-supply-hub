@@ -1,9 +1,19 @@
 from rest_framework.decorators import api_view, throttle_classes
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import (
+    NotAuthenticated,
+    PermissionDenied,
+    ValidationError,
+)
 from rest_framework.response import Response
 
 from ...models import Contributor
 from ...serializers import EmbedConfigSerializer
+from ...services.embed_spotlight import (
+    DELUXE_EMBED_LEVEL,
+    spotlight_for_settings,
+    spotlight_for_visitors,
+)
+from .get_contributor import get_contributor
 from ...services.embed_supply_chains import published_supply_chains
 from ...services.embed_field_filters import (
     embed_filter_options,
@@ -36,9 +46,29 @@ def contributor_embed_config(_, pk=None):
         )
         # The supply chains the contributor has published for visitors.
         embed_config['supply_chains'] = published_supply_chains(contributor)
+        # The Spotlight data the contributor has chosen to show, if any.
+        embed_config['spotlight'] = spotlight_for_visitors(contributor)
         return Response(embed_config)
     except Contributor.DoesNotExist as exc:
         raise ValidationError('Contributor not found.') from exc
+
+
+@api_view(['GET'])
+def embed_spotlight_options(request):
+    """
+    Returns the Spotlight data a contributor could show on their embedded
+    map: each partner field group and how many of their facilities have
+    data in it. For the contributor's own Embed settings screen.
+    """
+    if not request.user.is_authenticated:
+        raise NotAuthenticated()
+    contributor = get_contributor(request)
+    if contributor.embed_level != DELUXE_EMBED_LEVEL:
+        raise PermissionDenied(
+            'Spotlight on the embedded map is part of the Embed Deluxe '
+            'package.'
+        )
+    return Response(spotlight_for_settings(contributor))
 
 
 def getContributorTypeCount(value, counts):

@@ -11,6 +11,7 @@ import { EmbeddedMapInfoLink, USER_DEFAULT_STATE } from '../util/constants';
 
 import EmbeddedMapFieldsConfig from './EmbeddedMapFieldsConfig';
 import EmbeddedMapListOrderConfig from './EmbeddedMapListOrderConfig';
+import EmbeddedMapSpotlightConfig from './EmbeddedMapSpotlightConfig';
 import EmbeddedMapSupplyChainsConfig from './EmbeddedMapSupplyChainsConfig';
 import EmbeddedMapThemeConfig from './EmbeddedMapThemeConfig';
 import EmbeddedMapSizeConfig from './EmbeddedMapSizeConfig';
@@ -94,7 +95,8 @@ const SECTIONS = [
     { id: 'fields', label: 'Fields' },
     { id: 'code', label: 'Size and embed code' },
 ];
-// Supply chains are part of the Embed Deluxe package.
+// Spotlight and supply chains are part of the Embed Deluxe package.
+const SPOTLIGHT_SECTION = { id: 'spotlight', label: 'Spotlight' };
 const SUPPLY_CHAINS_SECTION = { id: 'chains', label: 'Supply chains' };
 const DELUXE_EMBED_LEVEL = 3;
 
@@ -167,6 +169,10 @@ function EmbeddedMapConfig({
         allowVisitorSort,
         blurbsFirst,
         markerColor,
+        showSpotlight,
+        spotlightHighlight,
+        spotlightFilter,
+        spotlightGroups,
     },
     setEmbedConfig,
     fields,
@@ -202,6 +208,20 @@ function EmbeddedMapConfig({
             .catch(() => setColorByOptions([]));
     }, [colorByField, contributorId, timestamp]);
 
+    // How many facilities the saved map shows Spotlight data for.
+    const [spotlightShownCount, setSpotlightShownCount] = useState(0);
+    useEffect(() => {
+        if (!contributorId) return;
+        apiRequest
+            .get(makeContributorEmbedConfigURL(contributorId))
+            .then(({ data }) =>
+                setSpotlightShownCount(
+                    data.spotlight ? data.spotlight.count : 0,
+                ),
+            )
+            .catch(() => setSpotlightShownCount(0));
+    }, [contributorId, timestamp]);
+
     if (!user.embed_level) return <EmbeddedMapUnauthorized isSettings />;
 
     const updateEmbedConfig = field => value =>
@@ -224,6 +244,7 @@ function EmbeddedMapConfig({
         user.embed_level === DELUXE_EMBED_LEVEL
             ? [
                   ...SECTIONS.slice(0, 2),
+                  SPOTLIGHT_SECTION,
                   SUPPLY_CHAINS_SECTION,
                   ...SECTIONS.slice(2),
               ]
@@ -381,6 +402,27 @@ function EmbeddedMapConfig({
                                 )}
                                 errors={errors}
                                 userEmbedLevel={user.embed_level}
+                            />
+                        ) : null}
+                        {section === 'spotlight' ? (
+                            <EmbeddedMapSpotlightConfig
+                                showSpotlight={!!showSpotlight}
+                                setShowSpotlight={updateEmbedConfig(
+                                    'showSpotlight',
+                                )}
+                                spotlightHighlight={!!spotlightHighlight}
+                                setSpotlightHighlight={updateEmbedConfig(
+                                    'spotlightHighlight',
+                                )}
+                                spotlightFilter={!!spotlightFilter}
+                                setSpotlightFilter={updateEmbedConfig(
+                                    'spotlightFilter',
+                                )}
+                                spotlightGroups={spotlightGroups || []}
+                                setSpotlightGroups={updateEmbedConfig(
+                                    'spotlightGroups',
+                                )}
+                                shownCount={spotlightShownCount}
                             />
                         ) : null}
                         {/* Kept mounted so a chain being built is not lost

@@ -118,6 +118,11 @@ def apply_embed_filters(facilities_qs, params):
     """Narrow a Facility or FacilityIndex queryset by the embed filters."""
     for facility_ids in embed_filter_facility_id_sets(params):
         facilities_qs = facilities_qs.filter(id__in=facility_ids)
+    # Imported here: the Spotlight service reaches models that import this
+    # module while they load.
+    from api.services.embed_spotlight import apply_embed_spotlight_filter
+
+    facilities_qs = apply_embed_spotlight_filter(facilities_qs, params)
     return facilities_qs
 
 

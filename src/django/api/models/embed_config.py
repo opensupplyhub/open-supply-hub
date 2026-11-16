@@ -114,6 +114,23 @@ class EmbedConfig(models.Model):
         default=False,
         help_text='Whether facilities that have a blurb are listed first '
                   'on the embedded map, ahead of the chosen list order.')
+    show_spotlight = models.BooleanField(
+        default=False,
+        help_text='Whether the embedded map shows Spotlight data from '
+                  'OS Hub data partners.')
+    spotlight_highlight = models.BooleanField(
+        default=False,
+        help_text='Whether facilities that have Spotlight data are ringed '
+                  'on the embedded map.')
+    spotlight_filter = models.BooleanField(
+        default=False,
+        help_text='Whether visitors to the embedded map can filter by '
+                  'Spotlight data.')
+    spotlight_groups = models.JSONField(
+        blank=True,
+        default=list,
+        help_text='The UUIDs of the partner field groups whose Spotlight '
+                  'data the embedded map shows.')
     allow_visitor_sort = models.BooleanField(
         default=False,
         help_text='Whether visitors to the embedded map can change the '

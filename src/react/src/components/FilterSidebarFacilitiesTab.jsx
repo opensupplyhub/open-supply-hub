@@ -196,6 +196,17 @@ const makeFacilitiesTabStyles = theme => ({
     },
 });
 
+// Marks a facility that has Spotlight data, on an embedded map that shows it.
+const spotlightBadgeStyle = Object.freeze({
+    display: 'inline-block',
+    padding: '1px 8px',
+    border: '1px solid currentColor',
+    borderRadius: '10px',
+    fontSize: '12px',
+    fontWeight: 700,
+    letterSpacing: '0.02em',
+});
+
 function FilterSidebarFacilitiesTab({
     user,
     fetching,
@@ -455,6 +466,7 @@ function FilterSidebarFacilitiesTab({
                                     is_closed: isClosed,
                                     number_of_public_contributors: numberOfPublicContributors,
                                     contributor_fields: contributorFields,
+                                    has_spotlight: hasSpotlight,
                                 },
                             }) => (
                                 <>
@@ -528,6 +540,22 @@ function FilterSidebarFacilitiesTab({
                                                         item
                                                         className={`${classes.facilityDetailItem} ${classes.osId}`}
                                                     >{`OS ID: ${osID}`}</Grid>
+                                                    {embed && hasSpotlight ? (
+                                                        <Grid
+                                                            item
+                                                            className={
+                                                                classes.facilityDetailItem
+                                                            }
+                                                        >
+                                                            <span
+                                                                style={
+                                                                    spotlightBadgeStyle
+                                                                }
+                                                            >
+                                                                Spotlight
+                                                            </span>
+                                                        </Grid>
+                                                    ) : null}
                                                     <ShowOnly
                                                         when={
                                                             !embed &&

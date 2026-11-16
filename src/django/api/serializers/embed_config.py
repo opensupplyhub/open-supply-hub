@@ -9,6 +9,8 @@ from ..models import (
     ExtendedField
 )
 from .embed_fields import EmbedFieldsSerializer
+from rest_framework.serializers import ValidationError
+from ..services.embed_spotlight import MAX_SPOTLIGHT_GROUPS
 
 
 class EmbedConfigSerializer(ModelSerializer):
@@ -23,10 +25,23 @@ class EmbedConfigSerializer(ModelSerializer):
                   'heading_font', 'corner_radius', 'marker_color',
                   'color_by_field',
                   'color_by_colors', 'default_sort', 'blurbs_first',
-                  'allow_visitor_sort', 'contributor',
+                  'allow_visitor_sort', 'show_spotlight',
+                  'spotlight_highlight', 'spotlight_filter',
+                  'spotlight_groups', 'contributor',
                   'embed_fields', 'prefer_contributor_name',
                   'contributor_name', 'text_search_label', 'map_style',
                   'extended_fields', 'hide_sector_data')
+
+    def validate_spotlight_groups(self, value):
+        if not isinstance(value, list) or not all(
+            isinstance(uuid, str) for uuid in value
+        ):
+            raise ValidationError(
+                'Spotlight groups must be a list of group IDs.'
+            )
+        if len(value) > MAX_SPOTLIGHT_GROUPS:
+            raise ValidationError('Too many Spotlight groups.')
+        return value
 
     def get_contributor(self, instance):
         try:
