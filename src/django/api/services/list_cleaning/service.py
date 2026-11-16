@@ -1217,7 +1217,11 @@ def run_breakdown(run):
     E = ListCleaningEvent
     closing = (run.events.filter(kind__in=(E.SUBMITTED, E.LAPSED))
                .order_by('-created_at').first())
-    if closing is not None and closing.meta:
-        return {key: closing.meta.get(key, 0) for key in BREAKDOWN_TOTALS}
+    meta = (closing.meta or {}) if closing is not None else {}
+    # only a meta that carries the counts; one recorded before they were
+    # added (or holding just opened/applied) is counted from the
+    # suggestions instead of read as all zeros
+    if any(key in meta for key in BREAKDOWN_TOTALS):
+        return {key: meta.get(key, 0) for key in BREAKDOWN_TOTALS}
     return {key: value for key, value in change_breakdown(
         run, as_uploaded=True).items() if key in BREAKDOWN_TOTALS}

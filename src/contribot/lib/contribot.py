@@ -71,12 +71,20 @@ CLEANING_BREAKDOWN = [
     ("Flags resolved", "flags_resolved"),
     ("Flags left as uploaded", "flags_left_as_uploaded"),
 ]
+# Outcome by closed_reason, and by whether the run ever applied anything
+# (``applied_at``): a submission as uploaded and a window that lapsed with
+# the review never opened both leave the list exactly as uploaded.
 CLEANING_OUTCOMES = {
-    "submitted": "Submitted by the contributor",
-    "lapsed": "Review window lapsed; decisions made so far applied",
-    "clean": "Nothing to review; list as uploaded",
-    "failed": "Cleaning run failed; list as uploaded",
+    ("submitted", True): "Submitted by the contributor",
+    ("submitted", False): "Submitted as uploaded by the contributor",
+    ("lapsed", True): "Review window lapsed; decisions made so far applied",
+    ("lapsed", False): "Review window lapsed; review never opened, list as uploaded",
+    ("clean", True): "Nothing to review; list as uploaded",
+    ("clean", False): "Nothing to review; list as uploaded",
+    ("failed", True): "Cleaning run failed; list as uploaded",
+    ("failed", False): "Cleaning run failed; list as uploaded",
 }
+NOT_APPLIED = " (not applied)"
 CLEANING_COLUMNS = [
     "Row",
     "Field",
@@ -714,9 +722,23 @@ class ContriBot:
         return False
 
     def _mark_removed_rows(self):
-        """Strike through removed rows on the data, Findings and Fixes sheets."""
+        """Strike through removed rows on the data, Findings and Fixes sheets.
+
+        The column checks fix cells on the Fixes sheet as they go, before a
+        row is known to be gone, so a removed row gets its uploaded values
+        back and loses the "fixed" styling: nothing is reported on it.
+        """
         if not self.removed_rows:
             return
+        source = self.wb[self.sourcesheet]
+        fixes = self.wb[self.fixessheet]
+        wrap_alignment = Alignment(wrap_text=True, vertical="top")
+        for r in sorted(self.removed_rows):
+            for col in self.populated_columns:
+                cell = fixes[f"{col}{r}"]
+                cell.value = source[f"{col}{r}"].value
+                cell.style = "Normal"
+                cell.alignment = wrap_alignment
         removed_font = Font(size=10, italic=True, strike=True, color="808080")
         for sheet in (self.sourcesheet, "Findings", self.fixessheet):
             ws = self.wb[sheet]
@@ -741,7 +763,8 @@ class ContriBot:
             (
                 "Outcome",
                 CLEANING_OUTCOMES.get(
-                    run.get("closed_reason") or "", "Review still open"
+                    (run.get("closed_reason") or "", bool(run.get("applied_at"))),
+                    "Review still open",
                 ),
             ),
             ("Run started", run.get("created_at") or ""),
@@ -759,23 +782,42 @@ class ContriBot:
         column = self.mapping.get(str(s.get("field") or "").lower(), "A")
         return f"{column}{s.get('row_number')}"
 
-    @staticmethod
-    def _suggestion_cells(s):
-        """One Cleaning-sheet row for a suggestion, in CLEANING_COLUMNS order."""
+    def _suggestion_cells(self, s):
+        """One Cleaning-sheet row for a suggestion, in CLEANING_COLUMNS order.
+
+        The final value is what reached the list, not what was decided: a
+        submission as uploaded, or a window that lapsed with the review never
+        opened, leaves every pre-accepted fix with its decision but nothing
+        applied, and the sheet says so rather than showing the suggested
+        value as final.
+        """
         kind = str(s.get("kind") or "").upper()
         decision = str(s.get("decision") or "PENDING").upper()
         extra = s.get("extra") or {}
         original = s.get("original_value") or ""
         suggested = s.get("corrected_value") or ""
+        applied = bool(s.get("applied"))
+        try:
+            row_removed = int(s.get("row_number")) in self.removed_rows
+        except (TypeError, ValueError):
+            row_removed = False
+        not_applied = False
 
-        if kind == "REMOVAL":
-            final = {"ACCEPTED": ROW_REMOVED, "REJECTED": ROW_KEPT}.get(decision, "")
-        elif decision == "REMOVED":
-            final = ROW_REMOVED
+        if kind == "REMOVAL" or decision == "REMOVED":
+            if decision == "PENDING":
+                final = ""
+            elif decision == "REJECTED":
+                final = ROW_KEPT
+            else:
+                removed = row_removed or applied or bool(extra.get("removal_applied"))
+                final = ROW_REMOVED if removed else ROW_KEPT
+                not_applied = not removed
         elif decision == "EDITED":
-            final = s.get("decided_value") or ""
+            final = (s.get("decided_value") or "") if applied else original
+            not_applied = not applied
         elif kind == "CORRECTION" and decision == "ACCEPTED":
-            final = suggested
+            final = suggested if applied else original
+            not_applied = not applied
         else:
             final = original
 
@@ -797,7 +839,7 @@ class ContriBot:
                 s.get("severity") or "",
                 original,
                 suggested,
-                decision.lower(),
+                decision.lower() + (NOT_APPLIED if not_applied else ""),
                 final,
                 decided_by,
                 s.get("note") or "",
@@ -864,7 +906,7 @@ class ContriBot:
                 if str(s.get("decision") or "").upper() == "REJECTED":
                     ws[f"I{row}"].style = "Neutral"
 
-        widths = [30, 16, 10, 22, 11, 13, 40, 40, 11, 40, 12, 50]
+        widths = [30, 16, 10, 22, 11, 13, 40, 40, 22, 40, 12, 50]
         for col, width in zip(columns, widths):
             ws.column_dimensions[col].width = width
 

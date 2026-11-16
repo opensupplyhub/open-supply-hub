@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -361,7 +362,33 @@ def test_handler_fails_while_the_review_window_is_open(
 
     mock_s3_cls.return_value.download.assert_not_called()
     api.download_cleaned_list.assert_not_called()
-    assert repo.update_list.call_args_list[-1].kwargs == {"status": "FAILED"}
+    # left for retry_failed_lists, and the wait costs no attempt
+    assert repo.update_list.call_args_list[-1].kwargs == {
+        "status": "FAILED",
+        "attempt_count": 0,
+    }
+
+
+def test_state_machine_leaves_a_list_under_review_without_notifying():
+    """The Catch by error name is what keeps the wait off the failures
+    channel: the name must match the exception class, and come before
+    States.ALL."""
+    definition = json.loads(
+        (
+            Path(__file__).resolve().parents[4]
+            / "deployment"
+            / "terraform"
+            / "step-functions"
+            / "contribot.json"
+        ).read_text()
+    )
+    states = definition["States"]["ProcessLists"]["Iterator"]["States"]
+    catches = states["ProcessList"]["Catch"]
+    assert catches[0]["ErrorEquals"] == [handler.ListUnderReview.__name__]
+    assert catches[0]["Next"] != "Notify"
+    assert states[catches[0]["Next"]]["Type"] == "Pass"
+    assert catches[-1]["ErrorEquals"] == ["States.ALL"]
+    assert catches[-1]["Next"] == "Notify"
 
 
 @pytest.mark.parametrize("payload", [

@@ -967,6 +967,26 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertTrue(lines[3].startswith('Viet Nam,Thanh Cong Textile,'))
         self.assertTrue(lines[3].endswith(',removed: duplicate of row 2'))
 
+    def test_download_settles_a_lapsed_window_first(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        self.client.post(self.url('events/'), {'kind': 'opened'},
+                         format='json')
+        run.review_until = timezone.now() - timedelta(minutes=1)
+        run.save(update_fields=['review_until'])
+        # nothing has read the run since the window passed, so the
+        # download is what notices the lapse: the pre-accepted automatic
+        # fixes must be on the rows it writes
+        self.client.force_login(self.superuser)
+        response = self.client.get(
+            self.url('download/'), {'shape': 'contribot'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        lines = response.content.decode('utf-8').splitlines()
+        self.assertTrue(lines[1].startswith('VN,Thanh Cong Textile,'))
+        self.assertTrue(lines[1].endswith(',1200,'))
+        run.refresh_from_db()
+        self.assertEqual(run.closed_reason, ListCleaningRun.LAPSED)
+
     def test_download_rejects_an_unknown_shape(self):
         self._ingested_run()
         self.client.force_login(self.user)
@@ -1022,6 +1042,23 @@ class ListCleaningFeedbackTest(APITestCase):
         # the two silent fixes and the automatic duplicate removal
         self.assertEqual(breakdown['auto_applied'], 3)
         self.assertEqual(breakdown['rows_removed_by_review'], 0)
+
+    def test_breakdown_without_counts_in_the_event_is_counted_now(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        fix = run.suggestions.get(code='country_in_address')
+        self.client.post(self.url('decisions/'), {'decisions': [
+            {'id': fix.id, 'decision': 'ACCEPTED'}]}, format='json')
+        self.client.post(self.url('submit/'), {}, format='json')
+        # a closing event recorded before the counts were kept on it
+        event = run.events.get(kind=ListCleaningEvent.SUBMITTED)
+        event.meta = {'as_uploaded': False, 'applied': 3}
+        event.save(update_fields=['meta'])
+
+        self.client.force_login(self.superuser)
+        breakdown = self.client.get(self.url()).data['breakdown']
+        self.assertEqual(breakdown['fixes_offered'], 1)
+        self.assertEqual(breakdown['fixes_accepted'], 1)
 
     def test_breakdown_before_the_window_closes_counts_nothing_applied(self):
         run = self._ingested_run()

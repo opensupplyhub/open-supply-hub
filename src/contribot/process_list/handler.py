@@ -9,7 +9,9 @@ When the list went through the contributor's list-cleaning review (OSDEV-3726
 v3) the report is of the list as the contributor left it, read from the
 platform rather than S3, and gains a Cleaning sheet listing every suggestion
 and what was done with it (OSDEV-3398). A list whose review window is still
-open is not processed: the task fails and the retry schedule brings it back.
+open is not processed: it is left for the retry schedule with
+:class:`ListUnderReview`, which the state machine catches without a failure
+notification, and the wait does not count as a processing attempt.
 """
 
 from __future__ import annotations
@@ -180,6 +182,14 @@ def handler(event, context):
             # None when the list did not go through the cleaning review
             "cleaning": summary.get("cleaning"),
         }
+    except ListUnderReview as exc:
+        # Waiting is not a failure. The row goes back to FAILED because that
+        # is what retry_failed_lists scans, with its attempt count reset so
+        # the wait costs none of CONTRIBOT_MAX_ATTEMPTS; the state machine
+        # catches this error by name and skips the failure notification.
+        logger.info("Leaving list_id=%s for a later run: %s", list_id, exc)
+        repository.update_list(list_id, status=STATUS_FAILED, attempt_count=0)
+        raise
     except Exception:
         logger.exception("Failed processing list_id=%s", list_id)
         repository.update_list(list_id, status=STATUS_FAILED)

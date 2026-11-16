@@ -67,6 +67,7 @@ PAYLOAD = {
         "prompt_version": "02",
         "created_at": "2026-11-16T10:00:00Z",
         "submitted_at": "2026-11-16T10:12:30Z",
+        "applied_at": "2026-11-16T10:12:30Z",
         "closed_reason": "submitted",
     },
     "summary": {
@@ -122,6 +123,7 @@ PAYLOAD = {
                     corrected_value="BD",
                     decision="ACCEPTED",
                     extra={"auto": True},
+                    applied=True,
                 ),
             ],
         },
@@ -144,6 +146,7 @@ PAYLOAD = {
                     code="duplicate",
                     decision="ACCEPTED",
                     extra={"auto": True, "duplicate_of": 2},
+                    applied=True,
                 ),
             ],
         },
@@ -235,6 +238,26 @@ class TestRemovedRows:
         assert summary["num_lines"] == 2
         assert "cleaning" not in summary
 
+    def test_removed_rows_keep_their_uploaded_values_on_the_fixes_sheet(
+        self, make_contribution, tmp_path
+    ):
+        df = _frame()
+        # double quotes are auto-fixed (C0008) on the Fixes sheet as the
+        # checks go; the removed row must come out as uploaded, unstyled
+        df.loc[0, "name"] = 'Acme "Textiles" Limited'
+        df.loc[1, "name"] = 'Acme "Textiles" Limited'
+        osh = make_contribution(df=df)
+        osh.process()
+        osh.save(targetfolder=str(tmp_path / "out"))
+        wb = openpyxl.load_workbook(tmp_path / "out" / osh.targetfilename)
+        fixes = wb[osh.fixessheet]
+        assert fixes["B2"].value == "Acme Textiles Limited"
+        assert fixes["B2"].style == "Good"
+        assert fixes["B3"].value == 'Acme "Textiles" Limited'
+        assert fixes["B3"].style == "Normal"
+        assert fixes["B3"].font.strike is True
+        assert fixes["B3"].comment is None
+
     def test_removed_rows_are_struck_through(self, make_contribution, tmp_path):
         osh = make_contribution(df=_frame())
         osh.process()
@@ -321,12 +344,69 @@ class TestCleaningSheet:
     def test_edited_value_is_the_final_value(self, make_contribution, tmp_path):
         payload = copy.deepcopy(PAYLOAD)
         payload["rows"][2]["suggestions"][0].update(
-            decision="EDITED", decided_value="12 Mirpur Road, Dhaka"
+            decision="EDITED", decided_value="12 Mirpur Road, Dhaka", applied=True
         )
         _, _, wb = self._saved(make_contribution, tmp_path, payload)
         flag = {t["Code"]: t for t in _cleaning_table(wb["Cleaning"])}["address_po_box"]
         assert flag["Final value"] == "12 Mirpur Road, Dhaka"
         assert flag["Decided by"] == "contributor"
+
+    def _nothing_applied(self, closed_reason):
+        """The run closed without apply_run: a submission as uploaded, or a
+        window that lapsed with the review never opened. Decisions stay as
+        they were (the automatic fixes pre-accepted), nothing is applied and
+        no row is removed."""
+        payload = copy.deepcopy(PAYLOAD)
+        payload["run"]["closed_reason"] = closed_reason
+        payload["run"]["applied_at"] = None
+        for entry in payload["rows"]:
+            for s in entry["suggestions"]:
+                s["applied"] = False
+        df = _frame()
+        df["os_hub_cleaning"] = ""
+        return payload, df
+
+    def test_submitted_as_uploaded_applies_nothing(self, make_contribution, tmp_path):
+        payload, df = self._nothing_applied("submitted")
+        _, _, wb = self._saved(make_contribution, tmp_path, payload, df)
+        assert _header(wb["Cleaning"])["Outcome"] == (
+            "Submitted as uploaded by the contributor"
+        )
+        by_code = {t["Code"]: t for t in _cleaning_table(wb["Cleaning"])}
+        auto = by_code["country_code"]
+        assert auto["Decision"] == "accepted (not applied)"
+        assert auto["Final value"] == "Bangladesh"
+        assert auto["Decided by"] == "automatic"
+        removal = by_code["duplicate"]
+        assert removal["Decision"] == "accepted (not applied)"
+        assert removal["Final value"] == "(row kept)"
+        # a rejected fix was never going to be applied, so nothing to say
+        assert by_code["country_in_address"]["Decision"] == "rejected"
+
+    def test_lapsed_without_opening_applies_nothing(self, make_contribution, tmp_path):
+        payload, df = self._nothing_applied("lapsed")
+        _, _, wb = self._saved(make_contribution, tmp_path, payload, df)
+        assert _header(wb["Cleaning"])["Outcome"] == (
+            "Review window lapsed; review never opened, list as uploaded"
+        )
+
+    def test_lapsed_after_opening_says_what_was_applied(self, make_contribution, tmp_path):
+        payload = copy.deepcopy(PAYLOAD)
+        payload["run"]["closed_reason"] = "lapsed"
+        _, _, wb = self._saved(make_contribution, tmp_path, payload)
+        assert _header(wb["Cleaning"])["Outcome"] == (
+            "Review window lapsed; decisions made so far applied"
+        )
+
+    def test_edited_value_not_applied_leaves_the_original(self, make_contribution, tmp_path):
+        payload = copy.deepcopy(PAYLOAD)
+        payload["rows"][2]["suggestions"][0].update(
+            decision="EDITED", decided_value="12 Mirpur Road, Dhaka", applied=False
+        )
+        _, _, wb = self._saved(make_contribution, tmp_path, payload)
+        flag = {t["Code"]: t for t in _cleaning_table(wb["Cleaning"])}["address_po_box"]
+        assert flag["Decision"] == "edited (not applied)"
+        assert flag["Final value"] == "PO Box 12, Dhaka Division"
 
     def test_row_links_to_the_cell_on_the_fixes_sheet(self, make_contribution, tmp_path):
         osh, _, wb = self._saved(make_contribution, tmp_path)

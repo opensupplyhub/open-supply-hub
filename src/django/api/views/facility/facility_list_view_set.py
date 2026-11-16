@@ -672,7 +672,9 @@ class FacilityListViewSet(ModelViewSet):
         current values only, every row where it was uploaded.
         """
         facility_list = self._get_list_for_user(request, pk)
-        run = facility_list.cleaning_runs.first()
+        # settle first: a window that lapsed since the last read applies
+        # the contributor's decisions before the file is built
+        run = list_cleaning.settle_run(facility_list.cleaning_runs.first())
         if run is None or run.status != ListCleaningRun.COMPLETE:
             raise ValidationError(NO_COMPLETED_RUN)
         shape = request.query_params.get(
