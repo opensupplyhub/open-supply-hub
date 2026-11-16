@@ -32,6 +32,9 @@ export const updateParentCompanyFilter = createAction(
 );
 // Payload: { column, value }. An empty value clears that column's filter.
 export const updateEmbedFilter = createAction('UPDATE_EMBED_FILTER');
+// Payload: the id of the supply chain a visitor is following on an embedded
+// map, or null to stop following one.
+export const selectEmbedSupplyChain = createAction('SELECT_EMBED_SUPPLY_CHAIN');
 export const updateFacilityTypeFilter = createAction(
     'UPDATE_FACILITY_TYPE_FILTER',
 );

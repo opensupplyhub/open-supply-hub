@@ -58,6 +58,8 @@ router.register('facility-activity-reports',
                 views.FacilityActivityReportViewSet,
                 'facility-activity-report')
 router.register('embed-configs', views.EmbedConfigViewSet, 'embed-config')
+router.register('embed-supply-chains', views.EmbedSupplyChainViewSet,
+                'embed-supply-chain')
 router.register('nonstandard-fields', views.NonstandardFieldsViewSet,
                 'nonstandard-fields')
 router.register('facilities-downloads', FacilitiesDownloadViewSet,

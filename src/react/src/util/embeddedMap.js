@@ -234,6 +234,370 @@ export const getListFields = (embedFields, contributorFields) =>
         })
         .filter(f => hasValue(f.value));
 
+// ---------------------------------------------------------------------------
+// Supply chains
+// ---------------------------------------------------------------------------
+// A published chain, as the embed config returns it:
+// { id, name, description, product_url, color,
+//   nodes: [{ os_id, name, address, country_name, lat, lng, stage, tier }],
+//   links: [[supplier os_id, customer os_id]] }
+
+export const getEmbedSupplyChains = (embed, config) =>
+    embed && config && Array.isArray(config.supply_chains)
+        ? config.supply_chains.filter(chain => chain.nodes.length > 0)
+        : [];
+
+export const findEmbedSupplyChain = (chains, id) =>
+    (chains || []).find(chain => String(chain.id) === String(id)) || null;
+
+// How many links a location is from the end of the chain: 1 for a location
+// that supplies nothing further, 2 for one that supplies it, and so on. Used
+// to group a chain's locations when the contributor has no tier field.
+export const getChainDepths = chain => {
+    const customers = {};
+    chain.links.forEach(([supplier, customer]) => {
+        customers[supplier] = [...(customers[supplier] || []), customer];
+    });
+    const depths = {};
+    const depthOf = (osId, seen) => {
+        if (depths[osId]) return depths[osId];
+        if (seen.has(osId)) return 1;
+        seen.add(osId);
+        const next = customers[osId] || [];
+        depths[osId] = next.length
+            ? 1 + Math.max(...next.map(id => depthOf(id, seen)))
+            : 1;
+        return depths[osId];
+    };
+    chain.nodes.forEach(node => depthOf(node.os_id, new Set()));
+    return depths;
+};
+
+// A chain's locations in groups, upstream first, for the list. Each group is
+// { label, nodes }, and each node gains `supplies`, the names of the locations
+// it feeds. Every group is a tier, by the location's position counted from
+// the end of the chain.
+export const getChainGroups = chain => {
+    const names = {};
+    chain.nodes.forEach(node => {
+        names[node.os_id] = node.name;
+    });
+    const withSupplies = chain.nodes.map(node => ({
+        ...node,
+        supplies: chain.links
+            .filter(([supplier]) => supplier === node.os_id)
+            .map(([, customer]) => names[customer]),
+    }));
+
+    // DECISION (2026-11-12, may be revisited): in a supply chain built with
+    // this tool, a location's tier is its position in the chain, counted
+    // from the end: the final location is tier 1, what supplies it tier 2,
+    // and so on. The contributor's own tier column is ignored here, even
+    // when it has a value for every location, so the headings always agree
+    // with the links the contributor drew. To use the column instead, group
+    // by `node.tier` (the embed config still sends it on each location).
+    const depths = getChainDepths(chain);
+    const keyOf = node => depths[node.os_id];
+    const keys = [...new Set(withSupplies.map(keyOf))].sort((a, b) => b - a);
+
+    return keys.map(key => ({
+        label: `Tier ${key}`,
+        nodes: withSupplies.filter(node => keyOf(node) === key),
+    }));
+};
+
+// --- Building a chain in the settings ---
+
+export const DEFAULT_CHAIN_COLOR = '#c0392b';
+export const MAX_CHAIN_LOCATIONS = 60;
+export const CHAIN_STAGE_SUGGESTIONS = Object.freeze([
+    'Raw material',
+    'Material production',
+    'Processing',
+    'Final assembly',
+]);
+
+export const makeEmptyChain = () => ({
+    name: '',
+    description: '',
+    product_url: '',
+    color: DEFAULT_CHAIN_COLOR,
+    is_published: false,
+    nodes: [],
+    links: [],
+});
+
+// Whether following "supplies" links from a location ever leads back to it.
+export const chainLinksLoop = links => {
+    const customers = {};
+    links.forEach(([supplier, customer]) => {
+        customers[supplier] = [...(customers[supplier] || []), customer];
+    });
+    const done = new Set();
+    const visit = (osId, path) => {
+        if (path.has(osId)) return true;
+        if (done.has(osId)) return false;
+        const nextPath = new Set(path).add(osId);
+        const looped = (customers[osId] || []).some(id => visit(id, nextPath));
+        done.add(osId);
+        return looped;
+    };
+    return Object.keys(customers).some(id => visit(id, new Set()));
+};
+
+export const addChainLocation = (chain, { osId, name }) =>
+    chain.nodes.some(node => node.os_id === osId)
+        ? chain
+        : {
+              ...chain,
+              nodes: [...chain.nodes, { os_id: osId, name, stage: '' }],
+          };
+
+// Removing a location also removes the links to and from it.
+export const removeChainLocation = (chain, osId) => ({
+    ...chain,
+    nodes: chain.nodes.filter(node => node.os_id !== osId),
+    links: chain.links.filter(link => !link.includes(osId)),
+});
+
+export const setChainLocationStage = (chain, osId, stage) => ({
+    ...chain,
+    nodes: chain.nodes.map(node =>
+        node.os_id === osId ? { ...node, stage } : node,
+    ),
+});
+
+export const addChainLink = (chain, supplier, customer) =>
+    chain.links.some(([s, c]) => s === supplier && c === customer)
+        ? chain
+        : { ...chain, links: [...chain.links, [supplier, customer]] };
+
+export const removeChainLink = (chain, supplier, customer) => ({
+    ...chain,
+    links: chain.links.filter(([s, c]) => !(s === supplier && c === customer)),
+});
+
+// The locations `supplier` could be set to supply: any other location it
+// does not already supply, where the link would not make the chain loop.
+export const getPossibleCustomers = (chain, supplier) =>
+    chain.nodes.filter(
+        node =>
+            node.os_id !== supplier &&
+            !chain.links.some(([s, c]) => s === supplier && c === node.os_id) &&
+            !chainLinksLoop([...chain.links, [supplier, node.os_id]]),
+    );
+
+// Reverse a link, unless that would make the chain loop.
+export const reverseChainLink = (chain, supplier, customer) => {
+    const others = chain.links.filter(
+        ([s, c]) => !(s === supplier && c === customer),
+    );
+    const reversed = [...others, [customer, supplier]];
+    return chainLinksLoop(reversed) ? chain : { ...chain, links: reversed };
+};
+
+// What clicking a facility does in the builder. `clicked` is { osId, name }.
+// Returns the chain, the location now selected, and a message when the
+// click could not do what was asked.
+//  - Nothing selected: the facility joins the chain and is selected.
+//  - The selected location: it is deselected.
+//  - Another facility: it joins the chain if need be, is linked as a
+//    supplier of the selected location, and becomes the selected one, so a
+//    chain can be walked back from the final factory. If the two are
+//    already linked it is only selected.
+// The link always runs the same way, from the facility clicked to the one
+// selected, whatever tiers the contributor's data gives them: the builder
+// does what the click says, and a link can be reversed afterwards.
+export const clickChainLocation = (chain, selectedId, clicked) => {
+    const inChain = chain.nodes.some(node => node.os_id === clicked.osId);
+    if (!inChain && chain.nodes.length >= MAX_CHAIN_LOCATIONS) {
+        return {
+            chain,
+            selectedId,
+            message: `A supply chain can have at most ${MAX_CHAIN_LOCATIONS} locations.`,
+        };
+    }
+    if (clicked.osId === selectedId) {
+        return { chain, selectedId: null, message: '' };
+    }
+    const withLocation = addChainLocation(chain, clicked);
+    const hasSelected = chain.nodes.some(node => node.os_id === selectedId);
+    if (!hasSelected) {
+        return { chain: withLocation, selectedId: clicked.osId, message: '' };
+    }
+    const linked = chain.links.some(
+        link => link.includes(clicked.osId) && link.includes(selectedId),
+    );
+    if (linked) {
+        return { chain, selectedId: clicked.osId, message: '' };
+    }
+    if (chainLinksLoop([...withLocation.links, [clicked.osId, selectedId]])) {
+        return {
+            chain,
+            selectedId,
+            message: `${clicked.name} cannot supply this location: the chain would loop back on itself.`,
+        };
+    }
+    return {
+        chain: addChainLink(withLocation, clicked.osId, selectedId),
+        selectedId: clicked.osId,
+        message: '',
+    };
+};
+
+// What the builder sends to the API: names are for display only.
+export const formatChainForAPI = chain => ({
+    name: chain.name.trim(),
+    description: chain.description.trim(),
+    product_url: chain.product_url.trim(),
+    color: chain.color,
+    is_published: chain.is_published,
+    nodes: chain.nodes.map(node => ({
+        os_id: node.os_id,
+        stage: node.stage || '',
+    })),
+    links: chain.links,
+});
+
+// Every message in an API error response, whichever field it is about.
+export const getChainErrorMessages = data => {
+    if (!data || typeof data !== 'object') {
+        return ['The supply chain could not be saved.'];
+    }
+    const messages = Object.values(data).flatMap(value =>
+        Array.isArray(value) ? value.map(String) : [String(value)],
+    );
+    return messages.length
+        ? messages
+        : ['The supply chain could not be saved.'];
+};
+
+// --- The schematic: a chain without the geography ---
+
+const SCHEMATIC_BOX = Object.freeze({ width: 172, height: 38 });
+const SCHEMATIC_GAP = Object.freeze({ x: 64, y: 12 });
+const SCHEMATIC_HEADER = 26;
+
+const shortenText = (text, length) =>
+    text.length > length ? `${text.slice(0, length - 1)}…` : text;
+
+// Where everything in a chain's schematic goes: its locations in columns,
+// the start of the chain on the left, each column headed by its tier or
+// step. Within a column, locations are ordered by where the locations they
+// supply sit, to keep the lines from crossing.
+export const getSchematicLayout = chain => {
+    const { width: W, height: H } = SCHEMATIC_BOX;
+    const columns = getChainGroups(chain);
+    const rowOf = {};
+    for (let k = columns.length - 1; k >= 0; k -= 1) {
+        const rank = node =>
+            Math.min(
+                99,
+                ...chain.links
+                    .filter(([supplier]) => supplier === node.os_id)
+                    .map(([, customer]) =>
+                        rowOf[customer] === undefined ? 99 : rowOf[customer],
+                    ),
+            );
+        columns[k].nodes = sortBy(columns[k].nodes, rank);
+        columns[k].nodes.forEach((node, row) => {
+            rowOf[node.os_id] = row;
+        });
+    }
+    const rows = Math.max(...columns.map(column => column.nodes.length));
+    const rowHeight = H + SCHEMATIC_GAP.y;
+
+    const position = {};
+    const boxes = [];
+    columns.forEach((column, k) => {
+        const x = k * (W + SCHEMATIC_GAP.x) + 2;
+        const offset = ((rows - column.nodes.length) * rowHeight) / 2;
+        column.nodes.forEach((node, row) => {
+            const y = SCHEMATIC_HEADER + row * rowHeight + offset;
+            position[node.os_id] = { x, y };
+            const fullName = node.name || node.os_id;
+            boxes.push({
+                osId: node.os_id,
+                x,
+                y,
+                fullName,
+                name: shortenText(fullName, 25),
+                sub: shortenText(
+                    [node.stage, node.country_name].filter(Boolean).join(' · '),
+                    30,
+                ),
+            });
+        });
+    });
+
+    const edges = chain.links
+        .filter(
+            ([supplier, customer]) => position[supplier] && position[customer],
+        )
+        .map(([supplier, customer]) => {
+            const from = position[supplier];
+            const to = position[customer];
+            const x1 = from.x + W;
+            const y1 = from.y + H / 2;
+            const x2 = to.x - 7;
+            const y2 = to.y + H / 2;
+            const middle = (x1 + x2) / 2;
+            return {
+                key: `${supplier}-${customer}`,
+                d: `M${x1} ${y1} C${middle} ${y1} ${middle} ${y2} ${x2} ${y2}`,
+            };
+        });
+
+    return {
+        width: columns.length * W + (columns.length - 1) * SCHEMATIC_GAP.x + 4,
+        height: rows * rowHeight + SCHEMATIC_HEADER + 4,
+        box: SCHEMATIC_BOX,
+        headers: columns.map((column, k) => ({
+            label: column.label,
+            x: k * (W + SCHEMATIC_GAP.x) + 2,
+        })),
+        boxes,
+        edges,
+    };
+};
+
+// Undo in the builder steps back through the chain's structure: which
+// locations are in it and how they are linked. Text typed since (a name, what
+// happens at a location) is kept.
+export const chainStructureKey = chain =>
+    JSON.stringify([chain.nodes.map(node => node.os_id), chain.links]);
+
+export const restoreChainStructure = (chain, { nodes, links }) => {
+    const current = {};
+    chain.nodes.forEach(node => {
+        current[node.os_id] = node;
+    });
+    return {
+        ...chain,
+        nodes: nodes.map(node => current[node.os_id] || node),
+        links,
+    };
+};
+
+// Whether the chain being edited differs from the one that was opened.
+export const chainHasChanges = (draft, original) =>
+    JSON.stringify(formatChainForAPI(draft)) !==
+    JSON.stringify(formatChainForAPI(original));
+
+// The chains with one moved up (-1) or down (1) a place.
+export const moveChain = (chains, id, direction) => {
+    const from = chains.findIndex(chain => chain.id === id);
+    const to = from + direction;
+    if (from < 0 || to < 0 || to >= chains.length) return chains;
+    const moved = [...chains];
+    moved.splice(to, 0, moved.splice(from, 1)[0]);
+    return moved;
+};
+
+// Only http(s) links are ever shown to visitors.
+export const getSafeProductUrl = url =>
+    /^https?:\/\/[^\s"<>]+$/i.test((url || '').trim()) ? url.trim() : '';
+
 // The dropdown filters an embedded map offers: the contributor's visible,
 // filterable fields that have at least one value, in the contributor's order.
 // `filterOptions` is `filter_options` from the embed config:

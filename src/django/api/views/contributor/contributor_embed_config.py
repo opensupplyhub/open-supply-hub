@@ -4,6 +4,7 @@ from rest_framework.response import Response
 
 from ...models import Contributor
 from ...serializers import EmbedConfigSerializer
+from ...services.embed_supply_chains import published_supply_chains
 from ...services.embed_field_filters import (
     embed_filter_options,
     field_value_options,
@@ -33,6 +34,8 @@ def contributor_embed_config(_, pk=None):
             if color_by_field
             else []
         )
+        # The supply chains the contributor has published for visitors.
+        embed_config['supply_chains'] = published_supply_chains(contributor)
         return Response(embed_config)
     except Contributor.DoesNotExist as exc:
         raise ValidationError('Contributor not found.') from exc

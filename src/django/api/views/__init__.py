@@ -66,6 +66,7 @@ from .moderation_events.moderation_events_view_set import ModerationEventsViewSe
 from .admin_facility_list_view import AdminFacilityListView
 from .disabled_pagination_inspector import DisabledPaginationInspector
 from .embed_config_view_set import EmbedConfigViewSet
+from .embed_supply_chain_view_set import EmbedSupplyChainViewSet
 from .get_geocoding import get_geocoding
 from .is_list_and_admin_or_not_list import IsListAndAdminOrNotList
 from .log_download import log_download
