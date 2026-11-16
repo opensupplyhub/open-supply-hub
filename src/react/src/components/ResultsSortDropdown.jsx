@@ -1,5 +1,13 @@
 import React, { useEffect } from 'react';
-import { string, func, shape, oneOfType, node } from 'prop-types';
+import {
+    arrayOf,
+    func,
+    node,
+    object,
+    oneOfType,
+    shape,
+    string,
+} from 'prop-types';
 import { withRouter } from 'react-router';
 import { connect } from 'react-redux';
 
@@ -59,6 +67,7 @@ const ResultsSortDropdown = ({
     sortAlgorithm,
     initializeSort,
     updateSort,
+    options,
 }) => {
     useEffect(() => {
         if (!sortAlgorithm) {
@@ -89,7 +98,7 @@ const ResultsSortDropdown = ({
                     }}
                     isSearchable={false}
                     value={sortAlgorithm}
-                    options={optionsForSortingResults}
+                    options={options}
                     onChange={updateSort}
                 />
             </Grid>
@@ -112,6 +121,11 @@ ResultsSortDropdown.propTypes = {
     ]).isRequired,
     initializeSort: func.isRequired,
     updateSort: func.isRequired,
+    options: arrayOf(object),
+};
+
+ResultsSortDropdown.defaultProps = {
+    options: optionsForSortingResults,
 };
 
 const mapStateToProps = ({ filters }) => ({

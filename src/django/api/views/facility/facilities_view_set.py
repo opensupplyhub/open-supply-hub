@@ -62,6 +62,13 @@ from api.services.claim_campaign_service import (
     resolve_claim_campaign,
 )
 from api.models.embed_field import EmbedField
+from api.services.embed_field_filters import (
+    embed_field_sort,
+    embed_has_blurb,
+    embed_settings_version,
+    order_by_embed_field,
+    resolve_embed_sort,
+)
 from api.serializers.utils import get_embed_contributor_id_from_query_params
 from api.models import (
     Contributor,
@@ -151,6 +158,17 @@ from api.views.facility.facility_parameters import (
 log = logging.getLogger(__name__)
 
 
+def facilities_list_cache_token(request):
+    """
+    What a cached facility list varies by, beyond its query: who is asking
+    and, for an embedded map, the version of its contributor's settings.
+    """
+    return '{}|{}'.format(
+        facilities_visibility_token(request),
+        embed_settings_version(request.query_params),
+    )
+
+
 def embed_list_shows_contributor_fields(request):
     """
     Whether the facility list for an embedded map should carry each
@@ -238,7 +256,7 @@ class FacilitiesViewSet(ListModelMixin,
     @swagger_auto_schema(manual_parameters=facilities_list_parameters)
     @cache_view_response(
         'facilities_list',
-        vary_on=facilities_visibility_token,
+        vary_on=facilities_list_cache_token,
     )
     def list(self, request):
         """
@@ -564,8 +582,13 @@ class FacilitiesViewSet(ListModelMixin,
                 facility_processing_filter=facility_processing_filter,
             )
         )
-        sort_by = params.validated_data['sort_by']
+        sort_by = resolve_embed_sort(
+            request.query_params, params.validated_data['sort_by']
+        )
         order_list = []
+        # An embedded map's list can be ordered by one of its contributor's
+        # own fields.
+        field_sort = embed_field_sort(request.query_params, sort_by)
 
         if (sort_by is None) or (sort_by == 'contributors_desc'):
             order_list = ['-contributors_count', 'name']
@@ -583,7 +606,26 @@ class FacilitiesViewSet(ListModelMixin,
             order_list.insert(0, '-_fp_relevance')
         order_list.append('id')
 
-        queryset = queryset.extra(order_by=order_list)
+        # An embedded map can list its blurbed facilities first, ahead of
+        # whichever order applies.
+        has_blurb = embed_has_blurb(request.query_params)
+        blurbs_first = []
+        if has_blurb is not None:
+            queryset = queryset.annotate(embed_has_blurb=has_blurb)
+            blurbs_first = ['-embed_has_blurb']
+
+        if field_sort is not None:
+            queryset, field_ordering = order_by_embed_field(
+                queryset, request.query_params, *field_sort
+            )
+            relevance = ['-_fp_relevance'] if has_fp_relevance else []
+            queryset = queryset.order_by(
+                *blurbs_first, *relevance, *field_ordering, 'name', 'id'
+            )
+        elif blurbs_first:
+            queryset = queryset.order_by(*blurbs_first, *order_list)
+        else:
+            queryset = queryset.extra(order_by=order_list)
 
         page_queryset = self.paginate_queryset(queryset)
 

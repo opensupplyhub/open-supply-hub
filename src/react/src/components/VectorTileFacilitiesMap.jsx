@@ -11,6 +11,7 @@ import get from 'lodash/get';
 import VectorTileFacilitiesLayer from './VectorTileFacilitiesLayer';
 import VectorTileFacilityGridLayer from './VectorTileFacilityGridLayer';
 import VectorTileGridLegend from './VectorTileGridLegend';
+import EmbedColorLegend from './EmbedColorLegend';
 import SearchControls from './SearchControls';
 import PolygonalSearchControl from './PolygonalSearchControl';
 
@@ -22,6 +23,7 @@ import {
 } from '../util/constants';
 
 import { makeFacilityDetailLink, getIsMobile } from '../util/util';
+import { embedDrawsDots } from '../util/embeddedMap';
 
 import { resetSingleFacility } from '../actions/facilities';
 
@@ -61,6 +63,7 @@ function VectorTileFacilitiesMap({
     drawFilterActive,
     boundary,
     isEmbedded,
+    drawsDots,
     mapStyle = 'silver',
     navigateToFacilities,
     isMobile,
@@ -142,28 +145,37 @@ function VectorTileFacilitiesMap({
                 <SearchControls />
             </Control>
             <Control position="bottomleft">
-                <VectorTileGridLegend
-                    currentZoomLevel={currentMapZoomLevel}
-                    gridColorRamp={gridColorRamp}
-                />
+                <EmbedColorLegend />
             </Control>
+            {/* An embedded map that draws every facility as its own dot at
+                every zoom level has no grouped grid and no grid legend. */}
+            {!drawsDots && (
+                <Control position="bottomleft">
+                    <VectorTileGridLegend
+                        currentZoomLevel={currentMapZoomLevel}
+                        gridColorRamp={gridColorRamp}
+                    />
+                </Control>
+            )}
             <ZoomControl position="bottomright" />
             <VectorTileFacilitiesLayer
                 handleMarkerClick={handleMarkerClick}
                 handleFacilityClick={handleFacilityClick}
                 osID={osID}
                 pushRoute={push}
-                minZoom={maxVectorTileFacilitiesGridZoom + 1}
+                minZoom={drawsDots ? 1 : maxVectorTileFacilitiesGridZoom + 1}
                 maxZoom={22}
+                asDots={drawsDots}
             />
-            {currentMapZoomLevel <= maxVectorTileFacilitiesGridZoom && (
-                <VectorTileFacilityGridLayer
-                    handleCellClick={handleCellClick}
-                    minZoom={1}
-                    maxZoom={maxVectorTileFacilitiesGridZoom}
-                    zoomLevel={currentMapZoomLevel}
-                />
-            )}
+            {!drawsDots &&
+                currentMapZoomLevel <= maxVectorTileFacilitiesGridZoom && (
+                    <VectorTileFacilityGridLayer
+                        handleCellClick={handleCellClick}
+                        minZoom={1}
+                        maxZoom={maxVectorTileFacilitiesGridZoom}
+                        zoomLevel={currentMapZoomLevel}
+                    />
+                )}
             {drawFilterActive && (
                 <PolygonalSearchControl
                     navigateToFacilities={navigateToFacilities}
@@ -221,6 +233,7 @@ function mapStateToProps({
     vectorTileLayer: { gridColorRamp },
     filters: { boundary },
     embeddedMap: { embed: isEmbedded, config },
+    featureFlags,
 }) {
     return {
         resetButtonClickCount,
@@ -231,6 +244,7 @@ function mapStateToProps({
         drawFilterActive,
         boundary,
         isEmbedded,
+        drawsDots: embedDrawsDots(isEmbedded, featureFlags),
         mapStyle: config.map_style,
         isMobile: getIsMobile(windowInnerWidth),
     };
