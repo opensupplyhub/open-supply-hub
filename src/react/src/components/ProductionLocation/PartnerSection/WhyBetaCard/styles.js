@@ -9,9 +9,11 @@ const whyBetaCardStyles = theme => {
             alignItems: 'flex-start',
         }),
         chip: Object.freeze({
-            marginBottom: spacing,
+            marginBottom: spacing * 1.5,
         }),
         card: Object.freeze({
+            // Indented under the chip, as in the mockup.
+            marginLeft: spacing * 3,
             backgroundColor: COLOURS.BETA_CARD_BG,
             color: COLOURS.WHITE,
             borderRadius: '8px',
