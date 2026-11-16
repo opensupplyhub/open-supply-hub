@@ -7,7 +7,9 @@ start_run      -> create a ListCleaningRun and hand it to the configured
                   `enable_list_cleaning_feedback` switch is on.
 refresh_run    -> poll an asynchronous runner and ingest its result.
 ingest_result  -> turn the pipeline's aggregated {file_pass, records, usage}
-                  into ListCleaningSuggestion rows.
+                  into ListCleaningSuggestion rows and open the review
+                  window: it runs from when there is something to
+                  review, not from when the pipeline was started.
 record_decisions -> log a contributor's accept / reject / edit / remove
                   per suggestion, or per error type across the list.
 submit_run     -> the one submission (v3): apply every accepted
@@ -83,7 +85,7 @@ def build_payload(facility_list):
 
 
 def review_deadline(now=None):
-    """When a run created now stops accepting the contributor's changes."""
+    """When a window opened now stops accepting the contributor's changes."""
     return (now or timezone.now()) + timedelta(
         minutes=settings.LIST_CLEANING_REVIEW_MINUTES)
 
@@ -111,6 +113,9 @@ def start_run(facility_list, runner_name=None, force=False):
         return None
 
     runner_name = runner_name or settings.LIST_CLEANING_RUNNER
+    # The deadline set here only caps how long the list waits for the
+    # pipeline (moderation holds off while it is in the future); the
+    # contributor's window proper starts over when the result arrives.
     run = ListCleaningRun.objects.create(
         facility_list=facility_list,
         runner=runner_name,
@@ -272,10 +277,27 @@ def _removal(record, item, common, now):
     )
 
 
-def _record_suggestions(record, item, common, now):
+def _unknown_column(item, field):
+    """
+    A correction names the column it changes. One that names none, or a
+    column the row does not have, would put a new key into raw_json
+    (and from there into the re-parse and what the moderator sees), so
+    it is dropped at ingest rather than carried into the review.
+    """
+    if not field:
+        return True
+    return item is not None and field not in (item.raw_json or {})
+
+
+def _record_suggestions(record, item, common, now, dropped):
     """Every suggestion one pipeline record carries for its row."""
-    out = [_correction(item, change, common, now)
-           for change in record.get('changes') or []]
+    out = []
+    for change in record.get('changes') or []:
+        field = change.get('field', '')
+        if _unknown_column(item, field):
+            dropped.append(f'row {record.get("row")}: {field!r}')
+            continue
+        out.append(_correction(item, change, common, now))
     out += [_issue(item, issue, common)
             for issue in record.get('issues') or []]
     if record.get('status') == 'removed':
@@ -297,6 +319,19 @@ def ingest_result(run, result):
                  'ignoring a repeated result')
         return run
     now = timezone.now()
+    if run.closed_at is not None:
+        # The window lapsed while the pipeline was still running: the
+        # deadline set at start caps how long a list waits for it, and
+        # the sweep has already sent the list to moderation as uploaded.
+        # A review nobody can act on must not open now.
+        run.status = ListCleaningRun.FAILED
+        run.error = ('The checks finished after the review window had '
+                     'closed; the list went to moderation as uploaded.')
+        run.completed_at = now
+        run.save(update_fields=['status', 'error', 'completed_at'])
+        log.warning(f'[List Cleaning] Run {run.id} finished after its '
+                    'window closed; the result is not stored')
+        return run
     items_by_row = {
         item.row_index + ROW_OFFSET: item
         for item in FacilityListItem.objects.filter(
@@ -305,18 +340,30 @@ def ingest_result(run, result):
     run.suggestions.all().delete()
 
     suggestions = []
+    dropped = []
     for record in result.get('records') or []:
         row_number = record.get('row')
         item = items_by_row.get(row_number)
         common = {'run': run, 'facility_list_item': item,
                   'row_number': row_number}
-        suggestions += _record_suggestions(record, item, common, now)
+        suggestions += _record_suggestions(
+            record, item, common, now, dropped)
+    if dropped:
+        log.warning(
+            f'[List Cleaning] Run {run.id}: dropped {len(dropped)} '
+            f'correction(s) for columns the row does not have: '
+            f'{"; ".join(dropped[:10])}')
 
     ListCleaningSuggestion.objects.bulk_create(suggestions)
 
     run.file_pass = result.get('file_pass') or {}
     run.usage = result.get('usage') or {}
     run.prompt_version = str(result.get('prompt_version') or '')
+    # The contributor's window starts now that there is something to
+    # review, not when the pipeline was started: its latency is not
+    # theirs to lose.
+    if run.review_until is not None:
+        run.review_until = review_deadline(now)
     run.status = ListCleaningRun.COMPLETE
     run.error = ''
     run.completed_at = now
@@ -516,9 +563,16 @@ def change_breakdown(run, as_uploaded=False):
     fixes = [s for s in suggestions
              if s.kind == S.CORRECTION and not (s.extra or {}).get('auto')]
     flags = [s for s in suggestions if s.severity == S.MUST_FIX]
-    removed_rows = {s.row_number for s in suggestions
-                    if s.decision == S.REMOVED}
-    flags_resolved = _count(
+    # The same test apply_run uses, so a flag on a row that went counts
+    # as resolved whether the contributor dropped the row or an
+    # automatic removal (a blank row, an exact repeat) took it. Rows
+    # the contributor removed themselves are the ones they chose
+    # REMOVED on; automatic removals are counted with the other
+    # automatic fixes.
+    removed_rows = {s.row_number for s in suggestions if wants_removal(s)}
+    removed_by_review = {s.row_number for s in suggestions
+                         if s.decision == S.REMOVED}
+    flags_resolved = 0 if as_uploaded else _count(
         flags, lambda s: s.decision == S.EDITED
         or s.row_number in removed_rows)
     out = {
@@ -529,7 +583,7 @@ def change_breakdown(run, as_uploaded=False):
         'fixes_kept_original': _count(
             fixes, lambda s: s.decision == S.REJECTED),
         'values_typed': _count(suggestions, lambda s: s.decision == S.EDITED),
-        'rows_removed_by_review': len(removed_rows),
+        'rows_removed_by_review': len(removed_by_review),
         'flags_offered': len(flags),
         'flags_resolved': flags_resolved,
         'flags_left_as_uploaded': len(flags) - flags_resolved,
@@ -572,7 +626,14 @@ def _tally_run(run, out, samples):
     if run.closed_at is None:
         out['runs_open'] += 1
         return
-    if run.closed_reason != ListCleaningRun.SUBMITTED:
+    if run.closed_reason not in (ListCleaningRun.SUBMITTED,
+                                 ListCleaningRun.LAPSED):
+        # Closed on arrival with nothing to decide (the checks found
+        # nothing, or the run failed): the contributor never had a
+        # window, so it is neither a submission nor a click-away.
+        out['nothing_to_review'] += 1
+        return
+    if run.closed_reason == ListCleaningRun.LAPSED:
         key = 'lapsed_after_opening' if opened else 'lapsed_never_opened'
         out[key] += 1
         # A lapse after opening put what was decided on the list, so
@@ -602,13 +663,15 @@ def metrics_summary():
     """
     Submit versus click away, across every closed run. Counts runs, not
     events: a contributor who opens, leaves, resumes and submits is one
-    "submitted" run that was also "left once".
+    "submitted" run that was also "left once". Runs that closed with
+    nothing to review are counted apart and stay out of the submit rate.
     """
     runs = ListCleaningRun.objects.filter(
         status=ListCleaningRun.COMPLETE).prefetch_related('events')
     out = {
         'runs_complete': 0,
         'runs_open': 0,
+        'nothing_to_review': 0,
         'review_opened': 0,
         'submitted_with_changes': 0,
         'submitted_as_uploaded': 0,
@@ -671,6 +734,11 @@ def _check_decision(suggestion, decision, value):
         raise DecisionError('A removal cannot be edited.')
     if suggestion.field in ('', 'row'):
         raise DecisionError('This flag is not tied to a single field.')
+    item = suggestion.facility_list_item
+    if item is not None and suggestion.field not in (item.raw_json or {}):
+        raise DecisionError(
+            'This flag is not tied to a column of the row, so there is '
+            'no value to replace.')
     if suggestion.field == 'country':
         # The same lookup parse uses, so the typed value is one the row
         # will re-parse with (and country_code follows it on submit).
@@ -801,7 +869,15 @@ def _reset_group(suggestions, user, now):
 
 
 def _write_field(item, field, value):
+    """Put the value in the row's column. False, with nothing written,
+    when the row has no such column: raw_json only ever holds what was
+    uploaded (ingest and the decision checks keep this from happening;
+    this is the last guard)."""
     raw = dict(item.raw_json or {})
+    if field not in raw:
+        log.warning(f'[List Cleaning] Item {item.id} has no column '
+                    f'{field!r}; nothing written')
+        return False
     raw[field] = value
     item.raw_json = raw
     if field == 'name':
@@ -812,6 +888,7 @@ def _write_field(item, field, value):
         item.clean_address = clean(value)[:200]
     # country_code and every other derived field follow from the
     # re-parse in _rederive_items.
+    return True
 
 
 REMOVED_STATUSES = (FacilityListItem.DUPLICATE,
@@ -889,10 +966,13 @@ def _build_fields(parsed, contributor):
             value = stored_value(field, row.fields.get(field), item)
             if value is None:
                 continue
+            # bulk_create sends no post_save, so the signal that stamps
+            # origin_source on the normal create_extendedfield path
+            # (signals.set_origin_source_on_create) never runs here.
             fields.append(ExtendedField(
                 contributor=contributor, facility_list_item=item,
                 facility_id=item.facility_id, field_name=field,
-                value=value))
+                value=value, origin_source=settings.INSTANCE_SOURCE))
     return fields
 
 
@@ -1052,12 +1132,13 @@ def _apply_values(item, suggestions, log_entry):
         action = _value_action(s, item)
         if action is None:
             continue
+        value = s.original_value if action == 'revert' else s.final_value
+        if not _write_field(item, s.field, value):
+            continue
         if action == 'revert':
-            _write_field(item, s.field, s.original_value)
             s.applied = False
             reverted += 1
         else:
-            _write_field(item, s.field, s.final_value)
             s.applied = True
             applied += 1
         log_entry(item, s, s.applied)

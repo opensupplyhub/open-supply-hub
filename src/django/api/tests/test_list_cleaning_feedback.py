@@ -30,12 +30,18 @@ from api.services.list_cleaning import (
     SWITCH_NAME,
     apply_run,
     ingest_result,
+    metrics_summary,
     record_decisions,
     refresh_run,
     start_run,
+    sweep_run,
 )
 from api.services.list_cleaning.runners import RunFailed
-from api.services.list_cleaning.service import build_fixed_csv
+from api.services.list_cleaning.service import (
+    DecisionError,
+    build_fixed_csv,
+    change_breakdown,
+)
 from api.services.list_cleaning.stub import run_rules
 
 SAMPLE_RESULT = {
@@ -79,6 +85,20 @@ SAMPLE_RESULT = {
     'usage': {'input_tokens': 10, 'output_tokens': 20, 'seconds': 1.5},
     'prompt_version': '01',
 }
+
+
+def _set_window(run, minutes_left):
+    run.review_until = timezone.now() + timedelta(minutes=minutes_left)
+    run.save(update_fields=['review_until'])
+
+
+def _running_run(facility_list, minutes_left):
+    """A run out in Step Functions, with the start-time deadline that
+    caps how long the list waits for it."""
+    return ListCleaningRun.objects.create(
+        facility_list=facility_list, runner=ListCleaningRun.STEP_FUNCTIONS,
+        status=ListCleaningRun.RUNNING, execution_arn='arn:exec',
+        review_until=timezone.now() + timedelta(minutes=minutes_left))
 
 
 @override_settings(LIST_CLEANING_RUNNER='stub')
@@ -224,8 +244,12 @@ class ListCleaningFeedbackTest(APITestCase):
     def _ingested_run(self, minutes_left=60):
         run = ListCleaningRun.objects.create(
             facility_list=self.list, runner=ListCleaningRun.IMPORT,
-            review_until=timezone.now() + timedelta(minutes=minutes_left))
+            review_until=timezone.now() + timedelta(minutes=60))
         ingest_result(run, SAMPLE_RESULT)
+        if minutes_left != 60:
+            # the window is set when the result arrives, so a run whose
+            # window has lapsed is backdated after the ingest
+            _set_window(run, minutes_left)
         return run
 
     def test_get_without_run(self):
@@ -671,6 +695,12 @@ class ListCleaningFeedbackTest(APITestCase):
         field = self._workers_field(first)
         self.assertEqual(field.value, {'min': 1250, 'max': 1250})
         self.assertEqual(field.facility_id, facility.id)
+        # bulk_create sends no post_save, so the signal that stamps
+        # origin_source on the upload path never runs for these rows
+        self.assertFalse(ExtendedField.objects.filter(
+            facility_list_item__source=self.source,
+            origin_source__isnull=True).exists())
+        self.assertEqual(field.origin_source, 'os_hub')
         facility.refresh_from_db()
         self.assertGreater(facility.updated_at, before)
         first.refresh_from_db()
@@ -1130,8 +1160,9 @@ class ListCleaningFeedbackTest(APITestCase):
             contributor=self.contributor)
         lapsed = ListCleaningRun.objects.create(
             facility_list=other, runner=ListCleaningRun.IMPORT,
-            review_until=timezone.now() - timedelta(minutes=1))
+            review_until=timezone.now() + timedelta(minutes=60))
         ingest_result(lapsed, SAMPLE_RESULT)
+        _set_window(lapsed, -1)
 
         self.assertEqual(
             self.client.get('/api/facility-lists/cleaning-metrics/')
@@ -1145,6 +1176,7 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(sweep_lapsed(), 1)
         response = self.client.get('/api/facility-lists/cleaning-metrics/')
         self.assertEqual(response.data['runs_complete'], 2)
+        self.assertEqual(response.data['nothing_to_review'], 0)
         self.assertEqual(response.data['submitted_with_changes'], 1)
         self.assertEqual(response.data['lapsed_never_opened'], 1)
         self.assertEqual(response.data['left_at_least_once'], 1)
@@ -1160,6 +1192,185 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response.data['totals']['fixes_offered'], 2)
         self.assertEqual(response.data['totals']['flags_left_as_uploaded'],
                          2)
+
+    # -- second review round ---------------------------------------------
+
+    @override_settings(LIST_CLEANING_REVIEW_MINUTES=60)
+    def test_review_window_starts_when_the_result_arrives(self):
+        # Fifty minutes into the start-time deadline the pipeline is
+        # done: the contributor still gets the whole window, since its
+        # latency was never theirs.
+        run = _running_run(self.list, minutes_left=10)
+        with patch('api.services.list_cleaning.service.get_runner') as g:
+            g.return_value.fetch_result.return_value = SAMPLE_RESULT
+            refresh_run(run)
+        run.refresh_from_db()
+        self.assertEqual(run.status, ListCleaningRun.COMPLETE)
+        self.assertGreater(run.review_until,
+                           timezone.now() + timedelta(minutes=59))
+        self.client.force_login(self.user)
+        response = self.client.get(self.url())
+        self.assertTrue(response.data['window_open'])
+        self.assertGreater(response.data['seconds_left'], 59 * 60)
+
+    def test_result_after_a_lapsed_window_does_not_open_a_review(self):
+        # The pipeline outran the start-time deadline: the sweep sent
+        # the list to moderation as uploaded while the run was still
+        # RUNNING, so the result that arrives later must not open a
+        # review nobody can act on.
+        run = _running_run(self.list, minutes_left=-1)
+        sweep_run(run)
+        run.refresh_from_db()
+        self.assertEqual(run.status, ListCleaningRun.RUNNING)
+        self.assertEqual(run.closed_reason, ListCleaningRun.LAPSED)
+        self.assertFalse(
+            run.events.get(kind=ListCleaningEvent.LAPSED).meta['opened'])
+        with patch('api.services.list_cleaning.service.get_runner') as g:
+            g.return_value.fetch_result.return_value = SAMPLE_RESULT
+            refresh_run(run)
+        run.refresh_from_db()
+        self.assertNotEqual(run.status, ListCleaningRun.COMPLETE)
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        self.assertIn('after the review window had closed', run.error)
+        self.assertEqual(run.suggestions.count(), 0)
+        self.assertEqual(run.closed_reason, ListCleaningRun.LAPSED)
+        first = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(first.raw_json['number_of_workers'], '1,200')
+        # the list is with the moderator, and stays there
+        self.client.force_login(self.superuser)
+        response = self.client.post(
+            f'/api/facility-lists/{self.list.id}/approve/',
+            {'reason': 'x'}, format='json')
+        self.assertNotEqual(response.status_code,
+                            status.HTTP_400_BAD_REQUEST, response.data)
+
+    def test_clean_runs_are_not_lapses_in_the_metrics(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, {'records': [], 'file_pass': {}})
+        self.assertEqual(run.closed_reason, ListCleaningRun.CLEAN)
+        summary = metrics_summary()
+        self.assertEqual(summary['runs_complete'], 1)
+        self.assertEqual(summary['nothing_to_review'], 1)
+        self.assertEqual(summary['runs_open'], 0)
+        self.assertEqual(summary['lapsed_never_opened'], 0)
+        self.assertEqual(summary['lapsed_after_opening'], 0)
+        # nothing was ever there to submit, so no submit rate either
+        self.assertIsNone(summary['submit_rate'])
+        out = StringIO()
+        call_command('list_cleaning_metrics', stdout=out)
+        self.assertIn('nothing to review', out.getvalue())
+
+    def test_a_flag_on_a_removed_row_counts_as_resolved(self):
+        # A blank row carries an empty_row flag (left PENDING) and an
+        # automatic removal (ACCEPTED): the row went, so the flag is
+        # resolved, but nobody chose to remove it.
+        FacilityListItem.objects.create(
+            source=self.source, row_index=3, raw_data='"","","",""',
+            raw_json={'country': '', 'name': '', 'address': '',
+                      'number_of_workers': ''},
+            name='', address='', country_code='', sector=[],
+            status=FacilityListItem.PARSED)
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, {'records': [{
+            'row': 5, 'status': 'removed', 'changes': [],
+            'issues': [{'code': 'empty_row', 'severity': 'must_fix',
+                        'field': '', 'note': 'Every cell is blank.'}],
+            'removed_reason': 'empty',
+        }], 'file_pass': {}})
+        breakdown = change_breakdown(run)
+        self.assertEqual(breakdown['flags_offered'], 1)
+        self.assertEqual(breakdown['flags_resolved'], 1)
+        self.assertEqual(breakdown['flags_left_as_uploaded'], 0)
+        self.assertEqual(breakdown['rows_removed_by_review'], 0)
+        self.assertEqual(breakdown['auto_applied'], 1)
+        # sent as uploaded, the row stayed and so did its flag
+        as_uploaded = change_breakdown(run, as_uploaded=True)
+        self.assertEqual(as_uploaded['flags_resolved'], 0)
+        self.assertEqual(as_uploaded['flags_left_as_uploaded'], 1)
+        self.assertEqual(as_uploaded['auto_applied'], 0)
+
+    def test_review_events_are_the_contributors_alone(self):
+        run = self._ingested_run()
+        # a superuser can read the list but did not upload it
+        self.client.force_login(self.superuser)
+        response = self.client.post(self.url('events/'), {'kind': 'opened'},
+                                    format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertFalse(run.events.exists())
+        # the owner can, while the window is open
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('events/'), {'kind': 'opened'},
+                                    format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.client.post(self.url('submit/'), {}, format='json')
+        response = self.client.post(self.url('events/'),
+                                    {'kind': 'resumed'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('not open', str(response.data))
+        # closing the walkthrough is about the user, not the window
+        response = self.client.post(self.url('events/'), {
+            'kind': 'tour_dismissed', 'meta': {'how': 'finished'}},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual([e.kind for e in run.events.all()],
+                         ['opened', 'submitted', 'tour_dismissed'])
+        with override_switch(SWITCH_NAME, active=False):
+            response = self.client.post(self.url('events/'), {
+                'kind': 'tour_dismissed'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_corrections_for_columns_the_row_lacks_are_dropped(self):
+        # A malformed record from the pipeline: a correction with no
+        # field, and one for a column the upload never had. Neither may
+        # put a key into raw_json; the good one is kept.
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, {'records': [{
+            'row': 2, 'status': 'auto_corrected', 'issues': [],
+            'changes': [
+                {'value': 'x', 'reason': 'whitespace'},
+                {'field': 'postcode', 'value': '700000',
+                 'reason': 'whitespace'},
+                {'field': 'number_of_workers', 'value': '1200',
+                 'reason': 'workers_format'},
+            ],
+        }], 'file_pass': {}})
+        self.assertEqual(
+            [s.field for s in run.suggestions.all()], ['number_of_workers'])
+        self.client.force_login(self.user)
+        response = self.client.post(self.url('submit/'), {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        first = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(set(first.raw_json),
+                         {'country', 'name', 'address', 'number_of_workers'})
+        self.assertEqual(first.raw_json['number_of_workers'], '1200')
+
+    def test_a_flag_on_a_missing_column_cannot_be_edited_into_one(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, {'records': [{
+            'row': 2, 'status': 'needs_your_action', 'changes': [],
+            'issues': [{'code': 'postcode_missing', 'severity': 'must_fix',
+                        'field': 'postcode', 'note': 'No postcode.'}],
+        }], 'file_pass': {}})
+        flag = run.suggestions.get()
+        with self.assertRaises(DecisionError) as raised:
+            record_decisions(
+                run, [{'id': flag.id, 'decision': 'EDITED',
+                       'value': '700000'}], self.user)
+        self.assertIn('not tied to a column', str(raised.exception))
+        # it can still be resolved the other ways
+        record_decisions(
+            run, [{'id': flag.id, 'decision': 'REMOVED'}], self.user)
+        flag.refresh_from_db()
+        self.assertEqual(flag.decision, ListCleaningSuggestion.REMOVED)
 
     def test_start_is_superuser_only(self):
         self.client.force_login(self.user)
