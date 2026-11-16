@@ -825,3 +825,127 @@ class ZoneSetFiltersTest(TestCase):
                                        'product_type': ['ore']})
         self.assertEqual(len(together), 1)
         self.assertIn('all of the filters together', together[0])
+
+
+OBJECT_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'report_title': {'type': 'string', 'title': 'Report'},
+        'survey_period': {'type': 'string', 'title': 'Survey period'},
+        'workers_surveyed': {'type': 'string', 'title': 'Workers surveyed'},
+        'report_url': {
+            'type': 'string', 'format': 'uri', 'title': 'Report link',
+        },
+    },
+}
+
+
+@override_switch(ZONE_SETS_SWITCH, active=True)
+class ZoneSetObjectFieldFiltersTest(TestCase):
+    """Tests for a zone set that feeds an object-type partner field
+    (several values per zone, as in OSDEV-3659) AND is limited by
+    filters (OSDEV-3813). Each feature is tested alone elsewhere; this
+    covers them together, which is what most partner datasets will be:
+    several fields per card, only on the locations that match."""
+
+    def setUp(self):
+        """An object zone set filtered to Mining locations that make
+        ore, over two bands. West carries every key plus an extra
+        property outside the schema; East leaves one key blank, one
+        null and one out."""
+        self.user = User.objects.create(email='object@example.com')
+        self.contributor = Contributor.objects.create(
+            admin=self.user,
+            name='Object partner',
+            contrib_type=Contributor.OTHER_CONTRIB_TYPE,
+        )
+        self.partner_field = PartnerField.objects.create(
+            name='object_partner_report',
+            type=PartnerField.OBJECT,
+            label='Object partner report',
+            json_schema=OBJECT_SCHEMA,
+        )
+        self.contributor.partner_fields.add(self.partner_field)
+        self.zone_set = ZoneSet.objects.create(
+            name='object_partner_report',
+            partner_field=self.partner_field,
+            value_property=None,
+            filters={'sector': ['Mining'], 'product_type': ['ore']},
+        )
+        self.zone_set.replace_zones(zone_pieces(
+            feature(WEST, {
+                'report_title': 'West report',
+                'survey_period': 'Q1 2025',
+                'workers_surveyed': '120 workers',
+                'report_url': 'https://example.com/west',
+                'internal_note': 'in the file, not in the schema',
+            }),
+            feature(EAST, {
+                'report_title': 'East report',
+                'survey_period': '   ',
+                'workers_surveyed': None,
+            }),
+            schema=OBJECT_SCHEMA,
+        ))
+        self.provider = ZoneSetProvider(self.zone_set)
+
+    def _tagged(self, lon, lat, sector, products):
+        """Create a facility with the given indexed sector and (already
+        lower-cased, as the index stores them) product types."""
+        facility = make_facility(self.contributor, lon, lat)
+        FacilityIndex.objects.filter(id=facility.id).update(
+            sector=sector, product_type=products
+        )
+        return facility
+
+    def test_card_shows_every_usable_field_only_where_filters_match(self):
+        """A matching location gets the schema's usable fields (and not
+        the extra property); a location in the zone that fails either
+        filter, or sits outside every zone, gets nothing, and the page
+        and the search condition agree."""
+        match = self._tagged(76.9, 28.6, ['Mining'], ['ore'])
+        wrong_sector = self._tagged(76.95, 28.6, ['Apparel'], ['ore'])
+        wrong_product = self._tagged(76.92, 28.7, ['Mining'], ['sand'])
+        outside = self._tagged(75.0, 20.0, ['Mining'], ['ore'])
+
+        self.assertEqual(self.provider.fetch_data(match)['value'], {
+            'raw_values': {
+                'report_title': 'West report',
+                'survey_period': 'Q1 2025',
+                'workers_surveyed': '120 workers',
+                'report_url': 'https://example.com/west',
+            },
+        })
+        for facility in (wrong_sector, wrong_product, outside):
+            self.assertIsNone(self.provider.fetch_data(facility))
+        searched = set(
+            FacilityIndex.objects
+            .filter(build_zone_sets_covered_q([self.zone_set]))
+            .values_list('id', flat=True)
+        )
+        self.assertEqual(searched, {match.id})
+
+    def test_incomplete_zone_serves_only_its_usable_fields(self):
+        """In the East zone the blank and null keys and the missing key
+        are left out, not shown as empty lines, and the filters still
+        decide which locations get the card."""
+        match = self._tagged(77.3, 28.6, ['Mining'], ['ore'])
+        other = self._tagged(77.25, 28.7, ['Apparel'], ['ore'])
+
+        self.assertEqual(
+            self.provider.fetch_data(match)['value'],
+            {'raw_values': {'report_title': 'East report'}},
+        )
+        self.assertIsNone(self.provider.fetch_data(other))
+
+    def test_zone_with_nothing_usable_stays_hidden_despite_matching(self):
+        """A location that matches the filters but sits in a zone whose
+        feature carried no usable value for any schema key gets no card,
+        so the field's heading is never shown over nothing."""
+        self.zone_set.replace_zones(zone_pieces(
+            feature(WEST, {'report_title': '  ', 'survey_period': None}),
+            schema=OBJECT_SCHEMA,
+        ))
+        match = self._tagged(76.9, 28.6, ['Mining'], ['ore'])
+
+        self.assertIsNone(self.provider.fetch_data(match))
