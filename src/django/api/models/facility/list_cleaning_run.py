@@ -86,10 +86,12 @@ class ListCleaningRun(models.Model):
         blank=True,
         help_text='When accepted corrections were last applied to the list.')
 
-    # v3: the contributor submits once. The review window opens with the
-    # run and closes either when they submit or when it lapses (with
-    # what they had decided applied, if they opened the review); after
-    # that nothing on the list changes and moderation can begin.
+    # v3: the contributor submits once. The review window opens when
+    # the pipeline's result arrives (review_until is set at start only
+    # to cap how long the list waits for it, and is set again at
+    # ingest) and closes either when they submit or when it lapses
+    # (with what they had decided applied, if they opened the review);
+    # after that nothing on the list changes and moderation can begin.
     SUBMITTED = 'submitted'
     LAPSED = 'lapsed'
     CLEAN = 'clean'
