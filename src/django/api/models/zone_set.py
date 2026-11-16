@@ -38,6 +38,15 @@ class ZoneSet(models.Model):
     file wins (lowest `Zone.feature_index`). This is deterministic
     and under the uploader's control — sort the features by severity
     before export to get "most severe wins". See `resolve_zone`.
+
+    Storage: each uploaded feature is cut into pieces of a bounded
+    vertex count before it is saved (`api.helpers.zone_subdivision`,
+    run by the admin form while it validates the file), so a
+    dissolved layer of a few enormous multipolygons costs the
+    point-in-polygon test no more than a layer of many small ones.
+    Every piece carries the feature's value and `feature_index`, so
+    nothing above this paragraph changes; `Zone.piece_index` only
+    tells the pieces of one feature apart.
     """
 
     uuid = models.UUIDField(
@@ -123,21 +132,27 @@ class ZoneSet(models.Model):
         """
         return (
             self.zones.filter(geom__covers=point)
-            .order_by('feature_index')
+            .order_by('feature_index', 'piece_index')
             .first()
         )
 
     @transaction.atomic
-    def replace_zones(self, zone_records):
+    def replace_zones(self, pieces):
         """
-        Replace every zone in this set with the given records, in one
+        Replace every zone in this set with the given pieces, in one
         transaction.
 
-        Callers validate the whole upload BEFORE calling this (see
-        `api.helpers.geojson_zones.parse_zone_features`), so by the
-        time any row is touched the new data is known to be good. The
+        Callers validate and cut the whole upload BEFORE calling this
+        (`api.helpers.geojson_zones.parse_zone_features`, then
+        `api.helpers.zone_subdivision.subdivide_zone_records`; the
+        admin form runs both in `clean`), so by the time any row is
+        touched the new data is known to be good and a feature that
+        could not be cut has already been refused as a form error. The
         delete and the inserts commit together: readers either see the
         complete old set or the complete new set, never a mix or a gap.
+
+        Each piece becomes one `Zone` row carrying its source feature's
+        label, properties and position in the file.
 
         New zones change which locations the set covers without
         touching any facility row, so once the transaction commits a
@@ -149,23 +164,24 @@ class ZoneSet(models.Model):
         the new ones at once.
 
         Args:
-            zone_records: Dicts with `geom`, `label` and `properties`
-                keys, in file order (the order defines
-                `feature_index`).
+            pieces: Dicts as returned by `subdivide_zone_records`, in
+                (feature, piece) order: `feature_index`, `piece_index`,
+                `geom`, `label` and `properties`.
         """
         self.zones.all().delete()
         Zone.objects.bulk_create(
             [
                 Zone(
                     zone_set=self,
-                    feature_index=index,
-                    geom=record['geom'],
+                    feature_index=piece['feature_index'],
+                    piece_index=piece['piece_index'],
+                    geom=piece['geom'],
                     value={
-                        'label': record['label'],
-                        'properties': record['properties'],
+                        'label': piece['label'],
+                        'properties': piece['properties'],
                     },
                 )
-                for index, record in enumerate(zone_records)
+                for piece in pieces
             ],
             batch_size=500,
         )
@@ -174,9 +190,22 @@ class ZoneSet(models.Model):
 
 class Zone(models.Model):
     """
-    One polygon in a `ZoneSet`, carrying the value shown for locations
-    inside it. Rows are created only by `ZoneSet.replace_zones`; they
-    are not edited individually.
+    One piece of one feature of a `ZoneSet`, carrying the value shown
+    for locations inside it. A feature whose geometry fits the vertex
+    budget is a single piece; a larger one is several rows that share
+    its `feature_index` and value and differ in `piece_index` (see
+    `api.helpers.zone_subdivision`). Rows are created only by
+    `ZoneSet.replace_zones`; they are not edited individually.
+
+    Every piece of a feature stores a copy of the feature's `value`
+    (label plus all source properties), so a feature cut into N pieces
+    stores its JSON N times. That is deliberate for now: the admin and
+    the migration that re-cut existing zones stay one-table changes,
+    and the cost is bounded (the upload cap is 10 MB and a piece's
+    JSON is small next to its geometry). If per-feature data grows or
+    needs editing, the value belongs on a ZoneFeature row that the
+    pieces point at, with uniqueness of `feature_index` falling out of
+    that key.
     """
 
     zone_set = models.ForeignKey(
@@ -189,6 +218,15 @@ class Zone(models.Model):
             'Position of the source feature in the uploaded file '
             '(0-based). When zones in a set overlap, the lowest index '
             'wins.'
+        ),
+    )
+    piece_index = models.PositiveIntegerField(
+        default=0,
+        help_text=(
+            'Position of this piece within its source feature '
+            '(0-based). Large features are cut into pieces of a '
+            'bounded vertex count at upload; every piece carries the '
+            "feature's value."
         ),
     )
     geom = gis_models.MultiPolygonField(
@@ -206,17 +244,20 @@ class Zone(models.Model):
     class Meta:
         verbose_name = 'Zone'
         verbose_name_plural = 'Zones'
-        ordering = ('zone_set', 'feature_index')
+        ordering = ('zone_set', 'feature_index', 'piece_index')
         constraints = [
             models.UniqueConstraint(
-                fields=('zone_set', 'feature_index'),
-                name='zone_unique_feature_index_per_set',
+                fields=('zone_set', 'feature_index', 'piece_index'),
+                name='zone_unique_piece_per_feature_per_set',
             ),
         ]
 
     def __str__(self):
-        """A zone is identified by its set and displayed label."""
-        return f'{self.zone_set.name} #{self.feature_index}: {self.label}'
+        """A zone is identified by its set, feature, piece and label."""
+        return (
+            f'{self.zone_set.name} #{self.feature_index}.{self.piece_index}: '
+            f'{self.label}'
+        )
 
     @property
     def label(self):

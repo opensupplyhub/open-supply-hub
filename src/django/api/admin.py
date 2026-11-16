@@ -727,14 +727,15 @@ class FacilityProfileCompletenessAdmin(admin.ModelAdmin):
     )
     list_filter = ('run_date', 'classifier_tier', 'scorer_version')
     search_fields = ('facility__id',)
-    raw_id_fields = ('facility',)
-    readonly_fields = ('created_at', 'updated_at')
 
     def has_add_permission(self, request):
         return False
 
-    def has_change_permission(self, request, obj=None):
-        return False
+    # Every field is read-only rather than relying on change permission
+    # alone, so the Facility FK is never an editable form field (its
+    # choices cannot see candidate facilities).
+    def get_readonly_fields(self, request, obj=None):
+        return [field.name for field in self.model._meta.fields]
 
 
 class USCountyTigerlineAdmin(admin.ModelAdmin):

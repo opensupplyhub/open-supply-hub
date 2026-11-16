@@ -29,6 +29,7 @@ from api.partner_fields.registry import (
 from api.partner_fields.zone_set_provider import ZoneSetProvider
 from api.serializers import FacilityIndexDetailsSerializer
 from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.zone_subdivision import subdivide_zone_records
 
 OPEN_SEARCH_SERVICE = "api.views.v1.production_locations.OpenSearchService"
 
@@ -53,6 +54,13 @@ def feature(coordinates, properties):
 def zone_records(*features, value_property='bws_label'):
     raw = json.dumps({'type': 'FeatureCollection', 'features': features})
     return parse_zone_features(raw, value_property)
+
+
+def zone_pieces(*features, value_property='bws_label'):
+    """The storage pieces for the features, as replace_zones takes them."""
+    return subdivide_zone_records(
+        zone_records(*features, value_property=value_property)
+    )
 
 
 @override_switch(ZONE_SETS_SWITCH, active=True)
@@ -87,7 +95,7 @@ class ZoneSetProviderTest(APITestCase):
             partner_field=self.partner_field,
             value_property='bws_label',
         )
-        self.zone_set.replace_zones(zone_records(
+        self.zone_set.replace_zones(zone_pieces(
             feature(WEST, {'bws_label': 'Extremely High'}),
             feature(EAST, {'bws_label': 'Low'}),
             feature(OVERLAPPING_WEST, {'bws_label': 'Medium'}),
