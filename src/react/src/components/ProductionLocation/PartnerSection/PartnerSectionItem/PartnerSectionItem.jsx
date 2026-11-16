@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import get from 'lodash/get';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -46,13 +47,22 @@ const PartnerSectionItem = ({
 
     // The "Why beta?" card explains the chip once per section, in the
     // right column after the fields, where the mockup places it. Its
-    // suggestions link reports the section's beta field label(s).
+    // suggestions link reports the section's beta field label(s), taken
+    // from each field's first entry (the label set in the admin) as
+    // PartnerFieldItem resolves it, so the event lines up with the other
+    // Spotlight events in GA. The title-cased field name is the fallback.
     const betaFieldLabels = useMemo(
         () =>
             (group.partnerFields || [])
                 .filter(field => field.beta)
-                .map(field => field.label),
-        [group],
+                .map(field => {
+                    const topValue = get(
+                        facilityData,
+                        `properties.partner_fields.${field.fieldName}[0]`,
+                    );
+                    return topValue?.label || field.label;
+                }),
+        [group, facilityData],
     );
     const hasBetaField = betaFieldLabels.length > 0;
 

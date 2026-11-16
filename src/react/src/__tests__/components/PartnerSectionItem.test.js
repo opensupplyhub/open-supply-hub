@@ -2,6 +2,12 @@ import React from 'react';
 import { fireEvent } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import PartnerSectionItem from '../../components/ProductionLocation/PartnerSection/PartnerSectionItem/PartnerSectionItem';
+import { sendLocationPartnerBetaFeedbackLinkClick } from '../../util/analytics/gaCustomEvents';
+
+jest.mock('../../util/analytics/gaCustomEvents', () => ({
+    ...jest.requireActual('../../util/analytics/gaCustomEvents'),
+    sendLocationPartnerBetaFeedbackLinkClick: jest.fn(),
+}));
 
 const makeGroup = (overrides = {}) => ({
     uuid: 'group-1',
@@ -115,6 +121,62 @@ describe('PartnerSectionItem component', () => {
             expect(
                 getByRole('heading', { name: 'Why beta?', level: 4 }),
             ).toBeInTheDocument();
+        });
+
+        test('reports the admin-set label of the beta field in the suggestions GA event', () => {
+            sendLocationPartnerBetaFeedbackLinkClick.mockClear();
+            const entry = {
+                id: 1,
+                value: { raw_value: 'x' },
+                contributor_name: 'HeatWatch',
+                contributor_id: 7,
+                created_at: '2026-08-25T00:00:00Z',
+                updated_at: '2026-08-25T00:00:00Z',
+                is_verified: false,
+                // The label set in the Django admin, unlike the
+                // title-cased field name preparePartnerFields derives.
+                label: 'Temperature & humidity',
+                beta: true,
+            };
+            const { getByRole } = renderComponent(
+                {
+                    group: makeGroup({
+                        uuid: 'beta-2',
+                        name: 'Environment & Climate',
+                        partnerFields: [
+                            {
+                                fieldName: 'heatwatch',
+                                label: 'Heatwatch',
+                                beta: true,
+                                formatValue: value => value.raw_value,
+                            },
+                        ],
+                    }),
+                },
+                {
+                    ...openState('beta-2'),
+                    facilities: {
+                        singleFacility: {
+                            data: {
+                                properties: {
+                                    os_id: 'IN2019083ABCDEF',
+                                    partner_fields: { heatwatch: [entry] },
+                                },
+                            },
+                        },
+                    },
+                },
+            );
+
+            fireEvent.click(getByRole('link', { name: 'Send us your suggestions' }));
+
+            expect(sendLocationPartnerBetaFeedbackLinkClick).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    partnerGroup: 'Environment & Climate',
+                    osId: 'IN2019083ABCDEF',
+                    partnerFieldName: 'Temperature & humidity',
+                }),
+            );
         });
 
         test('renders no card when no field in the group is beta', () => {
