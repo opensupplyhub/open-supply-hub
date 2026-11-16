@@ -1,6 +1,6 @@
 import uuid
 
-from django.db import models
+from django.db import models, transaction
 from django.core.cache import cache
 from django_ckeditor_5.fields import CKEditor5Field
 
@@ -173,5 +173,15 @@ class PartnerField(models.Model):
             self.source_by = '' if cleaned == '<p>&nbsp;</p>' else cleaned
 
     def __invalidate_cache(self):
-        """Invalidate cache for partner field list and names."""
+        """Invalidate the cached partner field list, now and on commit.
+
+        The immediate delete makes the change visible to reads on this
+        connection at once (and to tests, which run inside a transaction
+        whose on-commit hooks never fire). The on-commit delete covers a
+        reader on another connection that repopulated the cache from the
+        old rows between the first delete and the commit, so a stale list
+        is not pinned until the TTL expires. Outside a transaction the
+        second delete runs immediately; on rollback it is discarded.
+        """
         cache.delete(PARTNER_FIELD_LIST_KEY)
+        transaction.on_commit(lambda: cache.delete(PARTNER_FIELD_LIST_KEY))

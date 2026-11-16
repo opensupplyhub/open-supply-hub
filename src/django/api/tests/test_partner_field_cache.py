@@ -53,3 +53,16 @@ class PartnerFieldCacheInvalidationTest(TestCase):
         self.field.save()
 
         self.assertIs(self._cached_field().active, False)
+
+    def test_cache_repopulated_before_commit_is_dropped_on_commit(self):
+        # The admin saves inside a transaction. A reader on another
+        # connection can repopulate the cache from the old rows after
+        # the immediate delete and before the commit; the on-commit
+        # delete drops that stale list once the rows are visible.
+        with self.captureOnCommitCallbacks(execute=True) as callbacks:
+            self.field.beta = True
+            self.field.save()
+            cache.set(PARTNER_FIELD_LIST_KEY, ['stale list'], 60)
+
+        self.assertEqual(len(callbacks), 1)
+        self.assertIsNone(cache.get(PARTNER_FIELD_LIST_KEY))
