@@ -18,6 +18,7 @@ from api.helpers.geojson_zones import (
 from api.helpers.location_filters import (
     build_filters_q,
     clean_filters as clean_location_filters,
+    has_filters,
 )
 from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.partner_field import PartnerField
@@ -223,6 +224,37 @@ class ZoneSetForm(forms.ModelForm):
             )
         return partner_field
 
+    UNUSABLE_FILTERS_NOTICE = (
+        'WARNING: the filters saved on this dataset cannot be read, '
+        'so right now it shows on NO location. The boxes below start '
+        'empty. Fill them in and save to replace the saved filters; '
+        'saving with all three boxes empty removes the filters '
+        '(the dataset then shows on every location inside its zones).'
+    )
+
+    def _saved_filters(self):
+        """
+        The saved set's filters in their normal form, for filling the
+        boxes, or an empty dict when there are none or they are unusable.
+
+        Stored values go through the same `clean_filters` as serving, so
+        a single string such as `"sugar"` reads as a one-item list (and
+        is not split into letters) and country codes and product types
+        come out in their stored case. A value `clean_filters` refuses
+        (say a list where a dict belongs) must not stop the change page
+        from opening, or staff could not repair it: it is flagged for
+        `_init_filter_fields` to warn about, and the boxes start empty.
+        """
+        self.filters_unusable = False
+        stored = self.instance.filters if self.instance.pk else None
+        if not has_filters(stored):
+            return {}
+        try:
+            return clean_location_filters(stored)
+        except ValueError:
+            self.filters_unusable = True
+            return {}
+
     def _init_filter_fields(self):
         """
         Fill the filter fields: the sector choices, and, when editing a
@@ -233,7 +265,7 @@ class ZoneSetForm(forms.ModelForm):
         set uses that is no longer in the taxonomy is kept as a choice,
         so opening and saving the set does not silently drop it.
         """
-        saved = (self.instance.filters or {}) if self.instance.pk else {}
+        saved = self._saved_filters()
         sector_names = list(
             Sector.objects.order_by('name').values_list('name', flat=True)
         )
@@ -244,6 +276,11 @@ class ZoneSetForm(forms.ModelForm):
         self.fields['filter_sectors'].choices = [
             (name, name) for name in sector_names
         ]
+        if self.filters_unusable:
+            sectors = self.fields['filter_sectors']
+            sectors.help_text = (
+                f'{self.UNUSABLE_FILTERS_NOTICE} {sectors.help_text}'
+            )
         if self.instance.pk and not self.is_bound:
             self.initial['filter_sectors'] = saved.get('sector', [])
             self.initial['filter_product_types'] = '\n'.join(

@@ -724,6 +724,36 @@ class ZoneSetFiltersTest(TestCase):
         offered = [name for name, _ in form.fields['filter_sectors'].choices]
         self.assertIn('Retired sector', offered)
 
+    def test_edit_form_reads_a_single_stored_text_as_one_value(self):
+        """A stored filter written as one string (which the shared rules
+        accept as a one-item list) fills the boxes as one value, not one
+        letter per line, so saving an unrelated edit does not corrupt
+        it."""
+        Sector.objects.get_or_create(name='Mining')
+        self._set_filters({'product_type': 'Sugar', 'sector': 'Mining'})
+
+        form = ZoneSetForm(instance=ZoneSet.objects.get(pk=self.zone_set.pk))
+
+        self.assertEqual(form.initial['filter_product_types'], 'sugar')
+        self.assertEqual(form.initial['filter_sectors'], ['Mining'])
+
+    def test_edit_form_opens_when_the_stored_filters_are_unusable(self):
+        """A stored value of the wrong shape must not crash the change
+        page (staff could not then repair it): the boxes start empty and
+        a warning explains the dataset matches nothing until saved."""
+        for bad in (['bad'], 'text', {'sector': []}, {'nope': ['x']}):
+            self._set_filters(bad)
+
+            form = ZoneSetForm(
+                instance=ZoneSet.objects.get(pk=self.zone_set.pk)
+            )
+
+            self.assertEqual(form.initial['filter_sectors'], [])
+            self.assertEqual(form.initial['filter_product_types'], '')
+            self.assertIn(
+                'cannot be read', form.fields['filter_sectors'].help_text
+            )
+
     def test_editing_filters_later_keeps_the_zones(self):
         """Filters are applied to locations at serve time, so adding,
         changing or clearing them on a set that already has zones needs
