@@ -312,6 +312,16 @@ class FacilityIndex(models.Model):
         help_text="Claims' sectors information for given facility."),
         default=list
         )
+    zone_set_ids = postgres.ArrayField(models.IntegerField(
+        help_text='The id of a zone set with a zone covering the location.',
+    ),
+        default=list,
+        help_text=(
+            'The ids of every zone set (active or not) with a zone '
+            'covering the location, kept current by index_facilities_by. '
+            'Search resolves the active sets to look for; see '
+            'get_active_zone_sets_for_fields.'
+        ))
     origin_source = models.CharField(
         choices=OriginSource.CHOICES,
         blank=True,

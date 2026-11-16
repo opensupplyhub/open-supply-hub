@@ -7,7 +7,12 @@ from django.utils.html import format_html
 from waffle import switch_is_active
 
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
-from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.geojson_zones import (
+    parse_zone_features,
+    quote_keys,
+    required_keys_outside_properties,
+)
+from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.partner_field import PartnerField
 from api.models.polygon_admin import PolygonForm
 from api.models.zone_set import ZoneSet
@@ -22,12 +27,16 @@ class ZoneSetForm(forms.ModelForm):
     Admin form for creating and editing zone sets.
 
     Zones are not edited as rows: staff upload a GeoJSON
-    FeatureCollection and name the feature property that supplies
-    each zone's value. The whole file is parsed and validated here, in
-    `clean`, before anything is saved — a bad file becomes an ordinary
-    red form error and the set's existing zones are left untouched.
-    The parsed zones are handed to `ZoneSetAdmin.save_model`, which
-    swaps them in atomically.
+    FeatureCollection and, for a set feeding a string field, name the
+    feature property that supplies each zone's value; a set feeding an
+    object field reads one feature property per key of the field's
+    JSON schema instead (OSDEV-3659). The whole file is parsed,
+    validated and cut into storage pieces here, in `clean`, before
+    anything is saved — a
+    bad file, or a feature PostGIS cannot cut, becomes an ordinary red
+    form error and the set's existing zones are left untouched. The
+    pieces are handed to `ZoneSetAdmin.save_model`, which swaps them
+    in atomically.
     """
 
     geojson_file = forms.FileField(
@@ -38,7 +47,13 @@ class ZoneSetForm(forms.ModelForm):
             'set. When editing, leave empty to keep the current zones; '
             'uploading a new file replaces them all. Features are kept '
             'separate (not merged); if zones overlap, the feature that '
-            'comes first in the file wins.'
+            'comes first in the file wins. Large features are stored '
+            'as several small pieces that share the feature\'s value, '
+            'so a dissolved layer performs the same as one of many '
+            'small features. For an "object" partner field, each '
+            'feature must carry a property named after every key the '
+            'field\'s JSON schema lists as required; other schema keys '
+            'are served when present.'
         ),
     )
 
@@ -64,7 +79,8 @@ class ZoneSetForm(forms.ModelForm):
         self.fields['partner_field'].queryset = (
             PartnerField.objects.get_all_including_inactive()
         )
-        # Filled by clean() when a file is uploaded; None means "keep
+        # Filled by clean() when a file is uploaded with the pieces to
+        # store (see api.helpers.zone_subdivision); None means "keep
         # the existing zones".
         self.parsed_zones = None
 
@@ -72,19 +88,47 @@ class ZoneSetForm(forms.ModelForm):
         """
         Check the linked field can carry a zone value.
 
-        The provider emits a plain string (`raw_value`), so the field
-        must be string-typed: an object/int/float field would serve a
-        mis-shaped value to the API and the downloads. And it must not
-        be a field one of the hard-wired providers already serves, or
-        the registry would yield two providers for one name.
+        The provider emits a plain string (`raw_value`) for a string
+        field and one value per schema key (`raw_values`) for an
+        object field, so the field must be one of those two: an
+        int/float field would serve a mis-shaped value to the API, and
+        an object field without a schema gives the page nothing to
+        render by and the upload nothing to validate against. And it
+        must not be a field one of the hard-wired providers already
+        serves, or the registry would yield two providers for one name.
         """
         partner_field = self.cleaned_data.get('partner_field')
         if partner_field is None:
             return partner_field
-        if partner_field.type != PartnerField.STRING:
+        if partner_field.type == PartnerField.OBJECT:
+            if not partner_field.object_schema_properties():
+                raise forms.ValidationError(
+                    f'"{partner_field.name}" is an "{PartnerField.OBJECT}" '
+                    'field without a JSON schema. A zone set fills an '
+                    'object field one feature property per schema '
+                    'property, so the schema is required: give the field '
+                    'a schema with a "properties" map first.'
+                )
+            stray = required_keys_outside_properties(
+                partner_field.json_schema
+            )
+            if stray:
+                # The upload would demand these keys of every feature
+                # while the provider serves only the properties the
+                # schema defines, so the value could never be shown.
+                raise forms.ValidationError(
+                    f'"{partner_field.name}" lists '
+                    f'{quote_keys(stray)} as required, but its JSON schema '
+                    'does not define them under "properties". A zone set '
+                    'serves only the properties the schema defines, so '
+                    'add them to "properties" or drop them from '
+                    '"required" first.'
+                )
+        elif partner_field.type != PartnerField.STRING:
             raise forms.ValidationError(
                 f'A zone set can only feed a "{PartnerField.STRING}" '
-                f'partner field; "{partner_field.name}" is '
+                f'partner field or an "{PartnerField.OBJECT}" field with '
+                f'a JSON schema; "{partner_field.name}" is '
                 f'"{partner_field.type}".'
             )
         if partner_field.name in (
@@ -98,16 +142,41 @@ class ZoneSetForm(forms.ModelForm):
 
     def clean(self):
         """
-        Parse the uploaded file (if any) into zone records.
+        Parse the uploaded file (if any) into the zone pieces to store.
 
         A new set must come with a file. An existing set may be edited
         without one, in which case its zones are kept — unless the
         value property changed, because the stored labels were read
-        with the old key and would no longer match; re-uploading makes
-        the change explicit.
+        with the old key and would no longer match, or the set moved
+        to, from or between object fields, because the stored zones
+        were validated against (and are served by) the old field's
+        schema; re-uploading makes the change explicit.
+
+        The value property is required only for a string field: an
+        object field reads one feature property per schema key, so
+        whatever was typed is cleared rather than stored as a stale
+        setting.
         """
         cleaned_data = super().clean()
         geojson_file = cleaned_data.get('geojson_file')
+        partner_field = cleaned_data.get('partner_field')
+        feeds_object = (
+            partner_field is not None
+            and partner_field.type == PartnerField.OBJECT
+        )
+
+        if feeds_object:
+            cleaned_data['value_property'] = None
+        elif (
+            not cleaned_data.get('value_property')
+            and 'partner_field' not in self.errors
+        ):
+            self.add_error(
+                'value_property',
+                'Choose which feature property supplies the zone value. '
+                'Only a set that feeds an "object" partner field can '
+                'leave this empty.'
+            )
         value_property = cleaned_data.get('value_property')
 
         if not geojson_file:
@@ -115,9 +184,12 @@ class ZoneSetForm(forms.ModelForm):
                 raise forms.ValidationError(
                     'Upload a GeoJSON FeatureCollection file.'
                 )
+            if not self.instance.zones.exists():
+                return cleaned_data
             if (
                 'value_property' in self.changed_data
-                and self.instance.zones.exists()
+                and 'value_property' not in self.errors
+                and not feeds_object
             ):
                 self.add_error(
                     'value_property',
@@ -125,6 +197,18 @@ class ZoneSetForm(forms.ModelForm):
                     'property, so every zone is re-read with the new '
                     'key.'
                 )
+            if self._field_change_needs_reupload(partner_field):
+                self.add_error(
+                    'partner_field',
+                    'Upload the file again when linking an "object" '
+                    'partner field or replacing one, so every zone is '
+                    're-read against the new field\'s schema.'
+                )
+            return cleaned_data
+
+        if 'value_property' in self.errors:
+            # The file cannot be read by a key that is missing; the
+            # error above already says what to fix.
             return cleaned_data
 
         if geojson_file.size > self.GEOJSON_FILE_MAX_BYTES:
@@ -142,12 +226,48 @@ class ZoneSetForm(forms.ModelForm):
                 f'Could not read the file as UTF-8 text: {exc}'
             ) from exc
 
+        # Subdividing here rather than at save time means a feature
+        # PostGIS returns no piece for is reported like any other bad
+        # file, instead of surfacing after validation as a server
+        # error once the set itself has been saved.
         try:
-            self.parsed_zones = parse_zone_features(raw, value_property)
+            if feeds_object:
+                records = parse_zone_features(
+                    raw, schema=partner_field.json_schema
+                )
+            else:
+                records = parse_zone_features(raw, value_property)
+            self.parsed_zones = subdivide_zone_records(records)
         except InvalidPolygonGeoJSON as exc:
             raise forms.ValidationError(str(exc)) from exc
 
         return cleaned_data
+
+    def _field_change_needs_reupload(self, partner_field):
+        """
+        Whether swapping the linked field invalidates the stored zones.
+
+        Zones feeding an object field were validated against that
+        field's schema and are served by its keys; zones feeding a
+        string field carry one label. So a set that has zones and
+        moves to an object field, away from one, or from one object
+        field to another must be re-read from the file. Moving between
+        string fields (or from no field to a string field) keeps the
+        same shape and needs nothing.
+
+        Args:
+            partner_field: The field the form is about to link, or
+                None. The instance still holds the saved field, since
+                the model form only copies cleaned data onto it after
+                `clean` returns.
+        """
+        if 'partner_field' not in self.changed_data:
+            return False
+        original = self.instance.partner_field
+        return any(
+            field is not None and field.type == PartnerField.OBJECT
+            for field in (original, partner_field)
+        )
 
 
 class ZoneSetAdmin(admin.ModelAdmin):
@@ -206,23 +326,30 @@ class ZoneSetAdmin(admin.ModelAdmin):
         ))
 
     def get_queryset(self, request):
-        """Annotate the zone count so the list view needs one query."""
+        """Annotate the feature count so the list view needs one query."""
         return super().get_queryset(request).annotate(
-            _zone_count=Count('zones')
+            _zone_count=Count('zones__feature_index', distinct=True)
         )
 
     @admin.display(description='Zones', ordering='_zone_count')
     def zone_count(self, obj):
-        """Number of zones in the set (from the list annotation)."""
+        """
+        Number of zones in the set, counting source features rather
+        than the pieces they are stored as (from the list annotation).
+        """
         count = getattr(obj, '_zone_count', None)
-        return obj.zones.count() if count is None else count
+        if count is None:
+            return obj.zones.aggregate(
+                n=Count('feature_index', distinct=True)
+            )['n']
+        return count
 
     @admin.display(description='Current zones')
     def zone_summary(self, obj):
         """
-        One-line description of the saved zones (count, distinct
-        labels, and lon/lat extent), so staff can sanity-check an
-        upload at a glance.
+        One-line description of the saved zones (feature and piece
+        counts, distinct labels), so staff can sanity-check an upload
+        at a glance.
 
         Args:
             obj: The ZoneSet being displayed, or an unsaved instance on
@@ -231,9 +358,30 @@ class ZoneSetAdmin(admin.ModelAdmin):
         if not obj or not obj.pk:
             return '(no zones saved yet)'
         zones = obj.zones.all()
-        count = zones.count()
-        if count == 0:
+        counts = zones.aggregate(
+            features=Count('feature_index', distinct=True),
+            pieces=Count('id'),
+        )
+        if counts['pieces'] == 0:
             return '(no zones saved yet)'
+        if obj.feeds_object_field:
+            # An object field is served one value per schema key, so
+            # the keys are what staff need to check against the
+            # field's schema and the page; the label is only the first
+            # required property and says little on its own. The keys
+            # can only be gone if the schema was stripped outside the
+            # admin (the partner field form refuses that while zones
+            # exist), but say so rather than print a dangling colon.
+            keys = obj.schema_keys
+            serving = (
+                f'serving schema keys: {", ".join(keys)}' if keys
+                else 'serving no schema keys (the field\'s schema has no '
+                '"properties" map, so nothing is shown on the page)'
+            )
+            return (
+                f'{counts["features"]} zone(s) stored as '
+                f'{counts["pieces"]} piece(s); {serving}'
+            )
         # Distinct labels straight from the database: pulling every
         # zone's full JSON (label plus all source properties) into
         # Python just to dedupe it is slow on large uploads.
@@ -245,7 +393,10 @@ class ZoneSetAdmin(admin.ModelAdmin):
         shown = ', '.join(labels[:10])
         if len(labels) > 10:
             shown += f', … ({len(labels)} distinct)'
-        return f'{count} zone(s); labels: {shown}'
+        return (
+            f'{counts["features"]} zone(s) stored as {counts["pieces"]} '
+            f'piece(s); labels: {shown}'
+        )
 
     def save_model(self, request, obj, form, change):
         """
@@ -253,24 +404,39 @@ class ZoneSetAdmin(admin.ModelAdmin):
 
         Django wraps the whole admin save in one transaction, and
         `replace_zones` is atomic on its own as well, so the old zones
-        keep serving right up until the new ones are committed.
+        keep serving right up until the new ones are committed. The
+        search-side membership (`FacilityIndex.zone_set_ids`) is
+        recomputed in the background once they are (see
+        `ZoneSet.replace_zones`), so staff are told the two surfaces
+        will disagree briefly.
         """
         super().save_model(request, obj, form, change)
         if form.parsed_zones is not None:
             obj.replace_zones(form.parsed_zones)
+            messages.info(request, (
+                'Zones saved. Which locations the search filter returns '
+                'for this dataset is being recomputed in the background '
+                '(a pass over every indexed location); until it finishes, '
+                'Spotlight Partners search results reflect the previous '
+                'zones. Location pages show the new zones at once.'
+            ))
 
 
 class ZoneAdmin(admin.ModelAdmin):
     """
     Read-only listing of zones, for checking what an upload produced.
-    Zones are created and replaced only through their zone set.
+    One row per stored piece: a feature cut into several pieces at
+    upload appears once per piece, with the same feature index and
+    label. Zones are created and replaced only through their zone set.
     """
 
-    list_display = ('zone_set', 'feature_index', 'label', 'created_at')
+    list_display = (
+        'zone_set', 'feature_index', 'piece_index', 'label', 'created_at',
+    )
     list_filter = ('zone_set',)
     search_fields = ('value__label',)
-    readonly_fields = ('zone_set', 'feature_index', 'label', 'value',
-                       'created_at')
+    readonly_fields = ('zone_set', 'feature_index', 'piece_index', 'label',
+                       'value', 'created_at')
     fields = readonly_fields
 
     @admin.display(description='Label')

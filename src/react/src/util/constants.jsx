@@ -362,6 +362,24 @@ export const productionLocationsRoute = '/production-locations';
 export const productionLocationDetailsRoute = '/production-locations/:osID';
 export const claimFacilityRoute = '/facilities/:osID/claim';
 export const claimIntroRoute = '/claim/:osID';
+export const claimCampaignsRoute = '/claim-campaigns';
+export const newClaimCampaignRoute = '/claim-campaigns/new';
+// Digits only, so it never matches /claim-campaigns/new.
+export const claimCampaignRoute = '/claim-campaigns/:campaignId(\\d+)';
+export const makeClaimCampaignRoute = campaignID =>
+    `/claim-campaigns/${campaignID}`;
+export const makeClaimCampaignCandidatesURL = listID =>
+    listID === undefined
+        ? '/api/claim-campaigns/candidates/'
+        : `/api/claim-campaigns/candidates/?list=${listID}`;
+export const makeCloseClaimCampaignURL = campaignID =>
+    `/api/claim-campaigns/${campaignID}/close/`;
+export const makeClaimCampaignSearchURL = queryString =>
+    `/api/claim-campaigns/candidates/search/?${queryString}`;
+// The most suppliers one campaign can invite. Must match
+// MAX_SUPPLIERS_PER_CAMPAIGN in api/services/claim_campaign_service.py,
+// which refuses a larger os_ids list.
+export const MAX_SUPPLIERS_PER_CAMPAIGN = 5000;
 export const claimDetailsRoute = '/claim/:osID/details';
 export const profileRoute = '/profile/:id';
 export const aboutProcessingRoute = `${InfoLink}/${InfoPaths.dataQuality}`;
@@ -625,6 +643,7 @@ export const ENABLE_CLAIM_NAME_ADDRESS_EDIT = 'enable_claim_name_address_edit';
 export const CLAIM_INVITE = 'claim_invite';
 // Industry Classification (ISIC) on search and profiles (OSDEV-3340).
 export const ENABLE_ISIC_TAXONOMY = 'enable_isic_taxonomy';
+export const CLAIM_CAMPAIGNS = 'claim_campaigns';
 
 export const DEFAULT_COUNTRY_CODE = 'IE';
 
