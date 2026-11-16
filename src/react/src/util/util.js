@@ -357,6 +357,9 @@ export const makeEmbedConfigURL = id =>
 export const makeEmbedSupplyChainsURL = id =>
     `/api/embed-supply-chains/${id ? `${id}/` : ''}`;
 
+export const makeEmbedFieldValuesURL = column =>
+    `/api/embed-field-values/?${querystring.stringify({ column })}`;
+
 export const makeEmbedSpotlightOptionsURL = () =>
     '/api/embed-spotlight-options/';
 

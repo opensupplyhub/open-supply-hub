@@ -4,6 +4,44 @@ from ...models.facility.facility_list_item import FacilityListItem
 from ...models.transactions.index_facilities_new import index_facilities_new
 
 
+def clean_explanations(field_data):
+    """
+    The contributor's explanations for a field, checked and tidied: what
+    the field means, and what each of its values means. They are shown to
+    visitors as plain text. Empty explanations are dropped.
+    """
+    limit = EmbedField.MAX_DESCRIPTION_LENGTH
+    description = field_data.get('description') or ''
+    value_descriptions = field_data.get('value_descriptions') or {}
+
+    if not isinstance(description, str) or not isinstance(
+        value_descriptions, dict
+    ):
+        raise ValidationError('Field explanations are not in a valid form.')
+    if len(value_descriptions) > EmbedField.MAX_VALUE_DESCRIPTIONS:
+        raise ValidationError(
+            'A field can have at most {} value explanations.'.format(
+                EmbedField.MAX_VALUE_DESCRIPTIONS
+            )
+        )
+    cleaned = {}
+    for value, text in value_descriptions.items():
+        if not isinstance(value, str) or not isinstance(text, str):
+            raise ValidationError(
+                'Field explanations are not in a valid form.'
+            )
+        if text.strip():
+            cleaned[value.strip()] = text.strip()
+    if any(len(text) > limit for text in [description, *cleaned.values()]):
+        raise ValidationError(
+            'An explanation can be at most {} characters.'.format(limit)
+        )
+    return {
+        'description': description.strip(),
+        'value_descriptions': cleaned,
+    }
+
+
 def create_embed_fields(fields_data, embed_config, previously_searchable=None):
     if previously_searchable is None:
         previously_searchable = list()
@@ -23,6 +61,12 @@ def create_embed_fields(fields_data, embed_config, previously_searchable=None):
                 ', '.join(display_as_values)
             )
         )
+
+    # Every field is checked before any row is created.
+    fields_data = [
+        {**field_data, **clean_explanations(field_data)}
+        for field_data in fields_data
+    ]
 
     for field_data in fields_data:
         EmbedField.objects.create(embed_config=embed_config, **field_data)

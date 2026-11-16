@@ -16,6 +16,7 @@ from .contributor.all_contributor_types import all_contributor_types
 from .contributor.all_contributors import AllContributors
 from .contributor.contributor_embed_config import (
     contributor_embed_config,
+    embed_field_values,
     embed_spotlight_options,
     getContributorTypeCount,
 )

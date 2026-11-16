@@ -1,5 +1,9 @@
 import {
     embedUsesProductionLocationPage,
+    cleanValueDescriptions,
+    formatEmbedConfigForServer,
+    formatExistingFields,
+    getValueExplanations,
     getEmbedLocationFields,
     getEmbedLocationPageCss,
     withoutHiddenSector,
@@ -56,12 +60,16 @@ describe("a location's page on an embedded map", () => {
                     label: 'Tier',
                     value: '3',
                     displayAs: 'text',
+                    description: '',
+                    explanations: [],
                 },
                 {
                     columnName: 'brand_note',
                     label: 'Brand note',
                     value: 'A long partnership.',
                     displayAs: 'blurb',
+                    description: '',
+                    explanations: [],
                 },
             ]);
         });
@@ -72,6 +80,114 @@ describe("a location's page on an embedded map", () => {
             expect(
                 getEmbedLocationFields(embedConfig, { properties: {} }),
             ).toEqual([]);
+        });
+    });
+
+    describe("the contributor's explanations", () => {
+        const explained = {
+            embed_fields: [
+                {
+                    column_name: 'initiatives',
+                    display_name: 'Initiatives',
+                    display_as: 'tags',
+                    visible: true,
+                    order: 0,
+                    description: 'Programs this facility takes part in.',
+                    value_descriptions: {
+                        'Planet Water Foundation': 'Clean water access.',
+                        RISE: 'Workplace equality training.',
+                        Unused: 'Not on this location.',
+                    },
+                },
+                {
+                    column_name: 'brand_note',
+                    display_name: 'Brand note',
+                    display_as: 'blurb',
+                    visible: true,
+                    order: 1,
+                    value_descriptions: { 'A note': 'Never shown.' },
+                },
+            ],
+        };
+        const location = {
+            properties: {
+                contributor_fields: [
+                    {
+                        fieldName: 'initiatives',
+                        value: 'HERhealth|planet water foundation | RISE',
+                    },
+                    { fieldName: 'brand_note', value: 'A note' },
+                ],
+            },
+        };
+
+        it('go with the field, for the values this location has', () => {
+            const [initiatives, note] = getEmbedLocationFields(
+                explained,
+                location,
+            );
+
+            expect(initiatives.description).toBe(
+                'Programs this facility takes part in.',
+            );
+            expect(initiatives.explanations).toEqual([
+                {
+                    value: 'planet water foundation',
+                    text: 'Clean water access.',
+                },
+                { value: 'RISE', text: 'Workplace equality training.' },
+            ]);
+            // A blurb is free text, not a value to look up.
+            expect(note.explanations).toEqual([]);
+        });
+
+        it('match values whatever their case, and skip unexplained ones', () => {
+            expect(
+                getValueExplanations('rise, Other', { RISE: 'Training.' }),
+            ).toEqual([{ value: 'rise', text: 'Training.' }]);
+            expect(getValueExplanations('RISE', {})).toEqual([]);
+            expect(getValueExplanations('RISE', undefined)).toEqual([]);
+        });
+
+        it('are sent to the server without the empty ones', () => {
+            expect(
+                cleanValueDescriptions({
+                    RISE: ' Training. ',
+                    HERhealth: '   ',
+                    Other: '',
+                }),
+            ).toEqual({ RISE: 'Training.' });
+
+            const [sent] = formatEmbedConfigForServer({}, [
+                {
+                    columnName: 'initiatives',
+                    displayName: 'Initiatives',
+                    visible: true,
+                    order: 0,
+                    description: ' Programs. ',
+                    valueDescriptions: { RISE: 'Training.', Other: ' ' },
+                },
+            ]).embed_fields;
+
+            expect(sent.description).toBe('Programs.');
+            expect(sent.value_descriptions).toEqual({ RISE: 'Training.' });
+        });
+
+        it('are read back from the server', () => {
+            const [field] = formatExistingFields([
+                {
+                    column_name: 'initiatives',
+                    display_name: 'Initiatives',
+                    description: 'Programs.',
+                    value_descriptions: { RISE: 'Training.' },
+                },
+            ]);
+
+            expect(field.description).toBe('Programs.');
+            expect(field.valueDescriptions).toEqual({ RISE: 'Training.' });
+            expect(
+                formatExistingFields([{ column_name: 'tier' }])[0],
+            ).toMatchObject({ description: '', valueDescriptions: {} });
         });
     });
 

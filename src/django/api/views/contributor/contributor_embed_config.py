@@ -71,6 +71,23 @@ def embed_spotlight_options(request):
     return Response(spotlight_for_settings(contributor))
 
 
+@api_view(['GET'])
+def embed_field_values(request):
+    """
+    Returns the values the contributor's facilities have in one of their
+    columns (`?column=<name>`), with how many facilities have each. For
+    the contributor's own Embed settings screen, where they can explain
+    what each value means.
+    """
+    if not request.user.is_authenticated:
+        raise NotAuthenticated()
+    contributor = get_contributor(request)
+    column = request.query_params.get('column')
+    if not column:
+        raise ValidationError('A column is required.')
+    return Response(field_value_options(contributor.id, column))
+
+
 def getContributorTypeCount(value, counts):
     try:
         type = counts.get(contrib_type=value)

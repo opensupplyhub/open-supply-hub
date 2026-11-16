@@ -11,6 +11,9 @@ class EmbedField(models.Model):
     TEXT = 'text'
     TAGS = 'tags'
     BLURB = 'blurb'
+    MAX_DESCRIPTION_LENGTH = 300
+    MAX_VALUE_DESCRIPTIONS = 200
+
     DISPLAY_AS_CHOICES = (
         (TEXT, 'Text'),
         (TAGS, 'Tags'),
@@ -62,6 +65,18 @@ class EmbedField(models.Model):
         default=TEXT,
         help_text='How to display the value of this field: as plain '
                   'text, as tags, or as a blurb.')
+
+    description = models.CharField(
+        max_length=300,
+        blank=True,
+        default='',
+        help_text='The contributor\'s explanation of what this field '
+                  'means, shown with it on the embedded map.')
+    value_descriptions = models.JSONField(
+        blank=True,
+        default=dict,
+        help_text='The contributor\'s explanations of this field\'s '
+                  'values, keyed by value.')
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
