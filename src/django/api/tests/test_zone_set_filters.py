@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+from django.contrib.admin.sites import AdminSite
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db.models import Q
 from django.test import SimpleTestCase, TestCase
@@ -23,7 +26,7 @@ from api.models.facility.partner_contributor_filter import (
     apply_partner_fields_or_filter,
 )
 from api.models.partner_field_group import PartnerFieldGroup
-from api.models.zone_set_admin import ZoneSetForm
+from api.models.zone_set_admin import ZoneSetAdmin, ZoneSetForm
 from api.partner_fields.registry import ZONE_SETS_SWITCH
 from api.partner_fields.zone_set_provider import (
     ZoneSetProvider,
@@ -763,3 +766,32 @@ class ZoneSetFiltersTest(TestCase):
         self.assertEqual(
             saved.filters, {'sector': ['Mining'], 'product_type': ['sugar']}
         )
+
+    def _warnings_for(self, filters):
+        """Run the admin's save-time check for these filters and return
+        the warning messages it would show."""
+        admin_obj = ZoneSetAdmin(ZoneSet, AdminSite())
+        with patch('api.models.zone_set_admin.messages.warning') as warn:
+            admin_obj._warn_about_filters_matching_nothing(None, filters)
+        return [call.args[1] for call in warn.call_args_list]
+
+    def test_save_warns_when_a_filter_matches_no_location(self):
+        """A typo'd product warns by name; a filter that matches, a
+        combination that matches, and no filters stay silent; and when
+        every box matches alone but nothing matches all together, the
+        combination is called out instead."""
+        FacilityIndex.objects.filter(id=self.mine.id).update(
+            product_type=['ore'])
+        self.assertEqual(self._warnings_for({}), [])
+        self.assertEqual(
+            self._warnings_for({'sector': ['Mining'],
+                                'product_type': ['ore']}), [])
+        typo = self._warnings_for({'sector': ['Mining'],
+                                   'product_type': ['oer']})
+        self.assertEqual(len(typo), 1)
+        self.assertIn('Product types', typo[0])
+        self.assertIn('oer', typo[0])
+        together = self._warnings_for({'sector': ['Apparel'],
+                                       'product_type': ['ore']})
+        self.assertEqual(len(together), 1)
+        self.assertIn('all of the filters together', together[0])

@@ -12,11 +12,13 @@ from waffle import switch_is_active
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
 from api.helpers.geojson_zones import parse_zone_features
 from api.helpers.location_filters import (
+    build_filters_q,
     clean_filters as clean_location_filters,
 )
 from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.partner_field import PartnerField
 from api.models.polygon_admin import PolygonForm
+from api.models.facility.facility_index import FacilityIndex
 from api.models.sector import Sector
 from api.models.zone_set import ZoneSet
 from api.partner_fields.registry import (
@@ -569,6 +571,52 @@ class ZoneSetAdmin(admin.ModelAdmin):
             f'piece(s); labels: {shown}'
         )
 
+    def _warn_about_filters_matching_nothing(self, request, filters):
+        """
+        Warn (never block) when a saved filter matches no location.
+
+        A typo such as `cattel` is valid, so it saves fine but would
+        quietly leave the dataset empty. Each filter box is checked on
+        its own (one cheap `exists()` query each) so the message names
+        the one that matches nothing; if every box matches something on
+        its own but no location matches all of them together, that is
+        said instead. This looks at every indexed location, not just
+        those inside the zones, and does not stop the save: a filter
+        for data that has not been uploaded yet is a legitimate setup.
+        """
+        if not filters:
+            return
+        names = {
+            'sector': 'Sectors',
+            'product_type': 'Product types',
+            'country': 'Country',
+            'facility_type': 'Facility type',
+            'processing_type': 'Processing type',
+            'parent_company': 'Parent company',
+        }
+        empty = [
+            key for key, values in filters.items()
+            if not FacilityIndex.objects.filter(
+                build_filters_q({key: values})).exists()
+        ]
+        for key in empty:
+            messages.warning(request, (
+                f'Saved, but no location on OS Hub currently matches the '
+                f'"{names.get(key, key)}" filter ({", ".join(filters[key])}). '
+                'Check the spelling. Until something matches, this '
+                'dataset will show on no location.'
+            ))
+        if (
+            not empty and len(filters) > 1
+            and not FacilityIndex.objects.filter(
+                build_filters_q(filters)).exists()
+        ):
+            messages.warning(request, (
+                'Saved, but no location matches all of the filters '
+                'together (a location must match every filter box), so '
+                'this dataset will show on no location.'
+            ))
+
     def save_model(self, request, obj, form, change):
         """
         Save the set, then swap in the uploaded zones if there are any.
@@ -582,6 +630,7 @@ class ZoneSetAdmin(admin.ModelAdmin):
         will disagree briefly.
         """
         super().save_model(request, obj, form, change)
+        self._warn_about_filters_matching_nothing(request, obj.filters)
         if form.parsed_zones is not None:
             obj.replace_zones(form.parsed_zones)
             messages.info(request, (
