@@ -35,7 +35,10 @@ const detailsStyles = theme =>
             display: 'flex',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: theme.spacing.unit,
+            // Row gap when the adornment wraps under a long label, column
+            // gap between the label and the adornment (OSDEV-3778 mockup).
+            // Given with units: JSS does not add `px` to `gap`.
+            gap: `${theme.spacing.unit}px ${theme.spacing.unit * 3}px`,
         },
     });
 
