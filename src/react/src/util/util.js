@@ -1711,6 +1711,13 @@ export const removeDuplicatesFromOtherLocationsData = otherLocationsData =>
 export const getLocationWithoutEmbedParam = () =>
     window.location.href.replace('&embed=1', '').replace('embed=1', '');
 
+// Where "View on Open Supply Hub" on an embedded map leads: the location's
+// own page on Open Supply Hub.
+export const makeProductionLocationPageLink = osID =>
+    `${window.location.origin}/production-locations/${encodeURIComponent(
+        osID,
+    )}`;
+
 export const getEmbeddedMapSrc = ({ contributor, timestamp }) => {
     const qs = timestamp
         ? querystring.stringify({

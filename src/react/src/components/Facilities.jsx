@@ -5,6 +5,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 
 import FeatureFlag from './FeatureFlag';
 import FacilityDetails from './FacilityDetails';
+import ProductionLocationDetailsContainer from './ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
 import MapAndSidebar from './MapAndSidebar';
 
 import withQueryStringSync from '../util/withQueryStringSync';
@@ -16,9 +17,14 @@ import {
 } from '../util/constants';
 
 import { getFilteredSearchForEmbed, getLastPathParameter } from '../util/util';
+import { embedUsesProductionLocationPage } from '../util/embeddedMap';
 import UserProfile from './UserProfile';
 
-const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
+const Facilities = ({
+    fetchingFeatureFlags,
+    isEmbedded,
+    usesProductionLocationPage,
+}) => {
     if (fetchingFeatureFlags) {
         return <CircularProgress />;
     }
@@ -37,8 +43,15 @@ const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
                         location?.pathname || '',
                     );
 
+                    // An embedded map shows a location at this address: on
+                    // the production location page in its embed form while
+                    // that switch is on, otherwise on the older details view.
                     if (isEmbedded) {
-                        return <FacilityDetails {...props} />;
+                        return usesProductionLocationPage ? (
+                            <ProductionLocationDetailsContainer {...props} />
+                        ) : (
+                            <FacilityDetails {...props} />
+                        );
                     }
 
                     return (
@@ -69,11 +82,15 @@ const Facilities = ({ fetchingFeatureFlags, isEmbedded }) => {
     );
 };
 
-function mapStateToProps({
-    featureFlags: { fetching: fetchingFeatureFlags },
-    embeddedMap: { embed },
-}) {
-    return { fetchingFeatureFlags, isEmbedded: !!embed };
+function mapStateToProps({ featureFlags, embeddedMap: { embed } }) {
+    return {
+        fetchingFeatureFlags: featureFlags.fetching,
+        isEmbedded: !!embed,
+        usesProductionLocationPage: embedUsesProductionLocationPage(
+            embed,
+            featureFlags,
+        ),
+    };
 }
 
 export default connect(mapStateToProps)(withQueryStringSync(Facilities));

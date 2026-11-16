@@ -35,7 +35,7 @@ import {
 } from '../util/constants';
 
 import {
-    getLocationWithoutEmbedParam,
+    makeProductionLocationPageLink,
     formatAttribution,
     formatExtendedField,
     makeFacilityDetailLinkOnRedirect,
@@ -283,7 +283,9 @@ const FacilityDetailsContent = ({
                     <ShowOnly when={embed}>
                         <a
                             className={classes.link}
-                            href={getLocationWithoutEmbedParam()}
+                            href={makeProductionLocationPageLink(
+                                data.properties.os_id,
+                            )}
                             target="_blank"
                             rel="noreferrer"
                         >

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
     object,
     string,
@@ -23,6 +23,7 @@ import MetaDate from './MetaDate/MetaDate';
 import { STATUS_CLAIMED, STATUS_CROWDSOURCED } from './constants';
 import getStatusChipClass from './utils';
 import dataPointStyles from './styles';
+import PlainDataPointContext from './PlainDataPointContext';
 
 const DataPoint = ({
     classes,
@@ -38,6 +39,8 @@ const DataPoint = ({
     onOpenDrawer,
     multiline,
 }) => {
+    // An embedded map shows the value without its sources.
+    const isPlain = useContext(PlainDataPointContext);
     // Counts the promoted contribution as well, so a field with a single
     // contribution can still open the drawer (OSDEV-3228).
     const sourcesCount = getTotalContributionsCount(drawerData);
@@ -173,7 +176,7 @@ const DataPoint = ({
                         multiline ? classes.metaRowWrapperMultiline : ''
                     }`}
                 >
-                    {metaContent}
+                    {isPlain ? null : metaContent}
                 </Grid>
             </Grid>
         </Grid>
