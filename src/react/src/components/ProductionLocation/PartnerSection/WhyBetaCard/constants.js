@@ -1,3 +1,5 @@
+import { listUploadTroubleshootingEmail } from '../../../../util/constants';
+
 export const WHY_BETA_TITLE = 'Why beta?';
 
 export const WHY_BETA_BODY =
@@ -8,5 +10,4 @@ export const WHY_BETA_BODY =
 
 export const WHY_BETA_LINK_TEXT = 'Send us your suggestions';
 
-export const WHY_BETA_LINK_HREF =
-    'mailto:support@opensupplyhub.org?subject=Spotlight%20beta%20data%20feedback';
+export const WHY_BETA_LINK_HREF = `mailto:${listUploadTroubleshootingEmail}?subject=Spotlight%20beta%20data%20feedback`;

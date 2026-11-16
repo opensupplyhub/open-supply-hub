@@ -45,11 +45,16 @@ const PartnerSectionItem = ({
     }, [group]);
 
     // The "Why beta?" card explains the chip once per section, in the
-    // right column after the fields, where the mockup places it.
-    const hasBetaField = useMemo(
-        () => (group.partnerFields || []).some(field => field.beta),
+    // right column after the fields, where the mockup places it. Its
+    // suggestions link reports the section's beta field label(s).
+    const betaFieldLabels = useMemo(
+        () =>
+            (group.partnerFields || [])
+                .filter(field => field.beta)
+                .map(field => field.label),
         [group],
     );
+    const hasBetaField = betaFieldLabels.length > 0;
 
     const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
 
@@ -174,7 +179,18 @@ const PartnerSectionItem = ({
                                     ))}
                                     {hasBetaField && (
                                         <div className={classes.fieldItem}>
-                                            <WhyBetaCard />
+                                            <WhyBetaCard
+                                                gaSpotlightContext={{
+                                                    partner_group: group.name,
+                                                    os_id: String(
+                                                        facilityData?.properties
+                                                            ?.os_id ?? '',
+                                                    ),
+                                                    partner_field_name: betaFieldLabels.join(
+                                                        ', ',
+                                                    ),
+                                                }}
+                                            />
                                         </div>
                                     )}
                                 </Grid>
