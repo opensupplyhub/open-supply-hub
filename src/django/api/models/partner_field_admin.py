@@ -9,6 +9,11 @@ from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from jsoneditor.forms import JSONEditor
 
+from api.helpers.geojson_zones import (
+    quote_keys,
+    required_keys_outside_properties,
+    schema_required_keys,
+)
 from .partner_field import PartnerField
 
 logger = logging.getLogger(__name__)
@@ -106,7 +111,9 @@ class PartnerFieldAdminForm(forms.ModelForm):
         - the type cannot change: a string set carries one label, an
           object set one value per schema key;
         - an object field must keep a schema with a "properties" map,
-          as the zone set form requires to link one;
+          as the zone set form requires to link one, and every key its
+          "required" list names must be one of those properties, or the
+          next upload would demand a key the provider never serves;
         - a property may become required only if every stored feature
           already carries a usable value for it. Properties outside the
           schema are stored at upload, so the way to add a required
@@ -155,10 +162,19 @@ class PartnerFieldAdminForm(forms.ModelForm):
             )
             return
 
-        required = [
-            key for key in (schema.get('required') or [])
-            if isinstance(key, str)
-        ]
+        stray = required_keys_outside_properties(schema)
+        if stray:
+            self.add_error(
+                'json_schema',
+                f'"{self.instance.name}" feeds zone set "{zone_set.name}", '
+                'which serves only the properties the schema defines, '
+                f'but {quote_keys(stray)} are listed as required without an '
+                'entry under "properties". Add them to "properties" or '
+                'drop them from "required".'
+            )
+            return
+
+        required = schema_required_keys(schema)
         problems = [
             f'{missing} of {total} zone(s) have no value for the required '
             f'property "{key}"'

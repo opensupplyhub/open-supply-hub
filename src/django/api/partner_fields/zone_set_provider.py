@@ -115,7 +115,9 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
     location page and the v1 production-locations endpoint render it
     unchanged. A location outside every zone gets nothing — "match
     nothing, never everything", as the India Labour Line provider puts
-    it.
+    it — and so does one whose zone has no servable value for an
+    object field (every schema key optional and absent), rather than
+    an empty block under the field's heading.
     """
 
     # "Outside every zone" is the normal case for a dataset that covers
@@ -141,15 +143,21 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
 
         Returns:
             The containing `Zone`, or None when the location has no
-            coordinates, lies outside every zone of the set, or does
-            not match the set's filters. The filters run last, so a
-            location outside every zone (the usual case for a regional
-            dataset) never pays for the extra lookup.
+            coordinates, lies outside every zone of the set, sits (for
+            an object field) in a zone whose feature carried no
+            usable value for any schema key (the page would
+            otherwise show the field's heading and attribution line
+            with nothing under them), or does not match the set's
+            filters. The filters run last, so a location outside
+            every zone (the usual case for a regional dataset) or
+            with no usable value never pays for the extra lookup.
         """
         if not production_location.location:
             return None
         zone = self.zone_set.resolve_zone(production_location.location)
         if zone is None:
+            return None
+        if self.zone_set.feeds_object_field and not self._object_values(zone):
             return None
         # One extra query per location page, by design. The filterable
         # columns (sector, product type, ...) live on FacilityIndex, but
@@ -214,11 +222,18 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
         """
         if not self.zone_set.feeds_object_field:
             return {'raw_value': zone.label}
+        return {'raw_values': self._object_values(zone)}
+
+    def _object_values(self, zone: Zone) -> Dict[str, Any]:
+        """
+        The zone's servable values keyed by schema key, for an object
+        field: the properties the schema defines that the source
+        feature carried with a usable scalar value. Empty when it
+        carried none, which `_fetch_raw_data` treats as "no data".
+        """
         properties = (zone.value or {}).get('properties') or {}
         return {
-            'raw_values': {
-                key: properties[key]
-                for key in self.zone_set.schema_keys
-                if is_usable_zone_value(properties.get(key))
-            },
+            key: properties[key]
+            for key in self.zone_set.schema_keys
+            if is_usable_zone_value(properties.get(key))
         }
