@@ -668,16 +668,26 @@ class FacilityListViewSet(ModelViewSet):
         """
         The list as it now stands, as CSV: original columns, current
         values, removed rows at the end tagged with the reason.
+        `?shape=contribot` is the moderator report's input instead:
+        current values only, every row where it was uploaded.
         """
         facility_list = self._get_list_for_user(request, pk)
         run = facility_list.cleaning_runs.first()
         if run is None or run.status != ListCleaningRun.COMPLETE:
             raise ValidationError(NO_COMPLETED_RUN)
-        body = list_cleaning.build_fixed_csv(run)
+        shape = request.query_params.get(
+            'shape', list_cleaning.PAIRED_SHAPE)
+        if shape not in list_cleaning.DOWNLOAD_SHAPES:
+            raise ValidationError(
+                'shape must be one of '
+                + ', '.join(list_cleaning.DOWNLOAD_SHAPES))
+        body = list_cleaning.build_fixed_csv(run, shape=shape)
         stem = os.path.splitext(facility_list.file_name or 'list')[0]
+        suffix = '-fixed' if shape == list_cleaning.PAIRED_SHAPE \
+            else '-cleaned'
         response = HttpResponse(body, content_type='text/csv')
         response['Content-Disposition'] = content_disposition_header(
-            True, f'{stem}-fixed.csv')
+            True, f'{stem}{suffix}.csv')
         return response
 
     @transaction.atomic

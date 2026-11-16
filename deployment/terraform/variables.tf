@@ -1439,6 +1439,17 @@ variable "contribot_last_list_id" {
   default     = "NaN"
 }
 
+variable "contribot_min_list_age_minutes" {
+  type        = number
+  description = "fetch_lists leaves lists uploaded more recently than this for a later run, so the contributor's list-cleaning review window (60 minutes from the end of the parse) has closed before ContriBot reports on the list."
+  default     = 90
+
+  validation {
+    condition     = var.contribot_min_list_age_minutes >= 0 && floor(var.contribot_min_list_age_minutes) == var.contribot_min_list_age_minutes
+    error_message = "contribot_min_list_age_minutes must be a non-negative integer."
+  }
+}
+
 variable "contribot_max_attempts" {
   type        = number
   description = "Maximum process_list attempts before a FAILED facility list is left for ops follow-up."

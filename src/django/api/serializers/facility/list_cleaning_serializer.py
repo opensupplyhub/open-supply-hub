@@ -7,6 +7,7 @@ from ...models.facility.list_cleaning_run import (
 )
 from ...services.list_cleaning import (
     group_key,
+    run_breakdown,
     seconds_left,
     wants_removal,
     window_open,
@@ -17,7 +18,8 @@ class ListCleaningSuggestionSerializer(ModelSerializer):
     class Meta:
         model = ListCleaningSuggestion
         fields = ('id', 'row_number', 'facility_list_item', 'kind', 'field',
-                  'code', 'severity', 'original_value', 'corrected_value',
+                  'code', 'source', 'severity', 'original_value',
+                  'corrected_value',
                   'note', 'extra', 'decision', 'decided_value', 'decided_at',
                   'applied')
 
@@ -276,7 +278,7 @@ def serialize_run(run, include_internal=False, only_rows=None):
     if only_rows is not None:
         row_suggestions = [s for s in suggestions
                            if s.row_number in only_rows]
-    return {
+    data = {
         'run': ListCleaningRunSerializer(run).data,
         'window_open': window_open(run),
         'seconds_left': seconds_left(run),
@@ -286,3 +288,8 @@ def serialize_run(run, include_internal=False, only_rows=None):
         'rows': _rows_by_number(row_suggestions),
         'rows_partial': only_rows is not None,
     }
+    if include_internal:
+        # The moderator report's header (OSDEV-3398): what the
+        # contributor did with the run, as counted when it closed.
+        data['breakdown'] = run_breakdown(run)
+    return data

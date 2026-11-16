@@ -100,7 +100,7 @@ Store sensitive values in AWS Secrets Manager. Each Lambda receives only the sec
 
 | Secret (Secrets Manager) | Environment variable                    | Used by         | Description                                                                |
 | ------------------------ | --------------------------------------- | --------------- | -------------------------------------------------------------------------- |
-| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`           | `fetch_lists`   | API token used to authenticate requests to Open Supply Hub.                |
+| OS Hub API token         | `OS_HUB_API_TOKEN_SECRET_ARN`           | `fetch_lists`, `process_list` | API token used to authenticate requests to Open Supply Hub (a superuser's; `process_list` reads the list-cleaning run and the post-review list with it). |
 | Monday API key           | `MONDAY_API_KEY_SECRET_ARN`             | `notify`        | API token used to post items to the Monday board.                          |
 | Slack webhook URL        | `SLACK_API_URL_SECRET_ARN`              | `notify`        | Webhook URL for successful list notifications.                             |
 | Slack failures webhook URL | `SLACK_FAILURES_API_URL_SECRET_ARN`   | `notify`        | Webhook URL for failed list notifications.                                 |
@@ -114,7 +114,8 @@ Nonsensitive configuration is set as plain Lambda environment variables. Each fu
 | ---------------------------------- | ------------------------------ | ------------------------------------------------------------------------ |
 | `CONTRIBOT_STATE_TABLE_NAME`       | all                            | DynamoDB table that stores the state of processed facility lists.        |
 | `LAST_LIST_ID`                     | `fetch_lists`                  | Fallback resume cursor when the DynamoDB `__CURSOR__` item is missing.   |
-| `OS_HUB_API_URL`                   | `fetch_lists`, `notify`        | Base URL of the Open Supply Hub API.                                     |
+| `OS_HUB_API_URL`                   | `fetch_lists`, `process_list`, `notify` | Base URL of the Open Supply Hub API.                            |
+| `CONTRIBOT_MIN_LIST_AGE_MINUTES`   | `fetch_lists`                  | Lists uploaded more recently than this are left for a later run, so the contributor's list-cleaning review window (60 min from the end of the parse) has closed. Default 90. |
 | `CONTRIBOT_STATE_MACHINE_ARN`      | `retry_failed_lists`           | Step Functions state machine started with re-queued `FAILED` lists.      |
 | `CONTRIBOT_MAX_ATTEMPTS`           | `retry_failed_lists`           | Maximum `process_list` attempts before a `FAILED` list is left for ops.  |
 | `AWS_STORAGE_BUCKET_NAME`          | `process_list`                 | S3 bucket where uploaded facility list files are stored.                 |

@@ -937,6 +937,100 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(disposition.count('filename'), 1)
         self.assertIn('\\"list\\"', disposition)
 
+    # -- moderator report input (OSDEV-3398) ----------------------------
+
+    def test_contribot_download_keeps_every_row_in_place(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        removal = run.suggestions.get(kind=ListCleaningSuggestion.REMOVAL)
+        self.client.post(self.url('decisions/'), {'decisions': [
+            {'id': removal.id, 'decision': 'ACCEPTED'}]}, format='json')
+        self.client.post(self.url('submit/'), {}, format='json')
+
+        self.client.force_login(self.superuser)
+        response = self.client.get(
+            self.url('download/'), {'shape': 'contribot'})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('-cleaned.csv', response['Content-Disposition'])
+        lines = response.content.decode('utf-8').splitlines()
+        # current values only, the tag column last
+        self.assertEqual(
+            lines[0], 'country,name,address,number_of_workers,os_hub_cleaning')
+        self.assertEqual(len(lines), 4)
+        self.assertEqual(
+            lines[1],
+            'VN,Thanh Cong Textile,'
+            '"36 Tay Thanh Street, Ho Chi Minh City, Vietnam",1200,')
+        self.assertTrue(lines[2].startswith('Bangladesh,ABC Garments,'))
+        # the removed row stays where it was uploaded, so it is still
+        # row 4 on the review screen and in the report
+        self.assertTrue(lines[3].startswith('Viet Nam,Thanh Cong Textile,'))
+        self.assertTrue(lines[3].endswith(',removed: duplicate of row 2'))
+
+    def test_download_rejects_an_unknown_shape(self):
+        self._ingested_run()
+        self.client.force_login(self.user)
+        response = self.client.get(self.url('download/'), {'shape': 'x'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_ingest_keeps_the_pipeline_source(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        result = json.loads(json.dumps(SAMPLE_RESULT))
+        result['records'][0]['changes'][0]['source'] = 'rules'
+        result['records'][0]['changes'][2]['source'] = 'rules+model'
+        result['records'][1]['issues'][0]['source'] = 'model'
+        result['records'][2]['source'] = 'rules'
+        ingest_result(run, result)
+        by_code = {s.code: s.source for s in run.suggestions.all()}
+        self.assertEqual(by_code['country_code'], 'rules')
+        self.assertEqual(by_code['country_in_address'], 'rules+model')
+        self.assertEqual(by_code['address_po_box'], 'model')
+        self.assertEqual(by_code['duplicate'], 'rules')
+        # earlier pipelines say nothing, and the column stays blank
+        self.assertEqual(by_code['workers_format'], '')
+        self.client.force_login(self.superuser)
+        sources = {s['code']: s['source']
+                   for row in self.client.get(self.url()).data['rows']
+                   for s in row['suggestions']}
+        self.assertEqual(sources['address_po_box'], 'model')
+
+    def test_superuser_payload_carries_the_closing_breakdown(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        # the contributor: no breakdown
+        self.assertNotIn('breakdown', self.client.get(self.url()).data)
+        fix = run.suggestions.get(code='country_in_address')
+        flag = run.suggestions.get(code='address_po_box')
+        self.client.post(self.url('decisions/'), {'decisions': [
+            {'id': fix.id, 'decision': 'ACCEPTED'},
+            {'id': flag.id, 'decision': 'EDITED',
+             'value': '12 Mirpur Road, Dhaka'},
+        ]}, format='json')
+        self.client.post(self.url('submit/'), {}, format='json')
+
+        self.client.force_login(self.superuser)
+        data = self.client.get(self.url()).data
+        self.assertEqual(data['run']['closed_reason'], 'submitted')
+        breakdown = data['breakdown']
+        self.assertEqual(breakdown['fixes_offered'], 1)
+        self.assertEqual(breakdown['fixes_accepted'], 1)
+        self.assertEqual(breakdown['values_typed'], 1)
+        self.assertEqual(breakdown['flags_resolved'], 1)
+        self.assertEqual(breakdown['flags_left_as_uploaded'], 0)
+        # the two silent fixes and the automatic duplicate removal
+        self.assertEqual(breakdown['auto_applied'], 3)
+        self.assertEqual(breakdown['rows_removed_by_review'], 0)
+
+    def test_breakdown_before_the_window_closes_counts_nothing_applied(self):
+        run = self._ingested_run()
+        self.client.force_login(self.superuser)
+        breakdown = self.client.get(self.url()).data['breakdown']
+        self.assertEqual(breakdown['fixes_offered'], 1)
+        self.assertEqual(breakdown['auto_applied'], 0)
+        self.assertEqual(run.closed_at, None)
+
     def test_stub_duplicate_key_includes_country(self):
         result = run_rules({'rows': [
             {'row': 2, 'country': 'Viet Nam', 'name': 'Same Name',

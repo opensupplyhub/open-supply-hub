@@ -242,6 +242,13 @@ class ListCleaningSuggestion(models.Model):
         help_text='Issues only. must_fix blocks approval, advisory is '
                   'shown as worth a look, internal_note is never shown '
                   'to the contributor.')
+    source = models.CharField(
+        max_length=20,
+        blank=True,
+        default='',
+        help_text='What produced the suggestion: rules, model or '
+                  'rules+model (OSDEV-3724). Blank when the pipeline '
+                  'did not say.')
     original_value = models.TextField(blank=True, default='')
     corrected_value = models.TextField(blank=True, default='')
     note = models.TextField(
