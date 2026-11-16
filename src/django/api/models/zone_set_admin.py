@@ -7,7 +7,11 @@ from django.utils.html import format_html
 from waffle import switch_is_active
 
 from api.helpers.geojson_polygon import InvalidPolygonGeoJSON
-from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.geojson_zones import (
+    parse_zone_features,
+    quote_keys,
+    required_keys_outside_properties,
+)
 from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models.partner_field import PartnerField
 from api.models.polygon_admin import PolygonForm
@@ -171,6 +175,21 @@ class ZoneSetForm(forms.ModelForm):
                     'object field one feature property per schema '
                     'property, so the schema is required: give the field '
                     'a schema with a "properties" map first.'
+                )
+            stray = required_keys_outside_properties(
+                partner_field.json_schema
+            )
+            if stray:
+                # The upload would demand these keys of every feature
+                # while the provider serves only the properties the
+                # schema defines, so the value could never be shown.
+                raise forms.ValidationError(
+                    f'"{partner_field.name}" lists '
+                    f'{quote_keys(stray)} as required, but its JSON schema '
+                    'does not define them under "properties". A zone set '
+                    'serves only the properties the schema defines, so '
+                    'add them to "properties" or drop them from '
+                    '"required" first.'
                 )
         elif partner_field.type != PartnerField.STRING:
             raise forms.ValidationError(
@@ -512,11 +531,19 @@ class ZoneSetAdmin(admin.ModelAdmin):
             # An object field is served one value per schema key, so
             # the keys are what staff need to check against the
             # field's schema and the page; the label is only the first
-            # required property and says little on its own.
+            # required property and says little on its own. The keys
+            # can only be gone if the schema was stripped outside the
+            # admin (the partner field form refuses that while zones
+            # exist), but say so rather than print a dangling colon.
+            keys = obj.schema_keys
+            serving = (
+                f'serving schema keys: {", ".join(keys)}' if keys
+                else 'serving no schema keys (the field\'s schema has no '
+                '"properties" map, so nothing is shown on the page)'
+            )
             return (
                 f'{counts["features"]} zone(s) stored as '
-                f'{counts["pieces"]} piece(s); serving schema keys: '
-                f'{", ".join(obj.schema_keys)}'
+                f'{counts["pieces"]} piece(s); {serving}'
             )
         # Distinct labels straight from the database: pulling every
         # zone's full JSON (label plus all source properties) into

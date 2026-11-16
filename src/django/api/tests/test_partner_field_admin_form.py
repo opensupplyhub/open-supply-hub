@@ -152,6 +152,19 @@ class PartnerFieldAdminFormZoneSetTest(TestCase):
                               '&quot;properties&quot; map',
                               str(form.errors['json_schema']))
 
+    def test_required_key_outside_properties_is_refused(self):
+        """Every stored feature carries `scope` and `note`, so the
+        count check would pass; the refusal is that the schema never
+        defines them, so the provider could never serve them."""
+        form = self._form(json_schema={
+            **SCHEMA, 'required': [*SCHEMA['required'], 'pfaf_id', 'note'],
+        })
+        self.assertFalse(form.is_valid())
+        message = str(form.errors['json_schema'])
+        self.assertIn('&quot;pfaf_id&quot;, &quot;note&quot; are listed as '
+                      'required without an entry under', message)
+        self.assertNotIn('have no value for', message)
+
     def test_type_change_is_refused_while_the_set_has_zones(self):
         form = self._form(type=PartnerField.STRING)
         self.assertFalse(form.is_valid())

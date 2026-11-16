@@ -490,6 +490,50 @@ class ZoneSetProviderObjectFieldTest(APITestCase):
         facility = make_facility(self.contributor, 80.0, 20.0)
         self.assertIsNone(self.provider.fetch_data(facility))
 
+    def test_zone_with_no_servable_value_gets_nothing(self):
+        """A schema that requires nothing accepts a feature carrying
+        none of its keys. That zone still resolves, but serving it
+        would put the field's heading and attribution line on the
+        page with nothing under them, so it counts as no data."""
+        optional_schema = {
+            'type': 'object',
+            'properties': {
+                'note': {'type': 'string', 'title': 'Note'},
+                'scope': {'type': 'string', 'title': 'Scope'},
+            },
+        }
+        partner_field = PartnerField.objects.create(
+            name='aqueduct_notes', type=PartnerField.OBJECT,
+            label='Aqueduct notes', json_schema=optional_schema,
+        )
+        self.contributor.partner_fields.add(partner_field)
+        zone_set = ZoneSet.objects.create(
+            name='aqueduct_notes', partner_field=partner_field,
+            value_property=None,
+        )
+        zone_set.replace_zones(zone_pieces(
+            feature(WEST, {'pfaf_id': 1, 'note': '  '}),
+            feature(EAST, {'pfaf_id': 2, 'note': 'basin 2'}),
+            schema=optional_schema,
+        ))
+        provider = ZoneSetProvider(zone_set)
+        empty = make_facility(self.contributor, 76.9, 28.6)
+        served = make_facility(self.contributor, 77.3, 28.6)
+        self.assertIsNotNone(zone_set.resolve_zone(empty.location))
+
+        self.assertIsNone(provider.fetch_data(empty))
+        self.assertIsNone(provider.fetch_only_raw_values(empty))
+        self.assertEqual(
+            provider.fetch_data(served)['value'],
+            {'raw_values': {'note': 'basin 2'}},
+        )
+        data = FacilityIndexDetailsSerializer(
+            FacilityIndex.objects.get(id=empty.id)
+        ).data
+        self.assertNotIn(
+            'aqueduct_notes', data['properties']['partner_fields']
+        )
+
     def test_details_serializer_carries_raw_values_and_schema(self):
         """AC #1 on the location page: one entry under the field's
         label, with the values keyed as the schema names them and the
