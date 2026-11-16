@@ -28,10 +28,30 @@ def apply_partner_fields_or_filter(
     System partner fields use country-code lookups via standard `Q` objects.
     """
     filters = []
+
+    # Zone-set fields are served by polygons, not ExtendedField rows,
+    # so they are taken out of the contributed branch and matched by
+    # location below. With the `enable_zone_sets` switch off (or the
+    # set inactive) nothing comes back here, the names stay in the
+    # contributed branch, and that branch finds no rows for them: the
+    # filter then matches nothing for those fields, never everything.
+    # Imported here rather than at module level for the circular-import
+    # reason build_india_labour_line_filter gives below.
+    from api.partner_fields.zone_set_provider import (
+        build_zone_sets_covered_q,
+        get_active_zone_sets_for_fields,
+    )
+
+    zone_sets = get_active_zone_sets_for_fields(field_names)
+    zone_set_field_names = {
+        zone_set.partner_field.name for zone_set in zone_sets
+    }
+
     regular_field_names = [
         field_name
         for field_name in field_names
         if field_name not in SYSTEM_PARTNER_FIELD_NAMES
+        and field_name not in zone_set_field_names
     ]
 
     if regular_field_names:
@@ -73,6 +93,9 @@ def apply_partner_fields_or_filter(
 
     if INDIA_LABOUR_LINE_FIELD in field_names:
         filters.append(build_india_labour_line_filter())
+
+    if zone_sets:
+        filters.append(build_zone_sets_covered_q(zone_sets))
 
     if not filters:
         return facilities_queryset

@@ -10,7 +10,9 @@ from api.models import User, Contributor
 
 class Command(BaseCommand):
     help = 'Given a User email address, delete the User and also delete the ' \
-           'associated Contributor record.'
+           'associated Contributor record. Claim campaigns the Contributor ' \
+           'owns are kept, closed and without an owner, so the claims ' \
+           'attributed to them keep their campaign.'
 
     def add_arguments(self, parser):
         group = parser.add_argument_group('required arguments')

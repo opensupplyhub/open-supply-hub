@@ -215,6 +215,41 @@ class ParsePolygonGeoJSONTest(unittest.TestCase):
         # The merged piece covers both original squares.
         self.assertAlmostEqual(result.area, 200.0)
 
+    def test_many_disjoint_parts_are_kept_separate(self):
+        """A feature with thousands of separate parts (an archipelago,
+        or a basin layer dissolved per value) parses with every part
+        kept. Merging the parts one at a time re-processed the growing
+        result for each one and took hours at this size; the cascaded
+        union does it in well under a second."""
+        parts = [
+            [[[x, y], [x, y + 0.5], [x + 0.5, y + 0.5], [x + 0.5, y],
+              [x, y]]]
+            for x in range(0, 60)
+            for y in range(0, 50)
+        ]
+        geojson = json.dumps({
+            'type': 'MultiPolygon', 'coordinates': parts,
+        })
+        result = parse_polygon_geojson(geojson)
+        self.assertEqual(len(result), 3000)
+        self.assertAlmostEqual(result.area, 3000 * 0.25)
+
+    def test_many_touching_parts_merge_into_one(self):
+        """Thousands of parts that tile an area edge to edge merge into
+        a single piece covering the whole area, the same result the
+        one-at-a-time union gave for a handful of parts."""
+        parts = [
+            [[[x, y], [x, y + 1], [x + 1, y + 1], [x + 1, y], [x, y]]]
+            for x in range(0, 60)
+            for y in range(0, 60)
+        ]
+        geojson = json.dumps({
+            'type': 'MultiPolygon', 'coordinates': parts,
+        })
+        result = parse_polygon_geojson(geojson)
+        self.assertEqual(len(result), 1)
+        self.assertAlmostEqual(result.area, 3600.0)
+
     def test_enclosed_gaps_stay_unmapped(self):
         """Merging touching pieces never fills space neither piece
         claimed. Two pieces that wrap around an enclave (think South
