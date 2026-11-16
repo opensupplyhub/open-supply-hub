@@ -65,6 +65,12 @@ def build_zone_sets_covered_q(zone_sets):
     inactive sets too: the switch-off and inactive-set behaviour comes
     from which ids the caller passes, not from the column.
 
+    A set with `filters` (sector, country, product type and so on)
+    only covers the locations that also match them, so search and the
+    profile spotlight agree with the location page. The filters are
+    read from the location row itself, so they need no extra column
+    and no recompute when they change.
+
     Args:
         zone_sets: The `ZoneSet` rows to test against. Pass only active
             sets; this helper does not re-check `active` or the switch
@@ -73,7 +79,22 @@ def build_zone_sets_covered_q(zone_sets):
     Returns:
         A `Q` against a queryset whose model carries `zone_set_ids`.
     """
-    return Q(zone_set_ids__overlap=[zone_set.id for zone_set in zone_sets])
+    conditions = {zone_set.id: zone_set.filters_condition()
+                  for zone_set in zone_sets}
+    unfiltered_ids = [
+        zone_set_id for zone_set_id, filters_q in conditions.items()
+        if filters_q is None
+    ]
+    condition = Q(zone_set_ids__overlap=unfiltered_ids)
+    # A set with filters covers a location only when the location
+    # also matches them, the same test `ZoneSet.passes_filters` runs
+    # for the location page. Sets without filters keep sharing one
+    # array overlap, so a search over unfiltered sets costs what it
+    # did before filters existed.
+    for zone_set_id, filters_q in conditions.items():
+        if filters_q is not None:
+            condition |= Q(zone_set_ids__overlap=[zone_set_id]) & filters_q
+    return condition
 
 
 class ZoneSetProvider(SystemPartnerFieldProvider):
@@ -122,11 +143,14 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
 
         Returns:
             The containing `Zone`, or None when the location has no
-            coordinates, lies outside every zone of the set, or (for
-            an object field) sits in a zone whose feature carried no
-            usable value for any schema key, since the page would
+            coordinates, lies outside every zone of the set, sits (for
+            an object field) in a zone whose feature carried no
+            usable value for any schema key (the page would
             otherwise show the field's heading and attribution line
-            with nothing under them.
+            with nothing under them), or does not match the set's
+            filters. The filters run last, so a location outside
+            every zone (the usual case for a regional dataset) or
+            with no usable value never pays for the extra lookup.
         """
         if not production_location.location:
             return None
@@ -134,6 +158,16 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
         if zone is None:
             return None
         if self.zone_set.feeds_object_field and not self._object_values(zone):
+            return None
+        # One extra query per location page, by design. The filterable
+        # columns (sector, product type, ...) live on FacilityIndex, but
+        # this method may be handed a plain Facility (the v1 endpoint),
+        # which does not have them, so the check is a single indexed
+        # EXISTS lookup by id rather than a Python comparison. It runs
+        # only after the zone matched and only for sets that have
+        # filters (unfiltered sets return at once), so most locations
+        # never pay for it.
+        if not self.zone_set.passes_filters(production_location):
             return None
         return zone
 

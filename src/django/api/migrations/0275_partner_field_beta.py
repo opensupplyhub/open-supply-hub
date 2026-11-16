@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0273_zone_set_value_property_optional'),
+        ('api', '0274_zone_set_filters'),
     ]
 
     operations = [
