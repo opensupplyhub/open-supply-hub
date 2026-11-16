@@ -94,6 +94,34 @@ class ZoneSetForm(forms.ModelForm):
     # save completed behind it.
     GEOJSON_FILE_MAX_BYTES = PolygonForm.GEOJSON_FILE_MAX_BYTES
 
+    # How the two changes that invalidate the stored zones are refused
+    # (see `_changes_needing_reupload`): on an edit without a file, and
+    # together with a file in add mode (OSDEV-3812).
+    REUPLOAD_MESSAGES = {
+        'value_property': (
+            'Upload the file again when changing the value property, '
+            'so every zone is re-read with the new key.'
+        ),
+        'partner_field': (
+            'Upload the file again when linking an "object" partner '
+            'field or replacing one, so every zone is re-read against '
+            'the new field\'s schema.'
+        ),
+    }
+    REPLACE_MESSAGES = {
+        'value_property': (
+            'Changing the value property requires a replace: choose '
+            '"Replace all zones" and upload the whole set, so every '
+            'zone is re-read with the new key.'
+        ),
+        'partner_field': (
+            'Linking an "object" partner field or replacing one '
+            'requires a replace: choose "Replace all zones" and upload '
+            'the whole set, so every zone is re-read against the new '
+            'field\'s schema.'
+        ),
+    }
+
     class Meta:
         model = ZoneSet
         fields = (
@@ -201,7 +229,6 @@ class ZoneSetForm(forms.ModelForm):
                 'Only a set that feeds an "object" partner field can '
                 'leave this empty.'
             )
-        value_property = cleaned_data.get('value_property')
         # Add mode means something only for a set that exists; on a
         # new set there is nothing to add to and the file is stored as
         # a replace would store it.
@@ -211,30 +238,7 @@ class ZoneSetForm(forms.ModelForm):
         )
 
         if not geojson_file:
-            if not self.instance.pk:
-                raise forms.ValidationError(
-                    'Upload a GeoJSON FeatureCollection file.'
-                )
-            if not self.instance.zones.exists():
-                return cleaned_data
-            if (
-                'value_property' in self.changed_data
-                and 'value_property' not in self.errors
-                and not feeds_object
-            ):
-                self.add_error(
-                    'value_property',
-                    'Upload the file again when changing the value '
-                    'property, so every zone is re-read with the new '
-                    'key.'
-                )
-            if self._field_change_needs_reupload(partner_field):
-                self.add_error(
-                    'partner_field',
-                    'Upload the file again when linking an "object" '
-                    'partner field or replacing one, so every zone is '
-                    're-read against the new field\'s schema.'
-                )
+            self._clean_without_file(partner_field, feeds_object)
             return cleaned_data
 
         if 'value_property' in self.errors:
@@ -247,24 +251,117 @@ class ZoneSetForm(forms.ModelForm):
             # by, the key or schema the set has now; an added file
             # read by a new one would leave the set half one way and
             # half the other.
-            if 'value_property' in self.changed_data and not feeds_object:
-                self.add_error(
-                    'value_property',
-                    'Changing the value property requires a replace: '
-                    'choose "Replace all zones" and upload the whole '
-                    'set, so every zone is re-read with the new key.'
-                )
-            if self._field_change_needs_reupload(partner_field):
-                self.add_error(
-                    'partner_field',
-                    'Linking an "object" partner field or replacing one '
-                    'requires a replace: choose "Replace all zones" and '
-                    'upload the whole set, so every zone is re-read '
-                    'against the new field\'s schema.'
-                )
+            self._refuse_changes_needing_reupload(
+                partner_field, feeds_object, self.REPLACE_MESSAGES
+            )
             if self.errors:
                 return cleaned_data
 
+        self.parsed_zones = self._parse_upload(
+            geojson_file, partner_field, feeds_object,
+            cleaned_data.get('value_property'),
+        )
+        self.adds_to_existing = adding
+
+        return cleaned_data
+
+    def _clean_without_file(self, partner_field, feeds_object):
+        """
+        Validate an edit that uploads no file.
+
+        A new set must come with one. An existing set keeps its zones,
+        unless this save changes the key or schema they were read by
+        (see `_changes_needing_reupload`), which is refused on that
+        field with a message asking for the file again.
+
+        Raises:
+            forms.ValidationError: If the set does not exist yet.
+        """
+        if not self.instance.pk:
+            raise forms.ValidationError(
+                'Upload a GeoJSON FeatureCollection file.'
+            )
+        if self.instance.zones.exists():
+            self._refuse_changes_needing_reupload(
+                partner_field, feeds_object, self.REUPLOAD_MESSAGES
+            )
+
+    def _refuse_changes_needing_reupload(
+        self, partner_field, feeds_object, messages
+    ):
+        """
+        Add an error, worded by `messages`, on each field whose change
+        on this save invalidates the stored zones.
+
+        Args:
+            partner_field: The field the form is about to link, or None.
+            feeds_object: Whether that field is object-typed.
+            messages: Error text by field name (`REUPLOAD_MESSAGES` or
+                `REPLACE_MESSAGES`).
+        """
+        for field in self._changes_needing_reupload(
+            partner_field, feeds_object
+        ):
+            self.add_error(field, messages[field])
+
+    def _changes_needing_reupload(self, partner_field, feeds_object):
+        """
+        The fields whose change on this save would leave the stored
+        zones read by a key or schema they were never validated
+        against.
+
+        `value_property`, when it changed on a set that still feeds a
+        string field (the stored labels were read with the old key),
+        unless the form has already refused it; and `partner_field`,
+        when the move is to, from or between object fields (see
+        `_field_change_needs_reupload`).
+
+        Args:
+            partner_field: The field the form is about to link, or None.
+            feeds_object: Whether that field is object-typed.
+
+        Returns:
+            The field names, in form order.
+        """
+        fields = []
+        if (
+            'value_property' in self.changed_data
+            and 'value_property' not in self.errors
+            and not feeds_object
+        ):
+            fields.append('value_property')
+        if self._field_change_needs_reupload(partner_field):
+            fields.append('partner_field')
+        return fields
+
+    def _parse_upload(
+        self, geojson_file, partner_field, feeds_object, value_property
+    ):
+        """
+        Parse, validate and cut the uploaded file into the pieces to
+        store.
+
+        Subdividing here rather than at save time means a feature
+        PostGIS returns no piece for is reported like any other bad
+        file, instead of surfacing after validation as a server error
+        once the set itself has been saved.
+
+        Args:
+            geojson_file: The uploaded file.
+            partner_field: The field the set will feed, or None.
+            feeds_object: Whether that field is object-typed, in which
+                case the file is read by the field's schema rather than
+                by `value_property`.
+            value_property: The feature property that supplies a
+                string set's zone value.
+
+        Returns:
+            The pieces, as `subdivide_zone_records` returns them.
+
+        Raises:
+            forms.ValidationError: If the file is over the cap, is not
+                UTF-8 text, or fails zone validation or subdivision.
+        """
         if geojson_file.size > self.GEOJSON_FILE_MAX_BYTES:
             raise forms.ValidationError(
                 f'GeoJSON file is too large '
@@ -279,11 +376,6 @@ class ZoneSetForm(forms.ModelForm):
             raise forms.ValidationError(
                 f'Could not read the file as UTF-8 text: {exc}'
             ) from exc
-
-        # Subdividing here rather than at save time means a feature
-        # PostGIS returns no piece for is reported like any other bad
-        # file, instead of surfacing after validation as a server
-        # error once the set itself has been saved.
         try:
             if feeds_object:
                 records = parse_zone_features(
@@ -291,12 +383,9 @@ class ZoneSetForm(forms.ModelForm):
                 )
             else:
                 records = parse_zone_features(raw, value_property)
-            self.parsed_zones = subdivide_zone_records(records)
+            return subdivide_zone_records(records)
         except InvalidPolygonGeoJSON as exc:
             raise forms.ValidationError(str(exc)) from exc
-        self.adds_to_existing = adding
-
-        return cleaned_data
 
     def _field_change_needs_reupload(self, partner_field):
         """
