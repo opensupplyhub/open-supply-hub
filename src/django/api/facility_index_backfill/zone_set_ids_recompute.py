@@ -73,9 +73,9 @@ def schedule_zone_set_ids_recompute():
     Recompute `zone_set_ids` for every row once the current transaction
     commits.
 
-    Called by `ZoneSet.replace_zones`. Deferred to commit so the job
-    (or the inline pass) sees the new zones, and so a rolled-back
-    replacement queues nothing.
+    Called by `ZoneSet.replace_zones` and `ZoneSet.add_zones`. Deferred
+    to commit so the job (or the inline pass) sees the new zones, and so
+    a rolled-back upload queues nothing.
     """
     transaction.on_commit(recompute_zone_set_ids)
 
