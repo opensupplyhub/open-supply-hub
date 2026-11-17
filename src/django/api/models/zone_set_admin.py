@@ -530,17 +530,20 @@ class ZoneSetForm(forms.ModelForm):
             # state, and the lock is held to the end of the admin
             # transaction, so taking it after the parse keeps one
             # upload from waiting out another's parse.
-            self._lock_set_for_add()
+            self._lock_set_for_add(partner_field, feeds_object)
+            if self.errors:
+                return cleaned_data
         self.parsed_zones = parsed_zones
         self.adds_to_existing = adding
 
         return cleaned_data
 
-    def _lock_set_for_add(self):
+    def _lock_set_for_add(self, partner_field, feeds_object):
         """
         Lock the set's row for the rest of the save, then refuse the
-        add if another save changed the set since this form was loaded
-        or the file is the one the set's last upload stored.
+        add if another save changed the set since this form was loaded,
+        if this save changes the key or schema of zones the set holds
+        now, or if the file is the one the set's last upload stored.
 
         The add-mode checks compare the submitted key and field with
         the ones the stored zones were read by, taken from the
@@ -559,6 +562,9 @@ class ZoneSetForm(forms.ModelForm):
 
         Only the key and field are compared: a competing replace under
         the same key and field leaves zones this file can be added to.
+        It can also give zones to a set that had none when `clean`
+        skipped the key-change refusal before the parse, so that
+        refusal is repeated here, under the lock, when zones exist.
 
         The digest comparison is what makes an add safe to submit
         twice (OSDEV-3812): a double-click, a resubmitted page or two
@@ -568,10 +574,15 @@ class ZoneSetForm(forms.ModelForm):
         under the same lock, so the second of two concurrent posts
         sees the first's and is refused.
 
+        Args:
+            partner_field: The field the form is about to link, or None.
+            feeds_object: Whether that field is object-typed.
+
         Raises:
             forms.ValidationError: On the form if the set changed
                 meanwhile; on the file field if it repeats the last
-                upload.
+                upload. A key or schema change is added as a field
+                error instead, as before the parse.
         """
         stored = (
             ZoneSet.objects.select_for_update()
@@ -590,6 +601,10 @@ class ZoneSetForm(forms.ModelForm):
                 'by the value property or partner field this page was '
                 'loaded with. Reload the page and upload the file '
                 'again.'
+            )
+        if self.instance.zones.exists():
+            self._refuse_changes_needing_reupload(
+                partner_field, feeds_object, self.REPLACE_MESSAGES
             )
         if stored['last_upload_sha256'] == self.upload_sha256:
             raise forms.ValidationError({'geojson_file': (
@@ -942,10 +957,14 @@ class ZoneSetAdmin(admin.ModelAdmin):
         The stored file's digest is saved with the set (in the same
         transaction as its zones, so a failed insert records nothing)
         for `ZoneSetForm._lock_set_for_add` to refuse the same file on
-        the next add.
+        the next add. A save without a file keeps the digest the row
+        holds now, not the one the page was loaded with (see
+        `_keep_stored_digest`).
         """
         if form.parsed_zones is not None:
             obj.last_upload_sha256 = form.upload_sha256
+        elif change:
+            self._keep_stored_digest(obj)
         super().save_model(request, obj, form, change)
         self._warn_about_filters_matching_nothing(request, obj.filters)
         if form.parsed_zones is None:
@@ -968,6 +987,27 @@ class ZoneSetAdmin(admin.ModelAdmin):
             'Spotlight Partners search results reflect the previous '
             'zones. Location pages show the new zones at once.'
         ))
+
+    @staticmethod
+    def _keep_stored_digest(obj):
+        """
+        Carry the digest the row holds now onto the instance about to
+        be saved without a file.
+
+        The admin's save writes every column, editable or not, so a
+        metadata-only save loaded before another request stored an
+        upload would write that page's digest back over the upload's,
+        and the next add of the same file would pass the repeat check.
+        The digest is re-read under the row lock, held to the end of
+        the admin transaction: an add in flight has either committed
+        its digest, which this save then keeps, or waits for this save
+        and records its own after it.
+        """
+        obj.last_upload_sha256 = (
+            ZoneSet.objects.select_for_update()
+            .values_list('last_upload_sha256', flat=True)
+            .get(pk=obj.pk)
+        )
 
 
 class ZoneAdmin(admin.ModelAdmin):

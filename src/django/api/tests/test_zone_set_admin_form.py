@@ -1108,6 +1108,77 @@ class ZoneSetAddModeTest(TestCase):
                     value_property='bws_label', partner_field=None,
                 )
 
+    def test_add_to_an_empty_set_rechecks_the_key_under_the_lock(self):
+        """The key-change refusal is skipped before the parse when the
+        set has no zones. If another save fills the set under the
+        loaded key while this one parses, the staleness check passes
+        (the key did not change), so the refusal is repeated under the
+        lock and the add under the new key is refused."""
+        zone_set = ZoneSet.objects.create(**BASE_DATA)
+        self.assertEqual(zone_set.feature_count, 0)
+        real_parse = ZoneSetForm._parse_upload
+
+        def parse_while_another_save_fills_the_set(form, *args, **kwargs):
+            pieces = real_parse(form, *args, **kwargs)
+            ZoneSet.objects.get(pk=zone_set.pk).replace_zones(
+                subdivide_zone_records(records(
+                    feature(LEFT, {'bws_label': 'High', 'bws_cat': 4}),
+                ))
+            )
+            return pieces
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD, 'value_property': 'bws_cat'},
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low', 'bws_cat': 1}),
+            )},
+            instance=zone_set,
+        )
+        with patch.object(
+            ZoneSetForm, '_parse_upload',
+            parse_while_another_save_fills_the_set,
+        ):
+            self.assertFalse(form.is_valid())
+
+        self.assertIn('requires a replace',
+                      str(form.errors['value_property']))
+        self.assertIsNone(form.parsed_zones)
+        self.assertEqual(
+            [(z.feature_index, z.label) for z in zone_set.zones.all()],
+            [(0, 'High')],
+        )
+
+    def test_save_without_a_file_keeps_the_digest_a_later_add_stored(self):
+        """The admin's save writes every column, so an edit page loaded
+        before another request added a file must not write its stale
+        digest back; otherwise that file could be added again."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+        loaded_before_the_add = ZoneSet.objects.get(pk=zone_set.pk)
+        far = feature(FAR, {'bws_label': 'Extremely high'})
+        self._save(
+            {**BASE_DATA, **ADD},
+            files={'geojson_file': upload(far)},
+            instance=ZoneSet.objects.get(pk=zone_set.pk),
+        )
+        added = ZoneSet.objects.get(pk=zone_set.pk).last_upload_sha256
+
+        self._save(
+            {**BASE_DATA, 'description': 'Edited without a file.'},
+            instance=loaded_before_the_add,
+        )
+
+        zone_set.refresh_from_db()
+        self.assertEqual(zone_set.description, 'Edited without a file.')
+        self.assertEqual(zone_set.last_upload_sha256, added)
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD},
+            files={'geojson_file': upload(far)},
+            instance=ZoneSet.objects.get(pk=zone_set.pk),
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('same contents', form.errors['geojson_file'][0])
+        self.assertEqual(zone_set.feature_count, 2)
+
     def test_adding_the_same_file_twice_is_refused(self):
         """A double-click or a resubmitted page posts the file again:
         the repeat is refused by the file's digest, recorded on the
