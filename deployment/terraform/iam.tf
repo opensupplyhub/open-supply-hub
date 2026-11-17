@@ -278,6 +278,18 @@ resource "aws_iam_role_policy" "list_cleaning_state_machine" {
   policy = data.aws_iam_policy_document.list_cleaning_state_machine[0].json
 }
 
+# The run is started at the end of the parse, which executes in the
+# default Batch job definition. That job has no job role, so its
+# container acts as the EC2 container-instance role: it gets the same
+# grants (and the same caller role to assume) as the app task, which
+# polls the run and reads its result.
+resource "aws_iam_role_policy" "list_cleaning_state_machine_batch" {
+  count  = var.list_cleaning_state_machine_arn != "" ? 1 : 0
+  name   = "ListCleaningStateMachine"
+  role   = aws_iam_role.container_instance_ec2.name
+  policy = data.aws_iam_policy_document.list_cleaning_state_machine[0].json
+}
+
 #
 # ALB IAM resources
 #
