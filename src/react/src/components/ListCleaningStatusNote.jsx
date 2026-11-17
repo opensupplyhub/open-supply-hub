@@ -128,6 +128,20 @@ const ListCleaningStatusNote = ({
         return () => clearTimeout(timer);
     }, [open, reviewing, data]);
 
+    // When the window closes while this line is on screen (the ticking
+    // refetch found it lapsed), the rows below carry pre-settlement
+    // values: tell the parent, as coming back from the review does. Not
+    // on first render, which can already show a closed run, and not
+    // while the review is on screen, whose own close reports then.
+    const wasOpen = useRef(open);
+    useEffect(() => {
+        const closedNow = wasOpen.current && !open && !!data?.run;
+        wasOpen.current = open;
+        if (closedNow && !reviewing && submittedRef.current) {
+            submittedRef.current();
+        }
+    }, [open, reviewing, data]);
+
     const run = data?.run;
     if (run?.status !== 'COMPLETE') return null;
     const text = statusText(run, data, { open, isListOwner, isAdminUser });

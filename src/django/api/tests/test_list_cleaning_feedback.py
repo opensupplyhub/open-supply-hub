@@ -7,6 +7,8 @@ from unittest.mock import MagicMock, patch
 
 from django.contrib.gis.geos import Point
 from django.core.management import call_command
+from django.db import connection, transaction
+from django.test.utils import CaptureQueriesContext
 from django.test import override_settings
 from django.utils import timezone
 from rest_framework import status
@@ -29,6 +31,7 @@ from api.models import (
 from api.services.list_cleaning import (
     SWITCH_NAME,
     apply_run,
+    build_payload,
     ingest_result,
     metrics_summary,
     record_decisions,
@@ -37,11 +40,13 @@ from api.services.list_cleaning import (
     sweep_run,
 )
 from api.services.list_cleaning.runners import RunFailed
+from api.services.list_cleaning import service as cleaning_service
 from api.services.list_cleaning.service import (
     DecisionError,
     build_fixed_csv,
     change_breakdown,
 )
+from api.serializers.facility.list_cleaning_serializer import serialize_run
 from api.services.list_cleaning.stub import run_rules
 
 SAMPLE_RESULT = {
@@ -421,11 +426,14 @@ class ListCleaningFeedbackTest(APITestCase):
         # contributor as worth a look here.
         repeated = by_code[(2, 'repeated_names')]
         self.assertEqual(repeated.severity, ListCleaningSuggestion.ADVISORY)
-        # The copies travel with the flag, so the review can show them
-        # together and offer to keep one.
+        # The flag says which group the row is in, so the review can
+        # show the copies together and offer to keep one; the group's
+        # rows are on the run's file_pass, once.
         self.assertEqual(repeated.extra, {
             'source': 'rules',
-            'group': {'name': 'Fairview Knits', 'rows': [2, 3]}})
+            'group': {'name': 'Fairview Knits', 'index': 0}})
+        self.assertEqual(run.file_pass['repeated_names'],
+                         [{'name': 'Fairview Knits', 'rows': [2, 3]}])
 
         pii = by_code[(3, 'pii')]
         self.assertEqual(pii.severity, ListCleaningSuggestion.MUST_FIX)
@@ -1655,3 +1663,258 @@ class ListCleaningFeedbackTest(APITestCase):
         response = self.client.post(self.url('start/'), {}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['run']['status'], 'COMPLETE')
+
+    # -- OSDEV-3861: the CodeRabbit findings -----------------------------
+
+    def test_sweep_leaves_a_window_ingestion_just_extended(self):
+        run = self._ingested_run(minutes_left=-1)
+        real_lock = cleaning_service._lock
+
+        def extend_then_lock(r):
+            # A result that arrived while this sweep waited for the lock
+            # started the window over.
+            ListCleaningRun.objects.filter(pk=r.pk).update(
+                review_until=timezone.now() + timedelta(minutes=60))
+            real_lock(r)
+
+        with patch.object(cleaning_service, '_lock',
+                          side_effect=extend_then_lock):
+            sweep_run(run)
+        run.refresh_from_db()
+        self.assertIsNone(run.closed_at)
+        self.assertFalse(
+            run.events.filter(kind=ListCleaningEvent.LAPSED).exists())
+
+    def test_start_run_database_error_does_not_abort_the_upload(self):
+        from api.facility_actions.processing_facility_list import (
+            ProcessingFacilityList,
+        )
+        processing = ProcessingFacilityList({
+            'facility_list': self.list,
+            'parsing_started': str(timezone.now())})
+
+        def broken_query(facility_list):
+            with connection.cursor() as cursor:
+                cursor.execute('SELECT 1/0')
+
+        with patch('api.services.list_cleaning.start_run',
+                   side_effect=broken_query), \
+                patch('api.facility_actions.processing_facility_list'
+                      '.report_error_to_rollbar'), \
+                self.assertLogs('api.facility_actions'
+                                '.processing_facility_list',
+                                level='ERROR'):
+            with transaction.atomic():
+                processing._ProcessingFacilityList__start_list_cleaning()
+                # The list-create transaction is still usable: without a
+                # savepoint the next query would raise and the parsed
+                # rows roll back.
+                self.assertEqual(
+                    FacilityListItem.objects.filter(
+                        source=self.source).count(), 3)
+
+    def test_uploaded_row_column_does_not_overwrite_the_row_number(self):
+        item = self.items[0]
+        item.raw_json = {**item.raw_json, 'row': 'A-17'}
+        item.save(update_fields=['raw_json'])
+        payload = build_payload(self.list)
+        self.assertEqual([r['row'] for r in payload['rows']], [2, 3, 4])
+
+    def test_stub_duplicate_key_keeps_non_latin_addresses_apart(self):
+        result = run_rules({'rows': [
+            {'row': 2, 'country': 'JP', 'name': '東京縫製',
+             'address': '東京都墨田区1-2-3'},
+            {'row': 3, 'country': 'JP', 'name': '東京縫製',
+             'address': '大阪府大阪市4-5-6'},
+        ]})
+        self.assertEqual(result['file_pass']['exact_duplicates'], [])
+        self.assertEqual(
+            [r['status'] for r in result['records']].count('removed'), 0)
+        # the same address written twice is still an exact repeat
+        result = run_rules({'rows': [
+            {'row': 2, 'country': 'JP', 'name': '東京縫製',
+             'address': '東京都墨田区1-2-3'},
+            {'row': 3, 'country': 'JP', 'name': '東京 縫製',
+             'address': '東京都 墨田区 1-2-3'},
+        ]})
+        self.assertEqual(result['file_pass']['exact_duplicates'],
+                         [{'keep': 2, 'remove': 3, 'match': 'exact'}])
+
+    CONFLICT_RESULT = {
+        'file_pass': {'row_count': 3, 'exact_duplicates': [],
+                      'repeated_names': [], 'header_issues': []},
+        'records': [
+            {'row': 2, 'status': 'needs_your_action',
+             'changes': [
+                 {'field': 'address',
+                  'value': '36 Tay Thanh Street, Ho Chi Minh City',
+                  'reason': 'country_in_address'}],
+             'issues': [
+                 {'code': 'address_too_few', 'severity': 'must_fix',
+                  'field': 'address', 'note': 'The address is thin.'}]},
+        ],
+    }
+
+    def _conflicting_run(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, self.CONFLICT_RESULT)
+        fix = run.suggestions.get(kind=ListCleaningSuggestion.CORRECTION)
+        flag = run.suggestions.get(kind=ListCleaningSuggestion.ISSUE)
+        return run, fix, flag
+
+    def _decide_later(self, suggestion, decision, value=''):
+        """A decision made after every other one so far."""
+        record_decisions(
+            self.list.cleaning_runs.first(),
+            [{'id': suggestion.id, 'decision': decision, 'value': value}],
+            self.user)
+        ListCleaningSuggestion.objects.filter(pk=suggestion.pk).update(
+            decided_at=timezone.now() + timedelta(seconds=1))
+
+    def test_competing_typed_values_on_one_column_the_latest_wins(self):
+        run, fix, flag = self._conflicting_run()
+        record_decisions(run, [
+            {'id': flag.id, 'decision': 'EDITED', 'value': 'First typed'}],
+            self.user)
+        self._decide_later(fix, 'EDITED', 'Second typed')
+
+        counts = apply_run(run)
+        self.assertEqual(counts, {'applied': 1, 'reverted': 0})
+        item = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(item.raw_json['address'], 'Second typed')
+        fix.refresh_from_db()
+        flag.refresh_from_db()
+        self.assertTrue(fix.applied)
+        self.assertFalse(flag.applied)
+        self.assertEqual(flag.extra['superseded_by'], fix.id)
+        entries = {e['suggestion_id']: e['applied']
+                   for e in item.processing_results
+                   if e['action'] == 'list_cleaning'}
+        self.assertEqual(entries, {fix.id: True, flag.id: False})
+        summary = serialize_run(run)['summary']
+        self.assertEqual(summary['changes_applied'], 1)
+        self.assertEqual(summary['changes_unapplied'], 0)
+
+    def test_a_typed_value_beats_an_accepted_fix_on_the_same_column(self):
+        run, fix, flag = self._conflicting_run()
+        record_decisions(run, [
+            {'id': flag.id, 'decision': 'EDITED', 'value': 'Typed'}],
+            self.user)
+        self._decide_later(fix, 'ACCEPTED')
+
+        self.assertEqual(apply_run(run)['applied'], 1)
+        item = FacilityListItem.objects.get(pk=self.items[0].id)
+        self.assertEqual(item.raw_json['address'], 'Typed')
+        fix.refresh_from_db()
+        flag.refresh_from_db()
+        self.assertTrue(flag.applied)
+        self.assertFalse(fix.applied)
+        self.assertEqual(fix.extra['superseded_by'], flag.id)
+
+    def test_repeated_name_membership_is_stored_once_per_group(self):
+        rows = (2, 3, 4)
+        result = {
+            'file_pass': {
+                'row_count': 3, 'exact_duplicates': [], 'header_issues': [],
+                'repeated_names': [
+                    {'name': 'Thanh Cong Textile', 'rows': list(rows)}]},
+            'records': [
+                {'row': n, 'status': 'needs_your_action', 'changes': [],
+                 'issues': [{'code': 'repeated_names',
+                             'severity': 'advisory', 'field': 'name',
+                             'note': 'The same name is on other rows.'}]}
+                for n in rows],
+        }
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.IMPORT,
+            review_until=timezone.now() + timedelta(minutes=60))
+        ingest_result(run, result)
+        self.assertEqual(
+            [s.extra['group'] for s in run.suggestions.all()],
+            [{'name': 'Thanh Cong Textile', 'index': 0}] * 3)
+        self.assertEqual(run.file_pass['repeated_names'],
+                         [{'name': 'Thanh Cong Textile', 'rows': [2, 3, 4]}])
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        flags = [s for row in response.data['rows']
+                 for s in row['suggestions']]
+        self.assertEqual(len(flags), 3)
+        self.assertFalse(any('rows' in s['extra']['group'] for s in flags))
+        self.assertEqual(
+            response.data['run']['file_pass']['repeated_names'][0]['rows'],
+            [2, 3, 4])
+
+    def test_restart_locks_the_list_before_reading_its_run(self):
+        self._ingested_run(minutes_left=-1)
+        self.client.force_login(self.superuser)
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.post(self.url('start/'), {},
+                                        format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        sql = [q['sql'] for q in ctx.captured_queries]
+        list_lock = next(
+            i for i, q in enumerate(sql)
+            if 'FROM "api_facilitylist"' in q and 'FOR UPDATE' in q)
+        first_run_read = next(
+            i for i, q in enumerate(sql)
+            if 'FROM "api_listcleaningrun"' in q)
+        self.assertLess(list_lock, first_run_read)
+        self.assertEqual(self.list.cleaning_runs.count(), 2)
+
+    def test_command_refuses_a_restart_while_the_review_is_open(self):
+        run = self._ingested_run()
+        fix = run.suggestions.get(code='country_in_address')
+        record_decisions(
+            run, [{'id': fix.id, 'decision': 'ACCEPTED'}], self.user)
+
+        def refused(*args):
+            err = StringIO()
+            with self.assertRaises(SystemExit):
+                call_command('list_cleaning', '-l', str(self.list.id),
+                             *args, stdout=StringIO(), stderr=err)
+            self.assertIn('still reviewing', err.getvalue())
+            self.assertIn('--force', err.getvalue())
+
+        refused()
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, 'records.json')
+            with open(path, 'w') as f:
+                json.dump(SAMPLE_RESULT, f)
+            refused('--records', path)
+        self.assertEqual(self.list.cleaning_runs.count(), 1)
+        fix.refresh_from_db()
+        self.assertEqual(fix.decision, ListCleaningSuggestion.ACCEPTED)
+
+        call_command('list_cleaning', '-l', str(self.list.id), '--force',
+                     stdout=StringIO())
+        self.assertEqual(self.list.cleaning_runs.count(), 2)
+
+    def test_review_event_is_refused_when_a_sweep_closes_the_run(self):
+        run = self._ingested_run()
+        self.client.force_login(self.user)
+        real_lock = cleaning_service._lock
+
+        def close_then_lock(r):
+            # The sweep that held the lock closed the run meanwhile.
+            ListCleaningRun.objects.filter(pk=r.pk).update(
+                closed_at=timezone.now(),
+                closed_reason=ListCleaningRun.LAPSED)
+            real_lock(r)
+
+        with patch.object(cleaning_service, '_lock',
+                          side_effect=close_then_lock):
+            response = self.client.post(
+                self.url('events/'), {'kind': 'opened'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('not open', str(response.data))
+        self.assertFalse(
+            run.events.filter(kind=ListCleaningEvent.OPENED).exists())
+        # closing the walkthrough is about the user, not the window
+        response = self.client.post(
+            self.url('events/'), {'kind': 'tour_dismissed'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)

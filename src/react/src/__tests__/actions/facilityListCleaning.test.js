@@ -29,32 +29,52 @@ jest.mock('../../util/apiRequest', () => ({
 const mockStore = configureStore([thunk]);
 const types = store => store.getActions().map(a => a.type);
 const LIST = 42;
+// The store as it stands when a request goes out: three decisions or
+// submissions so far.
+const stateWith = mutation => ({ facilityListCleaning: { mutation } });
 
 describe('facilityListCleaning actions', () => {
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
-    test('fetch dispatches start and complete with the payload', async () => {
+    test('fetch names its list and carries the mutation count it was sent at', async () => {
         const payload = { run: { id: 1 } };
         apiRequest.get.mockResolvedValue({ data: payload });
-        const store = mockStore({});
+        const store = mockStore(stateWith(3));
         await store.dispatch(fetchFacilityListCleaning(LIST));
         expect(apiRequest.get.mock.calls[0][0]).toContain(`/${LIST}/cleaning/`);
         expect(types(store)).toEqual([
             startFetchFacilityListCleaning.getType(),
             completeFetchFacilityListCleaning.getType(),
         ]);
-        expect(store.getActions()[1].payload).toBe(payload);
+        expect(store.getActions()[0].payload).toEqual({
+            listID: LIST,
+            silent: false,
+            restart: false,
+        });
+        expect(store.getActions()[1].payload).toEqual({
+            listID: LIST,
+            mutation: 3,
+            data: payload,
+        });
     });
 
-    test('a silent fetch skips the start action', async () => {
+    test('a silent fetch still names its list, flagged silent', async () => {
         apiRequest.get.mockResolvedValue({ data: {} });
         const store = mockStore({});
         await store.dispatch(fetchFacilityListCleaning(LIST, { silent: true }));
         expect(types(store)).toEqual([
+            startFetchFacilityListCleaning.getType(),
             completeFetchFacilityListCleaning.getType(),
         ]);
+        expect(store.getActions()[0].payload).toEqual({
+            listID: LIST,
+            silent: true,
+            restart: false,
+        });
+        // a store with no cleaning slice yet counts from zero
+        expect(store.getActions()[1].payload.mutation).toBe(0);
     });
 
     test('a failed fetch dispatches the failure with a message', async () => {
@@ -64,15 +84,22 @@ describe('facilityListCleaning actions', () => {
         expect(types(store)).toContain(failFetchFacilityListCleaning.getType());
     });
 
-    test('start posts to the start endpoint', async () => {
-        apiRequest.post.mockResolvedValue({ data: { run: { id: 2 } } });
-        const store = mockStore({});
+    test('start posts to the start endpoint and counts as a change', async () => {
+        const data = { run: { id: 2 } };
+        apiRequest.post.mockResolvedValue({ data });
+        const store = mockStore(stateWith(1));
         await store.dispatch(startFacilityListCleaningRun(LIST));
         expect(apiRequest.post.mock.calls[0][0]).toContain('cleaning/start');
         expect(types(store)).toEqual([
             startFetchFacilityListCleaning.getType(),
             completeFetchFacilityListCleaning.getType(),
         ]);
+        expect(store.getActions()[0].payload.restart).toBe(true);
+        expect(store.getActions()[1].payload).toEqual({
+            listID: LIST,
+            mutation: 1,
+            data,
+        });
     });
 
     test('row decisions are posted as a decisions list', async () => {

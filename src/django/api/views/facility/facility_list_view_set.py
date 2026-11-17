@@ -537,23 +537,16 @@ class FacilityListViewSet(ModelViewSet):
     def cleaning_start(self, request, pk=None):
         """Start (or re-start) a run regardless of the feature switch."""
         facility_list = self._get_list_for_user(request, pk)
-        # Under the current run's lock, so a submission in flight
-        # finishes first and the window check sees its closure.
-        with transaction.atomic():
-            current = facility_list.cleaning_runs.first()
-            if current is not None:
-                list_cleaning.lock_run(current)
-                current = list_cleaning.settle_run(current)
-            if current is not None and list_cleaning.window_open(current):
-                raise ValidationError(
-                    'The contributor is still reviewing this list; a new '
-                    'run would discard their decisions. Wait for the '
-                    'window to close at '
-                    f'{current.review_until.isoformat()}.')
-            run = list_cleaning.start_run(
+        # Under the list's lock, so two restarts at once cannot both
+        # create a run, and the current run's, so a submission in
+        # flight finishes first and the window check sees its closure.
+        try:
+            run = list_cleaning.restart_run(
                 facility_list,
                 runner_name=request.data.get('runner'),
                 force=True)
+        except list_cleaning.ReviewOpen as e:
+            raise ValidationError(str(e))
         return Response(serialize_run(run, include_internal=True))
 
     @action(detail=True, methods=['post'], url_path='cleaning/decisions')
@@ -664,15 +657,16 @@ class FacilityListViewSet(ModelViewSet):
         if kind not in ListCleaningEvent.CLIENT_KINDS:
             raise ValidationError(
                 f'"kind" must be one of {ListCleaningEvent.CLIENT_KINDS}.')
-        if (kind != ListCleaningEvent.TOUR_DISMISSED
-                and not list_cleaning.window_open(run)):
-            raise ValidationError(
-                'The review window for this list is not open, so there '
-                'is nothing to record.')
         meta = request.data.get('meta') or {}
         if not isinstance(meta, dict):
             raise ValidationError('"meta" must be an object.')
-        list_cleaning.record_event(run, kind, user=request.user, meta=meta)
+        # The window is checked under the run's lock, so an event cannot
+        # land on a run a sweep is closing at the same moment.
+        try:
+            list_cleaning.record_review_event(
+                run, kind, user=request.user, meta=meta)
+        except list_cleaning.DecisionError as e:
+            raise ValidationError(str(e))
         return Response({'recorded': kind}, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='cleaning-metrics',

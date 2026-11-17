@@ -34,6 +34,11 @@ const mergeDecisions = (data, payload) => {
 };
 
 const initialState = Object.freeze({
+    // The list the data and any fetch in flight belong to.
+    listID: null,
+    // Counts the decisions and submissions sent or saved, so a fetch reply
+    // from before one of them is known to be older than the store.
+    mutation: 0,
     data: null,
     fetching: false,
     error: null,
@@ -46,24 +51,47 @@ const initialState = Object.freeze({
 
 export default createReducer(
     {
-        [startFetchFacilityListCleaning]: state =>
+        [startFetchFacilityListCleaning]: (
+            state,
+            { listID, silent, restart },
+        ) =>
             update(state, {
-                fetching: { $set: true },
-                error: { $set: null },
+                listID: { $set: listID },
+                // Another list's data is not this one's.
+                data: { $set: listID === state.listID ? state.data : null },
+                fetching: { $set: silent ? state.fetching : true },
+                error: { $set: silent ? state.error : null },
+                mutation: {
+                    $set: restart ? state.mutation + 1 : state.mutation,
+                },
             }),
         [failFetchFacilityListCleaning]: (state, payload) =>
             update(state, {
                 fetching: { $set: false },
                 error: { $set: payload },
             }),
-        [completeFetchFacilityListCleaning]: (state, payload) =>
-            update(state, {
+        [completeFetchFacilityListCleaning]: (
+            state,
+            { listID, mutation, data },
+        ) => {
+            if (listID !== state.listID) {
+                // A reply for a list this store no longer shows.
+                return state;
+            }
+            if (mutation !== state.mutation) {
+                // Fetched before a decision or submission was sent, so its
+                // rows are older than what the store holds.
+                return update(state, { fetching: { $set: false } });
+            }
+            return update(state, {
                 fetching: { $set: false },
                 error: { $set: null },
-                data: { $set: payload },
-            }),
+                data: { $set: data },
+            });
+        },
         [startSubmitFacilityListCleaningDecisions]: state =>
             update(state, {
+                mutation: { $set: state.mutation + 1 },
                 submitting: { $set: true },
                 submitError: { $set: null },
             }),
@@ -74,12 +102,14 @@ export default createReducer(
             }),
         [completeSubmitFacilityListCleaningDecisions]: (state, payload) =>
             update(state, {
+                mutation: { $set: state.mutation + 1 },
                 submitting: { $set: false },
                 submitError: { $set: null },
                 data: { $set: mergeDecisions(state.data, payload) },
             }),
         [startApplyFacilityListCleaning]: state =>
             update(state, {
+                mutation: { $set: state.mutation + 1 },
                 applying: { $set: true },
                 applyError: { $set: null },
             }),
@@ -90,6 +120,7 @@ export default createReducer(
             }),
         [completeApplyFacilityListCleaning]: (state, payload) =>
             update(state, {
+                mutation: { $set: state.mutation + 1 },
                 applying: { $set: false },
                 applyError: { $set: null },
                 data: { $set: payload },
