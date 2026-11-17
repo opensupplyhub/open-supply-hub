@@ -208,6 +208,17 @@ class CandidatePilotSwitchTest(APITestCase):
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
 
     @override_switch(SWITCH_NAME, active=False)
+    def test_list_is_404_when_off(self):
+        # OSDEV-3754: the paged list mode is behind the same gate.
+        for params in ({}, {'sort': '-confidence', 'limit': 10}):
+            response = self.client.get(
+                '/api/v1/production-locations/candidates/', params
+            )
+            self.assertEqual(
+                status.HTTP_404_NOT_FOUND, response.status_code
+            )
+
+    @override_switch(SWITCH_NAME, active=False)
     def test_retirement_requests_are_404_for_moderators_when_off(self):
         request = FacilityCandidateRetirementRequest.objects.create(
             facility=self.candidate,
