@@ -6,10 +6,11 @@ locals {
   contribot_os_hub_api_url = var.environment == "Production" ? "https://${var.r53_public_hosted_zone}" : "https://${local.domain_name}"
 
   contribot_fetch_lists_environment = {
-    CONTRIBOT_STATE_TABLE_NAME  = aws_dynamodb_table.contribot_state.name
-    LAST_LIST_ID                = var.contribot_last_list_id
-    OS_HUB_API_URL              = local.contribot_os_hub_api_url
-    OS_HUB_API_TOKEN_SECRET_ARN = local.contribot_os_hub_api_token_arn
+    CONTRIBOT_STATE_TABLE_NAME     = aws_dynamodb_table.contribot_state.name
+    LAST_LIST_ID                   = var.contribot_last_list_id
+    OS_HUB_API_URL                 = local.contribot_os_hub_api_url
+    OS_HUB_API_TOKEN_SECRET_ARN    = local.contribot_os_hub_api_token_arn
+    CONTRIBOT_MIN_LIST_AGE_MINUTES = tostring(var.contribot_min_list_age_minutes)
   }
 
   contribot_process_list_environment = {
@@ -17,6 +18,8 @@ locals {
     AWS_STORAGE_BUCKET_NAME             = local.files_bucket_name
     GOOGLE_DRIVE_SHARED_DIRECTORY_ID    = var.contribot_google_drive_shared_directory_id
     GOOGLE_DRIVE_SERVICE_KEY_SECRET_ARN = local.contribot_google_drive_service_key_arn
+    OS_HUB_API_URL                      = local.contribot_os_hub_api_url
+    OS_HUB_API_TOKEN_SECRET_ARN         = local.contribot_os_hub_api_token_arn
   }
 
   contribot_notify_environment = {

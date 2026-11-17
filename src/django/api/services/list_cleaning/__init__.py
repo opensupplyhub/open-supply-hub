@@ -1,4 +1,7 @@
 from .service import (  # noqa: F401
+    CONTRIBOT_SHAPE,
+    DOWNLOAD_SHAPES,
+    PAIRED_SHAPE,
     REMOVAL_TAG_COLUMN,
     SWITCH_NAME,
     DecisionError,
@@ -15,6 +18,7 @@ from .service import (  # noqa: F401
     record_group_decisions,
     refresh_run,
     review_deadline,
+    run_breakdown,
     seconds_left,
     settle_run,
     start_run,
