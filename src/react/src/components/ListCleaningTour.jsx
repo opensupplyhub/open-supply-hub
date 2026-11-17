@@ -68,6 +68,17 @@ export const REVIEW_TOUR_STEPS = Object.freeze([
             'is the one submission: after it, or once the hour is up, ' +
             'nothing changes and a human moderator takes over.',
     }),
+    Object.freeze({
+        anchor: 'clock',
+        title: 'You have an hour to submit',
+        text:
+            'This clock counts down from when your results arrived. You ' +
+            'can leave and come back from your list page while it runs. ' +
+            'If it runs out before you submit, your list goes to the human ' +
+            'moderator with the decisions you had made by then, and a row ' +
+            'you had not decided keeps its uploaded value. If you never ' +
+            'opened this review, the list goes exactly as uploaded.',
+    }),
 ]);
 
 const Z_INDEX = 1400; // above the full-screen dialog (1300)
