@@ -23,7 +23,8 @@ class PolygonModelTest(TestCase):
         )
 
     def _make_facility(
-        self, facility_id, lon, lat, country_code='US', sector=None
+        self, facility_id, lon, lat, country_code='US', sector=None,
+        product_type=None,
     ):
         """Create a minimal FacilityIndex row at the given lon/lat."""
         return FacilityIndex.objects.create(
@@ -32,6 +33,7 @@ class PolygonModelTest(TestCase):
             address='123 Main St',
             country_code=country_code,
             sector=sector or [],
+            product_type=product_type or [],
             location=Point(lon, lat),
             contributors_count=1,
             contributors_id=[self.contributor.id],
@@ -158,6 +160,55 @@ class PolygonModelTest(TestCase):
             polygon.get_production_locations(filters={'contry': ['US']})
 
         self.assertIn('contry', str(ctx.exception))
+
+    def test_polygon_filters_follow_the_shared_zone_set_rules(self):
+        """A filter means the same thing on a polygon as on a zone set,
+        because both go through the shared helper: product types are
+        matched without regard to capitals (the index stores them in
+        lower case), whereas `sugar` is a different product from
+        `sugarcane`."""
+        polygon = self._make_square_polygon()
+        cane = self._make_facility(
+            'US1000000CANE', 1, 1, product_type=['sugar cane']
+        )
+        sugar = self._make_facility(
+            'US1000000SUGR', 2, 2, product_type=['sugarcane']
+        )
+
+        def ids(filters):
+            return set(
+                polygon.get_production_locations(filters=filters)
+                .values_list('id', flat=True)
+            )
+
+        self.assertEqual(ids({'product_type': ['Sugar Cane']}), {cane.id})
+        self.assertEqual(ids({'product_type': ['SUGARCANE']}), {sugar.id})
+        self.assertEqual(ids({'product_type': ['sugar']}), set())
+
+    def test_unusable_filters_are_refused_like_on_zone_sets(self):
+        """An empty list, a blank value, or too many values raises
+        instead of quietly matching nothing."""
+        polygon = self._make_square_polygon()
+        cases = (
+            {'sector': []},
+            {'sector': ['Apparel', '  ']},
+            {'sector': [f'sector {i}' for i in range(201)]},
+        )
+        for filters in cases:
+            with self.subTest(filters=str(filters)[:40]):
+                with self.assertRaises(ValueError):
+                    polygon.get_production_locations(filters=filters)
+
+    def test_no_filters_means_every_location_inside(self):
+        """`None` and `{}` apply no filtering."""
+        polygon = self._make_square_polygon()
+        inside = self._make_facility('US1000000NOFL', 1, 1)
+        for filters in (None, {}):
+            ids = set(
+                polygon.get_production_locations(filters=filters)
+                .values_list('id', flat=True)
+            )
+            self.assertIn(inside.id, ids)
 
     def test_polygon_names_must_be_unique(self):
         """The database refuses a second polygon with the same name."""

@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0275_list_cleaning_tour_dismissed'),
+        ('api', '0282_list_cleaning_tour_dismissed'),
     ]
 
     operations = [

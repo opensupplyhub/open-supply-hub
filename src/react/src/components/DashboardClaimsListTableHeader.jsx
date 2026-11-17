@@ -32,6 +32,12 @@ const claimsListHeadCells = [
         label: 'Country',
     },
     {
+        id: 'campaign_code',
+        numeric: false,
+        disablePadding: true,
+        label: 'Campaign',
+    },
+    {
         id: 'created_at',
         numeric: false,
         disablePadding: true,
@@ -63,12 +69,19 @@ const claimsListHeadCells = [
     },
 ];
 
+// The Campaign column only shows while the claim_campaigns switch is on.
+const getClaimsListHeadCells = showCampaignColumn =>
+    showCampaignColumn
+        ? claimsListHeadCells
+        : claimsListHeadCells.filter(cell => cell.id !== 'campaign_code');
+
 function DashboardClaimsListTableHeader({
     order,
     orderBy,
     onRequestSort,
     fetching,
     loading,
+    showCampaignColumn,
 }) {
     const createSortHandler = property => event => {
         onRequestSort(event, property);
@@ -77,7 +90,7 @@ function DashboardClaimsListTableHeader({
     return (
         <TableHead>
             <TableRow>
-                {claimsListHeadCells.map(headCell => (
+                {getClaimsListHeadCells(showCampaignColumn).map(headCell => (
                     <TableCell
                         key={headCell.id}
                         sortDirection={orderBy === headCell.id ? order : false}
@@ -97,12 +110,17 @@ function DashboardClaimsListTableHeader({
     );
 }
 
+DashboardClaimsListTableHeader.defaultProps = {
+    showCampaignColumn: false,
+};
+
 DashboardClaimsListTableHeader.propTypes = {
     loading: bool.isRequired,
     fetching: bool.isRequired,
     order: string.isRequired,
     orderBy: string.isRequired,
     onRequestSort: func.isRequired,
+    showCampaignColumn: bool,
 };
 
 export default DashboardClaimsListTableHeader;

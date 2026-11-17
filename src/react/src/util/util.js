@@ -59,6 +59,8 @@ import {
     OTHER,
     FEATURE_COLLECTION,
     CLAIM_A_FACILITY,
+    CLAIM_CAMPAIGNS,
+    claimCampaignsRoute,
     inputTypesEnum,
     registrationFieldsEnum,
     registrationFormFields,
@@ -746,10 +748,12 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
     const {
         countries,
         statuses = dashboardClaimsListParamsDefaults.claimStatuses,
+        campaigns,
     } = querystring.parse(parseFilterQueryString(qs));
 
     const statusesArray = Array.isArray(statuses) ? statuses : [statuses];
     const countriesArray = Array.isArray(countries) ? countries : [countries];
+    const campaignsArray = Array.isArray(campaigns) ? campaigns : [campaigns];
 
     return Object.freeze({
         countries: uniq(compact(countriesArray)),
@@ -757,6 +761,7 @@ export const getDashboardClaimsListParamsFromQueryString = qs => {
             uniq(compact(statusesArray)),
             map(facilityClaimStatusChoices, 'value'),
         ),
+        campaigns: uniq(compact(campaignsArray)),
     });
 };
 
@@ -1177,7 +1182,11 @@ export const makeDashboardContributorListLink = ({
     }`;
 };
 
-export const makeDashboardClaimListLink = ({ statuses, countries }) => {
+export const makeDashboardClaimListLink = ({
+    statuses,
+    countries,
+    campaigns,
+}) => {
     const createClaimFilterParams = (key, claimParamValues) =>
         claimParamValues && claimParamValues.length > 0
             ? join(
@@ -1188,8 +1197,9 @@ export const makeDashboardClaimListLink = ({ statuses, countries }) => {
 
     const statusParams = createClaimFilterParams('statuses', statuses);
     const countryParams = createClaimFilterParams('countries', countries);
+    const campaignParams = createClaimFilterParams('campaigns', campaigns);
 
-    const params = [statusParams, countryParams]
+    const params = [statusParams, countryParams, campaignParams]
         .filter(param => param)
         .join('&');
 
@@ -1712,6 +1722,9 @@ export const formatAttribution = (date, contributor) => {
     return moment(date).format('LL');
 };
 
+export const hasClaimCampaignAccess = user =>
+    !!(user && user.claim_campaigns && user.claim_campaigns.access);
+
 export const createUserDropdownLinks = (
     user,
     logoutAction,
@@ -1733,6 +1746,20 @@ export const createUserDropdownLinks = (
             Object.freeze({
                 label: 'My Facilities',
                 href: '/claimed',
+            }),
+        );
+    }
+
+    // Claims campaigns are premium: the switch turns the feature on, and
+    // each brand user is given access separately (claim_campaign_access).
+    if (
+        includes(activeFeatureFlags, CLAIM_CAMPAIGNS) &&
+        hasClaimCampaignAccess(user)
+    ) {
+        links.push(
+            Object.freeze({
+                label: 'Claims Campaigns',
+                href: claimCampaignsRoute,
             }),
         );
     }

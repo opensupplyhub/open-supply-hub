@@ -211,7 +211,11 @@ class DatabaseSynchronizer:
             },
             'excluded_fields': [
                 'created_at',
-                'updated_at'
+                'updated_at',
+                # Campaign attribution stays on the main instance;
+                # ClaimCampaign records are not synchronized.
+                'campaign',
+                'via_link'
             ]
         },
         'ExtendedField': {

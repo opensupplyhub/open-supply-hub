@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0271_list_cleaning_review_window'),
+        ('api', '0278_list_cleaning_review_window'),
     ]
 
     operations = [
