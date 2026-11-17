@@ -184,6 +184,33 @@ describe('CandidateListMap', () => {
         expect(onBboxChange).toHaveBeenCalledWith('20,10,25,10.05');
     });
 
+    it('applies a drag that a parent re-render interrupted', () => {
+        const mapProps = {
+            rows: [row('A', 10, 20), row('B', 11, 21)],
+            selectedOsId: null,
+            bbox: null,
+            onSelect: jest.fn(),
+        };
+        const first = jest.fn();
+        const latest = jest.fn();
+        const { rerender } = render(
+            <CandidateListMap {...mapProps} onBboxChange={first} />,
+        );
+        fireEvent.click(screen.getByTestId('candidate-map-draw'));
+        act(() => {
+            mockMap.fire('mousedown', { lat: 10, lng: 20 });
+        });
+        // The page re-renders mid-drag (a list response landing) and
+        // hands the map a new callback, as an inline arrow does.
+        rerender(<CandidateListMap {...mapProps} onBboxChange={latest} />);
+        act(() => {
+            mockMap.fire('mouseup', { lat: 11, lng: 21 });
+        });
+
+        expect(latest).toHaveBeenCalledWith('20,10,21,11');
+        expect(first).not.toHaveBeenCalled();
+    });
+
     it('sets no area for a drag with no extent on one axis', () => {
         const { onBboxChange } = renderMap();
         fireEvent.click(screen.getByTestId('candidate-map-draw'));

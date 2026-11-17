@@ -130,6 +130,13 @@ export const CandidateReviewPage = ({
     }, [location.search, closePanel]);
 
     const selectedIndex = rows.findIndex(row => row.osId === selectedOsId);
+
+    // The previous page's rows stay on screen while the next one loads, so
+    // a row can be opened just before it is replaced. Its panel would be
+    // stranded at "0 of n" with both arrows disabled; close it instead.
+    useEffect(() => {
+        if (selectedOsId && selectedIndex < 0) closePanel();
+    }, [selectedOsId, selectedIndex, closePanel]);
     const stepTo = index => {
         if (index >= 0 && index < rows.length) selectRow(rows[index].osId);
     };

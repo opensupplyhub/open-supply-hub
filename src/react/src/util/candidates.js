@@ -89,7 +89,9 @@ const parseConfidence = value => {
 const isBboxString = value =>
     typeof value === 'string' &&
     value.split(',').length === 4 &&
-    value.split(',').every(part => part !== '' && Number.isFinite(+part));
+    value
+        .split(',')
+        .every(part => part.trim() !== '' && Number.isFinite(+part));
 
 /**
  * `?page=2&sort=-confidence&state=unverified,disputed` -> query object.

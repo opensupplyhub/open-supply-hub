@@ -86,6 +86,12 @@ const CandidateListMap = ({
     const [dragBounds, setDragBounds] = useState(null);
     const dragStartRef = useRef(null);
     const dragLatestRef = useRef(null);
+    // The latest callback, read when a drag ends. The parent passes a new
+    // function on every render; depending on it would re-run the draw
+    // effect mid-drag (a list response landing is enough), and its cleanup
+    // forgets where the drag started, so the release would apply nothing.
+    const onBboxChangeRef = useRef(onBboxChange);
+    onBboxChangeRef.current = onBboxChange;
 
     const getMap = () => mapRef.current && mapRef.current.leafletElement;
 
@@ -121,26 +127,23 @@ const CandidateListMap = ({
         }
     }, [points, areaBounds]);
 
-    const finishDrag = useCallback(
-        (start, end) => {
-            const map = getMap();
-            dragStartRef.current = null;
-            setDragBounds(null);
-            setDrawing(false);
-            if (!map || !start || !end) return;
-            const startPoint = map.latLngToContainerPoint(start);
-            const endPoint = map.latLngToContainerPoint(end);
-            const dx = Math.abs(startPoint.x - endPoint.x);
-            const dy = Math.abs(startPoint.y - endPoint.y);
-            // A click is short on both axes. A drag long on one axis and
-            // short on the other is still an area (a thin strip), unless
-            // it has no extent at all, which the API refuses as a box.
-            if (dx < MIN_DRAG_PX && dy < MIN_DRAG_PX) return;
-            if (start.lat === end.lat || start.lng === end.lng) return;
-            onBboxChange(formatBbox(L.latLngBounds(start, end)));
-        },
-        [onBboxChange],
-    );
+    const finishDrag = useCallback((start, end) => {
+        const map = getMap();
+        dragStartRef.current = null;
+        setDragBounds(null);
+        setDrawing(false);
+        if (!map || !start || !end) return;
+        const startPoint = map.latLngToContainerPoint(start);
+        const endPoint = map.latLngToContainerPoint(end);
+        const dx = Math.abs(startPoint.x - endPoint.x);
+        const dy = Math.abs(startPoint.y - endPoint.y);
+        // A click is short on both axes. A drag long on one axis and
+        // short on the other is still an area (a thin strip), unless
+        // it has no extent at all, which the API refuses as a box.
+        if (dx < MIN_DRAG_PX && dy < MIN_DRAG_PX) return;
+        if (start.lat === end.lat || start.lng === end.lng) return;
+        onBboxChangeRef.current(formatBbox(L.latLngBounds(start, end)));
+    }, []);
 
     // Draw mode: suspend panning and turn a drag into a rectangle.
     useEffect(() => {

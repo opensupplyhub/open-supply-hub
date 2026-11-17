@@ -323,6 +323,67 @@ describe('CandidateReviewPage', () => {
         );
     });
 
+    it('treats a 404 on the first page as an error that Retry refetches', async () => {
+        apiRequest.get.mockRejectedValue({ response: { status: 404 } });
+        renderPage();
+
+        const retry = await screen.findByRole('button', { name: 'Retry' });
+        expect(
+            screen.queryByTestId('candidate-list-first-page'),
+        ).not.toBeInTheDocument();
+
+        mockApi();
+        fireEvent.click(retry);
+        await waitFor(() => expect(rows()).toHaveLength(3));
+    });
+
+    it('closes the panel of a row that the next page replaced', async () => {
+        mockApi(listBody(ROWS, 120));
+        renderPage();
+        await waitFor(() => expect(rows()).toHaveLength(3));
+
+        // Page 2 is slow: page 1's rows are still on screen and clickable.
+        let deliverPageTwo;
+        apiRequest.get.mockImplementation(url => {
+            if (url.startsWith(LIST_URL)) {
+                return new Promise(resolve => {
+                    deliverPageTwo = resolve;
+                });
+            }
+            const osId = url.split('/').filter(Boolean).pop();
+            return Promise.resolve({ data: detailBody(osId) });
+        });
+        fireEvent.click(screen.getByLabelText('Next page'));
+        await waitFor(() =>
+            expect(lastListRequest()).toBe(`${LIST_URL}?page=2&limit=50`),
+        );
+        fireEvent.click(rows()[0]);
+        await screen.findByTestId('candidate-validation-panel');
+
+        deliverPageTwo({ data: listBody([], 120) });
+        await waitFor(() =>
+            expect(
+                screen.queryByTestId('candidate-review-panel'),
+            ).not.toBeInTheDocument(),
+        );
+    });
+
+    it('previews on an inactive header the direction a click would apply', async () => {
+        mockApi();
+        renderPage(loggedIn, '?sort=confidence');
+        await waitFor(() => expect(rows()).toHaveLength(3));
+
+        // Confidence is sorted ascending; nearby count starts descending.
+        const inactive = screen.getByTestId('candidate-sort-nearby_count');
+        expect(
+            inactive.querySelector('[class*="iconDirectionDesc"]'),
+        ).not.toBeNull();
+        const active = screen.getByTestId('candidate-sort-confidence');
+        expect(
+            active.querySelector('[class*="iconDirectionAsc"]'),
+        ).not.toBeNull();
+    });
+
     it('opens the panel for a row, votes in place and steps to the next row', async () => {
         mockApi();
         apiRequest.post.mockResolvedValue({

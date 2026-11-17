@@ -43,6 +43,7 @@ export const useCandidateList = (query, { enabled = true } = {}) => {
     const [state, setState] = useState(INITIAL);
     const [refreshKey, setRefreshKey] = useState(0);
     const url = makeCandidatesListURL(query);
+    const page = get(query, 'page', 1);
     const controllerRef = useRef(null);
 
     useEffect(() => {
@@ -66,17 +67,21 @@ export const useCandidateList = (query, { enabled = true } = {}) => {
             .catch(err => {
                 if (axios.isCancel(err)) return;
                 const status = get(err, 'response.status');
+                // Page 1 of an empty set is a 200, so a 404 there is not
+                // "past the end" (the pilot switch is off, say): it is an
+                // error, whose Retry refetches. "Back to the first page"
+                // from page 1 would change nothing and fetch nothing.
+                const pastEnd = status === 404 && page > 1;
                 setState({
                     rows: [],
                     count: 0,
-                    status:
-                        status === 404
-                            ? LIST_STATUS.PAGE_PAST_END
-                            : LIST_STATUS.ERROR,
+                    status: pastEnd
+                        ? LIST_STATUS.PAGE_PAST_END
+                        : LIST_STATUS.ERROR,
                 });
             });
         return () => controller.abort();
-    }, [url, enabled, refreshKey]);
+    }, [url, page, enabled, refreshKey]);
 
     const refetch = useCallback(() => setRefreshKey(key => key + 1), []);
 

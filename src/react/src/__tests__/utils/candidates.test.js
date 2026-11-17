@@ -445,6 +445,18 @@ describe('candidates util', () => {
             });
         });
 
+        it('drops a bbox whose parts are blank or whitespace', () => {
+            ['?bbox=%20,%20,%20,%20', '?bbox=1,2,%20,4', '?bbox=1,2,,4'].forEach(
+                search =>
+                    expect(candidateListQueryFromSearch(search).bbox).toBe(
+                        null,
+                    ),
+            );
+            expect(
+                candidateListQueryFromSearch('?bbox=%201,2,3,4').bbox,
+            ).toBe(' 1,2,3,4');
+        });
+
         it('round-trips through the search string, leaving defaults out', () => {
             const query = {
                 ...DEFAULT_CANDIDATE_LIST_QUERY,

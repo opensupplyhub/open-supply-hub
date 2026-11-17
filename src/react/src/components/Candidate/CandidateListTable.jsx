@@ -147,7 +147,12 @@ const CandidateListTable = ({
                                                 column.sortField ===
                                                 current.field
                                             }
-                                            direction={current.direction}
+                                            direction={
+                                                column.sortField ===
+                                                current.field
+                                                    ? current.direction
+                                                    : column.defaultDirection
+                                            }
                                             onClick={() =>
                                                 onSortChange(
                                                     nextSortFor(column, sort),
