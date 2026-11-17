@@ -1,5 +1,8 @@
 from django.utils import timezone
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import (
+    ModelSerializer,
+    SerializerMethodField,
+)
 
 from ...models.facility.list_cleaning_run import (
     ListCleaningRun,
@@ -7,6 +10,7 @@ from ...models.facility.list_cleaning_run import (
 )
 from ...services.list_cleaning import (
     group_key,
+    run_breakdown,
     seconds_left,
     wants_removal,
     window_open,
@@ -14,10 +18,19 @@ from ...services.list_cleaning import (
 
 
 class ListCleaningSuggestionSerializer(ModelSerializer):
+    # What produced the suggestion (rules, model or rules+model), which
+    # the v2 pipeline reports and ingest keeps on `extra`; blank when the
+    # pipeline did not say. The moderator report (OSDEV-3398) shows it.
+    source = SerializerMethodField()
+
+    def get_source(self, suggestion):
+        return str((suggestion.extra or {}).get('source') or '')
+
     class Meta:
         model = ListCleaningSuggestion
         fields = ('id', 'row_number', 'facility_list_item', 'kind', 'field',
-                  'code', 'severity', 'original_value', 'corrected_value',
+                  'code', 'source', 'severity', 'original_value',
+                  'corrected_value',
                   'note', 'extra', 'decision', 'decided_value', 'decided_at',
                   'applied')
 
@@ -276,7 +289,7 @@ def serialize_run(run, include_internal=False, only_rows=None):
     if only_rows is not None:
         row_suggestions = [s for s in suggestions
                            if s.row_number in only_rows]
-    return {
+    data = {
         'run': ListCleaningRunSerializer(run).data,
         'window_open': window_open(run),
         'seconds_left': seconds_left(run),
@@ -286,3 +299,8 @@ def serialize_run(run, include_internal=False, only_rows=None):
         'rows': _rows_by_number(row_suggestions),
         'rows_partial': only_rows is not None,
     }
+    if include_internal:
+        # The moderator report's header (OSDEV-3398): what the
+        # contributor did with the run, as counted when it closed.
+        data['breakdown'] = run_breakdown(run)
+    return data
