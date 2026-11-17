@@ -159,11 +159,42 @@ const CODE_HELP = Object.freeze({
         'Shorten the value to 200 characters or fewer, or remove the row.',
     address_po_box:
         "A PO Box can't be placed on the map. Type the street address of the facility, or remove the row.",
+    empty_row: 'Nothing to do: the row is removed.',
+    address_too_few:
+        'Add the missing parts of the address (street, town or city, region, postal code), or remove the row.',
+    address_too_many:
+        'Edit the address so it holds only the address; move a business name to the name or parent company column. Or remove the row.',
+    multiple_addresses:
+        'Keep one address here and give the other location its own row, or remove the row.',
+    country_address_mismatch:
+        'Check which is right and fix the country or the address, or remove the row.',
+    name_incomplete:
+        "Give the facility's full registered name, or remove the row.",
+    name_too_many:
+        'Edit the name so it holds only the facility name; move a parent company or address to its own column. Or remove the row.',
+    multiple_names:
+        'Keep one business here and give the other its own row, or remove the row.',
+    repeated_names:
+        'Add a distinguishing detail to each site\u2019s name, keep the rows as they are if they are different sites, or remove the copies.',
+    non_roman_characters:
+        'Give the Roman or English form of the value, or remove the row.',
+    sector_unrecognized:
+        'Choose a sector from the supported list, or remove the row.',
+    column_swap:
+        'Move the value to the column it belongs in, or remove the row.',
+    spelling_uncertain:
+        'Check the spelling and fix it if it is wrong, or keep the original.',
 });
 
+// Every flag has a way out: the named advice for its type, or the general
+// one, which is always to fix the value or drop the row.
 export const codeHelp = (code, field) => {
     const help = CODE_HELP[(code || '').split('+')[0]];
-    if (!help) return '';
+    if (!help) {
+        if (!code) return '';
+        const label = FIELD_LABELS[field] || field || 'value';
+        return `Fix the value so it holds only the ${label.toLowerCase()}, or remove the row.`;
+    }
     if (typeof help === 'string') return help;
     return help[field] || help.default;
 };
@@ -1286,7 +1317,7 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
                     </div>
                 )}
                 <div style={styles.muted}>{suggestion.note}</div>
-                {!internal && codeHelp(suggestion.code, suggestion.field) && (
+                {codeHelp(suggestion.code, suggestion.field) && (
                     <div style={styles.muted}>
                         {codeHelp(suggestion.code, suggestion.field)}
                     </div>
@@ -1912,20 +1943,23 @@ const TIER_COLOURS = Object.freeze({
     [TIER.AUTO]: COLOURS.DARK_GREY,
 });
 
-const TierBadge = ({ tier, advisory }) => (
-    <span
-        style={{
-            ...guideStyles.badge,
-            background: advisory ? ADVISORY_COLOUR : TIER_COLOURS[tier],
-        }}
-        data-tier={tier}
-    >
-        {TIER_LABELS[tier]}
-    </span>
-);
+const TierBadge = ({ tier, advisory, label }) => {
+    let background = TIER_COLOURS[tier];
+    if (label) background = COLOURS.DARK_GREY;
+    else if (advisory) background = ADVISORY_COLOUR;
+    return (
+        <span style={{ ...guideStyles.badge, background }} data-tier={tier}>
+            {label || TIER_LABELS[tier]}
+        </span>
+    );
+};
 
-TierBadge.defaultProps = { advisory: false };
-TierBadge.propTypes = { tier: string.isRequired, advisory: bool };
+TierBadge.defaultProps = { advisory: false, label: null };
+TierBadge.propTypes = {
+    tier: string.isRequired,
+    advisory: bool,
+    label: string,
+};
 
 const TierHeading = ({ tier }) => (
     <div style={chipStyles.tierHead}>
@@ -1945,6 +1979,7 @@ TierHeading.propTypes = { tier: string.isRequired };
 const ErrorGuide = ({ group }) => {
     const guide = codeGuide(group.code);
     if (!guide) return null;
+    const internal = group.severity === SEVERITY.INTERNAL_NOTE;
     let tone = {};
     if (group.auto) tone = guideStyles.boxAuto;
     else if (group.kind === KIND.CORRECTION) tone = guideStyles.boxFix;
@@ -1956,6 +1991,7 @@ const ErrorGuide = ({ group }) => {
                 <TierBadge
                     tier={tier}
                     advisory={group.severity === SEVERITY.ADVISORY}
+                    label={internal ? 'Moderator note' : null}
                 />
                 <span>
                     {guide.title}: {guide.problem}
@@ -2026,7 +2062,13 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
             <Typography variant="subheading">
                 {chipTitle(group)}: {plural(group.count, 'row')}
             </Typography>
-            {!internal && <ErrorGuide group={group} />}
+            <ErrorGuide group={group} />
+            {internal && (
+                <div style={styles.muted}>
+                    The contributor does not see this type; it is for the
+                    moderator, who asks for the fix in the outcome email.
+                </div>
+            )}
             {group.auto && (
                 <div style={styles.muted}>
                     These fixes were made for you and are applied when you
