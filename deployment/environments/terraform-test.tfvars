@@ -163,6 +163,17 @@ contribot_google_drive_service_key_secret_name = "oshub/test/contribot-google-dr
 # read claim attachments directly (s3:GetObject on claim_attachments/* only).
 claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claims-ModerateClaimRole-zZNYv0M0at1w"]
 
+# OSDEV-3726 / OSDEV-3872: the auto-lists-cleaning Step Functions state
+# machine (the auto-lists stack in the automated-single-location-contribution
+# repo) that the contributor-facing list review starts after a list is
+# parsed, and the stack's results bucket. Same account as the app task role,
+# so the stack's ResultsReaderPrincipal stays empty. With the ARN set,
+# Terraform grants the app task role start/describe on the state machine and
+# read on lists/* and write on inbox/* in the bucket.
+list_cleaning_state_machine_arn = "arn:aws:states:us-east-1:343975343274:stateMachine:auto-lists-cleaning"
+list_cleaning_results_bucket = "auto-lists-results-343975343274-us-east-1"
+list_cleaning_results_bucket_owner = "343975343274"
+
 earth_genome_contributor_id_secret_name = "oshub/test/earth-genome-contributor-id"
 earth_index_api_key_secret_name = "oshub/test/earth-index-api-key"
 earth_index_project_id_secret_name = "oshub/test/earth-index-project-id"
