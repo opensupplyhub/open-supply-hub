@@ -53,9 +53,15 @@ def get_tile(request, layer, cachekey, z, x, y, ext):
         if layer == 'facilities':
             tile = get_facilities_vector_tile(
                 request.query_params, layer, z, x, y)
-        else:
+        elif layer == 'facilitygrid':
             tile = get_facility_grid_vector_tile(
                 request.query_params, layer, z, x, y)
+        else:
+            # Unreachable while the guard above rejects everything else,
+            # but named explicitly: a bare `else` would quietly serve a
+            # grid tile for a layer nobody meant, where the dict this
+            # replaced raised KeyError. A new layer should fail loudly.
+            raise BadRequestException(f'invalid layer name: {layer}')
         return Response(tile.tobytes())
     except EmptyResultSet:
         return Response(None, status=HTTP_204_NO_CONTENT)

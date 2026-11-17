@@ -84,3 +84,20 @@ class TileDispatchTest(APITestCase):
         # one, so swapping the arms would fail here rather than silently.
         response, _, _ = self.fetch('facilitygrid')
         self.assertEqual(b'grid-tile', response.content)
+
+    @override_switch('vector_tile', active=True)
+    def test_an_unknown_layer_builds_nothing(self):
+        # The dict this replaced raised KeyError on an unknown layer. A
+        # bare `else` would instead have served a grid tile for it, so
+        # this pins that an unrecognised layer still fails rather than
+        # silently returning the wrong one.
+        with patch(f'{TILER}.get_facilities_vector_tile') as facilities, \
+             patch(f'{TILER}.get_facility_grid_vector_tile') as grid:
+            response = self.client.get(
+                '/tile/notalayer/1567700347-1-95f951f7/6/15/29.pbf',
+                {}, HTTP_REFERER='http://allowed.org/',
+            )
+
+        self.assertNotEqual(200, response.status_code)
+        self.assertEqual(0, facilities.call_count)
+        self.assertEqual(0, grid.call_count)
