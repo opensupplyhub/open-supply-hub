@@ -22,7 +22,9 @@ const LISTBOX_ROLE_PROPS = Object.freeze({ role: 'listbox' });
 Industry Classification (OSDEV-3340): one field over the titles of every
 ISIC revision OS Hub holds. A category picked here filters on its code in
 each revision it exists in; the API adds values uploaded under the other
-revision through the UN correspondence. Codes are never shown.
+revision through the UN correspondence. Codes are never shown. Once the
+counts load, categories without locations are not suggested, so picking a
+suggestion never leads to an empty result list; until then every category is.
 */
 export function IsicSearch({
     entries,
@@ -45,14 +47,21 @@ export function IsicSearch({
         entries,
         selections,
     ]);
+    const selectedIds = useMemo(
+        () => new Set(selected.map(entry => entry.id)),
+        [selected],
+    );
     const rows = useMemo(
+        () => searchEntries(entries, query, selectedIds, counts),
+        [entries, query, selectedIds, counts],
+    );
+    // Whether the query matches categories that are left out for having no
+    // locations, to say so instead of saying that no category matches.
+    const matchesOnlyEmptyCategories = useMemo(
         () =>
-            searchEntries(
-                entries,
-                query,
-                new Set(selected.map(entry => entry.id)),
-            ),
-        [entries, query, selected],
+            rows.length === 0 &&
+            searchEntries(entries, query, selectedIds).length > 0,
+        [rows, entries, query, selectedIds],
     );
 
     const trimmedQuery = query.trim();
@@ -88,9 +97,12 @@ export function IsicSearch({
                 <output>Loading industry categories&hellip;</output>
             ) : (
                 <>
-                    No ISIC category matches {'\u201D'}
+                    {matchesOnlyEmptyCategories
+                        ? 'No locations are classified under a category matching'
+                        : 'No ISIC category matches'}{' '}
+                    {'\u201C'}
                     {trimmedQuery}
-                    {'\u201C'}. Try a shorter or more general word.
+                    {'\u201D'}. Try a shorter or more general word.
                 </>
             )}
         </div>

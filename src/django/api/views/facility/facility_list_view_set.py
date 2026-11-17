@@ -12,6 +12,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
     NotFound,
+    PermissionDenied,
     ValidationError
 )
 from rest_framework.response import Response
@@ -642,15 +643,32 @@ class FacilityListViewSet(ModelViewSet):
         Submitted and lapsed are recorded server-side. A tour_dismissed
         event is remembered per user: the walkthrough no longer opens
         by itself for them on later reviews.
+
+        Whether the review was opened decides what a lapse applies, so
+        only the contributor who uploaded the list can say so (a
+        superuser can read the list but not speak for them), and only
+        while the window is open; closing the walkthrough is about the
+        user, not the window.
         """
+        self._require_switch()
         facility_list = self._get_list_for_user(request, pk)
-        run = facility_list.cleaning_runs.first()
+        source = getattr(facility_list, 'source', None)
+        if source is None or source.contributor.admin_id != request.user.id:
+            raise PermissionDenied(
+                'Only the contributor who uploaded this list can record '
+                'its review events.')
+        run = list_cleaning.settle_run(facility_list.cleaning_runs.first())
         if run is None:
             raise ValidationError('There is no run for this list.')
         kind = request.data.get('kind')
         if kind not in ListCleaningEvent.CLIENT_KINDS:
             raise ValidationError(
                 f'"kind" must be one of {ListCleaningEvent.CLIENT_KINDS}.')
+        if (kind != ListCleaningEvent.TOUR_DISMISSED
+                and not list_cleaning.window_open(run)):
+            raise ValidationError(
+                'The review window for this list is not open, so there '
+                'is nothing to record.')
         meta = request.data.get('meta') or {}
         if not isinstance(meta, dict):
             raise ValidationError('"meta" must be an object.')

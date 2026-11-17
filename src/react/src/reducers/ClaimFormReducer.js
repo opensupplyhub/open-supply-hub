@@ -20,6 +20,7 @@ const initialState = Object.freeze({
     formData: Object.freeze({
         // Eligibility step.
         claimantLocationRelationship: null,
+        campaign: '',
 
         // Contact step.
         pointOfContactEmail: '',

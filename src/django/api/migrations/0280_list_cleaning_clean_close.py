@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0273_list_cleaning_clean_close'),
+        ('api', '0279_list_cleaning_advisory_severity'),
     ]
 
     operations = [
@@ -14,9 +14,8 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 blank=True,
                 choices=[('submitted', 'Contributor submitted'),
-                         ('lapsed', 'Window lapsed, decisions so far applied'),
-                         ('clean', 'Nothing to review, list as uploaded'),
-                         ('failed', 'Run failed, list as uploaded')],
+                         ('lapsed', 'Window lapsed, list as uploaded'),
+                         ('clean', 'Nothing to review, list as uploaded')],
                 default='', max_length=20),
         ),
     ]

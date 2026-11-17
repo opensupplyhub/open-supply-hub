@@ -4,7 +4,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0274_list_cleaning_failed_close'),
+        ('api', '0281_list_cleaning_failed_close'),
     ]
 
     operations = [

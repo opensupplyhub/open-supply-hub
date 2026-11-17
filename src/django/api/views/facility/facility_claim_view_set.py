@@ -270,7 +270,8 @@ class FacilityClaimViewSet(ModelViewSet):
         'facility',
         'contributor',
         'contributor__admin',
-        'status_change_by'
+        'status_change_by',
+        'campaign',
     ).all()
     serializer_class = FacilityClaimDashboardSerializer
     permission_classes = [IsSuperuser]
@@ -292,12 +293,14 @@ class FacilityClaimViewSet(ModelViewSet):
 
         statuses = params.validated_data.get('statuses')
         countries = params.validated_data.get('countries')
+        campaigns = params.validated_data.get('campaigns')
 
         queryset = FacilityClaim.objects.select_related(
             'facility',
             'contributor',
             'contributor__admin',
-            'status_change_by'
+            'status_change_by',
+            'campaign',
         ).prefetch_related(
             # select_related('author'): notes_meta reports is_automated
             # from note.author.email — without this it is an N+1 per note.
@@ -312,6 +315,8 @@ class FacilityClaimViewSet(ModelViewSet):
             queryset = queryset.filter(status__in=statuses)
         if countries:
             queryset = queryset.filter(facility__country_code__in=countries)
+        if campaigns:
+            queryset = queryset.filter(campaign__code__in=campaigns)
 
         response_data = FacilityClaimDashboardSerializer(
             queryset, many=True

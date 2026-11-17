@@ -28,6 +28,7 @@ class UserSerializer(ModelSerializer):
     claimed_facility_ids = SerializerMethodField()
     embed_level = SerializerMethodField()
     allowed_records_number = SerializerMethodField()
+    claim_campaigns = SerializerMethodField()
 
     class Meta:
         model = User
@@ -140,6 +141,11 @@ class UserSerializer(ModelSerializer):
                 'approved': None,
                 'pending': None,
             }
+
+    def get_claim_campaigns(self, user):
+        # Imported here to keep the user serializer's imports light.
+        from api.services.claim_campaign_service import campaign_permissions
+        return campaign_permissions(user)
 
     def get_allowed_records_number(self, user):
         try:

@@ -1,5 +1,8 @@
 from django.utils import timezone
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import (
+    ModelSerializer,
+    SerializerMethodField,
+)
 
 from ...models.facility.list_cleaning_run import (
     ListCleaningRun,
@@ -15,6 +18,14 @@ from ...services.list_cleaning import (
 
 
 class ListCleaningSuggestionSerializer(ModelSerializer):
+    # What produced the suggestion (rules, model or rules+model), which
+    # the v2 pipeline reports and ingest keeps on `extra`; blank when the
+    # pipeline did not say. The moderator report (OSDEV-3398) shows it.
+    source = SerializerMethodField()
+
+    def get_source(self, suggestion):
+        return str((suggestion.extra or {}).get('source') or '')
+
     class Meta:
         model = ListCleaningSuggestion
         fields = ('id', 'row_number', 'facility_list_item', 'kind', 'field',
@@ -28,7 +39,7 @@ class ListCleaningRunSerializer(ModelSerializer):
     class Meta:
         model = ListCleaningRun
         fields = ('id', 'status', 'runner', 'prompt_version', 'file_pass',
-                  'usage', 'error', 'created_at', 'started_at',
+                  'usage', 'pipeline', 'error', 'created_at', 'started_at',
                   'completed_at', 'applied_at', 'review_until',
                   'submitted_at', 'closed_at', 'closed_reason')
 

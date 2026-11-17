@@ -7,7 +7,15 @@ start_run      -> create a ListCleaningRun and hand it to the configured
                   `enable_list_cleaning_feedback` switch is on.
 refresh_run    -> poll an asynchronous runner and ingest its result.
 ingest_result  -> turn the pipeline's aggregated {file_pass, records, usage}
-                  into ListCleaningSuggestion rows.
+                  into ListCleaningSuggestion rows and open the review
+                  window: it runs from when there is something to
+                  review, not from when the pipeline was started.
+                  The state machine's records say which layer made
+                  each decision (`source` rules, model or
+                  rules+model), which rules flags the model withdrew,
+                  and which rows the model never judged
+                  (`model_error`); all of that is kept on the
+                  suggestion's `extra` and the run's `pipeline`.
 record_decisions -> log a contributor's accept / reject / edit / remove
                   per suggestion, or per error type across the list.
 submit_run     -> the one submission (v3): apply every accepted
@@ -60,6 +68,17 @@ log = logging.getLogger(__name__)
 SWITCH_NAME = 'enable_list_cleaning_feedback'
 ROW_OFFSET = 2  # FacilityListItem.row_index 0 is spreadsheet row 2
 
+# The pipeline files its notes for the moderator (internal_note). Here
+# every one of them is shown to the contributor as worth a look, with a
+# fix or a removal on offer: they are the ones who can tell whether one
+# name at two addresses is two sites, or what a thin address is missing
+# (decided 2026-11-17). The internal_note severity is kept for runs
+# ingested before this; it never comes from ingest any more.
+
+# What a state-machine record says about a change or issue beyond the
+# prompt's own shape, kept on the suggestion for the moderator report.
+RECORD_EXTRA_KEYS = ('source', 'rules_value')
+
 
 def feature_enabled():
     return switch_is_active(SWITCH_NAME)
@@ -83,7 +102,7 @@ def build_payload(facility_list):
 
 
 def review_deadline(now=None):
-    """When a run created now stops accepting the contributor's changes."""
+    """When a window opened now stops accepting the contributor's changes."""
     return (now or timezone.now()) + timedelta(
         minutes=settings.LIST_CLEANING_REVIEW_MINUTES)
 
@@ -111,6 +130,9 @@ def start_run(facility_list, runner_name=None, force=False):
         return None
 
     runner_name = runner_name or settings.LIST_CLEANING_RUNNER
+    # The deadline set here only caps how long the list waits for the
+    # pipeline (moderation holds off while it is in the future); the
+    # contributor's window proper starts over when the result arrives.
     run = ListCleaningRun.objects.create(
         facility_list=facility_list,
         runner=runner_name,
@@ -198,11 +220,16 @@ def _original_value(item, field, change=None):
     return str(getattr(item, field, '') or '')
 
 
-def _source(record):
-    """Who produced a change, issue or removal: the v2 pipeline reports
-    `source` as rules, model or rules+model (OSDEV-3724); earlier
-    pipelines report nothing and the column stays blank."""
-    return str(record.get('source') or '')[:20]
+def _severity(issue):
+    severity = issue.get('severity', '') or ''
+    if severity == ListCleaningSuggestion.INTERNAL_NOTE:
+        return ListCleaningSuggestion.ADVISORY
+    return severity
+
+
+def _record_extra(entry):
+    return {k: entry[k] for k in RECORD_EXTRA_KEYS
+            if entry.get(k) is not None}
 
 
 def _default_decision(field, code):
@@ -220,31 +247,39 @@ def _correction(item, change, common, now):
     code = change.get('reason', '')
     decision = _default_decision(field, code)
     auto = decision == ListCleaningSuggestion.ACCEPTED
+    extra = _record_extra(change)
+    if auto:
+        extra['auto'] = True
     return ListCleaningSuggestion(
         kind=ListCleaningSuggestion.CORRECTION,
         field=field,
         code=code,
-        source=_source(change),
         original_value=_original_value(item, field, change),
         corrected_value=_corrected_value(change),
         note=change.get('note', '') or '',
         decision=decision,
         decided_at=now if auto else None,
-        extra={'auto': True} if auto else {},
+        extra=extra,
         **common,
     )
 
 
-def _issue(item, issue, common):
+def _issue(item, issue, common, repeated=None):
     field = issue.get('field', '') or ''
+    extra = _record_extra(issue)
+    # The rows that share this row's name, so the review can show the
+    # copies together and offer to keep one of them.
+    group = (repeated or {}).get(common.get('row_number'))
+    if issue.get('code') == 'repeated_names' and group:
+        extra['group'] = group
     return ListCleaningSuggestion(
         kind=ListCleaningSuggestion.ISSUE,
         field=field,
         code=issue.get('code', ''),
-        source=_source(issue),
-        severity=issue.get('severity', ''),
+        severity=_severity(issue),
         original_value=_original_value(item, field),
         note=issue.get('note', '') or '',
+        extra=extra,
         **common,
     )
 
@@ -266,14 +301,14 @@ def _removal(record, item, common, now):
             note += ' It is an exact repeat, so it cannot be put back.'
     else:
         note = 'This row is blank, so it was removed.'
-    extra = {'duplicate_of': duplicate_of, 'auto': True}
+    extra = {'duplicate_of': duplicate_of, 'auto': True,
+             **_record_extra(record)}
     if parser_removed:
         extra['parser_removed'] = True
     return ListCleaningSuggestion(
         kind=ListCleaningSuggestion.REMOVAL,
         field='row',
         code=reason,
-        source=_source(record),
         note=note,
         decision=ListCleaningSuggestion.ACCEPTED,
         decided_at=now,
@@ -282,15 +317,117 @@ def _removal(record, item, common, now):
     )
 
 
-def _record_suggestions(record, item, common, now):
+def _attach_withdrawn(corrections, withdrawn):
+    """
+    A rules flag the model resolved (an unknown country the model named,
+    a sector it mapped) is not an issue any more, but the moderator
+    should still see that it was raised: it goes on the correction that
+    resolved it, matched by reason and, where given, field.
+    """
+    for entry in withdrawn or []:
+        resolved_by = entry.get('resolved_by', '')
+        match = next(
+            (c for c in corrections
+             if resolved_by in (c.code or '').split('+')
+             and (not entry.get('field') or c.field == entry['field'])),
+            None)
+        if match is None:
+            match = next(
+                (c for c in corrections
+                 if resolved_by in (c.code or '').split('+')), None)
+        if match is not None:
+            match.extra.setdefault('withdrawn', []).append(
+                {'code': entry.get('code', ''),
+                 'field': entry.get('field', '') or ''})
+
+
+def _unknown_column(item, field):
+    """
+    A correction names the column it changes. One that names none, or a
+    column the row does not have, would put a new key into raw_json
+    (and from there into the re-parse and what the moderator sees), so
+    it is dropped at ingest rather than carried into the review.
+    """
+    if not field:
+        return True
+    return item is not None and field not in (item.raw_json or {})
+
+
+def _repeated_groups(file_pass):
+    """row number -> {name, rows} for every repeated-name group."""
+    out = {}
+    for group in file_pass.get('repeated_names') or []:
+        rows = [r for r in group.get('rows') or [] if isinstance(r, int)]
+        entry = {'name': group.get('name', '') or '', 'rows': rows}
+        for row in rows:
+            out[row] = entry
+    return out
+
+
+def _record_suggestions(record, item, common, now, dropped, repeated=None):
     """Every suggestion one pipeline record carries for its row."""
-    out = [_correction(item, change, common, now)
-           for change in record.get('changes') or []]
-    out += [_issue(item, issue, common)
-            for issue in record.get('issues') or []]
+    corrections = []
+    for change in record.get('changes') or []:
+        field = change.get('field', '')
+        if _unknown_column(item, field):
+            dropped.append(f'row {record.get("row")}: {field!r}')
+            continue
+        corrections.append(_correction(item, change, common, now))
+    _attach_withdrawn(corrections, record.get('withdrawn'))
+    out = corrections + [_issue(item, issue, common, repeated)
+                         for issue in record.get('issues') or []]
     if record.get('status') == 'removed':
         out.append(_removal(record, item, common, now))
+    if record.get('model_error'):
+        # The row's batch never came back from the model, so these are
+        # the rules' findings alone.
+        for s in out:
+            s.extra['model_error'] = True
     return out
+
+
+def _header_note(issue):
+    """
+    The state machine reports a header problem as {column, expected,
+    issue}; the stub and prompt 01 wrote a sentence. Give every entry one.
+    """
+    if issue.get('note'):
+        return issue['note']
+    column = issue.get('column', '')
+    expected = issue.get('expected', '') or column
+    if issue.get('issue') == 'missing':
+        return (f'The required column "{expected}" is missing from the '
+                'file header.')
+    return (f'The column "{column}" was read as "{expected}"; the '
+            'template spells it that way.')
+
+
+def _file_pass(result):
+    file_pass = dict(result.get('file_pass') or {})
+    file_pass['header_issues'] = [
+        {**issue, 'note': _header_note(issue)}
+        for issue in file_pass.get('header_issues') or []
+    ]
+    return file_pass
+
+
+def _pipeline_meta(result, records):
+    """
+    What the state machine said about the run as a whole: how many
+    batches reached the model, which rows it never judged, and whether
+    the report is rules-only for half the list or more (`degraded`).
+    Empty counts for the stub and an imported file.
+    """
+    batches = result.get('batches') or {}
+    return {
+        'execution': result.get('execution') or '',
+        'batches_total': int(batches.get('total') or 0),
+        'batches_failed': int(batches.get('failed') or 0),
+        'model_error_rows': [r.get('row') for r in records
+                             if r.get('model_error')],
+        'degraded': bool(result.get('degraded')),
+        'rejected': sum(len(r.get('rejected') or []) for r in records),
+    }
 
 
 @transaction.atomic
@@ -307,6 +444,19 @@ def ingest_result(run, result):
                  'ignoring a repeated result')
         return run
     now = timezone.now()
+    if run.closed_at is not None:
+        # The window lapsed while the pipeline was still running: the
+        # deadline set at start caps how long a list waits for it, and
+        # the sweep has already sent the list to moderation as uploaded.
+        # A review nobody can act on must not open now.
+        run.status = ListCleaningRun.FAILED
+        run.error = ('The checks finished after the review window had '
+                     'closed; the list went to moderation as uploaded.')
+        run.completed_at = now
+        run.save(update_fields=['status', 'error', 'completed_at'])
+        log.warning(f'[List Cleaning] Run {run.id} finished after its '
+                    'window closed; the result is not stored')
+        return run
     items_by_row = {
         item.row_index + ROW_OFFSET: item
         for item in FacilityListItem.objects.filter(
@@ -314,23 +464,49 @@ def ingest_result(run, result):
     }
     run.suggestions.all().delete()
 
+    records = result.get('records') or []
+    file_pass = _file_pass(result)
+    repeated = _repeated_groups(file_pass)
     suggestions = []
-    for record in result.get('records') or []:
+    dropped = []
+    for record in records:
         row_number = record.get('row')
         item = items_by_row.get(row_number)
         common = {'run': run, 'facility_list_item': item,
                   'row_number': row_number}
-        suggestions += _record_suggestions(record, item, common, now)
+        suggestions += _record_suggestions(
+            record, item, common, now, dropped, repeated)
+    if dropped:
+        log.warning(
+            f'[List Cleaning] Run {run.id}: dropped {len(dropped)} '
+            f'correction(s) for columns the row does not have: '
+            f'{"; ".join(dropped[:10])}')
 
     ListCleaningSuggestion.objects.bulk_create(suggestions)
 
-    run.file_pass = result.get('file_pass') or {}
+    run.file_pass = file_pass
     run.usage = result.get('usage') or {}
     run.prompt_version = str(result.get('prompt_version') or '')
+    run.pipeline = _pipeline_meta(result, records)
+    # The contributor's window starts now that there is something to
+    # review, not when the pipeline was started: its latency is not
+    # theirs to lose.
+    if run.review_until is not None:
+        run.review_until = review_deadline(now)
     run.status = ListCleaningRun.COMPLETE
     run.error = ''
     run.completed_at = now
     run.save()
+
+    # One line an alarm can watch: the state machine still SUCCEEDS when
+    # the model was unavailable, since a rules-only report beats none.
+    meta = run.pipeline
+    if meta['degraded'] or meta['model_error_rows']:
+        log.warning(
+            f'[List Cleaning] Run {run.id} is rules-only for '
+            f'{len(meta["model_error_rows"])} rows: '
+            f'{meta["batches_failed"]} of {meta["batches_total"]} batches '
+            f'failed (degraded={meta["degraded"]})')
 
     # v3: nothing goes onto the list until the contributor submits, the
     # automatic fixes included. They are pre-accepted, so a submission
@@ -526,9 +702,16 @@ def change_breakdown(run, as_uploaded=False):
     fixes = [s for s in suggestions
              if s.kind == S.CORRECTION and not (s.extra or {}).get('auto')]
     flags = [s for s in suggestions if s.severity == S.MUST_FIX]
-    removed_rows = {s.row_number for s in suggestions
-                    if s.decision == S.REMOVED}
-    flags_resolved = _count(
+    # The same test apply_run uses, so a flag on a row that went counts
+    # as resolved whether the contributor dropped the row or an
+    # automatic removal (a blank row, an exact repeat) took it. Rows
+    # the contributor removed themselves are the ones they chose
+    # REMOVED on; automatic removals are counted with the other
+    # automatic fixes.
+    removed_rows = {s.row_number for s in suggestions if wants_removal(s)}
+    removed_by_review = {s.row_number for s in suggestions
+                         if s.decision == S.REMOVED}
+    flags_resolved = 0 if as_uploaded else _count(
         flags, lambda s: s.decision == S.EDITED
         or s.row_number in removed_rows)
     out = {
@@ -539,7 +722,7 @@ def change_breakdown(run, as_uploaded=False):
         'fixes_kept_original': _count(
             fixes, lambda s: s.decision == S.REJECTED),
         'values_typed': _count(suggestions, lambda s: s.decision == S.EDITED),
-        'rows_removed_by_review': len(removed_rows),
+        'rows_removed_by_review': len(removed_by_review),
         'flags_offered': len(flags),
         'flags_resolved': flags_resolved,
         'flags_left_as_uploaded': len(flags) - flags_resolved,
@@ -582,7 +765,14 @@ def _tally_run(run, out, samples):
     if run.closed_at is None:
         out['runs_open'] += 1
         return
-    if run.closed_reason != ListCleaningRun.SUBMITTED:
+    if run.closed_reason not in (ListCleaningRun.SUBMITTED,
+                                 ListCleaningRun.LAPSED):
+        # Closed on arrival with nothing to decide (the checks found
+        # nothing, or the run failed): the contributor never had a
+        # window, so it is neither a submission nor a click-away.
+        out['nothing_to_review'] += 1
+        return
+    if run.closed_reason == ListCleaningRun.LAPSED:
         key = 'lapsed_after_opening' if opened else 'lapsed_never_opened'
         out[key] += 1
         # A lapse after opening put what was decided on the list, so
@@ -612,13 +802,15 @@ def metrics_summary():
     """
     Submit versus click away, across every closed run. Counts runs, not
     events: a contributor who opens, leaves, resumes and submits is one
-    "submitted" run that was also "left once".
+    "submitted" run that was also "left once". Runs that closed with
+    nothing to review are counted apart and stay out of the submit rate.
     """
     runs = ListCleaningRun.objects.filter(
         status=ListCleaningRun.COMPLETE).prefetch_related('events')
     out = {
         'runs_complete': 0,
         'runs_open': 0,
+        'nothing_to_review': 0,
         'review_opened': 0,
         'submitted_with_changes': 0,
         'submitted_as_uploaded': 0,
@@ -681,6 +873,11 @@ def _check_decision(suggestion, decision, value):
         raise DecisionError('A removal cannot be edited.')
     if suggestion.field in ('', 'row'):
         raise DecisionError('This flag is not tied to a single field.')
+    item = suggestion.facility_list_item
+    if item is not None and suggestion.field not in (item.raw_json or {}):
+        raise DecisionError(
+            'This flag is not tied to a column of the row, so there is '
+            'no value to replace.')
     if suggestion.field == 'country':
         # The same lookup parse uses, so the typed value is one the row
         # will re-parse with (and country_code follows it on submit).
@@ -811,7 +1008,15 @@ def _reset_group(suggestions, user, now):
 
 
 def _write_field(item, field, value):
+    """Put the value in the row's column. False, with nothing written,
+    when the row has no such column: raw_json only ever holds what was
+    uploaded (ingest and the decision checks keep this from happening;
+    this is the last guard)."""
     raw = dict(item.raw_json or {})
+    if field not in raw:
+        log.warning(f'[List Cleaning] Item {item.id} has no column '
+                    f'{field!r}; nothing written')
+        return False
     raw[field] = value
     item.raw_json = raw
     if field == 'name':
@@ -822,6 +1027,7 @@ def _write_field(item, field, value):
         item.clean_address = clean(value)[:200]
     # country_code and every other derived field follow from the
     # re-parse in _rederive_items.
+    return True
 
 
 REMOVED_STATUSES = (FacilityListItem.DUPLICATE,
@@ -899,10 +1105,13 @@ def _build_fields(parsed, contributor):
             value = stored_value(field, row.fields.get(field), item)
             if value is None:
                 continue
+            # bulk_create sends no post_save, so the signal that stamps
+            # origin_source on the normal create_extendedfield path
+            # (signals.set_origin_source_on_create) never runs here.
             fields.append(ExtendedField(
                 contributor=contributor, facility_list_item=item,
                 facility_id=item.facility_id, field_name=field,
-                value=value))
+                value=value, origin_source=settings.INSTANCE_SOURCE))
     return fields
 
 
@@ -1071,12 +1280,13 @@ def _apply_values(item, suggestions, log_entry):
         action = _value_action(s, item)
         if action is None:
             continue
+        value = s.original_value if action == 'revert' else s.final_value
+        if not _write_field(item, s.field, value):
+            continue
         if action == 'revert':
-            _write_field(item, s.field, s.original_value)
             s.applied = False
             reverted += 1
         else:
-            _write_field(item, s.field, s.final_value)
             s.applied = True
             applied += 1
         log_entry(item, s, s.applied)

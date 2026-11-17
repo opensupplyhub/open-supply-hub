@@ -22,6 +22,7 @@ class Command(BaseCommand):
         rows = [
             ('Completed runs', summary['runs_complete']),
             ('  still open', summary['runs_open']),
+            ('  nothing to review', summary['nothing_to_review']),
             ('  review screen opened', summary['review_opened']),
             ('Submitted with changes', summary['submitted_with_changes']),
             ('Submitted as uploaded', summary['submitted_as_uploaded']),

@@ -69,6 +69,14 @@ describe('ListCleaningReviewDialog', () => {
     test('waits while the checks run and lets the contributor skip', () => {
         const { onContinue } = renderDialog(reviewData({ run: { status: 'RUNNING' } }));
         expect(screen.getByText('Checking your list for problems')).toBeInTheDocument();
+        expect(
+            screen.getByText(/makes it more likely that your list will be accepted/),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('under a minute', { selector: 'strong' }),
+        ).toBeInTheDocument();
+        expect(screen.getByText(/Reading the rows/)).toBeInTheDocument();
+        expect(screen.getByRole('progressbar', { name: /Estimated progress/ })).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: /Skip and go to my list/ }));
         expect(onContinue).toHaveBeenCalled();
     });
@@ -148,6 +156,7 @@ describe('ListCleaningReviewDialog', () => {
         expect(submitFacilityListCleaningGroupDecisions).toHaveBeenCalledWith(42, [
             { key: 'ISSUE:address_po_box:address', decision: 'REMOVED' },
             { key: 'CORRECTION:workers_format:number_of_workers', decision: 'ACCEPTED' },
+            { key: 'ISSUE:repeated_names:name', decision: 'REJECTED' },
         ]);
     });
 

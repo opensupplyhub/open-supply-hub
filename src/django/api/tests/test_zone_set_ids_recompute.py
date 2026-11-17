@@ -16,7 +16,9 @@ from api.models.facility.facility_index import FacilityIndex
 from api.models.partner_field import PartnerField
 from api.partner_fields.registry import ZONE_SETS_SWITCH
 from api.tests.test_partner_contributor_filter_zone_sets import make_facility
-from api.tests.test_zone_set_provider import EAST, WEST, feature, zone_records
+from api.tests.test_zone_set_provider import (
+    EAST, WEST, feature, zone_pieces, zone_records,
+)
 
 RECOMPUTE = (
     'api.facility_index_backfill.zone_set_ids_recompute.'
@@ -79,7 +81,7 @@ class ZoneSetIdsRecomputeTest(TestCase):
         replacement queues nothing."""
         with patch(RECOMPUTE) as recompute:
             with self.captureOnCommitCallbacks(execute=False) as callbacks:
-                self.zone_set.replace_zones(zone_records(
+                self.zone_set.replace_zones(zone_pieces(
                     feature(WEST, {'bws_label': 'Extremely High'}),
                 ))
             recompute.assert_not_called()
@@ -106,7 +108,7 @@ class ZoneSetIdsRecomputeTest(TestCase):
         """A location the previous zones covered and the new ones do
         not is cleared, not left with a stale id."""
         with self.captureOnCommitCallbacks(execute=True):
-            self.zone_set.replace_zones(zone_records(
+            self.zone_set.replace_zones(zone_pieces(
                 feature(WEST, {'bws_label': 'Extremely High'}),
             ))
         self.assertEqual(self._zone_set_ids(self.inside), [self.zone_set.id])
@@ -182,7 +184,7 @@ class ZoneSetIdsRecomputeTest(TestCase):
         """The trigger path: a facility saved after the zones exist gets
         its membership from `index_facilities_by` with no recompute."""
         with self.captureOnCommitCallbacks(execute=True):
-            self.zone_set.replace_zones(zone_records(
+            self.zone_set.replace_zones(zone_pieces(
                 feature(EAST, {'bws_label': 'Low'}),
             ))
 

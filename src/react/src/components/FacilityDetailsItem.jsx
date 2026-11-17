@@ -31,11 +31,21 @@ const detailsStyles = theme =>
         itemWrapper: {
             paddingBottom: theme.spacing.unit * 3,
         },
+        labelRow: {
+            display: 'flex',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            // Row gap when the adornment wraps under a long label, column
+            // gap between the label and the adornment (OSDEV-3778 mockup).
+            // Given with units: JSS does not add `px` to `gap`.
+            gap: `${theme.spacing.unit}px ${theme.spacing.unit * 3}px`,
+        },
     });
 
 const FacilityDetailsItem = ({
     additionalContent,
     label,
+    labelAdornment,
     primary,
     lat,
     lng,
@@ -65,8 +75,9 @@ const FacilityDetailsItem = ({
 
     return (
         <div className={classes.item}>
-            <div>
+            <div className={classes.labelRow}>
                 <Typography className={classes.label}>{label}</Typography>
+                {labelAdornment}
             </div>
             <FacilityDetailsDetail
                 primary={primary}
@@ -162,6 +173,7 @@ FacilityDetailsItem.propTypes = {
         }),
     ),
     label: PropTypes.string,
+    labelAdornment: PropTypes.node,
     primary: PropTypes.oneOfType([
         PropTypes.string,
         PropTypes.node,
@@ -196,6 +208,7 @@ FacilityDetailsItem.propTypes = {
 FacilityDetailsItem.defaultProps = {
     additionalContent: [],
     label: '',
+    labelAdornment: null,
     primary: null,
     lat: null,
     lng: null,

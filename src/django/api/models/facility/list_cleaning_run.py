@@ -66,6 +66,14 @@ class ListCleaningRun(models.Model):
         default=dict,
         blank=True,
         help_text='Token usage and wall-clock reported by the pipeline.')
+    pipeline = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='How the state machine ran: execution name, batches '
+                  'total and failed, the rows the model never judged '
+                  '(model_error_rows), whether the report is rules-only '
+                  'for half the list or more (degraded), and how many '
+                  'model suggestions were rejected by the contract.')
     error = models.TextField(
         blank=True,
         default='',
@@ -78,10 +86,12 @@ class ListCleaningRun(models.Model):
         blank=True,
         help_text='When accepted corrections were last applied to the list.')
 
-    # v3: the contributor submits once. The review window opens with the
-    # run and closes either when they submit or when it lapses (with
-    # what they had decided applied, if they opened the review); after
-    # that nothing on the list changes and moderation can begin.
+    # v3: the contributor submits once. The review window opens when
+    # the pipeline's result arrives (review_until is set at start only
+    # to cap how long the list waits for it, and is set again at
+    # ingest) and closes either when they submit or when it lapses
+    # (with what they had decided applied, if they opened the review);
+    # after that nothing on the list changes and moderation can begin.
     SUBMITTED = 'submitted'
     LAPSED = 'lapsed'
     CLEAN = 'clean'
@@ -242,13 +252,6 @@ class ListCleaningSuggestion(models.Model):
         help_text='Issues only. must_fix blocks approval, advisory is '
                   'shown as worth a look, internal_note is never shown '
                   'to the contributor.')
-    source = models.CharField(
-        max_length=20,
-        blank=True,
-        default='',
-        help_text='What produced the suggestion: rules, model or '
-                  'rules+model (OSDEV-3724). Blank when the pipeline '
-                  'did not say.')
     original_value = models.TextField(blank=True, default='')
     corrected_value = models.TextField(blank=True, default='')
     note = models.TextField(

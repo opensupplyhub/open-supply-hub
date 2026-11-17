@@ -1,15 +1,12 @@
 import uuid
-import logging
 
-from django.db import models
+from django.db import models, transaction
 from django.core.cache import cache
 from django_ckeditor_5.fields import CKEditor5Field
 
 from api.constants import PARTNER_FIELD_LIST_KEY
 from api.fields import JSONTextField
 from api.models.partner_field_manager import PartnerFieldManager
-
-logger = logging.getLogger(__name__)
 
 
 class PartnerField(models.Model):
@@ -112,6 +109,15 @@ class PartnerField(models.Model):
             "Indicates if this partner field is available in data downloads."
         ),
     )
+    beta = models.BooleanField(
+        default=False,
+        help_text=(
+            'Shows a "Beta" tag beside this field\'s title on the '
+            'production location page, for datasets that are still '
+            'provisional. The tag is not part of the label, so analytics '
+            'event names and the contributions drawer title are unchanged.'
+        ),
+    )
     polygon = models.ForeignKey(
         'Polygon',
         null=True,
@@ -141,28 +147,36 @@ class PartnerField(models.Model):
     def __str__(self):
         return self.name
 
+    def object_schema_properties(self):
+        """
+        Return the top-level `properties` map of this field's JSON
+        schema, or an empty dict.
+
+        A consumer that fills an object field one value per schema key
+        (the zone set provider; the location page renders by the same
+        keys) can only do so when the schema is a dict with a
+        non-empty `properties` dict. Any other schema, and any
+        int/float/string field, gets `{}`.
+        """
+        if self.type != self.OBJECT or not isinstance(self.json_schema, dict):
+            return {}
+        properties = self.json_schema.get('properties')
+        if not isinstance(properties, dict) or not properties:
+            return {}
+        return properties
+
     def save(self, *args, **kwargs):
-        """Save partner field and invalidate cache if needed."""
+        """Save partner field and invalidate the cached field list.
+
+        The cache holds whole rows, so every saved change must drop it,
+        not only an activation flip: a `beta`, `label` or `display_text`
+        edit would otherwise keep serving the old value until the
+        entry's TTL expired (OSDEV-3778).
+        """
         self.clean()
-        if self._state.adding:
-            self.__invalidate_cache()
-            return super().save(*args, **kwargs)
-
-        try:
-            original = PartnerField.objects \
-                .get_all_including_inactive() \
-                .get(pk=self.pk)
-
-            if original.active != self.active:
-                self.__invalidate_cache()
-        except PartnerField.DoesNotExist:
-            logger.warning(
-                f"Partner field `{self.pk}` not found. "
-                "System field must exist in database."
-            )
-            self.__invalidate_cache()
-
-        return super().save(*args, **kwargs)
+        result = super().save(*args, **kwargs)
+        self.__invalidate_cache()
+        return result
 
     def delete(self, *args, **kwargs):
         """Delete partner field and invalidate cache."""
@@ -177,5 +191,15 @@ class PartnerField(models.Model):
             self.source_by = '' if cleaned == '<p>&nbsp;</p>' else cleaned
 
     def __invalidate_cache(self):
-        """Invalidate cache for partner field list and names."""
+        """Invalidate the cached partner field list, now and on commit.
+
+        The immediate delete makes the change visible to reads on this
+        connection at once (and to tests, which run inside a transaction
+        whose on-commit hooks never fire). The on-commit delete covers a
+        reader on another connection that repopulated the cache from the
+        old rows between the first delete and the commit, so a stale list
+        is not pinned until the TTL expires. Outside a transaction the
+        second delete runs immediately; on rollback it is discarded.
+        """
         cache.delete(PARTNER_FIELD_LIST_KEY)
+        transaction.on_commit(lambda: cache.delete(PARTNER_FIELD_LIST_KEY))

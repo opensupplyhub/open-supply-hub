@@ -7,6 +7,7 @@ const Page = ({ onDone }) => (
         <div data-tour="intro">tracker</div>
         <div data-tour="automatic">automatic</div>
         <div data-tour="chips">chips</div>
+        <span data-tour="clock">Submit within 59 min</span>
         <ListCleaningTour onDone={onDone} />
     </div>
 );
@@ -16,7 +17,7 @@ describe('ListCleaningTour', () => {
         const onDone = jest.fn();
         render(<Page onDone={onDone} />);
         expect(screen.getByText('Where you are in the upload')).toBeInTheDocument();
-        expect(screen.getByText('1 of 3')).toBeInTheDocument();
+        expect(screen.getByText('1 of 4')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         expect(screen.getByText('Automatic fixes')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Back' }));
@@ -24,6 +25,9 @@ describe('ListCleaningTour', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         fireEvent.click(screen.getByRole('button', { name: 'Next' }));
         expect(screen.getByText('Required fixes first, then recommended')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+        expect(screen.getByText('You have an hour to submit')).toBeInTheDocument();
+        expect(screen.getByText(/leave and come back from your list page/)).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
         expect(onDone).toHaveBeenCalledTimes(1);
     });

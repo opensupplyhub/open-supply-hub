@@ -8,6 +8,10 @@ from api.facility_actions.processing_facility_executor import (
 from api.helpers.rba_instance import merge_rejection_reason
 from api.models.transactions.index_facilities_new import index_facilities_new
 from api.models.facility.facility_index import FacilityIndex
+from api.helpers.provenance import (
+    PROVENANCE_CONTEXT_KEY,
+    build_extended_field_provenance_map,
+)
 from api.serializers.facility.facility_candidate_details_serializer import (
     FacilityCandidateDetailsSerializer,
     NOINDEX_HEADER,
@@ -57,6 +61,10 @@ from django.views.decorators.vary import vary_on_headers
 
 from api.facilities_extent_cache import FacilitiesExtentCache
 from api.facilities_visibility_token import facilities_visibility_token
+from api.services.claim_campaign_service import (
+    move_campaign_suppliers,
+    resolve_claim_campaign,
+)
 from api.models import (
     Contributor,
     Facility,
@@ -215,8 +223,13 @@ class FacilitiesViewSet(ListModelMixin,
     def list(self, request):
         """
         Returns a list of facilities in GeoJSON format for a given query.
-        (Maximum of 50 facilities per page if the detail parameter is fale or
-        not specified, 10 if the detail parameter is true.)
+        (Maximum of 50 facilities per page.)
+
+        With `detail=true`, each extended field carries a `provenance` key.
+        It is null unless `detail_provenance_data=true` is also passed, in
+        which case it holds the source details of the contribution the value
+        came from, or null when the value did not come from a contribution
+        list item (e.g. claim-born values).
 
         ### Sample Response
             {
@@ -264,6 +277,7 @@ class FacilitiesViewSet(ListModelMixin,
                 "params": {
                     "contributors": [],
                     "detail": false,
+                    "detail_provenance_data": false,
                     "number_of_public_contributors": false,
                     "sort_by": null,
                     "embed": 0
@@ -345,6 +359,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -365,6 +380,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -388,6 +404,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -411,6 +428,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -431,6 +449,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -451,6 +470,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -472,6 +492,7 @@ class FacilitiesViewSet(ListModelMixin,
                 "params": {
                     "contributors": [],
                     "detail": true,
+                    "detail_provenance_data": false,
                     "number_of_public_contributors": false,
                     "sort_by": null,
                     "embed": 0
@@ -509,7 +530,61 @@ class FacilitiesViewSet(ListModelMixin,
                 "params": {
                     "contributors": [],
                     "detail": false,
+                    "detail_provenance_data": false,
                     "number_of_public_contributors": true,
+                    "sort_by": null,
+                    "embed": 0
+                },
+                "is_same_contributor": false
+            }
+
+        ### Sample Response - parameters 'detail' and 'detail_provenance_data' equal 'true'
+        (Only the relevant part of one feature is shown.)
+            {
+                "type": "FeatureCollection",
+                "count": 1,
+                "next": null,
+                "previous": null,
+                "features": [
+                    {
+                        "id": "US2025123ABC456",
+                        "type": "Feature",
+                        "properties": {
+                            "os_id": "US2025123ABC456",
+                            "extended_fields": {
+                                "name_operator": [
+                                    {
+                                        "id": 21,
+                                        "is_verified": false,
+                                        "value": {"raw_value": "Blue Horizon Ops"},
+                                        "updated_at": "2025-06-02T10:12:01.123456Z",
+                                        "contributor_id": 1,
+                                        "contributor_name": "Contributor A",
+                                        "value_count": 1,
+                                        "verified_count": 0,
+                                        "is_from_claim": false,
+                                        "field_name": "name_operator",
+                                        "provenance": {
+                                            "source_name": "US EPA FRS",
+                                            "source_link": "https://example.com/dc?id=1",
+                                            "information_source_type": "air quality permit",
+                                            "date_of_source": "2024-06",
+                                            "notes": "Values copied from the permit.",
+                                            "data_collection_methodology": "Desk research",
+                                            "ai_usage_notes": "AI-extracted; human reviewed",
+                                            "added_on_date": "2025-06-02"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ],
+                "params": {
+                    "contributors": [],
+                    "detail": true,
+                    "detail_provenance_data": true,
+                    "number_of_public_contributors": false,
                     "sort_by": null,
                     "embed": 0
                 },
@@ -564,6 +639,10 @@ class FacilitiesViewSet(ListModelMixin,
         context = {'request': request}
 
         should_serialize_details = params.validated_data['detail']
+        # Validation guarantees this is only set together with `detail`.
+        should_serialize_provenance = (
+            params.validated_data['detail_provenance_data']
+        )
         should_serialize_number_of_public_contributors = \
             params.validated_data["number_of_public_contributors"]
         exclude_fields = []
@@ -591,6 +670,9 @@ class FacilitiesViewSet(ListModelMixin,
         )
 
         if page_queryset is not None:
+            if should_serialize_provenance:
+                self.__prefetch_provenance(context, page_queryset)
+
             serializer = FacilityIndexSerializer(page_queryset, many=True,
                                                  context=context,
                                                  exclude_fields=exclude_fields)
@@ -605,6 +687,9 @@ class FacilitiesViewSet(ListModelMixin,
             return page
 
         # Non-paginated response
+        if should_serialize_provenance:
+            self.__prefetch_provenance(context, queryset)
+
         serializer = FacilityIndexSerializer(queryset, many=True,
                                              context=context,
                                              exclude_fields=exclude_fields)
@@ -619,6 +704,20 @@ class FacilitiesViewSet(ListModelMixin,
             response['extent'] = extent
         response['params'] = params.validated_data
         return Response(response)
+
+    @staticmethod
+    def __prefetch_provenance(context, facilities):
+        """
+        Load the provenance of every FacilityListItem referenced by the
+        extended fields of `facilities` in a single query, and store it in
+        the serializer `context`, so a page costs one query instead of one
+        per facility (OSDEV-3751).
+        """
+        context[PROVENANCE_CONTEXT_KEY] = build_extended_field_provenance_map(
+            entry
+            for facility in facilities
+            for entry in (facility.extended_fields or [])
+        )
 
     @staticmethod
     def __is_anonymised_only(queryset, flagged, count=None):
@@ -765,6 +864,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -785,6 +885,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -808,6 +909,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -831,6 +933,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -851,6 +954,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -871,6 +975,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": null,
                                 "base_url": null,
                                 "display_text": null,
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -958,6 +1063,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Worldly",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Worldly Assessments Data Update",
@@ -1013,6 +1119,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "SLCP Assessment",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "SLCP Assessment",
@@ -1065,6 +1172,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Accord Inspections & Remediation Program",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Accord Inspections and Remediation Program",
@@ -1116,6 +1224,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "amfori Assessment & Audits",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Amfori Compliance Status",
@@ -1193,6 +1302,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Climate TRACE Emissions",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Climate TRACE Estimated Emissions",
@@ -1241,6 +1351,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Estimated Annual Activity",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -1261,6 +1372,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Estimated Annual Emissions",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": null
                             }
                         ],
@@ -1290,6 +1402,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "WageIndicator: Minimum & Living Wages",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Wage indicator reference links",
@@ -1341,6 +1454,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Living Wage Institute: Local Living Wage",
                                 "base_url": "https://livingwage.mit.edu/counties/",
                                 "display_text": "View local living wage",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Some Data",
@@ -1379,6 +1493,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Accord/RSC Grievance Mechanism",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "RSC Grievance Mechanism",
@@ -1440,6 +1555,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "WOVO",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Labor Solutions Grievance Mechanism",
@@ -1502,6 +1618,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "Ulula Grievance Mechanism",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "Ulula Grievance Mechanism",
@@ -1573,6 +1690,7 @@ class FacilitiesViewSet(ListModelMixin,
                                 "label": "WRAP Certification",
                                 "base_url": "",
                                 "display_text": "",
+                                "beta": false,
                                 "json_schema": {
                                     "type": "object",
                                     "title": "WRAP Certification",
@@ -1757,6 +1875,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1777,6 +1896,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1800,6 +1920,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1823,6 +1944,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1843,6 +1965,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1863,6 +1986,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": null,
                                         "base_url": null,
                                         "display_text": null,
+                                        "beta": false,
                                         "json_schema": null
                                     }
                                 ],
@@ -1906,6 +2030,7 @@ class FacilitiesViewSet(ListModelMixin,
                                         "label": "Climate TRACE Emissions",
                                         "base_url": "",
                                         "display_text": "",
+                                        "beta": false,
                                         "json_schema": {
                                             "type": "object",
                                             "title": "Climate TRACE Estimated Emissions",
@@ -2353,6 +2478,8 @@ class FacilitiesViewSet(ListModelMixin,
                         facility=promoted_facility,
                         os_id=os_id,
                         reason=FacilityAlias.DELETE)
+
+                move_campaign_suppliers(facility, promoted_facility)
             else:
                 for other_match in other_matches:
                     delete_facility_match(other_match)
@@ -2414,9 +2541,16 @@ class FacilitiesViewSet(ListModelMixin,
             serializer.is_valid(raise_exception=True)
             validated_data = serializer.validated_data
 
+            campaign, via_link = resolve_claim_campaign(
+                facility,
+                validated_data.get("campaign"),
+            )
+
             facility_claim = FacilityClaim.objects.create(
                 facility=facility,
                 contributor=contributor,
+                campaign=campaign,
+                via_link=via_link,
                 contact_person=validated_data.get("your_name"),
                 job_title=validated_data.get("your_title"),
                 point_of_contact_person_name=validated_data.get(
@@ -2836,6 +2970,8 @@ class FacilitiesViewSet(ListModelMixin,
         for field in ExtendedField.objects.filter(facility=merge):
             field.facility = target
             field.save()
+
+        move_campaign_suppliers(merge, target)
 
         for alias in FacilityAlias.objects.filter(facility=merge):
             os_id = alias.os_id

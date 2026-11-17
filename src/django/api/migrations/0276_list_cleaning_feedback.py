@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0268_index_zone_set_ids_search'),
+        ('api', '0275_partner_field_beta'),
     ]
 
     operations = [

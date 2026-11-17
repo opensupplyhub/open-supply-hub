@@ -362,6 +362,146 @@ class FacilityClaimReviewNoteAdmin(SimpleHistoryAdmin):
     readonly_fields = ('claim', 'author')
 
 
+class ClaimCampaignSupplierInline(admin.TabularInline):
+    # Adding a row turns on "chosen suppliers only" for the campaign.
+    # Rows can be deleted one at a time; deleting them all leaves the
+    # campaign empty rather than falling back to all the brand's lists.
+    model = models.ClaimCampaignSupplier
+    raw_id_fields = ('facility',)
+    readonly_fields = ('created_at',)
+    extra = 0
+    verbose_name = 'supplier (OS ID)'
+    verbose_name_plural = (
+        'suppliers (see "chosen suppliers only" above)'
+    )
+
+
+class ClaimCampaignAdminForm(forms.ModelForm):
+    """
+    Refuses a campaign without chosen suppliers for a contributor whose
+    active lists are too large: such a campaign covers every production
+    location on those lists, and the brand's campaign page loads them
+    all at once.
+    """
+
+    class Meta:
+        model = models.ClaimCampaign
+        fields = '__all__'
+
+    def clean(self):
+        from api.services import claim_campaign_service as service
+        cleaned = super().clean()
+        contributor = cleaned.get('contributor')
+        if contributor is None or cleaned.get('uses_roster'):
+            return cleaned
+        # Only when this save is what makes the campaign cover the lists,
+        # so an existing campaign can still be renamed or closed.
+        is_new = self.instance.pk is None
+        if not (
+            is_new
+            or 'contributor' in self.changed_data
+            or 'uses_roster' in self.changed_data
+        ):
+            return cleaned
+        facility_count = service.count_contributor_facilities(contributor)
+        if service.is_too_large(facility_count):
+            raise forms.ValidationError(
+                f'{contributor.name} has {facility_count:,} production '
+                f'locations on its active lists. A campaign that covers '
+                f'all of a brand\'s lists is limited to '
+                f'{service.MAX_LIST_FACILITIES:,}. Tick "chosen suppliers '
+                f'only" and add the suppliers to invite below instead.'
+            )
+        return cleaned
+
+
+class ClaimCampaignAdmin(admin.ModelAdmin):
+    form = ClaimCampaignAdminForm
+    list_display = ('name', 'code', 'contributor', 'status', 'has_access')
+    list_filter = ('status',)
+    search_fields = ('name', 'code', 'contributor__name')
+    readonly_fields = ('uuid', 'created_at', 'updated_at')
+    raw_id_fields = ('contributor',)
+    inlines = (ClaimCampaignSupplierInline,)
+    actions = ('close_campaigns', 'reopen_campaigns', 'give_brands_access')
+
+    @admin.display(boolean=True, description='Brand has access')
+    def has_access(self, campaign):
+        from api.services.claim_campaign_service import ACCESS_FLAG
+        if campaign.contributor is None:
+            # Its brand was deleted; nobody can see it.
+            return False
+        admin_user = campaign.contributor.admin
+        return admin_user.is_superuser or admin_user.groups.filter(
+            name=ACCESS_FLAG
+        ).exists()
+
+    @admin.action(description='Close selected campaigns')
+    def close_campaigns(self, request, queryset):
+        from api.models.facility.claim_campaign import ClaimCampaign
+        updated = queryset.exclude(
+            status=ClaimCampaign.Status.CLOSED
+        ).update(status=ClaimCampaign.Status.CLOSED)
+        self.message_user(request, f'Closed {updated} campaign(s).')
+
+    @admin.action(description='Reopen selected campaigns')
+    def reopen_campaigns(self, request, queryset):
+        from api.models.facility.claim_campaign import ClaimCampaign
+        # A campaign whose brand was deleted stays closed: nobody owns
+        # it, so it must not attribute new claims. Give it an owner first.
+        ownerless = queryset.filter(contributor__isnull=True).count()
+        updated = queryset.exclude(
+            status=ClaimCampaign.Status.ACTIVE
+        ).exclude(contributor__isnull=True).update(
+            status=ClaimCampaign.Status.ACTIVE
+        )
+        self.message_user(request, f'Reopened {updated} campaign(s).')
+        if ownerless:
+            self.message_user(
+                request,
+                f'{ownerless} campaign(s) have no owner (their brand was '
+                'deleted) and stay closed. Choose an owner to reopen one.',
+                level=messages.WARNING,
+            )
+
+    @admin.action(
+        description='Give these brands campaign access (premium)'
+    )
+    def give_brands_access(self, request, queryset):
+        from django.contrib.auth.models import Group
+        from api.services.claim_campaign_service import ACCESS_FLAG
+        group, _ = Group.objects.get_or_create(name=ACCESS_FLAG)
+        users = {
+            campaign.contributor.admin
+            for campaign in queryset.select_related('contributor__admin')
+            if campaign.contributor is not None
+        }
+        for user in users:
+            user.groups.add(group)
+        self.message_user(
+            request,
+            f'{len(users)} brand user(s) can now see Claims Campaigns.',
+        )
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if obj.contributor is not None and not self.has_access(obj):
+            self.message_user(
+                request,
+                f'{obj.contributor.name} can\'t see this campaign yet: '
+                'claims campaigns are a premium feature. Use the "Give '
+                'these brands campaign access" action, or add the brand\'s '
+                'user to the claim_campaign_access group.',
+                level=messages.WARNING,
+            )
+
+    def get_readonly_fields(self, request, obj=None):
+        # The code is used in live campaign links; lock it after creation.
+        if obj:
+            return self.readonly_fields + ('code',)
+        return self.readonly_fields
+
+
 class FacilityAliasAdmin(SimpleHistoryAdmin):
     # A NOT_A_FACILITY tombstone has facility=None; every field here is
     # read-only so the change form renders it as "-" rather than offering
@@ -664,6 +804,7 @@ admin_site.register(models.FacilityMatch, FacilityMatchAdmin)
 admin_site.register(models.FacilityClaim, FacilityClaimAdmin)
 admin_site.register(models.FacilityClaimReviewNote,
                     FacilityClaimReviewNoteAdmin)
+admin_site.register(models.ClaimCampaign, ClaimCampaignAdmin)
 admin_site.register(models.FacilityAlias, FacilityAliasAdmin)
 admin_site.register(ClaimAffiliation, ClaimAffiliationAdmin)
 admin_site.register(ClaimCertification, ClaimCertificationAdmin)
