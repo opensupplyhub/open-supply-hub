@@ -1297,6 +1297,24 @@ class ListCleaningFeedbackTest(APITestCase):
         response = self.client.get(self.url('download/'), {'shape': 'x'})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_download_answers_a_text_csv_accept_header(self):
+        # ContriBot's client asks for text/csv; without a renderer for it
+        # DRF's content negotiation answered 406 before the view ran
+        self._ingested_run()
+        self.client.force_login(self.superuser)
+        response = self.client.get(
+            self.url('download/'), {'shape': 'contribot'},
+            HTTP_ACCEPT='text/csv')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response['Content-Type'].startswith('text/csv'))
+        self.assertTrue(response.content.decode('utf-8').startswith(
+            'country,name,address,'))
+        # an error under that header still says what went wrong
+        response = self.client.get(
+            self.url('download/'), {'shape': 'x'}, HTTP_ACCEPT='text/csv')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('shape must be one of', response.content.decode())
+
     def test_ingest_keeps_the_pipeline_source(self):
         run = ListCleaningRun.objects.create(
             facility_list=self.list, runner=ListCleaningRun.IMPORT,

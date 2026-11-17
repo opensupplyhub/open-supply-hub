@@ -296,7 +296,7 @@ class TestCleaningSheet:
         assert header["Outcome"] == "Submitted by the contributor"
         assert header["Minutes from run to submission"] == 12.5
         assert header["Rows in the list"] == 3
-        assert header["Rows removed in review"] == 1
+        assert header["Rows removed"] == 1
         assert header["Suggestions"] == 5
         assert header["Must-fix flags unresolved"] == 1
         assert header["Suggested fixes rejected"] == 1

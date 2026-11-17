@@ -771,7 +771,7 @@ class ContriBot:
             ("Submitted", run.get("submitted_at") or ""),
             ("Minutes from run to submission", minutes),
             ("Rows in the list", summary.get("rows_total")),
-            ("Rows removed in review", counts["rows_removed"]),
+            ("Rows removed", counts["rows_removed"]),
             ("Suggestions", total),
             ("Must-fix flags unresolved", counts["must_fix_unresolved"]),
             ("Suggested fixes rejected", counts["corrections_rejected"]),

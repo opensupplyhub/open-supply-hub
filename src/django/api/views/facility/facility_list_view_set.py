@@ -10,6 +10,7 @@ from oar.settings import (
 )
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.renderers import JSONRenderer
 from rest_framework.exceptions import (
     NotFound,
     PermissionDenied,
@@ -52,6 +53,7 @@ from ...models.facility.list_cleaning_run import (
     ListCleaningRun,
 )
 from ...models.source import Source
+from ...renderers import CSVRenderer
 from ...models.user import User
 from ...serializers.facility.list_cleaning_serializer import (
     serialize_run,
@@ -681,7 +683,8 @@ class FacilityListViewSet(ModelViewSet):
         """Submit versus click away, across every closed run."""
         return Response(list_cleaning.metrics_summary())
 
-    @action(detail=True, methods=['get'], url_path='cleaning/download')
+    @action(detail=True, methods=['get'], url_path='cleaning/download',
+            renderer_classes=[JSONRenderer, CSVRenderer])
     def cleaning_download(self, request, pk=None):
         """
         The list as it now stands, as CSV: original columns, current
