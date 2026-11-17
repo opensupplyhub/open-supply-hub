@@ -319,42 +319,73 @@ class ListCleaningFeedbackTest(APITestCase):
                        LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
                        LIST_CLEANING_AWS_REGION='us-east-1',
                        LIST_CLEANING_ROLE_ARN='arn:aws:iam::1:role/caller',
+                       LIST_CLEANING_RESULTS_BUCKET='auto-lists-results',
+                       LIST_CLEANING_RESULTS_BUCKET_OWNER='123456789012',
                        ENVIRONMENT='Production')
     @patch('api.services.list_cleaning.runners._assumed',
-           {'arn': None, 'credentials': None})
+           {'arn': None, 'credentials': None, 'session': None})
+    @patch('api.services.list_cleaning.runners.INLINE_INPUT_LIMIT', 64)
     @patch('api.services.list_cleaning.runners.boto3')
     def test_step_functions_clients_assume_the_caller_role(self, boto3):
         # Staging and production are in another account than the state
         # machine, and Step Functions cannot grant StartExecution across
         # accounts: the app assumes the stack's caller role instead and
         # keeps the temporary credentials until shortly before expiry.
-        client = MagicMock()
-        boto3.session.Session.return_value.client.return_value = client
+        # Only STS is called as the task role; Step Functions and both S3
+        # calls (the inbox upload and the result read) go as the caller.
+        own, assumed = MagicMock(name='own'), MagicMock(name='assumed')
+        boto3.session.Session.side_effect = (
+            lambda **kwargs: assumed if 'aws_session_token' in kwargs
+            else own)
+        sts, client = own.client.return_value, assumed.client.return_value
         credentials = {
             'AccessKeyId': 'AKIA', 'SecretAccessKey': 'secret',
             'SessionToken': 'token',
             'Expiration': timezone.now() + timedelta(hours=1)}
-        client.assume_role.return_value = {'Credentials': credentials}
+        sts.assume_role.return_value = {'Credentials': credentials}
         client.start_execution.return_value = {'executionArn': 'arn:exec'}
         run = start_run(self.list)
         self.assertEqual(run.status, ListCleaningRun.RUNNING, run.error)
-        client.assume_role.assert_called_once_with(
+        sts.assume_role.assert_called_once_with(
             RoleArn='arn:aws:iam::1:role/caller',
             RoleSessionName='oshub-production-list-cleaning')
+        self.assertEqual(
+            [call.args[0] for call in own.client.call_args_list], ['sts'])
         boto3.session.Session.assert_any_call(
             aws_access_key_id='AKIA', aws_secret_access_key='secret',
             aws_session_token='token')
         self.assertEqual(
+            client.put_object.call_args.kwargs['Key'],
+            f'inbox/production/{self.list.id}/run-{run.id}.json')
+        self.assertEqual(
             client.start_execution.call_args.kwargs['name'],
             f'production-list-{self.list.id}-run-{run.id}')
 
+        # The credentials, and the session built on them, are reused
+        # across polls until they are close to expiry.
         client.describe_execution.return_value = {'status': 'RUNNING'}
         refresh_run(run)
-        self.assertEqual(client.assume_role.call_count, 1)
+        self.assertEqual(sts.assume_role.call_count, 1)
+        self.assertEqual(boto3.session.Session.call_count, 2)
 
         credentials['Expiration'] = timezone.now() + timedelta(minutes=1)
+        sts.assume_role.return_value = {'Credentials': {
+            **credentials, 'Expiration': timezone.now() + timedelta(hours=1)}}
         refresh_run(run)
-        self.assertEqual(client.assume_role.call_count, 2)
+        self.assertEqual(sts.assume_role.call_count, 2)
+
+        client.describe_execution.return_value = {
+            'status': 'SUCCEEDED',
+            'output': json.dumps({'result_s3': {
+                'bucket': 'auto-lists-results', 'key': 'lists/x'}})}
+        client.get_object.return_value = {
+            'Body': BytesIO(json.dumps(SAMPLE_RESULT).encode('utf-8'))}
+        self.assertEqual(refresh_run(run).status, ListCleaningRun.COMPLETE)
+        self.assertEqual(client.get_object.call_args.kwargs['Key'],
+                         'lists/x')
+        self.assertEqual(
+            [call.args[0] for call in own.client.call_args_list],
+            ['sts', 'sts'])
 
     @override_switch(SWITCH_NAME, active=True)
     @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
@@ -536,10 +567,16 @@ class ListCleaningFeedbackTest(APITestCase):
         run = start_run(self.list)
         self.assertEqual(run.status, ListCleaningRun.FAILED)
         rollbar.assert_called_once()
-        self.assertIn('LIST_CLEANING_STATE_MACHINE_ARN',
-                      rollbar.call_args.kwargs['message'])
-        self.assertEqual(rollbar.call_args.kwargs['extra_data']['run_id'],
-                         run.id)
+        # The message names the cause only, so Rollbar groups every run
+        # that fails this way on one item; the ids are data.
+        self.assertEqual(
+            rollbar.call_args.kwargs['message'],
+            '[List Cleaning] A run failed to start: '
+            'LIST_CLEANING_STATE_MACHINE_ARN is not set')
+        self.assertEqual(
+            rollbar.call_args.kwargs['extra_data'],
+            {'run_id': run.id, 'facility_list_id': self.list.id,
+             'runner': 'stepfunctions'})
 
     @override_switch(SWITCH_NAME, active=True)
     @override_settings(LIST_CLEANING_RUNNER='stepfunctions',

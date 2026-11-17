@@ -10,6 +10,7 @@ the model at once, then one merged result) and later reads its result;
 import json
 import logging
 import re
+import threading
 from datetime import timedelta
 
 import boto3
@@ -36,10 +37,13 @@ INBOX_PREFIX = 'inbox/'
 # results prefix follows the execution name.
 ENVIRONMENT_SLUG_FALLBACK = 'unknown'
 
-# Temporary credentials for LIST_CLEANING_ROLE_ARN are kept until this
-# close to their expiry, so a poll does not call STS every time.
+# Temporary credentials for LIST_CLEANING_ROLE_ARN, and the session built
+# on them, are kept until this close to their expiry, so a poll neither
+# calls STS nor builds a session every time. The lock keeps two threads
+# that find the credentials stale from both calling STS.
 ASSUME_ROLE_MARGIN = timedelta(minutes=5)
-_assumed = {'arn': None, 'credentials': None}
+_assumed = {'arn': None, 'credentials': None, 'session': None}
+_assumed_lock = threading.Lock()
 
 # Both clients are used on the request path (a start at the end of parse,
 # a describe on every poll), so a slow AWS answer must not hold a worker.
@@ -93,25 +97,27 @@ class StepFunctionsRunner:
         grant StartExecution across accounts, so the stack's caller role
         is assumed instead, for the S3 calls as well.
         """
-        cached = _assumed['credentials']
-        if (_assumed['arn'] != arn or cached is None
-                or cached['Expiration'] - timezone.now()
-                < ASSUME_ROLE_MARGIN):
-            sts = self._own_session().client(
-                'sts',
-                region_name=settings.LIST_CLEANING_AWS_REGION,
-                config=CLIENT_CONFIG,
-            )
-            session_name = f'oshub-{environment_slug()}-list-cleaning'
-            response = sts.assume_role(
-                RoleArn=arn, RoleSessionName=session_name[:64])
-            cached = response['Credentials']
-            _assumed.update(arn=arn, credentials=cached)
-        return boto3.session.Session(
-            aws_access_key_id=cached['AccessKeyId'],
-            aws_secret_access_key=cached['SecretAccessKey'],
-            aws_session_token=cached['SessionToken'],
-        )
+        with _assumed_lock:
+            cached = _assumed['credentials']
+            if (_assumed['arn'] != arn or cached is None
+                    or cached['Expiration'] - timezone.now()
+                    < ASSUME_ROLE_MARGIN):
+                sts = self._own_session().client(
+                    'sts',
+                    region_name=settings.LIST_CLEANING_AWS_REGION,
+                    config=CLIENT_CONFIG,
+                )
+                session_name = f'oshub-{environment_slug()}-list-cleaning'
+                response = sts.assume_role(
+                    RoleArn=arn, RoleSessionName=session_name[:64])
+                cached = response['Credentials']
+                session = boto3.session.Session(
+                    aws_access_key_id=cached['AccessKeyId'],
+                    aws_secret_access_key=cached['SecretAccessKey'],
+                    aws_session_token=cached['SessionToken'],
+                )
+                _assumed.update(arn=arn, credentials=cached, session=session)
+            return _assumed['session']
 
     def _client(self, service):
         role_arn = settings.LIST_CLEANING_ROLE_ARN
