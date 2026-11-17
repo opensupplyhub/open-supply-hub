@@ -92,6 +92,33 @@ if ENVIRONMENT not in VALID_ENVIRONMENTS:
 # processing management commands.
 BATCH_MODE = os.getenv('BATCH_MODE', '')
 
+# OSDEV-3726: contributor-facing list-cleaning feedback. The feature itself is
+# gated by the `enable_list_cleaning_feedback` waffle switch; these only say
+# how a run is executed once the switch is on. `stub` runs deterministic
+# local rules (no AWS); `stepfunctions` starts the OSDEV-3724 state machine.
+LIST_CLEANING_RUNNER = os.getenv(
+    'LIST_CLEANING_RUNNER', 'stub' if DEBUG else 'stepfunctions')
+LIST_CLEANING_STATE_MACHINE_ARN = os.getenv(
+    'LIST_CLEANING_STATE_MACHINE_ARN', '')
+LIST_CLEANING_AWS_REGION = os.getenv('LIST_CLEANING_AWS_REGION', 'us-east-1')
+# The stack's results bucket (ResultsBucketName output) and the AWS
+# account id that owns it. Results are read from `lists/*` with that
+# owner checked, and a list too large for the 256 KB execution input is
+# uploaded to `inbox/*` there first.
+LIST_CLEANING_RESULTS_BUCKET = os.getenv('LIST_CLEANING_RESULTS_BUCKET', '')
+LIST_CLEANING_RESULTS_BUCKET_OWNER = os.getenv(
+    'LIST_CLEANING_RESULTS_BUCKET_OWNER', '')
+# Local development only: an AWS CLI profile (from the mounted ~/.aws) for
+# the Step Functions and S3 clients. docker-compose sets
+# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY to the MinIO credentials, which
+# would otherwise be sent to AWS. Leave unset in deployed environments,
+# where the task role is used.
+LIST_CLEANING_AWS_PROFILE = os.getenv('LIST_CLEANING_AWS_PROFILE') or None
+# How long after upload a contributor may submit changes from the review
+# screen before the list goes through as uploaded.
+LIST_CLEANING_REVIEW_MINUTES = int(
+    os.getenv('LIST_CLEANING_REVIEW_MINUTES', '60'))
+
 BATCH_JOB_QUEUE_NAME = os.getenv('BATCH_JOB_QUEUE_NAME')
 if (
     not (BATCH_JOB_QUEUE_NAME or '').strip()
