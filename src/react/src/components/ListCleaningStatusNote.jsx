@@ -114,9 +114,18 @@ const ListCleaningStatusNote = ({
     }, [listID]);
     const backFromReview = useCallback(() => {
         setReviewing(false);
-        fetchRef.current();
         if (submittedRef.current) submittedRef.current();
     }, []);
+    // The review dialog clears the store slice when it unmounts, so the
+    // refetch that brings this line up to date goes out once the dialog
+    // has gone (an unmounting child's cleanup runs before this effect),
+    // not from backFromReview: sent before the clear, its reply would
+    // name a list the cleared store no longer does and be dropped.
+    const wasReviewing = useRef(reviewing);
+    useEffect(() => {
+        if (wasReviewing.current && !reviewing) fetchRef.current();
+        wasReviewing.current = reviewing;
+    }, [reviewing]);
 
     // A ticking refetch while the window is open, so the line flips to
     // "closed" on its own when the hour runs out.

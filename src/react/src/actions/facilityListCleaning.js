@@ -25,6 +25,7 @@ export const startFetchFacilityListCleaning = createAction(
 );
 export const failFetchFacilityListCleaning = createAction(
     'FAIL_FETCH_FACILITY_LIST_CLEANING',
+    ({ listID, error }) => ({ listID, error }),
 );
 export const completeFetchFacilityListCleaning = createAction(
     'COMPLETE_FETCH_FACILITY_LIST_CLEANING',
@@ -80,7 +81,8 @@ export function fetchFacilityListCleaning(listID, { silent = false } = {}) {
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching the automated checks for this list',
-                        failFetchFacilityListCleaning,
+                        error =>
+                            failFetchFacilityListCleaning({ listID, error }),
                     ),
                 ),
             );
@@ -109,7 +111,8 @@ export function startFacilityListCleaningRun(listID) {
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented starting the automated checks',
-                        failFetchFacilityListCleaning,
+                        error =>
+                            failFetchFacilityListCleaning({ listID, error }),
                     ),
                 ),
             );

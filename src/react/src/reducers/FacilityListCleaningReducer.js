@@ -65,11 +65,16 @@ export default createReducer(
                     $set: restart ? state.mutation + 1 : state.mutation,
                 },
             }),
-        [failFetchFacilityListCleaning]: (state, payload) =>
-            update(state, {
+        [failFetchFacilityListCleaning]: (state, { listID, error }) => {
+            if (listID !== state.listID) {
+                // A failure for a list this store no longer shows.
+                return state;
+            }
+            return update(state, {
                 fetching: { $set: false },
-                error: { $set: payload },
-            }),
+                error: { $set: error },
+            });
+        },
         [completeFetchFacilityListCleaning]: (
             state,
             { listID, mutation, data },

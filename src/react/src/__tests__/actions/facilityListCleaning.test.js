@@ -77,11 +77,15 @@ describe('facilityListCleaning actions', () => {
         expect(store.getActions()[1].payload.mutation).toBe(0);
     });
 
-    test('a failed fetch dispatches the failure with a message', async () => {
+    test('a failed fetch dispatches the failure with a message, named for its list', async () => {
         apiRequest.get.mockRejectedValue(new Error('nope'));
         const store = mockStore({});
         await store.dispatch(fetchFacilityListCleaning(LIST));
         expect(types(store)).toContain(failFetchFacilityListCleaning.getType());
+        expect(store.getActions()[1].payload).toEqual({
+            listID: LIST,
+            error: ['An error prevented fetching the automated checks for this list'],
+        });
     });
 
     test('start posts to the start endpoint and counts as a change', async () => {

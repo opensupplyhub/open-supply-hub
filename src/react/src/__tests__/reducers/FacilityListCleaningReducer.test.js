@@ -48,10 +48,21 @@ describe('FacilityListCleaningReducer', () => {
         expect(done.data).toBe(data);
         const failed = reducer(
             fetching,
-            failFetchFacilityListCleaning(['boom']),
+            failFetchFacilityListCleaning({ listID: LIST, error: ['boom'] }),
         );
         expect(failed.fetching).toBe(false);
         expect(failed.error).toEqual(['boom']);
+    });
+
+    test('a failure for another list is ignored', () => {
+        const fetching = fetchStarted(fetchStarted(initial, 7), LIST);
+        const stale = reducer(
+            fetching,
+            failFetchFacilityListCleaning({ listID: 7, error: ['boom'] }),
+        );
+        expect(stale).toBe(fetching);
+        expect(stale.fetching).toBe(true);
+        expect(stale.error).toBeNull();
     });
 
     test('a silent fetch shows no spinner and keeps the data on screen', () => {

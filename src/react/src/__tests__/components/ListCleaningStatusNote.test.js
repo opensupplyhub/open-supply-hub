@@ -6,7 +6,10 @@ import {
     cleaningState,
 } from '../../util/testUtils/listCleaningFixtures';
 import ListCleaningStatusNote from '../../components/ListCleaningStatusNote';
-import { completeFetchFacilityListCleaning } from '../../actions/facilityListCleaning';
+import {
+    startFetchFacilityListCleaning,
+    completeFetchFacilityListCleaning,
+} from '../../actions/facilityListCleaning';
 
 // The thunks are mocked; the plain action creators stay real, so the
 // store's reducer still answers to them and a test can feed it a reply.
@@ -157,6 +160,47 @@ describe('ListCleaningStatusNote', () => {
         expect(
             screen.getByText(/closed .* without a submission/),
         ).toBeInTheDocument();
+    });
+
+    test('leaving the resumed review refetches after the dialog has cleared the store', async () => {
+        const onSubmitted = jest.fn();
+        const lapsed = reviewData({
+            window_open: false,
+            seconds_left: 0,
+            run: { closed_reason: 'lapsed', closed_at: '2026-11-09T11:00:00Z' },
+        });
+        // The fetch as the real one behaves: it names its list on the way
+        // out, and its reply names it and the mutation count it was sent at.
+        let reply = null;
+        actions.fetchFacilityListCleaning.mockImplementation(
+            listID => (dispatch, getState) => {
+                dispatch(startFetchFacilityListCleaning({ listID, silent: true }));
+                const { mutation } = getState().facilityListCleaning;
+                if (!reply) return Promise.resolve();
+                return Promise.resolve().then(() =>
+                    dispatch(
+                        completeFetchFacilityListCleaning({ listID, mutation, data: reply }),
+                    ),
+                );
+            },
+        );
+        const { reduxStore } = renderNote(reviewData(), { onSubmitted });
+        fireEvent.click(screen.getByRole('button', { name: /Resume review/ }));
+        // the window closes while the review is on screen
+        reply = lapsed;
+        act(() => {
+            reduxStore.dispatch(
+                completeFetchFacilityListCleaning({ listID: 42, mutation: 0, data: lapsed }),
+            );
+        });
+        // Leaving unmounts the dialog, which clears the store slice; the
+        // refetch sent after that is for the list the store names again.
+        fireEvent.click(screen.getByRole('button', { name: /Go to my list/ }));
+        expect(
+            await screen.findByText(/closed .* without a submission/),
+        ).toBeInTheDocument();
+        expect(reduxStore.getState().facilityListCleaning.listID).toBe(42);
+        expect(onSubmitted).toHaveBeenCalledTimes(1);
     });
 
     test('a review already closed when the page opens does not reload the rows', () => {

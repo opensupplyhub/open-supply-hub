@@ -128,9 +128,6 @@ def _lock(run):
     run.refresh_from_db()
 
 
-lock_run = _lock
-
-
 def start_run(facility_list, runner_name=None, force=False):
     """
     Start a run for the list. Returns the run, or None when the feature
@@ -580,6 +577,12 @@ def _close(run, reason, now):
     run.save(update_fields=['closed_at', 'closed_reason'])
 
 
+def _lapsed(run):
+    """An open window whose deadline has passed."""
+    return (run.closed_at is None and run.review_until is not None
+            and timezone.now() >= run.review_until)
+
+
 def review_opened(run):
     """Whether the contributor ever reached the review screen."""
     return run.events.filter(
@@ -597,9 +600,7 @@ def sweep_run(run):
     the rest stays as uploaded. A review nobody opened goes through
     exactly as uploaded, since nothing in it was ever decided.
     """
-    if run is None or run.closed_at is not None or run.review_until is None:
-        return run
-    if timezone.now() < run.review_until:
+    if run is None or not _lapsed(run):
         return run
     with transaction.atomic():
         # Reads sweep too, so two requests can notice the lapse at once;
@@ -608,9 +609,7 @@ def sweep_run(run):
         # Checked again on the reloaded run: a result ingested while
         # this waited for the lock starts the window over, and the run
         # must stay open for it.
-        if run.closed_at is not None or run.review_until is None:
-            return run
-        if timezone.now() < run.review_until:
+        if not _lapsed(run):
             return run
         now = timezone.now()
         opened = review_opened(run)
