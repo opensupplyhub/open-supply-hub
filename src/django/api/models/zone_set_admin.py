@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 from django import forms
@@ -45,9 +46,14 @@ class ZoneSetForm(forms.ModelForm):
     anything is saved — a
     bad file, or a feature PostGIS cannot cut, becomes an ordinary red
     form error and the set's existing zones are left untouched. The
-    pieces are handed to `ZoneSetAdmin.save_model`, which swaps them
-    in atomically.
+    pieces are handed to `ZoneSetAdmin.save_model`, which either swaps
+    them in atomically or, in "Add to the existing zones" mode
+    (OSDEV-3812), appends them after the stored zones, so a dataset
+    too large for one file under the cap can be loaded as several.
     """
+
+    UPLOAD_MODE_REPLACE = 'replace'
+    UPLOAD_MODE_ADD = 'add'
 
     geojson_file = forms.FileField(
         required=False,
@@ -55,9 +61,12 @@ class ZoneSetForm(forms.ModelForm):
             'Upload a .geojson/.json FeatureCollection with one Polygon '
             'or MultiPolygon feature per zone. Required when creating a '
             'set. When editing, leave empty to keep the current zones; '
-            'uploading a new file replaces them all. Features are kept '
+            'a new file replaces them all or is added after them, as '
+            'the upload mode below says. Features are kept '
             'separate (not merged); if zones overlap, the feature that '
-            'comes first in the file wins. Large features are stored '
+            'comes first in the file wins, and across several uploads '
+            'the earlier upload wins. Adding a file identical to the '
+            'set\'s last upload is refused. Large features are stored '
             'as several small pieces that share the feature\'s value, '
             'so a dissolved layer performs the same as one of many '
             'small features. For an "object" partner field, each '
@@ -66,11 +75,69 @@ class ZoneSetForm(forms.ModelForm):
             'are served when present.'
         ),
     )
+    upload_mode = forms.ChoiceField(
+        required=False,
+        initial=UPLOAD_MODE_REPLACE,
+        choices=(
+            (UPLOAD_MODE_REPLACE, 'Replace all zones'),
+            (UPLOAD_MODE_ADD, 'Add to the existing zones'),
+        ),
+        widget=forms.RadioSelect,
+        label='Upload mode',
+        help_text=(
+            'What the uploaded file does to the zones already stored; '
+            'ignored when no file is uploaded. "Replace all zones" '
+            'discards them and keeps only this file\'s. "Add to the '
+            'existing zones" keeps them and stores this file\'s zones '
+            'after them, so a dataset larger than the per-file limit '
+            'can be loaded into one set as several files, each under '
+            'the limit. An added file is checked exactly as a '
+            'replacement is (size, geometry, properties); one that '
+            'fails leaves the stored zones untouched. Where zones from '
+            'two uploads overlap, the earlier upload wins, so upload '
+            'the file whose values should take precedence first. '
+            'Changing the value property, or linking or replacing an '
+            '"object" partner field, requires a replace. To take one '
+            'upload\'s zones out of a set, replace the whole set.'
+        ),
+    )
 
     # Same cap as polygon uploads: a bigger file almost certainly means
-    # an unsimplified export. Whether a set can be assembled from
-    # several files is still an open question (OSDEV-3551).
+    # an unsimplified export. A dataset that does not fit under it is
+    # loaded as several files in "Add to the existing zones" mode
+    # (OSDEV-3812); raising the cap is not the answer, because parsing
+    # and cutting a file of several tens of MB would outlast
+    # CloudFront's 30 s origin timeout and show staff a 504 while the
+    # save completed behind it.
     GEOJSON_FILE_MAX_BYTES = PolygonForm.GEOJSON_FILE_MAX_BYTES
+
+    # How the two changes that invalidate the stored zones are refused
+    # (see `_changes_needing_reupload`): on an edit without a file, and
+    # together with a file in add mode (OSDEV-3812).
+    REUPLOAD_MESSAGES = {
+        'value_property': (
+            'Upload the file again when changing the value property, '
+            'so every zone is re-read with the new key.'
+        ),
+        'partner_field': (
+            'Upload the file again when linking an "object" partner '
+            'field or replacing one, so every zone is re-read against '
+            'the new field\'s schema.'
+        ),
+    }
+    REPLACE_MESSAGES = {
+        'value_property': (
+            'Changing the value property requires a replace: choose '
+            '"Replace all zones" and upload the whole set, so every '
+            'zone is re-read with the new key.'
+        ),
+        'partner_field': (
+            'Linking an "object" partner field or replacing one '
+            'requires a replace: choose "Replace all zones" and upload '
+            'the whole set, so every zone is re-read against the new '
+            'field\'s schema.'
+        ),
+    }
 
     class Meta:
         model = ZoneSet
@@ -165,8 +232,13 @@ class ZoneSetForm(forms.ModelForm):
         )
         # Filled by clean() when a file is uploaded with the pieces to
         # store (see api.helpers.zone_subdivision); None means "keep
-        # the existing zones".
+        # the existing zones". `adds_to_existing` says whether they go
+        # after the stored zones (add mode on an existing set) or in
+        # their place. `upload_sha256` is the file's digest, recorded
+        # on the set at save so the next add can refuse the same file.
         self.parsed_zones = None
+        self.adds_to_existing = False
+        self.upload_sha256 = ''
 
     def clean_partner_field(self):
         """
@@ -386,7 +458,13 @@ class ZoneSetForm(forms.ModelForm):
         with the old key and would no longer match, or the set moved
         to, from or between object fields, because the stored zones
         were validated against (and are served by) the old field's
-        schema; re-uploading makes the change explicit.
+        schema; re-uploading makes the change explicit. The same two
+        changes are refused together with a file in add mode
+        (OSDEV-3812): the added file would be read with the new key or
+        schema while the stored zones were read with the old, so the
+        set must be replaced as a whole. An add is also refused when
+        the file repeats the set's last upload, so a save submitted
+        twice stores the file once (see `_lock_set_for_add`).
 
         The value property is required only for a string field: an
         object field reads one feature property per schema key, so
@@ -413,33 +491,16 @@ class ZoneSetForm(forms.ModelForm):
                 'Only a set that feeds an "object" partner field can '
                 'leave this empty.'
             )
-        value_property = cleaned_data.get('value_property')
+        # Add mode means something only for a set that exists; on a
+        # new set there is nothing to add to and the file is stored as
+        # a replace would store it.
+        adding = (
+            cleaned_data.get('upload_mode') == self.UPLOAD_MODE_ADD
+            and bool(self.instance.pk)
+        )
 
         if not geojson_file:
-            if not self.instance.pk:
-                raise forms.ValidationError(
-                    'Upload a GeoJSON FeatureCollection file.'
-                )
-            if not self.instance.zones.exists():
-                return cleaned_data
-            if (
-                'value_property' in self.changed_data
-                and 'value_property' not in self.errors
-                and not feeds_object
-            ):
-                self.add_error(
-                    'value_property',
-                    'Upload the file again when changing the value '
-                    'property, so every zone is re-read with the new '
-                    'key.'
-                )
-            if self._field_change_needs_reupload(partner_field):
-                self.add_error(
-                    'partner_field',
-                    'Upload the file again when linking an "object" '
-                    'partner field or replacing one, so every zone is '
-                    're-read against the new field\'s schema.'
-                )
+            self._clean_without_file(partner_field, feeds_object)
             return cleaned_data
 
         if 'value_property' in self.errors:
@@ -447,6 +508,210 @@ class ZoneSetForm(forms.ModelForm):
             # error above already says what to fix.
             return cleaned_data
 
+        if adding and self.instance.zones.exists():
+            # Every stored zone was validated against, and is served
+            # by, the key or schema the set has now; an added file
+            # read by a new one would leave the set half one way and
+            # half the other. This compares the submitted values with
+            # the loaded ones and needs no lock, so it runs before the
+            # parse and a refused save pays for no parse.
+            self._refuse_changes_needing_reupload(
+                partner_field, feeds_object, self.REPLACE_MESSAGES
+            )
+            if self.errors:
+                return cleaned_data
+
+        parsed_zones = self._parse_upload(
+            geojson_file, partner_field, feeds_object,
+            cleaned_data.get('value_property'),
+        )
+        if adding:
+            # Parse first, lock second: the parse reads no stored
+            # state, and the lock is held to the end of the admin
+            # transaction, so taking it after the parse keeps one
+            # upload from waiting out another's parse.
+            self._lock_set_for_add(partner_field, feeds_object)
+            if self.errors:
+                return cleaned_data
+        self.parsed_zones = parsed_zones
+        self.adds_to_existing = adding
+
+        return cleaned_data
+
+    def _lock_set_for_add(self, partner_field, feeds_object):
+        """
+        Lock the set's row for the rest of the save, then refuse the
+        add if another save changed the set since this form was loaded,
+        if this save changes the key or schema of zones the set holds
+        now, or if the file is the one the set's last upload stored.
+
+        The add-mode checks compare the submitted key and field with
+        the ones the stored zones were read by, taken from the
+        instance as it was loaded for this request. Without a lock,
+        another save could replace the zones under a different key or
+        field between that load and this save (the parse runs in
+        between, so the window is seconds long for a large file); the
+        admin's own save would then write the loaded values back over
+        it and `add_zones` would append zones read one way beside
+        zones read another. The admin runs the whole POST in one
+        transaction, so the lock taken here holds until the save
+        commits: a competing save either committed first, in which
+        case the row no longer matches what the form was loaded with
+        and the add is refused, or waits for this one and sees its
+        result.
+
+        Only the key and field are compared: a competing replace under
+        the same key and field leaves zones this file can be added to.
+        It can also give zones to a set that had none when `clean`
+        skipped the key-change refusal before the parse, so that
+        refusal is repeated here, under the lock, when zones exist.
+
+        The digest comparison is what makes an add safe to submit
+        twice (OSDEV-3812): a double-click, a resubmitted page or two
+        staff adding the same file post it again, and without a record
+        of what was stored the repeat would land at fresh indices and
+        insert cleanly, doubling every feature. The digest is read
+        under the same lock, so the second of two concurrent posts
+        sees the first's and is refused.
+
+        Args:
+            partner_field: The field the form is about to link, or None.
+            feeds_object: Whether that field is object-typed.
+
+        Raises:
+            forms.ValidationError: On the form if the set changed
+                meanwhile; on the file field if it repeats the last
+                upload. A key or schema change is added as a field
+                error instead, as before the parse.
+        """
+        stored = (
+            ZoneSet.objects.select_for_update()
+            .values(
+                'value_property', 'partner_field_id', 'last_upload_sha256'
+            )
+            .get(pk=self.instance.pk)
+        )
+        if (
+            stored['value_property'] != self.instance.value_property
+            or stored['partner_field_id'] != self.instance.partner_field_id
+        ):
+            raise forms.ValidationError(
+                'This zone set was changed by another save while you '
+                'were editing it, so its zones may no longer be read '
+                'by the value property or partner field this page was '
+                'loaded with. Reload the page and upload the file '
+                'again.'
+            )
+        if self.instance.zones.exists():
+            self._refuse_changes_needing_reupload(
+                partner_field, feeds_object, self.REPLACE_MESSAGES
+            )
+        if stored['last_upload_sha256'] == self.upload_sha256:
+            raise forms.ValidationError({'geojson_file': (
+                'This file has the same contents as the set\'s last '
+                'upload, so adding it would store its zones a second '
+                'time; nothing was added. If the set should hold only '
+                'this file, choose "Replace all zones".'
+            )})
+
+    def _clean_without_file(self, partner_field, feeds_object):
+        """
+        Validate an edit that uploads no file.
+
+        A new set must come with one. An existing set keeps its zones,
+        unless this save changes the key or schema they were read by
+        (see `_changes_needing_reupload`), which is refused on that
+        field with a message asking for the file again.
+
+        Raises:
+            forms.ValidationError: If the set does not exist yet.
+        """
+        if not self.instance.pk:
+            raise forms.ValidationError(
+                'Upload a GeoJSON FeatureCollection file.'
+            )
+        if self.instance.zones.exists():
+            self._refuse_changes_needing_reupload(
+                partner_field, feeds_object, self.REUPLOAD_MESSAGES
+            )
+
+    def _refuse_changes_needing_reupload(
+        self, partner_field, feeds_object, messages
+    ):
+        """
+        Add an error, worded by `messages`, on each field whose change
+        on this save invalidates the stored zones.
+
+        Args:
+            partner_field: The field the form is about to link, or None.
+            feeds_object: Whether that field is object-typed.
+            messages: Error text by field name (`REUPLOAD_MESSAGES` or
+                `REPLACE_MESSAGES`).
+        """
+        for field in self._changes_needing_reupload(
+            partner_field, feeds_object
+        ):
+            self.add_error(field, messages[field])
+
+    def _changes_needing_reupload(self, partner_field, feeds_object):
+        """
+        The fields whose change on this save would leave the stored
+        zones read by a key or schema they were never validated
+        against.
+
+        `value_property`, when it changed on a set that still feeds a
+        string field (the stored labels were read with the old key),
+        unless the form has already refused it; and `partner_field`,
+        when the move is to, from or between object fields (see
+        `_field_change_needs_reupload`).
+
+        Args:
+            partner_field: The field the form is about to link, or None.
+            feeds_object: Whether that field is object-typed.
+
+        Returns:
+            The field names, in form order.
+        """
+        fields = []
+        if (
+            'value_property' in self.changed_data
+            and 'value_property' not in self.errors
+            and not feeds_object
+        ):
+            fields.append('value_property')
+        if self._field_change_needs_reupload(partner_field):
+            fields.append('partner_field')
+        return fields
+
+    def _parse_upload(
+        self, geojson_file, partner_field, feeds_object, value_property
+    ):
+        """
+        Parse, validate and cut the uploaded file into the pieces to
+        store.
+
+        Subdividing here rather than at save time means a feature
+        PostGIS returns no piece for is reported like any other bad
+        file, instead of surfacing after validation as a server error
+        once the set itself has been saved. The file's SHA-256 is kept
+        on `upload_sha256` for the repeat check and the saved record.
+
+        Args:
+            geojson_file: The uploaded file.
+            partner_field: The field the set will feed, or None.
+            feeds_object: Whether that field is object-typed, in which
+                case the file is read by the field's schema rather than
+                by `value_property`.
+            value_property: The feature property that supplies a
+                string set's zone value.
+
+        Returns:
+            The pieces, as `subdivide_zone_records` returns them.
+
+        Raises:
+            forms.ValidationError: If the file is over the cap, is not
+                UTF-8 text, or fails zone validation or subdivision.
+        """
         if geojson_file.size > self.GEOJSON_FILE_MAX_BYTES:
             raise forms.ValidationError(
                 f'GeoJSON file is too large '
@@ -455,17 +720,14 @@ class ZoneSetForm(forms.ModelForm):
                 'Simplify the geometry (e.g. with mapshaper.org) and '
                 'try again.'
             )
+        data = geojson_file.read()
+        self.upload_sha256 = hashlib.sha256(data).hexdigest()
         try:
-            raw = geojson_file.read().decode('utf-8')
+            raw = data.decode('utf-8')
         except UnicodeDecodeError as exc:
             raise forms.ValidationError(
                 f'Could not read the file as UTF-8 text: {exc}'
             ) from exc
-
-        # Subdividing here rather than at save time means a feature
-        # PostGIS returns no piece for is reported like any other bad
-        # file, instead of surfacing after validation as a server
-        # error once the set itself has been saved.
         try:
             if feeds_object:
                 records = parse_zone_features(
@@ -473,11 +735,9 @@ class ZoneSetForm(forms.ModelForm):
                 )
             else:
                 records = parse_zone_features(raw, value_property)
-            self.parsed_zones = subdivide_zone_records(records)
+            return subdivide_zone_records(records)
         except InvalidPolygonGeoJSON as exc:
             raise forms.ValidationError(str(exc)) from exc
-
-        return cleaned_data
 
     def _field_change_needs_reupload(self, partner_field):
         """
@@ -522,8 +782,8 @@ class ZoneSetAdmin(admin.ModelAdmin):
     fields = (
         'name', 'description', 'partner_field', 'value_property',
         'filter_sectors', 'filter_product_types', 'filter_other',
-        'geojson_file', 'zone_summary', 'active', 'uuid', 'created_at',
-        'updated_at',
+        'geojson_file', 'upload_mode', 'zone_summary', 'active', 'uuid',
+        'created_at', 'updated_at',
     )
 
     def changelist_view(self, request, extra_context=None):
@@ -683,27 +943,71 @@ class ZoneSetAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         """
-        Save the set, then swap in the uploaded zones if there are any.
+        Save the set, then store the uploaded zones if there are any:
+        in place of the stored ones, or after them in add mode.
 
         Django wraps the whole admin save in one transaction, and
-        `replace_zones` is atomic on its own as well, so the old zones
-        keep serving right up until the new ones are committed. The
-        search-side membership (`FacilityIndex.zone_set_ids`) is
-        recomputed in the background once they are (see
-        `ZoneSet.replace_zones`), so staff are told the two surfaces
-        will disagree briefly.
+        `replace_zones` / `add_zones` are atomic on their own as well,
+        so the old zones keep serving right up until the new ones are
+        committed. The search-side membership
+        (`FacilityIndex.zone_set_ids`) is recomputed in the background
+        once they are (see `ZoneSet.replace_zones`), so staff are told
+        the two surfaces will disagree briefly.
+
+        The stored file's digest is saved with the set (in the same
+        transaction as its zones, so a failed insert records nothing)
+        for `ZoneSetForm._lock_set_for_add` to refuse the same file on
+        the next add. A save without a file keeps the digest the row
+        holds now, not the one the page was loaded with (see
+        `_keep_stored_digest`).
         """
+        if form.parsed_zones is not None:
+            obj.last_upload_sha256 = form.upload_sha256
+        elif change:
+            self._keep_stored_digest(obj)
         super().save_model(request, obj, form, change)
         self._warn_about_filters_matching_nothing(request, obj.filters)
-        if form.parsed_zones is not None:
+        if form.parsed_zones is None:
+            return
+        if form.adds_to_existing:
+            first = obj.add_zones(form.parsed_zones)
+            added = len({p['feature_index'] for p in form.parsed_zones})
+            saved = (
+                f'{added} zone(s) added to the set as feature(s) '
+                f'{first}–{first + added - 1}; the set now holds '
+                f'{obj.feature_count}.'
+            )
+        else:
             obj.replace_zones(form.parsed_zones)
-            messages.info(request, (
-                'Zones saved. Which locations the search filter returns '
-                'for this dataset is being recomputed in the background '
-                '(a pass over every indexed location); until it finishes, '
-                'Spotlight Partners search results reflect the previous '
-                'zones. Location pages show the new zones at once.'
-            ))
+            saved = 'Zones saved.'
+        messages.info(request, (
+            f'{saved} Which locations the search filter returns '
+            'for this dataset is being recomputed in the background '
+            '(a pass over every indexed location); until it finishes, '
+            'Spotlight Partners search results reflect the previous '
+            'zones. Location pages show the new zones at once.'
+        ))
+
+    @staticmethod
+    def _keep_stored_digest(obj):
+        """
+        Carry the digest the row holds now onto the instance about to
+        be saved without a file.
+
+        The admin's save writes every column, editable or not, so a
+        metadata-only save loaded before another request stored an
+        upload would write that page's digest back over the upload's,
+        and the next add of the same file would pass the repeat check.
+        The digest is re-read under the row lock, held to the end of
+        the admin transaction: an add in flight has either committed
+        its digest, which this save then keeps, or waits for this save
+        and records its own after it.
+        """
+        obj.last_upload_sha256 = (
+            ZoneSet.objects.select_for_update()
+            .values_list('last_upload_sha256', flat=True)
+            .get(pk=obj.pk)
+        )
 
 
 class ZoneAdmin(admin.ModelAdmin):

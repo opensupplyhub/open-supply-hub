@@ -24,7 +24,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0283_list_cleaning_pipeline_meta'),
+        ('api', '0284_zone_set_last_upload_sha256'),
     ]
 
     operations = [
