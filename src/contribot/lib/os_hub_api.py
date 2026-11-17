@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from enum import Enum
+from pathlib import Path
 from typing import Any, Optional
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlparse
@@ -21,6 +22,11 @@ class FacilityListStatus(str, Enum):
     REJECTED = "REJECTED"
     MATCHED = "MATCHED"
     REPLACED = "REPLACED"
+
+
+# The download shape the moderator report reads (OSDEV-3398): current
+# values only, every row where it was uploaded, removed rows tagged.
+CONTRIBOT_DOWNLOAD_SHAPE = "contribot"
 
 
 class OSHubAPI:
@@ -82,22 +88,55 @@ class OSHubAPI:
 
         return results
 
+    def fetch_cleaning(self, list_id: int | str) -> dict[str, Any]:
+        """The list's latest list-cleaning run and its suggestions.
+
+        The superuser view of ``/api/facility-lists/{id}/cleaning/`` (OSDEV-3726
+        v3): ``run`` is ``None`` when nothing ran, ``window_open`` says whether
+        the contributor can still change the list, ``rows`` carry every
+        suggestion including ``internal_note`` ones, and ``breakdown`` counts
+        what the contributor did.
+        """
+        url = self._build_url(f"/api/facility-lists/{int(list_id)}/cleaning/", {})
+        return self._http_get_json(url, self._token)
+
+    def download_cleaned_list(self, list_id: int | str, dest_path: str | Path) -> Path:
+        """Save the list as the contributor left it to ``dest_path`` as CSV.
+
+        ``shape=contribot``: current values only, every row where it was
+        uploaded, with an ``os_hub_cleaning`` column tagging removed rows, so
+        row numbers match the review screen and the report's Cleaning sheet.
+        """
+        url = self._build_url(
+            f"/api/facility-lists/{int(list_id)}/cleaning/download/",
+            {"shape": CONTRIBOT_DOWNLOAD_SHAPE},
+        )
+        body = self._http_get_text(url, self._token, accept="text/csv")
+        dest = Path(dest_path)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        # bytes, so the CSV's own line endings reach the file untouched
+        dest.write_bytes(body.encode("utf-8"))
+        return dest
+
     def _build_url(self, path: str, params: dict[str, Any]) -> str:
         base = self._api_url.rstrip("/") + path
-        return f"{base}?{urlencode(params)}"
+        return f"{base}?{urlencode(params)}" if params else base
 
     def _http_get_json(self, url: str, token: str) -> dict[str, Any]:
+        return json.loads(self._http_get_text(url, token, accept="application/json"))
+
+    def _http_get_text(self, url: str, token: str, *, accept: str) -> str:
         request = Request(
             url,
             headers={
                 "Authorization": f"Token {token}",
-                "Accept": "application/json",
+                "Accept": accept,
             },
             method="GET",
         )
         try:
-            with urlopen(request, timeout=30) as response:
-                body = response.read().decode("utf-8")
+            with urlopen(request, timeout=60) as response:
+                return response.read().decode("utf-8")
         except HTTPError as exc:
             error_body = exc.read().decode("utf-8", errors="replace")
             raise RuntimeError(
@@ -105,4 +144,3 @@ class OSHubAPI:
             ) from exc
         except URLError as exc:
             raise RuntimeError(f"OS Hub API request failed: {exc}") from exc
-        return json.loads(body)
