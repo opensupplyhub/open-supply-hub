@@ -63,7 +63,9 @@ class ZoneSet(models.Model):
     and still show as one Spotlight field with one attribution line.
     Added features continue `Zone.feature_index` after the stored
     maximum, so every zone keeps a position in one sequence across
-    uploads.
+    uploads. The admin records each stored file's digest in
+    `last_upload_sha256` and refuses to add a file that matches it,
+    so a save submitted twice does not store a file twice.
 
     Overlapping zones: if a location falls inside more than one zone
     of the same set, the zone that appeared FIRST in the uploaded
@@ -154,6 +156,20 @@ class ZoneSet(models.Model):
         help_text=(
             'Inactive zone sets serve no values. Use this to retire a '
             'dataset without deleting its zones.'
+        ),
+    )
+    last_upload_sha256 = models.CharField(
+        max_length=64,
+        blank=True,
+        default='',
+        editable=False,
+        help_text=(
+            'SHA-256 digest of the GeoJSON file the zones were last '
+            'stored from, by a replace or an add. The admin form '
+            'refuses to add a file with this digest, so a double-click '
+            'or a resubmitted page cannot store the same zones twice. '
+            'Only the last upload is remembered: a file added before '
+            'it is not recognised.'
         ),
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -463,9 +479,11 @@ class Zone(models.Model):
     )
     feature_index = models.PositiveIntegerField(
         help_text=(
-            'Position of the source feature in the uploaded file '
-            '(0-based). When zones in a set overlap, the lowest index '
-            'wins.'
+            'Position of the source feature across the set\'s uploads '
+            '(0-based): its position in the file for the set\'s first '
+            'or replacing upload, continuing after the stored maximum '
+            'for a file added to the set. When zones in a set overlap, '
+            'the lowest index wins.'
         ),
     )
     piece_index = models.PositiveIntegerField(

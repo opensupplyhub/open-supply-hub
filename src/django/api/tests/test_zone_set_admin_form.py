@@ -1,3 +1,4 @@
+import hashlib
 from unittest.mock import Mock, patch
 
 from django.conf import settings
@@ -12,7 +13,9 @@ from api.helpers.zone_subdivision import subdivide_zone_records
 from api.models import PartnerField, User, Zone, ZoneSet
 from api.models.zone_set_admin import ZoneSetAdmin, ZoneSetForm
 from api.partner_fields.registry import ZONE_SETS_SWITCH
-from api.tests.zone_fixtures import DISC, feature, records, upload
+from api.tests.zone_fixtures import (
+    DISC, collection, feature, records, upload,
+)
 
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
@@ -992,7 +995,8 @@ class ZoneSetAddModeTest(TestCase):
 
     def test_add_with_a_value_property_change_is_refused(self):
         """AC #4: the stored labels were read with the old key; the
-        error says the change needs a replace, and nothing changes."""
+        error says the change needs a replace, nothing changes, and
+        the refusal costs no parse of the file."""
         zone_set = self._string_set(
             feature(LEFT, {'bws_label': 'High', 'bws_cat': 4}),
         )
@@ -1006,7 +1010,11 @@ class ZoneSetAddModeTest(TestCase):
             instance=zone_set,
         )
 
-        self.assertFalse(form.is_valid())
+        with patch.object(
+            ZoneSetForm, '_parse_upload', wraps=form._parse_upload
+        ) as parse:
+            self.assertFalse(form.is_valid())
+        parse.assert_not_called()
         self.assertIn('requires a replace',
                       str(form.errors['value_property']))
         self.assertIn('Replace all zones', str(form.errors['value_property']))
@@ -1099,6 +1107,78 @@ class ZoneSetAddModeTest(TestCase):
                 ZoneSet.objects.filter(pk=zone_set.pk).update(
                     value_property='bws_label', partner_field=None,
                 )
+
+    def test_adding_the_same_file_twice_is_refused(self):
+        """A double-click or a resubmitted page posts the file again:
+        the repeat is refused by the file's digest, recorded on the
+        set by the first add, and the set does not grow. A different
+        file is still added after the refusal."""
+        zone_set = self._string_set(feature(LEFT, {'bws_label': 'High'}))
+        far = feature(FAR, {'bws_label': 'Extremely high'})
+        self._save(
+            {**BASE_DATA, **ADD},
+            files={'geojson_file': upload(far)},
+            instance=zone_set,
+        )
+        self.assertEqual(zone_set.feature_count, 2)
+        zone_set.refresh_from_db()
+        self.assertEqual(
+            zone_set.last_upload_sha256,
+            hashlib.sha256(collection(far).encode('utf-8')).hexdigest(),
+        )
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD},
+            files={'geojson_file': upload(far)},
+            instance=zone_set,
+        )
+
+        self.assertFalse(form.is_valid())
+        error = form.errors['geojson_file'][0]
+        self.assertIn('same contents as the set\'s last upload', error)
+        self.assertIn('Replace all zones', error)
+        self.assertIsNone(form.parsed_zones)
+        self.assertEqual(zone_set.feature_count, 2)
+
+        # An invalid model form still copies its cleaned data onto the
+        # instance; start the allowed save from what is stored.
+        zone_set.refresh_from_db()
+        self._save(
+            {**BASE_DATA, **ADD},
+            files={'geojson_file': upload(
+                feature(RIGHT, {'bws_label': 'Low'}),
+            )},
+            instance=zone_set,
+        )
+        self.assertEqual(zone_set.feature_count, 3)
+
+    def test_adding_the_file_the_set_was_built_from_is_refused(self):
+        """The digest is recorded by a replace as well, the first
+        upload included, so adding the file the set already holds is
+        refused; replacing with it stays allowed, as a replace is
+        idempotent."""
+        left = feature(LEFT, {'bws_label': 'High'})
+        zone_set = self._string_set(left)
+
+        form = ZoneSetForm(
+            data={**BASE_DATA, **ADD},
+            files={'geojson_file': upload(left)},
+            instance=zone_set,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('same contents', str(form.errors['geojson_file']))
+        self.assertEqual(zone_set.feature_count, 1)
+
+        zone_set.refresh_from_db()
+        self._save(
+            {**BASE_DATA, **REPLACE},
+            files={'geojson_file': upload(left)},
+            instance=zone_set,
+        )
+        self.assertEqual(
+            [(z.feature_index, z.label) for z in zone_set.zones.all()],
+            [(0, 'High')],
+        )
 
     def test_replace_after_several_adds_discards_them_all(self):
         """AC #5: replace mode is today's behaviour whatever the set
