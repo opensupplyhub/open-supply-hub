@@ -87,6 +87,65 @@ export const CANDIDATE_COPY = Object.freeze({
         'satellite-detected candidates until they are confirmed.',
 });
 
+/**
+ * Copy for the candidate review page at /candidates (OSDEV-3755).
+ * Interim wording, same Design caveat as CANDIDATE_COPY.
+ */
+export const CANDIDATE_LIST_COPY = Object.freeze({
+    title: 'Satellite detections to review',
+    intro:
+        'Production locations detected from satellite imagery that have ' +
+        'not been confirmed by a person yet. Sort and filter to pick an ' +
+        'order, then open a detection to vote without leaving the list.',
+    loginNote:
+        'Log in with an Open Supply Hub account to review satellite ' +
+        'detections.',
+    filtersTitle: 'Filters',
+    filterState: 'Validation state',
+    filterConfidence: 'Confidence (%)',
+    filterConfidenceMin: 'Min',
+    filterConfidenceMax: 'Max',
+    filterNearby: 'Confirmed facility within 500 m',
+    filterNearbyAny: 'Any',
+    filterNearbyYes: 'Has one',
+    filterNearbyNo: 'Has none',
+    filterCountry: 'Country codes',
+    filterCountryHint: 'ISO alpha-2, comma-separated (e.g. US, MX)',
+    filterArea: 'Map area',
+    filterAreaNone: 'Draw a rectangle on the map to limit the list.',
+    filterAreaSet: 'Limited to the drawn area',
+    filterAreaClear: 'Clear area',
+    resetFilters: 'Reset filters',
+    columnOsId: 'OS ID',
+    columnConfidence: 'Confidence',
+    columnState: 'State',
+    columnVotes: 'Votes',
+    columnNearby: 'Nearby',
+    columnNearest: 'Nearest confirmed facility',
+    columnCountry: 'Country',
+    nearestNone: 'None within 500 m',
+    noVotes: 'No votes',
+    empty: 'No satellite detections match these filters.',
+    pagePastEnd: 'That page is past the end of the list.',
+    backToFirstPage: 'Back to the first page',
+    loadError: 'The list could not be loaded. Please try again in a moment.',
+    retry: 'Retry',
+    mapDraw: 'Draw area',
+    mapDrawCancel: 'Cancel drawing',
+    mapDrawHint: 'Click and drag on the map to draw a rectangle.',
+    mapLegend: 'Dots are the detections on this page',
+    panelPrevious: 'Previous',
+    panelNext: 'Next',
+    panelPosition: (index, total) => `${index} of ${total} on this page`,
+    panelClose: 'Close',
+    countSummary: (count, page, pages) =>
+        count === 0
+            ? 'No detections'
+            : `${count.toLocaleString()} detection${
+                  count === 1 ? '' : 's'
+              } · page ${page} of ${pages}`,
+});
+
 export const CANDIDATE_STATE_LABELS = Object.freeze({
     [CANDIDATE_STATES.UNVERIFIED]: 'Unverified',
     [CANDIDATE_STATES.DISPUTED]: 'Disputed',

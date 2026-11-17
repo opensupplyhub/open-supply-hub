@@ -24,7 +24,20 @@ from api.models.facility.facility import Facility
 # Metres per degree of latitude (and of longitude at the equator). Used
 # only to turn the metre radius into the degree radius the index-backed
 # ``dwithin`` pre-filter needs on a geodetic geometry column.
-METRES_PER_DEGREE = 111_320.0
+#
+# Deliberately a little under the true figure. ``ST_DistanceSphere``,
+# which the exact filter uses, measures on a sphere where a degree is
+# about 111,195 m; the WGS 84 equatorial value (111,320) is larger than
+# that, which made the pre-filter box a fraction too small and dropped
+# a facility between roughly 499.4 m and 500 m of a 500 m radius. A
+# value below the sphere's keeps the box over-inclusive, which is all a
+# pre-filter has to be.
+METRES_PER_DEGREE = 111_000.0
+
+# Floor of the latitude cosine, so the widening stays finite at a pole.
+# Shared with the list's per-row radius (``candidate_listing``), which
+# must widen exactly as this module does for the two to agree.
+MIN_COS_LATITUDE = 0.01
 
 
 def _degree_radius(point, radius_m):
@@ -35,7 +48,7 @@ def _degree_radius(point, radius_m):
     the exact metre filter afterwards removes the overshoot.
     """
     cos_lat = math.cos(math.radians(point.y))
-    return radius_m / METRES_PER_DEGREE / max(cos_lat, 0.01)
+    return radius_m / METRES_PER_DEGREE / max(cos_lat, MIN_COS_LATITUDE)
 
 
 def suggested_matches_for_point(
