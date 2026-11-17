@@ -18,8 +18,9 @@ const identityRecordStyles = theme =>
             color: COLOURS.DARK_GREY,
         }),
         attribution: Object.freeze({
-            fontSize: '0.9rem',
-            color: COLOURS.DARK_GREY,
+            fontSize: '0.9375rem',
+            lineHeight: 1.5,
+            color: COLOURS.DARK_SLATE_GREY,
             marginBottom: '1rem',
         }),
         card: Object.freeze({
@@ -43,17 +44,22 @@ const identityRecordStyles = theme =>
             margin: 0,
         }),
         term: Object.freeze({
-            color: COLOURS.DARK_GREY,
-            fontSize: '0.9rem',
+            color: COLOURS.DARK_SLATE_GREY,
+            fontSize: '0.9375rem',
+            fontWeight: 500,
+            lineHeight: 1.4,
         }),
         detail: Object.freeze({
             margin: 0,
-            wordBreak: 'break-word',
+            fontSize: '1rem',
+            lineHeight: 1.45,
+            overflowWrap: 'anywhere',
         }),
         caveat: Object.freeze({
             marginTop: '1rem',
-            fontSize: '0.85rem',
-            color: COLOURS.DARK_GREY,
+            fontSize: '0.9375rem',
+            lineHeight: 1.5,
+            color: COLOURS.DARK_SLATE_GREY,
         }),
         claims: Object.freeze({
             listStyle: 'none',
@@ -65,11 +71,13 @@ const identityRecordStyles = theme =>
             flexWrap: 'wrap',
             alignItems: 'baseline',
             gap: '0.75rem',
-            padding: '0.6rem 0',
+            padding: '0.8rem 0',
             borderBottom: `1px solid ${COLOURS.GREY}`,
         }),
         claimName: Object.freeze({
             flex: '1 1 20rem',
+            fontSize: '1rem',
+            lineHeight: 1.45,
         }),
         claimScore: Object.freeze({
             fontSize: '0.78rem',
@@ -81,7 +89,7 @@ const identityRecordStyles = theme =>
         }),
         claimDate: Object.freeze({
             fontSize: '0.85rem',
-            color: COLOURS.DARK_GREY,
+            color: COLOURS.DARK_SLATE_GREY,
         }),
         unavailable: Object.freeze({
             padding: '2rem',
@@ -91,6 +99,13 @@ const identityRecordStyles = theme =>
         }),
         externalLink: Object.freeze({
             color: COLOURS.NAVY_BLUE,
+            fontSize: '0.9375rem',
+            overflowWrap: 'anywhere',
+            textUnderlineOffset: '2px',
+            '&:focus-visible': Object.freeze({
+                outline: `3px solid ${COLOURS.NAVY_BLUE}`,
+                outlineOffset: '2px',
+            }),
         }),
         locationLink: Object.freeze({
             color: COLOURS.NAVY_BLUE,
