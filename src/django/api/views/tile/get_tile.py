@@ -44,12 +44,18 @@ def get_tile(request, layer, cachekey, z, x, y, ext):
         raise ValidationError(params.errors)
 
     try:
-        tile = {
-            'facilities': get_facilities_vector_tile(
-                request.query_params, layer, z, x, y),
-            'facilitygrid': get_facility_grid_vector_tile(
+        # Dispatch with an explicit branch. A dict literal is built in
+        # full before the subscript picks one entry, so both tile queries
+        # ran on every request and one result was discarded: a grid
+        # request also built a whole facilities tile for the same bounding
+        # box. On production that was about half of the single largest
+        # consumer of the database. See OSDEV-3864.
+        if layer == 'facilities':
+            tile = get_facilities_vector_tile(
                 request.query_params, layer, z, x, y)
-        }[layer]
+        else:
+            tile = get_facility_grid_vector_tile(
+                request.query_params, layer, z, x, y)
         return Response(tile.tobytes())
     except EmptyResultSet:
         return Response(None, status=HTTP_204_NO_CONTENT)
