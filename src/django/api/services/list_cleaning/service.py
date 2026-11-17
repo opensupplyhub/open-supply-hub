@@ -68,10 +68,12 @@ log = logging.getLogger(__name__)
 SWITCH_NAME = 'enable_list_cleaning_feedback'
 ROW_OFFSET = 2  # FacilityListItem.row_index 0 is spreadsheet row 2
 
-# The pipeline files these for the moderator (internal_note); here they
-# are shown to the contributor as worth a look. One name at two addresses
-# is either two sites or one typed twice, and only the contributor knows.
-ADVISORY_CODES = ('repeated_names',)
+# The pipeline files its notes for the moderator (internal_note). Here
+# every one of them is shown to the contributor as worth a look, with a
+# fix or a removal on offer: they are the ones who can tell whether one
+# name at two addresses is two sites, or what a thin address is missing
+# (decided 2026-11-17). The internal_note severity is kept for runs
+# ingested before this; it never comes from ingest any more.
 
 # What a state-machine record says about a change or issue beyond the
 # prompt's own shape, kept on the suggestion for the moderator report.
@@ -220,8 +222,7 @@ def _original_value(item, field, change=None):
 
 def _severity(issue):
     severity = issue.get('severity', '') or ''
-    if (issue.get('code') in ADVISORY_CODES
-            and severity == ListCleaningSuggestion.INTERNAL_NOTE):
+    if severity == ListCleaningSuggestion.INTERNAL_NOTE:
         return ListCleaningSuggestion.ADVISORY
     return severity
 

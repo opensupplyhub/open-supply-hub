@@ -511,14 +511,16 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNone(response.data['run'])
 
-    def test_contributor_sees_must_fix_but_not_internal_notes(self):
+    def test_contributor_sees_must_fix_and_notes_as_advisory(self):
+        # The pipeline's moderator notes reach the contributor as
+        # advisory flags they can fix or remove.
         self._ingested_run()
         self.client.force_login(self.user)
         response = self.client.get(self.url())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         severities = [s['severity'] for row in response.data['rows']
                       for s in row['suggestions'] if s['kind'] == 'ISSUE']
-        self.assertEqual(severities, ['must_fix'])
+        self.assertEqual(severities, ['advisory', 'must_fix'])
         self.assertEqual(response.data['summary']['rows_must_fix'], 1)
         self.assertEqual(response.data['summary']['corrections_total'], 3)
         self.assertEqual(response.data['summary']['removals'], 1)
@@ -532,14 +534,30 @@ class ListCleaningFeedbackTest(APITestCase):
             response.data['summary']['fixes_to_review_decided'], 0)
         self.assertEqual(response.data['summary']['must_fix_total'], 1)
 
-    def test_superuser_sees_internal_notes(self):
+    def test_superuser_sees_the_same_flags(self):
         self._ingested_run()
         self.client.force_login(self.superuser)
         response = self.client.get(self.url())
         severities = sorted(s['severity'] for row in response.data['rows']
                             for s in row['suggestions']
                             if s['kind'] == 'ISSUE')
-        self.assertEqual(severities, ['internal_note', 'must_fix'])
+        self.assertEqual(severities, ['advisory', 'must_fix'])
+
+    def test_a_note_can_be_fixed_or_removed(self):
+        run = self._ingested_run()
+        note = run.suggestions.get(code='address_too_few')
+        self.assertEqual(note.severity, ListCleaningSuggestion.ADVISORY)
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url('decisions/'),
+            {'decisions': [{'id': note.id, 'decision': 'EDITED',
+                            'value': '36 Tay Thanh Street, Tan Phu, '
+                                     'Ho Chi Minh City 700000'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        note.refresh_from_db()
+        self.assertEqual(note.decision, ListCleaningSuggestion.EDITED)
 
     def test_other_contributor_gets_404(self):
         self._ingested_run()
@@ -1006,7 +1024,9 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertNotEqual(response.status_code,
                             status.HTTP_400_BAD_REQUEST, response.data)
 
-    def test_internal_notes_alone_close_the_window_at_once(self):
+    def test_a_note_alone_opens_the_review(self):
+        # A pipeline note is now something the contributor can act on,
+        # so a list whose only finding is a note still gets its review.
         run = ListCleaningRun.objects.create(
             facility_list=self.list, runner=ListCleaningRun.IMPORT,
             review_until=timezone.now() + timedelta(minutes=60))
@@ -1014,16 +1034,17 @@ class ListCleaningFeedbackTest(APITestCase):
             'row': 2, 'status': 'needs_your_action', 'changes': [],
             'issues': [{'code': 'address_too_few',
                         'severity': 'internal_note', 'field': 'address',
-                        'note': 'For the moderator only.'}],
+                        'note': 'Only a city, no street.'}],
         }], 'file_pass': {}})
         run.refresh_from_db()
         self.assertEqual(run.suggestions.count(), 1)
-        # the contributor is shown nothing, so there is nothing to wait for
-        self.assertEqual(run.closed_reason, ListCleaningRun.CLEAN)
+        self.assertIsNone(run.closed_at)
         self.client.force_login(self.user)
         response = self.client.get(self.url())
-        self.assertFalse(response.data['window_open'])
-        self.assertEqual(response.data['rows'], [])
+        self.assertTrue(response.data['window_open'])
+        self.assertEqual(
+            [s['severity'] for s in response.data['rows'][0]['suggestions']],
+            ['advisory'])
 
     def test_parser_duplicate_is_shown_but_cannot_be_put_back(self):
         # The parser dropped the exact repeat at upload, before the
