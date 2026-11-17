@@ -263,8 +263,14 @@ def _correction(item, change, common, now):
     )
 
 
-def _issue(item, issue, common):
+def _issue(item, issue, common, repeated=None):
     field = issue.get('field', '') or ''
+    extra = _record_extra(issue)
+    # The rows that share this row's name, so the review can show the
+    # copies together and offer to keep one of them.
+    group = (repeated or {}).get(common.get('row_number'))
+    if issue.get('code') == 'repeated_names' and group:
+        extra['group'] = group
     return ListCleaningSuggestion(
         kind=ListCleaningSuggestion.ISSUE,
         field=field,
@@ -272,7 +278,7 @@ def _issue(item, issue, common):
         severity=_severity(issue),
         original_value=_original_value(item, field),
         note=issue.get('note', '') or '',
-        extra=_record_extra(issue),
+        extra=extra,
         **common,
     )
 
@@ -345,7 +351,18 @@ def _unknown_column(item, field):
     return item is not None and field not in (item.raw_json or {})
 
 
-def _record_suggestions(record, item, common, now, dropped):
+def _repeated_groups(file_pass):
+    """row number -> {name, rows} for every repeated-name group."""
+    out = {}
+    for group in file_pass.get('repeated_names') or []:
+        rows = [r for r in group.get('rows') or [] if isinstance(r, int)]
+        entry = {'name': group.get('name', '') or '', 'rows': rows}
+        for row in rows:
+            out[row] = entry
+    return out
+
+
+def _record_suggestions(record, item, common, now, dropped, repeated=None):
     """Every suggestion one pipeline record carries for its row."""
     corrections = []
     for change in record.get('changes') or []:
@@ -355,7 +372,7 @@ def _record_suggestions(record, item, common, now, dropped):
             continue
         corrections.append(_correction(item, change, common, now))
     _attach_withdrawn(corrections, record.get('withdrawn'))
-    out = corrections + [_issue(item, issue, common)
+    out = corrections + [_issue(item, issue, common, repeated)
                          for issue in record.get('issues') or []]
     if record.get('status') == 'removed':
         out.append(_removal(record, item, common, now))
@@ -446,6 +463,8 @@ def ingest_result(run, result):
     run.suggestions.all().delete()
 
     records = result.get('records') or []
+    file_pass = _file_pass(result)
+    repeated = _repeated_groups(file_pass)
     suggestions = []
     dropped = []
     for record in records:
@@ -454,7 +473,7 @@ def ingest_result(run, result):
         common = {'run': run, 'facility_list_item': item,
                   'row_number': row_number}
         suggestions += _record_suggestions(
-            record, item, common, now, dropped)
+            record, item, common, now, dropped, repeated)
     if dropped:
         log.warning(
             f'[List Cleaning] Run {run.id}: dropped {len(dropped)} '
@@ -463,7 +482,7 @@ def ingest_result(run, result):
 
     ListCleaningSuggestion.objects.bulk_create(suggestions)
 
-    run.file_pass = _file_pass(result)
+    run.file_pass = file_pass
     run.usage = result.get('usage') or {}
     run.prompt_version = str(result.get('prompt_version') or '')
     run.pipeline = _pipeline_meta(result, records)

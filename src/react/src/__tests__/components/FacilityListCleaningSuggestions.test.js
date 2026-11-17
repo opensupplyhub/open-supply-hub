@@ -7,6 +7,7 @@ import {
     Correction,
     Issue,
     Removal,
+    SuggestionRows,
     plural,
     describeCode,
     codeGuide,
@@ -246,13 +247,20 @@ describe('GroupTabs', () => {
     test('resolve everything accepts the fixes and removes the required rows in one go', () => {
         const { decideGroup } = renderTabs();
         fireEvent.click(
-            screen.getByRole('button', { name: 'Resolve everything: accept 1 fix, remove 1 row' }),
+            screen.getByRole('button', {
+                name: 'Resolve everything: accept 1 fix, remove 1 row, keep 1 row as uploaded',
+            }),
         );
         expect(decideGroup).toHaveBeenCalledWith(
-            ['ISSUE:address_po_box:address', 'CORRECTION:workers_format:number_of_workers'],
+            [
+                'ISSUE:address_po_box:address',
+                'CORRECTION:workers_format:number_of_workers',
+                'ISSUE:repeated_names:name',
+            ],
             {
                 'ISSUE:address_po_box:address': 'REMOVED',
                 'CORRECTION:workers_format:number_of_workers': 'ACCEPTED',
+                'ISSUE:repeated_names:name': 'REJECTED',
             },
             false,
         );
@@ -269,8 +277,36 @@ describe('GroupTabs', () => {
         }));
         renderTabs({ rows: byHand });
         expect(
-            screen.getByRole('button', { name: 'Resolve everything: accept 1 fix' }),
+            screen.getByRole('button', {
+                name: 'Resolve everything: accept 1 fix, keep 1 row as uploaded',
+            }),
         ).toBeInTheDocument();
+    });
+
+    test('repeated names are shown as copies with a keep-one action', () => {
+        const flag = (id, rowNumber, group = { name: 'Same Name Ltd', rows: [5, 6] }) => ({
+            ...SUGGESTIONS.repeated,
+            id,
+            row_number: rowNumber,
+            extra: { group },
+        });
+        const rows = [
+            { row_number: 5, name: 'Same Name Ltd', address: 'Zone 1', suggestions: [flag(50, 5)] },
+            { row_number: 6, name: 'Same Name Ltd', address: 'Zone 2', suggestions: [flag(60, 6)] },
+            { row_number: 7, name: 'Other', address: 'Zone 3', suggestions: [flag(70, 7, { name: 'Other', rows: [7] })] },
+        ];
+        const decide = jest.fn();
+        render(
+            <SuggestionRows rows={rows} canAct busy={false} decide={decide} filter={null} cluster />,
+        );
+        expect(screen.getByText(/“Same Name Ltd” on 2 rows/)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Keep row 5, remove the other 1 copy' }));
+        expect(decide).toHaveBeenCalledWith([
+            { id: 50, decision: 'REJECTED' },
+            { id: 60, decision: 'REMOVED' },
+        ]);
+        // One cluster only, so no "every name" button; row 7 stands alone.
+        expect(screen.queryByRole('button', { name: /Keep one row per name/ })).toBeNull();
     });
 
     test('the Needs-you tab accepts every suggested fix or keeps everything', () => {

@@ -421,7 +421,11 @@ class ListCleaningFeedbackTest(APITestCase):
         # contributor as worth a look here.
         repeated = by_code[(2, 'repeated_names')]
         self.assertEqual(repeated.severity, ListCleaningSuggestion.ADVISORY)
-        self.assertEqual(repeated.extra, {'source': 'rules'})
+        # The copies travel with the flag, so the review can show them
+        # together and offer to keep one.
+        self.assertEqual(repeated.extra, {
+            'source': 'rules',
+            'group': {'name': 'Fairview Knits', 'rows': [2, 3]}})
 
         pii = by_code[(3, 'pii')]
         self.assertEqual(pii.severity, ListCleaningSuggestion.MUST_FIX)
