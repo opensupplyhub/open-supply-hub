@@ -25,11 +25,12 @@ a request are kept in the ``candidate_lists`` cache (memcached, shared by
 every Django process) for ``CANDIDATE_LIST_ORDER_CACHE_SECONDS``, keyed
 by every filter except ``page`` / ``limit`` and by the settings the
 order depends on. The rows of the requested page are always fetched live
-and re-checked against the column filters, so state and tally are
-current and a row that stopped being a candidate (or left the filters)
-is dropped; only membership in a nearby-sorted, state-filtered set can
-lag by the cache window after a vote, and the ``count`` can include such
-a dropped row. memcached's default item cap is 1 MB, about 50k ids; a
+and re-checked against the column filters and ``has_nearby``, so state,
+tally and nearby figures are current and a row that stopped being a
+candidate (or left those filters) is dropped; only membership in a
+state-filtered set that is nearby-sorted or ``has_nearby``-filtered can
+lag by the cache window after a vote, and the ``count`` can include a
+dropped row. memcached's default item cap is 1 MB, about 50k ids; a
 list that does not fit is not cached and a warning is logged.
 
 Alternative kept in reserve (not built): store ``nearby_count``,
@@ -46,7 +47,6 @@ in the number of candidates) becomes a problem, around 50k candidates.
 import hashlib
 import json
 import logging
-import math
 
 from django.conf import settings
 from django.contrib.gis.db.models import PointField
@@ -56,39 +56,30 @@ from django.contrib.gis.measure import D
 from django.core.cache import caches
 from django.core.paginator import EmptyPage, Paginator
 from django.db.models import (
+    BooleanField,
     ExpressionWrapper,
     F,
     FloatField,
+    Func,
     IntegerField,
     OuterRef,
     Q,
     Subquery,
+    Value,
 )
+from django.db.models.functions import Cos, Greatest, Radians
 
 from api.models.facility.facility import Facility
 from api.serializers.v1.candidates_list_query_param_serializer import (
     NEARBY_SORT_FIELDS,
 )
 from api.services import candidate_validation
-from api.services.candidate_matches import METRES_PER_DEGREE
+from api.services.candidate_matches import (
+    METRES_PER_DEGREE,
+    MIN_COS_LATITUDE,
+)
 
 logger = logging.getLogger(__name__)
-
-# ``candidate_matches._degree_radius`` widens the pre-filter by the
-# point's own latitude. That is not possible here: the radius cannot
-# depend on the outer row's latitude inside a correlated subquery without
-# losing the index, so it is fixed at the widening for this latitude.
-# 75 degrees covers every populated place; above it the list can report
-# fewer nearby facilities than the detail endpoint's suggested matches.
-PREFILTER_MAX_LATITUDE = 75.0
-
-
-def _prefilter_degree_radius(radius_m):
-    """``radius_m`` metres of longitude as degrees at the fixed latitude."""
-    return (
-        radius_m / METRES_PER_DEGREE
-        / math.cos(math.radians(PREFILTER_MAX_LATITUDE))
-    )
 
 
 def _outer_location():
@@ -102,6 +93,45 @@ def _outer_location():
     )
 
 
+def _prefilter_degree_radius(radius_m):
+    """
+    ``radius_m`` as the degree radius of the index pre-filter, widened by
+    the outer candidate row's own latitude: the SQL form of
+    ``candidate_matches._degree_radius``, with the same constants, so the
+    list and the detail endpoint's suggested matches find the same
+    facilities at every latitude.
+    """
+    latitude = Func(
+        _outer_location(), function='ST_Y', output_field=FloatField()
+    )
+    return ExpressionWrapper(
+        Value(radius_m / METRES_PER_DEGREE)
+        / Greatest(Cos(Radians(latitude)), Value(MIN_COS_LATITUDE)),
+        output_field=FloatField(),
+    )
+
+
+def _within_prefilter(radius_m):
+    """
+    ``ST_DWithin(facility, candidate, <per-row degree radius>)`` as a
+    filter condition. Written as a function call, not as the ``dwithin``
+    lookup: the lookup compiles its distance against the subquery's own
+    table, so an ``OuterRef`` in it would read the facility's latitude,
+    not the candidate's, and a radius that varies with the scanned row
+    cannot be answered from the index. As a plain expression the outer
+    reference resolves to the candidate row, which is constant for each
+    probe, and PostGIS expands it into the same indexed bounding-box
+    test (``location && ST_Expand(candidate, radius)``).
+    """
+    return Func(
+        F('location'),
+        _outer_location(),
+        _prefilter_degree_radius(radius_m),
+        function='ST_DWithin',
+        output_field=BooleanField(),
+    )
+
+
 class SubqueryCount(Subquery):
     """``(SELECT count(*) FROM (<subquery>) _count)``."""
     template = '(SELECT count(*) FROM (%(subquery)s) _count)'
@@ -111,15 +141,13 @@ class SubqueryCount(Subquery):
 def _nearby_facilities(radius_m):
     """
     Confirmed facilities within ``radius_m`` of the outer candidate row.
-    Two filters on purpose, as in ``candidate_matches``: ``dwithin`` in
-    degrees is what the GiST index answers, ``distance_lte`` in metres
+    Two filters on purpose, as in ``candidate_matches``: ``ST_DWithin``
+    in degrees is what the GiST index answers, ``distance_lte`` in metres
     trims that box to the circle. ``Facility.objects`` excludes
     candidates, so a candidate never counts another candidate.
     """
     return Facility.objects.filter(
-        location__dwithin=(
-            _outer_location(), _prefilter_degree_radius(radius_m)
-        ),
+        _within_prefilter(radius_m),
         location__distance_lte=(_outer_location(), D(m=radius_m)),
     )
 
@@ -230,6 +258,10 @@ def _column_filtered(params):
     Applied to the filtered set and again to the page rows, so a row that
     left the set after its ordering was cached is dropped rather than
     served (see ``list_candidates``).
+
+    ``confidence`` is nullable. A candidate without one matches neither
+    confidence bound, so either filter leaves it out, as SQL comparison
+    with NULL does.
     """
     queryset = Facility.including_candidates.filter(is_candidate=True)
     bbox = params.get('bbox')
@@ -261,6 +293,18 @@ def needs_whole_set_nearby(params):
     return sort in NEARBY_SORT_FIELDS or params.get('has_nearby') is not None
 
 
+def _filter_has_nearby(queryset, has_nearby):
+    """
+    Narrow a queryset annotated with ``nearby_count`` by the validated
+    ``has_nearby`` value; ``None`` (not asked for) leaves it as it is.
+    """
+    if has_nearby is True:
+        return queryset.filter(nearby_count__gt=0)
+    if has_nearby is False:
+        return queryset.filter(nearby_count=0)
+    return queryset
+
+
 def candidate_queryset(params):
     """
     ``(queryset, ordered_by_nearby)``: the filtered, ordered queryset for
@@ -274,14 +318,10 @@ def candidate_queryset(params):
         queryset = queryset.filter(_state_filter(params['state']))
 
     sort = params.get('sort') or 'id'
-    has_nearby = params.get('has_nearby')
     needs_nearby_on_set = needs_whole_set_nearby(params)
     if needs_nearby_on_set:
         queryset = annotate_nearby_count_and_distance(queryset)
-        if has_nearby is True:
-            queryset = queryset.filter(nearby_count__gt=0)
-        elif has_nearby is False:
-            queryset = queryset.filter(nearby_count=0)
+        queryset = _filter_has_nearby(queryset, params.get('has_nearby'))
 
     return queryset.order_by(*_ordering(sort)), needs_nearby_on_set
 
@@ -324,20 +364,30 @@ def _order_cache_key(params):
     return f'order:v{ORDER_CACHE_VERSION}:{digest}'
 
 
-def _ordered_ids_cached(params, queryset):
+def _ordered_ids(params):
+    """The whole ordered id list of a request, computed now."""
+    queryset, _ = candidate_queryset(params)
+    return list(queryset.values_list('id', flat=True))
+
+
+def _ordered_ids_cached(params):
     """
     The whole ordered id list for a nearby-sorted or nearby-filtered
     request, from the cache when a request with the same filters and
     sort ran within ``CANDIDATE_LIST_ORDER_CACHE_SECONDS``.
+
+    The queryset is built only on a miss: building it for a ``state``
+    filter runs the vote aggregate (``_state_filter``), which a cache hit
+    has no use for.
     """
     ttl = settings.CANDIDATE_LIST_ORDER_CACHE_SECONDS
     if ttl <= 0:
-        return list(queryset.values_list('id', flat=True))
+        return _ordered_ids(params)
     cache = caches[ORDER_CACHE_ALIAS]
     key = _order_cache_key(params)
     ids = cache.get(key)
     if ids is None:
-        ids = list(queryset.values_list('id', flat=True))
+        ids = _ordered_ids(params)
         _store_order(cache, key, ids, ttl)
     return ids
 
@@ -379,14 +429,14 @@ def list_candidates(params):
     ``nearest_name`` attributes. Raises ``PageNotFound`` for a page past
     the end (page 1 of an empty set is fine and returns no rows).
     """
-    queryset, ordered_by_nearby = candidate_queryset(params)
-    if ordered_by_nearby:
+    if needs_whole_set_nearby(params):
         page_ids, total = _page_slice(
-            _ordered_ids_cached(params, queryset),
+            _ordered_ids_cached(params),
             params['page'],
             params['limit'],
         )
     else:
+        queryset, _ = candidate_queryset(params)
         paginator = Paginator(
             queryset.values_list('id', flat=True), params['limit']
         )
@@ -398,10 +448,12 @@ def list_candidates(params):
             page_ids = []
         total = paginator.count
     # The cached ordering is trusted for order and count, not for
-    # membership: a row promoted out of candidacy or edited out of the
-    # column filters since the order was cached is dropped here.
+    # membership: a row promoted out of candidacy, edited out of the
+    # column filters, or whose nearby figures no longer satisfy
+    # ``has_nearby`` since the order was cached is dropped here.
     rows = _column_filtered(params).filter(id__in=page_ids)
     rows = annotate_nearby_count_and_distance(rows)
+    rows = _filter_has_nearby(rows, params.get('has_nearby'))
     rows = annotate_nearest_facility(rows)
     by_id = {row.id: row for row in rows}
     # Re-apply the page order: the id__in fetch has none of its own.
