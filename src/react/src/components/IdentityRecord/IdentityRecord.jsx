@@ -284,11 +284,11 @@ export const IdentityRecord = ({ classes, match }) => {
                  * page must not imply the record has been verified.
                  */}
                 <Typography className={classes.caveat}>
-                    Everything shown above is that credential, decoded. Open
-                    Supply Hub stores only a link to this record and fetches it
-                    each time this page is opened. The signature on the
-                    credential is not checked here; follow the link above to
-                    verify it with the issuer.
+                    Everything shown above is from the raw signed credential,
+                    decoded. Open Supply Hub stores only a link to this record
+                    and fetches it each time this page is opened. The signature
+                    on the credential is not checked here; follow the link above
+                    to verify it with the issuer.
                 </Typography>
             </Paper>
 
