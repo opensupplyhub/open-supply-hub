@@ -1,17 +1,21 @@
 import React from 'react';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, act } from '@testing-library/react';
 import renderWithProviders from '../../util/testUtils/renderWithProviders';
 import {
     reviewData,
     cleaningState,
 } from '../../util/testUtils/listCleaningFixtures';
 import ListCleaningStatusNote from '../../components/ListCleaningStatusNote';
+import {
+    startFetchFacilityListCleaning,
+    completeFetchFacilityListCleaning,
+} from '../../actions/facilityListCleaning';
 
+// The thunks are mocked; the plain action creators stay real, so the
+// store's reducer still answers to them and a test can feed it a reply.
 jest.mock('../../actions/facilityListCleaning', () => ({
+    ...jest.requireActual('../../actions/facilityListCleaning'),
     fetchFacilityListCleaning: jest.fn(() => () => Promise.resolve()),
-    resetFacilityListCleaning: jest.fn(() => ({
-        type: 'RESET_FACILITY_LIST_CLEANING',
-    })),
     submitFacilityListCleaningDecisions: jest.fn(() => () =>
         Promise.resolve(),
     ),
@@ -28,9 +32,6 @@ const actions = jest.requireMock('../../actions/facilityListCleaning');
 const thunk = () => () => Promise.resolve();
 const installMocks = () => {
     actions.fetchFacilityListCleaning.mockImplementation(thunk);
-    actions.resetFacilityListCleaning.mockImplementation(() => ({
-        type: 'RESET_FACILITY_LIST_CLEANING',
-    }));
     actions.submitFacilityListCleaningDecisions.mockImplementation(thunk);
     actions.submitFacilityListCleaningGroupDecisions.mockImplementation(thunk);
     actions.applyFacilityListCleaning.mockImplementation(thunk);
@@ -132,6 +133,86 @@ describe('ListCleaningStatusNote', () => {
         expect(
             screen.getByText(/without a submission, so the list went through with the 2 changes decided by then/),
         ).toBeInTheDocument();
+    });
+
+    test('the rows reload when an open review lapses on screen', () => {
+        const onSubmitted = jest.fn();
+        const { reduxStore } = renderNote(reviewData(), { onSubmitted });
+        expect(onSubmitted).not.toHaveBeenCalled();
+        // the ticking refetch finds the window closed
+        act(() => {
+            reduxStore.dispatch(
+                completeFetchFacilityListCleaning({
+                    listID: 42,
+                    mutation: 0,
+                    data: reviewData({
+                        window_open: false,
+                        seconds_left: 0,
+                        run: {
+                            closed_reason: 'lapsed',
+                            closed_at: '2026-11-09T11:00:00Z',
+                        },
+                    }),
+                }),
+            );
+        });
+        expect(onSubmitted).toHaveBeenCalledTimes(1);
+        expect(
+            screen.getByText(/closed .* without a submission/),
+        ).toBeInTheDocument();
+    });
+
+    test('leaving the resumed review refetches after the dialog has cleared the store', async () => {
+        const onSubmitted = jest.fn();
+        const lapsed = reviewData({
+            window_open: false,
+            seconds_left: 0,
+            run: { closed_reason: 'lapsed', closed_at: '2026-11-09T11:00:00Z' },
+        });
+        // The fetch as the real one behaves: it names its list on the way
+        // out, and its reply names it and the mutation count it was sent at.
+        let reply = null;
+        actions.fetchFacilityListCleaning.mockImplementation(
+            listID => (dispatch, getState) => {
+                dispatch(startFetchFacilityListCleaning({ listID, silent: true }));
+                const { mutation } = getState().facilityListCleaning;
+                if (!reply) return Promise.resolve();
+                return Promise.resolve().then(() =>
+                    dispatch(
+                        completeFetchFacilityListCleaning({ listID, mutation, data: reply }),
+                    ),
+                );
+            },
+        );
+        const { reduxStore } = renderNote(reviewData(), { onSubmitted });
+        fireEvent.click(screen.getByRole('button', { name: /Resume review/ }));
+        // the window closes while the review is on screen
+        reply = lapsed;
+        act(() => {
+            reduxStore.dispatch(
+                completeFetchFacilityListCleaning({ listID: 42, mutation: 0, data: lapsed }),
+            );
+        });
+        // Leaving unmounts the dialog, which clears the store slice; the
+        // refetch sent after that is for the list the store names again.
+        fireEvent.click(screen.getByRole('button', { name: /Go to my list/ }));
+        expect(
+            await screen.findByText(/closed .* without a submission/),
+        ).toBeInTheDocument();
+        expect(reduxStore.getState().facilityListCleaning.listID).toBe(42);
+        expect(onSubmitted).toHaveBeenCalledTimes(1);
+    });
+
+    test('a review already closed when the page opens does not reload the rows', () => {
+        const onSubmitted = jest.fn();
+        renderNote(
+            reviewData({
+                window_open: false,
+                run: { closed_reason: 'lapsed', closed_at: '2026-11-09T11:00:00Z' },
+            }),
+            { onSubmitted },
+        );
+        expect(onSubmitted).not.toHaveBeenCalled();
     });
 
     test('a clean result went straight to moderation', () => {

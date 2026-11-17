@@ -60,7 +60,10 @@ def _norm(value):
 
 
 def _key(value):
-    return re.sub(r'[^a-z0-9]+', '', _norm(value).lower())
+    # Letters and digits of any script: a pattern that kept only a-z
+    # turned every non-Latin address into the same empty key, so two
+    # different Japanese addresses read as an exact duplicate.
+    return re.sub(r'[\W_]+', '', _norm(value).lower())
 
 
 def _is_filler(value):

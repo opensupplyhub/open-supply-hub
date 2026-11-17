@@ -348,7 +348,8 @@ const FacilityListItems = ({
                 isListOwner={isListOwner}
                 isAdminUser={isAdminUser}
                 onSubmitted={() => {
-                    // The rows below reflect the submission straight away.
+                    // The rows below reflect the submission, or a window
+                    // that lapsed on screen, straight away.
                     fetchList();
                     fetchListItems();
                 }}

@@ -188,6 +188,8 @@ export const reviewData = (overrides = {}) => ({
 
 export const cleaningState = (data, extra = {}) => ({
     facilityListCleaning: {
+        listID: 42,
+        mutation: 0,
         data,
         fetching: false,
         error: null,

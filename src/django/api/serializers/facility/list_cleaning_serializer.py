@@ -160,6 +160,9 @@ def _value_pending(s):
     S = ListCleaningSuggestion
     if s.kind == S.REMOVAL:
         return False
+    if (s.extra or {}).get('superseded_by'):
+        # Another value on the same column went on instead of this one.
+        return False
     if s.decision == S.EDITED:
         item = s.facility_list_item
         current = (item.raw_json or {}).get(s.field) if item else None

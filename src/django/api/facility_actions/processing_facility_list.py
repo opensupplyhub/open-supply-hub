@@ -3,6 +3,7 @@ import traceback
 from typing import Any, Dict, Optional, Set, List, Union
 
 from django.contrib.gis.geos import Point
+from django.db import transaction
 from django.utils import timezone
 
 from api.constants import FileHeaderField, ProcessingAction
@@ -96,7 +97,12 @@ class ProcessingFacilityList(ProcessingFacility):
         '''
         from api.services.list_cleaning import start_run
         try:
-            run = start_run(self.__facility_list)
+            # The parse runs inside the list-create transaction, so a
+            # database error here is kept to its own savepoint: without
+            # one it would abort the outer transaction and roll the
+            # parsed rows back while the parse looked to have succeeded.
+            with transaction.atomic():
+                run = start_run(self.__facility_list)
         except Exception as e:
             error_message = (
                 f'[List Upload] Could not start list cleaning run: {e}'

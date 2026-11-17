@@ -29,6 +29,12 @@ sweep_run      -> close a run whose review window has lapsed. A review
 record_event   -> one row per moment that matters on the review screen
                   (opened, resumed, left, submitted, lapsed), for the
                   "submit versus click away" numbers in metrics_summary.
+                  record_review_event is the client-facing entry: it
+                  takes the run lock and checks the window again there.
+restart_run    -> a superuser's or the command's new run for a list that
+                  may already have one, refused while the contributor's
+                  window is open; the list row is locked first so two
+                  restarts cannot both get past that check.
 build_fixed_csv -> the list as it now stands, removed rows last with a
                   tag saying why.
 """
@@ -47,6 +53,7 @@ from api.extended_fields import RAW_DATA_FIELDS, extendedfield_value
 from api.helpers.helpers import clean
 from api.models.extended_field import ExtendedField
 from api.models.facility.facility import Facility
+from api.models.facility.facility_list import FacilityList
 from api.models.facility.facility_list_item import FacilityListItem
 from api.models.facility.list_cleaning_run import (
     ListCleaningEvent,
@@ -94,9 +101,12 @@ def build_payload(facility_list):
     )
     rows = []
     for item in items:
-        row = {'row': item.row_index + ROW_OFFSET}
+        row = {}
         for key, value in (item.raw_json or {}).items():
             row[key] = '' if value is None else str(value)
+        # Set last, so an uploaded column that happens to be called
+        # "row" cannot overwrite the row number the pipeline keys on.
+        row['row'] = item.row_index + ROW_OFFSET
         rows.append(row)
     return {'list_id': str(facility_list.id), 'rows': rows}
 
@@ -116,9 +126,6 @@ def _lock(run):
     """
     list(ListCleaningRun.objects.select_for_update().filter(pk=run.pk))
     run.refresh_from_db()
-
-
-lock_run = _lock
 
 
 def start_run(facility_list, runner_name=None, force=False):
@@ -267,8 +274,10 @@ def _correction(item, change, common, now):
 def _issue(item, issue, common, repeated=None):
     field = issue.get('field', '') or ''
     extra = _record_extra(issue)
-    # The rows that share this row's name, so the review can show the
-    # copies together and offer to keep one of them.
+    # Which repeated-name group this row is in, so the review can show
+    # the copies together and offer to keep one of them. The group's
+    # rows are on the run's file_pass, once; a flag carries the name
+    # and the group's index there, not the membership.
     group = (repeated or {}).get(common.get('row_number'))
     if issue.get('code') == 'repeated_names' and group:
         extra['group'] = group
@@ -354,13 +363,18 @@ def _unknown_column(item, field):
 
 
 def _repeated_groups(file_pass):
-    """row number -> {name, rows} for every repeated-name group."""
+    """
+    row number -> {name, index} for every repeated-name group: the
+    group's name and its position in file_pass['repeated_names'], where
+    its rows are kept once. Copying the rows onto every flag of the
+    group would store and send a group of N rows N times over.
+    """
     out = {}
-    for group in file_pass.get('repeated_names') or []:
-        rows = [r for r in group.get('rows') or [] if isinstance(r, int)]
-        entry = {'name': group.get('name', '') or '', 'rows': rows}
-        for row in rows:
-            out[row] = entry
+    for index, group in enumerate(file_pass.get('repeated_names') or []):
+        entry = {'name': group.get('name', '') or '', 'index': index}
+        for row in group.get('rows') or []:
+            if isinstance(row, int):
+                out[row] = entry
     return out
 
 
@@ -564,6 +578,12 @@ def _close(run, reason, now):
     run.save(update_fields=['closed_at', 'closed_reason'])
 
 
+def _lapsed(run):
+    """An open window whose deadline has passed."""
+    return (run.closed_at is None and run.review_until is not None
+            and timezone.now() >= run.review_until)
+
+
 def review_opened(run):
     """Whether the contributor ever reached the review screen."""
     return run.events.filter(
@@ -581,15 +601,16 @@ def sweep_run(run):
     the rest stays as uploaded. A review nobody opened goes through
     exactly as uploaded, since nothing in it was ever decided.
     """
-    if run is None or run.closed_at is not None or run.review_until is None:
-        return run
-    if timezone.now() < run.review_until:
+    if run is None or not _lapsed(run):
         return run
     with transaction.atomic():
         # Reads sweep too, so two requests can notice the lapse at once;
         # the lock makes the second one find the run already closed.
         _lock(run)
-        if run.closed_at is not None:
+        # Checked again on the reloaded run: a result ingested while
+        # this waited for the lock starts the window over, and the run
+        # must stay open for it.
+        if not _lapsed(run):
             return run
         now = timezone.now()
         opened = review_opened(run)
@@ -637,6 +658,63 @@ def sweep_lapsed():
         sweep_run(run)
         closed += 1
     return closed
+
+
+class ReviewOpen(ValueError):
+    """A new run now would discard the contributor's decisions."""
+
+
+def ensure_restartable(facility_list):
+    """
+    Inside a transaction: lock the list row, settle its current run and
+    refuse (ReviewOpen) while that run's review window is open. The
+    list lock is what keeps two restarts at once from both passing the
+    check and both creating a run; the run lock makes a submission in
+    flight finish first, so the check sees its closure. Returns the
+    locked list.
+    """
+    facility_list = (FacilityList.objects.select_for_update()
+                     .get(pk=facility_list.pk))
+    current = facility_list.cleaning_runs.first()
+    if current is not None:
+        _lock(current)
+        current = settle_run(current)
+    if current is not None and window_open(current):
+        raise ReviewOpen(
+            'The contributor is still reviewing this list; a new run '
+            'would discard their decisions. Wait for the window to '
+            f'close at {current.review_until.isoformat()}.')
+    return facility_list
+
+
+def restart_run(facility_list, runner_name=None, force=False):
+    """start_run for a list that may already have a run: refused with
+    ReviewOpen while the current run is under review."""
+    with transaction.atomic():
+        facility_list = ensure_restartable(facility_list)
+        return start_run(facility_list, runner_name=runner_name,
+                         force=force)
+
+
+def record_review_event(run, kind, user, meta=None):
+    """
+    An event from the review screen. Closing the walkthrough is about
+    the user, not the window, so it is recorded as is. The rest say
+    what the contributor did with an open review, so they are recorded
+    under the run's lock with the window checked again there: a sweep
+    closing the run at the same moment either went first, and the
+    event is refused, or waits, and finds it recorded.
+    """
+    if kind == ListCleaningEvent.TOUR_DISMISSED:
+        return record_event(run, kind, user=user, meta=meta)
+    with transaction.atomic():
+        _lock(run)
+        sweep_run(run)
+        if not window_open(run):
+            raise DecisionError(
+                'The review window for this list is not open, so there '
+                'is nothing to record.')
+        return record_event(run, kind, user=user, meta=meta)
 
 
 def _ensure_open(run):
@@ -1272,25 +1350,54 @@ def _value_action(s, item):
     return None
 
 
+def _write_precedence(s):
+    """
+    Which of several values wanting the same cell wins: a value the
+    contributor typed over one they accepted (the typed one is their
+    own, the accepted one the pipeline's), and among equals the latest
+    decision, which is the one they saw last. Decided 2026-11-17.
+    """
+    decided = s.decided_at.timestamp() if s.decided_at else 0
+    return (s.decision == ListCleaningSuggestion.EDITED, decided, s.id)
+
+
 def _apply_values(item, suggestions, log_entry):
-    """Step 1 of apply: accepted corrections and edited values on, and
-    previously applied values that were since rejected back off."""
+    """
+    Step 1 of apply: previously applied values that were since rejected
+    back off, then accepted corrections and edited values on. A
+    correction and a flag can both sit on one column, so the values
+    wanting it are resolved per column first: one is written and marked
+    applied, the others are marked superseded by it.
+    """
     applied = reverted = 0
+    writes = {}
     for s in suggestions:
         action = _value_action(s, item)
         if action is None:
             continue
-        value = s.original_value if action == 'revert' else s.final_value
-        if not _write_field(item, s.field, value):
+        if action != 'revert':
+            writes.setdefault(s.field, []).append(s)
             continue
-        if action == 'revert':
-            s.applied = False
-            reverted += 1
-        else:
-            s.applied = True
-            applied += 1
-        log_entry(item, s, s.applied)
+        if not _write_field(item, s.field, s.original_value):
+            continue
+        s.applied = False
+        reverted += 1
+        log_entry(item, s, False)
         s.save(update_fields=['applied'])
+    for field, wanting in writes.items():
+        winner = max(wanting, key=_write_precedence)
+        for s in wanting:
+            if s is winner:
+                continue
+            s.extra = {**(s.extra or {}), 'superseded_by': winner.id}
+            s.save(update_fields=['extra'])
+            log_entry(item, s, False)
+        if not _write_field(item, field, winner.final_value):
+            continue
+        winner.applied = True
+        applied += 1
+        log_entry(item, winner, True)
+        winner.save(update_fields=['applied'])
     return applied, reverted
 
 
