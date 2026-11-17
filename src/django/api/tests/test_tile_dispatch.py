@@ -24,6 +24,12 @@ class TileDispatchTest(APITestCase):
     These assert the query that was not asked for is never called. A test
     that only checked the response would have passed against the old code,
     which is exactly why the bug survived so long.
+
+    There is deliberately no "each known layer builds exactly one tile"
+    test. With an if/elif/else that assertion cannot fail, so it would
+    document an intention rather than guard it; the real risk is a new
+    layer falling through the dispatch, which
+    test_an_unknown_layer_builds_nothing covers.
     """
 
     @staticmethod
@@ -66,17 +72,6 @@ class TileDispatchTest(APITestCase):
             0, facilities.call_count,
             'a grid request must not also build a facilities tile',
         )
-
-    @override_switch('vector_tile', active=True)
-    def test_every_layer_builds_exactly_one_tile(self):
-        # Guards the branch as a whole rather than either side of it, so a
-        # future third layer cannot quietly fall through to building two.
-        for layer in ('facilities', 'facilitygrid'):
-            with self.subTest(layer=layer):
-                _, facilities, grid = self.fetch(layer)
-                self.assertEqual(
-                    1, facilities.call_count + grid.call_count,
-                )
 
     @override_switch('vector_tile', active=True)
     def test_the_requested_layer_is_the_one_returned(self):
