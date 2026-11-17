@@ -120,6 +120,20 @@ export const CODE_LABELS = Object.freeze({
     name_incomplete: 'name looks incomplete',
     repeated_names: 'same name at several addresses',
     empty_row: 'blank row',
+    // The remaining codes the auto-lists-cleaning state machine emits.
+    duplicate_token: 'repeated words removed',
+    spelling: 'spelling corrected',
+    sector_mapping: 'sector matched to a supported value',
+    facility_type_mapping: 'facility type matched to a supported value',
+    address_too_many: 'address has details that are not the address',
+    multiple_addresses: 'more than one address',
+    country_address_mismatch: 'address does not match the country',
+    name_too_many: 'name has details that are not the name',
+    multiple_names: 'more than one name',
+    sector_unrecognized: 'sector not in the supported list',
+    non_roman_characters: 'non-Roman characters',
+    column_swap: 'values in the wrong column',
+    spelling_uncertain: 'possible misspelling',
 });
 
 // What a contributor can do about each required fix, in their words.
@@ -145,11 +159,42 @@ const CODE_HELP = Object.freeze({
         'Shorten the value to 200 characters or fewer, or remove the row.',
     address_po_box:
         "A PO Box can't be placed on the map. Type the street address of the facility, or remove the row.",
+    empty_row: 'Nothing to do: the row is removed.',
+    address_too_few:
+        'Add the missing parts of the address (street, town or city, region, postal code), or remove the row.',
+    address_too_many:
+        'Edit the address so it holds only the address; move a business name to the name or parent company column. Or remove the row.',
+    multiple_addresses:
+        'Keep one address here and give the other location its own row, or remove the row.',
+    country_address_mismatch:
+        'Check which is right and fix the country or the address, or remove the row.',
+    name_incomplete:
+        "Give the facility's full registered name, or remove the row.",
+    name_too_many:
+        'Edit the name so it holds only the facility name; move a parent company or address to its own column. Or remove the row.',
+    multiple_names:
+        'Keep one business here and give the other its own row, or remove the row.',
+    repeated_names:
+        'Add a distinguishing detail to each site\u2019s name, keep the rows as they are if they are different sites, or remove the copies.',
+    non_roman_characters:
+        'Give the Roman or English form of the value, or remove the row.',
+    sector_unrecognized:
+        'Choose a sector from the supported list, or remove the row.',
+    column_swap:
+        'Move the value to the column it belongs in, or remove the row.',
+    spelling_uncertain:
+        'Check the spelling and fix it if it is wrong, or keep the original.',
 });
 
+// Every flag has a way out: the named advice for its type, or the general
+// one, which is always to fix the value or drop the row.
 export const codeHelp = (code, field) => {
     const help = CODE_HELP[(code || '').split('+')[0]];
-    if (!help) return '';
+    if (!help) {
+        if (!code) return '';
+        const label = FIELD_LABELS[field] || field || 'value';
+        return `Fix the value so it holds only the ${label.toLowerCase()}, or remove the row.`;
+    }
     if (typeof help === 'string') return help;
     return help[field] || help.default;
 };
@@ -162,7 +207,7 @@ const GEOCODE_WHY =
     'OS Hub places every facility on a map and matches it against facilities other contributors have shared. A clear street address lets that happen accurately, so your facility is found, matched and counted correctly.';
 const NAME_WHY =
     'Names are how OS Hub matches your facility with the same facility shared by others. A precise, unique name means your data merges with theirs instead of creating a duplicate or a wrong match.';
-const CODE_GUIDE = Object.freeze({
+const GUIDE = {
     address_po_box: {
         title: 'PO Box in the address',
         problem:
@@ -423,7 +468,45 @@ const CODE_GUIDE = Object.freeze({
             'Accept the trimmed address, or keep the original if the country is part of a place name.',
         ],
     },
-});
+    duplicate_token: {
+        title: 'Repeated words',
+        problem:
+            'A word or place name is written twice in a row, for example "Madrid, Spain Spain".',
+        why: GEOCODE_WHY,
+        fix: [
+            'Accept the version with the repeat removed, or keep the original if the repeat is part of the place name (Walla Walla, Baden Baden).',
+        ],
+    },
+    business_name_in_address: {
+        title: 'Business name in the address',
+        problem:
+            "The address starts with a business name, the facility's own or another's.",
+        why: GEOCODE_WHY,
+        fix: [
+            'Accept the address without the name, or keep the original if the name is part of the street address (an industrial estate, a building).',
+        ],
+    },
+    sector_mapping: {
+        title: 'Sector or facility type matched',
+        problem:
+            'The value was written differently from the supported list, for example "apparels" or "Cut and sew".',
+        why:
+            'These columns feed the filters on OS Hub; a value outside the supported list cannot be searched.',
+        fix: [
+            'Accept the matched value, or keep the original if it means something different.',
+        ],
+    },
+};
+// The state machine's names for problems the guide already covers.
+GUIDE.name_in_address = GUIDE.business_name_in_address;
+GUIDE.facility_type_mapping = GUIDE.sector_mapping;
+GUIDE.country_address_mismatch = GUIDE.country_mismatch;
+GUIDE.sector_unrecognized = GUIDE.sector_values;
+GUIDE.column_swap = GUIDE.sector_values;
+GUIDE.non_roman_characters = GUIDE.encoding;
+GUIDE.spelling_uncertain = GUIDE.spelling;
+GUIDE.empty_row = GUIDE.empty;
+const CODE_GUIDE = Object.freeze(GUIDE);
 
 export const codeGuide = code => CODE_GUIDE[(code || '').split('+')[0]] || null;
 
@@ -467,6 +550,27 @@ export const styles = Object.freeze({
         borderLeft: `4px solid ${COLOURS.NAVY_BLUE}`,
         background: '#F0F4FF',
         fontSize: '0.9rem',
+    }),
+    clusterHeader: Object.freeze({
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+        flexWrap: 'wrap',
+        margin: '-4px 0 8px 0',
+        padding: '6px 10px',
+        background: '#F3F0FA',
+        borderRadius: '4px',
+    }),
+    clusterName: Object.freeze({
+        fontWeight: 600,
+    }),
+    clusterAll: Object.freeze({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        flexWrap: 'wrap',
+        margin: '8px 0 12px 0',
     }),
     rowCard: Object.freeze({
         border: '1px solid #E0E0E0',
@@ -1213,7 +1317,7 @@ export const Issue = ({ suggestion, canAct, busy, onDecide }) => {
                     </div>
                 )}
                 <div style={styles.muted}>{suggestion.note}</div>
-                {!internal && codeHelp(suggestion.code, suggestion.field) && (
+                {codeHelp(suggestion.code, suggestion.field) && (
                     <div style={styles.muted}>
                         {codeHelp(suggestion.code, suggestion.field)}
                     </div>
@@ -1366,12 +1470,32 @@ Removal.propTypes = {
 
 /*
  * Whole-file findings. Exact duplicates are an automatic group and
- * repeated names an advisory one, so both live in the chips; only a
- * header problem, which has no rows to act on, is left to say here.
+ * repeated names an advisory one, so both live in the chips; a header
+ * problem, which has no rows to act on, is said here, and so is a run
+ * the judgment checks did not finish: the state machine still returns
+ * the formatting checks for those rows, and the contributor should
+ * know that is all they are seeing.
  */
-export const ListFindings = ({ filePass }) => {
+export const partialChecksNote = pipeline => {
+    const rows = (pipeline && pipeline.model_error_rows) || [];
+    if (pipeline && pipeline.degraded) {
+        return 'Part of the automatic checks was unavailable, so most rows show only the formatting checks. Our human moderator still reviews every row.';
+    }
+    if (rows.length) {
+        return `Part of the automatic checks could not run for ${plural(
+            rows.length,
+            'row',
+        )}, so ${
+            rows.length === 1 ? 'that row shows' : 'those rows show'
+        } only the formatting checks. Our human moderator still reviews every row.`;
+    }
+    return '';
+};
+
+export const ListFindings = ({ filePass, pipeline }) => {
     const headerIssues = filePass.header_issues || [];
-    if (!headerIssues.length) return null;
+    const partial = partialChecksNote(pipeline);
+    if (!headerIssues.length && !partial) return null;
     return (
         <div style={styles.headerIssues}>
             {headerIssues.map(issue => (
@@ -1379,11 +1503,13 @@ export const ListFindings = ({ filePass }) => {
                     {issue.note || `Header problem: ${issue.column}`}
                 </div>
             ))}
+            {partial && <div>{partial}</div>}
         </div>
     );
 };
 
-ListFindings.propTypes = { filePass: object.isRequired };
+ListFindings.defaultProps = { pipeline: {} };
+ListFindings.propTypes = { filePass: object.isRequired, pipeline: object };
 
 export const suggestionKey = s => `${s.kind}:${s.code}:${s.field}`;
 
@@ -1396,6 +1522,78 @@ export const visibleRows = (rows, filter) =>
         )
         .filter(row => row.suggestions.length);
 
+/*
+ * The repeated-name copies, clustered by name. Each cluster is the rows
+ * the pipeline's file pass said share a name (carried on the flag as
+ * extra.group); a flag without one clusters by the row's own name.
+ */
+const REPEATED = 'repeated_names';
+
+const repeatedFlag = row =>
+    row.suggestions.find(s => s.kind === KIND.ISSUE && s.code === REPEATED);
+
+export const nameClusters = rows => {
+    const clusters = new Map();
+    rows.forEach(row => {
+        const flag = repeatedFlag(row);
+        if (!flag) return;
+        const name = flag.extra?.group?.name || row.name || '';
+        const key = name.trim().toLowerCase();
+        if (!clusters.has(key)) clusters.set(key, { name, rows: [] });
+        clusters.get(key).rows.push(row);
+    });
+    return Array.from(clusters.values()).filter(c => c.rows.length > 1);
+};
+
+/*
+ * Keep the first row of a cluster and remove the others. The kept row's
+ * flag is recorded as looked at (original kept) so the cluster counts
+ * as decided. Nothing here is automatic: the same name at two addresses
+ * is as likely two sites as one typed twice, and only the contributor
+ * knows which, so this is a button they press, per cluster or for all.
+ */
+export const keepOneDecisions = clusters =>
+    clusters.reduce(
+        (acc, cluster) =>
+            acc.concat(
+                cluster.rows.map((row, i) => ({
+                    id: repeatedFlag(row).id,
+                    decision: i === 0 ? DECISION.REJECTED : DECISION.REMOVED,
+                })),
+            ),
+        [],
+    );
+
+const undecided = cluster =>
+    cluster.rows.some(row => repeatedFlag(row).decision === DECISION.PENDING);
+
+const ClusterHeader = ({ cluster, canAct, busy, decide }) => (
+    <div style={styles.clusterHeader}>
+        <span style={styles.clusterName}>
+            &ldquo;{cluster.name}&rdquo; on {plural(cluster.rows.length, 'row')}
+        </span>
+        {canAct && undecided(cluster) && (
+            <Button
+                size="small"
+                variant="outlined"
+                color="primary"
+                disabled={busy}
+                onClick={() => decide(keepOneDecisions([cluster]))}
+            >
+                Keep row {cluster.rows[0].row_number}, remove the other{' '}
+                {plural(cluster.rows.length - 1, 'copy', 'copies')}
+            </Button>
+        )}
+    </div>
+);
+
+ClusterHeader.propTypes = {
+    cluster: object.isRequired,
+    canAct: bool.isRequired,
+    busy: bool.isRequired,
+    decide: func.isRequired,
+};
+
 export const SuggestionRows = ({
     rows,
     canAct,
@@ -1404,13 +1602,21 @@ export const SuggestionRows = ({
     filter,
     selected,
     onToggle,
-}) =>
-    visibleRows(rows, filter).map((row, i) => (
+    cluster,
+}) => {
+    const shown = visibleRows(rows, filter);
+    const clusters = cluster ? nameClusters(shown) : [];
+    const clustered = new Set(
+        clusters.reduce((acc, c) => acc.concat(c.rows), []),
+    );
+    const openClusters = clusters.filter(undecided);
+    const card = (row, i, before) => (
         <div
             key={row.row_number}
             style={styles.rowCard}
             data-tour={i === 0 ? 'rows' : undefined}
         >
+            {before}
             <div style={styles.rowHeader}>
                 {canAct && onToggle && (
                     <Checkbox
@@ -1467,15 +1673,66 @@ export const SuggestionRows = ({
                 );
             })}
         </div>
-    ));
+    );
+    if (!clusters.length) return shown.map((row, i) => card(row, i, null));
+    // Clustered rows first, each cluster under its header, then the rest.
+    let index = 0;
+    const out = [];
+    if (canAct && openClusters.length > 1) {
+        out.push(
+            <div key="keep-one-all" style={styles.clusterAll}>
+                <Button
+                    size="small"
+                    variant="contained"
+                    color="primary"
+                    disabled={busy}
+                    onClick={() => decide(keepOneDecisions(openClusters))}
+                >
+                    Keep one row per name, remove the other copies
+                </Button>
+                <span style={styles.muted}>
+                    Keeps the first row of each name below. If these are
+                    different sites, give each a distinguishing name instead.
+                </span>
+            </div>,
+        );
+    }
+    clusters.forEach(c => {
+        c.rows.forEach((row, j) => {
+            out.push(
+                card(
+                    row,
+                    index,
+                    j === 0 ? (
+                        <ClusterHeader
+                            cluster={c}
+                            canAct={canAct}
+                            busy={busy}
+                            decide={decide}
+                        />
+                    ) : null,
+                ),
+            );
+            index += 1;
+        });
+    });
+    shown.forEach(row => {
+        if (clustered.has(row)) return;
+        out.push(card(row, index, null));
+        index += 1;
+    });
+    return out;
+};
 
 SuggestionRows.defaultProps = {
+    cluster: false,
     filter: null,
     selected: new Set(),
     onToggle: null,
 };
 
 SuggestionRows.propTypes = {
+    cluster: bool,
     rows: arrayOf(object).isRequired,
     canAct: bool.isRequired,
     busy: bool.isRequired,
@@ -1686,20 +1943,23 @@ const TIER_COLOURS = Object.freeze({
     [TIER.AUTO]: COLOURS.DARK_GREY,
 });
 
-const TierBadge = ({ tier, advisory }) => (
-    <span
-        style={{
-            ...guideStyles.badge,
-            background: advisory ? ADVISORY_COLOUR : TIER_COLOURS[tier],
-        }}
-        data-tier={tier}
-    >
-        {TIER_LABELS[tier]}
-    </span>
-);
+const TierBadge = ({ tier, advisory, label }) => {
+    let background = TIER_COLOURS[tier];
+    if (label) background = COLOURS.DARK_GREY;
+    else if (advisory) background = ADVISORY_COLOUR;
+    return (
+        <span style={{ ...guideStyles.badge, background }} data-tier={tier}>
+            {label || TIER_LABELS[tier]}
+        </span>
+    );
+};
 
-TierBadge.defaultProps = { advisory: false };
-TierBadge.propTypes = { tier: string.isRequired, advisory: bool };
+TierBadge.defaultProps = { advisory: false, label: null };
+TierBadge.propTypes = {
+    tier: string.isRequired,
+    advisory: bool,
+    label: string,
+};
 
 const TierHeading = ({ tier }) => (
     <div style={chipStyles.tierHead}>
@@ -1719,6 +1979,7 @@ TierHeading.propTypes = { tier: string.isRequired };
 const ErrorGuide = ({ group }) => {
     const guide = codeGuide(group.code);
     if (!guide) return null;
+    const internal = group.severity === SEVERITY.INTERNAL_NOTE;
     let tone = {};
     if (group.auto) tone = guideStyles.boxAuto;
     else if (group.kind === KIND.CORRECTION) tone = guideStyles.boxFix;
@@ -1730,6 +1991,7 @@ const ErrorGuide = ({ group }) => {
                 <TierBadge
                     tier={tier}
                     advisory={group.severity === SEVERITY.ADVISORY}
+                    label={internal ? 'Moderator note' : null}
                 />
                 <span>
                     {guide.title}: {guide.problem}
@@ -1800,7 +2062,13 @@ const GroupHeader = ({ group, canAct, busy, decideGroup }) => {
             <Typography variant="subheading">
                 {chipTitle(group)}: {plural(group.count, 'row')}
             </Typography>
-            {!internal && <ErrorGuide group={group} />}
+            <ErrorGuide group={group} />
+            {internal && (
+                <div style={styles.muted}>
+                    The contributor does not see this type; it is for the
+                    moderator, who asks for the fix in the outcome email.
+                </div>
+            )}
             {group.auto && (
                 <div style={styles.muted}>
                     These fixes were made for you and are applied when you
@@ -1897,6 +2165,8 @@ const resolvePlan = (groups, rows) => {
         !isAuto(s) && !s.extra?.by_row && !s.extra?.parser_removed;
     const requiredIssue = s =>
         s.kind === KIND.ISSUE && s.severity === SEVERITY.MUST_FIX;
+    const advisoryIssue = s =>
+        s.kind === KIND.ISSUE && s.severity === SEVERITY.ADVISORY;
     const suggestions = rows.reduce((acc, r) => acc.concat(r.suggestions), []);
     const fixes = suggestions.filter(
         s =>
@@ -1915,17 +2185,33 @@ const resolvePlan = (groups, rows) => {
             )
             .map(s => s.row_number),
     ).size;
+    // Rows that are only worth a look are kept as uploaded, recorded as
+    // looked at, so the review counts them done and the tracker reaches
+    // 100% once everything else is resolved.
+    const kept = new Set(
+        suggestions
+            .filter(
+                s =>
+                    open(s) &&
+                    advisoryIssue(s) &&
+                    s.decision === DECISION.PENDING,
+            )
+            .map(s => s.row_number),
+    ).size;
     const decisions = {};
     groups.forEach(g => {
         if (g.kind === KIND.CORRECTION) decisions[g.key] = DECISION.ACCEPTED;
         else if (g.kind === KIND.REMOVAL) decisions[g.key] = DECISION.ACCEPTED;
         else if (g.severity === SEVERITY.MUST_FIX) {
             decisions[g.key] = DECISION.REMOVED;
+        } else if (g.severity === SEVERITY.ADVISORY) {
+            decisions[g.key] = DECISION.REJECTED;
         }
     });
     const parts = [];
     if (fixes) parts.push(`accept ${plural(fixes, 'fix', 'fixes')}`);
     if (removed) parts.push(`remove ${plural(removed, 'row')}`);
+    if (kept) parts.push(`keep ${plural(kept, 'row')} as uploaded`);
     return { decisions, label: parts.join(', '), anything: parts.length > 0 };
 };
 
@@ -1972,9 +2258,10 @@ const AllHeader = ({ groups, rows, canAct, busy, decideGroup }) => {
                         Resolve everything: {plan.label}
                     </Button>
                     <span style={styles.muted}>
-                        One click accepts every fix and removes the rows with
-                        required fixes you have not made yourself, so nothing
-                        left stops approval. You can undo any row below.
+                        One click accepts every fix, removes the rows with
+                        required fixes you have not made yourself and keeps the
+                        rows that are only worth a look as uploaded, so nothing
+                        is left to review. You can undo any row below.
                     </span>
                 </div>
             )}
@@ -2294,6 +2581,7 @@ export const GroupTabs = ({
                 filter={filter}
                 selected={picked}
                 onToggle={canAct ? toggle : null}
+                cluster={current?.code === REPEATED}
             />
         </div>
     );

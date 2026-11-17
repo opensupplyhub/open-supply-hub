@@ -7,6 +7,7 @@ import {
     Correction,
     Issue,
     Removal,
+    SuggestionRows,
     plural,
     describeCode,
     codeGuide,
@@ -37,6 +38,27 @@ describe('helpers', () => {
         expect(codeHelp('pii')).toMatch(/personal/);
         expect(codeHelp('')).toBe('');
     });
+
+    test('every flag the pipeline emits has an explainer and a way out', () => {
+        const issues = [
+            'empty_row', 'missing_name', 'missing_address', 'missing_country',
+            'unknown_country', 'address_po_box', 'pii', 'too_long',
+            'address_too_few', 'address_too_many', 'multiple_addresses',
+            'country_address_mismatch', 'name_incomplete', 'name_too_many',
+            'multiple_names', 'repeated_names', 'non_roman_characters',
+            'sector_unrecognized', 'column_swap', 'spelling_uncertain',
+        ];
+        issues.forEach(code => {
+            expect(codeGuide(code)).not.toBeNull();
+            expect(codeHelp(code, 'name')).not.toBe('');
+        });
+        expect(codeHelp('name_too_many', 'name')).toMatch(/only the facility name.*remove the row/);
+        // A code nobody wrote advice for still says what to do.
+        expect(codeHelp('something_new', 'address')).toBe(
+            'Fix the value so it holds only the address, or remove the row.',
+        );
+    });
+
 
     test('tiers: flags block, fixes and advisory notes are recommended', () => {
         const byCode = Object.fromEntries(GROUPS.map(g => [g.code, g]));
@@ -115,6 +137,19 @@ describe('ListFindings', () => {
         );
         expect(screen.getByText('Missing country column')).toBeInTheDocument();
         expect(screen.queryByText(/Findings about the whole file/)).toBeNull();
+    });
+
+    test('says when rows had only the formatting checks', () => {
+        const { container, rerender } = render(
+            <ListFindings filePass={{}} pipeline={{ model_error_rows: [], degraded: false }} />,
+        );
+        expect(container).toBeEmptyDOMElement();
+        rerender(<ListFindings filePass={{}} pipeline={{ model_error_rows: [4] }} />);
+        expect(
+            screen.getByText(/could not run for 1 row, so that row shows only the formatting checks/),
+        ).toBeInTheDocument();
+        rerender(<ListFindings filePass={{}} pipeline={{ model_error_rows: [4, 5], degraded: true }} />);
+        expect(screen.getByText(/most rows show only the formatting checks/)).toBeInTheDocument();
     });
 });
 
@@ -233,13 +268,20 @@ describe('GroupTabs', () => {
     test('resolve everything accepts the fixes and removes the required rows in one go', () => {
         const { decideGroup } = renderTabs();
         fireEvent.click(
-            screen.getByRole('button', { name: 'Resolve everything: accept 1 fix, remove 1 row' }),
+            screen.getByRole('button', {
+                name: 'Resolve everything: accept 1 fix, remove 1 row, keep 1 row as uploaded',
+            }),
         );
         expect(decideGroup).toHaveBeenCalledWith(
-            ['ISSUE:address_po_box:address', 'CORRECTION:workers_format:number_of_workers'],
+            [
+                'ISSUE:address_po_box:address',
+                'CORRECTION:workers_format:number_of_workers',
+                'ISSUE:repeated_names:name',
+            ],
             {
                 'ISSUE:address_po_box:address': 'REMOVED',
                 'CORRECTION:workers_format:number_of_workers': 'ACCEPTED',
+                'ISSUE:repeated_names:name': 'REJECTED',
             },
             false,
         );
@@ -256,8 +298,59 @@ describe('GroupTabs', () => {
         }));
         renderTabs({ rows: byHand });
         expect(
-            screen.getByRole('button', { name: 'Resolve everything: accept 1 fix' }),
+            screen.getByRole('button', {
+                name: 'Resolve everything: accept 1 fix, keep 1 row as uploaded',
+            }),
         ).toBeInTheDocument();
+    });
+
+    test('repeated names are shown as copies with a keep-one action', () => {
+        const flag = (id, rowNumber, group = { name: 'Same Name Ltd', rows: [5, 6] }) => ({
+            ...SUGGESTIONS.repeated,
+            id,
+            row_number: rowNumber,
+            extra: { group },
+        });
+        const rows = [
+            { row_number: 5, name: 'Same Name Ltd', address: 'Zone 1', suggestions: [flag(50, 5)] },
+            { row_number: 6, name: 'Same Name Ltd', address: 'Zone 2', suggestions: [flag(60, 6)] },
+            { row_number: 7, name: 'Other', address: 'Zone 3', suggestions: [flag(70, 7, { name: 'Other', rows: [7] })] },
+        ];
+        const decide = jest.fn();
+        render(
+            <SuggestionRows rows={rows} canAct busy={false} decide={decide} filter={null} cluster />,
+        );
+        expect(screen.getByText(/“Same Name Ltd” on 2 rows/)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Keep row 5, remove the other 1 copy' }));
+        expect(decide).toHaveBeenCalledWith([
+            { id: 50, decision: 'REJECTED' },
+            { id: 60, decision: 'REMOVED' },
+        ]);
+        // One cluster only, so no "every name" button; row 7 stands alone.
+        expect(screen.queryByRole('button', { name: /Keep one row per name/ })).toBeNull();
+    });
+
+    test('a moderator note still gets the explainer box', () => {
+        const note = {
+            ...GROUPS[0],
+            key: 'ISSUE:name_too_many:name',
+            code: 'name_too_many',
+            field: 'name',
+            severity: 'internal_note',
+        };
+        const noteRow = {
+            row_number: 9,
+            name: 'Example Ltd (formerly Other Ltd), Dhaka',
+            address: 'Road 1',
+            suggestions: [
+                { ...SUGGESTIONS.poBox, id: 90, row_number: 9, field: 'name', code: 'name_too_many', severity: 'internal_note' },
+            ],
+        };
+        renderTabs({ groups: [...GROUPS, note], rows: [...ROWS, noteRow] });
+        fireEvent.click(screen.getByRole('tab', { name: /name has details that are not the name/ }));
+        expect(screen.getByText(/Too much in the name/)).toBeInTheDocument();
+        expect(screen.getByText('Moderator note', { selector: 'span[data-tier]' })).toBeInTheDocument();
+        expect(screen.getByText(/only the facility name/)).toBeInTheDocument();
     });
 
     test('the Needs-you tab accepts every suggested fix or keeps everything', () => {

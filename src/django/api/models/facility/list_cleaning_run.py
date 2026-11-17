@@ -66,6 +66,14 @@ class ListCleaningRun(models.Model):
         default=dict,
         blank=True,
         help_text='Token usage and wall-clock reported by the pipeline.')
+    pipeline = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='How the state machine ran: execution name, batches '
+                  'total and failed, the rows the model never judged '
+                  '(model_error_rows), whether the report is rules-only '
+                  'for half the list or more (degraded), and how many '
+                  'model suggestions were rejected by the contract.')
     error = models.TextField(
         blank=True,
         default='',

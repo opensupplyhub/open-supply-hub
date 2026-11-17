@@ -158,6 +158,7 @@ export const RUN = Object.freeze({
     prompt_version: 'stub',
     file_pass: {},
     usage: {},
+    pipeline: {},
     error: '',
     created_at: '2026-11-09T10:00:00Z',
     started_at: '2026-11-09T10:00:00Z',

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { bool, func, number, object, shape } from 'prop-types';
+import { bool, func, number, object, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -63,6 +64,11 @@ const countdown = seconds => {
 // list-page panel does, and stop pretending after a while.
 const POLL_INTERVAL_MS = 3000;
 const MAX_WAIT_MS = 3 * 60 * 1000;
+// What the checks are aimed to take. The bar below is an estimate
+// against this, not a measurement: the pipeline reports nothing until
+// it is done, so the bar fills over the first minute and then holds.
+const EXPECTED_MS = 60 * 1000;
+const HOLD_AT = 92;
 
 // The upload as four steps, so the review reads as one of them; the
 // note under the bar says a human moderator still checks the list after
@@ -163,6 +169,21 @@ const styles = Object.freeze({
         // bottom edge, and the body supplies the side gutters.
         padding: 0,
     }),
+    progress: Object.freeze({
+        width: '100%',
+        maxWidth: '420px',
+        margin: '8px auto 0 auto',
+        textAlign: 'left',
+    }),
+    phaseList: Object.freeze({
+        listStyle: 'none',
+        padding: 0,
+        margin: '10px 0 0 0',
+        color: '#555',
+        fontSize: '14px',
+    }),
+    phase: Object.freeze({}),
+    phaseDone: Object.freeze({ color: '#2e7d32' }),
     centred: Object.freeze({
         display: 'flex',
         flexDirection: 'column',
@@ -198,36 +219,95 @@ const styles = Object.freeze({
     }),
 });
 
-const Checking = ({ timedOut, onContinue }) => (
-    <div style={styles.centred}>
-        <CircularProgress size={48} />
-        <Typography style={styles.heading}>
-            {timedOut
-                ? 'Still checking your list'
-                : 'Checking your list for problems'}
-        </Typography>
-        <Typography>
-            Your file has been uploaded. We are checking every row for issues
-            that need your review before a human moderator sees it. This usually
-            takes a few minutes.
-        </Typography>
-        {timedOut && (
-            <Typography>
-                This is taking longer than usual. You can continue to your list
-                now and the issues will appear there when they are ready.
-            </Typography>
-        )}
-        <Button
-            variant={timedOut ? 'contained' : 'text'}
-            color="primary"
-            onClick={onContinue}
-        >
-            {timedOut ? 'Continue to my list' : 'Skip and go to my list'}
-        </Button>
-    </div>
-);
+const useElapsed = startedAt => {
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+    return startedAt ? Math.max(0, now - startedAt) : 0;
+};
 
-Checking.propTypes = { timedOut: bool.isRequired, onContinue: func.isRequired };
+/*
+ * Two waits happen here. First the file is read into rows (locally that
+ * is the upload request itself; deployed, a parse job), and only then
+ * the checks run. The screen names the phase it is in, and the bar is
+ * elapsed time against the one-minute aim.
+ */
+const Checking = ({ timedOut, onContinue, phase, rowsTotal, startedAt }) => {
+    const elapsed = useElapsed(startedAt);
+    const percent = Math.min(
+        HOLD_AT,
+        Math.round((100 * elapsed) / EXPECTED_MS),
+    );
+    const steps = [
+        { label: 'File uploaded', done: true },
+        { label: 'Reading the rows', done: phase === 'checking' },
+        {
+            label: rowsTotal
+                ? `Checking ${plural(rowsTotal, 'row')} for problems`
+                : 'Checking every row for problems',
+            done: false,
+        },
+    ];
+    return (
+        <div style={styles.centred}>
+            <CircularProgress size={48} />
+            <Typography style={styles.heading}>
+                {timedOut
+                    ? 'Still checking your list'
+                    : 'Checking your list for problems'}
+            </Typography>
+            <Typography>
+                Your file has been uploaded. We are checking every row for
+                issues that need your review before a human moderator sees it.
+                This usually takes under a minute. Making the fixes we suggest
+                makes it more likely that your list is accepted.
+            </Typography>
+            <div style={styles.progress}>
+                <LinearProgress
+                    variant="determinate"
+                    value={percent}
+                    aria-label="Estimated progress of the checks"
+                />
+                <ul style={styles.phaseList}>
+                    {steps.map(step => (
+                        <li
+                            key={step.label}
+                            style={step.done ? styles.phaseDone : styles.phase}
+                        >
+                            {step.done ? '\u2713 ' : '\u2022 '}
+                            {step.label}
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            {timedOut && (
+                <Typography>
+                    This is taking longer than usual. You can continue to your
+                    list now and the issues will appear there when they are
+                    ready.
+                </Typography>
+            )}
+            <Button
+                variant={timedOut ? 'contained' : 'text'}
+                color="primary"
+                onClick={onContinue}
+            >
+                {timedOut ? 'Continue to my list' : 'Skip and go to my list'}
+            </Button>
+        </div>
+    );
+};
+
+Checking.defaultProps = { phase: 'reading', rowsTotal: 0, startedAt: null };
+Checking.propTypes = {
+    timedOut: bool.isRequired,
+    onContinue: func.isRequired,
+    phase: string,
+    rowsTotal: number,
+    startedAt: number,
+};
 
 const Unavailable = ({ onContinue }) => (
     <div style={styles.centred}>
@@ -525,7 +605,10 @@ const ReviewStep = ({ review }) => {
                 showingAuto={showAuto}
                 onViewFixes={() => setShowAuto(s => !s)}
             />
-            <ListFindings filePass={run.file_pass || {}} />
+            <ListFindings
+                filePass={run.file_pass || {}}
+                pipeline={run.pipeline || {}}
+            />
             <GroupTabs
                 groups={data.groups || []}
                 rows={rows}
@@ -795,7 +878,15 @@ const ListCleaningReviewDialog = ({
     let activeStep = STEP.CHECKS;
     let content;
     if (waiting) {
-        content = <Checking timedOut={timedOut} onContinue={onContinue} />;
+        content = (
+            <Checking
+                timedOut={timedOut}
+                onContinue={onContinue}
+                phase={run ? 'checking' : 'reading'}
+                rowsTotal={summary ? summary.rows_total || 0 : 0}
+                startedAt={openedAt}
+            />
+        );
     } else if (runStatus === RUN_STATUS.FAILED || !data || !run) {
         content = <Unavailable onContinue={onContinue} />;
     } else if (finished) {

@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 from datetime import timedelta
-from io import StringIO
+from io import BytesIO, StringIO
 from unittest.mock import MagicMock, patch
 
 from django.contrib.gis.geos import Point
@@ -84,6 +84,71 @@ SAMPLE_RESULT = {
     ],
     'usage': {'input_tokens': 10, 'output_tokens': 20, 'seconds': 1.5},
     'prompt_version': '01',
+}
+
+
+# What the auto-lists-cleaning state machine returns (OSDEV-3724): the
+# prompt's record shape plus, per change or issue, which layer made it;
+# per row, flags the model withdrew, suggestions the contract rejected
+# and whether its batch ever came back; and per run, the batch counts.
+SAMPLE_RESULT_V2 = {
+    'list_id': '1',
+    'execution': 'list-1-run-9',
+    'file_pass': {
+        'row_count': 3,
+        'exact_duplicates': [{'keep': 2, 'remove': 4, 'match': 'exact'}],
+        'repeated_names': [{'name': 'Fairview Knits', 'rows': [2, 3]}],
+        'header_issues': [
+            {'column': 'Country', 'expected': 'country', 'issue': 'case'},
+        ],
+    },
+    'records': [
+        {
+            'row': 2, 'status': 'auto_corrected',
+            'changes': [
+                {'field': 'country', 'value': 'VN',
+                 'reason': 'country_code', 'source': 'model'},
+                {'field': 'address',
+                 'value': '36 Tay Thanh Street, Ho Chi Minh City',
+                 'reason': 'whitespace+spelling', 'source': 'rules+model',
+                 'rules_value': '36 Tay Thanh Streeet, Ho Chi Minh City'},
+            ],
+            'issues': [
+                {'code': 'repeated_names', 'severity': 'internal_note',
+                 'field': 'name', 'note': 'The same name is on row 3.',
+                 'source': 'rules'},
+            ],
+            'withdrawn': [
+                {'code': 'unknown_country', 'field': 'country',
+                 'resolved_by': 'country_code'},
+            ],
+            'rejected': [
+                {'field': 'name', 'value': 'Other', 'reason': 'spelling',
+                 'problem': 'more than one word changed'},
+            ],
+        },
+        {
+            'row': 3, 'status': 'needs_your_action',
+            'changes': [],
+            'issues': [
+                {'code': 'pii', 'severity': 'must_fix', 'field': 'name',
+                 'note': 'The name looks like a person.',
+                 'source': 'rules'},
+            ],
+            'model_error': True,
+        },
+        {
+            'row': 4, 'status': 'removed', 'changes': [], 'issues': [],
+            'removed_reason': 'duplicate', 'duplicate_of': 2,
+        },
+    ],
+    'usage': {'input_tokens': 100, 'output_tokens': 50,
+              'cache_creation_input_tokens': 0,
+              'cache_read_input_tokens': 0, 'seconds': 12.0},
+    'prompt_version': '02',
+    'batches': {'total': 2, 'failed': 1},
+    'model_errors': 1,
+    'degraded': True,
 }
 
 
@@ -191,23 +256,211 @@ class ListCleaningFeedbackTest(APITestCase):
     @patch('api.services.list_cleaning.runners.boto3')
     def test_step_functions_runner_starts_and_ingests(self, boto3):
         client = MagicMock()
-        boto3.client.return_value = client
+        boto3.session.Session.return_value.client.return_value = client
         client.start_execution.return_value = {'executionArn': 'arn:exec'}
         run = start_run(self.list)
         self.assertEqual(run.status, ListCleaningRun.RUNNING)
         self.assertEqual(run.execution_arn, 'arn:exec')
         sent = client.start_execution.call_args.kwargs
         self.assertEqual(sent['stateMachineArn'], 'arn:aws:states:x')
-        self.assertIn('"list_id"', sent['input'])
+        self.assertEqual(sent['name'], f'list-{self.list.id}-run-{run.id}')
+        payload = json.loads(sent['input'])
+        self.assertEqual(payload['list_id'], str(self.list.id))
+        self.assertEqual([r['row'] for r in payload['rows']], [2, 3, 4])
 
         client.describe_execution.return_value = {'status': 'RUNNING'}
         self.assertEqual(refresh_run(run).status, ListCleaningRun.RUNNING)
 
-        import json
         client.describe_execution.return_value = {
             'status': 'SUCCEEDED', 'output': json.dumps(SAMPLE_RESULT)}
         self.assertEqual(refresh_run(run).status, ListCleaningRun.COMPLETE)
         self.assertEqual(run.suggestions.count(), 6)
+
+    @override_switch(SWITCH_NAME, active=True)
+    @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
+                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
+                       LIST_CLEANING_AWS_REGION='us-east-1',
+                       LIST_CLEANING_AWS_PROFILE='local-profile')
+    @patch('api.services.list_cleaning.runners.boto3')
+    def test_step_functions_clients_use_the_named_profile(self, boto3):
+        # docker-compose hands the container MinIO credentials in the
+        # AWS_* variables, so the local profile must win over them.
+        client = MagicMock()
+        boto3.session.Session.return_value.client.return_value = client
+        client.start_execution.return_value = {'executionArn': 'arn:exec'}
+        start_run(self.list)
+        boto3.session.Session.assert_called_with(
+            profile_name='local-profile')
+        _, kwargs = boto3.session.Session.return_value.client.call_args
+        self.assertEqual(kwargs['region_name'], 'us-east-1')
+        self.assertEqual(kwargs['config'].read_timeout, 20)
+        self.assertEqual(kwargs['config'].retries, {'max_attempts': 2})
+
+    @override_switch(SWITCH_NAME, active=True)
+    @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
+                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
+                       LIST_CLEANING_RESULTS_BUCKET='auto-lists-results',
+                       LIST_CLEANING_RESULTS_BUCKET_OWNER='123456789012')
+    @patch('api.services.list_cleaning.runners.INLINE_INPUT_LIMIT', 64)
+    @patch('api.services.list_cleaning.runners.boto3')
+    def test_large_list_goes_through_the_inbox(self, boto3):
+        # The execution input is capped at 256 KB; past the limit the
+        # rows go to the bucket's inbox and the execution gets a pointer.
+        client = MagicMock()
+        boto3.session.Session.return_value.client.return_value = client
+        client.start_execution.return_value = {'executionArn': 'arn:exec'}
+        run = start_run(self.list)
+        self.assertEqual(run.status, ListCleaningRun.RUNNING, run.error)
+        put = client.put_object.call_args.kwargs
+        key = f'inbox/{self.list.id}/run-{run.id}.json'
+        self.assertEqual(put['Bucket'], 'auto-lists-results')
+        self.assertEqual(put['Key'], key)
+        self.assertEqual(put['ExpectedBucketOwner'], '123456789012')
+        self.assertEqual(len(json.loads(put['Body'])), 3)
+        sent = json.loads(client.start_execution.call_args.kwargs['input'])
+        self.assertEqual(sent, {
+            'list_id': str(self.list.id),
+            'rows_s3': {'bucket': 'auto-lists-results', 'key': key}})
+
+    @override_switch(SWITCH_NAME, active=True)
+    @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
+                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
+                       LIST_CLEANING_RESULTS_BUCKET='',
+                       LIST_CLEANING_RESULTS_BUCKET_OWNER='')
+    @patch('api.services.list_cleaning.runners.INLINE_INPUT_LIMIT', 64)
+    @patch('api.services.list_cleaning.runners.boto3')
+    def test_large_list_without_a_bucket_fails_the_run(self, boto3):
+        run = start_run(self.list)
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        self.assertIn('LIST_CLEANING_RESULTS_BUCKET', run.error)
+        self.assertFalse(
+            boto3.session.Session.return_value.client.return_value
+            .start_execution.called)
+
+    @override_switch(SWITCH_NAME, active=True)
+    @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
+                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
+                       LIST_CLEANING_RESULTS_BUCKET='auto-lists-results',
+                       LIST_CLEANING_RESULTS_BUCKET_OWNER='123456789012')
+    @patch('api.services.list_cleaning.runners.boto3')
+    def test_result_is_read_from_the_configured_bucket(self, boto3):
+        client = MagicMock()
+        boto3.session.Session.return_value.client.return_value = client
+        client.start_execution.return_value = {'executionArn': 'arn:exec'}
+        run = start_run(self.list)
+
+        # A pointer anywhere but the configured bucket is refused.
+        client.describe_execution.return_value = {
+            'status': 'SUCCEEDED',
+            'output': json.dumps({'result_s3': {
+                'bucket': 'someone-elses', 'key': 'lists/1/x/result.json'}})}
+        run = refresh_run(run)
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        self.assertIn('someone-elses', run.error)
+        self.assertFalse(client.get_object.called)
+
+        run = start_run(self.list, force=True)
+        client.describe_execution.return_value = {
+            'status': 'SUCCEEDED',
+            'output': json.dumps({'result_s3': {
+                'bucket': 'auto-lists-results',
+                'key': 'lists/1/x/result.json'}, 'degraded': True})}
+        client.get_object.return_value = {
+            'Body': BytesIO(json.dumps(SAMPLE_RESULT_V2).encode())}
+        run = refresh_run(run)
+        self.assertEqual(run.status, ListCleaningRun.COMPLETE, run.error)
+        got = client.get_object.call_args.kwargs
+        self.assertEqual(got['Bucket'], 'auto-lists-results')
+        self.assertEqual(got['Key'], 'lists/1/x/result.json')
+        self.assertEqual(got['ExpectedBucketOwner'], '123456789012')
+        self.assertEqual(run.prompt_version, '02')
+
+    @override_switch(SWITCH_NAME, active=True)
+    @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
+                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x')
+    @patch('api.services.list_cleaning.runners.boto3')
+    def test_execution_that_did_not_succeed_fails_the_run(self, boto3):
+        client = MagicMock()
+        boto3.session.Session.return_value.client.return_value = client
+        client.start_execution.return_value = {'executionArn': 'arn:exec'}
+        run = start_run(self.list)
+        client.describe_execution.return_value = {
+            'status': 'TIMED_OUT', 'error': 'States.Timeout',
+            'cause': 'took too long'}
+        run = refresh_run(run)
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        self.assertIn('TIMED_OUT', run.error)
+        self.assertEqual(run.closed_reason, ListCleaningRun.FAILED_RUN)
+
+    def test_ingests_the_state_machine_record_shape(self):
+        run = ListCleaningRun.objects.create(
+            facility_list=self.list, runner=ListCleaningRun.STEP_FUNCTIONS,
+            review_until=timezone.now() + timedelta(minutes=60))
+        with self.assertLogs('api.services.list_cleaning.service',
+                             level='WARNING') as logs:
+            ingest_result(run, SAMPLE_RESULT_V2)
+        self.assertIn('rules-only for 1 rows', logs.output[0])
+        self.assertIn('1 of 2 batches failed', logs.output[0])
+
+        by_code = {(s.row_number, s.code): s for s in run.suggestions.all()}
+        country = by_code[(2, 'country_code')]
+        self.assertEqual(country.extra['source'], 'model')
+        self.assertTrue(country.extra['auto'])
+        # The flag the model resolved travels with the fix that resolved it.
+        self.assertEqual(country.extra['withdrawn'],
+                         [{'code': 'unknown_country', 'field': 'country'}])
+
+        address = by_code[(2, 'whitespace+spelling')]
+        self.assertEqual(address.extra['source'], 'rules+model')
+        self.assertEqual(address.extra['rules_value'],
+                         '36 Tay Thanh Streeet, Ho Chi Minh City')
+        self.assertEqual(address.decision, ListCleaningSuggestion.PENDING)
+        self.assertNotIn('withdrawn', address.extra)
+
+        # Filed for the moderator by the pipeline, shown to the
+        # contributor as worth a look here.
+        repeated = by_code[(2, 'repeated_names')]
+        self.assertEqual(repeated.severity, ListCleaningSuggestion.ADVISORY)
+        # The copies travel with the flag, so the review can show them
+        # together and offer to keep one.
+        self.assertEqual(repeated.extra, {
+            'source': 'rules',
+            'group': {'name': 'Fairview Knits', 'rows': [2, 3]}})
+
+        pii = by_code[(3, 'pii')]
+        self.assertEqual(pii.severity, ListCleaningSuggestion.MUST_FIX)
+        self.assertTrue(pii.extra['model_error'])
+        self.assertNotIn('model_error', country.extra)
+
+        self.assertEqual(run.pipeline, {
+            'execution': 'list-1-run-9',
+            'batches_total': 2,
+            'batches_failed': 1,
+            'model_error_rows': [3],
+            'degraded': True,
+            'rejected': 1,
+        })
+        self.assertEqual(
+            run.file_pass['header_issues'][0]['note'],
+            'The column "Country" was read as "country"; the template '
+            'spells it that way.')
+        self.assertEqual(run.usage['seconds'], 12.0)
+
+        self.client.force_login(self.user)
+        response = self.client.get(self.url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['run']['pipeline']['degraded'])
+        self.assertEqual(response.data['run']['pipeline']['model_error_rows'],
+                         [3])
+        codes = {g['code']: g['severity'] for g in response.data['groups']}
+        self.assertEqual(codes['repeated_names'], 'advisory')
+
+    def test_stub_and_import_leave_pipeline_counts_empty(self):
+        run = self._ingested_run()
+        self.assertEqual(run.pipeline, {
+            'execution': '', 'batches_total': 0, 'batches_failed': 0,
+            'model_error_rows': [], 'degraded': False, 'rejected': 0})
+        self.assertEqual(run.file_pass['header_issues'], [])
 
     @override_switch(SWITCH_NAME, active=True)
     @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
@@ -258,14 +511,16 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNone(response.data['run'])
 
-    def test_contributor_sees_must_fix_but_not_internal_notes(self):
+    def test_contributor_sees_must_fix_and_notes_as_advisory(self):
+        # The pipeline's moderator notes reach the contributor as
+        # advisory flags they can fix or remove.
         self._ingested_run()
         self.client.force_login(self.user)
         response = self.client.get(self.url())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         severities = [s['severity'] for row in response.data['rows']
                       for s in row['suggestions'] if s['kind'] == 'ISSUE']
-        self.assertEqual(severities, ['must_fix'])
+        self.assertEqual(severities, ['advisory', 'must_fix'])
         self.assertEqual(response.data['summary']['rows_must_fix'], 1)
         self.assertEqual(response.data['summary']['corrections_total'], 3)
         self.assertEqual(response.data['summary']['removals'], 1)
@@ -279,14 +534,30 @@ class ListCleaningFeedbackTest(APITestCase):
             response.data['summary']['fixes_to_review_decided'], 0)
         self.assertEqual(response.data['summary']['must_fix_total'], 1)
 
-    def test_superuser_sees_internal_notes(self):
+    def test_superuser_sees_the_same_flags(self):
         self._ingested_run()
         self.client.force_login(self.superuser)
         response = self.client.get(self.url())
         severities = sorted(s['severity'] for row in response.data['rows']
                             for s in row['suggestions']
                             if s['kind'] == 'ISSUE')
-        self.assertEqual(severities, ['internal_note', 'must_fix'])
+        self.assertEqual(severities, ['advisory', 'must_fix'])
+
+    def test_a_note_can_be_fixed_or_removed(self):
+        run = self._ingested_run()
+        note = run.suggestions.get(code='address_too_few')
+        self.assertEqual(note.severity, ListCleaningSuggestion.ADVISORY)
+        self.client.force_login(self.user)
+        response = self.client.post(
+            self.url('decisions/'),
+            {'decisions': [{'id': note.id, 'decision': 'EDITED',
+                            'value': '36 Tay Thanh Street, Tan Phu, '
+                                     'Ho Chi Minh City 700000'}]},
+            format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK,
+                         response.data)
+        note.refresh_from_db()
+        self.assertEqual(note.decision, ListCleaningSuggestion.EDITED)
 
     def test_other_contributor_gets_404(self):
         self._ingested_run()
@@ -753,7 +1024,9 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertNotEqual(response.status_code,
                             status.HTTP_400_BAD_REQUEST, response.data)
 
-    def test_internal_notes_alone_close_the_window_at_once(self):
+    def test_a_note_alone_opens_the_review(self):
+        # A pipeline note is now something the contributor can act on,
+        # so a list whose only finding is a note still gets its review.
         run = ListCleaningRun.objects.create(
             facility_list=self.list, runner=ListCleaningRun.IMPORT,
             review_until=timezone.now() + timedelta(minutes=60))
@@ -761,16 +1034,17 @@ class ListCleaningFeedbackTest(APITestCase):
             'row': 2, 'status': 'needs_your_action', 'changes': [],
             'issues': [{'code': 'address_too_few',
                         'severity': 'internal_note', 'field': 'address',
-                        'note': 'For the moderator only.'}],
+                        'note': 'Only a city, no street.'}],
         }], 'file_pass': {}})
         run.refresh_from_db()
         self.assertEqual(run.suggestions.count(), 1)
-        # the contributor is shown nothing, so there is nothing to wait for
-        self.assertEqual(run.closed_reason, ListCleaningRun.CLEAN)
+        self.assertIsNone(run.closed_at)
         self.client.force_login(self.user)
         response = self.client.get(self.url())
-        self.assertFalse(response.data['window_open'])
-        self.assertEqual(response.data['rows'], [])
+        self.assertTrue(response.data['window_open'])
+        self.assertEqual(
+            [s['severity'] for s in response.data['rows'][0]['suggestions']],
+            ['advisory'])
 
     def test_parser_duplicate_is_shown_but_cannot_be_put_back(self):
         # The parser dropped the exact repeat at upload, before the

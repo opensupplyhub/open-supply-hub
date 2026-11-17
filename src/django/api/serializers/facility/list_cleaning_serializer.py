@@ -26,7 +26,7 @@ class ListCleaningRunSerializer(ModelSerializer):
     class Meta:
         model = ListCleaningRun
         fields = ('id', 'status', 'runner', 'prompt_version', 'file_pass',
-                  'usage', 'error', 'created_at', 'started_at',
+                  'usage', 'pipeline', 'error', 'created_at', 'started_at',
                   'completed_at', 'applied_at', 'review_until',
                   'submitted_at', 'closed_at', 'closed_reason')
 
