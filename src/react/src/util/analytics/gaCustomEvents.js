@@ -100,6 +100,26 @@ export const sendLocationPartnerExternalLinkClick = externalLinkPayload => {
     });
 };
 
+/**
+ * The "Send us your suggestions" link on a Spotlight section's "Why beta?"
+ * card (OSDEV-3778): the one signal for whether the beta feedback loop is
+ * used. `partnerFieldName` is the label(s) of the section's beta field(s).
+ */
+export const sendLocationPartnerBetaFeedbackLinkClick = betaFeedbackPayload => {
+    const { destinationUrl, destinationDomain } = getDestinationParts(
+        betaFeedbackPayload.destinationUrl,
+    );
+    sendGaEvent(GA_EVENTS.LOCATION_PARTNER_BETA_FEEDBACK_LINK_CLICK, {
+        partner_group: betaFeedbackPayload.partnerGroup,
+        link_placement: betaFeedbackPayload.linkPlacement,
+        destination_url: destinationUrl,
+        destination_domain: destinationDomain,
+        os_id: betaFeedbackPayload.osId,
+        partner_field_name: betaFeedbackPayload.partnerFieldName.toUpperCase(),
+        viewer_user_id: betaFeedbackPayload.viewerUserId,
+    });
+};
+
 export const sendContributorExternalWebsiteLinkClick = contributorWebsitePayload => {
     const { destinationUrl, destinationDomain } = getDestinationParts(
         contributorWebsitePayload.destinationUrl,
