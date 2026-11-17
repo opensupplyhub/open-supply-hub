@@ -70,7 +70,10 @@ describe('ListCleaningReviewDialog', () => {
         const { onContinue } = renderDialog(reviewData({ run: { status: 'RUNNING' } }));
         expect(screen.getByText('Checking your list for problems')).toBeInTheDocument();
         expect(
-            screen.getByText(/under a minute. Making the fixes we suggest makes it more likely/),
+            screen.getByText(/makes it more likely that your list will be accepted/),
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText('under a minute', { selector: 'strong' }),
         ).toBeInTheDocument();
         expect(screen.getByText(/Reading the rows/)).toBeInTheDocument();
         expect(screen.getByRole('progressbar', { name: /Estimated progress/ })).toBeInTheDocument();

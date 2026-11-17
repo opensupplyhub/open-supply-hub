@@ -261,8 +261,9 @@ const Checking = ({ timedOut, onContinue, phase, rowsTotal, startedAt }) => {
             <Typography>
                 Your file has been uploaded. We are checking every row for
                 issues that need your review before a human moderator sees it.
-                This usually takes under a minute. Making the fixes we suggest
-                makes it more likely that your list is accepted.
+                Making fixes to these issues makes it more likely that your list
+                will be accepted. This usually takes{' '}
+                <strong>under a minute</strong>.
             </Typography>
             <div style={styles.progress}>
                 <LinearProgress
