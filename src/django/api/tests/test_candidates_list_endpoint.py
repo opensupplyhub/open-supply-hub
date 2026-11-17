@@ -1,3 +1,4 @@
+import math
 import unittest.mock
 from datetime import timedelta
 
@@ -401,6 +402,61 @@ class CandidatesListEndpointTest(APITestCase):
 
     # --- cached ordering ----------------------------------------------
 
+    def _suggested_match_ids(self, candidate):
+        detail = self.client.get(
+            f'/api/v1/production-locations/{candidate.id}/'
+        )
+        self.assertEqual(status.HTTP_200_OK, detail.status_code, detail.data)
+        return [
+            match['os_id'] for match in detail.data['suggested_matches']
+        ]
+
+    def test_nearby_agrees_with_the_detail_endpoint_at_high_latitude(self):
+        # A degree of longitude is short this far north, so a facility
+        # 400 m due east is many more degrees away than at the equator.
+        # The pre-filter has to widen by the candidate's own latitude to
+        # see it, in the list as on the detail endpoint.
+        for latitude in (80, 85):
+            east_400m = 400 / (111_195 * math.cos(math.radians(latitude)))
+            candidate = self._create_candidate(
+                f'eg-arctic-{latitude}',
+                polygon=None,
+                location=Point(20, latitude),
+            )
+            neighbour = self._create_facility(
+                self.list_source,
+                name=f'Confirmed at {latitude} north',
+                location=Point(20 + east_400m, latitude),
+            )
+            with self.subTest(latitude=latitude):
+                self.assertEqual(
+                    [neighbour.id], self._suggested_match_ids(candidate)
+                )
+                properties = self._props(self._get())[candidate.id]
+                self.assertEqual(1, properties['nearby_count'])
+                self.assertEqual(neighbour.id, properties['nearest']['os_id'])
+                self.assertNotIn(
+                    candidate.id, self._ids(self._get(has_nearby='false'))
+                )
+
+    def test_nearby_reaches_the_edge_of_the_radius(self):
+        # 499.9 m due east on the equator: inside the radius, and inside
+        # the pre-filter box only if a degree is not taken to be longer
+        # than it is on the sphere ST_DistanceSphere measures on.
+        candidate = self._create_candidate(
+            'eg-edge', polygon=None, location=Point(40, 0)
+        )
+        neighbour = self._create_facility(
+            self.list_source,
+            name='Confirmed at the edge',
+            location=Point(40 + 499.9 / 111_195, 0),
+        )
+
+        self.assertEqual([neighbour.id], self._suggested_match_ids(candidate))
+        properties = self._props(self._get())[candidate.id]
+        self.assertEqual(1, properties['nearby_count'])
+        self.assertEqual(neighbour.id, properties['nearest']['os_id'])
+
     def test_nearby_ordering_is_cached_per_filter_set(self):
         first = self._get(sort='-nearby_count', limit=2)
         self.assertEqual(4, first.data['count'])
@@ -458,6 +514,37 @@ class CandidatesListEndpointTest(APITestCase):
         by_country = self._get(sort='-nearby_count', country='MX')
         self.assertNotIn(self.c_mexico.id, self._ids(by_country))
 
+    def test_cached_has_nearby_filter_is_rechecked_on_the_page(self):
+        first = self._get(has_nearby='false')
+        self.assertIn(self.c_alone.id, self._ids(first))
+
+        # A facility confirmed next to it after the order was cached: the
+        # id is still in the cached list, but the row now has a neighbour
+        # and must not be served under has_nearby=false.
+        self._create_facility(
+            self.list_source,
+            name='Confirmed near alone',
+            location=Point(0.5 + NEAR_OFFSET_DEG, 0.5),
+        )
+
+        response = self._get(has_nearby='false')
+        self.assertNotIn(self.c_alone.id, self._ids(response))
+        for properties in self._props(response).values():
+            self.assertEqual(0, properties['nearby_count'])
+
+    def test_cache_hit_does_not_run_the_vote_aggregate(self):
+        voted_tallies = (
+            'api.services.candidate_listing.candidate_validation'
+            '.voted_tallies'
+        )
+        first = self._get(sort='-nearby_count', state='unverified')
+
+        with unittest.mock.patch(voted_tallies) as aggregate:
+            cached = self._get(sort='-nearby_count', state='unverified')
+
+        aggregate.assert_not_called()
+        self.assertEqual(self._ids(first), self._ids(cached))
+
     def test_order_cache_key_changes_with_the_settings_it_depends_on(self):
         params = {'sort': '-nearby_count', 'page': 1, 'limit': 50}
         with override_settings(CANDIDATE_SUGGESTION_RADIUS_M=500):
@@ -496,6 +583,15 @@ class CandidatesListEndpointTest(APITestCase):
             [self.c_near_zero.id],
             self._ids(self._get(confidence_max=0.4)),
         )
+
+    def test_confidence_filters_leave_out_candidates_without_one(self):
+        unscored = self._create_candidate(
+            'eg-0007', polygon=None, location=Point(8, 8), confidence=None
+        )
+
+        self.assertIn(unscored.id, self._ids(self._get()))
+        self.assertNotIn(unscored.id, self._ids(self._get(confidence_min=0)))
+        self.assertNotIn(unscored.id, self._ids(self._get(confidence_max=1)))
 
     def test_filter_by_country_and_source(self):
         self.assertEqual(

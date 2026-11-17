@@ -14,7 +14,9 @@ from api.serializers.v1.candidates_bbox_query_param_serializer import (
 from api.services import candidate_validation
 
 DEFAULT_PAGE_SIZE = 50
-MAX_PAGE_SIZE = 500
+# Named apart from ``PaginationConfig.MAX_PAGE_SIZE`` (250), which caps
+# other v1 lists: this cap is the candidate list's own.
+CANDIDATE_LIST_MAX_PAGE_SIZE = 500
 
 # The sort keys the list accepts. Nearby keys are computed on read by
 # api/services/candidate_listing.py; the rest are columns.
@@ -91,8 +93,9 @@ class CandidatesListQueryParamSerializer(Serializer):
     ``GET /api/v1/production-locations/candidates/`` (OSDEV-3754).
 
     Every parameter is optional. ``bbox`` has the map mode's format but
-    no size cap; ``limit`` is clamped to ``MAX_PAGE_SIZE`` rather than
-    rejected, as in the map mode. ``state`` and ``country`` accept a
+    no size cap; ``limit`` is clamped to
+    ``CANDIDATE_LIST_MAX_PAGE_SIZE`` rather than rejected, as in the map
+    mode. ``state`` and ``country`` accept a
     comma-separated list.
     '''
     bbox = CharField(required=False)
@@ -131,8 +134,8 @@ class CandidatesListQueryParamSerializer(Serializer):
         return parse_bbox(value, max_side_degrees=None)
 
     def validate_limit(self, value):
-        """Clamp to ``MAX_PAGE_SIZE`` rather than reject, like the map mode."""
-        return min(value, MAX_PAGE_SIZE)
+        """Clamp to the cap rather than reject, like the map mode."""
+        return min(value, CANDIDATE_LIST_MAX_PAGE_SIZE)
 
     def validate_country(self, value):
         """Comma-separated alpha-2 codes, upper-cased and de-duplicated."""
