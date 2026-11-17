@@ -184,11 +184,17 @@ def handler(event, context):
         }
     except ListUnderReview as exc:
         # Waiting is not a failure. The row goes back to FAILED because that
-        # is what retry_failed_lists scans, with its attempt count reset so
-        # the wait costs none of CONTRIBOT_MAX_ATTEMPTS; the state machine
-        # catches this error by name and skips the failure notification.
+        # is what retry_failed_lists scans, and the attempt it counted for
+        # this run is given back so the wait costs none of
+        # CONTRIBOT_MAX_ATTEMPTS; earlier real failures keep their count.
+        # The state machine catches this error by name and skips the
+        # failure notification.
         logger.info("Leaving list_id=%s for a later run: %s", list_id, exc)
-        repository.update_list(list_id, status=STATUS_FAILED, attempt_count=0)
+        repository.update_list(
+            list_id,
+            status=STATUS_FAILED,
+            attempt_count=max(0, int(item.get("attempt_count") or 0) - 1),
+        )
         raise
     except Exception:
         logger.exception("Failed processing list_id=%s", list_id)

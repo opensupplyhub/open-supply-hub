@@ -2282,6 +2282,14 @@ class ContriBot:
                 )
                 & (self.df_similarity.ratio > 0.75)
             ]
+            # A pair with a row the review removed is resolved already:
+            # the moderator reads that row as gone, so it is neither
+            # diagnosed nor listed on the Similarities sheet.
+            if self.removed_rows:
+                self.df_similarity = self.df_similarity[
+                    ~self.df_similarity.i.isin(self.removed_rows)
+                    & ~self.df_similarity.j.isin(self.removed_rows)
+                ]
 
             df_duplicates = self.df_similarity[self.df_similarity.ratio >= 1.0]
             num_identical = len(df_duplicates)

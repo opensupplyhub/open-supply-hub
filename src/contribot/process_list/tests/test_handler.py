@@ -342,17 +342,31 @@ def test_handler_reports_on_the_post_review_list(
     assert result["num_lines"] == 9
 
 
+@pytest.mark.parametrize(
+    "attempts_before,attempts_after",
+    [
+        # first run, straight from fetch_lists
+        (None, 0),
+        # a retry: retry_failed_lists counted this attempt, so only that
+        # one is given back and the two real failures before it stay
+        (3, 2),
+    ],
+)
 @patch("handler.OSHubAPI")
 @patch("handler.ContribotWorkbook")
 @patch("handler.S3Storage")
 @patch("handler.ListsRepository")
 def test_handler_fails_while_the_review_window_is_open(
-    mock_repo_cls, mock_s3_cls, mock_wb_cls, mock_api_cls, api_env, monkeypatch
+    mock_repo_cls, mock_s3_cls, mock_wb_cls, mock_api_cls, api_env, monkeypatch,
+    attempts_before, attempts_after,
 ):
     _patch_error_codes(monkeypatch)
     repo = MagicMock()
     mock_repo_cls.return_value = repo
-    repo.get_list.return_value = {"list_id": "42", "file_name": "list.xlsx"}
+    item = {"list_id": "42", "file_name": "list.xlsx"}
+    if attempts_before is not None:
+        item["attempt_count"] = attempts_before
+    repo.get_list.return_value = item
     api = MagicMock()
     mock_api_cls.return_value = api
     api.fetch_cleaning.return_value = _cleaning_payload(window_open=True)
@@ -365,7 +379,7 @@ def test_handler_fails_while_the_review_window_is_open(
     # left for retry_failed_lists, and the wait costs no attempt
     assert repo.update_list.call_args_list[-1].kwargs == {
         "status": "FAILED",
-        "attempt_count": 0,
+        "attempt_count": attempts_after,
     }
 
 

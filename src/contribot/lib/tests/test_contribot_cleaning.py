@@ -258,6 +258,29 @@ class TestRemovedRows:
         assert fixes["B3"].font.strike is True
         assert fixes["B3"].comment is None
 
+    def test_similarities_sheet_skips_pairs_with_a_removed_row(
+        self, make_contribution, tmp_path
+    ):
+        df = _frame()
+        # row 3 is an exact copy of row 2 and was removed for it; row 5 is
+        # another exact copy the contributor kept, so that pair still shows
+        df.loc[1, "address"] = df.loc[0, "address"]
+        df = pd.concat([df, df.iloc[[0]]], ignore_index=True)
+        osh = make_contribution(df=df)
+        osh.process()
+        osh.save(targetfolder=str(tmp_path / "out"))
+        wb = openpyxl.load_workbook(tmp_path / "out" / osh.targetfilename)
+        pairs = [
+            (r[0].value, r[1].value)
+            for r in wb["Similarities"].iter_rows(min_row=2)
+            if r[0].value is not None
+        ]
+        assert pairs == [(2, 5)]
+        duplicates = [
+            d["row"] for d in osh.diagnostics_table if d["code"] == "T0010"
+        ]
+        assert duplicates == ["2 5"]
+
     def test_removed_rows_are_struck_through(self, make_contribution, tmp_path):
         osh = make_contribution(df=_frame())
         osh.process()
