@@ -301,7 +301,8 @@ def _removal(record, item, common, now):
             note += ' It is an exact repeat, so it cannot be put back.'
     else:
         note = 'This row is blank, so it was removed.'
-    extra = {'duplicate_of': duplicate_of, 'auto': True}
+    extra = {'duplicate_of': duplicate_of, 'auto': True,
+             **_record_extra(record)}
     if parser_removed:
         extra['parser_removed'] = True
     return ListCleaningSuggestion(
@@ -1227,6 +1228,15 @@ def apply_run(run):
 
 REMOVAL_TAG_COLUMN = 'os_hub_cleaning'
 
+# Shapes of the fixed-list download. PAIRED is the contributor's: each
+# column followed by the value as uploaded, removed rows last. CONTRIBOT
+# is the moderator report's input (OSDEV-3398): current values only,
+# every row in upload order, the tag column saying which rows were
+# removed, so row numbers match the Cleaning tab and the review screen.
+PAIRED_SHAPE = 'paired'
+CONTRIBOT_SHAPE = 'contribot'
+DOWNLOAD_SHAPES = (PAIRED_SHAPE, CONTRIBOT_SHAPE)
+
 
 UPLOADED_SUFFIX = ' (as uploaded)'
 
@@ -1345,7 +1355,7 @@ def _removal_tag(item, suggestions):
     return f'removed: {reason or "removed"}'
 
 
-def build_fixed_csv(run):
+def build_fixed_csv(run, shape=PAIRED_SHAPE):
     """
     The list as it stands after the contributor's changes: the original
     columns in the original order with the current values, each followed
@@ -1353,7 +1363,15 @@ def build_fixed_csv(run):
     every removed row with a tag saying why it was dropped. Rows the
     parser rejected outright are included untouched with their own tag,
     so nothing from the upload is lost.
+
+    `shape=CONTRIBOT_SHAPE` drops the "(as uploaded)" columns and keeps
+    every row where it was uploaded, removed ones included, so that row
+    N of the file is row N on the review screen and in the moderator
+    report's Cleaning tab.
     """
+    if shape not in DOWNLOAD_SHAPES:
+        raise ValueError(f'Unknown download shape {shape!r}')
+    paired = shape == PAIRED_SHAPE
     facility_list = run.facility_list
     header = next(csv.reader([facility_list.header or ''])) \
         if facility_list.header else []
@@ -1367,24 +1385,53 @@ def build_fixed_csv(run):
     for s in run.suggestions.all():
         by_item.setdefault(s.facility_list_item_id, []).append(s)
 
+    def cells(current, original):
+        return _paired(current, original) if paired else list(current)
+
     kept, dropped = [], []
     for item in items:
         original = _uploaded_cells(item, header)
         if item.status == FacilityListItem.ERROR_PARSING:
-            dropped.append(_paired(original, original)
-                           + ['not read: fix the row and re-upload'])
+            row = cells(original, original) + [NOT_READ_TAG]
+            (dropped if paired else kept).append(row)
             continue
         current = [_current_cell(item, column) for column in header]
         tag = _removal_tag(item, by_item.get(item.id, []))
-        (dropped if tag else kept).append(
-            _paired(current, original) + [tag])
+        row = cells(current, original) + [tag]
+        (dropped if paired and tag else kept).append(row)
 
     out = io.StringIO()
     writer = csv.writer(out)
-    writer.writerow(
-        [_safe_cell(h) for column in header
-         for h in (column, column + UPLOADED_SUFFIX)]
-        + [REMOVAL_TAG_COLUMN])
+    if paired:
+        columns = [h for column in header
+                   for h in (column, column + UPLOADED_SUFFIX)]
+    else:
+        columns = list(header)
+    writer.writerow([_safe_cell(h) for h in columns] + [REMOVAL_TAG_COLUMN])
     writer.writerows(kept)
     writer.writerows(dropped)
     return out.getvalue()
+
+
+NOT_READ_TAG = 'not read: fix the row and re-upload'
+
+
+def run_breakdown(run):
+    """
+    The change counts for the run as it closed, for the moderator's
+    report: what went on by itself, what the contributor accepted, typed,
+    kept or removed, and which flags they resolved. The closing event
+    (submitted or lapsed) carries them as they were at that moment; a
+    run still open, or closed with nothing to apply, is counted now.
+    """
+    E = ListCleaningEvent
+    closing = (run.events.filter(kind__in=(E.SUBMITTED, E.LAPSED))
+               .order_by('-created_at').first())
+    meta = (closing.meta or {}) if closing is not None else {}
+    # only a meta that carries the counts; one recorded before they were
+    # added (or holding just opened/applied) is counted from the
+    # suggestions instead of read as all zeros
+    if any(key in meta for key in BREAKDOWN_TOTALS):
+        return {key: meta.get(key, 0) for key in BREAKDOWN_TOTALS}
+    return {key: value for key, value in change_breakdown(
+        run, as_uploaded=True).items() if key in BREAKDOWN_TOTALS}

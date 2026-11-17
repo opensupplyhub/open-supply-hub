@@ -10,6 +10,7 @@ from oar.settings import (
 )
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.renderers import JSONRenderer
 from rest_framework.exceptions import (
     NotFound,
     PermissionDenied,
@@ -52,6 +53,7 @@ from ...models.facility.list_cleaning_run import (
     ListCleaningRun,
 )
 from ...models.source import Source
+from ...renderers import CSVRenderer
 from ...models.user import User
 from ...serializers.facility.list_cleaning_serializer import (
     serialize_run,
@@ -681,21 +683,34 @@ class FacilityListViewSet(ModelViewSet):
         """Submit versus click away, across every closed run."""
         return Response(list_cleaning.metrics_summary())
 
-    @action(detail=True, methods=['get'], url_path='cleaning/download')
+    @action(detail=True, methods=['get'], url_path='cleaning/download',
+            renderer_classes=[JSONRenderer, CSVRenderer])
     def cleaning_download(self, request, pk=None):
         """
         The list as it now stands, as CSV: original columns, current
         values, removed rows at the end tagged with the reason.
+        `?shape=contribot` is the moderator report's input instead:
+        current values only, every row where it was uploaded.
         """
         facility_list = self._get_list_for_user(request, pk)
-        run = facility_list.cleaning_runs.first()
+        # settle first: a window that lapsed since the last read applies
+        # the contributor's decisions before the file is built
+        run = list_cleaning.settle_run(facility_list.cleaning_runs.first())
         if run is None or run.status != ListCleaningRun.COMPLETE:
             raise ValidationError(NO_COMPLETED_RUN)
-        body = list_cleaning.build_fixed_csv(run)
+        shape = request.query_params.get(
+            'shape', list_cleaning.PAIRED_SHAPE)
+        if shape not in list_cleaning.DOWNLOAD_SHAPES:
+            raise ValidationError(
+                'shape must be one of '
+                + ', '.join(list_cleaning.DOWNLOAD_SHAPES))
+        body = list_cleaning.build_fixed_csv(run, shape=shape)
         stem = os.path.splitext(facility_list.file_name or 'list')[0]
+        suffix = '-fixed' if shape == list_cleaning.PAIRED_SHAPE \
+            else '-cleaned'
         response = HttpResponse(body, content_type='text/csv')
         response['Content-Disposition'] = content_disposition_header(
-            True, f'{stem}-fixed.csv')
+            True, f'{stem}{suffix}.csv')
         return response
 
     @transaction.atomic
