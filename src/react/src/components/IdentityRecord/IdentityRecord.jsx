@@ -262,7 +262,9 @@ export const IdentityRecord = ({ classes, match }) => {
                     </dd>
                     {data.document_uri && (
                         <>
-                            <dt className={classes.term}>Signed credential</dt>
+                            <dt className={classes.term}>
+                                Raw signed credential
+                            </dt>
                             <dd className={classes.detail}>
                                 <a
                                     href={data.document_uri}
@@ -270,7 +272,7 @@ export const IdentityRecord = ({ classes, match }) => {
                                     rel="noopener noreferrer"
                                     target="_blank"
                                 >
-                                    View the signed credential
+                                    View the raw signed credential
                                 </a>
                             </dd>
                         </>
@@ -282,10 +284,11 @@ export const IdentityRecord = ({ classes, match }) => {
                  * page must not imply the record has been verified.
                  */}
                 <Typography className={classes.caveat}>
-                    Open Supply Hub stores only a link to this record and
-                    fetches it each time this page is opened. The signature on
-                    the credential is not checked here; follow the link above to
-                    verify it with the issuer.
+                    Everything shown above is from the raw signed credential,
+                    decoded. Open Supply Hub stores only a link to this record
+                    and fetches it each time this page is opened. The signature
+                    on the credential is not checked here; follow the link above
+                    to verify it with the issuer.
                 </Typography>
             </Paper>
 
