@@ -227,9 +227,22 @@ resource "aws_iam_role_policy" "bedrock_invoke_submission_quality_model" {
 # it writes. Scoped to the one state machine, its executions and the two
 # prefixes of its results bucket the application touches, and created
 # only when the environment names a state machine, so an environment
-# without the feature grants nothing.
+# without the feature grants nothing. When the stack is in another
+# account (OSDEV-3872), the app assumes the stack's caller role for those
+# calls instead, so the task role also gets sts:AssumeRole on it; the
+# direct grants below then apply to nothing in this account and are kept
+# so the two cases read the same.
 data "aws_iam_policy_document" "list_cleaning_state_machine" {
   count = var.list_cleaning_state_machine_arn != "" ? 1 : 0
+
+  dynamic "statement" {
+    for_each = var.list_cleaning_role_arn != "" ? [var.list_cleaning_role_arn] : []
+    content {
+      effect    = "Allow"
+      resources = [statement.value]
+      actions   = ["sts:AssumeRole"]
+    }
+  }
 
   statement {
     effect    = "Allow"

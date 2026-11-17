@@ -166,10 +166,10 @@ claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claim
 # OSDEV-3726 / OSDEV-3872: the auto-lists-cleaning Step Functions state
 # machine (the auto-lists stack in the automated-single-location-contribution
 # repo) that the contributor-facing list review starts after a list is
-# parsed, and the stack's results bucket. Same account as the app task role,
-# so the stack's ResultsReaderPrincipal stays empty. With the ARN set,
-# Terraform grants the app task role start/describe on the state machine and
-# read on lists/* and write on inbox/* in the bucket.
+# parsed, and the stack's results bucket. The stack is in this account, so
+# the app task role calls it directly and list_cleaning_role_arn stays
+# empty. The feature itself stays behind the enable_list_cleaning_feedback
+# switch.
 list_cleaning_state_machine_arn = "arn:aws:states:us-east-1:343975343274:stateMachine:auto-lists-cleaning"
 list_cleaning_results_bucket = "auto-lists-results-343975343274-us-east-1"
 list_cleaning_results_bucket_owner = "343975343274"

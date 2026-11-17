@@ -39,7 +39,7 @@ from api.services.list_cleaning import (
     start_run,
     sweep_run,
 )
-from api.services.list_cleaning.runners import RunFailed
+from api.services.list_cleaning.runners import RunFailed, environment_slug
 from api.services.list_cleaning import service as cleaning_service
 from api.services.list_cleaning.service import (
     DecisionError,
@@ -257,7 +257,8 @@ class ListCleaningFeedbackTest(APITestCase):
 
     @override_switch(SWITCH_NAME, active=True)
     @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
-                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x')
+                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
+                       ENVIRONMENT='Test')
     @patch('api.services.list_cleaning.runners.boto3')
     def test_step_functions_runner_starts_and_ingests(self, boto3):
         client = MagicMock()
@@ -268,7 +269,8 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(run.execution_arn, 'arn:exec')
         sent = client.start_execution.call_args.kwargs
         self.assertEqual(sent['stateMachineArn'], 'arn:aws:states:x')
-        self.assertEqual(sent['name'], f'list-{self.list.id}-run-{run.id}')
+        self.assertEqual(sent['name'],
+                         f'test-list-{self.list.id}-run-{run.id}')
         payload = json.loads(sent['input'])
         self.assertEqual(payload['list_id'], str(self.list.id))
         self.assertEqual([r['row'] for r in payload['rows']], [2, 3, 4])
@@ -301,11 +303,65 @@ class ListCleaningFeedbackTest(APITestCase):
         self.assertEqual(kwargs['config'].read_timeout, 20)
         self.assertEqual(kwargs['config'].retries, {'max_attempts': 2})
 
+    def test_environment_slug_follows_django_env(self):
+        # Several environments share one state machine, and Step
+        # Functions refuses a repeated execution name on it for 90 days,
+        # so the environment is part of every name and inbox key.
+        with override_settings(ENVIRONMENT='Pre-prod'):
+            self.assertEqual(environment_slug(), 'pre-prod')
+        with override_settings(ENVIRONMENT='Local'):
+            self.assertEqual(environment_slug(), 'local')
+        with override_settings(ENVIRONMENT=''):
+            self.assertEqual(environment_slug(), 'unknown')
+
+    @override_switch(SWITCH_NAME, active=True)
+    @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
+                       LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
+                       LIST_CLEANING_AWS_REGION='us-east-1',
+                       LIST_CLEANING_ROLE_ARN='arn:aws:iam::1:role/caller',
+                       ENVIRONMENT='Production')
+    @patch('api.services.list_cleaning.runners._assumed',
+           {'arn': None, 'credentials': None})
+    @patch('api.services.list_cleaning.runners.boto3')
+    def test_step_functions_clients_assume_the_caller_role(self, boto3):
+        # Staging and production are in another account than the state
+        # machine, and Step Functions cannot grant StartExecution across
+        # accounts: the app assumes the stack's caller role instead and
+        # keeps the temporary credentials until shortly before expiry.
+        client = MagicMock()
+        boto3.session.Session.return_value.client.return_value = client
+        credentials = {
+            'AccessKeyId': 'AKIA', 'SecretAccessKey': 'secret',
+            'SessionToken': 'token',
+            'Expiration': timezone.now() + timedelta(hours=1)}
+        client.assume_role.return_value = {'Credentials': credentials}
+        client.start_execution.return_value = {'executionArn': 'arn:exec'}
+        run = start_run(self.list)
+        self.assertEqual(run.status, ListCleaningRun.RUNNING, run.error)
+        client.assume_role.assert_called_once_with(
+            RoleArn='arn:aws:iam::1:role/caller',
+            RoleSessionName='oshub-production-list-cleaning')
+        boto3.session.Session.assert_any_call(
+            aws_access_key_id='AKIA', aws_secret_access_key='secret',
+            aws_session_token='token')
+        self.assertEqual(
+            client.start_execution.call_args.kwargs['name'],
+            f'production-list-{self.list.id}-run-{run.id}')
+
+        client.describe_execution.return_value = {'status': 'RUNNING'}
+        refresh_run(run)
+        self.assertEqual(client.assume_role.call_count, 1)
+
+        credentials['Expiration'] = timezone.now() + timedelta(minutes=1)
+        refresh_run(run)
+        self.assertEqual(client.assume_role.call_count, 2)
+
     @override_switch(SWITCH_NAME, active=True)
     @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
                        LIST_CLEANING_STATE_MACHINE_ARN='arn:aws:states:x',
                        LIST_CLEANING_RESULTS_BUCKET='auto-lists-results',
-                       LIST_CLEANING_RESULTS_BUCKET_OWNER='123456789012')
+                       LIST_CLEANING_RESULTS_BUCKET_OWNER='123456789012',
+                       ENVIRONMENT='Test')
     @patch('api.services.list_cleaning.runners.INLINE_INPUT_LIMIT', 64)
     @patch('api.services.list_cleaning.runners.boto3')
     def test_large_list_goes_through_the_inbox(self, boto3):
@@ -317,7 +373,7 @@ class ListCleaningFeedbackTest(APITestCase):
         run = start_run(self.list)
         self.assertEqual(run.status, ListCleaningRun.RUNNING, run.error)
         put = client.put_object.call_args.kwargs
-        key = f'inbox/{self.list.id}/run-{run.id}.json'
+        key = f'inbox/test/{self.list.id}/run-{run.id}.json'
         self.assertEqual(put['Bucket'], 'auto-lists-results')
         self.assertEqual(put['Key'], key)
         self.assertEqual(put['ExpectedBucketOwner'], '123456789012')
@@ -469,6 +525,21 @@ class ListCleaningFeedbackTest(APITestCase):
             'execution': '', 'batches_total': 0, 'batches_failed': 0,
             'model_error_rows': [], 'degraded': False, 'rejected': 0})
         self.assertEqual(run.file_pass['header_issues'], [])
+
+    @override_switch(SWITCH_NAME, active=True)
+    @override_settings(LIST_CLEANING_RUNNER='stepfunctions',
+                       LIST_CLEANING_STATE_MACHINE_ARN='')
+    @patch('api.services.list_cleaning.service.report_error_to_rollbar')
+    def test_a_run_that_cannot_start_is_reported(self, rollbar):
+        # A configuration gap would otherwise show only as the
+        # contributor's fallback screen (OSDEV-3872).
+        run = start_run(self.list)
+        self.assertEqual(run.status, ListCleaningRun.FAILED)
+        rollbar.assert_called_once()
+        self.assertIn('LIST_CLEANING_STATE_MACHINE_ARN',
+                      rollbar.call_args.kwargs['message'])
+        self.assertEqual(rollbar.call_args.kwargs['extra_data']['run_id'],
+                         run.id)
 
     @override_switch(SWITCH_NAME, active=True)
     @override_settings(LIST_CLEANING_RUNNER='stepfunctions',

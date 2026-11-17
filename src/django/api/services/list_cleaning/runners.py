@@ -9,6 +9,8 @@ the model at once, then one merged result) and later reads its result;
 """
 import json
 import logging
+import re
+from datetime import timedelta
 
 import boto3
 from botocore.config import Config
@@ -25,6 +27,19 @@ log = logging.getLogger(__name__)
 # started with a pointer, which is the one prefix stage 1 reads input from.
 INLINE_INPUT_LIMIT = 200 * 1024
 INBOX_PREFIX = 'inbox/'
+
+# Several OS Hub environments share one state machine, and Step Functions
+# refuses a repeated execution name on a state machine for 90 days. Test
+# is an anonymised copy of production, so list and run ids repeat across
+# environments: every execution name and inbox key carries the
+# environment (DJANGO_ENV) so the environments cannot collide. The
+# results prefix follows the execution name.
+ENVIRONMENT_SLUG_FALLBACK = 'unknown'
+
+# Temporary credentials for LIST_CLEANING_ROLE_ARN are kept until this
+# close to their expiry, so a poll does not call STS every time.
+ASSUME_ROLE_MARGIN = timedelta(minutes=5)
+_assumed = {'arn': None, 'credentials': None}
 
 # Both clients are used on the request path (a start at the end of parse,
 # a describe on every poll), so a slow AWS answer must not hold a worker.
@@ -54,14 +69,54 @@ class StubRunner:
         return None
 
 
+def environment_slug():
+    """The environment name as it appears in execution names and keys."""
+    name = (getattr(settings, 'ENVIRONMENT', '') or '').lower()
+    return re.sub(r'[^a-z0-9]+', '-', name).strip('-') or \
+        ENVIRONMENT_SLUG_FALLBACK
+
+
 class StepFunctionsRunner:
     name = ListCleaningRun.STEP_FUNCTIONS
 
-    def _client(self, service):
+    @staticmethod
+    def _own_session():
         # A named profile only in local development (see settings); the
         # default chain, which is the task role when deployed, otherwise.
-        session = boto3.session.Session(
+        return boto3.session.Session(
             profile_name=settings.LIST_CLEANING_AWS_PROFILE)
+
+    def _assumed_session(self, arn):
+        """
+        A session on LIST_CLEANING_ROLE_ARN, for an environment whose task
+        role is in another account than the stack: Step Functions cannot
+        grant StartExecution across accounts, so the stack's caller role
+        is assumed instead, for the S3 calls as well.
+        """
+        cached = _assumed['credentials']
+        if (_assumed['arn'] != arn or cached is None
+                or cached['Expiration'] - timezone.now()
+                < ASSUME_ROLE_MARGIN):
+            sts = self._own_session().client(
+                'sts',
+                region_name=settings.LIST_CLEANING_AWS_REGION,
+                config=CLIENT_CONFIG,
+            )
+            session_name = f'oshub-{environment_slug()}-list-cleaning'
+            response = sts.assume_role(
+                RoleArn=arn, RoleSessionName=session_name[:64])
+            cached = response['Credentials']
+            _assumed.update(arn=arn, credentials=cached)
+        return boto3.session.Session(
+            aws_access_key_id=cached['AccessKeyId'],
+            aws_secret_access_key=cached['SecretAccessKey'],
+            aws_session_token=cached['SessionToken'],
+        )
+
+    def _client(self, service):
+        role_arn = settings.LIST_CLEANING_ROLE_ARN
+        session = (self._assumed_session(role_arn) if role_arn
+                   else self._own_session())
         return session.client(
             service,
             region_name=settings.LIST_CLEANING_AWS_REGION,
@@ -83,7 +138,8 @@ class StepFunctionsRunner:
         if len(body.encode('utf-8')) <= INLINE_INPUT_LIMIT:
             return body
         bucket, owner = self._bucket()
-        key = f'{INBOX_PREFIX}{run.facility_list_id}/run-{run.id}.json'
+        key = (f'{INBOX_PREFIX}{environment_slug()}/'
+               f'{run.facility_list_id}/run-{run.id}.json')
         self._client('s3').put_object(
             Bucket=bucket,
             Key=key,
@@ -105,7 +161,8 @@ class StepFunctionsRunner:
                 'LIST_CLEANING_STATE_MACHINE_ARN is not set')
         response = self._client('stepfunctions').start_execution(
             stateMachineArn=arn,
-            name=f'list-{run.facility_list_id}-run-{run.id}',
+            name=(f'{environment_slug()}-list-{run.facility_list_id}'
+                  f'-run-{run.id}'),
             input=self._execution_input(run, payload),
         )
         run.execution_arn = response['executionArn']

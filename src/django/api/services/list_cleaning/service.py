@@ -68,6 +68,8 @@ from api.sector_cache import SectorCache
 from contricleaner.lib.contri_cleaner import ContriCleaner
 from simple_history.utils import bulk_create_with_history
 
+from oar.rollbar import report_error_to_rollbar
+
 from .runners import RunFailed, get_runner
 
 log = logging.getLogger(__name__)
@@ -152,9 +154,18 @@ def start_run(facility_list, runner_name=None, force=False):
     try:
         get_runner(runner_name).start(run, payload)
     except Exception as e:
-        log.exception(
-            f'[List Cleaning] Run {run.id} for list {facility_list.id} '
-            f'failed to start')
+        # A run that cannot start is nearly always configuration (no
+        # state machine ARN, no role, no permission), which the
+        # contributor's "checks unavailable" screen would otherwise be
+        # the only sign of: report it, not just log it.
+        message = (f'[List Cleaning] Run {run.id} for list '
+                   f'{facility_list.id} failed to start: {e}')
+        log.exception(message)
+        report_error_to_rollbar(
+            message=message,
+            extra_data={'run_id': run.id,
+                        'facility_list_id': facility_list.id,
+                        'runner': runner_name})
         _fail(run, str(e))
     return run
 
