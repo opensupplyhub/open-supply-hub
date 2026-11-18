@@ -1786,3 +1786,15 @@ variable "list_cleaning_aws_region" {
   description = "Region the state machine and its results bucket are in; the auto-lists stack deploys to us-east-1."
   default     = "us-east-1"
 }
+
+# For an environment whose app task role is in a different AWS account
+# from the auto-lists stack (staging and production): the stack's caller
+# role (its CallerRoleArn output), which the app assumes for its Step
+# Functions and S3 calls, since Step Functions cannot grant StartExecution
+# across accounts. The stack's ResultsReaderPrincipal parameter must list
+# this environment's app task role for the role to trust it. Empty when
+# the app and the stack share an account.
+variable "list_cleaning_role_arn" {
+  type    = string
+  default = ""
+}
