@@ -1,3 +1,5 @@
+from django.core.validators import MaxLengthValidator
+
 from api.helpers.data_center import (
     DATE_OF_SOURCE_FORMAT_MESSAGE,
     normalize_date_of_source,
@@ -158,13 +160,32 @@ class ProductionLocationSchemaSerializer(serializers.Serializer):
     )
 
     # Use only subclasses.
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, skip_length_check_fields=(), **kwargs):
         super().__init__(*args, **kwargs)
         if self.__class__ is ProductionLocationSchemaSerializer:
             raise TypeError(
                 'ProductionLocationSchemaSerializer is abstract;'
                 ' use a concrete subclass.'
             )
+        self._skip_length_check(skip_length_check_fields)
+
+    def _skip_length_check(self, field_names) -> None:
+        '''
+        Drop only the max_length check from the given fields. They hold
+        values backfilled from what is already stored for the location,
+        not submitted: stored values are cleaned and may exceed the
+        200-character submission limit (OSDEV-1085). Every other check
+        still applies to them.
+        '''
+        for field_name in field_names:
+            field = self.fields.get(field_name)
+            if field is None:
+                continue
+            field.max_length = None
+            field.validators = [
+                validator for validator in field.validators
+                if not isinstance(validator, MaxLengthValidator)
+            ]
 
     def _set_core_required(self, required: bool) -> None:
         for field in self.core_fields:

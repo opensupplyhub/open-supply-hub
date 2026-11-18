@@ -111,3 +111,44 @@ class ContributionProductionLocationSchemaSerializerTest(SimpleTestCase):
             'must be a list',
             str(serializer.errors['isic_4'])
         )
+
+    def test_skip_length_check_fields_drops_only_the_length_check(self):
+        # Backfilled values may exceed the 200-character submission limit
+        # (OSDEV-1085); fields not listed keep the limit.
+        payload = {
+            'name': 'n' * 250,
+            'address': 'a' * 201,
+            'country': 'US',
+        }
+        serializer = ProductionLocationPostSchemaSerializer(
+            data=payload,
+            skip_length_check_fields={'name'},
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertEqual(['address'], list(serializer.errors))
+        self.assertEqual(
+            'Field address cannot be longer than 200 characters.',
+            str(serializer.errors['address'][0]),
+        )
+
+    def test_skip_length_check_fields_keeps_other_checks(self):
+        serializer = ProductionLocationPostSchemaSerializer(
+            data={**self.base_payload, 'name': ''},
+            skip_length_check_fields={'name'},
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('name', serializer.errors)
+
+    def test_skip_length_check_fields_is_per_instance(self):
+        ProductionLocationPostSchemaSerializer(
+            data=self.base_payload,
+            skip_length_check_fields={'name'},
+        )
+        serializer = ProductionLocationPostSchemaSerializer(
+            data={**self.base_payload, 'name': 'n' * 201},
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('name', serializer.errors)
