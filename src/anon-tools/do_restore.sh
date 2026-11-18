@@ -86,4 +86,19 @@ PGOPTIONS="-c maintenance_work_mem=$RESTORE_MAINTENANCE_WORK_MEM -c synchronous_
   "$DUMP_FILE"
 RESTORE_CODE=$?
 echo "[info] pg_restore finished with exit code $RESTORE_CODE"
-exit $RESTORE_CODE
+if [ "$RESTORE_CODE" -ne 0 ]; then
+  exit $RESTORE_CODE
+fi
+
+# OSDEV-3865: a dump carries no planner statistics (pg_statistic), and the
+# migrations that ANALYZE are already recorded in its django_migrations, so
+# without this every table starts with no statistics until autovacuum gets
+# to it, and queries planned before then can pick very slow plans (the
+# api_facility is_candidate estimate behind the /api/facilities/ 504s).
+echo "[info] Analyzing the restored database with $RESTORE_JOBS parallel jobs"
+if ! vacuumdb --analyze-only -j "$RESTORE_JOBS" \
+  -d "$DATABASE_NAME" -U "$DATABASE_USERNAME" -h "$DATABASE_HOST" -p "$DATABASE_PORT"; then
+  echo "[error] vacuumdb --analyze-only failed" >&2
+  exit 1
+fi
+echo "[info] Analyze finished"
