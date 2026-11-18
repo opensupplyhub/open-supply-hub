@@ -1,0 +1,69 @@
+/*
+Organization level: re-creates index_facility_addresses() so that a contribution recorded
+against an organization (organization_id on its source or claim) is
+named after the organization instead of the member's contributor.
+The contributor's id, type and admin id are kept, and organization_id
+marks the entry so that no link to the member's profile is published.
+*/
+
+CREATE OR REPLACE
+FUNCTION index_facility_addresses(af_id TEXT)
+RETURNS TABLE (facility_address json)
+LANGUAGE plpgsql
+AS $Body$
+BEGIN
+	RETURN QUERY
+SELECT
+	json_build_object(
+	'address',
+	af2.address,
+	'updated_at',
+	af2.updated_at,
+	'created_at',
+	af2.created_at,
+	'is_from_created_from',
+	COALESCE(
+		(af2.id = (
+			SELECT af.created_from_id
+			FROM api_facility af
+			WHERE af.id = af_id
+		)),
+		false
+	),
+	'is_anonymized',
+	COALESCE(as2.is_anonymized, false),
+	'contributor',
+	json_build_object(
+		'id',
+	ac.id,
+		'name',
+	COALESCE(ao.name, ac.name),
+		'contrib_type',
+	ac.contrib_type,
+		'admin_id',
+	ac.admin_id,
+		'organization_id',
+	ao.id
+	)
+)
+FROM
+	api_facilitymatch fm_item
+LEFT JOIN api_facilitylistitem af2 ON
+	af2.id = fm_item.facility_list_item_id
+LEFT JOIN api_source as2 ON
+	as2.id = af2.source_id
+LEFT JOIN api_contributor ac ON
+	ac.id = as2.contributor_id
+LEFT JOIN api_organization ao ON
+	ao.id = as2.organization_id
+WHERE
+	(fm_item.status = 'AUTOMATIC'
+		OR fm_item.status = 'CONFIRMED'
+		OR fm_item.status = 'MERGED')
+	AND fm_item.facility_id = af_id
+	AND fm_item.is_active
+	AND as2.is_active
+	AND as2.is_public;
+END;
+
+$Body$;

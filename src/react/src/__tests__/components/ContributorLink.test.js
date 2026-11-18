@@ -24,6 +24,13 @@ describe('ContributorLink', () => {
         expect(link).toHaveAttribute('href', '/profile/42');
     });
 
+    it('renders the name without a link when no profile id is published', () => {
+        render(<ContributorLink {...defaultProps} contributor_id={null} />);
+
+        expect(screen.getByText(/Acme Corp/)).toBeInTheDocument();
+        expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    });
+
     it('opens the link in a new tab with secure rel', () => {
         render(<ContributorLink {...defaultProps} />);
 

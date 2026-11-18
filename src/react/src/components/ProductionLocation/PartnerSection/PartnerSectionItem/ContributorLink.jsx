@@ -36,6 +36,17 @@ const ContributorLink = ({ classes, gaSpotlightContext, ...props }) => {
         });
     };
 
+    // No profile id is published for a contribution shown under an
+    // organization's name, so there is nothing to link to.
+    if (props.contributor_id == null) {
+        return (
+            <>
+                {moment(props.created_at).format('LL')} by{' '}
+                {props.contributor_name}
+            </>
+        );
+    }
+
     return (
         <>
             {moment(props.created_at).format('LL')} by{' '}

@@ -67,6 +67,20 @@ class ModerationEvent(models.Model):
         help_text='Linked contributor responsible for this moderation event.'
     )
 
+    organization = models.ForeignKey(
+        'Organization',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        # Indexed by the partial index in Meta, built concurrently.
+        db_index=False,
+        help_text=(
+            'The organization the contributor belonged to when the '
+            'event was submitted. Recorded for members only and kept '
+            'when the member leaves.'
+        )
+    )
+
     os = models.ForeignKey(
         Facility,
         on_delete=models.SET_NULL,
@@ -185,6 +199,15 @@ class ModerationEvent(models.Model):
             'user did not provide them in a PATCH request.'
         )
     )
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['organization'],
+                name='api_modevent_org_idx',
+                condition=models.Q(organization__isnull=False),
+            ),
+        ]
 
     def __str__(self):
         return (
