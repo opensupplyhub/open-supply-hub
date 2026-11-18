@@ -1200,6 +1200,115 @@ class TestLocationContributionStrategy(APITestCase):
         )
 
     @patch('api.geocoding.requests.get')
+    def test_patch_with_only_a_partner_field_backfills_and_succeeds(
+        self,
+        mock_get,
+    ):
+        # Partner-field data is posted with a PATCH that carries only the
+        # partner field: name, address and country are backfilled from the
+        # location. The schema serializer does not declare partner fields,
+        # so it must still see the backfilled values or it would find no
+        # fields and reject the request with "No fields provided."
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
+        mock_get.return_value.json.return_value = geocoding_data
+        partner_field = PartnerField.objects.create(
+            name='custom_partner_field',
+            type=PartnerField.STRING,
+        )
+        self.contributor.partner_fields.add(partner_field)
+        existing_facility = self._create_existing_facility()
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data={'custom_partner_field': 'test'},
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility,
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto,
+        )
+
+        self.assertEqual(result.errors, {})
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(
+            result.moderation_event.backfilled_fields,
+            ['name', 'address', 'country'],
+        )
+        self.assertEqual(
+            result.moderation_event.cleaned_data['fields'][
+                'custom_partner_field'
+            ],
+            'test',
+        )
+
+    @patch('api.geocoding.requests.get')
+    def test_patch_with_only_a_partner_field_and_long_stored_values(
+        self,
+        mock_get,
+    ):
+        # The same request on a location whose stored name and address are
+        # longer than the 200-character submission limit (OSDEV-1085).
+        mock_get.return_value = Mock(ok=True, status_code=status.HTTP_200_OK)
+        mock_get.return_value.json.return_value = geocoding_data
+        partner_field = PartnerField.objects.create(
+            name='custom_partner_field',
+            type=PartnerField.STRING,
+        )
+        self.contributor.partner_fields.add(partner_field)
+        existing_facility = self._create_existing_facility()
+        stored_name = 'Existing Facility, ' + 'n' * 183
+        stored_address = 'Existing Address, ' + 'a' * 184
+        Facility.objects.filter(id=existing_facility.id).update(
+            name=stored_name,
+            address=stored_address,
+        )
+        existing_facility.refresh_from_db()
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data={'custom_partner_field': 'test'},
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility,
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto,
+        )
+
+        self.assertEqual(result.errors, {})
+        self.assertEqual(result.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(
+            result.moderation_event.cleaned_data['name'], stored_name
+        )
+        self.assertEqual(
+            result.moderation_event.cleaned_data['address'], stored_address
+        )
+
+    def test_patch_with_nothing_to_update_is_rejected(self):
+        existing_facility = self._create_existing_facility()
+
+        event_dto = CreateModerationEventDTO(
+            contributor=self.contributor,
+            raw_data={'source': 'API'},
+            request_type=ModerationEvent.RequestType.UPDATE.value,
+            os=existing_facility,
+        )
+
+        result = self.moderation_event_creator.perform_event_creation(
+            event_dto,
+        )
+
+        self.assertEqual(
+            result.status_code, status.HTTP_422_UNPROCESSABLE_ENTITY
+        )
+        self.assertEqual(
+            result.errors['errors'],
+            [{'field': 'non_field_errors', 'detail': 'No fields provided.'}],
+        )
+        self.assertIsNone(result.moderation_event)
+
+    @patch('api.geocoding.requests.get')
     def test_patch_backfills_stored_values_over_the_submission_limit(
         self,
         mock_get,
