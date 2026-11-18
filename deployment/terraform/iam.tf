@@ -227,9 +227,22 @@ resource "aws_iam_role_policy" "bedrock_invoke_submission_quality_model" {
 # it writes. Scoped to the one state machine, its executions and the two
 # prefixes of its results bucket the application touches, and created
 # only when the environment names a state machine, so an environment
-# without the feature grants nothing.
+# without the feature grants nothing. When the stack is in another
+# account (OSDEV-3872), the app assumes the stack's caller role for those
+# calls instead, so the task role also gets sts:AssumeRole on it; the
+# direct grants below then apply to nothing in this account and are kept
+# so the two cases read the same.
 data "aws_iam_policy_document" "list_cleaning_state_machine" {
   count = var.list_cleaning_state_machine_arn != "" ? 1 : 0
+
+  dynamic "statement" {
+    for_each = var.list_cleaning_role_arn != "" ? [var.list_cleaning_role_arn] : []
+    content {
+      effect    = "Allow"
+      resources = [statement.value]
+      actions   = ["sts:AssumeRole"]
+    }
+  }
 
   statement {
     effect    = "Allow"
@@ -262,6 +275,18 @@ resource "aws_iam_role_policy" "list_cleaning_state_machine" {
   count  = var.list_cleaning_state_machine_arn != "" ? 1 : 0
   name   = "ListCleaningStateMachine"
   role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.list_cleaning_state_machine[0].json
+}
+
+# The run is started at the end of the parse, which executes in the
+# default Batch job definition. That job has no job role, so its
+# container acts as the EC2 container-instance role: it gets the same
+# grants (and the same caller role to assume) as the app task, which
+# polls the run and reads its result.
+resource "aws_iam_role_policy" "list_cleaning_state_machine_batch" {
+  count  = var.list_cleaning_state_machine_arn != "" ? 1 : 0
+  name   = "ListCleaningStateMachine"
+  role   = aws_iam_role.container_instance_ec2.name
   policy = data.aws_iam_policy_document.list_cleaning_state_machine[0].json
 }
 

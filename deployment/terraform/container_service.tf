@@ -184,6 +184,7 @@ data "template_file" "app" {
     list_cleaning_results_bucket                  = var.list_cleaning_results_bucket
     list_cleaning_results_bucket_owner            = var.list_cleaning_results_bucket_owner
     list_cleaning_aws_region                      = var.list_cleaning_aws_region
+    list_cleaning_role_arn                        = var.list_cleaning_role_arn
     claim_attachments_signing_role_arn            = aws_iam_role.claim_attachments_signer.arn
     kafka_bootstrap_servers                       = join(",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name                        = var.topic_dedup_basic_name
@@ -252,6 +253,7 @@ data "template_file" "app_cli" {
     list_cleaning_results_bucket                  = var.list_cleaning_results_bucket
     list_cleaning_results_bucket_owner            = var.list_cleaning_results_bucket_owner
     list_cleaning_aws_region                      = var.list_cleaning_aws_region
+    list_cleaning_role_arn                        = var.list_cleaning_role_arn
     kafka_bootstrap_servers                       = join(",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name                        = var.topic_dedup_basic_name
     opensearch_host                               = aws_opensearch_domain.opensearch.endpoint
