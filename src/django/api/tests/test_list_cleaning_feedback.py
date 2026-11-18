@@ -37,7 +37,6 @@ from api.services.list_cleaning import (
     sweep_run,
 )
 from api.services.list_cleaning.runners import RunFailed, environment_slug
-from api.services.list_cleaning import service as cleaning_service
 from api.services.list_cleaning.service import (
     DecisionError,
     build_fixed_csv,
