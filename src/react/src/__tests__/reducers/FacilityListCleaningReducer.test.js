@@ -13,10 +13,20 @@ import {
 } from '../../actions/facilityListCleaning';
 
 const initial = reducer(undefined, { type: '@@INIT' });
+const LIST = 42;
+
+// A fetch for the list, and its reply as the server sent it: the reply
+// carries the mutation count the fetch was sent at.
+const fetchStarted = (state, listID = LIST, silent = false) =>
+    reducer(state, startFetchFacilityListCleaning({ listID, silent }));
+const fetched = (state, data, { listID = LIST, mutation = state.mutation } = {}) =>
+    reducer(state, completeFetchFacilityListCleaning({ listID, mutation, data }));
 
 describe('FacilityListCleaningReducer', () => {
     test('starts empty and idle', () => {
         expect(initial).toEqual({
+            listID: null,
+            mutation: 0,
             data: null,
             fetching: false,
             error: null,
@@ -29,18 +39,112 @@ describe('FacilityListCleaningReducer', () => {
     });
 
     test('tracks a fetch from start to data or error', () => {
-        const fetching = reducer(initial, startFetchFacilityListCleaning());
+        const fetching = fetchStarted(initial);
         expect(fetching.fetching).toBe(true);
+        expect(fetching.listID).toBe(LIST);
         const data = { run: { id: 1 } };
-        const done = reducer(fetching, completeFetchFacilityListCleaning(data));
+        const done = fetched(fetching, data);
         expect(done.fetching).toBe(false);
         expect(done.data).toBe(data);
         const failed = reducer(
             fetching,
-            failFetchFacilityListCleaning(['boom']),
+            failFetchFacilityListCleaning({ listID: LIST, error: ['boom'] }),
         );
         expect(failed.fetching).toBe(false);
         expect(failed.error).toEqual(['boom']);
+    });
+
+    test('a failure for another list is ignored', () => {
+        const fetching = fetchStarted(fetchStarted(initial, 7), LIST);
+        const stale = reducer(
+            fetching,
+            failFetchFacilityListCleaning({ listID: 7, error: ['boom'] }),
+        );
+        expect(stale).toBe(fetching);
+        expect(stale.fetching).toBe(true);
+        expect(stale.error).toBeNull();
+    });
+
+    test('a silent fetch shows no spinner and keeps the data on screen', () => {
+        const loaded = fetched(fetchStarted(initial), { run: { id: 1 } });
+        const polling = fetchStarted(loaded, LIST, true);
+        expect(polling.fetching).toBe(false);
+        expect(polling.data).toEqual({ run: { id: 1 } });
+    });
+
+    test('a reply for another list is ignored', () => {
+        const forA = fetchStarted(initial, 7);
+        const forB = fetchStarted(forA, LIST);
+        expect(forB.data).toBeNull();
+        const stale = fetched(forB, { run: { id: 'A' } }, { listID: 7 });
+        expect(stale).toBe(forB);
+        const current = fetched(stale, { run: { id: 'B' } });
+        expect(current.data).toEqual({ run: { id: 'B' } });
+        expect(current.fetching).toBe(false);
+    });
+
+    test('after a reset, a reply for the old list is ignored', () => {
+        const forA = fetchStarted(initial);
+        const reset = reducer(forA, resetFacilityListCleaning());
+        expect(fetched(reset, { run: { id: 'A' } })).toBe(reset);
+    });
+
+    test('a reply fetched before a decision was sent does not overwrite it', () => {
+        const loaded = fetched(fetchStarted(initial), {
+            run: { id: 1 },
+            rows: [{ row_number: 2, suggestions: [{ decision: 'PENDING' }] }],
+        });
+        // a poll goes out, then the contributor decides a row
+        const polling = fetchStarted(loaded, LIST, true);
+        const deciding = reducer(polling, startSubmitFacilityListCleaningDecisions());
+        const decided = reducer(
+            deciding,
+            completeSubmitFacilityListCleaningDecisions({
+                run: { id: 1 },
+                rows: [{ row_number: 2, suggestions: [{ decision: 'ACCEPTED' }] }],
+                rows_partial: true,
+            }),
+        );
+        expect(decided.mutation).toBe(2);
+        // the poll's reply, from before the decision, arrives last
+        const stale = fetched(decided, {
+            run: { id: 1 },
+            rows: [{ row_number: 2, suggestions: [{ decision: 'PENDING' }] }],
+        }, { mutation: 0 });
+        expect(stale.data.rows[0].suggestions[0].decision).toBe('ACCEPTED');
+        expect(stale.fetching).toBe(false);
+        // a fetch sent after the decision is taken
+        const fresh = fetched(fetchStarted(stale, LIST, true), { run: { id: 1 }, rows: [] });
+        expect(fresh.data.rows).toEqual([]);
+    });
+
+    test('a reply fetched before the submission is ignored too', () => {
+        const loaded = fetched(fetchStarted(initial), { run: { id: 1, closed_at: null } });
+        const polling = fetchStarted(loaded, LIST, true);
+        const applying = reducer(polling, startApplyFacilityListCleaning());
+        const applied = reducer(
+            applying,
+            completeApplyFacilityListCleaning({
+                run: { id: 1, closed_at: 'now' },
+                applied: { applied: 1, reverted: 0 },
+            }),
+        );
+        const stale = fetched(applied, { run: { id: 1, closed_at: null } }, { mutation: 0 });
+        expect(stale.data.run.closed_at).toBe('now');
+    });
+
+    test('a restart counts as a change', () => {
+        const loaded = fetched(fetchStarted(initial), { run: { id: 1 } });
+        const polling = fetchStarted(loaded, LIST, true);
+        const restarting = reducer(
+            polling,
+            startFetchFacilityListCleaning({ listID: LIST, restart: true }),
+        );
+        expect(restarting.mutation).toBe(1);
+        const stale = fetched(restarting, { run: { id: 1 } }, { mutation: 0 });
+        expect(stale.data).toEqual({ run: { id: 1 } });
+        const fresh = fetched(stale, { run: { id: 2 } }, { mutation: 1 });
+        expect(fresh.data).toEqual({ run: { id: 2 } });
     });
 
     test('tracks decisions being saved', () => {
@@ -65,19 +169,16 @@ describe('FacilityListCleaningReducer', () => {
     });
 
     test('a partial decision reply replaces only the rows it carries', () => {
-        const loaded = reducer(
-            initial,
-            completeFetchFacilityListCleaning({
-                run: { id: 1 },
-                summary: { rows_pending_review: 2 },
-                tour_seen: true,
-                rows: [
-                    { row_number: 2, suggestions: ['a'] },
-                    { row_number: 3, suggestions: ['b'] },
-                    { row_number: 5, suggestions: ['c'] },
-                ],
-            }),
-        );
+        const loaded = fetched(fetchStarted(initial), {
+            run: { id: 1 },
+            summary: { rows_pending_review: 2 },
+            tour_seen: true,
+            rows: [
+                { row_number: 2, suggestions: ['a'] },
+                { row_number: 3, suggestions: ['b'] },
+                { row_number: 5, suggestions: ['c'] },
+            ],
+        });
         const merged = reducer(
             loaded,
             completeSubmitFacilityListCleaningDecisions({
@@ -118,7 +219,7 @@ describe('FacilityListCleaningReducer', () => {
     });
 
     test('reset returns to the initial state', () => {
-        const busy = reducer(initial, completeFetchFacilityListCleaning({}));
+        const busy = fetched(fetchStarted(initial), {});
         expect(reducer(busy, resetFacilityListCleaning())).toEqual(initial);
     });
 });

@@ -11,14 +11,25 @@ import {
     makeFacilityListCleaningEventsURL,
 } from '../util/util';
 
+// A fetch names the list it is for, and its reply carries the mutation
+// count (decisions and submissions sent or saved) as it stood when the
+// request went out: the store drops a reply for another list, or one
+// fetched before a later change, instead of overwriting newer rows.
 export const startFetchFacilityListCleaning = createAction(
     'START_FETCH_FACILITY_LIST_CLEANING',
+    ({ listID, silent = false, restart = false }) => ({
+        listID,
+        silent,
+        restart,
+    }),
 );
 export const failFetchFacilityListCleaning = createAction(
     'FAIL_FETCH_FACILITY_LIST_CLEANING',
+    ({ listID, error }) => ({ listID, error }),
 );
 export const completeFetchFacilityListCleaning = createAction(
     'COMPLETE_FETCH_FACILITY_LIST_CLEANING',
+    ({ listID, mutation, data }) => ({ listID, mutation, data }),
 );
 export const resetFacilityListCleaning = createAction(
     'RESET_FACILITY_LIST_CLEANING',
@@ -44,23 +55,34 @@ export const completeApplyFacilityListCleaning = createAction(
     'COMPLETE_APPLY_FACILITY_LIST_CLEANING',
 );
 
+const mutationCount = getState =>
+    (getState().facilityListCleaning || {}).mutation || 0;
+
 export function fetchFacilityListCleaning(listID, { silent = false } = {}) {
-    return dispatch => {
-        if (!silent) {
-            dispatch(startFetchFacilityListCleaning());
-        }
+    return (dispatch, getState) => {
+        // A silent fetch (a poll, a refresh after the review) still says
+        // which list it is for; it just shows no spinner.
+        dispatch(startFetchFacilityListCleaning({ listID, silent }));
+        const mutation = mutationCount(getState);
 
         return apiRequest
             .get(makeFacilityListCleaningURL(listID))
             .then(({ data }) =>
-                dispatch(completeFetchFacilityListCleaning(data)),
+                dispatch(
+                    completeFetchFacilityListCleaning({
+                        listID,
+                        mutation,
+                        data,
+                    }),
+                ),
             )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented fetching the automated checks for this list',
-                        failFetchFacilityListCleaning,
+                        error =>
+                            failFetchFacilityListCleaning({ listID, error }),
                     ),
                 ),
             );
@@ -68,20 +90,29 @@ export function fetchFacilityListCleaning(listID, { silent = false } = {}) {
 }
 
 export function startFacilityListCleaningRun(listID) {
-    return dispatch => {
-        dispatch(startFetchFacilityListCleaning());
+    return (dispatch, getState) => {
+        // A restart replaces the run, so it counts as a change: a poll
+        // sent before it cannot bring the old run back.
+        dispatch(startFetchFacilityListCleaning({ listID, restart: true }));
 
         return apiRequest
             .post(makeFacilityListCleaningStartURL(listID), {})
             .then(({ data }) =>
-                dispatch(completeFetchFacilityListCleaning(data)),
+                dispatch(
+                    completeFetchFacilityListCleaning({
+                        listID,
+                        mutation: mutationCount(getState),
+                        data,
+                    }),
+                ),
             )
             .catch(err =>
                 dispatch(
                     logErrorAndDispatchFailure(
                         err,
                         'An error prevented starting the automated checks',
-                        failFetchFacilityListCleaning,
+                        error =>
+                            failFetchFacilityListCleaning({ listID, error }),
                     ),
                 ),
             );
