@@ -58,6 +58,11 @@ from .facility.claim_campaign import ClaimCampaign, ClaimCampaignSupplier
 from .facility.facility_list import FacilityList
 from .facility.facility_list_item import FacilityListItem
 from .facility.facility_list_item_temp import FacilityListItemTemp
+from .facility.list_cleaning_run import (
+    ListCleaningEvent,
+    ListCleaningRun,
+    ListCleaningSuggestion,
+)
 from .facility.facility_location import FacilityLocation
 
 from .facility.facility_match import (

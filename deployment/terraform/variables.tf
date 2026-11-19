@@ -1439,6 +1439,17 @@ variable "contribot_last_list_id" {
   default     = "NaN"
 }
 
+variable "contribot_min_list_age_minutes" {
+  type        = number
+  description = "fetch_lists leaves lists uploaded more recently than this for a later run, so the contributor's list-cleaning review window (60 minutes from the end of the parse) has closed before ContriBot reports on the list."
+  default     = 90
+
+  validation {
+    condition     = var.contribot_min_list_age_minutes >= 0 && floor(var.contribot_min_list_age_minutes) == var.contribot_min_list_age_minutes
+    error_message = "contribot_min_list_age_minutes must be a non-negative integer."
+  }
+}
+
 variable "contribot_max_attempts" {
   type        = number
   description = "Maximum process_list attempts before a FAILED facility list is left for ops follow-up."
@@ -1742,4 +1753,48 @@ variable "contribot_google_drive_service_key_secret_name" {
 variable "claim_attachments_reader_role_arns" {
   type    = list(string)
   default = []
+}
+
+# The auto-lists-cleaning Step Functions state machine (OSDEV-3724, in
+# the automated-single-location-contribution repo's auto-lists stack) that
+# the contributor-facing list review (OSDEV-3726) starts after a list is
+# parsed, and the stack's results bucket, where the application reads
+# results from lists/* and uploads the rows of a list too large for the
+# execution input to inbox/*. All three come from the stack's outputs
+# (StateMachineArn, ResultsBucketName) and the account it is deployed in.
+# Empty by default: the app then has no permission to start it, and the
+# feature stays behind its waffle switch. When the stack is in another
+# account, its ResultsReaderPrincipal parameter must name this
+# environment's app task role as well.
+variable "list_cleaning_state_machine_arn" {
+  type    = string
+  default = ""
+}
+
+variable "list_cleaning_results_bucket" {
+  type    = string
+  default = ""
+}
+
+variable "list_cleaning_results_bucket_owner" {
+  type    = string
+  default = ""
+}
+
+variable "list_cleaning_aws_region" {
+  type        = string
+  description = "Region the state machine and its results bucket are in; the auto-lists stack deploys to us-east-1."
+  default     = "us-east-1"
+}
+
+# For an environment whose app task role is in a different AWS account
+# from the auto-lists stack (staging and production): the stack's caller
+# role (its CallerRoleArn output), which the app assumes for its Step
+# Functions and S3 calls, since Step Functions cannot grant StartExecution
+# across accounts. The stack's ResultsReaderPrincipal parameter must list
+# this environment's app task role for the role to trust it. Empty when
+# the app and the stack share an account.
+variable "list_cleaning_role_arn" {
+  type    = string
+  default = ""
 }

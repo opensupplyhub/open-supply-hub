@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0272_facility_claim_live_check'),
+        ('api', '0286_facility_claim_live_check'),
     ]
 
     operations = [

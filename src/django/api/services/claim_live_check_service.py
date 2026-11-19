@@ -74,7 +74,7 @@ from api.services.facility_claim_status_service import (
 logger = logging.getLogger(__name__)
 
 # The whole feature ships behind this switch (created off by migration
-# 0272). Off, the endpoint answers 404 and the claim form is unchanged.
+# 0286). Off, the endpoint answers 404 and the claim form is unchanged.
 CLAIM_LIVE_CHECK_SWITCH = 'claim_live_check'
 
 # A claimant can fix their pending claim and check again, this many
