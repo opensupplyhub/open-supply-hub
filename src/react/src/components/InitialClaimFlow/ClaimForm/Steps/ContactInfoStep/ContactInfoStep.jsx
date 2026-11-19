@@ -125,7 +125,7 @@ const ContactInfoStep = ({
                     />
                     <TextField
                         fullWidth
-                        id="claimant-email"
+                        id={liveCheckFixes.email && 'claimant-email'}
                         helperText={
                             liveCheckFixes.email && (
                                 <ClaimLiveCheckFieldFixes

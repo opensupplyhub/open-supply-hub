@@ -12,6 +12,7 @@ import {
     COMPANY_ADDRESS_VERIFICATION_OPTIONS,
     DOCUMENT_BASED_VERIFICATION_OPTIONS,
 } from '../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/constants';
+import { focusFixField } from '../../components/ClaimLiveCheck/utils';
 import COLOURS from '../../util/COLOURS';
 
 // The real selector is heavy. The stand-in shows whether the step
@@ -91,6 +92,7 @@ describe('live check fixes on the claim form fields', () => {
     test('nothing is marked unless fixes are passed', () => {
         const contact = renderStep(ContactInfoStep, {});
         expect(contact.queryByTestId('live-check-field-fixes')).toBeNull();
+        expect(contact.container.querySelector('#claimant-email')).toBeNull();
         expect(
             contact.getByTestId('claimantEmploymentVerificationMethod'),
         ).not.toHaveAttribute('data-border', COLOURS.RED);
@@ -118,6 +120,11 @@ describe('live check fixes on the claim form fields', () => {
         // Directly under the field, inside the same form control.
         expect(field.parentNode).toContainElement(line);
         expect(container.querySelectorAll('[data-testid="live-check-field-fixes"]')).toHaveLength(1);
+
+        // The email input is disabled and cannot take the keyboard
+        // focus, so the line under it does.
+        expect(focusFixField('work_email', container)).toBe(true);
+        expect(document.activeElement.id).toBe('claimant-email-helper-text');
     });
 
     test('the employment selector is marked when no upload area is shown', () => {

@@ -29,7 +29,7 @@ export const CLAIM_LIVE_CHECK_FIXES = Object.freeze({
     work_email: Object.freeze({
         text: 'Use a work email, not a personal email.',
         field: CLAIM_LIVE_CHECK_FIELDS.EMAIL,
-        targets: Object.freeze(['#claimant-email']),
+        targets: Object.freeze(['#claimant-email-helper-text']),
     }),
     upload_document: Object.freeze({
         text: 'Upload a document. Claims with a document are approved fastest.',

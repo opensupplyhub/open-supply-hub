@@ -97,8 +97,8 @@ export const getFixesByField = fixes =>
 
 // Scroll to the field `fix` is about and put the keyboard focus on it.
 // Returns whether a field was found. Some targets cannot take focus
-// themselves (a label, a disabled input); those are made focusable so
-// a keyboard or screen reader user lands in the same place.
+// themselves (a label, the line under the read-only email); those are
+// made focusable so a keyboard or screen reader user lands there too.
 export const focusFixField = (fix, root = document) => {
     const target = CLAIM_LIVE_CHECK_FIXES[fix].targets
         .map(selector => root.querySelector(selector))
@@ -109,7 +109,7 @@ export const focusFixField = (fix, root = document) => {
     if (typeof target.scrollIntoView === 'function') {
         target.scrollIntoView({ block: 'center' });
     }
-    if (target.tabIndex < 0 || target.disabled) {
+    if (target.tabIndex < 0) {
         target.setAttribute('tabindex', '-1');
     }
     target.focus({ preventScroll: true });

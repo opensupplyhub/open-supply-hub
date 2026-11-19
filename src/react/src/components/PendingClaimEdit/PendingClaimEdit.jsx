@@ -138,7 +138,8 @@ function PendingClaimEdit({
     // to check again after saving. What is marked comes from the claim's
     // latest check, read on every visit.
     const search = location ? location.search : '';
-    const locationKey = location ? location.key : undefined;
+    const locationKey =
+        isLiveCheckEnabled && location ? location.key : undefined;
     const { fix, checkAgain } = useMemo(() => parseFixParams(search), [search]);
     const fixesByField = useMemo(
         () =>
@@ -168,7 +169,8 @@ function PendingClaimEdit({
     }, [saved]);
 
     // Every visit starts clean, including coming back to this page
-    // from the result of a check that ran here after a save.
+    // from the result of a check that ran here after a save. With the
+    // feature off, locationKey never changes.
     useEffect(() => {
         setOutcomeDialogOpen(false);
         setCheckSkipped(false);

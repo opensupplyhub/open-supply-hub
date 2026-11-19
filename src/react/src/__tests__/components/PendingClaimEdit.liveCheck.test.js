@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, waitFor } from '@testing-library/react';
+import { act, fireEvent, waitFor } from '@testing-library/react';
 import { Route, Router } from 'react-router-dom';
 
 import history from '../../util/history';
@@ -25,7 +25,7 @@ jest.mock(
             data-testid="contact-step"
             data-fixes={JSON.stringify(liveCheckFixes)}
         >
-            <input id="claimant-email" aria-label="Your Email" />
+            <div id="claimant-email-helper-text" aria-label="Your Email" />
             <select
                 id="claimantEmploymentVerificationMethod"
                 aria-label="Employment Verification"
@@ -208,8 +208,15 @@ describe('PendingClaimEdit after "Go back and fix it"', () => {
             claim_live_check: false,
         });
 
-        fireEvent.click(await findByText('Save changes'));
+        // Moving within the page does not read the claim again.
+        await findByText('Save changes');
+        act(() => history.push(`/claimed/pending/${CLAIM_ID}?check=1`));
+        expect(
+            apiRequest.get.mock.calls.filter(([url]) => url === PENDING_URL),
+        ).toHaveLength(1);
         expect(queryByRole('status')).toBeNull();
+
+        fireEvent.click(await findByText('Save changes'));
 
         expect(await findByText(THANK_YOU)).toBeInTheDocument();
         expect(queryByText(SAVE_AND_CHECK)).toBeNull();

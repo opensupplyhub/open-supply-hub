@@ -107,14 +107,6 @@ describe('focusFixField', () => {
         );
     });
 
-    test('scrolls to the read-only email for the work email fix', () => {
-        const root = render('<input id="claimant-email" disabled />');
-        const input = root.querySelector('input');
-
-        expect(focusFixField('work_email', root)).toBe(true);
-        expect(input.scrollIntoView).toHaveBeenCalled();
-    });
-
     test('does nothing for a missing field', () => {
         const root = render('<input id="something-else" />');
 
