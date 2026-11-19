@@ -15,7 +15,7 @@ from api.partner_fields.india_labour_line_provider import (
 )
 from api.partner_fields.registry import ZONE_SETS_SWITCH
 from api.tests.test_partner_contributor_filter_zone_sets import make_facility
-from api.tests.test_zone_set_provider import EAST, WEST, feature, zone_records
+from api.tests.test_zone_set_provider import EAST, WEST, feature, zone_pieces
 
 
 class TestUserProfileFacilities(APITestCase):
@@ -211,7 +211,7 @@ class TestZoneSetSpotlight(APITestCase):
             partner_field=self.partner_field,
             value_property="bws_label",
         )
-        self.zone_set.replace_zones(zone_records(
+        self.zone_set.replace_zones(zone_pieces(
             feature(WEST, {"bws_label": "Extremely High"}),
             feature(EAST, {"bws_label": "Low"}),
         ))

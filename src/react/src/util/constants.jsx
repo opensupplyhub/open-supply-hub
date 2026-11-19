@@ -354,6 +354,8 @@ export const multipleLocationRoute = '/contribute/multiple-locations';
 export const listsRoute = '/lists';
 export const facilityListItemsRoute = '/lists/:listID';
 export const facilitiesRoute = '/facilities';
+// Earth Genome candidate review page (OSDEV-3755); flagged and login-gated.
+export const candidatesRoute = '/candidates';
 export const facilityDetailsRoute = '/facilities/:osID';
 // Scope doc 2.6: the registered record gets its own page rather than
 // being merged into the facility profile, so it is a sibling route.
@@ -627,6 +629,7 @@ export const SHOW_ADDITIONAL_IDENTIFIERS = 'show_additional_identifiers';
 export const ENABLE_IDENTITY_RESOLVER = 'enable_identity_resolver';
 export const PRIVATE_INSTANCE = 'private_instance';
 export const ENABLE_DROMO_UPLOADING = 'enable_dromo_uploading';
+export const ENABLE_LIST_CLEANING_FEEDBACK = 'enable_list_cleaning_feedback';
 export const ENABLE_V1_CLAIMS_FLOW = 'enable_v1_claims_flow';
 // Earth Genome candidate pilot kill switch (OSDEV-3627): off hides the
 // candidate footprint layer; the API answers 404 for candidates anyway.

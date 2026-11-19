@@ -7,7 +7,11 @@ from api.helpers.geojson_polygon import (
     InvalidPolygonGeoJSON,
     parse_feature_collection_polygons,
 )
-from api.helpers.geojson_zones import parse_zone_features
+from api.helpers.geojson_zones import (
+    parse_zone_features,
+    required_keys_outside_properties,
+    schema_required_keys,
+)
 
 LEFT = [[[0, 0], [0, 10], [5, 10], [5, 0], [0, 0]]]
 RIGHT = [[[5, 0], [5, 10], [10, 10], [10, 0], [5, 0]]]
@@ -229,3 +233,129 @@ class ParseZoneFeaturesTest(unittest.TestCase):
         raw = collection(feature(bowtie, {'bws_label': 'High'}))
         with self.assertRaises(InvalidPolygonGeoJSON):
             parse_zone_features(raw, 'bws_label')
+
+
+# The schema of an object partner field such as the Aqueduct block:
+# two required labels and an optional link.
+SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'bws_label': {'type': 'string', 'title': 'Water stress, today'},
+        'bwd_label': {'type': 'string', 'title': 'Drought risk'},
+        'atlas_url': {
+            'type': 'string', 'format': 'uri',
+            'title': 'Aqueduct Water Risk Atlas',
+        },
+    },
+    'required': ['bws_label', 'bwd_label'],
+}
+
+
+class ParseZoneFeaturesForObjectFieldTest(unittest.TestCase):
+    """Tests for reading zones for an object-type partner field, one
+    feature property per schema key (OSDEV-3659)."""
+
+    def test_reads_required_keys_and_labels_by_the_first(self):
+        raw = collection(
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low',
+                           'atlas_url': 'https://example.org/a'}),
+            feature(RIGHT, {'bws_label': 'Low', 'bwd_label': 'High'}),
+        )
+
+        zones = parse_zone_features(raw, schema=SCHEMA)
+
+        self.assertEqual([zone['label'] for zone in zones], ['High', 'Low'])
+        self.assertEqual(
+            zones[0]['properties'],
+            {'bws_label': 'High', 'bwd_label': 'Low',
+             'atlas_url': 'https://example.org/a'},
+        )
+        self.assertTrue(zones[1]['geom'].contains(Point(8, 5)))
+
+    def test_optional_schema_keys_may_be_absent(self):
+        """Only the `required` keys are checked; `atlas_url` is in the
+        schema but not required, so a feature without it is fine."""
+        raw = collection(
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+        )
+        [zone] = parse_zone_features(raw, schema=SCHEMA)
+        self.assertNotIn('atlas_url', zone['properties'])
+
+    def test_properties_outside_the_schema_are_kept(self):
+        """The full properties dict is stored so a zone can be traced
+        to its source row; the provider decides what is served."""
+        raw = collection(
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low',
+                           'pfaf_id': 2345}),
+        )
+        [zone] = parse_zone_features(raw, schema=SCHEMA)
+        self.assertEqual(zone['properties']['pfaf_id'], 2345)
+
+    def test_counts_features_missing_a_required_key(self):
+        """AC #3: the message names the key and how many features
+        lack it, and reports every required key with a problem."""
+        raw = collection(
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+            feature(RIGHT, {'bws_label': 'Low'}),
+            feature(FAR, {'bwd_label': None, 'bws_label': '  '}),
+        )
+        with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
+            parse_zone_features(raw, schema=SCHEMA)
+        message = str(ctx.exception)
+        self.assertIn('1 of 3 feature(s) are missing the "bws_label"', message)
+        self.assertIn('2 of 3 feature(s) are missing the "bwd_label"', message)
+        self.assertIn('(first at position 1)', message)
+        self.assertIn('lists as required', message)
+
+    def test_nested_required_value_counts_as_missing(self):
+        raw = collection(
+            feature(LEFT, {'bws_label': {'nested': 1}, 'bwd_label': 'Low'}),
+        )
+        with self.assertRaises(InvalidPolygonGeoJSON) as ctx:
+            parse_zone_features(raw, schema=SCHEMA)
+        self.assertIn('blank or non-scalar', str(ctx.exception))
+
+    def test_schema_without_required_keys_gives_an_empty_label(self):
+        """Nothing is mandatory and nothing identifies the zone, so the
+        label is empty rather than guessed from an arbitrary key."""
+        schema = {'properties': {'note': {'type': 'string'}}}
+        raw = collection(feature(LEFT, {}))
+        [zone] = parse_zone_features(raw, schema=schema)
+        self.assertEqual(zone['label'], '')
+
+    def test_value_property_is_ignored_when_a_schema_is_given(self):
+        raw = collection(
+            feature(LEFT, {'bws_label': 'High', 'bwd_label': 'Low'}),
+        )
+        [zone] = parse_zone_features(raw, 'not_a_key', schema=SCHEMA)
+        self.assertEqual(zone['label'], 'High')
+
+
+class SchemaRequiredKeysTest(unittest.TestCase):
+    """The one reading of a schema's `required` list that the parser
+    and both admin forms share."""
+
+    def test_required_keys_in_order_strings_only(self):
+        schema = {'required': ['b', 3, 'a', None]}
+        self.assertEqual(schema_required_keys(schema), ['b', 'a'])
+
+    def test_no_required_keys_for_a_missing_list_or_non_dict(self):
+        for schema in ({}, {'required': None}, None, 'required', []):
+            with self.subTest(schema=schema):
+                self.assertEqual(schema_required_keys(schema), [])
+
+    def test_required_keys_outside_properties(self):
+        schema = {
+            'properties': {'a': {}, 'b': {}},
+            'required': ['b', 'c', 'a', 'd'],
+        }
+        self.assertEqual(required_keys_outside_properties(schema), ['c', 'd'])
+
+    def test_every_required_key_is_outside_a_missing_properties_map(self):
+        for schema in ({'required': ['a']}, {'properties': 'a',
+                                             'required': ['a']}):
+            with self.subTest(schema=schema):
+                self.assertEqual(
+                    required_keys_outside_properties(schema), ['a']
+                )
+        self.assertEqual(required_keys_outside_properties(None), [])
