@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+    arrayOf,
     func,
     object,
     shape,
@@ -31,6 +32,7 @@ import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import findSelectedOption from '../utils';
 import InputErrorText from '../../../../Contribute/InputErrorText';
+import ClaimLiveCheckFieldFixes from '../../../../ClaimLiveCheck/ClaimLiveCheckFieldFixes';
 import { selectStyles } from '../../styles';
 import { CLAIM_PII_WARNING_TEXT } from '../../../../../util/constants';
 
@@ -43,6 +45,7 @@ const ContactInfoStep = ({
     errors,
     touched,
     userEmail,
+    liveCheckFixes,
 }) => {
     const isPublic = Boolean(formData.pointOfContactPubliclyVisible);
     const employmentOption = findSelectedOption(
@@ -100,6 +103,11 @@ const ContactInfoStep = ({
         urlFieldName = 'yourBusinessWebsite';
     }
 
+    // A live check fix about this proof is shown on the upload area
+    // when there is one, and on the selector otherwise.
+    const isEmploymentSelectFlagged =
+        Boolean(liveCheckFixes.employment) && !showDocumentUpload;
+
     const isEmploymentVerificationUrlError = !!(
         urlFieldName &&
         touched[urlFieldName] &&
@@ -118,6 +126,14 @@ const ContactInfoStep = ({
                     <TextField
                         fullWidth
                         id="claimant-email"
+                        helperText={
+                            liveCheckFixes.email && (
+                                <ClaimLiveCheckFieldFixes
+                                    fixes={liveCheckFixes.email}
+                                />
+                            )
+                        }
+                        FormHelperTextProps={{ component: 'div' }}
                         value={userEmail || ''}
                         required
                         variant="outlined"
@@ -126,7 +142,9 @@ const ContactInfoStep = ({
                             classes: {
                                 root: classes.inputRoot,
                                 input: classes.input,
-                                notchedOutline: classes.notchedOutlineStyles,
+                                notchedOutline: liveCheckFixes.email
+                                    ? classes.notchedOutlineFlagged
+                                    : classes.notchedOutlineStyles,
                             },
                         }}
                         className={classes.textField}
@@ -226,7 +244,8 @@ const ContactInfoStep = ({
                             )
                         }
                         styles={getSelectStyles(
-                            isEmploymentVerificationError,
+                            isEmploymentVerificationError ||
+                                isEmploymentSelectFlagged,
                             selectStyles,
                         )}
                         placeholder="Choose one"
@@ -242,6 +261,11 @@ const ContactInfoStep = ({
                                 />
                             </div>
                         )}
+                    {isEmploymentSelectFlagged && (
+                        <ClaimLiveCheckFieldFixes
+                            fixes={liveCheckFixes.employment}
+                        />
+                    )}
                 </div>
                 <div className={classes.fieldContainer}>
                     {showUrlInput && (
@@ -308,6 +332,10 @@ const ContactInfoStep = ({
                                         newFiles,
                                     )
                                 }
+                                flagged={Boolean(liveCheckFixes.employment)}
+                            />
+                            <ClaimLiveCheckFieldFixes
+                                fixes={liveCheckFixes.employment}
                             />
                             {touched.employmentVerificationDocuments &&
                                 errors.employmentVerificationDocuments && (
@@ -518,6 +546,7 @@ ContactInfoStep.defaultProps = {
     userEmail: null,
     errors: {},
     touched: {},
+    liveCheckFixes: {},
 };
 
 ContactInfoStep.propTypes = {
@@ -555,6 +584,12 @@ ContactInfoStep.propTypes = {
         yourBusinessWebsite: bool,
     }),
     userEmail: string,
+    // Live check fixes to mark, by field. Only the pending claim edit
+    // page passes them.
+    liveCheckFixes: shape({
+        email: arrayOf(string),
+        employment: arrayOf(string),
+    }),
 };
 
 const mapStateToProps = ({

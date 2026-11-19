@@ -9,10 +9,26 @@ export const CLAIM_LIVE_CHECK_STATUSES = Object.freeze({
     UNAVAILABLE: 'UNAVAILABLE',
 });
 
+// The fields of the pending claim edit page a fix can be about.
+// Several fixes can be about the same field.
+export const CLAIM_LIVE_CHECK_FIELDS = Object.freeze({
+    EMAIL: 'email',
+    EMPLOYMENT: 'employment',
+    ADDRESS: 'address',
+});
+
+// The text of the link that jumps to each field.
+export const CLAIM_LIVE_CHECK_FIELD_LABELS = Object.freeze({
+    [CLAIM_LIVE_CHECK_FIELDS.EMAIL]: 'Your email',
+    [CLAIM_LIVE_CHECK_FIELDS.EMPLOYMENT]: 'Employment verification',
+    [CLAIM_LIVE_CHECK_FIELDS.ADDRESS]: 'Company address verification',
+});
+
 // The preset fixes, keyed as the API names them. `text` is the line
-// shown. `targets` are CSS selectors for the field the fix is about on
-// the pending claim edit page, most specific first: the first one that
-// is on the page is the field the claimant is taken to.
+// shown. `field` is the field the fix is about. `targets` are CSS
+// selectors for that field on the pending claim edit page, most
+// specific first: the first one that is on the page is the element the
+// claimant is taken to.
 const ADDRESS_PROOF_TARGETS = Object.freeze([
     'label[for="company-address-verification-documents"]',
     '#locationAddressVerificationMethod',
@@ -21,19 +37,23 @@ const ADDRESS_PROOF_TARGETS = Object.freeze([
 export const CLAIM_LIVE_CHECK_FIXES = Object.freeze({
     work_email: Object.freeze({
         text: 'Use a work email, not a personal email.',
+        field: CLAIM_LIVE_CHECK_FIELDS.EMAIL,
         targets: Object.freeze(['#claimant-email']),
     }),
     upload_document: Object.freeze({
         text: 'Upload a document. Claims with a document are approved fastest.',
+        field: CLAIM_LIVE_CHECK_FIELDS.ADDRESS,
         targets: ADDRESS_PROOF_TARGETS,
     }),
     unreadable_document: Object.freeze({
         text: 'A document could not be read. Upload a clearer photo or a PDF.',
+        field: CLAIM_LIVE_CHECK_FIELDS.ADDRESS,
         targets: ADDRESS_PROOF_TARGETS,
     }),
     name_and_company_document: Object.freeze({
         text:
             'Add a document that shows your name and your company. For example a business card, employment letter or ID badge.',
+        field: CLAIM_LIVE_CHECK_FIELDS.EMPLOYMENT,
         targets: Object.freeze([
             'label[for="employment-verification-upload"]',
             '#claimantEmploymentVerificationMethod',
@@ -41,23 +61,32 @@ export const CLAIM_LIVE_CHECK_FIXES = Object.freeze({
     }),
     company_name_document: Object.freeze({
         text: 'Add an official document that shows the company name.',
+        field: CLAIM_LIVE_CHECK_FIELDS.ADDRESS,
         targets: ADDRESS_PROOF_TARGETS,
     }),
     company_address_document: Object.freeze({
         text:
             'Add an official document that shows the company address. For example a utility bill or business registration.',
+        field: CLAIM_LIVE_CHECK_FIELDS.ADDRESS,
         targets: ADDRESS_PROOF_TARGETS,
     }),
 });
 
-export const CHECK_AND_SUBMIT_BUTTON_TEXT = 'Check and submit my claim';
+export const CHECK_AND_SUBMIT_BUTTON_TEXT = 'Submit and check my claim';
 export const CHECK_AND_SUBMIT_HELPER_TEXT =
-    'Submits the claim and checks it right away. Stay on this page for up to one minute. If it passes, the claim is approved. If it does not pass, you will see what to change. You can also leave it for a person to review.';
+    'Your claim is submitted first. Then we check it right away, which takes up to one minute. You can stay to see the result or leave and get it by email.';
 export const SAVE_AND_CHECK_AGAIN_BUTTON_TEXT = 'Save and check again';
 
-export const CHECKING_TITLE = 'Checking your claim';
-export const CHECKING_STAY_TEXT =
-    'This takes up to one minute. Stay on this page.';
+export const CHECKING_TITLE =
+    'Your claim is submitted. We are checking it now.';
+export const CHECKING_STAY_TEXT = 'This takes up to one minute.';
+// The claimant can stop waiting at any time. The check carries on and
+// its result is emailed.
+export const EMAIL_ME_BUTTON_TEXT = 'Send me the result by email';
+export const EMAIL_ME_HELPER_TEXT =
+    'Your claim is already submitted. You can leave this page.';
+export const EMAIL_ME_TITLE = 'Your claim is submitted.';
+export const EMAIL_ME_TEXT = 'We will email you the result of the check.';
 export const CHECKING_BAR_LABEL = 'Checking your claim';
 
 // The steps shown while the check runs, and how long after the start
@@ -116,23 +145,33 @@ export const RESULT_HOLD_MS = 600;
 
 export const PASSED_TITLE = 'Your claim is approved.';
 
-export const NOT_PASSED_TITLE = 'Your claim did not pass the pre-check.';
-export const FIX_THIS_LABEL = 'Fix this:';
+export const NOT_PASSED_TITLE =
+    'Your claim is submitted, but it did not pass the check.';
+// `count` is how many preset fixes are listed, worked out on the page.
+export const makeFixLabel = count =>
+    count === 1 ? 'Fix this:' : `Fix these ${count} things:`;
+export const makeGoBackButtonText = count =>
+    count === 1 ? 'Go back and fix it' : 'Go back and fix them';
 export const CHOOSE_ONE_LABEL = 'Choose one:';
-export const GO_BACK_BUTTON_TEXT = 'Go back and fix it';
-export const GO_BACK_HELPER_TEXT =
-    'Opens the exact field to change. Then check again.';
-// Shown instead once the claim has used all its checks.
-export const GO_BACK_NO_CHECKS_HELPER_TEXT = 'Opens the exact field to change.';
+export const CHOICES_HELPER_TEXT =
+    'Fixing opens each field that needs a change. Leaving it means a person reviews the claim, which can take much longer.';
+// Shown instead once the claim has used all its checks: fixing still
+// helps the person who reviews it, but it is not checked again.
+export const CHOICES_NO_CHECKS_HELPER_TEXT =
+    'Fixing opens each field that needs a change. A person reviews the claim either way, which can take much longer.';
 export const LEAVE_BUTTON_TEXT = 'Leave it for review';
-export const LEAVE_HELPER_TEXT =
-    'A person will review the claim. Approval can be significantly delayed.';
 
-export const UNAVAILABLE_TITLE = 'The pre-check is not available right now.';
+// Shown when the page stops waiting for a check that is still running.
+export const UNAVAILABLE_TITLE = 'This is taking longer than usual.';
 export const UNAVAILABLE_TEXT =
-    'Your claim is submitted. A person will review it.';
+    'Your claim is submitted. You do not need to do anything.';
 export const UNAVAILABLE_EMAIL_TEXT =
-    'You will get an email when the claim is reviewed.';
+    'We will email you the result. If the check cannot finish, a person will review your claim.';
+
+// The banner at the top of the pending claim edit page while the
+// claim's latest check did not pass and its fixes are still current.
+export const makeFixBannerTitle = count =>
+    count === 1 ? '1 thing to fix' : `${count} things to fix`;
 
 // Space kept between the site's fixed top menu and the result panel
 // when the panel is scrolled into view.

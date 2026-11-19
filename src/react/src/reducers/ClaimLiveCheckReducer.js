@@ -27,7 +27,7 @@ const knownStatuses = Object.values(CLAIM_LIVE_CHECK_STATUSES);
 // Only what this page knows how to show is kept: an unknown status
 // reads as "not available" and an unknown fix key is dropped, so a
 // vocabulary mismatch with the API can never put raw text on the page.
-const readAnswer = data => {
+export const readAnswer = data => {
     const status = knownStatuses.includes(data?.status)
         ? data.status
         : CLAIM_LIVE_CHECK_STATUSES.UNAVAILABLE;

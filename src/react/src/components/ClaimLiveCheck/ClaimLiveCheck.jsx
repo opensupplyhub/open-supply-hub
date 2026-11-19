@@ -28,16 +28,17 @@ import {
 } from '../../util/constants';
 import {
     CHECK_TIMEOUT_MS,
+    CHOICES_HELPER_TEXT,
+    CHOICES_NO_CHECKS_HELPER_TEXT,
     CHOOSE_ONE_LABEL,
     CLAIM_LIVE_CHECK_FIXES,
     CLAIM_LIVE_CHECK_STATUSES,
-    FIX_THIS_LABEL,
-    GO_BACK_BUTTON_TEXT,
-    GO_BACK_HELPER_TEXT,
-    GO_BACK_NO_CHECKS_HELPER_TEXT,
+    EMAIL_ME_TEXT,
+    EMAIL_ME_TITLE,
     LEAVE_BUTTON_TEXT,
-    LEAVE_HELPER_TEXT,
     LEFT_FOR_REVIEW_TITLE,
+    makeFixLabel,
+    makeGoBackButtonText,
     NOT_PASSED_TITLE,
     PANEL_SCROLL_MARGIN_PX,
     PASSED_TITLE,
@@ -62,7 +63,9 @@ const { CHECKING, PASSED, NOT_PASSED, UNAVAILABLE } = CLAIM_LIVE_CHECK_STATUSES;
  *
  * The claim is already saved when this mounts, so nothing here can
  * cost the claimant their submission: a slow, failed or switched-off
- * check ends as "not available", and the claim waits for a person.
+ * check never ends in an error, and the claim waits for a person. The
+ * claimant can also stop waiting at any time and get the result by
+ * email; the check carries on without the page.
  */
 const ClaimLiveCheck = ({
     classes,
@@ -84,6 +87,8 @@ const ClaimLiveCheck = ({
     // nothing may be promised about it.
     const [started, setStarted] = useState(false);
     const [leftForReview, setLeftForReview] = useState(false);
+    // The claimant chose to get the result by email instead of waiting.
+    const [emailMe, setEmailMe] = useState(false);
     const [resultShown, setResultShown] = useState(false);
     const panelRef = useRef(null);
 
@@ -113,8 +118,10 @@ const ClaimLiveCheck = ({
         }
     }, [notStarted, onNotStarted]);
 
-    // The page has given up on a check that is still running.
-    const gaveUp = timedOut && status === CHECKING;
+    // The page has given up on a check that is still running. A
+    // claimant who asked for the email has already stopped waiting, so
+    // there is nothing to give up on.
+    const gaveUp = timedOut && status === CHECKING && !emailMe;
     useEffect(() => {
         if (gaveUp) {
             giveUpCheck(claimID);
@@ -128,8 +135,9 @@ const ClaimLiveCheck = ({
     const hasAnswer = status === PASSED || status === NOT_PASSED;
     const waiting =
         !timedOut &&
+        !emailMe &&
         (status === null || status === CHECKING || (hasAnswer && !resultShown));
-    const polling = !timedOut && status === CHECKING;
+    const polling = !timedOut && !emailMe && status === CHECKING;
 
     // The panel replaces a long form, and the page can be scrolled so
     // that its headline sits under the site's fixed top menu. Bring it
@@ -146,7 +154,7 @@ const ClaimLiveCheck = ({
             HEADER_HEIGHT -
             PANEL_SCROLL_MARGIN_PX;
         window.scrollTo(0, Math.max(0, top));
-    }, [waiting, leftForReview]);
+    }, [waiting, leftForReview, emailMe]);
 
     useEffect(() => {
         if (!polling) {
@@ -202,7 +210,27 @@ const ClaimLiveCheck = ({
                     done={hasAnswer}
                     locationName={locationName}
                     contributorCount={contributorCount}
+                    onEmailMe={hasAnswer ? null : () => setEmailMe(true)}
                 />
+            </div>
+        );
+    }
+
+    // An answer that was already on the page is shown instead.
+    if (emailMe && !hasAnswer) {
+        return (
+            <div
+                className={classes.panelUnavailable}
+                ref={panelRef}
+                role="status"
+            >
+                <Typography component="h2" className={classes.title}>
+                    {EMAIL_ME_TITLE}
+                </Typography>
+                <Typography className={classes.text}>
+                    {EMAIL_ME_TEXT}
+                </Typography>
+                {exits}
             </div>
         );
     }
@@ -246,7 +274,7 @@ const ClaimLiveCheck = ({
                     {NOT_PASSED_TITLE}
                 </Typography>
                 <Typography className={classes.label}>
-                    {FIX_THIS_LABEL}
+                    {makeFixLabel(fixes.length)}
                 </Typography>
                 <ul className={classes.fixes}>
                     {fixes.map(fix => (
@@ -271,13 +299,8 @@ const ClaimLiveCheck = ({
                                 )
                             }
                         >
-                            {GO_BACK_BUTTON_TEXT}
+                            {makeGoBackButtonText(fixes.length)}
                         </Button>
-                        <span>
-                            {canCheckAgain
-                                ? GO_BACK_HELPER_TEXT
-                                : GO_BACK_NO_CHECKS_HELPER_TEXT}
-                        </span>
                     </div>
                     <div className={classes.choice}>
                         <Button
@@ -287,9 +310,13 @@ const ClaimLiveCheck = ({
                         >
                             {LEAVE_BUTTON_TEXT}
                         </Button>
-                        <span>{LEAVE_HELPER_TEXT}</span>
                     </div>
                 </div>
+                <Typography className={classes.helper}>
+                    {canCheckAgain
+                        ? CHOICES_HELPER_TEXT
+                        : CHOICES_NO_CHECKS_HELPER_TEXT}
+                </Typography>
             </div>
         );
     }

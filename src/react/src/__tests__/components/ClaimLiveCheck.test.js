@@ -18,8 +18,13 @@ jest.mock('../../util/apiRequest', () => ({
 
 const CLAIM_ID = 77;
 const CHECK_URL = `/api/facility-claims/${CLAIM_ID}/live-check/`;
-const STAY = 'This takes up to one minute. Stay on this page.';
-const UNAVAILABLE = 'The pre-check is not available right now.';
+const CHECKING = 'Your claim is submitted. We are checking it now.';
+const STAY = 'This takes up to one minute.';
+const UNAVAILABLE = 'This is taking longer than usual.';
+const NOT_PASSED = 'Your claim is submitted, but it did not pass the check.';
+const EMAIL_ME = 'Send me the result by email';
+const EMAIL_FOLLOWS =
+    'We will email you the result. If the check cannot finish, a person will review your claim.';
 const WORK_EMAIL = 'Use a work email, not a personal email.';
 const COMPANY_ADDRESS =
     'Add an official document that shows the company address. For example a utility bill or business registration.';
@@ -107,10 +112,10 @@ describe('ClaimLiveCheck component', () => {
         Date.now.mockRestore();
     });
 
-    test('starts the check once and tells the claimant to stay', async () => {
+    test('starts the check once and says the claim is already submitted', async () => {
         const { getByText } = renderCheck();
 
-        expect(getByText('Checking your claim')).toBeInTheDocument();
+        expect(getByText(CHECKING)).toBeInTheDocument();
         expect(getByText(STAY)).toBeInTheDocument();
 
         await settle();
@@ -126,9 +131,7 @@ describe('ClaimLiveCheck component', () => {
         await settle();
         await advance(POLL_INTERVAL_MS);
 
-        expect(
-            getByText('You will get an email when the claim is reviewed.'),
-        ).toBeInTheDocument();
+        expect(getByText(EMAIL_FOLLOWS)).toBeInTheDocument();
     });
 
     test('brings the panel into view when it appears and when it changes', async () => {
@@ -221,7 +224,7 @@ describe('ClaimLiveCheck component', () => {
         await advance(RESULT_HOLD_MS);
 
         expect(getByText('Your claim is approved.')).toBeInTheDocument();
-        expect(queryByText('Checking your claim')).toBeNull();
+        expect(queryByText(CHECKING)).toBeNull();
     });
 
     test('a check that is not available never shows the bar as full', async () => {
@@ -314,9 +317,7 @@ describe('ClaimLiveCheck component', () => {
         await settle();
 
         expect(
-            getByRole('heading', {
-                name: 'Your claim did not pass the pre-check.',
-            }),
+            getByRole('heading', { name: NOT_PASSED }),
         ).toBeInTheDocument();
         expect(container.querySelectorAll('[role="status"]')).toHaveLength(1);
     });
@@ -352,9 +353,7 @@ describe('ClaimLiveCheck component', () => {
 
         expect(onNotStarted).not.toHaveBeenCalled();
         expect(getByText(UNAVAILABLE)).toBeInTheDocument();
-        expect(
-            getByText('You will get an email when the claim is reviewed.'),
-        ).toBeInTheDocument();
+        expect(getByText(EMAIL_FOLLOWS)).toBeInTheDocument();
     });
 
     test('tells the API once when it gives up after one minute', async () => {
@@ -450,34 +449,42 @@ describe('ClaimLiveCheck component', () => {
         const { getByText, getAllByRole } = renderCheck();
         await settle();
 
-        expect(
-            getByText('Your claim did not pass the pre-check.'),
-        ).toBeInTheDocument();
-        expect(getByText('Fix this:')).toBeInTheDocument();
+        expect(getByText(NOT_PASSED)).toBeInTheDocument();
+        expect(getByText('Fix these 2 things:')).toBeInTheDocument();
         expect(
             getAllByRole('listitem').map(item => item.textContent),
         ).toEqual([WORK_EMAIL, COMPANY_ADDRESS]);
         expect(getByText('Choose one:')).toBeInTheDocument();
-        expect(getByText('Go back and fix it')).toBeInTheDocument();
-        expect(
-            getByText('Opens the exact field to change. Then check again.'),
-        ).toBeInTheDocument();
+        expect(getByText('Go back and fix them')).toBeInTheDocument();
         expect(getByText('Leave it for review')).toBeInTheDocument();
         expect(
             getByText(
-                'A person will review the claim. Approval can be significantly delayed.',
+                'Fixing opens each field that needs a change. Leaving it means a person reviews the claim, which can take much longer.',
             ),
         ).toBeInTheDocument();
     });
 
-    test('"Go back and fix it" opens the first fix on the edit page', async () => {
+    test('one fix is worded in the singular', async () => {
+        apiRequest.post.mockResolvedValue(
+            answer('NOT_PASSED', ['upload_document']),
+        );
+        const { getByText, queryByText } = renderCheck();
+        await settle();
+
+        expect(getByText('Fix this:')).toBeInTheDocument();
+        expect(getByText('Go back and fix it')).toBeInTheDocument();
+        expect(queryByText(/Fix these/)).toBeNull();
+        expect(queryByText('Go back and fix them')).toBeNull();
+    });
+
+    test('going back opens the edit page at the first fix', async () => {
         apiRequest.post.mockResolvedValue(
             answer('NOT_PASSED', ['work_email', 'company_address_document']),
         );
         const { getByText } = renderCheck();
         await settle();
 
-        fireEvent.click(getByText('Go back and fix it'));
+        fireEvent.click(getByText('Go back and fix them'));
 
         expect(history.push).toHaveBeenCalledWith(
             `/claimed/pending/${CLAIM_ID}?fix=work_email&check=1`,
@@ -492,9 +499,11 @@ describe('ClaimLiveCheck component', () => {
         await settle();
 
         expect(
-            getByText('Opens the exact field to change.'),
+            getByText(
+                'Fixing opens each field that needs a change. A person reviews the claim either way, which can take much longer.',
+            ),
         ).toBeInTheDocument();
-        expect(queryByText(/Then check again/)).toBeNull();
+        expect(queryByText(/Leaving it means/)).toBeNull();
 
         fireEvent.click(getByText('Go back and fix it'));
         expect(history.push).toHaveBeenCalledWith(
@@ -546,7 +555,9 @@ describe('ClaimLiveCheck component', () => {
 
         expect(getByText(UNAVAILABLE)).toBeInTheDocument();
         expect(
-            getByText('Your claim is submitted. A person will review it.'),
+            getByText(
+                'Your claim is submitted. You do not need to do anything.',
+            ),
         ).toBeInTheDocument();
         expect(getByText('To My Claims')).toBeInTheDocument();
     });
@@ -593,6 +604,66 @@ describe('ClaimLiveCheck component', () => {
         const polls = apiRequest.get.mock.calls.length;
         await advance(POLL_INTERVAL_MS * 5);
         expect(apiRequest.get).toHaveBeenCalledTimes(polls);
+    });
+
+    test('the email choice is there from the start, before the check has answered', async () => {
+        const { getByText } = renderCheck();
+
+        expect(getByText(EMAIL_ME)).toBeInTheDocument();
+        expect(
+            getByText(
+                'Your claim is already submitted. You can leave this page.',
+            ),
+        ).toBeInTheDocument();
+        await settle();
+        expect(getByText(EMAIL_ME)).toBeInTheDocument();
+    });
+
+    test('asking for the email stops the polling and leaves the check running', async () => {
+        const { getByText, getByRole, queryByText, container } = renderCheck();
+        await settle();
+        await advance(POLL_INTERVAL_MS);
+        const polls = apiRequest.get.mock.calls.length;
+
+        fireEvent.click(getByText(EMAIL_ME));
+
+        expect(
+            getByRole('heading', { name: 'Your claim is submitted.' }),
+        ).toBeInTheDocument();
+        expect(
+            getByText('We will email you the result of the check.'),
+        ).toBeInTheDocument();
+        expect(container.querySelectorAll('[role="status"]')).toHaveLength(1);
+        expect(queryByText(CHECKING)).toBeNull();
+        expect(queryByText(EMAIL_ME)).toBeNull();
+
+        await advance(CHECK_TIMEOUT_MS + POLL_INTERVAL_MS * 3);
+
+        // No more polls, and the API is not told the page gave up: the
+        // check carries on and its result is emailed.
+        expect(apiRequest.get).toHaveBeenCalledTimes(polls);
+        expect(apiRequest.post).toHaveBeenCalledTimes(1);
+        expect(queryByText(UNAVAILABLE)).toBeNull();
+        fireEvent.click(getByText('To My Claims'));
+        expect(history.push).toHaveBeenCalledWith('/claimed');
+    });
+
+    test('asking for the email before a check that cannot start still hands back', async () => {
+        let resolveStart;
+        apiRequest.post.mockReturnValue(
+            new Promise(resolve => {
+                resolveStart = resolve;
+            }),
+        );
+        const onNotStarted = jest.fn();
+        const { getByText, container } = renderCheck({}, { onNotStarted });
+
+        fireEvent.click(getByText(EMAIL_ME));
+        await act(async () => resolveStart(answer('UNAVAILABLE', [], 3)));
+        await settle();
+
+        expect(onNotStarted).toHaveBeenCalledTimes(1);
+        expect(container).toBeEmptyDOMElement();
     });
 
     test('stops asking and forgets the check when it is left', async () => {

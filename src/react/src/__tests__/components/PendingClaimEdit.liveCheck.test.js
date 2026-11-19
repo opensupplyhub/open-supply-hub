@@ -14,16 +14,32 @@ jest.mock('../../util/apiRequest', () => ({
     delete: jest.fn(),
 }));
 
-// The reused claim-form steps are heavy and have their own tests. The
-// Business step stand-in carries the field a live check fix points at.
+// The reused claim-form steps are heavy and have their own tests
+// (the marks on their fields are in ClaimLiveCheckFieldFixes.test.js).
+// The stand-ins carry the fields the live check fixes point at and
+// show which fixes the page handed them.
 jest.mock(
     '../../components/InitialClaimFlow/ClaimForm/Steps/ContactInfoStep/ContactInfoStep',
-    () => () => <div data-testid="contact-step" />,
+    () => ({ liveCheckFixes }) => (
+        <div
+            data-testid="contact-step"
+            data-fixes={JSON.stringify(liveCheckFixes)}
+        >
+            <input id="claimant-email" aria-label="Your Email" />
+            <select
+                id="claimantEmploymentVerificationMethod"
+                aria-label="Employment Verification"
+            />
+        </div>
+    ),
 );
 jest.mock(
     '../../components/InitialClaimFlow/ClaimForm/Steps/BusinessStep/BusinessStep',
-    () => () => (
-        <div data-testid="business-step">
+    () => ({ liveCheckFixes }) => (
+        <div
+            data-testid="business-step"
+            data-fixes={JSON.stringify(liveCheckFixes)}
+        >
             <select
                 id="locationAddressVerificationMethod"
                 aria-label="Company Address Verification"
@@ -55,6 +71,7 @@ const CLAIM_ID = '12';
 const PENDING_URL = `/api/facility-claims/${CLAIM_ID}/pending/`;
 const LIVE_CHECK_URL = `/api/facility-claims/${CLAIM_ID}/live-check/`;
 const SAVE_AND_CHECK = 'Save and check again';
+const CHECKING = 'Your claim is submitted. We are checking it now.';
 const THANK_YOU = 'Thank you for editing your claim request!';
 
 const pendingClaim = {
@@ -109,11 +126,18 @@ describe('PendingClaimEdit after "Go back and fix it"', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-        apiRequest.get.mockImplementation(url =>
-            url === PENDING_URL
-                ? Promise.resolve({ data: pendingClaim })
-                : Promise.reject(new Error('not mocked')),
-        );
+        // The claim has no live check with fixes that are still current.
+        apiRequest.get.mockImplementation(url => {
+            if (url === PENDING_URL) {
+                return Promise.resolve({ data: pendingClaim });
+            }
+            if (url === LIVE_CHECK_URL) {
+                return Promise.resolve({
+                    data: { status: 'UNAVAILABLE', fixes: [], checks_left: 3 },
+                });
+            }
+            return Promise.reject(new Error('not mocked'));
+        });
         apiRequest.patch.mockResolvedValue({ data: pendingClaim });
         apiRequest.post.mockResolvedValue({
             data: { status: 'CHECKING', fixes: [], checks_left: 1 },
@@ -140,7 +164,7 @@ describe('PendingClaimEdit after "Go back and fix it"', () => {
 
         fireEvent.click(await findByText(SAVE_AND_CHECK));
 
-        expect(await findByText('Checking your claim')).toBeInTheDocument();
+        expect(await findByText(CHECKING)).toBeInTheDocument();
         expect(apiRequest.patch).toHaveBeenCalledWith(
             PENDING_URL,
             expect.anything(),
@@ -160,7 +184,7 @@ describe('PendingClaimEdit after "Go back and fix it"', () => {
         fireEvent.click(await findByText(SAVE_AND_CHECK));
 
         expect(await findByText(THANK_YOU)).toBeInTheDocument();
-        expect(queryByText('Checking your claim')).toBeNull();
+        expect(queryByText(CHECKING)).toBeNull();
         expect(queryByText(/email/i)).toBeNull();
     });
 
@@ -188,5 +212,200 @@ describe('PendingClaimEdit after "Go back and fix it"', () => {
             getByLabelText('Company Address Verification'),
         );
         expect(apiRequest.post).not.toHaveBeenCalled();
+        expect(apiRequest.get).not.toHaveBeenCalledWith(LIVE_CHECK_URL);
+    });
+});
+
+describe('PendingClaimEdit marks every field the latest check flagged', () => {
+    const SEVERAL = {
+        status: 'NOT_PASSED',
+        fixes: [
+            'work_email',
+            'upload_document',
+            'name_and_company_document',
+            'company_address_document',
+        ],
+        checks_left: 2,
+    };
+    const BY_FIELD = {
+        email: ['work_email'],
+        address: ['upload_document', 'company_address_document'],
+        employment: ['name_and_company_document'],
+    };
+
+    let liveCheck;
+
+    const fixesOf = element => JSON.parse(element.getAttribute('data-fixes'));
+
+    beforeAll(() => {
+        window.scrollTo = jest.fn();
+        global.HTMLButtonElement = window.HTMLButtonElement;
+    });
+    afterAll(() => {
+        delete global.HTMLButtonElement;
+    });
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        liveCheck = SEVERAL;
+        apiRequest.get.mockImplementation(url => {
+            if (url === PENDING_URL) {
+                return Promise.resolve({ data: pendingClaim });
+            }
+            if (url === LIVE_CHECK_URL) {
+                return Promise.resolve({ data: liveCheck });
+            }
+            return Promise.reject(new Error('not mocked'));
+        });
+        apiRequest.patch.mockResolvedValue({ data: pendingClaim });
+        apiRequest.post.mockResolvedValue({
+            data: { status: 'CHECKING', fixes: [], checks_left: 1 },
+        });
+    });
+
+    // The same marks whichever way the claimant arrives: from the
+    // result screen or the email link (both carry the query string),
+    // or from My Claims (no query string).
+    test.each([
+        ['from the result screen or the email link', '?fix=work_email&check=1'],
+        ['from My Claims', ''],
+    ])('%s', async (_, search) => {
+        const { findByRole, getByTestId, getByText } = renderEditPage(search);
+
+        const banner = await findByRole('status');
+        expect(banner).toHaveTextContent('4 things to fix');
+        expect(fixesOf(getByTestId('contact-step'))).toEqual(BY_FIELD);
+        expect(fixesOf(getByTestId('business-step'))).toEqual(BY_FIELD);
+        // One link per field, however many fixes are about it.
+        expect(
+            Array.from(banner.querySelectorAll('button')).map(
+                button => button.textContent,
+            ),
+        ).toEqual([
+            'Your email',
+            'Company address verification',
+            'Employment verification',
+        ]);
+        expect(getByText(SAVE_AND_CHECK)).toBeInTheDocument();
+    });
+
+    test('one fix is counted in the singular', async () => {
+        liveCheck = {
+            status: 'NOT_PASSED',
+            fixes: ['upload_document'],
+            checks_left: 2,
+        };
+        const { findByRole } = renderEditPage('');
+
+        expect(await findByRole('status')).toHaveTextContent('1 thing to fix');
+    });
+
+    test('each link takes the keyboard focus to its field', async () => {
+        const { findByText, getByText, getByLabelText } = renderEditPage('');
+
+        fireEvent.click(await findByText('Company address verification'));
+        expect(document.activeElement).toBe(
+            getByLabelText('Company Address Verification'),
+        );
+
+        fireEvent.click(getByText('Employment verification'));
+        expect(document.activeElement).toBe(
+            getByLabelText('Employment Verification'),
+        );
+
+        fireEvent.click(getByText('Your email'));
+        expect(document.activeElement).toBe(getByLabelText('Your Email'));
+    });
+
+    test('the query string still chooses the field to open at', async () => {
+        const { findByRole, getByLabelText } = renderEditPage(
+            '?fix=name_and_company_document&check=1',
+        );
+
+        await findByRole('status');
+        await waitFor(() =>
+            expect(document.activeElement).toBe(
+                getByLabelText('Employment Verification'),
+            ),
+        );
+    });
+
+    test('nothing is marked once the API returns no fixes, whatever the link says', async () => {
+        // What the API answers after the claim was edited since the check.
+        liveCheck = { status: 'UNAVAILABLE', fixes: [], checks_left: 2 };
+        const { findByText, getByTestId, queryByRole } = renderEditPage(
+            '?fix=upload_document',
+        );
+
+        expect(await findByText('Save changes')).toBeInTheDocument();
+        expect(queryByRole('status')).toBeNull();
+        expect(fixesOf(getByTestId('contact-step'))).toEqual({});
+    });
+
+    test.each([
+        ['a check that passed', { status: 'PASSED', fixes: ['upload_document'] }],
+        ['a check still running', { status: 'CHECKING', fixes: [] }],
+        ['an unknown fix', { status: 'NOT_PASSED', fixes: ['Raw model text'] }],
+    ])('nothing is marked for %s', async (_, answer) => {
+        liveCheck = { ...answer, checks_left: 2 };
+        const { findByText, queryByRole, queryByText } = renderEditPage('');
+
+        expect(await findByText('Save changes')).toBeInTheDocument();
+        expect(queryByRole('status')).toBeNull();
+        expect(queryByText(/Raw model text/)).toBeNull();
+    });
+
+    test('a failed read leaves the page as it always was', async () => {
+        apiRequest.get.mockImplementation(url =>
+            url === PENDING_URL
+                ? Promise.resolve({ data: pendingClaim })
+                : Promise.reject(new Error('network')),
+        );
+        const { findByText, queryByRole } = renderEditPage('');
+
+        expect(await findByText('Save changes')).toBeInTheDocument();
+        expect(queryByRole('status')).toBeNull();
+    });
+
+    test('with no checks left the fields are marked but saving does not check again', async () => {
+        liveCheck = { ...SEVERAL, checks_left: 0 };
+        const { findByRole, getByText, findByText } = renderEditPage('');
+
+        expect(await findByRole('status')).toHaveTextContent('4 things to fix');
+        fireEvent.click(getByText('Save changes'));
+
+        expect(await findByText(THANK_YOU)).toBeInTheDocument();
+        expect(apiRequest.post).not.toHaveBeenCalled();
+    });
+
+    test('with the switch off nothing is read and nothing is marked', async () => {
+        const { findByText, queryByRole } = renderEditPage('', {
+            claim_live_check: false,
+        });
+
+        expect(await findByText('Save changes')).toBeInTheDocument();
+        expect(queryByRole('status')).toBeNull();
+        expect(apiRequest.get).not.toHaveBeenCalledWith(LIVE_CHECK_URL);
+    });
+
+    test('going back from a second result opens the form again with the new marks', async () => {
+        const { findByText, findByRole, getByTestId } = renderEditPage('');
+        const second = {
+            status: 'NOT_PASSED',
+            fixes: ['company_name_document'],
+            checks_left: 1,
+        };
+        apiRequest.post.mockResolvedValue({ data: second });
+
+        fireEvent.click(await findByText(SAVE_AND_CHECK));
+        liveCheck = second;
+        fireEvent.click(await findByText('Go back and fix it'));
+
+        const banner = await findByRole('status');
+        expect(banner).toHaveTextContent('1 thing to fix');
+        expect(fixesOf(getByTestId('business-step'))).toEqual({
+            address: ['company_name_document'],
+        });
+        expect(await findByText(SAVE_AND_CHECK)).toBeInTheDocument();
     });
 });

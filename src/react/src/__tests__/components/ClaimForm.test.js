@@ -1060,8 +1060,8 @@ describe('ClaimForm component', () => {
         });
     });
 
-    describe('Check and submit my claim (live claim check)', () => {
-        const helperText = /Submits the claim and checks it right away/;
+    describe('Submit and check my claim (live claim check)', () => {
+        const helperText = /Your claim is submitted first\. Then we check it right away/;
         const stateOnLastStep = (flags, submissionState) => ({
             ...defaultPreloadedState,
             claimForm: {
@@ -1088,7 +1088,7 @@ describe('ClaimForm component', () => {
             );
 
             expect(getByText('Submit Claim')).toBeInTheDocument();
-            expect(queryByText('Check and submit my claim')).toBeNull();
+            expect(queryByText('Submit and check my claim')).toBeNull();
             expect(queryByText(helperText)).toBeNull();
         });
 
@@ -1097,7 +1097,7 @@ describe('ClaimForm component', () => {
                 stateOnLastStep({ claim_live_check: true }),
             );
 
-            expect(getByText('Check and submit my claim')).toBeInTheDocument();
+            expect(getByText('Submit and check my claim')).toBeInTheDocument();
             expect(getByText(helperText)).toBeInTheDocument();
             expect(queryByText('Submit Claim')).toBeNull();
         });
@@ -1127,7 +1127,7 @@ describe('ClaimForm component', () => {
 
             await waitFor(() => {
                 expect(
-                    getByText('This takes up to one minute. Stay on this page.'),
+                    getByText('This takes up to one minute.'),
                 ).toBeInTheDocument();
             });
             expect(apiRequest.post).toHaveBeenCalledWith(
@@ -1158,7 +1158,7 @@ describe('ClaimForm component', () => {
                 ).toBeInTheDocument();
             });
             expect(
-                queryByText('The pre-check is not available right now.'),
+                queryByText('This is taking longer than usual.'),
             ).toBeNull();
             expect(queryByText(/email/i)).toBeNull();
         });
@@ -1213,9 +1213,9 @@ describe('ClaimForm component', () => {
                 await new Promise(resolve => setTimeout(resolve, 50));
             });
 
-            expect(getByText('Check and submit my claim')).toBeInTheDocument();
+            expect(getByText('Submit and check my claim')).toBeInTheDocument();
             expect(
-                queryByText('This takes up to one minute. Stay on this page.'),
+                queryByText('This takes up to one minute.'),
             ).toBeNull();
             expect(apiRequest.post).not.toHaveBeenCalled();
         });

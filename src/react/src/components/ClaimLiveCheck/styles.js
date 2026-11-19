@@ -61,6 +61,8 @@ export const claimLiveCheckStyles = theme =>
             display: 'grid',
             gap: '8px',
             alignContent: 'start',
+        }),
+        helper: Object.freeze({
             fontSize: '16px',
         }),
         actions: Object.freeze({
@@ -89,6 +91,52 @@ export const claimLiveCheckStyles = theme =>
             },
         }),
     });
+
+// The marks on the pending claim edit page while the claim's latest
+// check did not pass: a banner with a link to each field, and the
+// preset lines under the field.
+export const fixBannerStyles = theme =>
+    Object.freeze({
+        banner: Object.freeze({
+            border: `2px solid ${COLOURS.RED}`,
+            backgroundColor: COLOURS.LIGHT_RED,
+            padding: '16px 24px',
+            marginBottom: '20px',
+            display: 'grid',
+            gap: '8px',
+        }),
+        bannerTitle: Object.freeze({
+            fontSize: '24px',
+            lineHeight: 1.1,
+            fontWeight: theme.typography.fontWeightExtraBold,
+        }),
+        bannerLinks: Object.freeze({
+            margin: 0,
+            paddingLeft: '24px',
+            display: 'grid',
+            gap: '4px',
+        }),
+        bannerLink: Object.freeze({
+            padding: 0,
+            minHeight: 0,
+            textTransform: 'none',
+            textDecoration: 'underline',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightSemiBold,
+            '&:hover': Object.freeze({
+                backgroundColor: 'transparent',
+                textDecoration: 'underline',
+            }),
+        }),
+    });
+
+export const fieldFixesStyles = Object.freeze({
+    fieldFixes: Object.freeze({
+        display: 'grid',
+        gap: '4px',
+        marginTop: '8px',
+    }),
+});
 
 export const confettiStyles = Object.freeze({
     [`@keyframes ${CONFETTI_FALL}`]: Object.freeze({
@@ -231,6 +279,25 @@ export const waitingStyles = theme =>
             alignContent: 'center',
             fontSize: '18px',
             overflowWrap: 'anywhere',
+        }),
+        emailMe: Object.freeze({
+            display: 'grid',
+            gap: '4px',
+            justifyItems: 'start',
+            fontSize: '16px',
+        }),
+        emailMeButton: Object.freeze({
+            padding: 0,
+            minHeight: 0,
+            textTransform: 'none',
+            textDecoration: 'underline',
+            fontSize: '18px',
+            fontWeight: theme.typography.fontWeightExtraBold,
+            color: COLOURS.PURPLE,
+            '&:hover': Object.freeze({
+                backgroundColor: 'transparent',
+                textDecoration: 'underline',
+            }),
         }),
         factLabel: Object.freeze({
             fontSize: '13px',

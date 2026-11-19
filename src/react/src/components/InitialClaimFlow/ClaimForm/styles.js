@@ -95,7 +95,7 @@ export const claimFormStyles = theme =>
             },
         }),
         buttonPrimary: primaryButtonStyles(theme),
-        // "Check and submit my claim" is longer than "Submit Claim".
+        // "Submit and check my claim" is longer than "Submit Claim".
         buttonCheckAndSubmit: Object.freeze({
             ...primaryButtonStyles(theme),
             width: 'auto',

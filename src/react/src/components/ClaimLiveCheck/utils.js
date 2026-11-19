@@ -121,6 +121,17 @@ export const parseFixParams = search => {
 };
 
 /**
+ * The fixes grouped by the field they are about, as
+ * { field: [fix, ...] }, in the order the fields first appear. Several
+ * fixes can be about one field, which is then listed once.
+ */
+export const getFixesByField = fixes =>
+    (fixes || []).filter(isKnownFix).reduce((byField, fix) => {
+        const { field } = CLAIM_LIVE_CHECK_FIXES[fix];
+        return { ...byField, [field]: [...(byField[field] || []), fix] };
+    }, {});
+
+/**
  * Scroll to the field `fix` is about and put the keyboard focus on it.
  * Returns whether a field was found. Some targets cannot take focus
  * themselves (a label, a disabled input); those are made focusable so

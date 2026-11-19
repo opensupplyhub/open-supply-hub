@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { bool, number, object, string } from 'prop-types';
+import { bool, func, number, object, string } from 'prop-types';
+import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -8,6 +9,8 @@ import {
     CHECKING_STAY_TEXT,
     CHECKING_STEPS,
     CHECKING_TITLE,
+    EMAIL_ME_BUTTON_TEXT,
+    EMAIL_ME_HELPER_TEXT,
     FACT_INTERVAL_MS,
     WAITING_TICK_MS,
 } from './constants';
@@ -47,6 +50,7 @@ const ClaimLiveCheckWaiting = ({
     done,
     locationName,
     contributorCount,
+    onEmailMe,
 }) => {
     const [elapsedMs, setElapsedMs] = useState(0);
     const [factIndex, setFactIndex] = useState(0);
@@ -152,6 +156,18 @@ const ClaimLiveCheckWaiting = ({
                 <span className={classes.factLabel}>{fact.label}</span>
                 <span>{fact.text}</span>
             </div>
+            {onEmailMe && (
+                <div className={classes.emailMe}>
+                    <Button
+                        className={classes.emailMeButton}
+                        onClick={onEmailMe}
+                        disableRipple
+                    >
+                        {EMAIL_ME_BUTTON_TEXT}
+                    </Button>
+                    <span>{EMAIL_ME_HELPER_TEXT}</span>
+                </div>
+            )}
         </div>
     );
 };
@@ -160,6 +176,7 @@ ClaimLiveCheckWaiting.defaultProps = {
     done: false,
     locationName: '',
     contributorCount: null,
+    onEmailMe: null,
 };
 
 ClaimLiveCheckWaiting.propTypes = {
@@ -167,6 +184,7 @@ ClaimLiveCheckWaiting.propTypes = {
     done: bool,
     locationName: string,
     contributorCount: number,
+    onEmailMe: func,
 };
 
 export default withStyles(waitingStyles)(ClaimLiveCheckWaiting);

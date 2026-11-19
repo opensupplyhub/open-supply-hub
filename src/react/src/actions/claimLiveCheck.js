@@ -36,6 +36,42 @@ export function giveUpClaimLiveCheck(claimID) {
     return request(claimID, url => apiRequest.post(url, { timed_out: true }));
 }
 
+// The pending claim edit page reads the claim's latest check when it
+// opens, to mark the fields that still need a change. The API returns
+// no fixes once the claim has been edited since that check.
+export const startFetchClaimLiveCheckFixes = createAction(
+    'START_FETCH_CLAIM_LIVE_CHECK_FIXES',
+);
+export const failFetchClaimLiveCheckFixes = createAction(
+    'FAIL_FETCH_CLAIM_LIVE_CHECK_FIXES',
+);
+export const completeFetchClaimLiveCheckFixes = createAction(
+    'COMPLETE_FETCH_CLAIM_LIVE_CHECK_FIXES',
+);
+export const resetClaimLiveCheckFixes = createAction(
+    'RESET_CLAIM_LIVE_CHECK_FIXES',
+);
+
+export function fetchClaimLiveCheckFixes(claimID) {
+    return dispatch => {
+        dispatch(startFetchClaimLiveCheckFixes({ claimID }));
+        return (
+            apiRequest
+                .get(makeClaimLiveCheckURL(claimID))
+                .then(({ data }) =>
+                    dispatch(
+                        completeFetchClaimLiveCheckFixes({ claimID, data }),
+                    ),
+                )
+                // Advisory, like the check itself: without an answer
+                // the edit page is simply shown as it always has been.
+                .catch(() =>
+                    dispatch(failFetchClaimLiveCheckFixes({ claimID })),
+                )
+        );
+    };
+}
+
 export function pollClaimLiveCheck(claimID) {
     return request(claimID, url => apiRequest.get(url));
 }
