@@ -69,6 +69,7 @@ jobs:
               - 'docker-compose.yml'
             contribot:
               - 'src/contribot/**'
+              - 'deployment/terraform/lambda-functions/contribot_*/**'
             integration:
               - 'src/react/**'
               - 'src/django/**'
