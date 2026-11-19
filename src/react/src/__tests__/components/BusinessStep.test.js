@@ -374,21 +374,21 @@ describe('BusinessStep component', () => {
             .map(option => [option.textContent, option.dataset.tag]);
 
         expect(options).toEqual([
-            ['Utility bill showing company name and address', 'preferred'],
-            ['Business registration document', 'preferred'],
-            ['Tax document or business license', 'preferred'],
-            ['Property lease or ownership document', 'preferred'],
+            ['Utility bill showing company name and address', 'Preferred'],
+            ['Business registration document', 'Preferred'],
+            ['Tax document or business license', 'Preferred'],
+            ['Property lease or ownership document', 'Preferred'],
             [
                 'Upload other official documents (business registration, utility bills, etc.)',
-                'preferred',
+                'Preferred',
             ],
             [
                 'Company website showing the production location address (e.g., Contact Us, Locations page)',
-                'can-delay',
+                'Can delay review',
             ],
             [
                 'Company LinkedIn page showing the production location address',
-                'can-delay',
+                'Can delay review',
             ],
         ]);
     });

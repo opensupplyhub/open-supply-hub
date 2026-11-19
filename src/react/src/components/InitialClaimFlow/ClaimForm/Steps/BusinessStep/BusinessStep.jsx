@@ -26,7 +26,7 @@ import {
 import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
 import findSelectedOption from '../utils';
-import formatVerificationOptionLabel from '../../../Shared/VerificationOptionLabel/formatVerificationOptionLabel';
+import { formatVerificationOptionLabel } from '../../../Shared/VerificationOptionLabel/VerificationOptionLabel';
 import {
     facilityDetailsRoute,
     contributeProductionLocationRoute,

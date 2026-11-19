@@ -30,7 +30,7 @@ import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import findSelectedOption from '../utils';
-import formatVerificationOptionLabel from '../../../Shared/VerificationOptionLabel/formatVerificationOptionLabel';
+import { formatVerificationOptionLabel } from '../../../Shared/VerificationOptionLabel/VerificationOptionLabel';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import { selectStyles } from '../../styles';
 import { CLAIM_PII_WARNING_TEXT } from '../../../../../util/constants';

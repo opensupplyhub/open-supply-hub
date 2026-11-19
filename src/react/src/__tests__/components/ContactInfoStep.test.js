@@ -197,18 +197,18 @@ describe('ContactInfoStep component', () => {
             .map(option => [option.textContent, option.dataset.tag]);
 
         expect(options).toEqual([
-            ['Employment letter or contract showing your name, title, and company', 'preferred'],
+            ['Employment letter or contract showing your name, title, and company', 'Preferred'],
             [
                 'Signed and/or stamped letter on company letterhead that confirms your name, your title with the company, and your email address',
-                'preferred',
+                'Preferred',
             ],
-            ['Company ID badge or access card (photo showing name and title)', 'preferred'],
-            ['Official organizational chart showing your position', 'preferred'],
-            ['Business card showing your name, title and company', 'preferred'],
-            ['An official company document showing your name and title', 'preferred'],
-            ['Audit reports showing your name and role at the facility', 'preferred'],
-            ['Company website showing your name and title (e.g., About Us, Team page)', 'can-delay'],
-            ['Your LinkedIn page showing your name, title and company', 'can-delay'],
+            ['Company ID badge or access card (photo showing name and title)', 'Preferred'],
+            ['Official organizational chart showing your position', 'Preferred'],
+            ['Business card showing your name, title and company', 'Preferred'],
+            ['An official company document showing your name and title', 'Preferred'],
+            ['Audit reports showing your name and role at the facility', 'Preferred'],
+            ['Company website showing your name and title (e.g., About Us, Team page)', 'Can delay review'],
+            ['Your LinkedIn page showing your name, title and company', 'Can delay review'],
         ]);
     });
 
