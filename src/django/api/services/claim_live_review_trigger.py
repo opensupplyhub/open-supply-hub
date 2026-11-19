@@ -9,8 +9,7 @@ event; the review itself runs in the pipeline, which reads the claim
 and records its decision through the same API it always uses. Nothing
 comes back here. The live check learns the outcome from the claim.
 
-The function to call is named by CLAIMS_LIVE_REVIEW_FUNCTION. Empty
-means the live check is not configured and nothing is called. Every
+The function to call is named by CLAIMS_LIVE_REVIEW_FUNCTION. Every
 failure is caught and reported as "not triggered": the caller tells the
 claimant the check is not available, and the claim, which is already
 saved, waits for a moderator.
@@ -38,29 +37,17 @@ TRIGGER_CLIENT_CONFIG = Config(
 ACCEPTED = 202
 
 
-def get_live_review_function() -> str:
-    return (settings.CLAIMS_LIVE_REVIEW_FUNCTION or '').strip()
-
-
-def is_live_review_configured() -> bool:
-    return bool(get_live_review_function())
-
-
 def trigger_live_review(claim_id: int) -> bool:
     '''
     Ask the pipeline to review `claim_id` now. True when Lambda accepted
-    the request, False when the live check is not configured or the
-    request failed for any reason. Never raises.
+    the request, False when the request failed for any reason. Never
+    raises.
     '''
-    function = get_live_review_function()
-    if not function:
-        return False
-
     try:
         response = boto3.client(
             'lambda', config=TRIGGER_CLIENT_CONFIG
         ).invoke(
-            FunctionName=function,
+            FunctionName=settings.CLAIMS_LIVE_REVIEW_FUNCTION,
             InvocationType='Event',
             Payload=json.dumps({'claim_id': claim_id}).encode(),
         )

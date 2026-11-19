@@ -171,21 +171,6 @@ def fixes_for_review(
     The preset fixes for a claim the pipeline held, as keys from FIXES
     in display order, at most MAX_FIXES. Empty when the review names no
     check we know how to explain.
-
-      who the claimant is (affiliation) failed, free-mail address
-          -> use a work email
-      who the claimant is (affiliation) failed, any other address
-          -> add a document showing their name and company
-      manager or supervisor failed
-          -> add a document showing their name and company
-      company name failed
-          -> add an official document showing the company name
-      company address failed
-          -> add an official document showing the company address
-      the claim has no documents
-          -> upload a document
-      documents failed and the claim has documents
-          -> a document could not be read
     '''
     failed = failed_checks(review)
     if not failed:

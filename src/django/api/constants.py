@@ -126,13 +126,7 @@ class FacilityClaimAIDecisions:
 
 class FacilityClaimLiveCheckStatuses:
     # Where a live check of a just-submitted claim stands (OSDEV-3804).
-    #   CHECKING    the claims automation pipeline was asked to review
-    #               the claim and has not answered yet
-    #   PASSED      the claim was approved
-    #   NOT_PASSED  the pipeline held the claim; the check carries the
-    #               preset fixes to show the claimant
-    #   UNAVAILABLE the check could not run or did not answer in time;
-    #               the claim waits for a moderator as it always has
+    # Explained in api/services/claim_live_check_service.py.
     CHECKING = 'CHECKING'
     PASSED = 'PASSED'
     NOT_PASSED = 'NOT_PASSED'
