@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.33.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 19, 2026
+
+### Bugfix
+* [Hotfix][OSDEV-3884](https://opensupplyhub.atlassian.net/browse/OSDEV-3884) - Fixed ContriBot's `process_list` Lambda crashing on start, which left every uploaded list without a ContriBot report. The deployed zip was missing `lib/os_hub_api.py`, which the handler imports since OSDEV-3398. The file is now packaged, and the zip build fails instead of shipping a zip with a listed file missing.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* No manual zip rebuild is needed: the deploy rebuilds the ContriBot Lambda zips during the Terraform plan, so the Makefile change is picked up automatically. No migration or environment variable changes are required.
+* After the deploy, re-run the lists that failed with `No module named 'lib.os_hub_api'` (for example list 9809). They are at the retry cap, so reset their `attempt_count` to 0 in the ContriBot state table and let `contribot_retry_failed_lists` pick them up, or start the ContriBot state machine directly with `{"lists": [{"list_id": "9809"}]}`.
+
+
 ## Release 2.33.0
 
 ## Introduction
@@ -59,7 +75,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * [OSDEV-3865](https://opensupplyhub.atlassian.net/browse/OSDEV-3865) - `DB - Apply Anonymized DB` now runs `vacuumdb --analyze-only` after `pg_restore` (`src/anon-tools/do_restore.sh`). `pg_dump` carries storage parameters but not planner statistics, and the dump's `django_migrations` already records 0285, so without this Test and Pre-prod start with no statistics until autovacuum gets to each table. Needs the restore image rebuilt.
 
 ### Bugfix
-* [OSDEV-3884](https://opensupplyhub.atlassian.net/browse/OSDEV-3884) - Fixed ContriBot's `process_list` Lambda crashing on start, which left every uploaded list without a ContriBot report. The deployed zip was missing `lib/os_hub_api.py`, which the handler imports since OSDEV-3398. The file is now packaged, and the zip build fails instead of shipping a zip with a listed file missing.
 * [OSDEV-3864](https://opensupplyhub.atlassian.net/browse/OSDEV-3864) - The map is faster to load. Every tile request was building both
   map layers and discarding one; it now builds only the layer it needs. Which tile is returned is unchanged.
 * [OSDEV-2680](https://opensupplyhub.atlassian.net/browse/OSDEV-2680) - Fixed the company website and phone entered in the claim form never appearing on the production location profile after approval. The profile shows them only when `facility_website_publicly_visible` / `facility_phone_number_publicly_visible` are set, and the claim form never set either flag, so both stayed private until the claimant found the toggles on the claimed-details page. The form's "Open Supply Hub Profile" step now has a "show on profile" switch for each, off by default, and a website given as company address verification is shown there read-only instead of being hidden. Claims created before this release are unchanged.
@@ -142,7 +157,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `backfill_facility_index --fields zone_set_ids` (one-off fill of the new column for existing rows; wired into `post_deployment` for this release, remove once every environment has deployed). It only writes rows inside some zone, so it is quick while no zone set is loaded.
 * [OSDEV-3714](https://opensupplyhub.atlassian.net/browse/OSDEV-3714) - A dump carries the function bodies that were in Production when it was taken, so `DB - Apply Anonymized DB` keeps failing until this migration has run on Production and a dump has been saved after that. The first `DB - Save Anonymized DB` run following this release produces the first restorable dump.
 * [OSDEV-1085](https://opensupplyhub.atlassian.net/browse/OSDEV-1085) - If `migrate` fails on `0265_widen_facility_name_and_address` with `canceling statement due to lock timeout`, a long-running query was holding one of the tables. Rerun `post_deployment` promptly: tables already widened are left as they are, and the rest are widened on the rerun. Until it succeeds, the new code is live against 200-character columns, so a cleaned name or address over 200 characters fails to save.
-* [OSDEV-3884](https://opensupplyhub.atlassian.net/browse/OSDEV-3884) - No manual zip rebuild is needed: the deploy pipeline rebuilds the ContriBot Lambda zips during the Terraform plan, so the standard plan and apply picks up the fix. After the apply, re-run the lists that failed with `No module named 'lib.os_hub_api'` (for example list 9809). They are at the retry cap, so reset their `attempt_count` to 0 in the ContriBot state table and let `contribot_retry_failed_lists` pick them up, or start the ContriBot state machine directly with `{"lists": [{"list_id": "9809"}]}`.
 * [OSDEV-3865](https://opensupplyhub.atlassian.net/browse/OSDEV-3865) - `0285_api_facility_autoanalyze_scale_factor` runs `ANALYZE api_facility` as part of `migrate`, so no extra command is needed. If `ANALYZE api_facility` was already run by hand on Production to stop the 504s, the migration simply runs it again.
 * OSDEV-3726 is a prototype and ships switched off: leave the `enable_list_cleaning_feedback` switch inactive except on Test, where it is on for the OSDEV-3396 evaluation and OSDEV-3872 supplies the configuration below for every environment. Turning it on in another environment needs `LIST_CLEANING_STATE_MACHINE_ARN`, `LIST_CLEANING_RESULTS_BUCKET` (the results bucket name) and `LIST_CLEANING_RESULTS_BUCKET_OWNER` (the account id that owns the results bucket; the Django task role must be allowed to start and describe executions of that state machine and read that bucket); `LIST_CLEANING_RUNNER`, `LIST_CLEANING_AWS_REGION` and `LIST_CLEANING_REVIEW_MINUTES` have defaults. For this release the Terraform changes under OSDEV-3872 set all of this for every environment, so nothing needs setting by hand.
 * Apart from the OSDEV-3872 Terraform changes (the `list_cleaning_*` variables in each environment's tfvars, plus `list_cleaning_role_arn` for staging and production, which needs the `auto-lists` stack's caller role deployed first), no Terraform or environment variable changes are required. The zone-set recompute reuses the default AWS Batch job definition (`BATCH_JOB_QUEUE_NAME` / `BATCH_JOB_DEF_NAME`) with a command override.
