@@ -89,8 +89,8 @@ describe('ClaimInfoSection component', () => {
                 'Job contract or business card',
                 'Employee ID badge or employment letter',
                 'Audit reports',
-                'Company website showing your name and role (can delay approval)',
-                'Link to your LinkedIn profile (may not be accepted, can significantly delay approval)',
+                'Company website showing your name and role (can delay review)',
+                'Link to your LinkedIn profile (can delay review)',
             ]);
         });
 
@@ -137,8 +137,8 @@ describe('ClaimInfoSection component', () => {
             expect(items).toEqual([
                 'Utility bill',
                 'Business registration, business license or tax document',
-                'Link to company website (can delay approval)',
-                'Link to company LinkedIn page (may not be accepted, can significantly delay approval)',
+                'Link to company website (can delay review)',
+                'Link to company LinkedIn page (can delay review)',
             ]);
         });
 

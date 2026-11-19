@@ -25,7 +25,8 @@ import {
 } from './utils';
 import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
-import findSelectedOption, { getOptionLabelWithNote } from '../utils';
+import findSelectedOption from '../utils';
+import formatVerificationOptionLabel from '../../../Shared/VerificationOptionLabel/formatVerificationOptionLabel';
 import {
     facilityDetailsRoute,
     contributeProductionLocationRoute,
@@ -244,17 +245,15 @@ const BusinessStep = ({
                     variant="body1"
                     className={classes.sectionDescription}
                 >
-                    Select one item below. Best: a utility bill or business
-                    registration that shows your company name and address. A
-                    LinkedIn page may not be accepted and can significantly
-                    delay approval.
+                    Select one item below. Documents are reviewed fastest. Links
+                    can take longer.
                 </Typography>
                 <StyledSelect
                     id="locationAddressVerificationMethod"
                     name="locationAddressVerificationMethod"
                     aria-label="Company Address Verification"
                     options={COMPANY_ADDRESS_VERIFICATION_OPTIONS}
-                    getOptionLabel={getOptionLabelWithNote}
+                    formatOptionLabel={formatVerificationOptionLabel}
                     value={selectedVerificationMethod}
                     onChange={valueObject => {
                         handleChange(
@@ -286,9 +285,7 @@ const BusinessStep = ({
                         <ImportantNote text={CLAIM_PII_WARNING_TEXT} />
                         <ClaimAttachmentsUploader
                             inputId="company-address-verification-documents"
-                            title={
-                                'Upload your documents\nClaims with a document are approved fastest. Submitting no document can significantly delay approval.'
-                            }
+                            title="Upload your documents"
                             files={
                                 formData.companyAddressVerificationDocuments ||
                                 []

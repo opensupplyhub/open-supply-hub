@@ -7,7 +7,7 @@ import { EMPLOYMENT_VERIFICATION_OPTIONS } from '../../components/InitialClaimFl
 jest.mock('../../components/Filters/StyledSelect', () => {
     // eslint-disable-next-line global-require
     const mockPropTypes = require('prop-types');
-    const MockStyledSelect = ({ options, value, onChange, onBlur, placeholder, name, getOptionLabel }) => (
+    const MockStyledSelect = ({ options, value, onChange, onBlur, placeholder, name }) => (
         <select
             data-testid="employment-verification-select"
             name={name}
@@ -20,8 +20,8 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         >
             <option value="">{placeholder}</option>
             {options.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                    {getOptionLabel ? getOptionLabel(opt) : opt.label}
+                <option key={opt.value} value={opt.value} data-tag={opt.tag}>
+                    {opt.label}
                 </option>
             ))}
         </select>
@@ -39,10 +39,9 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         onBlur: mockPropTypes.func,
         placeholder: mockPropTypes.string,
         name: mockPropTypes.string,
-        getOptionLabel: mockPropTypes.func,
     };
 
-    MockStyledSelect.defaultProps = { value: null, onBlur: () => {}, placeholder: '', name: 'claimantEmploymentVerificationMethod', getOptionLabel: undefined };
+    MockStyledSelect.defaultProps = { value: null, onBlur: () => {}, placeholder: '', name: 'claimantEmploymentVerificationMethod' };
 
     return MockStyledSelect;
 });
@@ -178,39 +177,42 @@ describe('ContactInfoStep component', () => {
         ).toBeInTheDocument();
     });
 
-    test('tells the claimant which employment proof is best', () => {
+    test('tells the claimant that documents are reviewed fastest', () => {
         renderComponent();
 
         expect(
             screen.getByText(
-                'Select one item below. Best: a business card, employment letter or ID badge that shows your name and your company. A LinkedIn link may not be accepted and can significantly delay approval.',
+                'Select one item below. Documents are reviewed fastest. Links can take longer.',
             ),
         ).toBeInTheDocument();
     });
 
-    test('shows the note on the LinkedIn option only, in the same order as before', () => {
+    test('lists documents first as preferred, then the website and LinkedIn options as can delay', () => {
         renderComponent();
 
-        const optionTexts = Array.from(
+        const options = Array.from(
             screen.getByTestId('employment-verification-select').querySelectorAll('option'),
         )
             .slice(1)
-            .map(option => option.textContent);
+            .map(option => [option.textContent, option.dataset.tag]);
 
-        expect(optionTexts).toEqual([
-            'Employment letter or contract showing your name, title, and company',
-            'Signed and/or stamped letter on company letterhead that confirms your name, your title with the company, and your email address',
-            'Company ID badge or access card (photo showing name and title)',
-            'Official organizational chart showing your position',
-            'Business card showing your name, title and company',
-            'Company website showing your name and title (e.g., About Us, Team page)',
-            'An official company document showing your name and title',
-            'Audit reports showing your name and role at the facility',
-            'Your LinkedIn page showing your name, title and company (may not be accepted, can significantly delay approval)',
+        expect(options).toEqual([
+            ['Employment letter or contract showing your name, title, and company', 'preferred'],
+            [
+                'Signed and/or stamped letter on company letterhead that confirms your name, your title with the company, and your email address',
+                'preferred',
+            ],
+            ['Company ID badge or access card (photo showing name and title)', 'preferred'],
+            ['Official organizational chart showing your position', 'preferred'],
+            ['Business card showing your name, title and company', 'preferred'],
+            ['An official company document showing your name and title', 'preferred'],
+            ['Audit reports showing your name and role at the facility', 'preferred'],
+            ['Company website showing your name and title (e.g., About Us, Team page)', 'can-delay'],
+            ['Your LinkedIn page showing your name, title and company', 'can-delay'],
         ]);
     });
 
-    test('stores the LinkedIn option label without its note', () => {
+    test('stores the LinkedIn option label without its tag', () => {
         renderComponent();
 
         const select = screen.getByTestId('employment-verification-select');
@@ -220,22 +222,6 @@ describe('ContactInfoStep component', () => {
             'claimantEmploymentVerificationMethod',
             'Your LinkedIn page showing your name, title and company',
         );
-    });
-
-    test('upload box says claims with a document are approved fastest', () => {
-        const letterLabel = EMPLOYMENT_VERIFICATION_OPTIONS.find(opt => opt.value === 'employment-letter').label;
-        renderComponent({
-            formData: {
-                ...defaultProps.formData,
-                claimantEmploymentVerificationMethod: letterLabel,
-            },
-        });
-
-        expect(
-            screen.getByText(
-                /You can upload multiple files\. Claims with a document are approved fastest\. Submitting no document can significantly delay approval\./,
-            ),
-        ).toBeInTheDocument();
     });
 
     test('selecting URL-based verification shows URL input with placeholder and updates value', () => {

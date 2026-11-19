@@ -29,7 +29,8 @@ import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
 import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
-import findSelectedOption, { getOptionLabelWithNote } from '../utils';
+import findSelectedOption from '../utils';
+import formatVerificationOptionLabel from '../../../Shared/VerificationOptionLabel/formatVerificationOptionLabel';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import { selectStyles } from '../../styles';
 import { CLAIM_PII_WARNING_TEXT } from '../../../../../util/constants';
@@ -212,10 +213,8 @@ const ContactInfoStep = ({
                         variant="body1"
                         className={classes.sectionDescription}
                     >
-                        Select one item below. Best: a business card, employment
-                        letter or ID badge that shows your name and your
-                        company. A LinkedIn link may not be accepted and can
-                        significantly delay approval.
+                        Select one item below. Documents are reviewed fastest.
+                        Links can take longer.
                     </Typography>
                     <StyledSelect
                         id="claimantEmploymentVerificationMethod"
@@ -223,7 +222,7 @@ const ContactInfoStep = ({
                         aria-label="Select employment verification option"
                         label={null}
                         options={EMPLOYMENT_VERIFICATION_OPTIONS}
-                        getOptionLabel={getOptionLabelWithNote}
+                        formatOptionLabel={formatVerificationOptionLabel}
                         onBlur={() =>
                             handleBlur('claimantEmploymentVerificationMethod')
                         }
@@ -305,7 +304,7 @@ const ContactInfoStep = ({
                             <ClaimAttachmentsUploader
                                 inputId="employment-verification-upload"
                                 title={
-                                    'Upload your documents/photos\nPlease upload one or more clear photos or scans of your selected verification method. You can upload multiple files. Claims with a document are approved fastest. Submitting no document can significantly delay approval.'
+                                    'Upload your documents/photos\nPlease upload one or more clear photos or scans of your selected verification method. You can upload multiple files.'
                                 }
                                 files={
                                     formData.employmentVerificationDocuments ||

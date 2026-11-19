@@ -14,7 +14,6 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         onBlur,
         placeholder,
         name,
-        getOptionLabel,
     }) => (
         <select
             data-testid="verification-select"
@@ -30,8 +29,8 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         >
             <option value="">{placeholder}</option>
             {options.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                    {getOptionLabel ? getOptionLabel(opt) : opt.label}
+                <option key={opt.value} value={opt.value} data-tag={opt.tag}>
+                    {opt.label}
                 </option>
             ))}
         </select>
@@ -55,7 +54,6 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         onBlur: mockPropTypes.func,
         placeholder: mockPropTypes.string,
         name: mockPropTypes.string,
-        getOptionLabel: mockPropTypes.func,
     };
 
     MockStyledSelect.defaultProps = {
@@ -63,7 +61,6 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         onBlur: () => {},
         placeholder: '',
         name: 'locationAddressVerificationMethod',
-        getOptionLabel: undefined,
     };
 
     return MockStyledSelect;
@@ -367,27 +364,36 @@ describe('BusinessStep component', () => {
         );
     });
 
-    test('lists documents first, then the website and LinkedIn options with their notes', () => {
+    test('lists documents first as preferred, then the website and LinkedIn options as can delay', () => {
         renderComponent();
 
-        const optionTexts = Array.from(
+        const options = Array.from(
             screen.getByTestId('verification-select').querySelectorAll('option'),
         )
             .slice(1)
-            .map(option => option.textContent);
+            .map(option => [option.textContent, option.dataset.tag]);
 
-        expect(optionTexts).toEqual([
-            'Utility bill showing company name and address',
-            'Business registration document',
-            'Tax document or business license',
-            'Property lease or ownership document',
-            'Upload other official documents (business registration, utility bills, etc.)',
-            'Company website showing the production location address (e.g., Contact Us, Locations page) (can delay approval)',
-            'Company LinkedIn page showing the production location address (may not be accepted, can significantly delay approval)',
+        expect(options).toEqual([
+            ['Utility bill showing company name and address', 'preferred'],
+            ['Business registration document', 'preferred'],
+            ['Tax document or business license', 'preferred'],
+            ['Property lease or ownership document', 'preferred'],
+            [
+                'Upload other official documents (business registration, utility bills, etc.)',
+                'preferred',
+            ],
+            [
+                'Company website showing the production location address (e.g., Contact Us, Locations page)',
+                'can-delay',
+            ],
+            [
+                'Company LinkedIn page showing the production location address',
+                'can-delay',
+            ],
         ]);
     });
 
-    test('stores the LinkedIn option label without its note', () => {
+    test('stores the LinkedIn option label without its tag', () => {
         renderComponent();
 
         const selectField = screen.getByTestId('verification-select');
@@ -399,30 +405,12 @@ describe('BusinessStep component', () => {
         );
     });
 
-    test('tells the claimant which address proof is best', () => {
+    test('tells the claimant that documents are reviewed fastest', () => {
         renderComponent();
 
         expect(
             screen.getByText(
-                'Select one item below. Best: a utility bill or business registration that shows your company name and address. A LinkedIn page may not be accepted and can significantly delay approval.'
-            )
-        ).toBeInTheDocument();
-    });
-
-    test('upload box says claims with a document are approved fastest', () => {
-        renderComponent({
-            formData: {
-                locationAddressVerificationMethod:
-                    'Utility bill showing company name and address',
-                businessWebsite: '',
-                businessLinkedinProfile: '',
-                companyAddressVerificationDocuments: [],
-            },
-        });
-
-        expect(
-            screen.getByText(
-                /Claims with a document are approved fastest\. Submitting no document can significantly delay approval\./
+                'Select one item below. Documents are reviewed fastest. Links can take longer.'
             )
         ).toBeInTheDocument();
     });

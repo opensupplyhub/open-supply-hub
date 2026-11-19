@@ -126,7 +126,7 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 className={classes.boxDescription}
                             >
                                 Company website showing your name and role (can
-                                delay approval)
+                                delay review)
                             </Typography>
                         </li>
                         <li>
@@ -134,8 +134,7 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Link to your LinkedIn profile (may not be
-                                accepted, can significantly delay approval)
+                                Link to your LinkedIn profile (can delay review)
                             </Typography>
                         </li>
                     </ul>
@@ -196,7 +195,7 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Link to company website (can delay approval)
+                                Link to company website (can delay review)
                             </Typography>
                         </li>
                         <li>
@@ -204,8 +203,7 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Link to company LinkedIn page (may not be
-                                accepted, can significantly delay approval)
+                                Link to company LinkedIn page (can delay review)
                             </Typography>
                         </li>
                     </ul>
