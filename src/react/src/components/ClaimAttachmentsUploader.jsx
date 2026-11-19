@@ -59,10 +59,13 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     }),
 });
 
-// The upload area outlined in red: a live check fix is about it.
+// The upload area outlined in red: a live check fix is about it. The
+// offset keeps the browser's focus ring outside the red border, so the
+// red still shows when the page opens with the focus on this area.
 const flaggedFileUploadArea = Object.freeze({
     ...claimAttachmentsUploaderStyles.fileUploadArea,
     border: `2px solid ${COLOURS.RED}`,
+    outlineOffset: '4px',
 });
 
 const ClaimAttachmentsUploader = ({

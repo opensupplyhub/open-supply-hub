@@ -185,6 +185,8 @@ describe('live check fixes on the claim form fields', () => {
 
         expect(getAllByText(UPLOAD)).toHaveLength(1);
         expect(uploadArea(container).style.border).toBe(FLAGGED_BORDER);
+        // The focus ring is kept clear of the red border.
+        expect(uploadArea(container).style.outlineOffset).toBe('4px');
         expect(
             getByTestId('locationAddressVerificationMethod'),
         ).not.toHaveAttribute('data-border', COLOURS.RED);
