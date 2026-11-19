@@ -18,6 +18,7 @@ LIB_MODULES = \
 	known_countries.py \
 	utils.py \
 	lists_repository.py \
+	os_hub_api.py \
 	s3_storage.py \
 	google_drive.py \
 	0000.error_codes.xlsx
@@ -28,7 +29,7 @@ all:
 	mkdir -p $(STAGING)/lib
 	cp $(CONTRIBOT_SRC)/process_list/handler.py $(STAGING)/
 	for f in $(LIB_MODULES); do \
-		cp $(CONTRIBOT_SRC)/lib/$$f $(STAGING)/lib/; \
+		cp $(CONTRIBOT_SRC)/lib/$$f $(STAGING)/lib/ || exit 1; \
 	done
 	# Cross-compile for the Lambda runtime: host pip may be a different Python
 	# (e.g. 3.11), which produces cpython-311 .so files that fail to import on

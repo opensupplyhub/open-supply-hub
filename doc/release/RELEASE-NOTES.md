@@ -3,6 +3,22 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.33.1
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: November 19, 2026
+
+### Bugfix
+* [Hotfix][OSDEV-3884](https://opensupplyhub.atlassian.net/browse/OSDEV-3884) - Fixed ContriBot's `process_list` Lambda crashing on start, which left every uploaded list without a ContriBot report. The deployed zip was missing `lib/os_hub_api.py`, which the handler imports since OSDEV-3398. The file is now packaged, and the zip build fails instead of shipping a zip with a listed file missing.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* No manual zip rebuild is needed: the deploy rebuilds the ContriBot Lambda zips during the Terraform plan, so the Makefile change is picked up automatically. No migration or environment variable changes are required.
+* After the deploy, re-run the lists that failed with `No module named 'lib.os_hub_api'` (for example list 9809). They are at the retry cap, so reset their `attempt_count` to 0 in the ContriBot state table and let `contribot_retry_failed_lists` pick them up, or start the ContriBot state machine directly with `{"lists": [{"list_id": "9809"}]}`.
+
+
 ## Release 2.33.0
 
 ## Introduction
