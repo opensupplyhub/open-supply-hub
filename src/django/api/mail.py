@@ -235,11 +235,14 @@ def make_pending_claim_edit_url(request, facility_claim, fix=None,
 def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
                                            check_again):
     '''
-    Tell a claimant who is no longer on the claim form that the live
-    check of their claim did not pass (OSDEV-3804), with the same preset
-    lines the form would have shown and a link back to the claim.
-    `fixes` are keys from claim_live_check_fixes; only their preset
-    texts are ever sent.
+    Tell a claimant that the live check of their claim did not pass
+    (OSDEV-3804), with the same preset lines the claim form shows and a
+    link back to the claim. It is sent for every check that does not
+    pass, whether or not the claimant was still on the form. The link
+    opens the pending claim edit page, which reads the check's result
+    itself and marks every field that needs a change; the `fix` in the
+    link only says which of them to scroll to first. `fixes` are keys
+    from claim_live_check_fixes; only their preset texts are ever sent.
     '''
     subj_template = get_template(
         'mail/claim_live_check_not_passed_subject.txt'

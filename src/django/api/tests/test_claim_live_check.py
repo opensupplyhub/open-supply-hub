@@ -54,7 +54,6 @@ from api.services.claim_live_check_service import (
     LATE_RESULT_WINDOW,
     LIVE_CHECK_TIMEOUT_SECONDS,
     MAX_LIVE_CHECKS_PER_CLAIM,
-    PAGE_LEFT_AFTER_SECONDS,
     STUB_DELAY_SECONDS,
     get_dev_stub,
 )
@@ -534,7 +533,8 @@ class ClaimLiveCheckOutcomeTest(ClaimLiveCheckTestBase):
         check = self.checks().get()
         self.assertEqual(check.status, NOT_PASSED)
         self.assertEqual(check.fixes, state['fixes'])
-        self.assertIsNone(check.emailed_at)
+        # A check that does not pass is always emailed.
+        self.assertIsNotNone(check.emailed_at)
 
     def test_every_answer_has_exactly_three_keys(self):
         keys = {'status', 'fixes', 'checks_left'}
@@ -807,10 +807,26 @@ class ClaimLiveCheckLimitTest(ClaimLiveCheckTestBase):
 
         state = self.start()
 
-        self.assertEqual(state['status'], NOT_PASSED)
+        # The claim was edited after its last check, so that check's
+        # fixes are not shown again, and there is no check left to run.
+        self.assertEqual(state['status'], UNAVAILABLE)
+        self.assertEqual(state['fixes'], [])
         self.assertEqual(state['checks_left'], 0)
         self.assertEqual(self.checks().count(), MAX_LIVE_CHECKS_PER_CLAIM)
         self.trigger.assert_not_called()
+
+    def test_last_check_still_shows_its_fixes_until_the_claim_changes(self):
+        for number in range(MAX_LIVE_CHECKS_PER_CLAIM):
+            if number:
+                self.claimant_edits()
+            self.assertEqual(self.start()['status'], CHECKING)
+            self.answer_not_passed()
+
+        state = self.start()
+
+        self.assertEqual(state['status'], NOT_PASSED)
+        self.assertTrue(state['fixes'])
+        self.assertEqual(state['checks_left'], 0)
 
     def test_decided_claim_is_not_checked(self):
         self.approve()
@@ -916,8 +932,109 @@ APPROVED_SUBJECT = (
 )
 
 
+class ClaimLiveCheckCurrentFixesTest(ClaimLiveCheckTestBase):
+    '''
+    The pending claim edit page reads the newest check when it opens.
+    Fixes are returned only while they are about the claim as it is.
+    '''
+
+    def not_passed(self):
+        self.start()
+        self.post_review(review_block([CHECK_ADDRESS, CHECK_AFFILIATION]))
+        return self.poll()
+
+    def test_every_read_returns_all_the_fixes_of_a_current_check(self):
+        first = self.not_passed()
+
+        again = self.poll()
+
+        self.assertEqual(first['status'], NOT_PASSED)
+        self.assertEqual(
+            first['fixes'],
+            [
+                FIX_UPLOAD_DOCUMENT,
+                FIX_NAME_AND_COMPANY_DOCUMENT,
+                FIX_COMPANY_ADDRESS_DOCUMENT,
+            ],
+        )
+        self.assertEqual(again, first)
+
+    def test_fixes_are_not_returned_after_the_claimant_edits(self):
+        self.not_passed()
+
+        response = self.client.patch(
+            f'/api/facility-claims/{self.claim.id}/pending/',
+            {'your_title': 'Plant manager'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        state = self.poll()
+
+        self.assertEqual(state['status'], UNAVAILABLE)
+        self.assertEqual(state['fixes'], [])
+        self.assertEqual(
+            state['checks_left'], MAX_LIVE_CHECKS_PER_CLAIM - 1
+        )
+        # The check itself is kept as it ended.
+        check = self.checks().get()
+        self.assertEqual(check.status, NOT_PASSED)
+        self.assertTrue(check.fixes)
+
+    def test_save_that_changes_nothing_keeps_the_fixes(self):
+        first = self.not_passed()
+
+        response = self.client.patch(
+            f'/api/facility-claims/{self.claim.id}/pending/',
+            {'your_title': self.claim.job_title},
+            format='json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(self.poll(), first)
+
+    def test_moderator_change_does_not_hide_the_fixes(self):
+        first = self.not_passed()
+
+        # Anything that is not a claimant edit only moves updated_at.
+        self.claim.refresh_from_db()
+        self.claim.save()
+
+        self.assertEqual(self.poll(), first)
+
+    def test_new_check_after_an_edit_shows_its_own_fixes(self):
+        self.not_passed()
+        self.claimant_edits()
+        self.assertEqual(self.poll()['fixes'], [])
+
+        self.assertEqual(self.start()['status'], CHECKING)
+        self.post_review(review_block([CHECK_NAME]))
+        state = self.poll()
+
+        self.assertEqual(state['status'], NOT_PASSED)
+        self.assertEqual(
+            state['fixes'],
+            [FIX_UPLOAD_DOCUMENT, FIX_COMPANY_NAME_DOCUMENT],
+        )
+
+    def test_another_claimant_cannot_read_the_fixes(self):
+        self.not_passed()
+        self.login(self.other_user)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_switch_off_hides_the_fixes(self):
+        self.not_passed()
+
+        with override_switch(CLAIM_LIVE_CHECK_SWITCH, active=False):
+            response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
 class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
-    '''A claimant who left the page gets the result by email.'''
+    '''Every check that does not pass is emailed to the claimant, once.'''
 
     def setUp(self):
         super().setUp()
@@ -927,9 +1044,7 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
     def leave_page(self):
         '''The claimant's page stopped asking some time ago.'''
         self.checks().update(
-            last_polled_at=timezone.now() - timedelta(
-                seconds=PAGE_LEFT_AFTER_SECONDS
-            )
+            last_polled_at=timezone.now() - timedelta(minutes=5)
         )
 
     def pipeline_posts(self, block, user=None):
@@ -979,6 +1094,15 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertIn(link.replace('&', '&amp;'), html)
         self.assertIn('The claim did not pass the automatic check.',
                       email.body)
+        for content in (email.body, html):
+            self.assertIn('Fix these 3 things:', content)
+            self.assertNotIn('Fix this:', content)
+            self.assertIn('which can take much longer.', content)
+        self.assertIn(
+            'You can also leave the claim as it is. A person will review '
+            'it, which can take much longer.',
+            email.body,
+        )
         self.assertIn(self.facility.name, email.body)
         self.assertIn('The OS Hub Claims Team', email.body)
 
@@ -999,17 +1123,101 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
             self.assertNotIn(str(FAIL_SCORE), content)
             self.assertNotIn(str(THRESHOLD), content)
 
-    def test_claimant_still_on_the_page_is_not_emailed(self):
+    def test_claimant_still_on_the_page_is_emailed_too(self):
         self.start()
         self.poll()
 
         self.pipeline_posts(review_block([CHECK_ADDRESS]))
 
-        self.assertEqual(mail.outbox, [])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].subject, NOT_PASSED_SUBJECT)
         check = self.checks().get()
         self.assertEqual(check.status, NOT_PASSED)
-        self.assertIsNone(check.emailed_at)
-        self.assertEqual(self.poll()['status'], NOT_PASSED)
+        self.assertIsNotNone(check.emailed_at)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.poll()['status'], NOT_PASSED)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_one_fix_is_worded_in_the_singular(self):
+        FacilityClaimAttachments.objects.create(
+            claim=self.claim, file_name='proof.pdf'
+        )
+        self.start()
+
+        self.pipeline_posts(review_block([CHECK_NAME]))
+
+        email = mail.outbox[0]
+        for content in (email.body, email.alternatives[0][0]):
+            self.assertIn('Fix this:', content)
+            self.assertNotIn('Fix these', content)
+            self.assertIn(FIX_TEXTS[FIX_COMPANY_NAME_DOCUMENT], content)
+
+    def test_check_settled_by_a_read_is_emailed_once(self):
+        self.start()
+        # The note is on the claim but was not recorded when it was
+        # posted, so the claimant's next read is what settles the check.
+        self.post_review(review_block([CHECK_ADDRESS]))
+
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.poll()['status'], NOT_PASSED)
+            self.poll()
+        self.pipeline_posts(review_block([CHECK_NAME]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertEqual(email.to, [WORK_EMAIL])
+        self.assertEqual(email.subject, NOT_PASSED_SUBJECT)
+        self.assertIn(FIX_TEXTS[FIX_COMPANY_ADDRESS_DOCUMENT], email.body)
+        self.assertIn(
+            '/claimed/pending/{}?fix={}&check=1'.format(
+                self.claim.id, FIX_UPLOAD_DOCUMENT
+            ),
+            email.body,
+        )
+        self.assertIsNotNone(self.checks().get().emailed_at)
+
+    def test_failed_email_does_not_fail_the_read(self):
+        self.start()
+        self.post_review(review_block([CHECK_ADDRESS]))
+
+        with patch('api.mail.send_mail', side_effect=RuntimeError('smtp')):
+            with self.captureOnCommitCallbacks(execute=True):
+                state = self.poll()
+
+        self.assertEqual(state['status'], NOT_PASSED)
+        self.assertTrue(state['fixes'])
+        self.assertEqual(mail.outbox, [])
+
+    def test_error_while_recording_the_email_does_not_fail_the_read(self):
+        self.start()
+        self.post_review(review_block([CHECK_ADDRESS]))
+
+        with patch.object(
+            claim_live_check_service,
+            '_email_result',
+            side_effect=RuntimeError('boom'),
+        ):
+            state = self.poll()
+
+        self.assertEqual(state['status'], NOT_PASSED)
+        self.assertTrue(state['fixes'])
+
+    @override_settings(
+        DEBUG=True,
+        CLAIMS_LIVE_REVIEW_FUNCTION='',
+        CLAIMS_LIVE_REVIEW_DEV_STUB='not_pass:work_email',
+    )
+    def test_stubbed_not_pass_is_emailed_once(self):
+        self.assertEqual(self.start()['status'], CHECKING)
+        self.age_checks(STUB_DELAY_SECONDS)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            state = self.poll()
+            self.poll()
+
+        self.assertEqual(state['status'], NOT_PASSED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(FIX_TEXTS[FIX_WORK_EMAIL], mail.outbox[0].body)
 
     def test_one_check_is_emailed_at_most_once(self):
         self.start()
@@ -1127,15 +1335,20 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertEqual(mail.outbox, [])
         self.assertEqual(self.checks().get().status, UNAVAILABLE)
 
-    def test_result_after_an_answered_check_sends_nothing(self):
+    def test_result_after_an_answered_check_sends_nothing_more(self):
         self.start()
         self.post_review(review_block([CHECK_ADDRESS]))
-        self.assertEqual(self.poll()['status'], NOT_PASSED)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.assertEqual(self.poll()['status'], NOT_PASSED)
+        self.assertEqual(len(mail.outbox), 1)
         self.leave_page()
 
         self.pipeline_posts(review_block([CHECK_NAME]))
 
-        self.assertEqual(mail.outbox, [])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertNotIn(
+            FIX_TEXTS[FIX_COMPANY_NAME_DOCUMENT], mail.outbox[0].body
+        )
 
     @override_settings(
         DEBUG=True,
@@ -1170,8 +1383,13 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertEqual(email.subject, NOT_PASSED_SUBJECT)
         html = email.alternatives[0][0]
         for content in (email.body, html):
-            self.assertIn('A person will review your claim.', content)
+            self.assertIn(
+                'A person will review your claim, which can take much '
+                'longer.',
+                content,
+            )
             self.assertNotIn('Fix this:', content)
+            self.assertNotIn('Fix these', content)
         self.assertIn(
             '/claimed/pending/{}'.format(self.claim.id), email.body
         )
@@ -1271,10 +1489,11 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.start()
         self.post_review(review_block([CHECK_ADDRESS]))
 
-        response = self.client.post(self.url, {'timed_out': True})
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(self.url, {'timed_out': True})
 
         self.assertEqual(response.json()['status'], NOT_PASSED)
-        self.assertEqual(mail.outbox, [])
+        self.assertEqual(len(mail.outbox), 1)
 
     def test_timed_out_call_without_a_check_starts_nothing(self):
         response = self.client.post(self.url, {'timed_out': True})

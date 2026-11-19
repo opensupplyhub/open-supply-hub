@@ -29,7 +29,7 @@
         </p>
         {% if fixes %}
         <p>
-            Fix this:
+            {% if fixes|length == 1 %}Fix this:{% else %}Fix these {{ fixes|length }} things:{% endif %}
         </p>
         <ul>
             {% for fix in fixes %}
@@ -42,13 +42,12 @@
             <a href="{{ fix_url }}">Fix your claim</a>
         </p>
         <p>
-            You can also leave the claim as it is. A person will review it.
-            Approval can be significantly delayed.
+            You can also leave the claim as it is. A person will review it,
+            which can take much longer.
         </p>
         {% else %}
         <p>
-            A person will review your claim. Approval can be significantly
-            delayed.
+            A person will review your claim, which can take much longer.
         </p>
         <p>
             <a href="{{ fix_url }}">You can update your claim here</a>
