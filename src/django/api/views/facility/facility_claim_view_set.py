@@ -23,6 +23,7 @@ from waffle import switch_is_active
 from api.constants import (
     FacilityClaimReviewNoteTypes,
     FacilityClaimStatuses,
+    FacilityClaimWaitingOn,
 )
 from ...exceptions import BadRequestException
 from ...extended_fields import create_extendedfields_for_claim
@@ -37,6 +38,12 @@ from ...services.claim_quality_check_service import (
 from ...services.claim_quality_warnings import validate_dismissed_warnings
 from ...services.facility_claim_review_note_service import (
     create_review_note,
+)
+from ...services.facility_claim_status_service import (
+    mark_waiting_on_claimant,
+    record_ai_approval,
+    record_ai_review,
+    resolve_denial_type,
 )
 from ...mail import (
     describe_pending_claim_changes,
@@ -355,6 +362,7 @@ class FacilityClaimViewSet(ModelViewSet):
             # email as one unit (see mail.py) — @transaction.atomic
             # rolls the note back if the send fails.
             send_message_to_claimant_email(request, claim, message)
+            mark_waiting_on_claimant(claim)
 
             response_data = FacilityClaimDetailsSerializer(claim).data
             return Response(response_data)
@@ -396,6 +404,7 @@ class FacilityClaimViewSet(ModelViewSet):
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.APPROVED
+            record_ai_approval(claim, request.user)
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)
 
@@ -448,10 +457,15 @@ class FacilityClaimViewSet(ModelViewSet):
                     'Only PENDING claims can be denied.',
                 )
 
+            denial_type = resolve_denial_type(
+                request.user, request.data.get('denial_type')
+            )
+
             claim.status_change_reason = request.data.get('reason', '')
             claim.status_change_by = request.user
             claim.status_change_date = timezone.now()
             claim.status = FacilityClaimStatuses.DENIED
+            claim.denial_type = denial_type
             claim.save()
             Facility.update_facility_updated_at_field(claim.facility_id)
 
@@ -526,12 +540,14 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             claim = FacilityClaim.objects.get(pk=pk)
 
+            note = request.data.get('note')
             create_review_note(
                 claim,
                 request.user,
-                request.data.get('note'),
+                note,
                 FacilityClaimReviewNoteTypes.INTERNAL,
             )
+            record_ai_review(claim, request.user, note)
 
             response_data = FacilityClaimDetailsSerializer(claim).data
             return Response(response_data)
@@ -829,7 +845,13 @@ class FacilityClaimViewSet(ModelViewSet):
         this field to surface claims edited since review started.
         """
         claim.claimant_updated_at = timezone.now()
-        claim.save(update_fields=['claimant_updated_at', 'updated_at'])
+        # The claimant acted, so the next move is OS Hub's (OSDEV-3795).
+        claim.waiting_on = FacilityClaimWaitingOn.OS_HUB
+        claim.save(update_fields=[
+            'claimant_updated_at',
+            'waiting_on',
+            'updated_at',
+        ])
 
     @staticmethod
     def __notify_claims_team_of_update(request, claim, changes):
@@ -911,6 +933,9 @@ class FacilityClaimViewSet(ModelViewSet):
         changed_fields = serializer.apply_to_claim(claim)
         if changed_fields:
             claim.claimant_updated_at = timezone.now()
+            # The claimant acted, so the next move is OS Hub's
+            # (OSDEV-3795).
+            claim.waiting_on = FacilityClaimWaitingOn.OS_HUB
             # simple-history records this save with history_user set to
             # the claimant via HistoryRequestMiddleware, which is what
             # lets moderators see exactly what the claimant changed.

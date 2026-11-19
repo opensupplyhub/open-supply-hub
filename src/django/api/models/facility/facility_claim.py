@@ -8,7 +8,10 @@ from django.db import models
 
 from countries.lib.countries import COUNTRY_CHOICES
 from api.constants import (
+    FacilityClaimAIDecisions,
+    FacilityClaimDenialTypes,
     FacilityClaimStatuses,
+    FacilityClaimWaitingOn,
     OriginSource,
 )
 
@@ -26,6 +29,24 @@ class FacilityClaim(models.Model):
         (FacilityClaimStatuses.APPROVED, FacilityClaimStatuses.APPROVED),
         (FacilityClaimStatuses.DENIED, FacilityClaimStatuses.DENIED),
         (FacilityClaimStatuses.REVOKED, FacilityClaimStatuses.REVOKED),
+    )
+
+    WAITING_ON_CHOICES = (
+        (FacilityClaimWaitingOn.OS_HUB, FacilityClaimWaitingOn.OS_HUB),
+        (FacilityClaimWaitingOn.CLAIMANT, FacilityClaimWaitingOn.CLAIMANT),
+    )
+
+    DENIAL_TYPE_CHOICES = (
+        (FacilityClaimDenialTypes.NO_RESPONSE,
+         FacilityClaimDenialTypes.NO_RESPONSE),
+        (FacilityClaimDenialTypes.NOT_ELIGIBLE,
+         FacilityClaimDenialTypes.NOT_ELIGIBLE),
+    )
+
+    AI_DECISION_CHOICES = (
+        (FacilityClaimAIDecisions.APPROVED,
+         FacilityClaimAIDecisions.APPROVED),
+        (FacilityClaimAIDecisions.HELD, FacilityClaimAIDecisions.HELD),
     )
 
     CUT_AND_SEW = 'Cut and Sew / RMG'
@@ -140,6 +161,47 @@ class FacilityClaim(models.Model):
         null=True,
         verbose_name='status change date',
     )
+    # The fields below refine `status` without adding values to it
+    # (OSDEV-3795): the four status values are stored and read by the
+    # API, the frontend and the claims automation pipeline.
+    waiting_on = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        choices=WAITING_ON_CHOICES,
+        default=FacilityClaimWaitingOn.OS_HUB,
+        verbose_name='waiting on',
+        help_text=('Who has the next move while this claim is PENDING. '
+                   'OS_HUB = a moderator owes the next step (the claim '
+                   'is new, or the claimant updated it). CLAIMANT = the '
+                   'claimant was asked for something. Emptied on save '
+                   'once the claim is decided.'))
+    denial_type = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        choices=DENIAL_TYPE_CHOICES,
+        verbose_name='denial type',
+        help_text=('Why this claim was DENIED. NO_RESPONSE = the '
+                   'claimant never answered. NOT_ELIGIBLE = a moderator '
+                   'reviewed the claim and ruled it out. Empty on claims '
+                   'that are not denied and on denials that have not '
+                   'been classified.'))
+    ai_decision = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        choices=AI_DECISION_CHOICES,
+        verbose_name='AI decision',
+        help_text=('What the claims automation pipeline did with this '
+                   'claim. APPROVED = it approved the claim. HELD = it '
+                   'reviewed the claim and left it for a moderator. '
+                   'Empty when the pipeline has not reviewed the claim.'))
+    ai_decision_reason = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name='AI decision reason',
+        help_text='Why the claims automation pipeline made its decision.')
     facility_name_english = models.CharField(
         max_length=200,
         null=True,
@@ -505,6 +567,22 @@ class FacilityClaim(models.Model):
     history = HistoricalRecords(
         excluded_fields=['uuid', 'origin_source']
     )
+
+    def save(self, *args, **kwargs):
+        """
+        Only a PENDING claim waits on anyone (OSDEV-3795). Clearing
+        `waiting_on` here covers every path that decides a claim, so no
+        caller has to remember it. A save limited by `update_fields`
+        gets `waiting_on` added to the write when it is cleared.
+        `QuerySet.update()` does not call save and is not covered.
+        """
+        if (self.status != FacilityClaimStatuses.PENDING
+                and self.waiting_on is not None):
+            self.waiting_on = None
+            update_fields = kwargs.get('update_fields')
+            if update_fields is not None:
+                kwargs['update_fields'] = {*update_fields, 'waiting_on'}
+        super().save(*args, **kwargs)
 
     default_change_includes = (
         'facility_name_english',

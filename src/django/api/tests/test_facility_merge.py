@@ -287,6 +287,10 @@ class FacilityMergeTest(APITestCase):
             FacilityClaimStatuses.DENIED,
             self.facility_2_claim.status
         )
+        # A claim closed by the merge is no longer waiting on anyone, and
+        # the merge is neither kind of denial (OSDEV-3795).
+        self.assertIsNone(self.facility_2_claim.waiting_on)
+        self.assertIsNone(self.facility_2_claim.denial_type)
 
     def test_merge_with_extended_fields(self):
         self.client.login(

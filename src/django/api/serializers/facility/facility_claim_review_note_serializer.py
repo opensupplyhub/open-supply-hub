@@ -1,9 +1,11 @@
-from django.conf import settings
 from rest_framework.serializers import (
   ModelSerializer,
   SerializerMethodField,
 )
 from ...models import FacilityClaimReviewNote
+from ...services.facility_claim_status_service import (
+    is_claims_automation_account,
+)
 
 
 def note_is_automated(note):
@@ -16,16 +18,10 @@ def note_is_automated(note):
     always agree, or the queue rail and the workspace derive different
     stages for the same claim.
 
-    Compared case-insensitively: User.save() lowercases emails on
-    write, so a mixed-case setting value would otherwise never match.
-    An empty setting disables flagging entirely (nothing is automated).
+    An empty CLAIMS_AUTOMATION_ACCOUNT_EMAIL setting disables flagging
+    entirely (nothing is automated).
     """
-    configured = (
-        settings.CLAIMS_AUTOMATION_ACCOUNT_EMAIL or ''
-    ).strip().lower()
-    if not configured:
-        return False
-    return note.author.email.lower() == configured
+    return is_claims_automation_account(note.author)
 
 
 class FacilityClaimReviewNoteSerializer(ModelSerializer):
