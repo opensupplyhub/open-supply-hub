@@ -130,7 +130,7 @@ const ContactInfoStep = ({
                             },
                         }}
                         className={classes.textField}
-                        placeholder="name@yourcompany.com"
+                        placeholder="opensupplyhubuser@company.com"
                     />
                     <Typography
                         variant="body1"

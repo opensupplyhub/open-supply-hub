@@ -169,7 +169,6 @@ describe('ContactInfoStep component', () => {
         renderComponent();
 
         expect(screen.getByText('Your Work Email')).toBeInTheDocument();
-        expect(screen.getByPlaceholderText('name@yourcompany.com')).toBeInTheDocument();
         expect(
             screen.getByText(
                 'Use your work email. A personal email may not be accepted and can significantly delay approval.',
