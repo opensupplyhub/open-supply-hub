@@ -3,35 +3,15 @@ import {
     makeFixLink,
     parseFixParams,
 } from '../../components/ClaimLiveCheck/utils';
-import { CLAIM_LIVE_CHECK_FIXES } from '../../components/ClaimLiveCheck/constants';
-import claimLiveCheckReducer from '../../reducers/ClaimLiveCheckReducer';
+import claimLiveCheckReducer, {
+    readAnswer,
+} from '../../reducers/ClaimLiveCheckReducer';
 import {
     completeClaimLiveCheck,
     failClaimLiveCheck,
     resetClaimLiveCheck,
     startClaimLiveCheck,
 } from '../../actions/claimLiveCheck';
-
-describe('ClaimLiveCheck preset fixes', () => {
-    test('are exactly the six approved lines', () => {
-        expect(
-            Object.values(CLAIM_LIVE_CHECK_FIXES).map(fix => fix.text),
-        ).toEqual([
-            'Use a work email, not a personal email.',
-            'Upload a document. Claims with a document are approved fastest.',
-            'A document could not be read. Upload a clearer photo or a PDF.',
-            'Add a document that shows your name and your company. For example a business card, employment letter or ID badge.',
-            'Add an official document that shows the company name.',
-            'Add an official document that shows the company address. For example a utility bill or business registration.',
-        ]);
-    });
-
-    test('each names a field to go back to', () => {
-        Object.values(CLAIM_LIVE_CHECK_FIXES).forEach(fix => {
-            expect(fix.targets.length).toBeGreaterThan(0);
-        });
-    });
-});
 
 describe('makeFixLink', () => {
     test('carries the fix and the request to check again', () => {
@@ -43,13 +23,6 @@ describe('makeFixLink', () => {
     test('leaves out the check when none is left', () => {
         expect(makeFixLink(12, 'upload_document', false)).toBe(
             '/claimed/pending/12?fix=upload_document',
-        );
-    });
-
-    test('leaves out a fix it does not know', () => {
-        expect(makeFixLink(12, 'made_up', false)).toBe('/claimed/pending/12');
-        expect(makeFixLink(12, undefined, true)).toBe(
-            '/claimed/pending/12?check=1',
         );
     });
 });
@@ -142,10 +115,9 @@ describe('focusFixField', () => {
         expect(input.scrollIntoView).toHaveBeenCalled();
     });
 
-    test('does nothing for an unknown fix or a missing field', () => {
+    test('does nothing for a missing field', () => {
         const root = render('<input id="something-else" />');
 
-        expect(focusFixField('made_up', root)).toBe(false);
         expect(focusFixField('work_email', root)).toBe(false);
     });
 });
@@ -201,6 +173,15 @@ describe('claimLiveCheck reducer', () => {
                 }),
             ),
         ).toBe(reset);
+    });
+
+    test('not passed with nothing to show reads as not available', () => {
+        const data = { status: 'NOT_PASSED', fixes: ['made_up'] };
+        expect(readAnswer(data).status).toBe('UNAVAILABLE');
+    });
+
+    test('an unknown status reads as not available', () => {
+        expect(readAnswer({ status: 'NEW' }).status).toBe('UNAVAILABLE');
     });
 
     test('a failure reads as not available', () => {

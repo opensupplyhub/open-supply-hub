@@ -4,7 +4,6 @@ import { withStyles } from '@material-ui/core/styles';
 
 import COLOURS from '../../util/COLOURS';
 import { confettiStyles } from './styles';
-import { prefersReducedMotion } from './utils';
 
 const PIECE_COUNT = 60;
 const SHOW_FOR_MS = 4200;
@@ -16,14 +15,10 @@ const PIECE_COLOURS = Object.freeze([
     COLOURS.RED,
 ]);
 
-/*
- * A short burst of falling paper for an approved claim (OSDEV-3805).
- * Decoration only: hidden from assistive technology, never in the way
- * of a click, gone after a few seconds, and not shown at all to people
- * who ask their system for reduced motion.
- */
+// A short burst of falling paper for an approved claim. Decoration
+// only: the styles hide it from people who ask for reduced motion.
 const Confetti = ({ classes }) => {
-    const [visible, setVisible] = useState(() => !prefersReducedMotion());
+    const [visible, setVisible] = useState(true);
 
     useEffect(() => {
         if (!visible) {

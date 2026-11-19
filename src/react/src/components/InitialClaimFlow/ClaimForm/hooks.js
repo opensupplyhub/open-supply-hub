@@ -174,11 +174,8 @@ export const useClaimFormSubmission = (
 ) => {
     const [submittingForm, setSubmittingForm] = useState(false);
     const [dialogIsOpen, setDialogIsOpen] = useState(false);
-    // The claim to run the live check on (OSDEV-3805). The API sends
-    // the new claim's id only while that feature is on, and it is
-    // latched here because resetting the form clears it from the
-    // store. Without an id the thank-you dialog opens as it always
-    // has.
+    // The claim to run the live check on. Latched here because
+    // resetting the form clears it from the store.
     const [liveCheckClaimId, setLiveCheckClaimId] = useState(null);
 
     // Show success dialog and reset form when submission completes.

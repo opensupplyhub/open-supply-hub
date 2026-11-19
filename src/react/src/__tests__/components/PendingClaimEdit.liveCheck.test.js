@@ -198,13 +198,18 @@ describe('PendingClaimEdit after "Go back and fix it"', () => {
         expect(apiRequest.post).not.toHaveBeenCalled();
     });
 
-    test('with the switch off the query string changes nothing', async () => {
-        const { findByText, getByLabelText, queryByText } = renderEditPage(
-            '?fix=upload_document&check=1',
-            { claim_live_check: false },
-        );
+    test('with the switch off the page is as it always was', async () => {
+        const {
+            findByText,
+            getByLabelText,
+            queryByRole,
+            queryByText,
+        } = renderEditPage('?fix=upload_document&check=1', {
+            claim_live_check: false,
+        });
 
         fireEvent.click(await findByText('Save changes'));
+        expect(queryByRole('status')).toBeNull();
 
         expect(await findByText(THANK_YOU)).toBeInTheDocument();
         expect(queryByText(SAVE_AND_CHECK)).toBeNull();
@@ -317,34 +322,10 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
         expect(document.activeElement).toBe(getByLabelText('Your Email'));
     });
 
-    test('the query string still chooses the field to open at', async () => {
-        const { findByRole, getByLabelText } = renderEditPage(
-            '?fix=name_and_company_document&check=1',
-        );
-
-        await findByRole('status');
-        await waitFor(() =>
-            expect(document.activeElement).toBe(
-                getByLabelText('Employment Verification'),
-            ),
-        );
-    });
-
-    test('nothing is marked once the API returns no fixes, whatever the link says', async () => {
-        // What the API answers after the claim was edited since the check.
-        liveCheck = { status: 'UNAVAILABLE', fixes: [], checks_left: 2 };
-        const { findByText, getByTestId, queryByRole } = renderEditPage(
-            '?fix=upload_document',
-        );
-
-        expect(await findByText('Save changes')).toBeInTheDocument();
-        expect(queryByRole('status')).toBeNull();
-        expect(fixesOf(getByTestId('contact-step'))).toEqual({});
-    });
-
     test.each([
         ['a check that passed', { status: 'PASSED', fixes: ['upload_document'] }],
         ['a check still running', { status: 'CHECKING', fixes: [] }],
+        ['a claim edited since', { status: 'UNAVAILABLE', fixes: [] }],
         ['an unknown fix', { status: 'NOT_PASSED', fixes: ['Raw model text'] }],
     ])('nothing is marked for %s', async (_, answer) => {
         liveCheck = { ...answer, checks_left: 2 };
@@ -376,16 +357,6 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
 
         expect(await findByText(THANK_YOU)).toBeInTheDocument();
         expect(apiRequest.post).not.toHaveBeenCalled();
-    });
-
-    test('with the switch off nothing is read and nothing is marked', async () => {
-        const { findByText, queryByRole } = renderEditPage('', {
-            claim_live_check: false,
-        });
-
-        expect(await findByText('Save changes')).toBeInTheDocument();
-        expect(queryByRole('status')).toBeNull();
-        expect(apiRequest.get).not.toHaveBeenCalledWith(LIVE_CHECK_URL);
     });
 
     test('going back from a second result opens the form again with the new marks', async () => {

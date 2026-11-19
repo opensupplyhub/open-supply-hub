@@ -11,9 +11,21 @@ const panel = Object.freeze({
     textAlign: 'left',
 });
 
+const title = theme =>
+    Object.freeze({
+        fontSize: '28px',
+        lineHeight: 1.1,
+        fontWeight: theme.typography.fontWeightExtraBold,
+    });
+
+const text = theme =>
+    Object.freeze({
+        fontSize: '18px',
+        fontWeight: theme.typography.fontWeightSemiBold,
+    });
+
 export const claimLiveCheckStyles = theme =>
     Object.freeze({
-        panel,
         panelPassed: Object.freeze({
             ...panel,
             borderColor: COLOURS.MATERIAL_GREEN,
@@ -28,15 +40,8 @@ export const claimLiveCheckStyles = theme =>
             ...panel,
             backgroundColor: theme.palette.background.grey,
         }),
-        title: Object.freeze({
-            fontSize: '28px',
-            lineHeight: 1.1,
-            fontWeight: theme.typography.fontWeightExtraBold,
-        }),
-        text: Object.freeze({
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightSemiBold,
-        }),
+        title: title(theme),
+        text: text(theme),
         label: Object.freeze({
             fontSize: '18px',
             fontWeight: theme.typography.fontWeightExtraBold,
@@ -56,11 +61,6 @@ export const claimLiveCheckStyles = theme =>
             [theme.breakpoints.down('sm')]: {
                 gridTemplateColumns: 'minmax(0, 1fr)',
             },
-        }),
-        choice: Object.freeze({
-            display: 'grid',
-            gap: '8px',
-            alignContent: 'start',
         }),
         helper: Object.freeze({
             fontSize: '16px',
@@ -92,9 +92,6 @@ export const claimLiveCheckStyles = theme =>
         }),
     });
 
-// The marks on the pending claim edit page while the claim's latest
-// check did not pass: a banner with a link to each field, and the
-// preset lines under the field.
 export const fixBannerStyles = theme =>
     Object.freeze({
         banner: Object.freeze({
@@ -129,14 +126,6 @@ export const fixBannerStyles = theme =>
             }),
         }),
     });
-
-export const fieldFixesStyles = Object.freeze({
-    fieldFixes: Object.freeze({
-        display: 'grid',
-        gap: '4px',
-        marginTop: '8px',
-    }),
-});
 
 export const confettiStyles = Object.freeze({
     [`@keyframes ${CONFETTI_FALL}`]: Object.freeze({
@@ -187,17 +176,6 @@ const dot = Object.freeze({
     fontWeight: 800,
 });
 
-const dotNow = Object.freeze({
-    ...dot,
-    borderColor: COLOURS.PURPLE,
-    borderTopColor: 'transparent',
-});
-
-const barFill = Object.freeze({
-    height: '100%',
-    backgroundColor: COLOURS.PURPLE,
-});
-
 const step = Object.freeze({
     display: 'grid',
     gridTemplateColumns: `${DOT_SIZE + 4}px minmax(0, 1fr)`,
@@ -221,15 +199,8 @@ export const waitingStyles = theme =>
             borderColor: COLOURS.PURPLE,
             backgroundColor: COLOURS.WHITE,
         }),
-        title: Object.freeze({
-            fontSize: '28px',
-            lineHeight: 1.1,
-            fontWeight: theme.typography.fontWeightExtraBold,
-        }),
-        text: Object.freeze({
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightSemiBold,
-        }),
+        title: title(theme),
+        text: text(theme),
         bar: Object.freeze({
             boxSizing: 'border-box',
             height: '12px',
@@ -237,11 +208,11 @@ export const waitingStyles = theme =>
             border: `1px solid ${COLOURS.PURPLE}`,
         }),
         barFill: Object.freeze({
-            ...barFill,
+            height: '100%',
+            backgroundColor: COLOURS.PURPLE,
             transition: 'width 0.25s linear',
             [REDUCED_MOTION]: Object.freeze({ transition: 'none' }),
         }),
-        barFillStill: barFill,
         steps: Object.freeze({
             listStyle: 'none',
             margin: 0,
@@ -257,11 +228,12 @@ export const waitingStyles = theme =>
         }),
         dot,
         dotNow: Object.freeze({
-            ...dotNow,
+            ...dot,
+            borderColor: COLOURS.PURPLE,
+            borderTopColor: 'transparent',
             animation: `${RING_SPIN} 0.8s linear infinite`,
             [REDUCED_MOTION]: Object.freeze({ animation: 'none' }),
         }),
-        dotNowStill: dotNow,
         dotDone: Object.freeze({
             ...dot,
             backgroundColor: COLOURS.MATERIAL_GREEN,

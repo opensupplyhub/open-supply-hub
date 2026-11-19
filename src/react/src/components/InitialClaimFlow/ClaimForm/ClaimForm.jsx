@@ -1,15 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { connect } from 'react-redux';
-import {
-    bool,
-    func,
-    number,
-    object,
-    arrayOf,
-    array,
-    oneOfType,
-    string,
-} from 'prop-types';
+import { bool, func, number, object, arrayOf, array } from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
@@ -251,10 +242,8 @@ const ClaimForm = ({
         );
     }
 
-    // The claim is submitted and is being checked right away
-    // (OSDEV-3805). The form has nothing left to do, so the check takes
-    // its place; fixing something happens on the pending claim edit
-    // page, which works on the saved claim.
+    // The claim is submitted and is being checked right away, so the
+    // check takes the form's place.
     if (liveCheckClaimId) {
         return (
             <div className={`${classes.container} notranslate`} translate="no">
@@ -588,7 +577,7 @@ ClaimForm.propTypes = {
     formData: object.isRequired,
     submissionFetching: bool.isRequired,
     submissionError: array,
-    submittedClaimId: oneOfType([number, string]),
+    submittedClaimId: number,
     countriesOptions: array,
     facilityProcessingTypeOptions: array,
     parentCompanyOptions: array,

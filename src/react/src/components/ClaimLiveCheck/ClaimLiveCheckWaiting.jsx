@@ -17,7 +17,6 @@ import {
     getCheckingFacts,
     getCheckingProgress,
     getCheckingStepStates,
-    prefersReducedMotion,
     STEP_STATES,
 } from './utils';
 
@@ -27,22 +26,8 @@ const STEP_STATE_LABELS = Object.freeze({
     [STEP_STATES.WAITING]: 'Not started',
 });
 
-/*
- * What the claimant sees while the live check of their claim runs
- * (OSDEV-3805): a progress bar, the steps of the check, and one fact
- * at a time.
- *
- * The review service does not report progress yet, so the bar and the
- * steps follow the time that has passed. Neither ever shows the check
- * as finished on its own: that only happens when `done` says the
- * result has arrived.
- *
- * Nothing in here is a live region. The bar and the steps change
- * several times a second and the facts every few seconds, which would
- * flood a screen reader; the facts are marked `aria-live="off"` so
- * that is explicit. A screen reader user can still read all of it, and
- * the result is announced by the panel that replaces this one.
- */
+// Nothing in here is a live region: the bar, the steps and the facts
+// change too often and would flood a screen reader.
 const ClaimLiveCheckWaiting = ({
     classes,
     done,
@@ -50,8 +35,6 @@ const ClaimLiveCheckWaiting = ({
     contributorCount,
 }) => {
     const [elapsedMs, setElapsedMs] = useState(0);
-    const [factIndex, setFactIndex] = useState(0);
-    const reducedMotion = useMemo(prefersReducedMotion, []);
 
     useEffect(() => {
         if (done) {
@@ -70,27 +53,12 @@ const ClaimLiveCheckWaiting = ({
         [locationName, contributorCount],
     );
 
-    useEffect(() => {
-        if (done) {
-            return undefined;
-        }
-        const interval = setInterval(
-            () => setFactIndex(index => index + 1),
-            FACT_INTERVAL_MS,
-        );
-        return () => clearInterval(interval);
-    }, [done]);
-
     const progress = getCheckingProgress(elapsedMs, done);
     const stepStates = getCheckingStepStates(elapsedMs, done);
-    const fact = facts[factIndex % facts.length];
+    const fact = facts[Math.floor(elapsedMs / FACT_INTERVAL_MS) % facts.length];
 
     return (
-        <div
-            className={classes.panel}
-            data-testid="claim-live-check-checking"
-            data-reduced-motion={reducedMotion ? 'true' : 'false'}
-        >
+        <div className={classes.panel} data-testid="claim-live-check-checking">
             <Typography component="h2" className={classes.title}>
                 {CHECKING_TITLE}
             </Typography>
@@ -106,9 +74,7 @@ const ClaimLiveCheckWaiting = ({
                 aria-valuenow={progress}
             >
                 <div
-                    className={
-                        reducedMotion ? classes.barFillStill : classes.barFill
-                    }
+                    className={classes.barFill}
                     style={{ width: `${progress}%` }}
                 />
             </div>
@@ -117,9 +83,7 @@ const ClaimLiveCheckWaiting = ({
                     const state = stepStates[index];
                     const dotClass = {
                         [STEP_STATES.DONE]: classes.dotDone,
-                        [STEP_STATES.NOW]: reducedMotion
-                            ? classes.dotNowStill
-                            : classes.dotNow,
+                        [STEP_STATES.NOW]: classes.dotNow,
                         [STEP_STATES.WAITING]: classes.dot,
                     }[state];
                     return (

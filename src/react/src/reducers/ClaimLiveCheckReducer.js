@@ -6,6 +6,10 @@ import {
     failClaimLiveCheck,
     completeClaimLiveCheck,
     resetClaimLiveCheck,
+    startFetchClaimLiveCheckFixes,
+    failFetchClaimLiveCheckFixes,
+    completeFetchClaimLiveCheckFixes,
+    resetClaimLiveCheckFixes,
 } from '../actions/claimLiveCheck';
 import {
     CLAIM_LIVE_CHECK_FIXES,
@@ -24,9 +28,8 @@ const initialState = Object.freeze({
 
 const knownStatuses = Object.values(CLAIM_LIVE_CHECK_STATUSES);
 
-// Only what this page knows how to show is kept: an unknown status
-// reads as "not available" and an unknown fix key is dropped, so a
-// vocabulary mismatch with the API can never put raw text on the page.
+// Only what the page knows how to show is kept: an unknown status
+// reads as "not available" and an unknown fix key is dropped.
 export const readAnswer = data => {
     const status = knownStatuses.includes(data?.status)
         ? data.status
@@ -50,36 +53,52 @@ export const readAnswer = data => {
     return { status, fixes, checksLeft };
 };
 
-export default createReducer(
-    {
-        [startClaimLiveCheck]: (state, { claimID }) =>
-            update(state, {
-                claimID: { $set: claimID },
-                status: { $set: null },
-                fixes: { $set: [] },
-                checksLeft: { $set: 0 },
-            }),
-        [completeClaimLiveCheck]: (state, { claimID, data }) => {
-            if (claimID !== state.claimID) {
-                return state;
-            }
-            const { status, fixes, checksLeft } = readAnswer(data);
-            return update(state, {
-                status: { $set: status },
-                fixes: { $set: fixes },
-                checksLeft: { $set: checksLeft },
-            });
+const makeLiveCheckReducer = (start, fail, complete, reset) =>
+    createReducer(
+        {
+            [start]: (state, { claimID }) =>
+                update(state, {
+                    claimID: { $set: claimID },
+                    status: { $set: null },
+                    fixes: { $set: [] },
+                    checksLeft: { $set: 0 },
+                }),
+            [complete]: (state, { claimID, data }) => {
+                if (claimID !== state.claimID) {
+                    return state;
+                }
+                const { status, fixes, checksLeft } = readAnswer(data);
+                return update(state, {
+                    status: { $set: status },
+                    fixes: { $set: fixes },
+                    checksLeft: { $set: checksLeft },
+                });
+            },
+            [fail]: (state, { claimID }) => {
+                if (claimID !== state.claimID) {
+                    return state;
+                }
+                return update(state, {
+                    status: { $set: CLAIM_LIVE_CHECK_STATUSES.UNAVAILABLE },
+                    fixes: { $set: [] },
+                });
+            },
+            [reset]: () => initialState,
         },
-        [failClaimLiveCheck]: (state, { claimID }) => {
-            if (claimID !== state.claimID) {
-                return state;
-            }
-            return update(state, {
-                status: { $set: CLAIM_LIVE_CHECK_STATUSES.UNAVAILABLE },
-                fixes: { $set: [] },
-            });
-        },
-        [resetClaimLiveCheck]: () => initialState,
-    },
-    initialState,
+        initialState,
+    );
+
+// The claim's latest check, as read by the pending claim edit page.
+export const claimLiveCheckFixesReducer = makeLiveCheckReducer(
+    startFetchClaimLiveCheckFixes,
+    failFetchClaimLiveCheckFixes,
+    completeFetchClaimLiveCheckFixes,
+    resetClaimLiveCheckFixes,
+);
+
+export default makeLiveCheckReducer(
+    startClaimLiveCheck,
+    failClaimLiveCheck,
+    completeClaimLiveCheck,
+    resetClaimLiveCheck,
 );

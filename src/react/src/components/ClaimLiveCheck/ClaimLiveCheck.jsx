@@ -55,14 +55,9 @@ import {
 
 const { CHECKING, PASSED, NOT_PASSED, UNAVAILABLE } = CLAIM_LIVE_CHECK_STATUSES;
 
-/*
- * Runs the live check of a claim that has just been submitted or
- * edited, and shows how it went (OSDEV-3805).
- *
- * The claim is already saved when this mounts, so nothing here can
- * cost the claimant their submission: a slow, failed or switched-off
- * check never ends in an error, and the claim waits for a person.
- */
+// Runs the live check of a claim that has just been saved and shows
+// how it went. A slow, failed or switched-off check never ends in an
+// error: the claim is already saved and waits for a person.
 const ClaimLiveCheck = ({
     classes,
     claimID,
@@ -79,8 +74,6 @@ const ClaimLiveCheck = ({
     onNotStarted,
 }) => {
     const [timedOut, setTimedOut] = useState(false);
-    // Whether a review was really started for this check. Until then
-    // nothing may be promised about it.
     const [started, setStarted] = useState(false);
     const [leftForReview, setLeftForReview] = useState(false);
     const [resultShown, setResultShown] = useState(false);
@@ -101,13 +94,11 @@ const ClaimLiveCheck = ({
         }
     }, [status]);
 
-    // The check could not be started: it is switched off on the server,
-    // not set up, or the request failed. Nothing is being reviewed
-    // right now, so the claimant must not be told about a check or an
-    // email. The caller shows its usual "submitted" outcome instead.
+    // The check could not be started, so the claimant must not be told
+    // about a check or an email. The caller shows its usual outcome.
     const notStarted = !started && (status === UNAVAILABLE || timedOut);
     useEffect(() => {
-        if (notStarted && onNotStarted) {
+        if (notStarted) {
             onNotStarted();
         }
     }, [notStarted, onNotStarted]);
@@ -121,27 +112,24 @@ const ClaimLiveCheck = ({
     }, [gaveUp, claimID, giveUpCheck]);
 
     // A null status is the request that starts the check still being
-    // on its way; it is shown as checking too.
-    // An answer is held back for a moment so the claimant sees the bar
-    // fill and the last step tick before the result replaces them.
+    // on its way. An answer is held back for a moment so the claimant
+    // sees the bar fill before the result replaces it.
     const hasAnswer = status === PASSED || status === NOT_PASSED;
     const waiting =
         !timedOut &&
         (status === null || status === CHECKING || (hasAnswer && !resultShown));
     const polling = !timedOut && status === CHECKING;
 
-    // The panel replaces a long form, and the page can be scrolled so
-    // that its headline sits under the site's fixed top menu. Bring it
-    // into view just below the menu when it appears and whenever what
-    // it shows changes.
+    // The panel replaces a long form. Bring it into view just below the
+    // site's fixed top menu whenever what it shows changes.
     useEffect(() => {
         const panel = panelRef.current;
-        if (!panel || typeof window.scrollTo !== 'function') {
+        if (!panel) {
             return;
         }
         const top =
             panel.getBoundingClientRect().top +
-            (window.pageYOffset || 0) -
+            window.pageYOffset -
             HEADER_HEIGHT -
             PANEL_SCROLL_MARGIN_PX;
         window.scrollTo(0, Math.max(0, top));
@@ -171,7 +159,7 @@ const ClaimLiveCheck = ({
         return () => clearTimeout(hold);
     }, [hasAnswer]);
 
-    if (notStarted && onNotStarted) {
+    if (notStarted) {
         return null;
     }
 
@@ -256,32 +244,24 @@ const ClaimLiveCheck = ({
                     {CHOOSE_ONE_LABEL}
                 </Typography>
                 <div className={classes.choices}>
-                    <div className={classes.choice}>
-                        <Button
-                            variant="contained"
-                            className={classes.primaryButton}
-                            onClick={() =>
-                                history.push(
-                                    makeFixLink(
-                                        claimID,
-                                        fixes[0],
-                                        canCheckAgain,
-                                    ),
-                                )
-                            }
-                        >
-                            {makeGoBackButtonText(fixes.length)}
-                        </Button>
-                    </div>
-                    <div className={classes.choice}>
-                        <Button
-                            variant="contained"
-                            className={classes.secondaryButton}
-                            onClick={() => setLeftForReview(true)}
-                        >
-                            {LEAVE_BUTTON_TEXT}
-                        </Button>
-                    </div>
+                    <Button
+                        variant="contained"
+                        className={classes.primaryButton}
+                        onClick={() =>
+                            history.push(
+                                makeFixLink(claimID, fixes[0], canCheckAgain),
+                            )
+                        }
+                    >
+                        {makeGoBackButtonText(fixes.length)}
+                    </Button>
+                    <Button
+                        variant="contained"
+                        className={classes.secondaryButton}
+                        onClick={() => setLeftForReview(true)}
+                    >
+                        {LEAVE_BUTTON_TEXT}
+                    </Button>
                 </div>
                 <Typography className={classes.helper}>
                     {canCheckAgain
@@ -308,7 +288,6 @@ const ClaimLiveCheck = ({
 
 ClaimLiveCheck.defaultProps = {
     status: null,
-    onNotStarted: null,
     locationName: '',
     contributorCount: null,
 };
@@ -325,12 +304,10 @@ ClaimLiveCheck.propTypes = {
     runCheck: func.isRequired,
     pollCheck: func.isRequired,
     giveUpCheck: func.isRequired,
-    onNotStarted: func,
+    onNotStarted: func.isRequired,
     resetCheck: func.isRequired,
 };
 
-// The fact about the location uses what the claim form (or the pending
-// claim edit page) already loaded for it. Nothing is fetched here.
 const mapStateToProps = ({
     claimLiveCheck: { status, fixes, checksLeft },
     contributeProductionLocation: {

@@ -16,12 +16,11 @@ import ProfileStep from '../InitialClaimFlow/ClaimForm/Steps/ProfileStep/Profile
 import PendingClaimAttachments from './PendingClaimAttachments';
 import ClaimOutcomeDialog from '../ClaimOutcomeDialog';
 import ClaimLiveCheck from '../ClaimLiveCheck/ClaimLiveCheck';
+import ClaimLiveCheckFixBanner from '../ClaimLiveCheck/ClaimLiveCheckFixBanner';
 import {
-    CLAIM_LIVE_CHECK_FIELD_LABELS,
-    makeFixBannerTitle,
+    CLAIM_LIVE_CHECK_STATUSES,
     SAVE_AND_CHECK_AGAIN_BUTTON_TEXT,
 } from '../ClaimLiveCheck/constants';
-import { fixBannerStyles } from '../ClaimLiveCheck/styles';
 import {
     focusFixField,
     getFixesByField,
@@ -62,7 +61,7 @@ import {
     CLAIM_LIVE_CHECK,
 } from '../../util/constants';
 
-const pendingClaimEditLayoutStyles = Object.freeze({
+const pendingClaimEditStyles = Object.freeze({
     container: Object.freeze({
         maxWidth: '960px',
         margin: '0 auto',
@@ -90,12 +89,6 @@ const pendingClaimEditLayoutStyles = Object.freeze({
     }),
 });
 
-const pendingClaimEditStyles = theme =>
-    Object.freeze({
-        ...pendingClaimEditLayoutStyles,
-        ...fixBannerStyles(theme),
-    });
-
 // The full edit page validates every section at once; the two document
 // picker fields are relaxed because already-uploaded attachments (shown
 // in the attachments section) satisfy the documentation requirement.
@@ -112,7 +105,7 @@ function PendingClaimEdit({
     match: {
         params: { claimID },
     },
-    history,
+    history: { push },
     location,
     data,
     fetching,
@@ -134,34 +127,25 @@ function PendingClaimEdit({
     countriesOptions,
     facilityProcessingTypeOptions,
     isLiveCheckEnabled,
+    liveCheckStatus,
     liveCheckFixes,
-    liveCheckFixesFetching,
     liveCheckChecksLeft,
     getLiveCheckFixes,
     resetLiveCheckFixes,
 }) {
-    const { push } = history;
     const [emissionsHasErrors, setEmissionsHasErrors] = useState(false);
-    // A claimant who chose to go back and fix their claim on the live
-    // check arrives with the field to scroll to first, and whether to
-    // check again after saving, in the query string (OSDEV-3805).
+    // The query string carries the field to scroll to first and whether
+    // to check again after saving. What is marked comes from the claim's
+    // latest check, read on every visit.
     const search = location ? location.search : '';
     const locationKey = location ? location.key : undefined;
     const { fix, checkAgain } = useMemo(() => parseFixParams(search), [search]);
-    // What is marked on the page does not come from the query string:
-    // it is the claim's latest check, read from the API on every visit,
-    // so it is the same from the result screen, the email link and My
-    // Claims. The API returns no fixes once the claim has been edited
-    // since that check. With the feature off, or without fixes, this
-    // page behaves as it always has.
     const fixesByField = useMemo(
-        () => (isLiveCheckEnabled ? getFixesByField(liveCheckFixes) : {}),
-        [isLiveCheckEnabled, liveCheckFixes],
-    );
-    const flaggedFields = Object.keys(fixesByField);
-    const fixCount = flaggedFields.reduce(
-        (count, field) => count + fixesByField[field].length,
-        0,
+        () =>
+            liveCheckStatus === CLAIM_LIVE_CHECK_STATUSES.NOT_PASSED
+                ? getFixesByField(liveCheckFixes)
+                : {},
+        [liveCheckStatus, liveCheckFixes],
     );
     // Set when the check after a save could not be started; the save
     // then ends with the usual thank-you dialog.
@@ -170,7 +154,8 @@ function PendingClaimEdit({
     const checksAfterSave =
         isLiveCheckEnabled &&
         !checkSkipped &&
-        (checkAgain || (fixCount > 0 && liveCheckChecksLeft > 0));
+        (checkAgain ||
+            (Object.keys(fixesByField).length > 0 && liveCheckChecksLeft > 0));
     // Latched locally so a stray Redux state change can never close the
     // dialog once a save has succeeded; it closes only by navigating
     // away (both dialog actions navigate, and unmount resets the slice).
@@ -273,15 +258,15 @@ function PendingClaimEdit({
     // section blank and syncs '' back over the fetched data.
     const formHydrated = Object.keys(formik.values).length > 0;
 
-    // Take the claimant to the field they came back to fix, once, as
-    // soon as the form is on the page and its marks are known.
+    // Take the claimant to the field they came back to fix, once the
+    // form is on the page and its marks are known.
     const formReady =
-        Boolean(data) && formHydrated && !fetching && !liveCheckFixesFetching;
+        Boolean(data) && formHydrated && !fetching && liveCheckStatus !== null;
     useEffect(() => {
-        if (isLiveCheckEnabled && formReady && fix) {
+        if (formReady && fix) {
             focusFixField(fix);
         }
-    }, [isLiveCheckEnabled, formReady, fix]);
+    }, [formReady, fix]);
 
     // On the very first render data is null and fetching has not been
     // set yet (the fetch dispatch runs in an effect), so treat that as
@@ -318,7 +303,7 @@ function PendingClaimEdit({
                 <Paper className={classes.section}>
                     <ClaimLiveCheck
                         claimID={claimID}
-                        history={history}
+                        history={{ push }}
                         onNotStarted={skipCheck}
                     />
                 </Paper>
@@ -353,33 +338,7 @@ function PendingClaimEdit({
                     the Open Supply Hub Claims Team.
                 </Typography>
 
-                {fixCount > 0 && (
-                    <div className={classes.banner} role="status">
-                        <Typography
-                            component="h2"
-                            className={classes.bannerTitle}
-                        >
-                            {makeFixBannerTitle(fixCount)}
-                        </Typography>
-                        <ul className={classes.bannerLinks}>
-                            {flaggedFields.map(field => (
-                                <li key={field}>
-                                    <Button
-                                        className={classes.bannerLink}
-                                        onClick={() =>
-                                            focusFixField(
-                                                fixesByField[field][0],
-                                            )
-                                        }
-                                        disableRipple
-                                    >
-                                        {CLAIM_LIVE_CHECK_FIELD_LABELS[field]}
-                                    </Button>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
+                <ClaimLiveCheckFixBanner fixesByField={fixesByField} />
 
                 <PendingClaimAttachments
                     claimId={data.id}
@@ -467,9 +426,7 @@ function PendingClaimEdit({
 
 PendingClaimEdit.defaultProps = {
     location: null,
-    liveCheckFixes: [],
-    liveCheckFixesFetching: false,
-    liveCheckChecksLeft: 0,
+    liveCheckStatus: null,
     data: null,
     error: null,
     formData: null,
@@ -486,9 +443,9 @@ PendingClaimEdit.propTypes = {
     history: shape({ push: func.isRequired }).isRequired,
     location: shape({ search: string, key: string }),
     isLiveCheckEnabled: bool.isRequired,
-    liveCheckFixes: arrayOf(string),
-    liveCheckFixesFetching: bool,
-    liveCheckChecksLeft: number,
+    liveCheckStatus: string,
+    liveCheckFixes: arrayOf(string).isRequired,
+    liveCheckChecksLeft: number.isRequired,
     getLiveCheckFixes: func.isRequired,
     resetLiveCheckFixes: func.isRequired,
     data: object,
@@ -529,14 +486,14 @@ const mapStateToProps = ({
     },
     featureFlags: { flags },
     claimLiveCheckFixes: {
+        status: liveCheckStatus,
         fixes: liveCheckFixes,
-        fetching: liveCheckFixesFetching,
         checksLeft: liveCheckChecksLeft,
     },
 }) => ({
     isLiveCheckEnabled: !!flags[CLAIM_LIVE_CHECK],
+    liveCheckStatus,
     liveCheckFixes,
-    liveCheckFixesFetching,
     liveCheckChecksLeft,
     data,
     fetching,

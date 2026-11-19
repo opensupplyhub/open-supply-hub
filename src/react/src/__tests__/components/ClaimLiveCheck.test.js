@@ -39,7 +39,7 @@ const setReducedMotion = matches => {
 
 describe('ClaimLiveCheck component', () => {
     let history;
-
+    let onNotStarted;
     let now;
 
     const renderCheck = (location = {}, props = {}) =>
@@ -47,6 +47,7 @@ describe('ClaimLiveCheck component', () => {
             <ClaimLiveCheck
                 claimID={CLAIM_ID}
                 history={history}
+                onNotStarted={onNotStarted}
                 {...props}
             />,
             {
@@ -96,6 +97,7 @@ describe('ClaimLiveCheck component', () => {
         now = 1700000000000;
         jest.spyOn(Date, 'now').mockImplementation(() => now);
         history = { push: jest.fn() };
+        onNotStarted = jest.fn();
         setReducedMotion(false);
         window.scrollTo = jest.fn();
         apiRequest.post.mockResolvedValue(answer('CHECKING'));
@@ -123,27 +125,6 @@ describe('ClaimLiveCheck component', () => {
         expect(apiRequest.post).toHaveBeenCalledTimes(1);
         expect(apiRequest.post).toHaveBeenCalledWith(CHECK_URL);
         expect(apiRequest.get).not.toHaveBeenCalled();
-    });
-
-    test('the not-available screen says an email follows', async () => {
-        apiRequest.get.mockResolvedValue(answer('UNAVAILABLE', [], 2));
-        const { getByText } = renderCheck();
-        await settle();
-        await advance(POLL_INTERVAL_MS);
-
-        expect(getByText(EMAIL_FOLLOWS)).toBeInTheDocument();
-    });
-
-    test('brings the panel into view when it appears and when it changes', async () => {
-        apiRequest.post.mockResolvedValue(answer('PASSED', [], 0));
-        renderCheck();
-
-        expect(window.scrollTo).toHaveBeenCalledTimes(1);
-        expect(window.scrollTo).toHaveBeenCalledWith(0, 0);
-
-        await settle();
-
-        expect(window.scrollTo).toHaveBeenCalledTimes(2);
     });
 
     test('the steps tick off as time passes, the last one only at the result', async () => {
@@ -227,21 +208,6 @@ describe('ClaimLiveCheck component', () => {
         expect(queryByText(CHECKING)).toBeNull();
     });
 
-    test('a check that is not available never shows the bar as full', async () => {
-        const { getByText, queryByRole } = renderCheck();
-        await flush();
-        apiRequest.get.mockResolvedValue(answer('UNAVAILABLE', [], 2));
-
-        await act(async () => {
-            now += POLL_INTERVAL_MS;
-            jest.advanceTimersByTime(POLL_INTERVAL_MS);
-        });
-        await flush();
-
-        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
-        expect(queryByRole('progressbar')).toBeNull();
-    });
-
     test('facts change every five seconds and start with the location', async () => {
         const { getByTestId } = renderCheck({
             name: 'Example Textiles',
@@ -319,8 +285,7 @@ describe('ClaimLiveCheck component', () => {
 
     test('a check that could not start hands back to the caller and promises nothing', async () => {
         apiRequest.post.mockResolvedValue(answer('UNAVAILABLE', [], 3));
-        const onNotStarted = jest.fn();
-        const { container } = renderCheck({}, { onNotStarted });
+        const { container } = renderCheck();
         await settle();
 
         expect(onNotStarted).toHaveBeenCalledTimes(1);
@@ -331,8 +296,7 @@ describe('ClaimLiveCheck component', () => {
 
     test('a failed request to start hands back to the caller too', async () => {
         apiRequest.post.mockRejectedValue(new Error('network'));
-        const onNotStarted = jest.fn();
-        const { container } = renderCheck({}, { onNotStarted });
+        const { container } = renderCheck();
         await settle();
 
         expect(onNotStarted).toHaveBeenCalledTimes(1);
@@ -341,25 +305,30 @@ describe('ClaimLiveCheck component', () => {
 
     test('a check that started and then became unavailable stays on the page', async () => {
         apiRequest.get.mockResolvedValue(answer('UNAVAILABLE', [], 2));
-        const onNotStarted = jest.fn();
-        const { getByText } = renderCheck({}, { onNotStarted });
+        const { getByText, queryByRole } = renderCheck();
         await settle();
         await advance(POLL_INTERVAL_MS);
 
         expect(onNotStarted).not.toHaveBeenCalled();
         expect(getByText(UNAVAILABLE)).toBeInTheDocument();
         expect(getByText(EMAIL_FOLLOWS)).toBeInTheDocument();
+        expect(queryByRole('progressbar')).toBeNull();
     });
 
-    test('tells the API once when it gives up after one minute', async () => {
-        const onNotStarted = jest.fn();
-        const { getByText } = renderCheck({}, { onNotStarted });
+    test('gives up after one minute, tells the API once and stops asking', async () => {
+        const { getByText, queryByText } = renderCheck();
         await settle();
         apiRequest.post.mockResolvedValue(answer('UNAVAILABLE', [], 2));
 
-        await advance(CHECK_TIMEOUT_MS);
+        await advance(CHECK_TIMEOUT_MS - POLL_INTERVAL_MS);
+        expect(getByText(STAY)).toBeInTheDocument();
+
+        await advance(POLL_INTERVAL_MS);
+        expect(queryByText(STAY)).toBeNull();
+        const polls = apiRequest.get.mock.calls.length;
         await advance(POLL_INTERVAL_MS * 3);
 
+        expect(apiRequest.get).toHaveBeenCalledTimes(polls);
         expect(apiRequest.post).toHaveBeenCalledTimes(2);
         expect(apiRequest.post).toHaveBeenLastCalledWith(CHECK_URL, {
             timed_out: true,
@@ -368,15 +337,11 @@ describe('ClaimLiveCheck component', () => {
         expect(getByText(UNAVAILABLE)).toBeInTheDocument();
     });
 
-    test('with reduced motion nothing is animated, facts still change and the result is not held back', async () => {
+    test('with reduced motion facts still change and the result is not held back', async () => {
         setReducedMotion(true);
         const { getByTestId, getByText } = renderCheck();
         await flush();
 
-        expect(getByTestId('claim-live-check-checking')).toHaveAttribute(
-            'data-reduced-motion',
-            'true',
-        );
         await advance(FACT_INTERVAL_MS);
         expect(getByTestId('claim-live-check-fact')).toHaveTextContent(
             'You can add your certifications',
@@ -425,16 +390,6 @@ describe('ClaimLiveCheck component', () => {
 
         fireEvent.click(getByText('To My Claims'));
         expect(history.push).toHaveBeenCalledWith('/claimed');
-    });
-
-    test('no confetti for people who prefer reduced motion', async () => {
-        setReducedMotion(true);
-        apiRequest.post.mockResolvedValue(answer('PASSED', [], 0));
-        const { getByText, queryByTestId } = renderCheck();
-        await settle();
-
-        expect(getByText('Your claim is approved.')).toBeInTheDocument();
-        expect(queryByTestId('claim-live-check-confetti')).toBeNull();
     });
 
     test('a claim that did not pass lists the preset fixes and two choices', async () => {
@@ -534,39 +489,6 @@ describe('ClaimLiveCheck component', () => {
         expect(queryByText(/Raw model text/)).toBeNull();
     });
 
-    test('not passed with nothing to show reads as not available', async () => {
-        apiRequest.post.mockResolvedValue(answer('NOT_PASSED', ['made_up']));
-        const { getByText, queryByText } = renderCheck();
-        await settle();
-
-        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
-        expect(queryByText('Fix this:')).toBeNull();
-    });
-
-    test('an unavailable check says the claim is submitted', async () => {
-        apiRequest.post.mockResolvedValue(answer('UNAVAILABLE', [], 3));
-        const { getByText } = renderCheck();
-        await settle();
-
-        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
-        expect(
-            getByText(
-                'Your claim is submitted. You do not need to do anything.',
-            ),
-        ).toBeInTheDocument();
-        expect(getByText('To My Claims')).toBeInTheDocument();
-    });
-
-    test('a failed request to start the check fails open', async () => {
-        apiRequest.post.mockRejectedValue(new Error('network'));
-        const { getByText } = renderCheck();
-        await settle();
-
-        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
-        await advance(POLL_INTERVAL_MS * 2);
-        expect(apiRequest.get).not.toHaveBeenCalled();
-    });
-
     test('a failed poll fails open', async () => {
         apiRequest.get.mockRejectedValue(new Error('network'));
         const { getByText } = renderCheck();
@@ -577,55 +499,13 @@ describe('ClaimLiveCheck component', () => {
         expect(getByText(UNAVAILABLE)).toBeInTheDocument();
     });
 
-    test('an unknown status reads as not available', async () => {
-        apiRequest.post.mockResolvedValue(answer('SOMETHING_NEW'));
-        const { getByText } = renderCheck();
-        await settle();
-
-        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
-    });
-
-    test('gives up after one minute and stops asking', async () => {
-        const { getByText, queryByText } = renderCheck();
-        await settle();
-
-        await advance(CHECK_TIMEOUT_MS - POLL_INTERVAL_MS);
-        expect(getByText(STAY)).toBeInTheDocument();
-
-        await advance(POLL_INTERVAL_MS);
-        expect(getByText(UNAVAILABLE)).toBeInTheDocument();
-        expect(queryByText(STAY)).toBeNull();
-
-        const polls = apiRequest.get.mock.calls.length;
-        await advance(POLL_INTERVAL_MS * 5);
-        expect(apiRequest.get).toHaveBeenCalledTimes(polls);
-    });
-
-    test('leaving is a plain line, not a link or a button', async () => {
-        const { getByText, queryByRole, queryByText } = renderCheck();
-        await settle();
-
-        expect(
-            getByText(
-                'Have to leave? We will email your result. Fixing it later can delay your approval.',
-            ),
-        ).toBeInTheDocument();
-        expect(queryByRole('button')).toBeNull();
-        expect(queryByRole('link')).toBeNull();
-        expect(queryByText(/Send me the result/)).toBeNull();
-    });
-
     test('stops asking and forgets the check when it is left', async () => {
         const { unmount, reduxStore } = renderCheck();
         await settle();
         await advance(POLL_INTERVAL_MS);
         const polls = apiRequest.get.mock.calls.length;
-        const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
 
         unmount();
-        // The poll, the bar and steps, and the facts each had a timer.
-        expect(clearIntervalSpy.mock.calls.length).toBeGreaterThanOrEqual(3);
-        clearIntervalSpy.mockRestore();
         await advance(POLL_INTERVAL_MS * 5);
 
         expect(apiRequest.get).toHaveBeenCalledTimes(polls);

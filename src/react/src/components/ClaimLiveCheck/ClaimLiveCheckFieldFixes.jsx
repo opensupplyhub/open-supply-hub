@@ -1,23 +1,18 @@
 import React from 'react';
-import { arrayOf, object, oneOf } from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
+import { arrayOf, oneOf } from 'prop-types';
 
 import InputErrorText from '../Contribute/InputErrorText';
 import { CLAIM_LIVE_CHECK_FIXES } from './constants';
-import { fieldFixesStyles } from './styles';
 
-/*
- * The preset lines of the live check fixes that are about one field of
- * the pending claim edit page, shown in red directly under that field
- * (OSDEV-3805). Renders nothing when the field has no fix.
- */
-const ClaimLiveCheckFieldFixes = ({ classes, fixes }) => {
-    if (!fixes || fixes.length === 0) {
+// The preset lines of the live check fixes about one field of the
+// pending claim edit page, shown in red directly under that field.
+const ClaimLiveCheckFieldFixes = ({ fixes }) => {
+    if (!fixes) {
         return null;
     }
     return (
         <div
-            className={classes.fieldFixes}
+            style={{ display: 'grid', gap: 4, marginTop: 8 }}
             data-testid="live-check-field-fixes"
         >
             {fixes.map(fix => (
@@ -35,8 +30,7 @@ ClaimLiveCheckFieldFixes.defaultProps = {
 };
 
 ClaimLiveCheckFieldFixes.propTypes = {
-    classes: object.isRequired,
     fixes: arrayOf(oneOf(Object.keys(CLAIM_LIVE_CHECK_FIXES))),
 };
 
-export default withStyles(fieldFixesStyles)(ClaimLiveCheckFieldFixes);
+export default ClaimLiveCheckFieldFixes;
