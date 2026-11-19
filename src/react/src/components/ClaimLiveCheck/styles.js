@@ -280,24 +280,8 @@ export const waitingStyles = theme =>
             fontSize: '18px',
             overflowWrap: 'anywhere',
         }),
-        emailMe: Object.freeze({
-            display: 'grid',
-            gap: '4px',
-            justifyItems: 'start',
+        leaveText: Object.freeze({
             fontSize: '16px',
-        }),
-        emailMeButton: Object.freeze({
-            padding: 0,
-            minHeight: 0,
-            textTransform: 'none',
-            textDecoration: 'underline',
-            fontSize: '18px',
-            fontWeight: theme.typography.fontWeightExtraBold,
-            color: COLOURS.PURPLE,
-            '&:hover': Object.freeze({
-                backgroundColor: 'transparent',
-                textDecoration: 'underline',
-            }),
         }),
         factLabel: Object.freeze({
             fontSize: '13px',

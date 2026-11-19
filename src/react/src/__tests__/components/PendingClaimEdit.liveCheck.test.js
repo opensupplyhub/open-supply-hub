@@ -71,7 +71,7 @@ const CLAIM_ID = '12';
 const PENDING_URL = `/api/facility-claims/${CLAIM_ID}/pending/`;
 const LIVE_CHECK_URL = `/api/facility-claims/${CLAIM_ID}/live-check/`;
 const SAVE_AND_CHECK = 'Save and check again';
-const CHECKING = 'Your claim is submitted. We are checking it now.';
+const CHECKING = 'We are checking your claim. Stay for your result.';
 const THANK_YOU = 'Thank you for editing your claim request!';
 
 const pendingClaim = {

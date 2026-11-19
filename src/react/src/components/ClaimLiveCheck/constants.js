@@ -74,19 +74,16 @@ export const CLAIM_LIVE_CHECK_FIXES = Object.freeze({
 
 export const CHECK_AND_SUBMIT_BUTTON_TEXT = 'Submit and check my claim';
 export const CHECK_AND_SUBMIT_HELPER_TEXT =
-    'Your claim is submitted first. Then we check it right away, which takes up to one minute. You can stay to see the result or leave and get it by email.';
+    'We check your claim right away. Stay for up to one minute to see your result.';
 export const SAVE_AND_CHECK_AGAIN_BUTTON_TEXT = 'Save and check again';
 
 export const CHECKING_TITLE =
-    'Your claim is submitted. We are checking it now.';
-export const CHECKING_STAY_TEXT = 'This takes up to one minute.';
-// The claimant can stop waiting at any time. The check carries on and
-// its result is emailed.
-export const EMAIL_ME_BUTTON_TEXT = 'Send me the result by email';
-export const EMAIL_ME_HELPER_TEXT =
-    'Your claim is already submitted. You can leave this page.';
-export const EMAIL_ME_TITLE = 'Your claim is submitted.';
-export const EMAIL_ME_TEXT = 'We will email you the result of the check.';
+    'We are checking your claim. Stay for your result.';
+export const CHECKING_STAY_TEXT =
+    'It takes up to one minute. If something needs a fix, you can fix it here and get approved faster.';
+// A plain line at the bottom of the waiting screen, not a link.
+export const CHECKING_LEAVE_TEXT =
+    'Have to leave? We will email your result. Fixing it later can delay your approval.';
 export const CHECKING_BAR_LABEL = 'Checking your claim';
 
 // The steps shown while the check runs, and how long after the start
@@ -119,7 +116,6 @@ export const CHECKING_BAR_MAX_PERCENT = 95;
 // One fact is shown at a time while the claimant waits.
 export const FACT_LABEL_LOCATION = 'About this location';
 export const FACT_LABEL_APPROVED = 'When your claim is approved';
-export const FACT_LABEL_GOOD_TO_KNOW = 'Good to know';
 export const CHECKING_FACTS = Object.freeze([
     Object.freeze({
         label: FACT_LABEL_APPROVED,
@@ -130,10 +126,6 @@ export const CHECKING_FACTS = Object.freeze([
         label: FACT_LABEL_APPROVED,
         text:
             'You can add your certifications, number of workers and product types.',
-    }),
-    Object.freeze({
-        label: FACT_LABEL_GOOD_TO_KNOW,
-        text: 'You can leave this page. The result is also sent by email.',
     }),
 ]);
 export const FACT_INTERVAL_MS = 5000;

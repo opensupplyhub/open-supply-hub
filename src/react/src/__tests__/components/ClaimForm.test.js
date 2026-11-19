@@ -1061,7 +1061,7 @@ describe('ClaimForm component', () => {
     });
 
     describe('Submit and check my claim (live claim check)', () => {
-        const helperText = /Your claim is submitted first\. Then we check it right away/;
+        const helperText = /We check your claim right away\. Stay for up to one minute to see your result\./;
         const stateOnLastStep = (flags, submissionState) => ({
             ...defaultPreloadedState,
             claimForm: {
@@ -1127,7 +1127,9 @@ describe('ClaimForm component', () => {
 
             await waitFor(() => {
                 expect(
-                    getByText('This takes up to one minute.'),
+                    getByText(
+                        'We are checking your claim. Stay for your result.',
+                    ),
                 ).toBeInTheDocument();
             });
             expect(apiRequest.post).toHaveBeenCalledWith(
@@ -1215,7 +1217,9 @@ describe('ClaimForm component', () => {
 
             expect(getByText('Submit and check my claim')).toBeInTheDocument();
             expect(
-                queryByText('This takes up to one minute.'),
+                queryByText(
+                    'We are checking your claim. Stay for your result.',
+                ),
             ).toBeNull();
             expect(apiRequest.post).not.toHaveBeenCalled();
         });

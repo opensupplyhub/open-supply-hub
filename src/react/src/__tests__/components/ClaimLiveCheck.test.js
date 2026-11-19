@@ -18,11 +18,11 @@ jest.mock('../../util/apiRequest', () => ({
 
 const CLAIM_ID = 77;
 const CHECK_URL = `/api/facility-claims/${CLAIM_ID}/live-check/`;
-const CHECKING = 'Your claim is submitted. We are checking it now.';
-const STAY = 'This takes up to one minute.';
+const CHECKING = 'We are checking your claim. Stay for your result.';
+const STAY =
+    'It takes up to one minute. If something needs a fix, you can fix it here and get approved faster.';
 const UNAVAILABLE = 'This is taking longer than usual.';
 const NOT_PASSED = 'Your claim is submitted, but it did not pass the check.';
-const EMAIL_ME = 'Send me the result by email';
 const EMAIL_FOLLOWS =
     'We will email you the result. If the check cannot finish, a person will review your claim.';
 const WORK_EMAIL = 'Use a work email, not a personal email.';
@@ -112,7 +112,7 @@ describe('ClaimLiveCheck component', () => {
         Date.now.mockRestore();
     });
 
-    test('starts the check once and says the claim is already submitted', async () => {
+    test('starts the check once and asks the claimant to stay', async () => {
         const { getByText } = renderCheck();
 
         expect(getByText(CHECKING)).toBeInTheDocument();
@@ -263,11 +263,6 @@ describe('ClaimLiveCheck component', () => {
         await advance(FACT_INTERVAL_MS);
         expect(fact()).toHaveTextContent(
             'When your claim is approvedYou can add your certifications, number of workers and product types.',
-        );
-
-        await advance(FACT_INTERVAL_MS);
-        expect(fact()).toHaveTextContent(
-            'Good to knowYou can leave this page. The result is also sent by email.',
         );
 
         await advance(FACT_INTERVAL_MS);
@@ -606,64 +601,18 @@ describe('ClaimLiveCheck component', () => {
         expect(apiRequest.get).toHaveBeenCalledTimes(polls);
     });
 
-    test('the email choice is there from the start, before the check has answered', async () => {
-        const { getByText } = renderCheck();
+    test('leaving is a plain line, not a link or a button', async () => {
+        const { getByText, queryByRole, queryByText } = renderCheck();
+        await settle();
 
-        expect(getByText(EMAIL_ME)).toBeInTheDocument();
         expect(
             getByText(
-                'Your claim is already submitted. You can leave this page.',
+                'Have to leave? We will email your result. Fixing it later can delay your approval.',
             ),
         ).toBeInTheDocument();
-        await settle();
-        expect(getByText(EMAIL_ME)).toBeInTheDocument();
-    });
-
-    test('asking for the email stops the polling and leaves the check running', async () => {
-        const { getByText, getByRole, queryByText, container } = renderCheck();
-        await settle();
-        await advance(POLL_INTERVAL_MS);
-        const polls = apiRequest.get.mock.calls.length;
-
-        fireEvent.click(getByText(EMAIL_ME));
-
-        expect(
-            getByRole('heading', { name: 'Your claim is submitted.' }),
-        ).toBeInTheDocument();
-        expect(
-            getByText('We will email you the result of the check.'),
-        ).toBeInTheDocument();
-        expect(container.querySelectorAll('[role="status"]')).toHaveLength(1);
-        expect(queryByText(CHECKING)).toBeNull();
-        expect(queryByText(EMAIL_ME)).toBeNull();
-
-        await advance(CHECK_TIMEOUT_MS + POLL_INTERVAL_MS * 3);
-
-        // No more polls, and the API is not told the page gave up: the
-        // check carries on and its result is emailed.
-        expect(apiRequest.get).toHaveBeenCalledTimes(polls);
-        expect(apiRequest.post).toHaveBeenCalledTimes(1);
-        expect(queryByText(UNAVAILABLE)).toBeNull();
-        fireEvent.click(getByText('To My Claims'));
-        expect(history.push).toHaveBeenCalledWith('/claimed');
-    });
-
-    test('asking for the email before a check that cannot start still hands back', async () => {
-        let resolveStart;
-        apiRequest.post.mockReturnValue(
-            new Promise(resolve => {
-                resolveStart = resolve;
-            }),
-        );
-        const onNotStarted = jest.fn();
-        const { getByText, container } = renderCheck({}, { onNotStarted });
-
-        fireEvent.click(getByText(EMAIL_ME));
-        await act(async () => resolveStart(answer('UNAVAILABLE', [], 3)));
-        await settle();
-
-        expect(onNotStarted).toHaveBeenCalledTimes(1);
-        expect(container).toBeEmptyDOMElement();
+        expect(queryByRole('button')).toBeNull();
+        expect(queryByRole('link')).toBeNull();
+        expect(queryByText(/Send me the result/)).toBeNull();
     });
 
     test('stops asking and forgets the check when it is left', async () => {
