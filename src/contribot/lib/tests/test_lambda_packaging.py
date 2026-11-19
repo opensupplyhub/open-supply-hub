@@ -1,18 +1,19 @@
-"""Check that each ContriBot Lambda zip ships every module its handler needs.
+"""Check that each ContriBot Lambda's zip contains every file its code imports.
 
-Each Lambda is built from a Makefile in
-``deployment/terraform/lambda-functions/contribot_*`` that copies an explicit
-list of files into a zip. The unit tests import the handlers from the full
-source tree, so they pass even when a Makefile forgets a file. The Lambda then
-fails in AWS with ``Unable to import module 'handler': No module named ...``
-before it reads any list data (OSDEV-3884: ``lib/os_hub_api.py`` was missing
-from the ``process_list`` zip).
+Each Lambda is deployed as a zip. The Makefile in
+``deployment/terraform/lambda-functions/contribot_*`` decides which files go
+into it, using a list of files to copy.
 
-These tests close that gap. They build every Lambda zip with its real Makefile
-(``pip`` is stubbed out, so nothing is downloaded), read the handler out of the
-zip, follow every import that points at ContriBot's own code, and fail if any
-of those files is not in the zip. Third-party packages are not checked here;
-they come from ``requirements.txt`` at build time.
+Our other tests import the handlers straight from ``src/contribot``, where every
+file exists, so they can't tell if a Makefile forgot one. When that happens the
+Lambda fails in AWS with ``Unable to import module 'handler': No module named
+...`` before it reads any list. That is what happened in OSDEV-3884:
+``lib/os_hub_api.py`` was missing from the ``process_list`` zip.
+
+These tests build each zip with its real Makefile, open the handler inside it,
+follow every import that points at our own code, and fail if any of those files
+isn't in the zip. They don't check third-party packages like ``pandas``; those
+are installed from ``requirements.txt`` when the zip is built.
 """
 
 from __future__ import annotations
@@ -46,15 +47,16 @@ LAMBDA_DIRS = sorted(
 
 
 def _packaged_path_for(module: str, handler_dir: Path) -> str | None:
-    """Return where ``module`` sits in a Lambda zip, if it is ContriBot code.
+    """Say where a module would sit inside the zip, if it's our own code.
 
-    A module is ContriBot's own code when it resolves to a file under the
-    handler's folder (shipped at the zip root) or under ``src/contribot`` (so
-    ``lib.x`` is shipped as ``lib/x.py``). Anything else, such as ``boto3`` or
-    ``pandas``, returns ``None`` because it is not ours to package.
+    For example ``lib.os_hub_api`` becomes ``lib/os_hub_api.py``. A module counts
+    as ours if its file exists in the Lambda's own folder (for example
+    ``process_list/``) or under ``src/contribot``. Anything else, like ``boto3``
+    or ``pandas``, returns ``None`` because we don't package it ourselves.
     """
     parts = module.split(".")
     for root in (handler_dir, CONTRIBOT_DIR):
+        # An import can point at a plain file (a/b.py) or a package (a/b/__init__.py).
         for candidate in (
             Path(*parts[:-1]) / f"{parts[-1]}.py",
             Path(*parts) / "__init__.py",
@@ -65,13 +67,13 @@ def _packaged_path_for(module: str, handler_dir: Path) -> str | None:
 
 
 def _imported_modules(source: str, package: str) -> set[str]:
-    """List every module a file imports, including lazy imports in functions.
+    """List every module that a piece of Python code imports.
 
-    ``package`` is the dotted package the file lives in inside the zip
-    (``""`` for a file at the zip root, ``"lib"`` for ``lib/x.py``). It is
-    needed to turn ``from .utils import x`` into ``lib.utils``. For
-    ``from lib import x`` the name ``lib.x`` is listed too, since ``x`` may be a
-    module and not an attribute.
+    This includes imports tucked inside functions, since those fail at runtime
+    too. ``package`` is the folder the file sits in inside the zip: ``""`` for a
+    file at the top, ``"lib"`` for ``lib/utils.py``. We need it to work out what
+    a relative import means, for example ``from .utils import x`` in a ``lib``
+    file is ``lib.utils``.
     """
     found: set[str] = set()
     for node in ast.walk(ast.parse(source)):
@@ -79,6 +81,7 @@ def _imported_modules(source: str, package: str) -> set[str]:
             found.update(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom):
             if node.level:
+                # Relative import: each extra dot climbs one package up.
                 base = package.split(".") if package else []
                 base = base[: len(base) - (node.level - 1)]
                 module = ".".join(base + ([node.module] if node.module else []))
@@ -87,6 +90,8 @@ def _imported_modules(source: str, package: str) -> set[str]:
             if not module:
                 continue
             found.add(module)
+            # "from lib import utils" could mean the module lib.utils, so list
+            # that too and let the caller check whether the file exists.
             found.update(f"{module}.{alias.name}" for alias in node.names)
     return found
 
@@ -96,18 +101,22 @@ def missing_from_zip(
     read_source: Callable[[str], str],
     handler_dir: Path,
 ) -> dict[str, set[str]]:
-    """Find ContriBot files the handler needs that the zip does not contain.
+    """Find our own files that the handler needs but the zip doesn't contain.
 
-    Starting from ``handler.py``, follow every import that points at ContriBot
-    code (and the ``__init__.py`` of each package it sits in), reading each
-    file's own imports in turn. Returns ``{missing zip path: {files that import
-    it}}``; an empty dict means the package is complete.
+    Start at ``handler.py`` and follow its imports. Then open each file it
+    imports and follow that file's imports too, so a file needed only by another
+    file is still caught. The result maps each missing file to the files that
+    import it, for example ``{"lib/os_hub_api.py": {"handler.py"}}``. An empty
+    result means the zip is complete.
+
+    ``zip_names`` is the list of paths inside the zip, and ``read_source`` gives
+    back the code of one of them.
     """
     missing: dict[str, set[str]] = {}
     seen: set[str] = set()
-    queue = ["handler.py"]
-    while queue:
-        path = queue.pop()
+    to_check = ["handler.py"]
+    while to_check:
+        path = to_check.pop()
         if path in seen:
             continue
         seen.add(path)
@@ -116,6 +125,8 @@ def missing_from_zip(
             needed = _packaged_path_for(module, handler_dir)
             if needed is None:
                 continue
+            # Python also needs the __init__.py of every package on the way
+            # down, so require those as well (for example lib/__init__.py).
             required = [needed]
             for ancestor in Path(needed).parents:
                 init = (ancestor / "__init__.py").as_posix()
@@ -123,7 +134,7 @@ def missing_from_zip(
                     required.append(init)
             for item in required:
                 if item in zip_names:
-                    queue.append(item)
+                    to_check.append(item)
                 else:
                     missing.setdefault(item, set()).add(path)
     return missing
@@ -131,12 +142,14 @@ def missing_from_zip(
 
 @pytest.fixture(scope="module")
 def build_lambda_zip(tmp_path_factory):
-    """Return a function that builds one Lambda's zip and gives back its path.
+    """Give tests a function that builds one Lambda's zip and returns its path.
 
-    The Makefile is copied into a throwaway folder and pointed at the real
-    source with ``CONTRIBOT_SRC``, so nothing is written into the repository.
-    A do-nothing ``pip`` is put first on ``PATH`` so the build needs no network;
-    the dependency install is not what these tests are about.
+    The Makefile is copied to a temporary folder and pointed at the real source
+    with ``CONTRIBOT_SRC``, so the build leaves nothing behind in the repo. We
+    also put a fake ``pip`` that does nothing at the front of ``PATH``. The
+    Makefile normally runs ``pip install`` to fetch dependencies, and these tests
+    only care which of our files end up in the zip, so skipping that keeps the
+    tests quick and means they don't need internet access.
     """
     if shutil.which("make") is None or shutil.which("zip") is None:
         pytest.skip("make and zip are needed to build the Lambda zips")
@@ -165,23 +178,24 @@ def build_lambda_zip(tmp_path_factory):
 
 
 def test_every_contribot_lambda_is_covered():
-    """Make sure the parametrised check below is not silently empty.
+    """Make sure the zip check below is actually running on all four Lambdas.
 
-    The test over ``LAMBDA_DIRS`` passes trivially if the folder moves and the
-    glob finds nothing, so this pins the four Lambdas it must cover. Add a new
-    Lambda here when one is created.
+    That check is generated from whatever Lambda folders it finds. If the folder
+    moved or got renamed, it would find none and pass without testing anything.
+    This test fails in that case. When you add a new ContriBot Lambda, add it to
+    ``EXPECTED_LAMBDAS`` too.
     """
     assert {path.name for path in LAMBDA_DIRS} == EXPECTED_LAMBDAS
 
 
 @pytest.mark.parametrize("lambda_dir", LAMBDA_DIRS, ids=lambda path: path.name)
 def test_zip_contains_every_module_the_handler_imports(lambda_dir, build_lambda_zip):
-    """Build the real zip and check it can import everything it ships a handler for.
+    """Build each Lambda's zip and check nothing its code imports is missing.
 
-    This is the regression test for OSDEV-3884. If a handler (or a ``lib``
-    module it uses) imports a ContriBot file that the Makefile does not copy,
-    the failure names the file and who imports it, instead of the Lambda
-    breaking in AWS.
+    This is the test that would have caught OSDEV-3884. If the handler, or any
+    file it uses, imports one of our files that the Makefile doesn't copy, the
+    test fails and names the missing file and what imports it. That way we find
+    out here and not when the Lambda fails in AWS.
     """
     handler_dir = CONTRIBOT_DIR / lambda_dir.name.removeprefix("contribot_")
     with zipfile.ZipFile(build_lambda_zip(lambda_dir)) as zf:
@@ -198,10 +212,10 @@ def test_zip_contains_every_module_the_handler_imports(lambda_dir, build_lambda_
 
 
 def test_process_list_zip_ships_os_hub_api(build_lambda_zip):
-    """Pin the exact file whose absence broke list #9809.
+    """Check the one file whose absence broke list #9809, by name.
 
-    The generic check above would also catch it; this keeps the original
-    failure visible by name.
+    The general test above would catch this too. This one is here so the
+    original failure stays easy to find if someone ever searches for it.
     """
     lambda_dir = LAMBDA_FUNCTIONS_DIR / "contribot_process_list"
     with zipfile.ZipFile(build_lambda_zip(lambda_dir)) as zf:
@@ -209,11 +223,11 @@ def test_process_list_zip_ships_os_hub_api(build_lambda_zip):
 
 
 def test_checker_reports_a_module_missing_from_the_zip():
-    """Show the checker fails when a handler import is not in the zip.
+    """Check that the checker really does report a missing file.
 
-    A made-up handler imports ``lib.os_hub_api`` but the made-up zip does not
-    contain it, which is exactly the OSDEV-3884 situation. Without this, a bug
-    in the checker could make the real tests pass while checking nothing.
+    We fake the OSDEV-3884 situation: a handler that imports ``lib.os_hub_api``
+    and a zip without that file. Without this test, a bug in the checker could
+    make the real tests pass while quietly checking nothing.
     """
     sources = {
         "handler.py": "from lib.os_hub_api import OSHubAPI\n",
@@ -227,11 +241,11 @@ def test_checker_reports_a_module_missing_from_the_zip():
 
 
 def test_checker_follows_imports_between_lib_modules():
-    """Show the checker also catches a file needed by a file the handler needs.
+    """Check that the checker catches a file needed by another file, not the handler.
 
-    The handler imports ``lib.contribot`` (present), which itself imports
-    ``.utils`` with a relative import (absent). The checker has to read
-    ``lib/contribot.py`` and notice, since the handler never names ``utils``.
+    We fake a handler that imports ``lib.contribot``, which is in the zip. That
+    file in turn imports ``.utils``, which isn't. The handler never mentions
+    ``utils``, so the checker has to open ``lib/contribot.py`` to notice.
     """
     sources = {
         "handler.py": "from lib.contribot import ContriBot\n",
