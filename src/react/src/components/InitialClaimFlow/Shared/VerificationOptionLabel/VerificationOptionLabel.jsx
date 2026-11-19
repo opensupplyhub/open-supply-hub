@@ -13,7 +13,7 @@ import styles from './styles';
  */
 const VerificationOptionLabel = ({ label, tag, classes }) => (
     <span className={classes.root}>
-        <span>{label}</span>
+        <span className={classes.label}>{label}</span>
         {tag && (
             <span
                 className={
@@ -40,6 +40,7 @@ VerificationOptionLabel.propTypes = {
     tag: oneOf(Object.values(VERIFICATION_OPTION_TAGS)),
     classes: shape({
         root: string.isRequired,
+        label: string.isRequired,
         preferredTag: string.isRequired,
         canDelayTag: string.isRequired,
     }).isRequired,
