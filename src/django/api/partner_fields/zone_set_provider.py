@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from django.db.models import Q
 from waffle import switch_is_active
 
+from api.helpers.geojson_zones import is_usable_zone_value
 from api.models.zone_set import Zone, ZoneSet
 from api.partner_fields.base_provider import SystemPartnerFieldProvider
 
@@ -64,6 +65,12 @@ def build_zone_sets_covered_q(zone_sets):
     inactive sets too: the switch-off and inactive-set behaviour comes
     from which ids the caller passes, not from the column.
 
+    A set with `filters` (sector, country, product type and so on)
+    only covers the locations that also match them, so search and the
+    profile spotlight agree with the location page. The filters are
+    read from the location row itself, so they need no extra column
+    and no recompute when they change.
+
     Args:
         zone_sets: The `ZoneSet` rows to test against. Pass only active
             sets; this helper does not re-check `active` or the switch
@@ -72,7 +79,22 @@ def build_zone_sets_covered_q(zone_sets):
     Returns:
         A `Q` against a queryset whose model carries `zone_set_ids`.
     """
-    return Q(zone_set_ids__overlap=[zone_set.id for zone_set in zone_sets])
+    conditions = {zone_set.id: zone_set.filters_condition()
+                  for zone_set in zone_sets}
+    unfiltered_ids = [
+        zone_set_id for zone_set_id, filters_q in conditions.items()
+        if filters_q is None
+    ]
+    condition = Q(zone_set_ids__overlap=unfiltered_ids)
+    # A set with filters covers a location only when the location
+    # also matches them, the same test `ZoneSet.passes_filters` runs
+    # for the location page. Sets without filters keep sharing one
+    # array overlap, so a search over unfiltered sets costs what it
+    # did before filters existed.
+    for zone_set_id, filters_q in conditions.items():
+        if filters_q is not None:
+            condition |= Q(zone_set_ids__overlap=[zone_set_id]) & filters_q
+    return condition
 
 
 class ZoneSetProvider(SystemPartnerFieldProvider):
@@ -85,12 +107,17 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
     adding a polygon-based dataset needs no code: upload the zones,
     link a partner field, assign the field to a contributor.
 
-    The field's name is the linked partner field's name. The value is
-    the containing zone's label, emitted in the same `raw_value` shape
-    contributed string partner fields use, so both the location page
-    and the v1 production-locations endpoint render it unchanged. A
-    location outside every zone gets nothing — "match nothing, never
-    everything", as the India Labour Line provider puts it.
+    The field's name is the linked partner field's name. The value
+    takes the shape the field's type calls for (see `_value`): for a
+    string field the containing zone's label as `raw_value`, for an
+    object field one entry per schema key as `raw_values`, in each
+    case the shape contributed fields of that type use, so both the
+    location page and the v1 production-locations endpoint render it
+    unchanged. A location outside every zone gets nothing — "match
+    nothing, never everything", as the India Labour Line provider puts
+    it — and so does one whose zone has no servable value for an
+    object field (every schema key optional and absent), rather than
+    an empty block under the field's heading.
     """
 
     # "Outside every zone" is the normal case for a dataset that covers
@@ -116,11 +143,33 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
 
         Returns:
             The containing `Zone`, or None when the location has no
-            coordinates or lies outside every zone of the set.
+            coordinates, lies outside every zone of the set, sits (for
+            an object field) in a zone whose feature carried no
+            usable value for any schema key (the page would
+            otherwise show the field's heading and attribution line
+            with nothing under them), or does not match the set's
+            filters. The filters run last, so a location outside
+            every zone (the usual case for a regional dataset) or
+            with no usable value never pays for the extra lookup.
         """
         if not production_location.location:
             return None
-        return self.zone_set.resolve_zone(production_location.location)
+        zone = self.zone_set.resolve_zone(production_location.location)
+        if zone is None:
+            return None
+        if self.zone_set.feeds_object_field and not self._object_values(zone):
+            return None
+        # One extra query per location page, by design. The filterable
+        # columns (sector, product type, ...) live on FacilityIndex, but
+        # this method may be handed a plain Facility (the v1 endpoint),
+        # which does not have them, so the check is a single indexed
+        # EXISTS lookup by id rather than a Python comparison. It runs
+        # only after the zone matched and only for sets that have
+        # filters (unfiltered sets return at once), so most locations
+        # never pay for it.
+        if not self.zone_set.passes_filters(production_location):
+            return None
+        return zone
 
     def _format_data(
         self,
@@ -138,13 +187,7 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
         uploaded_at = raw_data.created_at.isoformat()
         return {
             'id': None,
-            # `raw_value` (singular) is what keeps this field out of
-            # the facility downloads: `fetch_only_raw_values` on the
-            # base class returns None unless the value carries a
-            # `raw_values` dict. That is deliberate for now (downloads
-            # are a separate ticket), so a zone-set field missing from
-            # a download is this line, not the download serializer.
-            'value': {'raw_value': raw_data.label},
+            'value': self._value(raw_data),
             'created_at': uploaded_at,
             'updated_at': uploaded_at,
             'field_name': self._get_field_name(),
@@ -154,4 +197,43 @@ class ZoneSetProvider(SystemPartnerFieldProvider):
             # Random ID for being not from a claim.
             'facility_list_item_id': 1111,
             'should_display_association': True,
+        }
+
+    def _value(self, zone: Zone) -> Dict[str, Any]:
+        """
+        The zone's value in the shape the linked field's type calls for.
+
+        A string field gets `{'raw_value': label}`. An object field
+        gets `{'raw_values': {key: value, ...}}` with one entry per
+        top-level key of the field's JSON schema that the zone's source
+        feature carried with a usable scalar value (OSDEV-3659), which
+        `PartnerFieldSchemaValue` on the location page renders one line
+        per key by the schema property's title, and the v1 endpoint
+        flattens by schema exactly as it does a contributed object
+        field. Null, blank and nested values are left out so the page
+        shows no empty line for an optional key, and feature properties
+        outside the schema are stored on the zone but never served.
+
+        Neither shape reaches the facility downloads: the download
+        helpers that call `fetch_only_raw_values` each hold their own
+        hard-wired provider and never consult a zone set, so whether a
+        zone-set field appears in a download is the downloads ticket's
+        call, not this method's.
+        """
+        if not self.zone_set.feeds_object_field:
+            return {'raw_value': zone.label}
+        return {'raw_values': self._object_values(zone)}
+
+    def _object_values(self, zone: Zone) -> Dict[str, Any]:
+        """
+        The zone's servable values keyed by schema key, for an object
+        field: the properties the schema defines that the source
+        feature carried with a usable scalar value. Empty when it
+        carried none, which `_fetch_raw_data` treats as "no data".
+        """
+        properties = (zone.value or {}).get('properties') or {}
+        return {
+            key: properties[key]
+            for key in self.zone_set.schema_keys
+            if is_usable_zone_value(properties.get(key))
         }

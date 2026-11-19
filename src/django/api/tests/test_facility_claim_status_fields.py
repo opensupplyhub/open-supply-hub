@@ -960,7 +960,7 @@ class ClaimsAutomationAccountTest(SimpleTestCase):
 
 class ClaimWaitingOnBackfillTest(ClaimStatusFieldsTestBase):
     '''
-    The data step of migration 0271. The schema steps run when the test
+    The data step of migration 0285. The schema steps run when the test
     database is built; this runs the backfill against rows in the state
     the migration finds them in: waiting_on empty on every claim.
     '''
@@ -1014,7 +1014,7 @@ class ClaimWaitingOnBackfillTest(ClaimStatusFieldsTestBase):
 
     def run_backfill(self):
         migration = import_module(
-            'api.migrations.0271_add_claim_status_detail_fields'
+            'api.migrations.0285_add_claim_status_detail_fields'
         )
         migration.backfill_waiting_on(django_apps, None)
 

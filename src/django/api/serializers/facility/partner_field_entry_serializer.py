@@ -24,3 +24,4 @@ class PartnerFieldEntrySerializer(serializers.Serializer):
     base_url = serializers.CharField(read_only=True, allow_blank=True)
     display_text = serializers.CharField(read_only=True, allow_blank=True)
     json_schema = serializers.JSONField(read_only=True, allow_null=True)
+    beta = serializers.BooleanField(read_only=True, required=False)

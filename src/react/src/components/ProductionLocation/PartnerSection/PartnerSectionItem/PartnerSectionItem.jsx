@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import get from 'lodash/get';
 import { connect } from 'react-redux';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
@@ -13,6 +14,7 @@ import { getIconURL } from '../../Sidebar/NavBar/utils.js';
 import { toggleSectionOpen } from '../../../../actions/sectionNavigation.js';
 import parentSectionItemStyles from './styles.js';
 import PartnerFieldItem from './PartnerFieldItem.jsx';
+import WhyBetaCard from '../WhyBetaCard/WhyBetaCard.jsx';
 import {
     useScrollToSection,
     transitionDurationMs,
@@ -42,6 +44,27 @@ const PartnerSectionItem = ({
             right: group.partnerFields.slice(mid),
         };
     }, [group]);
+
+    // The "Why beta?" card explains the chip once per section, in the
+    // right column after the fields, where the mockup places it. Its
+    // suggestions link reports the section's beta field label(s), taken
+    // from each field's first entry (the label set in the admin) as
+    // PartnerFieldItem resolves it, so the event lines up with the other
+    // Spotlight events in GA. The title-cased field name is the fallback.
+    const betaFieldLabels = useMemo(
+        () =>
+            (group.partnerFields || [])
+                .filter(field => field.beta)
+                .map(field => {
+                    const topValue = get(
+                        facilityData,
+                        `properties.partner_fields.${field.fieldName}[0]`,
+                    );
+                    return topValue?.label || field.label;
+                }),
+        [group, facilityData],
+    );
+    const hasBetaField = betaFieldLabels.length > 0;
 
     const handleToggle = () => dispatch(toggleSectionOpen(group.uuid));
 
@@ -164,6 +187,22 @@ const PartnerSectionItem = ({
                                             />
                                         </div>
                                     ))}
+                                    {hasBetaField && (
+                                        <div className={classes.fieldItem}>
+                                            <WhyBetaCard
+                                                gaSpotlightContext={{
+                                                    partner_group: group.name,
+                                                    os_id: String(
+                                                        facilityData?.properties
+                                                            ?.os_id ?? '',
+                                                    ),
+                                                    partner_field_name: betaFieldLabels.join(
+                                                        ', ',
+                                                    ),
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                 </Grid>
                             </Grid>
                         )}
@@ -203,6 +242,7 @@ const partnerFieldForGroupPropType = PropTypes.shape({
     formatValue: PropTypes.func,
     label: PropTypes.string.isRequired,
     partnerConfigFields: partnerConfigFieldsPropType,
+    beta: PropTypes.bool,
 });
 
 PartnerSectionItem.propTypes = {

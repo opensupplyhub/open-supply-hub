@@ -95,6 +95,29 @@ def tallies(os_ids):
     return result
 
 
+def voted_tallies():
+    """
+    Live tallies for every candidate that has at least one vote:
+    ``{os_id: {"confirmed": n, "not_a_facility": m}}``. A candidate absent
+    from the result has no votes and is therefore ``unverified``. Used by
+    the list endpoint's state filter (OSDEV-3754), which has to derive
+    the state of the whole candidate set at once.
+    """
+    result = {}
+    rows = (
+        FacilityCandidateVote.objects
+        .values('facility_id', 'vote')
+        .annotate(count=Count('id'))
+    )
+    for row in rows:
+        counts = result.setdefault(
+            row['facility_id'],
+            {CONFIRMED_VOTE: 0, NOT_A_FACILITY_VOTE: 0},
+        )
+        counts[row['vote']] = row['count']
+    return result
+
+
 def derive_state(
     vote_tally,
     *,

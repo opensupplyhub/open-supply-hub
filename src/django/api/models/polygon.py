@@ -4,6 +4,11 @@ from django.contrib.gis.db import models as gis_models
 from django.core.validators import RegexValidator
 from django.db import models
 
+from api.helpers.location_filters import (
+    FILTERABLE_FIELDS as FILTERABLE_LOCATION_FIELDS,
+    build_filters_q,
+)
+
 
 # Polygon names are machine-friendly identifiers (other code looks
 # polygons up by name), so they follow identifier rules: letters,
@@ -80,25 +85,12 @@ class Polygon(models.Model):
 
     # The fields callers may pass as keys in the `filters` argument of
     # get_production_locations(), mapped to the FacilityIndex lookup
-    # that implements each one. Two kinds of lookup appear here because
-    # the underlying columns differ:
-    #   - `__in` fields hold ONE value per location (a location has
-    #     exactly one country), so the check is "is that value in the
-    #     requested list".
-    #   - `__overlap` fields are ARRAYS (a location can have several
-    #     sectors), so the check is "does the location's list share at
-    #     least one value with the requested list".
-    # To make a new field filterable, add an entry here — anything not
-    # in this allowlist is rejected with an error rather than silently
-    # ignored.
-    FILTERABLE_FIELDS = {
-        'country': 'country_code__in',
-        'sector': 'sector__overlap',
-        'facility_type': 'facility_type__overlap',
-        'processing_type': 'processing_type__overlap',
-        'product_type': 'product_type__overlap',
-        'parent_company': 'parent_company_name__overlap',
-    }
+    # that implements each one. The list lives in
+    # `api.helpers.location_filters` and is shared with zone sets, so a
+    # filter means the same thing on both. To make a new field
+    # filterable, add an entry there — anything not in the allowlist is
+    # rejected with an error rather than silently ignored.
+    FILTERABLE_FIELDS = FILTERABLE_LOCATION_FIELDS
 
     def get_production_locations(self, filters=None):
         """
@@ -115,30 +107,32 @@ class Polygon(models.Model):
             filters: Optional dict narrowing the results by core
                 location fields, e.g.
                 `{'country': ['IN'], 'sector': ['Apparel']}`.
-                Keys must appear in the `FILTERABLE_FIELDS`
-                allowlist (an unknown key raises `ValueError`, so
-                typos can't silently return unfiltered results).
-                Values may be a list or a single string. Within
-                one key, values are OR'd ("US or IN"); across keys,
-                conditions are AND'd ("that country AND that
-                sector"). Country codes are upper-cased before
-                matching so `'in'` behaves the same as `'IN'`.
+                Within one key, values are OR'd ("US or IN"); across
+                keys, conditions are AND'd ("that country AND that
+                sector"). The setting is validated and normalized by
+                the same functions zone sets use
+                (`api.helpers.location_filters.clean_filters` and
+                `build_filters_q`), so a filter means the same thing
+                on a polygon as on a zone set: keys must appear in the
+                `FILTERABLE_FIELDS` allowlist, a single string counts
+                as a one-item list, values are trimmed, country codes
+                are upper-cased (`'in'` behaves like `'IN'`), product
+                types are lower-cased (the index stores them in lower
+                case), and a key may list at most 200 values. An
+                unknown key, an empty list, or a blank or non-text
+                value raises `ValueError`, so a typo can't silently
+                return unfiltered or empty results. `None` or `{}`
+                means no filtering.
 
         Returns:
             A `FacilityIndex` queryset of the matching locations.
+
+        Raises:
+            ValueError: When `filters` is not usable.
         """
         from .facility.facility_index import FacilityIndex
         queryset = FacilityIndex.objects.filter(location__within=self.geom)
-        for field, values in (filters or {}).items():
-            lookup = self.FILTERABLE_FIELDS.get(field)
-            if lookup is None:
-                raise ValueError(
-                    f'Unknown filter field "{field}". Allowed fields: '
-                    f'{", ".join(sorted(self.FILTERABLE_FIELDS))}.'
-                )
-            if isinstance(values, str):
-                values = [values]
-            if field == 'country':
-                values = [value.upper() for value in values]
-            queryset = queryset.filter(**{lookup: list(values)})
+        condition = build_filters_q(filters)
+        if condition is not None:
+            queryset = queryset.filter(condition)
         return queryset
