@@ -30,12 +30,24 @@
                         "Catch": [
                             {
                                 "ErrorEquals": [
+                                    "ListUnderReview"
+                                ],
+                                "ResultPath": "$.error",
+                                "Next": "LeaveForRetry"
+                            },
+                            {
+                                "ErrorEquals": [
                                     "States.ALL"
                                 ],
                                 "ResultPath": "$.error",
                                 "Next": "Notify"
                             }
                         ]
+                    },
+                    "LeaveForRetry": {
+                        "Type": "Pass",
+                        "Comment": "The contributor's list-cleaning review window is still open (OSDEV-3398): process_list left the list FAILED for retry_failed_lists to bring back, and nobody is notified.",
+                        "End": true
                     },
                     "Notify": {
                         "Type": "Task",

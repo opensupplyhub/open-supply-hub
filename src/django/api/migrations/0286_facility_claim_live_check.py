@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0271_add_claim_status_detail_fields'),
+        ('api', '0285_add_claim_status_detail_fields'),
     ]
 
     operations = [
@@ -63,6 +63,17 @@ class Migration(migrations.Migration):
                               'claimant when the check did not pass. '
                               'Empty otherwise.',
                     size=None)),
+                ('review_requested', models.BooleanField(
+                    default=True,
+                    help_text='False when the pipeline could not be asked '
+                              'to review the claim. Nothing is emailed '
+                              'for such a check.')),
+                ('emailed_at', models.DateTimeField(
+                    blank=True,
+                    help_text='When the result of this check was emailed '
+                              'to the claimant. Empty when there was '
+                              'nothing to send.',
+                    null=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
                 ('claim', models.ForeignKey(

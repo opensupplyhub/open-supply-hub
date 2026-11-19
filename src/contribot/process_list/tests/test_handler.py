@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -112,6 +113,7 @@ def test_handler_happy_path_xlsx_uses_list_id_report_name(
         "num_lines": 10,
         "num_errors": 2,
         "error_ratio": 0.2,
+        "cleaning": None,
     }
     assert repo.update_list.call_args_list[0].args == ("42",)
     assert repo.update_list.call_args_list[0].kwargs == {
@@ -248,3 +250,222 @@ def test_handler_requires_list_id(mock_repo_cls, env):
         handler.handler({}, None)
 
     mock_repo_cls.return_value.update_list.assert_not_called()
+
+
+# -- OSDEV-3398: report on the post-review list ----------------------------
+
+
+@pytest.fixture
+def api_env(env, monkeypatch):
+    monkeypatch.setenv("OS_HUB_API_URL", "https://example.com")
+    monkeypatch.setenv(
+        "OS_HUB_API_TOKEN_SECRET_ARN",
+        "arn:aws:secretsmanager:us-east-1:123:secret:token",
+    )
+
+
+def _cleaning_payload(status="COMPLETE", window_open=False):
+    return {
+        "enabled": True,
+        "window_open": window_open,
+        "run": {"id": 7, "status": status, "review_until": "2026-11-16T11:00:00Z"},
+        "summary": {},
+        "breakdown": {},
+        "rows": [],
+    }
+
+
+def _fake_cleaned_download(dest_path):
+    Path(dest_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(dest_path).write_text("country,name\nBD,Acme\n", encoding="utf-8")
+    return Path(dest_path)
+
+
+@patch("handler.OSHubAPI")
+@patch("handler.GoogleDrive")
+@patch("handler.ContriBot")
+@patch("handler.ContribotWorkbook")
+@patch("handler.S3Storage")
+@patch("handler.ListsRepository")
+def test_handler_reports_on_the_post_review_list(
+    mock_repo_cls,
+    mock_s3_cls,
+    mock_wb_cls,
+    mock_bot_cls,
+    mock_drive_cls,
+    mock_api_cls,
+    api_env,
+    monkeypatch,
+):
+    _patch_error_codes(monkeypatch)
+    repo = MagicMock()
+    mock_repo_cls.return_value = repo
+    repo.get_list.return_value = {"list_id": "42", "file_name": "list.xlsx"}
+    api = MagicMock()
+    mock_api_cls.return_value = api
+    payload = _cleaning_payload()
+    api.fetch_cleaning.return_value = payload
+    api.download_cleaned_list.side_effect = (
+        lambda list_id, dest: _fake_cleaned_download(dest)
+    )
+    _stub_workbook(mock_wb_cls, "42")
+    bot = _mock_bot_that_writes_report(mock_bot_cls, "42")
+    bot.save.side_effect = None
+    cleaning_counts = {
+        "must_fix_unresolved": 2,
+        "corrections_rejected": 1,
+        "rows_removed": 1,
+        "outcome": "submitted",
+    }
+
+    def fake_save(targetfolder="./out"):
+        out = Path(targetfolder) / bot.targetfilename
+        out.write_bytes(b"report")
+        return {
+            "num_lines": 9,
+            "num_errors": 1,
+            "error_ratio": 0.1,
+            "cleaning": cleaning_counts,
+        }
+
+    bot.save.side_effect = fake_save
+    mock_drive_cls.return_value.upload_file.return_value = "https://drive/x"
+
+    result = handler.handler({"list_id": "42"}, None)
+
+    api.fetch_cleaning.assert_called_once_with("42")
+    mock_s3_cls.return_value.download.assert_not_called()
+    assert api.download_cleaned_list.call_args.args[0] == "42"
+    assert mock_wb_cls.call_args.kwargs["source_path"].name == "42-cleaned.csv"
+    bot.attach_cleaning.assert_called_once_with(payload)
+    assert result["cleaning"] == cleaning_counts
+    assert result["num_lines"] == 9
+
+
+@pytest.mark.parametrize(
+    "attempts_before,attempts_after",
+    [
+        # first run, straight from fetch_lists
+        (None, 0),
+        # a retry: retry_failed_lists counted this attempt, so only that
+        # one is given back and the two real failures before it stay
+        (3, 2),
+    ],
+)
+@patch("handler.OSHubAPI")
+@patch("handler.ContribotWorkbook")
+@patch("handler.S3Storage")
+@patch("handler.ListsRepository")
+def test_handler_fails_while_the_review_window_is_open(
+    mock_repo_cls, mock_s3_cls, mock_wb_cls, mock_api_cls, api_env, monkeypatch,
+    attempts_before, attempts_after,
+):
+    _patch_error_codes(monkeypatch)
+    repo = MagicMock()
+    mock_repo_cls.return_value = repo
+    item = {"list_id": "42", "file_name": "list.xlsx"}
+    if attempts_before is not None:
+        item["attempt_count"] = attempts_before
+    repo.get_list.return_value = item
+    api = MagicMock()
+    mock_api_cls.return_value = api
+    api.fetch_cleaning.return_value = _cleaning_payload(window_open=True)
+
+    with pytest.raises(handler.ListUnderReview, match="still being reviewed"):
+        handler.handler({"list_id": "42"}, None)
+
+    mock_s3_cls.return_value.download.assert_not_called()
+    api.download_cleaned_list.assert_not_called()
+    # left for retry_failed_lists, and the wait costs no attempt
+    assert repo.update_list.call_args_list[-1].kwargs == {
+        "status": "FAILED",
+        "attempt_count": attempts_after,
+    }
+
+
+def test_state_machine_leaves_a_list_under_review_without_notifying():
+    """The Catch by error name is what keeps the wait off the failures
+    channel: the name must match the exception class, and come before
+    States.ALL."""
+    definition = json.loads(
+        (
+            Path(__file__).resolve().parents[4]
+            / "deployment"
+            / "terraform"
+            / "step-functions"
+            / "contribot.json"
+        ).read_text()
+    )
+    states = definition["States"]["ProcessLists"]["Iterator"]["States"]
+    catches = states["ProcessList"]["Catch"]
+    assert catches[0]["ErrorEquals"] == [handler.ListUnderReview.__name__]
+    assert catches[0]["Next"] != "Notify"
+    assert states[catches[0]["Next"]]["Type"] == "Pass"
+    assert catches[-1]["ErrorEquals"] == ["States.ALL"]
+    assert catches[-1]["Next"] == "Notify"
+
+
+@pytest.mark.parametrize("payload", [
+    {"enabled": True, "run": None, "summary": None, "rows": []},
+    _cleaning_payload(status="FAILED"),
+])
+@patch("handler.OSHubAPI")
+@patch("handler.GoogleDrive")
+@patch("handler.ContriBot")
+@patch("handler.ContribotWorkbook")
+@patch("handler.S3Storage")
+@patch("handler.ListsRepository")
+def test_handler_reports_on_the_upload_without_a_completed_run(
+    mock_repo_cls,
+    mock_s3_cls,
+    mock_wb_cls,
+    mock_bot_cls,
+    mock_drive_cls,
+    mock_api_cls,
+    payload,
+    api_env,
+    monkeypatch,
+):
+    _patch_error_codes(monkeypatch)
+    repo = MagicMock()
+    mock_repo_cls.return_value = repo
+    repo.get_list.return_value = {"list_id": "42", "file_name": "list.xlsx"}
+    api = MagicMock()
+    mock_api_cls.return_value = api
+    api.fetch_cleaning.return_value = payload
+    mock_s3_cls.return_value.download.side_effect = _fake_download_bytes(b"xlsx")
+    _stub_workbook(mock_wb_cls, "42")
+    bot = _mock_bot_that_writes_report(mock_bot_cls, "42")
+    mock_drive_cls.return_value.upload_file.return_value = "https://drive/x"
+
+    result = handler.handler({"list_id": "42"}, None)
+
+    mock_s3_cls.return_value.download.assert_called_once()
+    api.download_cleaned_list.assert_not_called()
+    bot.attach_cleaning.assert_not_called()
+    assert result["cleaning"] is None
+
+
+@patch("handler.GoogleDrive")
+@patch("handler.ContriBot")
+@patch("handler.ContribotWorkbook")
+@patch("handler.S3Storage")
+@patch("handler.ListsRepository")
+def test_handler_without_api_access_reports_on_the_upload(
+    mock_repo_cls, mock_s3_cls, mock_wb_cls, mock_bot_cls, mock_drive_cls, env, monkeypatch
+):
+    _patch_error_codes(monkeypatch)
+    monkeypatch.delenv("OS_HUB_API_URL", raising=False)
+    repo = MagicMock()
+    mock_repo_cls.return_value = repo
+    repo.get_list.return_value = {"list_id": "42", "file_name": "list.xlsx"}
+    mock_s3_cls.return_value.download.side_effect = _fake_download_bytes(b"xlsx")
+    _stub_workbook(mock_wb_cls, "42")
+    bot = _mock_bot_that_writes_report(mock_bot_cls, "42")
+    mock_drive_cls.return_value.upload_file.return_value = "https://drive/x"
+
+    result = handler.handler({"list_id": "42"}, None)
+
+    mock_s3_cls.return_value.download.assert_called_once()
+    bot.attach_cleaning.assert_not_called()
+    assert result["cleaning"] is None

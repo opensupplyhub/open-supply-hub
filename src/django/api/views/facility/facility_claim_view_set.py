@@ -95,9 +95,6 @@ from ...serializers.facility.edit_pending_claim_serializer import (
     EditPendingClaimSerializer,
     PendingClaimSerializer,
 )
-from ...serializers.facility.facility_claim_live_check_serializer import (
-    FacilityClaimLiveCheckSerializer,
-)
 from ...serializers.facility.facility_create_claim_serializer import (
     validate_claimed_name_or_address,
 )
@@ -888,26 +885,6 @@ class FacilityClaimViewSet(ModelViewSet):
 
         transaction.on_commit(send)
 
-    def __get_owned_claim(self, request, pk, for_update=False, **filters):
-        """
-        Fetch a claim whose contributor is the requesting user,
-        narrowed by any extra `filters`. Anything else, including a
-        claim that exists but belongs to someone else, is a 404, so the
-        endpoint does not leak which claim ids exist. See
-        __get_owned_pending_claim for what for_update does.
-        """
-        try:
-            queryset = FacilityClaim.objects.all()
-            if for_update:
-                queryset = queryset.select_for_update()
-            return queryset.get(
-                pk=pk,
-                contributor=request.user.contributor,
-                **filters,
-            )
-        except (FacilityClaim.DoesNotExist, Contributor.DoesNotExist) as exc:
-            raise NotFound() from exc
-
     def __get_owned_pending_claim(self, request, pk, for_update=False):
         """
         Fetch a claim the requesting user may edit: they are its
@@ -925,12 +902,17 @@ class FacilityClaimViewSet(ModelViewSet):
         only ever the owning claimant racing themselves, so the lock is
         cheap; it is skipped for plain reads.
         """
-        return self.__get_owned_claim(
-            request,
-            pk,
-            for_update=for_update,
-            status=FacilityClaimStatuses.PENDING,
-        )
+        try:
+            queryset = FacilityClaim.objects.all()
+            if for_update:
+                queryset = queryset.select_for_update()
+            return queryset.get(
+                pk=pk,
+                contributor=request.user.contributor,
+                status=FacilityClaimStatuses.PENDING,
+            )
+        except (FacilityClaim.DoesNotExist, Contributor.DoesNotExist) as exc:
+            raise NotFound() from exc
 
     @action(detail=True,
             methods=['GET', 'POST'],
@@ -941,26 +923,16 @@ class FacilityClaimViewSet(ModelViewSet):
         The live check of the requesting claimant's own claim
         (OSDEV-3804). POST asks the claims automation pipeline to
         review the claim now and returns at once; GET reports where
-        that check stands. The claim form polls it while it waits, and
-        the pending claim edit page reads it when it opens, to show
-        the fixes that are still current. A POST with `timed_out` set
-        starts nothing: it records that the page has stopped waiting.
-        All return {status, fixes, checks_left}: status is CHECKING,
-        PASSED, NOT_PASSED or UNAVAILABLE, fixes are the keys of the
-        preset lines to show when the claim did not pass, and
-        checks_left is how many more checks the claim may have. Nothing
-        a moderator or the pipeline wrote is returned.
-
-        A check that did not pass is emailed to the claimant every
-        time, once. Its fixes are returned only until the claimant
-        changes the claim: after that the answer is UNAVAILABLE with no
-        fixes, so fixes for an older version of the claim are never
-        shown.
+        that check stands. A POST with `timed_out` set starts nothing:
+        it records that the page has stopped waiting. All return
+        {status, fixes, checks_left} and nothing a moderator or the
+        pipeline wrote.
 
         Only the claim's own contributor may call it; anyone else gets
         a 404, as does everyone while the claim_live_check switch is
-        off. A claim keeps this endpoint after it is decided, so a
-        claimant whose claim was just approved can read that.
+        off. Unlike the pending claim endpoints it also answers for a
+        decided claim, so a claimant whose claim was just approved can
+        read that.
 
         The check must never cost a claimant their submission, which
         is already saved by the time this is called. Any failure in
@@ -975,15 +947,20 @@ class FacilityClaimViewSet(ModelViewSet):
         try:
             to_request = None
             with transaction.atomic():
-                claim = self.__get_owned_claim(
-                    request, pk, for_update=starting
+                claims = FacilityClaim.objects.filter(
+                    pk=pk, contributor__admin=request.user
                 )
+                if starting:
+                    claims = claims.select_for_update(of=('self',))
+                claim = claims.first()
+                if claim is None:
+                    raise NotFound()
                 if not starting:
-                    state = get_live_check_state(claim, request)
+                    state = get_live_check_state(request, claim)
                 elif request.data.get('timed_out'):
-                    state = give_up_live_check(claim, request)
+                    state = give_up_live_check(request, claim)
                 else:
-                    state, to_request = start_live_check(claim, request)
+                    state, to_request = start_live_check(request, claim)
             # Outside the transaction: the claim's row lock is released
             # and the new check is committed before anything is sent.
             if to_request is not None:
@@ -994,7 +971,7 @@ class FacilityClaimViewSet(ModelViewSet):
             log.exception('Live claim check failed for claim %s.', pk)
             state = unavailable_state()
 
-        return Response(FacilityClaimLiveCheckSerializer(state).data)
+        return Response(state)
 
     @transaction.atomic
     @action(detail=True,

@@ -1,5 +1,3 @@
-from urllib.parse import urlencode
-
 from rest_framework.request import Request
 from django.core.exceptions import FieldDoesNotExist
 from django.core.mail import send_mail
@@ -214,35 +212,16 @@ def send_claim_facility_approval_email(request, facility_claim):
     )
 
 
-def make_pending_claim_edit_url(request, facility_claim, fix=None,
-                                check_again=False):
-    '''
-    The pending claim edit page for a claim, optionally opened at the
-    field a live check fix is about and set to check again on save
-    (the query string the page reads, OSDEV-3805).
-    '''
-    url = '{}/claimed/pending/{}'.format(
-        make_oshub_url(request), facility_claim.id
-    )
-    params = {}
-    if fix:
-        params['fix'] = fix
-    if check_again:
-        params['check'] = '1'
-    return '{}?{}'.format(url, urlencode(params)) if params else url
-
-
 def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
                                            check_again):
     '''
     Tell a claimant that the live check of their claim did not pass
     (OSDEV-3804), with the same preset lines the claim form shows and a
-    link back to the claim. It is sent for every check that does not
-    pass, whether or not the claimant was still on the form. The link
-    opens the pending claim edit page, which reads the check's result
-    itself and marks every field that needs a change; the `fix` in the
-    link only says which of them to scroll to first. `fixes` are keys
-    from claim_live_check_fixes; only their preset texts are ever sent.
+    link to the pending claim edit page (OSDEV-3805), which reads the
+    check's result itself: `fix` in the link only says which field to
+    scroll to first, and `check` to check again on save. `fixes` are
+    keys from claim_live_check_fixes; only their preset texts are ever
+    sent.
     '''
     subj_template = get_template(
         'mail/claim_live_check_not_passed_subject.txt'
@@ -251,18 +230,20 @@ def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
     html_template = get_template('mail/claim_live_check_not_passed_body.html')
 
     facility = facility_claim.facility
+    fix_url = '{}/claimed/pending/{}'.format(
+        make_oshub_url(request), facility_claim.id
+    )
+    if fixes:
+        fix_url += '?fix={}'.format(fixes[0])
+        if check_again:
+            fix_url += '&check=1'
     dictionary = {
         'production_location_name': facility.name,
         'production_location_address': facility.address,
         'production_location_country': COUNTRY_NAMES[facility.country_code],
         'production_location_url': make_facility_url(request, facility),
         'fixes': [FIX_TEXTS[fix] for fix in fixes],
-        'fix_url': make_pending_claim_edit_url(
-            request,
-            facility_claim,
-            fix=fixes[0] if fixes else None,
-            check_again=check_again,
-        ),
+        'fix_url': fix_url,
     }
 
     send_mail(

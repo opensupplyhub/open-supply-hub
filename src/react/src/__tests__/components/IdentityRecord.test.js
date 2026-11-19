@@ -84,7 +84,7 @@ describe('IdentityRecord page', () => {
         expect(screen.getAllByText(/did:web:issuer.example.org/).length)
             .toBeGreaterThan(0);
         expect(
-            screen.getByText('View the signed credential'),
+            screen.getByText('View the raw signed credential'),
         ).toBeInTheDocument();
     });
 
