@@ -941,14 +941,21 @@ class FacilityClaimViewSet(ModelViewSet):
         The live check of the requesting claimant's own claim
         (OSDEV-3804). POST asks the claims automation pipeline to
         review the claim now and returns at once; GET reports where
-        that check stands, and is what the claim form polls. A POST
-        with `timed_out` set starts nothing: it records that the page
-        has stopped waiting, so a later result is emailed. All
-        return {status, fixes, checks_left}: status is CHECKING, PASSED,
-        NOT_PASSED or UNAVAILABLE, fixes are the keys of the preset
-        lines to show when the claim did not pass, and checks_left is
-        how many more checks the claim may have. Nothing a moderator or
-        the pipeline wrote is returned.
+        that check stands. The claim form polls it while it waits, and
+        the pending claim edit page reads it when it opens, to show
+        the fixes that are still current. A POST with `timed_out` set
+        starts nothing: it records that the page has stopped waiting.
+        All return {status, fixes, checks_left}: status is CHECKING,
+        PASSED, NOT_PASSED or UNAVAILABLE, fixes are the keys of the
+        preset lines to show when the claim did not pass, and
+        checks_left is how many more checks the claim may have. Nothing
+        a moderator or the pipeline wrote is returned.
+
+        A check that did not pass is emailed to the claimant every
+        time, once. Its fixes are returned only until the claimant
+        changes the claim: after that the answer is UNAVAILABLE with no
+        fixes, so fixes for an older version of the claim are never
+        shown.
 
         Only the claim's own contributor may call it; anyone else gets
         a 404, as does everyone while the claim_live_check switch is
@@ -972,11 +979,11 @@ class FacilityClaimViewSet(ModelViewSet):
                     request, pk, for_update=starting
                 )
                 if not starting:
-                    state = get_live_check_state(claim)
+                    state = get_live_check_state(claim, request)
                 elif request.data.get('timed_out'):
-                    state = give_up_live_check(claim)
+                    state = give_up_live_check(claim, request)
                 else:
-                    state, to_request = start_live_check(claim)
+                    state, to_request = start_live_check(claim, request)
             # Outside the transaction: the claim's row lock is released
             # and the new check is committed before anything is sent.
             if to_request is not None:
