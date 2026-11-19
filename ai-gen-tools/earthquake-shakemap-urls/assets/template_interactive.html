@@ -1,0 +1,720 @@
+<title>__TITLE__</title>
+<style>
+:root {
+  --bg: #F2F5F5;
+  --surface: #FFFFFF;
+  --surface-2: #E7ECEC;
+  --border: #D3DBDC;
+  --ink: #1A2327;
+  --ink-muted: #56666B;
+  --accent: #2B6E76;
+  --accent-ink: #FFFFFF;
+  --warn-bg: #FBF1E4;
+  --warn-border: #E3B978;
+  --warn-ink: #6B4A17;
+  --ref-line: #4A2E5C;
+  --track: #D3DBDC;
+  --basemap-fill: #E3E9E9;
+  --basemap-line: #C3CDCD;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10161A;
+    --surface: #171F24;
+    --surface-2: #1E282E;
+    --border: #2B383F;
+    --ink: #E8EEF0;
+    --ink-muted: #90A3AA;
+    --accent: #5FB8C0;
+    --accent-ink: #0B1416;
+    --warn-bg: #2B2214;
+    --warn-border: #6B4E22;
+    --warn-ink: #E8C88A;
+    --ref-line: #C79FE8;
+    --track: #2B383F;
+    --basemap-fill: #1C2429;
+    --basemap-line: #2E3A40;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10161A;
+  --surface: #171F24;
+  --surface-2: #1E282E;
+  --border: #2B383F;
+  --ink: #E8EEF0;
+  --ink-muted: #90A3AA;
+  --accent: #5FB8C0;
+  --accent-ink: #0B1416;
+  --warn-bg: #2B2214;
+  --warn-border: #6B4E22;
+  --warn-ink: #E8C88A;
+  --ref-line: #C79FE8;
+  --track: #2B383F;
+  --basemap-fill: #1C2429;
+  --basemap-line: #2E3A40;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+  line-height: 1.55;
+  margin: 0;
+  padding: 3rem 1.25rem 5rem;
+}
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.eyebrow {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  margin: 0.35rem 0 0;
+  text-wrap: balance;
+  letter-spacing: -0.01em;
+}
+
+.subhead {
+  color: var(--ink-muted);
+  margin: 0.6rem 0 0;
+  font-size: 1.02rem;
+  max-width: 64ch;
+}
+
+.explainer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  font-size: 0.92rem;
+  color: var(--ink-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.explainer strong { color: var(--ink); }
+
+.callout {
+  border: 1px solid var(--warn-border);
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  font-size: 0.95rem;
+}
+.callout p { margin: 0.5rem 0 0; }
+.callout p:first-child { margin-top: 0; }
+.callout a { color: inherit; }
+
+.section-title {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  font-weight: 600;
+  margin: 0 0 0.9rem;
+}
+
+.levels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.level {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.level-top {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  border-left: 7px solid var(--sev-light);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .level-top { border-left-color: var(--sev-dark); }
+}
+:root[data-theme="dark"] .level-top { border-left-color: var(--sev-dark); }
+
+.mmi {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-size: 1.6rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.level-info { flex: 1; min-width: 0; }
+
+.level-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.level-desc {
+  margin: 0.3rem 0 0;
+  font-size: 0.88rem;
+  color: var(--ink-muted);
+  max-width: 55ch;
+}
+
+.tune-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.tune-toggle:hover { background: var(--surface-2); }
+.tune-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.tune-panel {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 1.1rem 1.25rem 1.25rem;
+  background: var(--surface-2);
+}
+.tune-panel.open { display: block; }
+
+.compare-wrap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 0.9rem;
+}
+.compare-wrap svg { display: block; width: 100%; height: auto; background: var(--surface); }
+
+.basemap-fill { fill: var(--basemap-fill); stroke: var(--basemap-line); }
+
+.legend {
+  display: flex;
+  gap: 1.1rem;
+  padding: 0.55rem 0.9rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  flex-wrap: wrap;
+}
+.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+.swatch.ref { border-radius: 0; height: 0; width: 16px; border-top: 2px dashed var(--ref-line); }
+.swatch.land { background: var(--basemap-fill); border: 1px solid var(--basemap-line); }
+.swatch.sev { background: var(--sev-light); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .swatch.sev { background: var(--sev-dark); }
+}
+:root[data-theme="dark"] .swatch.sev { background: var(--sev-dark); }
+
+.gen-path { fill: var(--sev-light); fill-opacity: 0.32; stroke: var(--sev-light); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .gen-path { fill: var(--sev-dark); stroke: var(--sev-dark); }
+}
+:root[data-theme="dark"] .gen-path { fill: var(--sev-dark); stroke: var(--sev-dark); }
+
+.controls { display: flex; flex-direction: column; gap: 0.9rem; }
+
+.control-row label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.control-row label .val {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+.control-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.control-hint {
+  font-size: 0.76rem;
+  color: var(--ink-muted);
+  margin: 0.35rem 0 0;
+}
+
+.control-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.3rem;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.reset-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+.reset-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.open-btn {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  padding: 0.5rem 0.95rem;
+  border-radius: 7px;
+}
+.open-btn:hover { filter: brightness(1.08); }
+.open-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.url-meta {
+  font-size: 0.75rem;
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  color: var(--ink-muted);
+  margin-top: 0.5rem;
+}
+.url-meta.over { color: #B0413A; }
+
+.len-track {
+  height: 4px;
+  background: var(--track);
+  border-radius: 2px;
+  margin-top: 0.35rem;
+  overflow: hidden;
+}
+.len-fill { height: 100%; background: var(--accent); }
+.len-fill.over { background: #B0413A; }
+
+.dropped-note {
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+  border-left: 3px solid var(--border);
+  padding-left: 0.85rem;
+}
+
+footer {
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+footer a { color: var(--accent); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .tune-panel.open { animation: reveal 0.15s ease-out; }
+}
+@keyframes reveal { from { opacity: 0; } to { opacity: 1; } }
+</style>
+
+<div class="page">
+  <div>
+    <span class="eyebrow">__EYEBROW__</span>
+    <h1>__H1__</h1>
+    <p class="subhead">__SUBHEAD__</p>
+  </div>
+
+  <div class="explainer">
+    <p><strong>What this page is for:</strong> OpenSupplyHub can search for every facility inside a boundary you give it — you paste a link and it draws the shape from coordinates baked right into that link's web address. There's no file upload; the shape <em>is</em> the link.</p>
+    <p><strong>Why this takes any processing at all:</strong> the shape USGS publishes is built for scientific precision, not for pasting into a link — it can have thousands of corner points, and web addresses can only be so long before they stop working. Used raw, the link would either be too long to work or absurdly overdetailed for "roughly where the ground shook this hard," which is all a facility search needs.</p>
+    <p><strong>What buffer and simplify do about that:</strong> buffer smooths the jagged, over-precise edges and pads them a little; simplify thins out excess corner points. Together they turn the raw scientific shape into something short enough to work as a link while still looking basically like the real shaking area.</p>
+  </div>
+
+  <div class="callout">
+    __VERIFY_LINKS_HTML__
+  </div>
+
+  <div>
+    <p class="section-title">Facility search links, by shaking intensity</p>
+    <div class="levels" id="levels"></div>
+  </div>
+
+  __DROPPED_NOTE_HTML__
+
+  <footer>
+    __FOOTER_HTML__ Dashed purple line in each comparison = the real USGS contour for that level; solid color = the shape this page generated. Faint shapes underneath are country borders for orientation only (not surveyed to facility-search precision).
+  </footer>
+</div>
+
+<script>
+__TURF_JS__
+</script>
+<script>
+const CONTOURS = __CONTOURS_JS__; // { "<event name>": <cont_mmi.json FeatureCollection>, ... }
+const BASEMAP = __BASEMAP_JSON__; // cropped Natural Earth country polygons, FeatureCollection
+const DEFAULT_BUFFER = 0.1;
+const DEFAULT_SIMPLIFY = 0.01;
+const MAX_URL_LEN = 2000;
+const STRIP_WIDTH = 0.0001;
+
+// Standard USGS Modified Mercalli Intensity descriptive scale, bucketed by
+// whole-number band. Contour values are decimals (e.g. 6.5) so we floor to
+// the band below. Not earthquake-specific — used for any event's levels.
+const MMI_BANDS = [
+  { min: 1, label: 'Not felt', desc: 'Not felt except by a very few under especially favorable conditions.' },
+  { min: 2, label: 'Weak', desc: 'Felt indoors by a few people, especially on upper floors.' },
+  { min: 4, label: 'Light', desc: 'Felt indoors by many, outdoors by few. No real damage.' },
+  { min: 5, label: 'Moderate', desc: 'Felt by nearly everyone; dishes and windows may rattle or break.' },
+  { min: 6, label: 'Strong', desc: 'Felt by all; slight damage to ordinary buildings.' },
+  { min: 7, label: 'Very strong', desc: 'Slight-to-moderate damage to well-built ordinary structures.' },
+  { min: 8, label: 'Severe', desc: 'Considerable damage to ordinary buildings; some partial collapse.' },
+  { min: 9, label: 'Violent', desc: 'Heavy damage; many buildings destroyed or shifted off foundations.' },
+  { min: 10, label: 'Extreme', desc: 'Near-total destruction.' },
+];
+
+function describeMMI(mmi) {
+  let band = MMI_BANDS[0];
+  for (const b of MMI_BANDS) if (mmi >= b.min) band = b;
+  return band;
+}
+
+// Continuous color ramp anchored at each whole MMI band, so any decimal
+// contour value gets an interpolated color rather than a hand-picked one.
+const SEV_ANCHORS_LIGHT = { 2: '#6E9C6B', 4: '#94A24A', 5: '#C9A227', 6: '#C97331', 7: '#BD5A34', 8: '#A83F35', 9: '#7C2E3A', 10: '#5C2230' };
+const SEV_ANCHORS_DARK  = { 2: '#8AC086', 4: '#B4C065', 5: '#E0BB3E', 6: '#E08C4A', 7: '#D67750', 8: '#C15A4C', 9: '#A34656', 10: '#7A3542' };
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function rgbToHex([r, g, b]) {
+  return '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+function severityColor(mmi, anchors) {
+  const keys = Object.keys(anchors).map(Number).sort((a, b) => a - b);
+  let lo = keys[0], hi = keys[keys.length - 1];
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (mmi >= keys[i] && mmi <= keys[i + 1]) { lo = keys[i]; hi = keys[i + 1]; break; }
+  }
+  if (mmi <= keys[0]) return anchors[keys[0]];
+  if (mmi >= keys[keys.length - 1]) return anchors[keys[keys.length - 1]];
+  const t = (mmi - lo) / (hi - lo);
+  const c1 = hexToRgb(anchors[lo]), c2 = hexToRgb(anchors[hi]);
+  return rgbToHex(c1.map((v, i) => v + (c2[i] - v) * t));
+}
+
+// --- geometry pipeline (mirrors the Python/shapely reference implementation) ---
+function ringsFromMultiLineString(geometry) {
+  const rings = [];
+  for (const ring of geometry.coordinates) {
+    let r = ring;
+    if (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1]) r = r.concat([r[0]]);
+    if (r.length >= 4) {
+      const p = turf.polygon([r]);
+      if (turf.area(p) > 0) rings.push(p);
+    }
+  }
+  return rings;
+}
+
+function contourToPolygon(geometry) {
+  const rings = ringsFromMultiLineString(geometry);
+  if (!rings.length) return null;
+  rings.sort((a, b) => turf.area(b) - turf.area(a));
+  let result = null;
+  for (const p of rings) {
+    if (result !== null && turf.booleanWithin(p, result)) {
+      result = turf.difference(turf.featureCollection([result, p]));
+    } else if (result === null) {
+      result = p;
+    } else {
+      result = turf.union(turf.featureCollection([result, p]));
+    }
+  }
+  return result;
+}
+
+function explodeCoords(feature) {
+  const pts = [];
+  turf.coordEach(feature, (c) => pts.push(c));
+  return pts;
+}
+
+function nearestPointPair(a, b) {
+  const aPts = explodeCoords(a), bPts = explodeCoords(b);
+  let best = null, bestDist = Infinity;
+  for (const p of aPts) for (const q of bPts) {
+    const d = turf.distance(p, q, { units: 'degrees' });
+    if (d < bestDist) { bestDist = d; best = [p, q]; }
+  }
+  return best;
+}
+
+function dissolveMultiPolygon(geom) {
+  if (!geom || geom.geometry.type !== 'MultiPolygon') return geom;
+  const pieces = geom.geometry.coordinates.map((c) => turf.polygon(c)).sort((a, b) => turf.area(b) - turf.area(a));
+  let hub = pieces[0], parts = [hub];
+  for (let i = 1; i < pieces.length; i++) {
+    const piece = pieces[i];
+    const [p1, p2] = nearestPointPair(hub, piece);
+    const strip = turf.buffer(turf.lineString([p1, p2]), STRIP_WIDTH, { units: 'degrees' });
+    parts.push(strip, piece);
+  }
+  return turf.union(turf.featureCollection(parts));
+}
+
+function removeHoles(feature) {
+  if (feature.geometry.type === 'Polygon') return turf.polygon([feature.geometry.coordinates[0]]);
+  if (feature.geometry.type === 'MultiPolygon') return turf.multiPolygon(feature.geometry.coordinates.map((c) => [c[0]]));
+  return feature;
+}
+
+function processGeom(rawFeature, buffer, simplify) {
+  const buffered = turf.buffer(rawFeature, buffer, { units: 'degrees' });
+  const simplified = turf.simplify(buffered, { tolerance: simplify, highQuality: false });
+  const dissolved = dissolveMultiPolygon(simplified);
+  const stillMulti = dissolved.geometry.type === 'MultiPolygon';
+  return { geom: removeHoles(dissolved), stillMulti };
+}
+
+function roundCoords(geometry, ndigits) {
+  const factor = Math.pow(10, ndigits);
+  function proc(arr) {
+    if (typeof arr[0] === 'number') return arr.map((c) => Math.round(c * factor) / factor);
+    return arr.map(proc);
+  }
+  return Object.assign({}, geometry, { coordinates: proc(geometry.coordinates) });
+}
+
+function toOshUrl(rawFeature, buffer, simplify, maxLen, maxTries) {
+  function build(simp) {
+    const { geom, stillMulti } = processGeom(rawFeature, buffer, simp);
+    const rounded = roundCoords(geom.geometry, 4);
+    const encoded = encodeURIComponent(JSON.stringify(rounded));
+    const url = `https://opensupplyhub.org/facilities/?boundary=${encoded}&sort_by=contributors_desc`;
+    return { url, geom, stillMulti };
+  }
+  let state = build(simplify), tries = 0, simp = simplify;
+  while (state.url.length > maxLen && tries < maxTries) {
+    simp *= 1.3;
+    state = build(simp);
+    tries++;
+  }
+  return Object.assign(state, { finalSimplify: simp, tries });
+}
+
+// A single global default buffer doesn't fit every level — a tight shape
+// near the epicenter and a sprawling, many-piece shape far out need
+// different treatment (see SKILL.md). Rather than shipping a level that
+// starts out broken and making the user discover the fix, search upward
+// from the global default until one actually produces a working single
+// shape, and use that as this level's own starting point.
+const BUFFER_CANDIDATES = [DEFAULT_BUFFER, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7];
+function pickDefaultBuffer(rawFeature) {
+  for (const buf of BUFFER_CANDIDATES) {
+    const result = toOshUrl(rawFeature, buf, DEFAULT_SIMPLIFY, MAX_URL_LEN, 15);
+    if (result.url.length <= MAX_URL_LEN && !result.stillMulti) return buf;
+  }
+  return BUFFER_CANDIDATES[BUFFER_CANDIDATES.length - 1];
+}
+
+// --- combine one MMI level across every included event ---
+function rawPolygonForLevel(mmiValue) {
+  const polys = [];
+  for (const eventName of Object.keys(CONTOURS)) {
+    const fc = CONTOURS[eventName];
+    const feature = fc.features.find((f) => f.properties.value === mmiValue);
+    if (feature) {
+      const p = contourToPolygon(feature.geometry);
+      if (p) polys.push(p);
+    }
+  }
+  if (!polys.length) return null;
+  if (polys.length === 1) return polys[0];
+  return polys.reduce((acc, p) => turf.union(turf.featureCollection([acc, p])));
+}
+
+function allLevels() {
+  const set = new Set();
+  for (const eventName of Object.keys(CONTOURS)) {
+    for (const f of CONTOURS[eventName].features) set.add(f.properties.value);
+  }
+  return Array.from(set).sort((a, b) => b - a);
+}
+
+// --- rendering ---
+function project(pt) { return [pt[0], -pt[1]]; }
+
+function ringToPath(ring) {
+  return ring.map((pt, i) => (i === 0 ? 'M' : 'L') + project(pt).join(',')).join(' ') + ' Z';
+}
+function polygonRingsToPath(coords) { return coords.map(ringToPath).join(' '); }
+function geometryToPath(geometry) {
+  if (!geometry) return '';
+  if (geometry.type === 'Polygon') return polygonRingsToPath(geometry.coordinates);
+  if (geometry.type === 'MultiPolygon') return geometry.coordinates.map(polygonRingsToPath).join(' ');
+  if (geometry.type === 'MultiLineString') return geometry.coordinates.map(ringToPath).join(' ');
+  if (geometry.type === 'LineString') return ringToPath(geometry.coordinates);
+  return '';
+}
+
+function boxForGeometries(geometries, padFrac) {
+  let bbox = null;
+  for (const g of geometries) {
+    const b = turf.bbox({ type: 'Feature', geometry: g, properties: {} });
+    bbox = bbox ? [Math.min(bbox[0], b[0]), Math.min(bbox[1], b[1]), Math.max(bbox[2], b[2]), Math.max(bbox[3], b[3])] : b;
+  }
+  const w = bbox[2] - bbox[0], h = bbox[3] - bbox[1];
+  const pad = Math.max(w, h) * padFrac || 0.01;
+  return { minX: bbox[0] - pad, minY: bbox[1] - pad, maxX: bbox[2] + pad, maxY: bbox[3] + pad };
+}
+
+function basemapPathsInView(view) {
+  const viewBoxPoly = turf.bboxPolygon([view.minX, view.minY, view.maxX, view.maxY]);
+  const paths = [];
+  for (const f of BASEMAP.features) {
+    try {
+      if (turf.booleanIntersects(f, viewBoxPoly)) paths.push(geometryToPath(f.geometry));
+    } catch (e) { /* skip malformed basemap feature */ }
+  }
+  return paths.join(' ');
+}
+
+function buildLevel(container, mmi) {
+  const rawFeature = rawPolygonForLevel(mmi);
+  if (!rawFeature) return;
+  const band = describeMMI(mmi);
+  const sevLight = severityColor(mmi, SEV_ANCHORS_LIGHT);
+  const sevDark = severityColor(mmi, SEV_ANCHORS_DARK);
+  const initialBuffer = pickDefaultBuffer(rawFeature);
+  const autoRaised = initialBuffer !== DEFAULT_BUFFER;
+
+  const refGeometries = Object.keys(CONTOURS)
+    .map((name) => CONTOURS[name].features.find((f) => f.properties.value === mmi))
+    .filter(Boolean)
+    .map((f) => f.geometry);
+  const view = boxForGeometries(refGeometries, 0.15);
+  const vbX = view.minX, vbY = -view.maxY, vbW = view.maxX - view.minX, vbH = view.maxY - view.minY;
+  const basemapD = basemapPathsInView(view);
+
+  const el = document.createElement('div');
+  el.className = 'level';
+  el.style.setProperty('--sev-light', sevLight);
+  el.style.setProperty('--sev-dark', sevDark);
+  el.innerHTML = `
+    <div class="level-top">
+      <span class="mmi">${mmi.toFixed(1)}</span>
+      <div class="level-info">
+        <div class="level-label">${band.label}</div>
+        <p class="level-desc">${band.desc}</p>
+      </div>
+      <button class="tune-toggle" type="button">Adjust &amp; compare</button>
+    </div>
+    <div class="tune-panel">
+      <div class="compare-wrap">
+        <svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}" preserveAspectRatio="xMidYMid meet">
+          <path class="basemap-fill" d="${basemapD}" fill-rule="evenodd" stroke-width="${vbW * 0.003}" />
+          <path class="ref-path" fill="none" stroke="var(--ref-line)" stroke-width="${vbW * 0.006}" stroke-dasharray="${vbW * 0.012} ${vbW * 0.01}" />
+          <path class="gen-path" fill-rule="evenodd" stroke-width="${vbW * 0.006}" />
+        </svg>
+        <div class="legend">
+          <span><span class="swatch land"></span> Land (orientation only)</span>
+          <span><span class="swatch ref"></span> Real USGS contour</span>
+          <span><span class="swatch sev"></span> Generated shape</span>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="control-row">
+          <label>Buffer (padding) <span class="val buffer-val"></span></label>
+          <input type="range" class="buffer-slider" min="0" max="0.7" step="0.005" value="${initialBuffer}">
+          ${autoRaised ? `<p class="control-hint">Raised automatically from the usual ${DEFAULT_BUFFER}° default &mdash; the raw shape here was fragmented into several separate patches, and a wider buffer was needed just to merge them into one usable shape.</p>` : ''}
+        </div>
+        <div class="control-row">
+          <label>Simplify (detail) <span class="val simplify-val"></span></label>
+          <input type="range" class="simplify-slider" min="0.001" max="0.2" step="0.001" value="${DEFAULT_SIMPLIFY}">
+        </div>
+        <div class="control-actions">
+          <button class="reset-btn" type="button">Reset to default</button>
+          <a class="open-btn" target="_blank" rel="noopener">Open facility search &rarr;</a>
+        </div>
+        <div class="len-track"><div class="len-fill"></div></div>
+        <p class="url-meta"></p>
+      </div>
+    </div>
+  `;
+  container.appendChild(el);
+
+  const refPath = el.querySelector('.ref-path');
+  const genPath = el.querySelector('.gen-path');
+  refPath.setAttribute('d', refGeometries.map(geometryToPath).join(' '));
+
+  const bufferSlider = el.querySelector('.buffer-slider');
+  const simplifySlider = el.querySelector('.simplify-slider');
+  const bufferVal = el.querySelector('.buffer-val');
+  const simplifyVal = el.querySelector('.simplify-val');
+  const openBtn = el.querySelector('.open-btn');
+  const urlMeta = el.querySelector('.url-meta');
+  const lenFill = el.querySelector('.len-fill');
+  const toggle = el.querySelector('.tune-toggle');
+  const panel = el.querySelector('.tune-panel');
+  const resetBtn = el.querySelector('.reset-btn');
+
+  let rendered = false;
+  function render() {
+    const buffer = parseFloat(bufferSlider.value);
+    const simplify = parseFloat(simplifySlider.value);
+    bufferVal.textContent = buffer.toFixed(3) + '°';
+    simplifyVal.textContent = simplify.toFixed(3) + '°';
+    const result = toOshUrl(rawFeature, buffer, simplify, MAX_URL_LEN, 15);
+    genPath.setAttribute('d', geometryToPath(result.geom.geometry));
+    openBtn.href = result.url;
+    const over = result.url.length > MAX_URL_LEN;
+    const pct = Math.min(100, (result.url.length / MAX_URL_LEN) * 100);
+    lenFill.style.width = pct + '%';
+    lenFill.classList.toggle('over', over);
+    urlMeta.classList.toggle('over', over);
+    let msg = `Link length: ${result.url.length} of ${MAX_URL_LEN} characters`;
+    if (result.tries > 0) msg += ` (simplify auto-increased to ${result.finalSimplify.toFixed(3)}° to fit)`;
+    if (result.stillMulti) msg += ' — could not merge into one connected shape, try raising buffer';
+    if (over) msg += ' — too long, try raising buffer or simplify';
+    urlMeta.textContent = msg;
+  }
+
+  let debounceId = null;
+  function scheduleRender() {
+    if (debounceId) clearTimeout(debounceId);
+    debounceId = setTimeout(render, 60);
+  }
+
+  bufferSlider.addEventListener('input', scheduleRender);
+  simplifySlider.addEventListener('input', scheduleRender);
+  resetBtn.addEventListener('click', () => {
+    bufferSlider.value = initialBuffer;
+    simplifySlider.value = DEFAULT_SIMPLIFY;
+    render();
+  });
+  toggle.addEventListener('click', () => {
+    panel.classList.toggle('open');
+    if (!rendered) { rendered = true; render(); }
+  });
+}
+
+const container = document.getElementById('levels');
+allLevels().forEach((mmi) => buildLevel(container, mmi));
+</script>
