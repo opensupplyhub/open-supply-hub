@@ -29,7 +29,7 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         >
             <option value="">{placeholder}</option>
             {options.map(opt => (
-                <option key={opt.value} value={opt.value}>
+                <option key={opt.value} value={opt.value} data-tag={opt.tag}>
                     {opt.label}
                 </option>
             ))}
@@ -226,7 +226,7 @@ describe('BusinessStep component', () => {
         renderComponent(propsWithDocumentVerification);
 
         expect(screen.getByTestId('attachments-uploader')).toBeInTheDocument();
-        expect(screen.getByText('Upload your documents')).toBeInTheDocument();
+        expect(screen.getByText(/^Upload your documents/)).toBeInTheDocument();
     });
 
     test('calls handleChange when URL input value changes', () => {
@@ -362,6 +362,57 @@ describe('BusinessStep component', () => {
             'locationAddressVerificationMethod',
             'Company website showing the production location address (e.g., Contact Us, Locations page)'
         );
+    });
+
+    test('lists documents first as preferred, then the website and LinkedIn options as can delay', () => {
+        renderComponent();
+
+        const options = Array.from(
+            screen.getByTestId('verification-select').querySelectorAll('option'),
+        )
+            .slice(1)
+            .map(option => [option.textContent, option.dataset.tag]);
+
+        expect(options).toEqual([
+            ['Utility bill showing company name and address', 'Preferred'],
+            ['Business registration document', 'Preferred'],
+            ['Tax document or business license', 'Preferred'],
+            ['Property lease or ownership document', 'Preferred'],
+            [
+                'Upload other official documents (business registration, utility bills, etc.)',
+                'Preferred',
+            ],
+            [
+                'Company website showing the production location address (e.g., Contact Us, Locations page)',
+                'Can delay review',
+            ],
+            [
+                'Company LinkedIn page showing the production location address',
+                'Can delay review',
+            ],
+        ]);
+    });
+
+    test('stores the LinkedIn option label without its tag', () => {
+        renderComponent();
+
+        const selectField = screen.getByTestId('verification-select');
+        fireEvent.change(selectField, { target: { value: 'linkedin-address' } });
+
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'locationAddressVerificationMethod',
+            'Company LinkedIn page showing the production location address'
+        );
+    });
+
+    test('tells the claimant that documents are reviewed fastest', () => {
+        renderComponent();
+
+        expect(
+            screen.getByText(
+                'Select one item below. Documents are reviewed fastest. Links can take longer.'
+            )
+        ).toBeInTheDocument();
     });
 
     test('document uploader shows correct number of uploaded files', () => {
