@@ -1,10 +1,15 @@
 """Tests for facility extent cache key normalization and cache hits."""
 
+from django.db import connection
 from django.http import QueryDict
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from unittest.mock import patch
 
-from api.facilities_extent_cache import FacilitiesExtentCache
+from api.facilities_extent_cache import (
+    EXTENT_WORK_MEM,
+    FacilitiesExtentCache,
+)
 
 
 class FakeCache:
@@ -127,3 +132,47 @@ class TestFacilitiesExtentCache(TestCase):
             self.assertIsNone(extent_cache.get(queryset, query_params))
 
         self.assertEqual(1, queryset.aggregate_call_count)
+
+
+class WorkMemProbeQuerySet:
+    """Reads the session's work_mem at the moment aggregate() runs."""
+
+    def __init__(self):
+        self.work_mem_during_aggregate = None
+
+    def aggregate(self, *args, **kwargs):
+        with connection.cursor() as cursor:
+            cursor.execute('SHOW work_mem')
+            self.work_mem_during_aggregate = cursor.fetchone()[0]
+        return {'location__extent': None}
+
+
+class TestExtentWorkMem(TestCase):
+    """The extent aggregate runs under a transaction-local work_mem.
+
+    A lossy TID bitmap on a broad free-text search rechecks whole heap
+    blocks through immutable_unaccent(), so the extent must run with
+    enough work_mem for an exact bitmap, and the setting must not leak
+    past the aggregate's transaction. See OSDEV-3793.
+    """
+
+    def test_aggregate_sees_raised_and_transaction_local_work_mem(self):
+        queryset = WorkMemProbeQuerySet()
+
+        with patch(
+            'api.facilities_extent_cache.caches',
+            FakeCaches(FakeCache()),
+        ), CaptureQueriesContext(connection) as captured:
+            FacilitiesExtentCache().get(queryset, QueryDict('contributors=1'))
+
+        self.assertEqual(EXTENT_WORK_MEM, queryset.work_mem_during_aggregate)
+
+        # set_config's third argument makes the setting transaction-local;
+        # a session-wide SET here would leak into unrelated queries.
+        set_config_calls = [
+            q['sql'] for q in captured.captured_queries
+            if 'set_config' in q['sql']
+        ]
+        self.assertEqual(1, len(set_config_calls))
+        self.assertIn("'work_mem'", set_config_calls[0])
+        self.assertIn('true', set_config_calls[0])
