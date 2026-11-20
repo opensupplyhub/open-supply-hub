@@ -37,7 +37,7 @@ class Migration(Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0270_claim_campaign_supplier_roster'),
+        ('api', '0284_zone_set_last_upload_sha256'),
     ]
 
     operations = [
