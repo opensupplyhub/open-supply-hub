@@ -337,18 +337,20 @@ jobs:
           # the cache lookup. Invalidating /* also wiped the long-lived tile/*
           # and api/* caches on every deploy (OSDEV-3896).
           aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/index.html" "/"
-          # Prune retired hashed assets: delete an assets/ object only when it
-          # is NOT part of the build just uploaded (membership — the live
+          # Prune retired hashed assets: an assets/ object qualifies only when
+          # it is NOT part of the build just uploaded (membership — the live
           # site's files can never be deleted, however long since the last
           # deploy) AND it has been retired for 14+ days (grace for open
-          # tabs, independent of deploy cadence). OSDEV-3895.
+          # tabs, independent of deploy cadence). Log-only for now: review
+          # these lines in the Actions output for a few deploys, then swap
+          # the echo for `aws s3 rm` to enable deletion. OSDEV-3895.
           CUTOFF=$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%S)
           aws s3api list-objects-v2 --bucket "$FRONTEND_BUCKET-$AWS_DEFAULT_REGION" --prefix assets/ \
             --query 'Contents' --output json |
             jq -r --arg cutoff "$CUTOFF" '(. // [])[] | select(.LastModified < $cutoff) | .Key' |
             while read -r key; do
               if [ ! -f "src/react/build/$key" ]; then
-                aws s3 rm "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/$key"
+                echo "prune (log-only): would delete s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/$key"
               fi
             done
 
