@@ -84,6 +84,24 @@ resource "aws_s3_bucket_versioning" "react" {
   }
 }
 
+# No age-based expiration here: retired hashed assets are pruned by the
+# deploy itself, by membership against the build it just uploaded, so a gap
+# between deploys can never delete files the live site uses (OSDEV-3895).
+resource "aws_s3_bucket_lifecycle_configuration" "react" {
+  bucket = aws_s3_bucket.react.id
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 resource "aws_s3_bucket_ownership_controls" "react" {
   bucket = aws_s3_bucket.react.id
 
