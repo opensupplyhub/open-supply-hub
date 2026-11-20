@@ -297,7 +297,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: src/react
-        run: yarn install
+        run: yarn install --frozen-lockfile
 
       - name: Build static assets
         working-directory: src/react
