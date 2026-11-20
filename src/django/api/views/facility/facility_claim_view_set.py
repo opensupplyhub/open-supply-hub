@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 from api.models.transactions.index_facilities_new import index_facilities_new
 
@@ -30,6 +31,15 @@ from ...extended_fields import create_extendedfields_for_claim
 from ...services.claim_contribution_service import (
     CLAIM_NAME_ADDRESS_EDIT_SWITCH,
     record_claim_contribution,
+)
+from ...services.claim_live_check_service import (
+    get_live_check_state,
+    give_up_live_check,
+    is_claim_live_check_active,
+    record_live_check_review,
+    request_review,
+    start_live_check,
+    unavailable_state,
 )
 from ...services.claim_quality_check_service import (
     SOURCE_CLAIMED_DETAILS,
@@ -89,6 +99,8 @@ from ...serializers.facility.facility_create_claim_serializer import (
     validate_claimed_name_or_address,
 )
 from ..make_report import _report_facility_claim_email_error_to_rollbar
+
+log = logging.getLogger(__name__)
 
 
 # Field groups the claimed-details PUT applies in bulk. get_claimed_details
@@ -548,6 +560,7 @@ class FacilityClaimViewSet(ModelViewSet):
                 FacilityClaimReviewNoteTypes.INTERNAL,
             )
             record_ai_review(claim, request.user, note)
+            record_live_check_review(request, claim, request.user, note)
 
             response_data = FacilityClaimDetailsSerializer(claim).data
             return Response(response_data)
@@ -900,6 +913,65 @@ class FacilityClaimViewSet(ModelViewSet):
             )
         except (FacilityClaim.DoesNotExist, Contributor.DoesNotExist) as exc:
             raise NotFound() from exc
+
+    @action(detail=True,
+            methods=['GET', 'POST'],
+            url_path='live-check',
+            permission_classes=(IsRegisteredAndConfirmed,))
+    def live_check(self, request, pk=None):
+        """
+        The live check of the requesting claimant's own claim
+        (OSDEV-3804). POST asks the claims automation pipeline to
+        review the claim now and returns at once; GET reports where
+        that check stands. A POST with `timed_out` set starts nothing:
+        it records that the page has stopped waiting. All return
+        {status, fixes, checks_left} and nothing a moderator or the
+        pipeline wrote.
+
+        Only the claim's own contributor may call it; anyone else gets
+        a 404, as does everyone while the claim_live_check switch is
+        off. Unlike the pending claim endpoints it also answers for a
+        decided claim, so a claimant whose claim was just approved can
+        read that.
+
+        The check must never cost a claimant their submission, which
+        is already saved by the time this is called. Any failure in
+        here is logged and answered as UNAVAILABLE rather than a 500.
+        """
+        if not switch_is_active('claim_a_facility'):
+            raise NotFound()
+        if not is_claim_live_check_active():
+            raise NotFound()
+
+        starting = request.method == 'POST'
+        try:
+            to_request = None
+            with transaction.atomic():
+                claims = FacilityClaim.objects.filter(
+                    pk=pk, contributor__admin=request.user
+                )
+                if starting:
+                    claims = claims.select_for_update(of=('self',))
+                claim = claims.first()
+                if claim is None:
+                    raise NotFound()
+                if not starting:
+                    state = get_live_check_state(request, claim)
+                elif request.data.get('timed_out'):
+                    state = give_up_live_check(request, claim)
+                else:
+                    state, to_request = start_live_check(request, claim)
+            # Outside the transaction: the claim's row lock is released
+            # and the new check is committed before anything is sent.
+            if to_request is not None:
+                state = request_review(claim, to_request)
+        except NotFound:
+            raise
+        except Exception:
+            log.exception('Live claim check failed for claim %s.', pk)
+            state = unavailable_state()
+
+        return Response(state)
 
     @transaction.atomic
     @action(detail=True,

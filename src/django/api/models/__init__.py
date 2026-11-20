@@ -53,6 +53,7 @@ from .facility.facility_claim_attachments import (
     FacilityClaimAttachments
 )
 from .facility.facility_claim_invite import FacilityClaimInvite
+from .facility.facility_claim_live_check import FacilityClaimLiveCheck
 from .facility.claim_campaign import ClaimCampaign, ClaimCampaignSupplier
 from .facility.facility_list import FacilityList
 from .facility.facility_list_item import FacilityListItem
