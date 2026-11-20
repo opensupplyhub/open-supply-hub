@@ -180,9 +180,11 @@ class FacilityIndexNewManager(models.Manager):
                     .filter(name_filter | Q(id=free_text_query))
 
         # `name` is deprecated in favor of `q`. We keep `name` available for
-        # backward compatibility.
+        # backward compatibility, matching per word as `q` does: both are
+        # public parameters, so the same query must not find results under
+        # one and nothing under the other.
         if name is not None:
-            name_filter = Q(name__unaccent__icontains=name)
+            name_filter = build_name_token_filter(name)
             facilities_qs = facilities_qs.filter(name_filter | Q(id=name))
 
         if countries is not None and len(countries):

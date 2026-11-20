@@ -71,9 +71,9 @@ class FacilitySearchMultiWordTest(TestCase):
                 created_from=list_item,
             )
 
-    def search(self, query):
+    def search(self, query, param="q"):
         params = QueryDict("", mutable=True)
-        params["q"] = query
+        params[param] = query
         result = FacilityIndexNewManager.filter_by_query_params(self, params)
         return sorted(facility.name for facility in result)
 
@@ -130,3 +130,12 @@ class FacilitySearchMultiWordTest(TestCase):
         # Tokenization is not fuzziness. Typo tolerance needs OpenSearch or
         # a trigram index; this records the current boundary.
         self.assert_search("Interlop", [])
+
+    def test_deprecated_name_param_matches_per_word_too(self):
+        # `name` is deprecated in favor of `q`, but both are public, so the
+        # same query must not find results under one and nothing under the
+        # other.
+        self.assertEqual(
+            ["Interloop Limited (Hosiery Division I)"],
+            self.search("Interloop Hosiery", param="name"),
+        )
