@@ -9,6 +9,8 @@ import SvgIcon from '@material-ui/core/SvgIcon';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
+import COLOURS from '../util/COLOURS';
+
 const claimAttachmentsUploaderStyles = Object.freeze({
     fileUploadArea: Object.freeze({
         display: 'block',
@@ -57,11 +59,21 @@ const claimAttachmentsUploaderStyles = Object.freeze({
     }),
 });
 
+// The upload area outlined in red: a live check fix is about it. The
+// offset keeps the browser's focus ring outside the red border, so the
+// red still shows when the page opens with the focus on this area.
+const flaggedFileUploadArea = Object.freeze({
+    ...claimAttachmentsUploaderStyles.fileUploadArea,
+    border: `2px solid ${COLOURS.RED}`,
+    outlineOffset: '4px',
+});
+
 const ClaimAttachmentsUploader = ({
     inputId,
     title,
     files,
     updateUploadFiles,
+    flagged,
 }) => {
     const [errorMessage, setErrorMessage] = useState();
     const fileInputRef = useRef(null);
@@ -155,7 +167,11 @@ const ClaimAttachmentsUploader = ({
                 ) : null}
             </ul>
             <label
-                style={claimAttachmentsUploaderStyles.fileUploadArea}
+                style={
+                    flagged
+                        ? flaggedFileUploadArea
+                        : claimAttachmentsUploaderStyles.fileUploadArea
+                }
                 onDrop={handleDrop}
                 onDragOver={e => e.preventDefault()}
                 htmlFor={inputId}
@@ -187,6 +203,7 @@ const ClaimAttachmentsUploader = ({
 
 ClaimAttachmentsUploader.defaultProps = {
     files: [],
+    flagged: false,
 };
 
 ClaimAttachmentsUploader.propTypes = {
@@ -194,6 +211,7 @@ ClaimAttachmentsUploader.propTypes = {
     title: PropTypes.string.isRequired,
     files: PropTypes.arrayOf(PropTypes.object),
     updateUploadFiles: PropTypes.func.isRequired,
+    flagged: PropTypes.bool,
 };
 
 export default ClaimAttachmentsUploader;

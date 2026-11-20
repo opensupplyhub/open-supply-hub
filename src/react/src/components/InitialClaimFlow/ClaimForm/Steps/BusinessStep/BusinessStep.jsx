@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { bool, func, object } from 'prop-types';
+import { arrayOf, bool, func, object, shape, string } from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
@@ -12,6 +12,7 @@ import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import StyledSelect from '../../../../Filters/StyledSelect';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import ClaimAttachmentsUploader from '../../../../ClaimAttachmentsUploader';
+import ClaimLiveCheckFieldFixes from '../../../../ClaimLiveCheck/ClaimLiveCheckFieldFixes';
 import withScrollReset from '../../../HOCs/withScrollReset';
 
 import businessStepStyles from './styles';
@@ -45,6 +46,7 @@ const BusinessStep = ({
     updateFieldWithoutTouch,
     isNameAddressEditable,
     fieldsDisabled,
+    liveCheckFixes,
 }) => {
     const [prevVerificationMethod, setPrevVerificationMethod] = useState(
         formData.locationAddressVerificationMethod || '',
@@ -78,6 +80,11 @@ const BusinessStep = ({
     const showDocumentUpload = requiresDocumentUpload(
         selectedVerificationMethod?.value,
     );
+
+    // A live check fix about this proof is shown on the upload area
+    // when there is one, and on the selector otherwise.
+    const isAddressSelectFlagged =
+        Boolean(liveCheckFixes.address) && !showDocumentUpload;
 
     const osId = productionLocationData?.os_id || '';
     const locationName = productionLocationData?.name || '';
@@ -263,7 +270,8 @@ const BusinessStep = ({
                         handleBlur('locationAddressVerificationMethod')
                     }
                     styles={getSelectStyles(
-                        isCompanyAddressVerificationError,
+                        isCompanyAddressVerificationError ||
+                            isAddressSelectFlagged,
                         selectStyles,
                     )}
                     placeholder="You need to provide one of the below items for address verification"
@@ -275,6 +283,9 @@ const BusinessStep = ({
                             text={errors.locationAddressVerificationMethod}
                         />
                     </div>
+                )}
+                {isAddressSelectFlagged && (
+                    <ClaimLiveCheckFieldFixes fixes={liveCheckFixes.address} />
                 )}
             </div>
             <div className={classes.documentUploadContainer}>
@@ -294,6 +305,10 @@ const BusinessStep = ({
                                     files,
                                 )
                             }
+                            flagged={Boolean(liveCheckFixes.address)}
+                        />
+                        <ClaimLiveCheckFieldFixes
+                            fixes={liveCheckFixes.address}
                         />
                         {isCompanyAddressVerificationDocumentsError && (
                             <div className={classes.errorWrapStyles}>
@@ -386,6 +401,7 @@ BusinessStep.defaultProps = {
     productionLocationData: {},
     isNameAddressEditable: false,
     fieldsDisabled: false,
+    liveCheckFixes: {},
 };
 
 BusinessStep.propTypes = {
@@ -399,6 +415,9 @@ BusinessStep.propTypes = {
     productionLocationData: object,
     isNameAddressEditable: bool,
     fieldsDisabled: bool,
+    // Live check fixes to mark, by field. Only the pending claim edit
+    // page passes them.
+    liveCheckFixes: shape({ address: arrayOf(string) }),
 };
 
 const mapStateToProps = ({

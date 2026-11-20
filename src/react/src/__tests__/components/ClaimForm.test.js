@@ -1059,4 +1059,169 @@ describe('ClaimForm component', () => {
             expect(apiRequest.post).not.toHaveBeenCalled();
         });
     });
+
+    describe('Submit and check my claim (live claim check)', () => {
+        const helperText = /We check your claim right away\. Stay for up to one minute to see your result\./;
+        const stateOnLastStep = (flags, submissionState) => ({
+            ...defaultPreloadedState,
+            claimForm: {
+                ...defaultPreloadedState.claimForm,
+                activeStep: 3,
+                ...(submissionState ? { submissionState } : {}),
+            },
+            featureFlags: { fetching: false, flags },
+        });
+        const submitting = { fetching: true, error: null, data: null };
+        const completeSubmission = async (reduxStore, payload) => {
+            await act(async () => {
+                reduxStore.dispatch({
+                    type: 'COMPLETE_SUBMIT_CLAIM_FORM_DATA',
+                    payload,
+                });
+                await new Promise(resolve => setTimeout(resolve, 50));
+            });
+        };
+
+        test('with the switch off the last step is unchanged', () => {
+            const { getByText, queryByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: false }),
+            );
+
+            expect(getByText('Submit Claim')).toBeInTheDocument();
+            expect(queryByText('Submit and check my claim')).toBeNull();
+            expect(queryByText(helperText)).toBeNull();
+        });
+
+        test('with the switch on the button and its helper text are shown', () => {
+            const { getByText, queryByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: true }),
+            );
+
+            expect(getByText('Submit and check my claim')).toBeInTheDocument();
+            expect(getByText(helperText)).toBeInTheDocument();
+            expect(queryByText('Submit Claim')).toBeNull();
+        });
+
+        test('the helper text is only on the last step', () => {
+            const { queryByText } = renderComponent({
+                ...stateOnLastStep({ claim_live_check: true }),
+                claimForm: { ...defaultPreloadedState.claimForm, activeStep: 2 },
+            });
+
+            expect(queryByText(helperText)).toBeNull();
+        });
+
+        test('a submitted claim is checked right away instead of the thank-you dialog', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { status: 'CHECKING', fixes: [], checks_left: 2 },
+            });
+            const { reduxStore, getByText, queryByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: true }, submitting),
+            );
+
+            await completeSubmission(reduxStore, {
+                approved: [],
+                pending: [mockOsID],
+                claim_id: 77,
+            });
+
+            await waitFor(() => {
+                expect(
+                    getByText(
+                        'We are checking your claim. Stay for your result.',
+                    ),
+                ).toBeInTheDocument();
+            });
+            expect(apiRequest.post).toHaveBeenCalledWith(
+                '/api/facility-claims/77/live-check/',
+            );
+            expect(
+                queryByText('Thank you for submitting your claim request!'),
+            ).toBeNull();
+        });
+
+        test('a check that cannot start ends with the thank-you dialog and no promise of an email', async () => {
+            apiRequest.post.mockResolvedValue({
+                data: { status: 'UNAVAILABLE', fixes: [], checks_left: 3 },
+            });
+            const { reduxStore, getByText, queryByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: true }, submitting),
+            );
+
+            await completeSubmission(reduxStore, {
+                approved: [],
+                pending: [mockOsID],
+                claim_id: 77,
+            });
+
+            await waitFor(() => {
+                expect(
+                    getByText('Thank you for submitting your claim request!'),
+                ).toBeInTheDocument();
+            });
+            expect(
+                queryByText('This is taking longer than usual.'),
+            ).toBeNull();
+            expect(queryByText(/email/i)).toBeNull();
+        });
+
+        test('a response without a claim id falls back to the thank-you dialog', async () => {
+            const { reduxStore, getByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: true }, submitting),
+            );
+
+            await completeSubmission(reduxStore, {
+                approved: [],
+                pending: [mockOsID],
+            });
+
+            await waitFor(() => {
+                expect(
+                    getByText('Thank you for submitting your claim request!'),
+                ).toBeInTheDocument();
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+
+        test('with the switch off a claim id in the response starts no check', async () => {
+            const { reduxStore, getByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: false }, submitting),
+            );
+
+            await completeSubmission(reduxStore, {
+                approved: [],
+                pending: [mockOsID],
+                claim_id: 77,
+            });
+
+            await waitFor(() => {
+                expect(
+                    getByText('Thank you for submitting your claim request!'),
+                ).toBeInTheDocument();
+            });
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+
+        test('a failed submission shows the error and starts no check', async () => {
+            const { reduxStore, getByText, queryByText } = renderComponent(
+                stateOnLastStep({ claim_live_check: true }, submitting),
+            );
+
+            await act(async () => {
+                reduxStore.dispatch({
+                    type: 'FAIL_SUBMIT_CLAIM_FORM_DATA',
+                    payload: ['Something went wrong'],
+                });
+                await new Promise(resolve => setTimeout(resolve, 50));
+            });
+
+            expect(getByText('Submit and check my claim')).toBeInTheDocument();
+            expect(
+                queryByText(
+                    'We are checking your claim. Stay for your result.',
+                ),
+            ).toBeNull();
+            expect(apiRequest.post).not.toHaveBeenCalled();
+        });
+    });
 });
