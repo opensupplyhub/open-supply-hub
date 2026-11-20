@@ -3,6 +3,21 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.34.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: _Provide release date_
+
+### Bugfix
+* [OSDEV-3894](https://opensupplyhub.atlassian.net/browse/OSDEV-3894) - The frontend deploy now uploads the React build with explicit Cache-Control headers: hashed assets under `/assets/` are cached for a year as immutable, while `index.html` and the other non-hashed files are `no-cache`, so browsers revalidate on every load and pick up each release without a hard refresh.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.33.0
 
 ## Introduction
