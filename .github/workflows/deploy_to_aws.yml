@@ -331,7 +331,12 @@ jobs:
             --cache-control "public, max-age=31536000, immutable"
           aws s3 sync src/react/build/ "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/" --exclude "assets/*" \
             --cache-control "no-cache"
-          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
+          # Only the HTML entry needs invalidating: hashed assets are immutable,
+          # the other no-cache files revalidate on their own, and the
+          # viewer-request Lambda rewrites every SPA route to /index.html before
+          # the cache lookup. Invalidating /* also wiped the long-lived tile/*
+          # and api/* caches on every deploy (OSDEV-3896).
+          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/index.html" "/"
           # Prune retired hashed assets: an assets/ object qualifies only when
           # it is NOT part of the build just uploaded (membership — the live
           # site's files can never be deleted, however long since the last
