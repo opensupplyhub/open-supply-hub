@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 ### Bugfix
 * [OSDEV-3894](https://opensupplyhub.atlassian.net/browse/OSDEV-3894) - The frontend deploy now uploads the React build with explicit Cache-Control headers: hashed assets under `/assets/` are cached for a year as immutable, while `index.html` and the other non-hashed files are `no-cache`, so browsers revalidate on every load and pick up each release without a hard refresh.
+* [OSDEV-3895](https://opensupplyhub.atlassian.net/browse/OSDEV-3895) - The frontend deploy no longer deletes the previous release's hashed assets, so a tab open across a release keeps loading its lazy chunks instead of failing with ChunkLoadError. Superseded assets are expired by a new 90-day lifecycle rule on the frontend bucket (every deploy re-uploads the current build, resetting live objects' age).
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
