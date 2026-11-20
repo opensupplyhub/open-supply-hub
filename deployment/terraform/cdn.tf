@@ -288,12 +288,17 @@ resource "aws_cloudfront_distribution" "cdn" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "originS3"
 
+    # Static files vary on neither cookies nor query strings; forwarding them
+    # put both in the cache key and fragmented the cache per user. TTLs follow
+    # the origin's Cache-Control headers (immutable hashed assets, no-cache
+    # index.html — OSDEV-3894); the default applies only to responses without
+    # one (OSDEV-3896).
     forwarded_values {
-      query_string = true
+      query_string = false
       headers      = []
 
       cookies {
-        forward = "all"
+        forward = "none"
       }
     }
 
@@ -311,8 +316,8 @@ resource "aws_cloudfront_distribution" "cdn" {
     compress               = false
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
-    default_ttl            = 0
-    max_ttl                = 300
+    default_ttl            = 86400
+    max_ttl                = 31536000
   }
 
   # Homepage proxy — serves Craft CMS at / when enable_homepage_proxy = true.
