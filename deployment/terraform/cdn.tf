@@ -84,6 +84,33 @@ resource "aws_s3_bucket_versioning" "react" {
   }
 }
 
+# Keeps superseded releases' hashed assets available for open tabs, bounded
+# in age. Every deploy re-uploads the whole build (a fresh checkout's mtimes
+# make `aws s3 sync` overwrite), which resets each live object's age, so only
+# assets absent from the current release reach the expiration. A 90-day gap
+# with no deploy would expire live assets; deploys land far more often than
+# that on every environment (OSDEV-3895).
+resource "aws_s3_bucket_lifecycle_configuration" "react" {
+  bucket = aws_s3_bucket.react.id
+
+  rule {
+    id     = "expire-superseded-assets"
+    status = "Enabled"
+
+    filter {
+      prefix = "assets/"
+    }
+
+    expiration {
+      days = 90
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 resource "aws_s3_bucket_ownership_controls" "react" {
   bucket = aws_s3_bucket.react.id
 
