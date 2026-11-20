@@ -332,6 +332,20 @@ jobs:
           aws s3 sync src/react/build/ "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/" --exclude "assets/*" \
             --cache-control "no-cache"
           aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
+          # Prune retired hashed assets: delete an assets/ object only when it
+          # is NOT part of the build just uploaded (membership — the live
+          # site's files can never be deleted, however long since the last
+          # deploy) AND it has been retired for 14+ days (grace for open
+          # tabs, independent of deploy cadence). OSDEV-3895.
+          CUTOFF=$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%S)
+          aws s3api list-objects-v2 --bucket "$FRONTEND_BUCKET-$AWS_DEFAULT_REGION" --prefix assets/ \
+            --query 'Contents' --output json |
+            jq -r --arg cutoff "$CUTOFF" '(. // [])[] | select(.LastModified < $cutoff) | .Key' |
+            while read -r key; do
+              if [ ! -f "src/react/build/$key" ]; then
+                aws s3 rm "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/$key"
+              fi
+            done
 
   build_and_push_docker_image:
     needs: apply
