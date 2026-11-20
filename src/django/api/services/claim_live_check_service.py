@@ -233,8 +233,10 @@ def _email_not_passed(
                 .select_for_update()
                 .get(pk=check.pk)
             )
-            if (locked.emailed_at is None and locked.status
-                    == FacilityClaimLiveCheckStatuses.NOT_PASSED):
+            not_passed = (
+                locked.status == FacilityClaimLiveCheckStatuses.NOT_PASSED
+            )
+            if not_passed and locked.emailed_at is None:
                 _email_result(request, claim, locked, list(locked.fixes))
     except Exception:
         logger.exception(
