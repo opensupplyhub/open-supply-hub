@@ -42,7 +42,7 @@ class Migration(Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0271_index_facility_name_search'),
+        ('api', '0285_index_facility_name_search'),
     ]
 
     operations = [

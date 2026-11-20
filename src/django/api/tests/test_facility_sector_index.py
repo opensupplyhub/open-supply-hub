@@ -18,7 +18,7 @@ from django.test import TestCase
 
 class FacilitySectorIndexTest(TestCase):
     """
-    The sector filter stays matched to the GIN index of 0272.
+    The sector filter stays matched to the GIN index of 0286.
 
     A plain GIN on an array column serves the overlap operator ``&&``, and
     nothing else. Rewriting the filter to compare a transformed column --
@@ -97,7 +97,7 @@ class FacilitySectorIndexTest(TestCase):
         return sorted(facility.name for facility in result)
 
     def test_sector_filter_uses_the_overlap_operator(self):
-        # `&&` is the only operator the plain GIN of 0272 can serve.
+        # `&&` is the only operator the plain GIN of 0286 can serve.
         self.assertIn("&&", self.sector_sql("Aerospace"))
 
     def test_sector_column_is_not_transformed(self):
