@@ -42,7 +42,6 @@ from api.services.claim_live_check_fixes import (
     FIX_UNREADABLE_DOCUMENT,
     FIX_UPLOAD_DOCUMENT,
     FIX_TEXTS,
-    FIX_WORK_EMAIL,
     FIXES,
     failed_checks,
     fixes_for_review,
@@ -129,10 +128,10 @@ class ClaimLiveCheckFixesTest(SimpleTestCase):
         self.assertFalse(is_free_mail(None))
         self.assertFalse(is_free_mail('gmail.com@factory.example.com'))
 
-    def test_affiliation_failed_with_free_mail_asks_for_work_email(self):
+    def test_affiliation_failed_with_free_mail_has_no_fix_yet(self):
         self.assertEqual(
             self.fixes([CHECK_AFFILIATION], email='someone@gmail.com'),
-            [FIX_WORK_EMAIL],
+            [],
         )
 
     def test_affiliation_failed_with_work_email_asks_for_who_document(self):
@@ -186,7 +185,6 @@ class ClaimLiveCheckFixesTest(SimpleTestCase):
             email='someone@gmail.com',
         )
         self.assertEqual(fixes, [
-            FIX_WORK_EMAIL,
             FIX_UNREADABLE_DOCUMENT,
             FIX_NAME_AND_COMPANY_DOCUMENT,
             FIX_COMPANY_NAME_DOCUMENT,
@@ -244,25 +242,45 @@ class ClaimLiveReviewTriggerTest(SimpleTestCase):
         invoke = boto3.client.return_value.invoke
         invoke.return_value = {'StatusCode': 202}
 
-        self.assertTrue(trigger_live_review(42))
+        self.assertTrue(trigger_live_review(42, 7))
 
         self.assertEqual(boto3.client.call_args.args, ('lambda',))
         kwargs = invoke.call_args.kwargs
         self.assertEqual(kwargs['FunctionName'], FUNCTION)
         self.assertEqual(kwargs['InvocationType'], 'Event')
-        self.assertEqual(json.loads(kwargs['Payload']), {'claim_id': 42})
+        self.assertEqual(json.loads(kwargs['Payload']), {
+            'claim_id': 42,
+            'check_id': 7,
+            'parallel_llm_queries': True,
+            'parallel_attachments': True,
+            'skip_plot_refresh': True,
+        })
+
+    @override_settings(
+        CLAIMS_LIVE_REVIEW_FUNCTION=FUNCTION,
+        CLAIMS_LIVE_REVIEW_REGION='us-west-2',
+    )
+    @patch.object(claim_live_review_trigger, 'boto3')
+    def test_invocation_goes_to_the_pipelines_region(self, boto3):
+        boto3.client.return_value.invoke.return_value = {'StatusCode': 202}
+
+        self.assertTrue(trigger_live_review(42, 7))
+
+        self.assertEqual(
+            boto3.client.call_args.kwargs['region_name'], 'us-west-2'
+        )
 
     @override_settings(CLAIMS_LIVE_REVIEW_FUNCTION=FUNCTION)
     @patch.object(claim_live_review_trigger, 'boto3')
     def test_unaccepted_invocation_is_not_triggered(self, boto3):
         boto3.client.return_value.invoke.return_value = {'StatusCode': 500}
-        self.assertFalse(trigger_live_review(42))
+        self.assertFalse(trigger_live_review(42, 7))
 
     @override_settings(CLAIMS_LIVE_REVIEW_FUNCTION=FUNCTION)
     @patch.object(claim_live_review_trigger, 'boto3')
     def test_failed_invocation_never_raises(self, boto3):
         boto3.client.return_value.invoke.side_effect = RuntimeError('down')
-        self.assertFalse(trigger_live_review(42))
+        self.assertFalse(trigger_live_review(42, 7))
 
 
 @override_settings(
@@ -472,8 +490,9 @@ class ClaimLiveCheckOutcomeTest(ClaimLiveCheckTestBase):
             'fixes': [],
             'checks_left': MAX_LIVE_CHECKS_PER_CLAIM - 1,
         })
-        self.trigger.assert_called_once_with(self.claim.id)
-        self.assertEqual(self.checks().count(), 1)
+        self.trigger.assert_called_once_with(
+            self.claim.id, self.checks().get().id
+        )
         self.assertEqual(self.poll()['status'], CHECKING)
 
     def test_start_leaves_the_claim_untouched(self):
@@ -521,10 +540,32 @@ class ClaimLiveCheckOutcomeTest(ClaimLiveCheckTestBase):
         self.start()
         self.post_review(review_block([CHECK_DOCUMENTS, CHECK_AFFILIATION]))
 
-        self.assertEqual(
-            self.poll()['fixes'],
-            [FIX_WORK_EMAIL, FIX_UNREADABLE_DOCUMENT],
+        self.assertEqual(self.poll()['fixes'], [FIX_UNREADABLE_DOCUMENT])
+
+    def test_held_only_for_a_personal_email_is_unavailable(self):
+        self.claimant.email = 'claimant@gmail.com'
+        self.claimant.save()
+        self.login(self.claimant)
+        FacilityClaimAttachments.objects.create(
+            claim=self.claim,
+            file_name='badge.png',
+            claim_attachment='badge.png',
         )
+        self.start()
+        self.post_review(review_block([CHECK_AFFILIATION]))
+
+        state = self.poll()
+
+        self.assertEqual(state['status'], UNAVAILABLE)
+        self.assertEqual(state['fixes'], [])
+
+    def test_review_asked_for_by_this_check_settles_it(self):
+        self.start()
+        self.post_review(
+            review_block([CHECK_ADDRESS], check_id=self.checks().get().id)
+        )
+
+        self.assertEqual(self.poll()['status'], NOT_PASSED)
 
     def test_settled_check_is_not_settled_again(self):
         self.start()
@@ -661,7 +702,9 @@ class ClaimLiveCheckFailOpenTest(ClaimLiveCheckTestBase):
     def test_review_is_requested_only_after_the_check_is_recorded(self):
         seen = []
         self.trigger.side_effect = (
-            lambda claim_id: seen.append(self.checks().count()) or True
+            lambda claim_id, check_id: (
+                seen.append(self.checks().count()) or True
+            )
         )
 
         self.assertEqual(self.start()['status'], CHECKING)
@@ -776,7 +819,7 @@ class ClaimLiveCheckDevStubTest(ClaimLiveCheckTestBase):
 
     @override_settings(
         CLAIMS_LIVE_REVIEW_DEV_STUB=(
-            'not_pass:company_address_document, work_email,made_up'
+            'not_pass:company_address_document, upload_document,made_up'
         )
     )
     def test_stubbed_not_pass_shows_the_chosen_fixes(self):
@@ -787,8 +830,13 @@ class ClaimLiveCheckDevStubTest(ClaimLiveCheckTestBase):
         self.assertEqual(state['status'], NOT_PASSED)
         self.assertEqual(
             state['fixes'],
-            [FIX_WORK_EMAIL, FIX_COMPANY_ADDRESS_DOCUMENT],
+            [FIX_UPLOAD_DOCUMENT, FIX_COMPANY_ADDRESS_DOCUMENT],
         )
+
+    @override_settings(CLAIMS_LIVE_REVIEW_DEV_STUB='not_pass:work_email')
+    def test_stubbed_fix_that_is_not_offered_is_not_shown(self):
+        self.start_and_wait()
+        self.assertEqual(self.poll()['fixes'], [FIX_UPLOAD_DOCUMENT])
 
     @override_settings(CLAIMS_LIVE_REVIEW_DEV_STUB='not_pass')
     def test_stubbed_not_pass_without_fixes_shows_one(self):
@@ -970,7 +1018,6 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         ):
             self.assertIn(FIX_TEXTS[fix], email.body)
             self.assertIn(FIX_TEXTS[fix], html)
-        self.assertNotIn(FIX_TEXTS[FIX_WORK_EMAIL], email.body)
         self.assertIn(link, email.body)
         self.assertIn(link.replace('&', '&amp;'), html)
         self.assertIn('The claim did not pass the automatic check.',
@@ -1070,7 +1117,7 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
     @override_settings(
         DEBUG=True,
         CLAIMS_LIVE_REVIEW_FUNCTION='',
-        CLAIMS_LIVE_REVIEW_DEV_STUB='not_pass:work_email',
+        CLAIMS_LIVE_REVIEW_DEV_STUB='not_pass:company_name_document',
     )
     def test_stubbed_not_pass_is_emailed_once(self):
         self.assertEqual(self.start()['status'], CHECKING)
@@ -1082,7 +1129,9 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
 
         self.assertEqual(state['status'], NOT_PASSED)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn(FIX_TEXTS[FIX_WORK_EMAIL], mail.outbox[0].body)
+        self.assertIn(
+            FIX_TEXTS[FIX_COMPANY_NAME_DOCUMENT], mail.outbox[0].body
+        )
 
     def test_one_check_is_emailed_at_most_once(self):
         self.start()
@@ -1175,7 +1224,7 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
     @override_settings(
         DEBUG=True,
         CLAIMS_LIVE_REVIEW_FUNCTION='',
-        CLAIMS_LIVE_REVIEW_DEV_STUB='late_not_pass:work_email',
+        CLAIMS_LIVE_REVIEW_DEV_STUB='late_not_pass:company_name_document',
     )
     def test_dev_stub_can_show_not_available_and_send_the_email(self):
         self.assertEqual(self.start()['status'], CHECKING)
@@ -1188,7 +1237,9 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertEqual(state['status'], UNAVAILABLE)
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, NOT_PASSED_SUBJECT)
-        self.assertIn(FIX_TEXTS[FIX_WORK_EMAIL], mail.outbox[0].body)
+        self.assertIn(
+            FIX_TEXTS[FIX_COMPANY_NAME_DOCUMENT], mail.outbox[0].body
+        )
         self.assertIn('localhost:6543/claimed/pending/', mail.outbox[0].body)
         self.trigger.assert_not_called()
 
@@ -1297,6 +1348,59 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertEqual(response.json()['status'], UNAVAILABLE)
         self.assertFalse(self.checks().exists())
         self.trigger.assert_not_called()
+
+    def test_result_for_an_older_check_does_not_answer_a_newer_one(self):
+        self.time_out_on_the_page()
+        first = self.checks().get()
+        self.claimant_edits()
+        self.assertEqual(self.start()['status'], CHECKING)
+        second = self.checks().exclude(pk=first.pk).get()
+
+        # The first check's review was still running and reports now,
+        # about the claim as it was before the edit.
+        self.pipeline_posts(review_block([CHECK_ADDRESS], check_id=first.id))
+
+        self.assertEqual(mail.outbox, [])
+        state = self.poll()
+        self.assertEqual(state['status'], CHECKING)
+        self.assertEqual(state['fixes'], [])
+        for check in (first, second):
+            check.refresh_from_db()
+            self.assertEqual(check.fixes, [])
+            self.assertIsNone(check.emailed_at)
+        self.assertEqual(first.status, UNAVAILABLE)
+        self.assertEqual(second.status, CHECKING)
+
+        # The second check's own review still answers it.
+        self.pipeline_posts(review_block([CHECK_NAME], check_id=second.id))
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(
+            FIX_TEXTS[FIX_COMPANY_NAME_DOCUMENT], mail.outbox[0].body
+        )
+        second.refresh_from_db()
+        self.assertEqual(second.status, NOT_PASSED)
+
+    def test_held_only_for_a_personal_email_emails_a_neutral_line(self):
+        self.claimant.email = 'claimant@gmail.com'
+        self.claimant.save()
+        self.login(self.claimant)
+        FacilityClaimAttachments.objects.create(
+            claim=self.claim,
+            file_name='badge.png',
+            claim_attachment='badge.png',
+        )
+        self.start()
+
+        self.pipeline_posts(review_block([CHECK_AFFILIATION]))
+
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(
+            'A person will review your claim, which can take much longer.',
+            mail.outbox[0].body,
+        )
+        self.assertNotIn('Fix this:', mail.outbox[0].body)
+        self.assertEqual(self.checks().get().status, UNAVAILABLE)
 
     def test_result_after_the_late_window_sends_nothing(self):
         self.time_out_on_the_page()

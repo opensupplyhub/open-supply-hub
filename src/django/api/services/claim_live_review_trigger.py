@@ -4,12 +4,14 @@ Asks the claims automation pipeline to review one claim now
 
 This is the only place the app reaches out to the pipeline, and it does
 one thing: an asynchronous invocation of the pipeline's Lambda function
-with the claim id. The call returns as soon as Lambda has accepted the
+with the claim id, the id of the check that asked and the settings that
+keep a live review short. The call returns as soon as Lambda has accepted the
 event; the review itself runs in the pipeline, which reads the claim
 and records its decision through the same API it always uses. Nothing
 comes back here. The live check learns the outcome from the claim.
 
-The function to call is named by CLAIMS_LIVE_REVIEW_FUNCTION. Every
+The function to call is named by CLAIMS_LIVE_REVIEW_FUNCTION, in the
+region named by CLAIMS_LIVE_REVIEW_REGION. Every
 failure is caught and reported as "not triggered": the caller tells the
 claimant the check is not available, and the claim, which is already
 saved, waits for a moderator.
@@ -37,19 +39,28 @@ TRIGGER_CLIENT_CONFIG = Config(
 ACCEPTED = 202
 
 
-def trigger_live_review(claim_id: int) -> bool:
+def trigger_live_review(claim_id: int, check_id: int) -> bool:
     '''
-    Ask the pipeline to review `claim_id` now. True when Lambda accepted
-    the request, False when the request failed for any reason. Never
-    raises.
+    Ask the pipeline to review `claim_id` now, for the live check
+    `check_id`, which the pipeline writes back in its review note. True
+    when Lambda accepted the request, False when the request failed for
+    any reason. Never raises.
     '''
     try:
         response = boto3.client(
-            'lambda', config=TRIGGER_CLIENT_CONFIG
+            'lambda',
+            region_name=settings.CLAIMS_LIVE_REVIEW_REGION,
+            config=TRIGGER_CLIENT_CONFIG,
         ).invoke(
             FunctionName=settings.CLAIMS_LIVE_REVIEW_FUNCTION,
             InvocationType='Event',
-            Payload=json.dumps({'claim_id': claim_id}).encode(),
+            Payload=json.dumps({
+                'claim_id': claim_id,
+                'check_id': check_id,
+                'parallel_llm_queries': True,
+                'parallel_attachments': True,
+                'skip_plot_refresh': True,
+            }).encode(),
         )
         status_code = response.get('StatusCode')
     except Exception:

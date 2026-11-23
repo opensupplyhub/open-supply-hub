@@ -25,7 +25,7 @@ checks are left: never a score, the model's words or a moderator's
 note.
 '''
 import logging
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Dict, List, Optional, Tuple
 
 from django.conf import settings
@@ -289,18 +289,33 @@ def _resolve_with_stub(
         _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
 
 
-def _review_since(claim: FacilityClaim, since: datetime) -> Optional[Dict]:
+def _for_another_check(review: Dict, check: FacilityClaimLiveCheck) -> bool:
     '''
-    The pipeline's newest review of the claim posted at or after
-    `since`, or None. Only notes written by the claims automation
-    account count, so nobody else can answer a check by posting a note
-    that looks like the pipeline's.
+    Whether the review answers a different check from `check`. The
+    pipeline writes the id of the check that asked for a review in its
+    note, so a review of an older version of the claim is never taken
+    for the answer to a newer check. A review that names no check (the
+    scheduled run) is for whichever check is waiting.
+    '''
+    check_id = review.get('check_id')
+    return check_id is not None and check_id != check.id
+
+
+def _review_since(
+    claim: FacilityClaim,
+    check: FacilityClaimLiveCheck,
+) -> Optional[Dict]:
+    '''
+    The pipeline's newest review of the claim posted since `check`
+    started and not asked for by another check, or None. Only notes
+    written by the claims automation account count, so nobody else can
+    answer a check by posting a note that looks like the pipeline's.
     '''
     notes = (
         FacilityClaimReviewNote.objects
         .filter(
             claim=claim,
-            created_at__gte=since,
+            created_at__gte=check.created_at,
             note__contains=AUTOMATED_REVIEW_MARKER,
         )
         .select_related('author')
@@ -310,7 +325,7 @@ def _review_since(claim: FacilityClaim, since: datetime) -> Optional[Dict]:
         if not is_claims_automation_account(note.author):
             continue
         review = read_automated_review(note.note)
-        if review is not None:
+        if review is not None and not _for_another_check(review, check):
             return review
     return None
 
@@ -353,7 +368,7 @@ def _resolve(
         _finish(check, FacilityClaimLiveCheckStatuses.UNAVAILABLE)
         return
 
-    review = _review_since(claim, check.created_at)
+    review = _review_since(claim, check)
     if (review is not None
             and review.get('decision') != REVIEW_DECISION_VALIDATED):
         fixes = _fixes_for(claim, review)
@@ -410,8 +425,10 @@ def record_live_check_review(
     could not be requested; and a check that started more than
     LATE_RESULT_WINDOW ago. Without the last two, a claimant could get
     a "did not pass" email days later from the pipeline's scheduled
-    run. The check row is locked for the decision, so two notes
-    arriving at once cannot both settle it.
+    run. A review that an older check asked for is left alone too: it
+    is about the claim as it was before the claimant's edit. The check
+    row is locked for the decision, so two notes arriving at once
+    cannot both settle it.
 
     A pass sends nothing from here, because the approval that follows
     sends the usual approval email.
@@ -433,6 +450,8 @@ def record_live_check_review(
         with transaction.atomic():
             check = _latest_check(claim, lock=True)
             if check is None or check.emailed_at is not None:
+                return
+            if _for_another_check(review, check):
                 return
             waiting = check.status == FacilityClaimLiveCheckStatuses.CHECKING
             gave_up = (
@@ -514,7 +533,7 @@ def request_review(
     check ends UNAVAILABLE and is marked as never requested, so nothing
     about it is ever emailed.
     '''
-    if not trigger_live_review(claim.id):
+    if not trigger_live_review(claim.id, check.id):
         check.status = FacilityClaimLiveCheckStatuses.UNAVAILABLE
         check.review_requested = False
         check.save(
