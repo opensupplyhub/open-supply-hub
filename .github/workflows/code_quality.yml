@@ -151,10 +151,25 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
+      # The base branch's coverage depends only on its commit, so it is
+      # cached by SHA. base_coverage.yml warms the cache on every push
+      # to a base branch; a miss (new base push racing this job, or an
+      # evicted entry) falls back to running the suite here.
+      - name: Get base commit SHA
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Restore cached base coverage
+        id: cov-cache
+        uses: actions/cache@v4
+        with:
+          path: ./src/react/coverage/lcov.info
+          key: base-fe-jest-cov-${{ steps.base.outputs.sha }}
       - name: Create required env file
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Run the Jest tests and generate code cov report
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: docker compose run --rm --no-deps react yarn test
       - name: Upload Jest code cov for the base branch
         uses: actions/upload-artifact@v4
@@ -216,12 +231,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
+      - name: Get base commit SHA
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Restore cached base coverage
+        id: cov-cache
+        uses: actions/cache@v4
+        with:
+          path: ./src/django/coverage/django/coverage.lcov
+          key: base-django-unittest-cov-${{ steps.base.outputs.sha }}
       - name: Create required env file
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: docker compose build
       - name: Run the unittest tests and generate code cov report
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           docker compose \
             run --rm --entrypoint /bin/sh django \
@@ -295,12 +322,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
+      - name: Get base commit SHA
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Restore cached base coverage
+        id: cov-cache
+        uses: actions/cache@v4
+        with:
+          path: ./src/django/coverage/countries/coverage.lcov
+          key: base-countries-unittest-cov-${{ steps.base.outputs.sha }}
       - name: Create required env file
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: docker compose build
       - name: Run the unittest tests and generate code cov report
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           docker compose \
               run --rm --entrypoint /bin/sh django \
@@ -374,12 +413,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
+      - name: Get base commit SHA
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Restore cached base coverage
+        id: cov-cache
+        uses: actions/cache@v4
+        with:
+          path: ./src/django/coverage/contricleaner/coverage.lcov
+          key: base-contricleaner-unittest-cov-${{ steps.base.outputs.sha }}
       - name: Create required env file
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Django image
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: docker compose build
       - name: Run the unittest tests and generate code cov report
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           docker compose \
               run --rm --entrypoint /bin/sh django \
@@ -453,12 +504,24 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
+      - name: Get base commit SHA
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Restore cached base coverage
+        id: cov-cache
+        uses: actions/cache@v4
+        with:
+          path: ./src/dedupe-hub/api/coverage/coverage.lcov
+          key: base-dd-unittest-cov-${{ steps.base.outputs.sha }}
       - name: Create required env file
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
       - name: Build Dedupe Hub image
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: docker compose build
       - name: Run the unittest tests and generate code cov report
+        if: steps.cov-cache.outputs.cache-hit != 'true'
         run: |
           docker compose \
               run --rm --entrypoint /bin/sh api-app \
@@ -610,11 +673,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Run the shellcheck linter on deployment scripts
-        # Ratchet: the deployment scripts predate linting and carry
-        # info/style findings (mostly unquoted expansions), so they are
-        # gated at error severity for now. Tighten to --severity=warning
-        # once the backlog is fixed; never loosen.
-        run: find deployment -maxdepth 1 -type f -not -name '*.tf' -exec shellcheck --severity=error {} +
+        run: find deployment -maxdepth 1 -type f -not -name '*.tf' -exec shellcheck {} +
       - name: Run the shellcheck linter on ops tool scripts
         run: find src/kafka-tools src/anon-tools -type f -name '*.sh' -exec shellcheck --severity=warning {} +
       - name: Check deployment scripts are executable
