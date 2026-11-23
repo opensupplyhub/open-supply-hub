@@ -31,7 +31,7 @@ resource "aws_opensearch_domain" "opensearch" {
   advanced_security_options {
     enabled = true
     master_user_options {
-     master_user_arn = aws_iam_role.app_task_role.arn
+      master_user_arn = aws_iam_role.app_task_role.arn
     }
   }
 
@@ -69,7 +69,7 @@ resource "aws_opensearch_domain" "opensearch" {
   }
 
   vpc_options {
-    subnet_ids         = module.vpc.private_subnet_ids
+    subnet_ids = module.vpc.private_subnet_ids
 
     security_group_ids = [aws_security_group.opensearch.id]
   }

@@ -1,6 +1,6 @@
 locals {
   default_tags = {
-    Project = var.project
+    Project     = var.project
     Environment = var.environment
   }
 }
