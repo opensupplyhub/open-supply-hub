@@ -31,7 +31,6 @@ CHECKS = (
 
 # The preset fixes, in the order they are shown. The first one is the
 # field the claimant is taken to when they choose to go back.
-FIX_WORK_EMAIL = 'work_email'
 FIX_UPLOAD_DOCUMENT = 'upload_document'
 FIX_UNREADABLE_DOCUMENT = 'unreadable_document'
 FIX_NAME_AND_COMPANY_DOCUMENT = 'name_and_company_document'
@@ -39,7 +38,6 @@ FIX_COMPANY_NAME_DOCUMENT = 'company_name_document'
 FIX_COMPANY_ADDRESS_DOCUMENT = 'company_address_document'
 
 FIXES = (
-    FIX_WORK_EMAIL,
     FIX_UPLOAD_DOCUMENT,
     FIX_UNREADABLE_DOCUMENT,
     FIX_NAME_AND_COMPANY_DOCUMENT,
@@ -53,7 +51,6 @@ MAX_FIXES = 5
 # form shows (ClaimLiveCheck/constants.js). Kept here as well because
 # the result can also reach the claimant by email.
 FIX_TEXTS = {
-    FIX_WORK_EMAIL: 'Use a work email, not a personal email.',
     FIX_UPLOAD_DOCUMENT: (
         'Upload a document. Claims with a document are approved fastest.'
     ),
@@ -177,11 +174,10 @@ def fixes_for_review(
         return []
 
     chosen = set()
-    if CHECK_AFFILIATION in failed:
-        chosen.add(
-            FIX_WORK_EMAIL if is_free_mail(claimant_email)
-            else FIX_NAME_AND_COMPANY_DOCUMENT
-        )
+    # A personal email address has no fix yet: the claimant cannot
+    # change the account's email where they edit the claim.
+    if CHECK_AFFILIATION in failed and not is_free_mail(claimant_email):
+        chosen.add(FIX_NAME_AND_COMPANY_DOCUMENT)
     if CHECK_MANAGER in failed:
         chosen.add(FIX_NAME_AND_COMPANY_DOCUMENT)
     if CHECK_NAME in failed:

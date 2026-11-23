@@ -86,6 +86,10 @@ DEBUG = (ENVIRONMENT == 'Local')
 # Empty (the default) means the live check is not configured: nothing
 # is called and the claimant is told the check is not available.
 CLAIMS_LIVE_REVIEW_FUNCTION = os.getenv('CLAIMS_LIVE_REVIEW_FUNCTION', '')
+# The region that function runs in, which is not the app's own.
+CLAIMS_LIVE_REVIEW_REGION = os.getenv(
+    'CLAIMS_LIVE_REVIEW_REGION', 'us-east-1'
+)
 # Local development only: fake the live check's answer (`pass`,
 # `timeout`, `not_pass:<fix>,<fix>` or `late_not_pass:<fix>,<fix>`).
 # Honoured only when DEBUG is on, see claim_live_check_service.
