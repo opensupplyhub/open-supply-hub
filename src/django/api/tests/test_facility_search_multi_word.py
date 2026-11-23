@@ -90,6 +90,15 @@ class FacilitySearchMultiWordTest(TestCase):
             ["Interloop Limited (Hosiery Division I)"],
         )
 
+    def test_reversed_word_order_matches_the_same_name(self):
+        # Every other positive case happens to keep the words in the
+        # order the name has them, so an order-dependent implementation
+        # could pass this suite. This one cannot be matched in order.
+        self.assert_search(
+            "Hosiery Interloop",
+            ["Interloop Limited (Hosiery Division I)"],
+        )
+
     def test_words_match_with_text_between_them(self):
         self.assert_search(
             "Interloop Apparel",
@@ -164,6 +173,12 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
     def test_words_match_out_of_order(self):
         self.assert_search(
             "Texport Syndicate b3f",
+            ["DIR TEXPORT SYNDICATEB3F INDIA"],
+        )
+
+    def test_reversed_word_order_matches_the_same_name(self):
+        self.assert_search(
+            "b3f Texport",
             ["DIR TEXPORT SYNDICATEB3F INDIA"],
         )
 
