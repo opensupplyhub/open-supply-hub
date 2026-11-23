@@ -1,0 +1,28 @@
+# Gitleaks configuration for the pre-submit secret scan (code_quality.yml).
+#
+# Extends the default ruleset with an allowlist for the repository's known
+# false positives. Keep every entry here narrow: allowlist the exact string
+# or pattern, never a whole directory, so a real credential in the same
+# file is still caught.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known false positives"
+regexTarget = "line"
+regexes = [
+    # Django migration dependency tuples: ('api', '0144_some_migration')
+    # match the generic-api-key rule because 'api' is followed by a long
+    # token-like string.
+    '''\(\s*'[a-z_]+',\s*'\d{4}_[a-zA-Z0-9_]+'\s*\)''',
+    # Development fixture API tokens created by `reset_database` and read
+    # by docker-compose.tests.yml. They only exist in local fixture
+    # databases and are deliberately committed.
+    '''1d18b962d6f976b0b7e8fcf9fcc39b56cf278051''',
+    '''4c2e09b7a3f81e6c9d723f0ebdac15a47f1cb3da''',
+    # Placeholder AWS query credentials in test fixtures.
+    '''AWSAccessKeyId=TEST''',
+    # Filenames assigned to *_KEY variables (S3 object keys in fixtures).
+    '''= "[A-Za-z0-9_\-]+\.(csv|xlsx|json)"''',
+]

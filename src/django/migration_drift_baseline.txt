@@ -1,0 +1,46 @@
+    - Delete model FacilityField
+    - Delete model FacilityListItemField
+    - Remove field facility from facilityfield
+    - Remove field facility_list_item from facilitylistitemfield
+    ~ Alter field available_in_api on partnerfield
+    ~ Alter field custom_text_search on facilityindex
+    ~ Alter field energy_animal_waste on facilityclaim
+    ~ Alter field energy_animal_waste on historicalfacilityclaim
+    ~ Alter field energy_biomass on facilityclaim
+    ~ Alter field energy_biomass on historicalfacilityclaim
+    ~ Alter field energy_charcoal on facilityclaim
+    ~ Alter field energy_charcoal on historicalfacilityclaim
+    ~ Alter field energy_coal on facilityclaim
+    ~ Alter field energy_coal on historicalfacilityclaim
+    ~ Alter field energy_diesel on facilityclaim
+    ~ Alter field energy_diesel on historicalfacilityclaim
+    ~ Alter field energy_electricity on facilityclaim
+    ~ Alter field energy_electricity on historicalfacilityclaim
+    ~ Alter field energy_kerosene on facilityclaim
+    ~ Alter field energy_kerosene on historicalfacilityclaim
+    ~ Alter field energy_natural_gas on facilityclaim
+    ~ Alter field energy_natural_gas on historicalfacilityclaim
+    ~ Alter field energy_other on facilityclaim
+    ~ Alter field energy_other on historicalfacilityclaim
+    ~ Alter field estimated_annual_throughput on facilityclaim
+    ~ Alter field estimated_annual_throughput on historicalfacilityclaim
+    ~ Alter field facility_id on facilitylistitemtemp
+    ~ Alter field facility_id on facilitymatchtemp
+    ~ Alter field facility_id on historicalfacilitymatchtemp
+    ~ Alter field field_name on extendedfield
+    ~ Alter field field_name on historicalextendedfield
+    ~ Alter field geoid on uscountytigerline
+    ~ Alter field id on facilitylistitemtemp
+    ~ Alter field id on facilitymatchtemp
+    ~ Alter field name on partnerfield
+    ~ Alter field opening_date on facilityclaim
+    ~ Alter field opening_date on historicalfacilityclaim
+    ~ Alter field period_limit on apilimit
+    ~ Alter field period_limit on historicalapilimit
+    ~ Alter field recipient_email on facilityclaiminvite
+    ~ Alter field uuid on partnerfield
+    ~ Alter unique_together for facilityfield (0 constraint(s))
+    ~ Alter unique_together for facilitylistitemfield (0 constraint(s))
+    ~ Change Meta options on partnerfield
+    ~ Change Meta options on wageindicatorlinktextconfig
+    ~ Rename index api_facilit_contrib_aa2da9_gin on facilityindex to api_facilit_contrib_8924ea_gin

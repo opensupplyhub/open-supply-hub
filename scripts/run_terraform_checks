@@ -1,0 +1,33 @@
+#!/bin/bash
+# Terraform checks mirroring the run-terraform-checks job in
+# code_quality.yml: formatting across the deployment tree, then
+# `terraform validate` on the root module.
+#
+# The Lambda zips referenced by filebase64sha256() are built at deploy
+# time and absent from a fresh checkout, so empty placeholders are
+# created for validate (which only hashes the files) and removed after.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+terraform fmt -check -recursive deployment
+
+placeholders=()
+cleanup() {
+    if [ "${#placeholders[@]}" -gt 0 ]; then
+        rm -f "${placeholders[@]}"
+    fi
+}
+trap cleanup EXIT
+
+for dir in deployment/terraform/lambda-functions/*/; do
+    zip="${dir}$(basename "$dir").zip"
+    if [ ! -f "$zip" ]; then
+        touch "$zip"
+        placeholders+=("$zip")
+    fi
+done
+
+terraform -chdir=deployment/terraform init -backend=false -input=false > /dev/null
+terraform -chdir=deployment/terraform validate

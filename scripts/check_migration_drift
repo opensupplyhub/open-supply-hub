@@ -1,0 +1,41 @@
+#!/bin/bash
+# Fail when Django model state and migrations have drifted further apart
+# than the recorded baseline.
+#
+# `manage.py makemigrations --check` cannot be enabled directly: main
+# already carries years of accumulated drift (46 pending changes,
+# captured in src/django/migration_drift_baseline.txt). This script
+# ratchets instead: a PR that introduces a NEW model change without its
+# migration fails, while the recorded drift is tolerated until it is
+# burned down. When drift is resolved, regenerate the baseline with
+# fewer lines; never add lines to it.
+#
+# Runs the same `docker compose` Django image as the other code-quality
+# checks, so it works locally and in CI.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+baseline="src/django/migration_drift_baseline.txt"
+current="$(mktemp)"
+trap 'rm -f "$current"' EXIT
+
+docker compose run --rm --no-deps --entrypoint python django \
+    manage.py makemigrations --dry-run --no-color 2>/dev/null \
+    | grep -E '^ +[~+-] ' | sort > "$current" || true
+
+if diff -u "$baseline" "$current" > /dev/null; then
+    echo "check_migration_drift: model state matches the recorded baseline."
+    exit 0
+fi
+
+echo "check_migration_drift: model/migration drift changed." >&2
+echo >&2
+echo "Lines added below mean a model change without a migration:" >&2
+echo "run 'python manage.py makemigrations', review the result, and" >&2
+echo "commit it. Lines removed mean drift was resolved: shrink" >&2
+echo "$baseline to match (never add lines to it)." >&2
+echo >&2
+diff -u "$baseline" "$current" >&2 || true
+exit 1

@@ -25,6 +25,11 @@ jobs:
       contribot: ${{ steps.filter.outputs.contribot == 'true' || steps.filter.outputs.critical == 'true' }}
       integration: ${{ steps.filter.outputs.integration == 'true' || steps.filter.outputs.critical == 'true' }}
       scripts: ${{ steps.filter.outputs.scripts == 'true' || steps.filter.outputs.critical == 'true' }}
+      terraform: ${{ steps.filter.outputs.terraform == 'true' || steps.filter.outputs.critical == 'true' }}
+      workflows: ${{ steps.filter.outputs.workflows == 'true' || steps.filter.outputs.critical == 'true' }}
+      ops_scripts: ${{ steps.filter.outputs.ops_scripts == 'true' || steps.filter.outputs.critical == 'true' }}
+      django_models: ${{ steps.filter.outputs.django_models == 'true' || steps.filter.outputs.critical == 'true' }}
+      django_migrations: ${{ steps.filter.outputs.django_migrations == 'true' || steps.filter.outputs.critical == 'true' }}
     steps:
       - name: Filter changed paths
         uses: dorny/paths-filter@v4
@@ -85,6 +90,19 @@ jobs:
               - 'scripts/manage'
             scripts:
               - 'scripts/**'
+            terraform:
+              - 'deployment/**/*.tf'
+              - 'deployment/**/*.tfvars'
+            workflows:
+              - '.github/workflows/**'
+            ops_scripts:
+              - 'deployment/*'
+              - 'src/kafka-tools/**'
+              - 'src/anon-tools/**'
+            django_models:
+              - 'src/django/**'
+            django_migrations:
+              - 'src/django/*/migrations/**'
 
       - name: Path filter results
         env:
@@ -99,6 +117,11 @@ jobs:
           CONTRIBOT: ${{ steps.filter.outputs.contribot }}
           INTEGRATION: ${{ steps.filter.outputs.integration }}
           SCRIPTS: ${{ steps.filter.outputs.scripts }}
+          TERRAFORM: ${{ steps.filter.outputs.terraform }}
+          WORKFLOWS: ${{ steps.filter.outputs.workflows }}
+          OPS_SCRIPTS: ${{ steps.filter.outputs.ops_scripts }}
+          DJANGO_MODELS: ${{ steps.filter.outputs.django_models }}
+          DJANGO_MIGRATIONS: ${{ steps.filter.outputs.django_migrations }}
         run: |
           echo "critical=${CRITICAL}"
           echo "frontend=${FRONTEND}"
@@ -111,6 +134,11 @@ jobs:
           echo "contribot=${CONTRIBOT}"
           echo "integration=${INTEGRATION}"
           echo "scripts=${SCRIPTS}"
+          echo "terraform=${TERRAFORM}"
+          echo "workflows=${WORKFLOWS}"
+          echo "ops_scripts=${OPS_SCRIPTS}"
+          echo "django_models=${DJANGO_MODELS}"
+          echo "django_migrations=${DJANGO_MIGRATIONS}"
 
   # code quality for the frontend
   get-base-branch-fe-cov:
@@ -559,7 +587,141 @@ jobs:
         # subdirectory exists under scripts/, which has nothing to do with
         # the shell scripts being linted. Coverage is unchanged - every
         # script directly in scripts/ is still checked.
-        run: find scripts -maxdepth 1 -type f -exec shellcheck {} +
+        run: find scripts -maxdepth 1 -type f -not -name '*.py' -exec shellcheck {} +
+      - name: Run the shellcheck linter on script subdirectories
+        run: find scripts -mindepth 2 -type f -name '*.sh' -exec shellcheck {} +
+      - name: Check scripts are executable
+        # A script committed without the executable bit fails with
+        # "Permission denied" the first time something invokes it
+        # directly instead of via `bash ./...` (#1221).
+        run: |
+          missing="$(find scripts -maxdepth 1 -type f ! -perm -u=x)"
+          if [ -n "$missing" ]; then
+            echo "These scripts are not executable (chmod +x and recommit):"
+            echo "$missing"
+            exit 1
+          fi
+
+  run-ops-script-linter:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.ops_scripts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run the shellcheck linter on deployment scripts
+        # Ratchet: the deployment scripts predate linting and carry
+        # info/style findings (mostly unquoted expansions), so they are
+        # gated at error severity for now. Tighten to --severity=warning
+        # once the backlog is fixed; never loosen.
+        run: find deployment -maxdepth 1 -type f -not -name '*.tf' -exec shellcheck --severity=error {} +
+      - name: Run the shellcheck linter on ops tool scripts
+        run: find src/kafka-tools src/anon-tools -type f -name '*.sh' -exec shellcheck --severity=warning {} +
+      - name: Check deployment scripts are executable
+        run: |
+          missing="$(find deployment -maxdepth 1 -type f -not -name '*.tf' ! -perm -u=x)"
+          if [ -n "$missing" ]; then
+            echo "These scripts are not executable (chmod +x and recommit):"
+            echo "$missing"
+            exit 1
+          fi
+
+  run-terraform-checks:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          # Must match the version deploy_to_aws.yml runs.
+          terraform_version: 1.13.3
+      - name: Run terraform fmt -check and validate
+        run: scripts/run_terraform_checks
+
+  run-workflow-linter:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run actionlint
+        # -shellcheck= disables the embedded shellcheck pass: the older
+        # workflows carry info-level quoting findings that would drown
+        # the syntax/expression/action-version checks this job is for.
+        run: docker run --rm -v "${PWD}:/repo" -w /repo rhysd/actionlint:1.7.8 -color -shellcheck=
+
+  run-secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run gitleaks
+        # Scans the working tree on every PR regardless of the paths
+        # changed. Known false positives are allowlisted in
+        # .gitleaks.toml; see the public repository hygiene section of
+        # AGENTS.md for what must never be committed.
+        run: |
+          docker run --rm -v "${PWD}:/repo" zricethezav/gitleaks:v8.30.1 \
+              detect --source /repo --no-git --redact --config /repo/.gitleaks.toml
+
+  run-migration-linter:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.django_migrations == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Lint new migrations for lock timeouts
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          mapfile -t added < <(git diff --name-only --diff-filter=A \
+              "origin/${BASE_REF}...HEAD" -- 'src/django/*/migrations/*.py')
+          if [ "${#added[@]}" -eq 0 ]; then
+            echo "No new migration files."
+            exit 0
+          fi
+          scripts/lint_migrations.py "${added[@]}"
+
+  check-migration-drift:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.django_models == 'true'
+    environment: Quality Environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Create required env file
+        run: |
+          echo '${{ secrets.CODE_QUALITY_ENV_FILE }}' > .env
+      - name: Build Django image
+        run: docker compose build
+      - name: Check model state against the migration drift baseline
+        run: scripts/check_migration_drift
+
+  run-contribot-type-check:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.contribot == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install ContriBot dependencies and pyright
+        run: |
+          pip install --require-hashes --only-binary=:all: -r src/contribot/requirements-dev.txt
+          pip install pyright==1.1.414
+      - name: Run pyright with the error-count ratchet
+        run: scripts/check_contribot_types
 
   run-flake8-linter:
     needs: detect-changes
@@ -596,7 +758,11 @@ jobs:
         run: yarn install --frozen-lockfile --ignore-scripts
       - name: Run the ESLint linter check
         working-directory: src/react
-        run: ./node_modules/.bin/eslint src/ --ext .js --ext .jsx
+        # Ratchet: the tree carries 49 react-hooks/exhaustive-deps
+        # warnings, which never failed the build before this cap. New
+        # warnings now fail. Lower the cap as warnings are fixed; never
+        # raise it.
+        run: ./node_modules/.bin/eslint src/ --ext .js --ext .jsx --max-warnings 49
       - name: Run the Prettier formatting check
         working-directory: src/react
         run: |
