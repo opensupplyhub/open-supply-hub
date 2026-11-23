@@ -135,10 +135,26 @@ class FacilitySearchMultiWordTest(TestCase):
     def test_blank_query_does_not_error(self):
         self.assertEqual([], self.search("   "))
 
-    def test_misspelling_still_returns_nothing(self):
-        # Tokenization is not fuzziness. Typo tolerance needs OpenSearch or
-        # a trigram index; this records the current boundary.
-        self.assert_search("Interlop", [])
+    def test_misspelling_falls_back_to_close_matches(self):
+        # When the typed words match nothing exactly, the search retries
+        # with strict word similarity on the trigram index (OSDEV-3906).
+        self.assert_search(
+            "Interlop",
+            [
+                "Interloop Limited (Hosiery Division I)",
+                "Interloop Limited Apparel Park",
+            ],
+        )
+
+    def test_gibberish_still_returns_nothing(self):
+        # The fallback is similarity, not surrender: a query resembling
+        # no name finds nothing.
+        self.assert_search("zzxqwv", [])
+
+    def test_short_misspelling_is_not_rescued(self):
+        # Tokens below FUZZY_MIN_TOKEN_LENGTH carry too few trigrams to
+        # score, so a purely short query never takes the fallback.
+        self.assert_search("Il", [])
 
     def test_deprecated_name_param_matches_per_word_too(self):
         # `name` is deprecated in favor of `q`, but both are public, so the
@@ -221,11 +237,29 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
     def test_every_word_must_match(self):
         self.assert_search("Texport Syndicate 16", [])
 
-    def test_misspelling_still_returns_nothing(self):
-        # The reported "Texoport" typo. Records the current boundary:
-        # typo tolerance needs similarity() on the OSDEV-3793 index or the
-        # OpenSearch endpoint (OSDEV-1575).
-        self.assert_search("Texoport", [])
+    def test_misspelling_falls_back_to_close_matches(self):
+        # The programs team's reported "Texoport" typo now finds the
+        # Texport facilities (strict_word_similarity 0.545 at the 0.5
+        # default threshold). "Texsport B.V." sits exactly at 0.5 and is
+        # included: it is one letter from the typo too, and the fallback
+        # cannot know which real name the user meant. See OSDEV-3906.
+        self.assert_search(
+            "Texoport",
+            [
+                "DIR TEXPORT SYNDICATEB3F INDIA",
+                "Texport Industries Private Limited [Unit - 6]",
+                "Texport Industries Pvt. Ltd. (Unit 16)",
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+                "Texport Overseas Pvt Ltd - IV",
+                "Texport Syndicate (I) Ltd., Unit-2",
+                "Texsport B.V.",
+            ],
+        )
+
+    def test_exact_match_suppresses_the_fallback(self):
+        # "Texsport" matches a name exactly, so no fuzzy neighbors are
+        # added: the user who typed a real name gets exactly that name.
+        self.assert_search("Texsport", ["Texsport B.V."])
 
     def test_roman_unit_number_finds_the_arabic_spelling(self):
         # "IV" as typed still matches by substring ("Private" contains
