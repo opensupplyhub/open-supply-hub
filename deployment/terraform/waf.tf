@@ -77,9 +77,11 @@ locals {
   }
   # Both rules count every request whose path starts with /api/ per
   # source IP, over var.waf_rate_limit_evaluation_window_sec.
-  # ApiRateLimitAnonPerIp only counts requests without an API token
-  # ("Authorization: Token ..."): the web app, browser sessions and
-  # scripts using the web client path.
+  # ApiRateLimitAnonPerIp only counts anonymous requests: no API token
+  # ("Authorization: Token ...") and no Django login session (sessionid
+  # cookie). That is the web app used without logging in and scripts using
+  # the web client path. Logged-in users are limited per user by Django and
+  # still count toward ApiRateLimitPerIp (OSDEV-3614).
   rate_limit_rules = {
     "ApiRateLimitPerIp" = {
       priority          = 20
@@ -333,6 +335,30 @@ resource "aws_wafv2_web_acl" "web_acl" {
                         text_transformation {
                           priority = 0
                           type     = "LOWERCASE"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              # Anonymous rule only: no Django session cookie (logged-in user)
+              dynamic "statement" {
+                for_each = rule.value.only_without_auth ? [1] : []
+                content {
+                  not_statement {
+                    statement {
+                      byte_match_statement {
+                        search_string         = "sessionid="
+                        positional_constraint = "CONTAINS"
+                        field_to_match {
+                          single_header {
+                            name = "cookie"
+                          }
+                        }
+                        text_transformation {
+                          priority = 0
+                          type     = "NONE"
                         }
                       }
                     }
