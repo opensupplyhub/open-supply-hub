@@ -79,6 +79,8 @@ def build_name_token_filter(text):
         else 'name__unaccent__icontains'
     )
 
+    has_unit_token = any(token.lower() == 'unit' for token in tokens)
+
     name_filter = Q()
     for token in tokens:
         token_filter = Q(**{lookup: token})
@@ -93,6 +95,16 @@ def build_name_token_filter(text):
                 token_filter |= Q(
                     name__iregex=r'\m{}\M'.format(counterpart)
                 )
+        elif token == '1' and has_unit_token:
+            # 1 has no general roman twin: standalone "I" is the India
+            # marker in thousands of names ("Texport Syndicate (I) Ltd").
+            # But 62 production names write unit one as "Unit I", so when
+            # the query says "unit 1" the added branch matches an I only
+            # directly after "unit" in the name, which the India marker
+            # never is. See OSDEV-3907.
+            token_filter |= Q(
+                name__iregex=r'\munit[^a-z0-9]{0,4}i\M'
+            )
         name_filter &= token_filter
     return name_filter
 

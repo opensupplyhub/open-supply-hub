@@ -166,6 +166,8 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
         "Texport Overseas Pvt Ltd - IV",
         "DIR TEXPORT SYNDICATEB3F INDIA",
         "Texsport B.V.",
+        "Brandix Apparel India (Pvt) Ltd - Unit I",
+        "Texport Syndicate (I) Ltd., Unit-2",
     )
 
     # The inherited tests assert against the Interloop/Shahi fixtures, so
@@ -206,6 +208,7 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
                 "Texport Industries Pvt. Ltd. (Unit 16)",
                 "Texport Industries Pvt. Ltd. (Unit 4)",
                 "Texport Overseas Pvt Ltd - IV",
+                "Texport Syndicate (I) Ltd., Unit-2",
             ],
         )
 
@@ -247,10 +250,20 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
             ],
         )
 
-    def test_one_is_never_expanded(self):
-        # 1/I is deliberately not treated as a numeral pair: a '%I%'
-        # substring matches nearly every name. '%1%' matches only Unit 16
-        # here, and no roman branch is added.
+    def test_unit_one_as_roman_is_found_by_a_digit_query(self):
+        # 62 production names write unit one as "Unit I". When the query
+        # says "unit 1", the carve-out matches an I directly after "unit"
+        # in the name — and nothing else.
+        self.assert_search(
+            "Brandix Unit 1",
+            ["Brandix Apparel India (Pvt) Ltd - Unit I"],
+        )
+
+    def test_the_india_marker_is_not_a_unit_number(self):
+        # 1/I has no general expansion: standalone "I" is the India marker
+        # in thousands of names. "Texport Syndicate (I) Ltd., Unit-2" must
+        # not match a unit-1 query — its I follows "Syndicate", not
+        # "unit". '%1%' matches only Unit 16 here.
         self.assert_search(
             "Texport Unit 1",
             ["Texport Industries Pvt. Ltd. (Unit 16)"],
