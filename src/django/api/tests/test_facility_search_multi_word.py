@@ -163,6 +163,7 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
         "Texport Industries Pvt. Ltd. (Unit 16)",
         "Texport Industries Pvt. Ltd. (Unit 4)",
         "Texport Industries Private Limited [Unit - 6]",
+        "Texport Overseas Pvt Ltd - IV",
         "DIR TEXPORT SYNDICATEB3F INDIA",
         "Texsport B.V.",
     )
@@ -204,6 +205,7 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
                 "Texport Industries Private Limited [Unit - 6]",
                 "Texport Industries Pvt. Ltd. (Unit 16)",
                 "Texport Industries Pvt. Ltd. (Unit 4)",
+                "Texport Overseas Pvt Ltd - IV",
             ],
         )
 
@@ -222,14 +224,36 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
         # OpenSearch endpoint (OSDEV-1575).
         self.assert_search("Texoport", [])
 
-    def test_roman_numerals_match_only_by_substring_accident(self):
-        # "Texport Unit IV" finds the [Unit - 6] name because "Private"
-        # contains "iv" — not because IV is read as 4. Records the current
-        # boundary: numeral equivalence is not implemented, so the user
-        # still sees some Texport facilities rather than none.
+    def test_roman_unit_number_finds_the_arabic_spelling(self):
+        # "IV" as typed still matches by substring ("Private" contains
+        # "iv"); the expansion adds the arabic counterpart, so the Unit 4
+        # facility the user is after is now in the results (OSDEV-3907).
         self.assert_search(
             "Texport Unit IV",
-            ["Texport Industries Private Limited [Unit - 6]"],
+            [
+                "Texport Industries Private Limited [Unit - 6]",
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+            ],
+        )
+
+    def test_arabic_unit_number_finds_the_roman_spelling(self):
+        # The added roman branch matches whole words only, so "4" reaches
+        # "- IV" without also matching the "iv" inside "Private".
+        self.assert_search(
+            "Texport 4",
+            [
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+                "Texport Overseas Pvt Ltd - IV",
+            ],
+        )
+
+    def test_one_is_never_expanded(self):
+        # 1/I is deliberately not treated as a numeral pair: a '%I%'
+        # substring matches nearly every name. '%1%' matches only Unit 16
+        # here, and no roman branch is added.
+        self.assert_search(
+            "Texport Unit 1",
+            ["Texport Industries Pvt. Ltd. (Unit 16)"],
         )
 
     def test_deprecated_name_param_matches_per_word_too(self):

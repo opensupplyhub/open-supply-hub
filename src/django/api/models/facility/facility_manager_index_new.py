@@ -20,6 +20,26 @@ from api.services.facility_processing_filter import FacilityProcessingFilter
 from api.services.facility_processing_query import FacilityProcessingQuery
 
 
+# Unit numbers are written both ways in facility names, so a numeral
+# token matches either spelling. 1/I is deliberately absent: a '%I%'
+# substring matches nearly every name. See OSDEV-3907.
+ARABIC_TO_ROMAN = {
+    '2': 'II', '3': 'III', '4': 'IV', '5': 'V', '6': 'VI', '7': 'VII',
+    '8': 'VIII', '9': 'IX', '10': 'X', '11': 'XI', '12': 'XII',
+    '13': 'XIII', '14': 'XIV', '15': 'XV', '16': 'XVI', '17': 'XVII',
+    '18': 'XVIII', '19': 'XIX', '20': 'XX',
+}
+ROMAN_TO_ARABIC = {
+    roman: arabic for arabic, roman in ARABIC_TO_ROMAN.items()
+}
+
+
+def numeral_counterpart(token):
+    """The other spelling of a unit number, or None."""
+    upper = token.upper()
+    return ARABIC_TO_ROMAN.get(upper) or ROMAN_TO_ARABIC.get(upper)
+
+
 def build_name_token_filter(text):
     """
     Match every whitespace-separated word in ``text`` against ``name``.
@@ -32,6 +52,9 @@ def build_name_token_filter(text):
     ``__unaccent`` so the predicate matches the trigram index of 0269; the
     two spell the same comparison, but only this one can be indexed
     (OSDEV-3793).
+
+    A numeral token matches its roman or arabic counterpart as well, so
+    "Unit IV" finds "Unit 4" and vice versa (OSDEV-3907).
     """
     tokens = text.split()
     if not tokens:
@@ -58,7 +81,19 @@ def build_name_token_filter(text):
 
     name_filter = Q()
     for token in tokens:
-        name_filter &= Q(**{lookup: token})
+        token_filter = Q(**{lookup: token})
+        counterpart = numeral_counterpart(token)
+        if counterpart is not None:
+            if counterpart.isdigit():
+                token_filter |= Q(**{lookup: counterpart})
+            else:
+                # A roman counterpart appears inside ordinary words ("IV"
+                # in "Private"), so the added branch matches whole words
+                # only. The typed token keeps its substring semantics.
+                token_filter |= Q(
+                    name__iregex=r'\m{}\M'.format(counterpart)
+                )
+        name_filter &= token_filter
     return name_filter
 
 
