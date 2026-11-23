@@ -114,6 +114,11 @@ LIST_CLEANING_RESULTS_BUCKET_OWNER = os.getenv(
 # would otherwise be sent to AWS. Leave unset in deployed environments,
 # where the task role is used.
 LIST_CLEANING_AWS_PROFILE = os.getenv('LIST_CLEANING_AWS_PROFILE') or None
+# A role in the stack's account for an environment whose task role is in
+# another account: Step Functions cannot grant StartExecution across
+# accounts, so the app assumes this role for its Step Functions and S3
+# calls. Empty when the stack and the app share an account.
+LIST_CLEANING_ROLE_ARN = os.getenv('LIST_CLEANING_ROLE_ARN', '')
 # How long after upload a contributor may submit changes from the review
 # screen before the list goes through as uploaded.
 LIST_CLEANING_REVIEW_MINUTES = int(
