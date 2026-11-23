@@ -15,8 +15,8 @@ import {
 
 describe('makeFixLink', () => {
     test('carries the fix and the request to check again', () => {
-        expect(makeFixLink(12, 'work_email', true)).toBe(
-            '/claimed/pending/12?fix=work_email&check=1',
+        expect(makeFixLink(12, 'upload_document', true)).toBe(
+            '/claimed/pending/12?fix=upload_document&check=1',
         );
     });
 
@@ -110,7 +110,7 @@ describe('focusFixField', () => {
     test('does nothing for a missing field', () => {
         const root = render('<input id="something-else" />');
 
-        expect(focusFixField('work_email', root)).toBe(false);
+        expect(focusFixField('upload_document', root)).toBe(false);
     });
 });
 
@@ -127,7 +127,7 @@ describe('claimLiveCheck reducer', () => {
                 claimID: 5,
                 data: {
                     status: 'NOT_PASSED',
-                    fixes: ['work_email'],
+                    fixes: ['upload_document'],
                     checks_left: 1,
                     ai_decision_reason: 'not for claimants',
                 },
@@ -137,7 +137,7 @@ describe('claimLiveCheck reducer', () => {
         expect(state).toEqual({
             claimID: 5,
             status: 'NOT_PASSED',
-            fixes: ['work_email'],
+            fixes: ['upload_document'],
             checksLeft: 1,
         });
     });

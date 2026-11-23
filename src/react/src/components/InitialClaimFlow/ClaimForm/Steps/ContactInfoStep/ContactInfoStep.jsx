@@ -125,15 +125,6 @@ const ContactInfoStep = ({
                     />
                     <TextField
                         fullWidth
-                        id={liveCheckFixes.email && 'claimant-email'}
-                        helperText={
-                            liveCheckFixes.email && (
-                                <ClaimLiveCheckFieldFixes
-                                    fixes={liveCheckFixes.email}
-                                />
-                            )
-                        }
-                        FormHelperTextProps={{ component: 'div' }}
                         value={userEmail || ''}
                         required
                         variant="outlined"
@@ -142,9 +133,7 @@ const ContactInfoStep = ({
                             classes: {
                                 root: classes.inputRoot,
                                 input: classes.input,
-                                notchedOutline: liveCheckFixes.email
-                                    ? classes.notchedOutlineFlagged
-                                    : classes.notchedOutlineStyles,
+                                notchedOutline: classes.notchedOutlineStyles,
                             },
                         }}
                         className={classes.textField}
@@ -587,7 +576,6 @@ ContactInfoStep.propTypes = {
     // Live check fixes to mark, by field. Only the pending claim edit
     // page passes them.
     liveCheckFixes: shape({
-        email: arrayOf(string),
         employment: arrayOf(string),
     }),
 };

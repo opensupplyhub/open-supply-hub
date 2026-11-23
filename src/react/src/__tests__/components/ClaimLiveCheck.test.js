@@ -25,7 +25,8 @@ const UNAVAILABLE = 'This is taking longer than usual.';
 const NOT_PASSED = 'Your claim is submitted, but it did not pass the check.';
 const EMAIL_FOLLOWS =
     'We will email you the result. If the check cannot finish, a person will review your claim.';
-const WORK_EMAIL = 'Use a work email, not a personal email.';
+const UPLOAD =
+    'Upload a document. Claims with a document are approved fastest.';
 const COMPANY_ADDRESS =
     'Add an official document that shows the company address. For example a utility bill or business registration.';
 
@@ -394,7 +395,7 @@ describe('ClaimLiveCheck component', () => {
 
     test('a claim that did not pass lists the preset fixes and two choices', async () => {
         apiRequest.post.mockResolvedValue(
-            answer('NOT_PASSED', ['work_email', 'company_address_document']),
+            answer('NOT_PASSED', ['upload_document', 'company_address_document']),
         );
         const { getByText, getAllByRole } = renderCheck();
         await settle();
@@ -403,7 +404,7 @@ describe('ClaimLiveCheck component', () => {
         expect(getByText('Fix these 2 things:')).toBeInTheDocument();
         expect(
             getAllByRole('listitem').map(item => item.textContent),
-        ).toEqual([WORK_EMAIL, COMPANY_ADDRESS]);
+        ).toEqual([UPLOAD, COMPANY_ADDRESS]);
         expect(getByText('Choose one:')).toBeInTheDocument();
         expect(getByText('Go back and fix them')).toBeInTheDocument();
         expect(getByText('Leave it for review')).toBeInTheDocument();
@@ -429,7 +430,7 @@ describe('ClaimLiveCheck component', () => {
 
     test('going back opens the edit page at the first fix', async () => {
         apiRequest.post.mockResolvedValue(
-            answer('NOT_PASSED', ['work_email', 'company_address_document']),
+            answer('NOT_PASSED', ['upload_document', 'company_address_document']),
         );
         const { getByText } = renderCheck();
         await settle();
@@ -437,7 +438,7 @@ describe('ClaimLiveCheck component', () => {
         fireEvent.click(getByText('Go back and fix them'));
 
         expect(history.push).toHaveBeenCalledWith(
-            `/claimed/pending/${CLAIM_ID}?fix=work_email&check=1`,
+            `/claimed/pending/${CLAIM_ID}?fix=upload_document&check=1`,
         );
     });
 

@@ -72,10 +72,6 @@ const contactInfoStepStyles = theme =>
         notchedOutlineStyles: Object.freeze({
             borderRadius: 0,
         }),
-        notchedOutlineFlagged: Object.freeze({
-            borderRadius: 0,
-            border: `2px solid ${COLOURS.RED} !important`,
-        }),
         errorWrapStyles: Object.freeze({
             marginTop: '8px',
         }),

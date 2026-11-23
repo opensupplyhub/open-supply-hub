@@ -25,7 +25,6 @@ jest.mock(
             data-testid="contact-step"
             data-fixes={JSON.stringify(liveCheckFixes)}
         >
-            <div id="claimant-email-helper-text" aria-label="Your Email" />
             <select
                 id="claimantEmploymentVerificationMethod"
                 aria-label="Employment Verification"
@@ -232,7 +231,6 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
     const SEVERAL = {
         status: 'NOT_PASSED',
         fixes: [
-            'work_email',
             'upload_document',
             'name_and_company_document',
             'company_address_document',
@@ -240,7 +238,6 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
         checks_left: 2,
     };
     const BY_FIELD = {
-        email: ['work_email'],
         address: ['upload_document', 'company_address_document'],
         employment: ['name_and_company_document'],
     };
@@ -279,13 +276,13 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
     // result screen or the email link (both carry the query string),
     // or from My Claims (no query string).
     test.each([
-        ['from the result screen or the email link', '?fix=work_email&check=1'],
+        ['from the result screen or the email link', '?fix=upload_document&check=1'],
         ['from My Claims', ''],
     ])('%s', async (_, search) => {
         const { findByRole, getByTestId, getByText } = renderEditPage(search);
 
         const banner = await findByRole('status');
-        expect(banner).toHaveTextContent('4 things to fix');
+        expect(banner).toHaveTextContent('3 things to fix');
         expect(fixesOf(getByTestId('contact-step'))).toEqual(BY_FIELD);
         expect(fixesOf(getByTestId('business-step'))).toEqual(BY_FIELD);
         // One link per field, however many fixes are about it.
@@ -294,7 +291,6 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
                 button => button.textContent,
             ),
         ).toEqual([
-            'Your email',
             'Company address verification',
             'Employment verification',
         ]);
@@ -324,9 +320,6 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
         expect(document.activeElement).toBe(
             getByLabelText('Employment Verification'),
         );
-
-        fireEvent.click(getByText('Your email'));
-        expect(document.activeElement).toBe(getByLabelText('Your Email'));
     });
 
     test.each([
@@ -359,7 +352,7 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
         liveCheck = { ...SEVERAL, checks_left: 0 };
         const { findByRole, getByText, findByText } = renderEditPage('');
 
-        expect(await findByRole('status')).toHaveTextContent('4 things to fix');
+        expect(await findByRole('status')).toHaveTextContent('3 things to fix');
         fireEvent.click(getByText('Save changes'));
 
         expect(await findByText(THANK_YOU)).toBeInTheDocument();

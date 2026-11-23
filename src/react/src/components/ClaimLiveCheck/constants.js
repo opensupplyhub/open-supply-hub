@@ -6,13 +6,11 @@ export const CLAIM_LIVE_CHECK_STATUSES = Object.freeze({
 });
 
 export const CLAIM_LIVE_CHECK_FIELDS = Object.freeze({
-    EMAIL: 'email',
     EMPLOYMENT: 'employment',
     ADDRESS: 'address',
 });
 
 export const CLAIM_LIVE_CHECK_FIELD_LABELS = Object.freeze({
-    [CLAIM_LIVE_CHECK_FIELDS.EMAIL]: 'Your email',
     [CLAIM_LIVE_CHECK_FIELDS.EMPLOYMENT]: 'Employment verification',
     [CLAIM_LIVE_CHECK_FIELDS.ADDRESS]: 'Company address verification',
 });
@@ -26,11 +24,6 @@ const ADDRESS_PROOF_TARGETS = Object.freeze([
 ]);
 
 export const CLAIM_LIVE_CHECK_FIXES = Object.freeze({
-    work_email: Object.freeze({
-        text: 'Use a work email, not a personal email.',
-        field: CLAIM_LIVE_CHECK_FIELDS.EMAIL,
-        targets: Object.freeze(['#claimant-email-helper-text']),
-    }),
     upload_document: Object.freeze({
         text: 'Upload a document. Claims with a document are approved fastest.',
         field: CLAIM_LIVE_CHECK_FIELDS.ADDRESS,
