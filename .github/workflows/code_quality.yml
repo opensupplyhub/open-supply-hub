@@ -25,6 +25,7 @@ jobs:
       contribot: ${{ steps.filter.outputs.contribot == 'true' || steps.filter.outputs.critical == 'true' }}
       integration: ${{ steps.filter.outputs.integration == 'true' || steps.filter.outputs.critical == 'true' }}
       scripts: ${{ steps.filter.outputs.scripts == 'true' || steps.filter.outputs.critical == 'true' }}
+      logstash: ${{ steps.filter.outputs.logstash == 'true' || steps.filter.outputs.critical == 'true' }}
       terraform: ${{ steps.filter.outputs.terraform == 'true' || steps.filter.outputs.critical == 'true' }}
       workflows: ${{ steps.filter.outputs.workflows == 'true' || steps.filter.outputs.critical == 'true' }}
       ops_scripts: ${{ steps.filter.outputs.ops_scripts == 'true' || steps.filter.outputs.critical == 'true' }}
@@ -90,6 +91,8 @@ jobs:
               - 'scripts/manage'
             scripts:
               - 'scripts/**'
+            logstash:
+              - 'src/logstash/**'
             terraform:
               - 'deployment/**/*.tf'
               - 'deployment/**/*.tfvars'
@@ -117,6 +120,7 @@ jobs:
           CONTRIBOT: ${{ steps.filter.outputs.contribot }}
           INTEGRATION: ${{ steps.filter.outputs.integration }}
           SCRIPTS: ${{ steps.filter.outputs.scripts }}
+          LOGSTASH: ${{ steps.filter.outputs.logstash }}
           TERRAFORM: ${{ steps.filter.outputs.terraform }}
           WORKFLOWS: ${{ steps.filter.outputs.workflows }}
           OPS_SCRIPTS: ${{ steps.filter.outputs.ops_scripts }}
@@ -134,6 +138,7 @@ jobs:
           echo "contribot=${CONTRIBOT}"
           echo "integration=${INTEGRATION}"
           echo "scripts=${SCRIPTS}"
+          echo "logstash=${LOGSTASH}"
           echo "terraform=${TERRAFORM}"
           echo "workflows=${WORKFLOWS}"
           echo "ops_scripts=${OPS_SCRIPTS}"
@@ -605,6 +610,23 @@ jobs:
           for testdir in src/contribot/*/tests; do
             (cd "$(dirname "$testdir")" && python -m pytest tests/)
           done
+
+  # code quality for the logstash Ruby filter scripts
+  run-logstash-filter-tests:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.logstash == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run the inline logstash filter tests
+        # Executes the test/in_event/expect blocks embedded in the filter
+        # scripts, which logstash itself never runs in CI. Keep the image
+        # tag in sync with scripts/run_logstash_filter_tests, the local
+        # wrapper for the same check.
+        run: |
+          docker run --rm -v "$PWD:/mnt" -w /mnt ruby:3.3-alpine \
+              ruby src/logstash/tests/run_filter_tests.rb
 
   # code quality integration test
   run-integration-test-code-quality:
