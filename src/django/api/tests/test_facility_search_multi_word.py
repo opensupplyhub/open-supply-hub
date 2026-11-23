@@ -139,3 +139,86 @@ class FacilitySearchMultiWordTest(TestCase):
             ["Interloop Limited (Hosiery Division I)"],
             self.search("Interloop Hosiery", param="name"),
         )
+
+
+class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
+    """
+    The programs team's real union-user queries, from OSDEV-3790 feedback.
+
+    Unions search for Texport units by unit number and consistently got
+    "no facilities found". The names and queries below are the reported
+    cases, verified against the production-anonymized restore.
+    """
+
+    NAMES = (
+        "Texport Industries Pvt. Ltd. (Unit 16)",
+        "Texport Industries Pvt. Ltd. (Unit 4)",
+        "Texport Industries Private Limited [Unit - 6]",
+        "DIR TEXPORT SYNDICATEB3F INDIA",
+        "Texsport B.V.",
+    )
+
+    # The inherited tests assert against the Interloop/Shahi fixtures, so
+    # they are overridden with this class's cases below; only the fixture
+    # setup is reused.
+    def test_words_match_out_of_order(self):
+        self.assert_search(
+            "Texport Syndicate b3f",
+            ["DIR TEXPORT SYNDICATEB3F INDIA"],
+        )
+
+    def test_words_match_with_text_between_them(self):
+        self.assert_search(
+            "Texport Unit 16",
+            ["Texport Industries Pvt. Ltd. (Unit 16)"],
+        )
+
+    def test_unit_number_matches(self):
+        self.assert_search(
+            "Texport Unit 4",
+            ["Texport Industries Pvt. Ltd. (Unit 4)"],
+        )
+
+    def test_single_word_still_matches_every_name_containing_it(self):
+        # "Texsport B.V." must not match: per-word matching is still a
+        # substring test per word, not fuzziness.
+        self.assert_search(
+            "Texport",
+            [
+                "DIR TEXPORT SYNDICATEB3F INDIA",
+                "Texport Industries Private Limited [Unit - 6]",
+                "Texport Industries Pvt. Ltd. (Unit 16)",
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+            ],
+        )
+
+    def test_whole_string_match_is_preserved(self):
+        self.assert_search(
+            "Texport Industries Pvt. Ltd. (Unit 16)",
+            ["Texport Industries Pvt. Ltd. (Unit 16)"],
+        )
+
+    def test_every_word_must_match(self):
+        self.assert_search("Texport Syndicate 16", [])
+
+    def test_misspelling_still_returns_nothing(self):
+        # The reported "Texoport" typo. Records the current boundary:
+        # typo tolerance needs similarity() on the OSDEV-3793 index or the
+        # OpenSearch endpoint (OSDEV-1575).
+        self.assert_search("Texoport", [])
+
+    def test_roman_numerals_match_only_by_substring_accident(self):
+        # "Texport Unit IV" finds the [Unit - 6] name because "Private"
+        # contains "iv" — not because IV is read as 4. Records the current
+        # boundary: numeral equivalence is not implemented, so the user
+        # still sees some Texport facilities rather than none.
+        self.assert_search(
+            "Texport Unit IV",
+            ["Texport Industries Private Limited [Unit - 6]"],
+        )
+
+    def test_deprecated_name_param_matches_per_word_too(self):
+        self.assertEqual(
+            ["Texport Industries Pvt. Ltd. (Unit 4)"],
+            self.search("Texport Unit 4", param="name"),
+        )
