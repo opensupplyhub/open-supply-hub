@@ -103,7 +103,10 @@ manage_bedrock_cost_budget = true
 
 waf_enabled = true
 waf_rate_limit_enabled = true
-waf_rate_limit_action = "count"
+# OSDEV-3614: blocking after the Count-mode review (Development, Test,
+# Preprod and Rba stay in count).
+waf_rate_limit_action = "block"
+waf_logging_enabled = true
 memcached_view_cache_timeout_seconds = 360
 stripe_price_id = "price_1TPjKeAnUgyIppdhAECREwYL"
 hubspot_subscription_id = "12847627"

@@ -1,0 +1,16 @@
+# robots.txt for opensupplyhub.org
+
+# ShapBot (Parallel Web Systems) indexes public pages for Parallel's AI search
+# APIs. Slowed down rather than blocked (OSDEV-3614): its rendered page loads
+# came in bursts that went over the WAF API rate limit.
+# https://docs.parallel.ai/resources/crawler
+User-agent: ShapBot
+Crawl-delay: 10
+
+# Intellens-Sites (Intellens, ops@intellens.ai) crawls facility data through
+# the API in short bursts. Slowed down the same way (OSDEV-3614).
+User-agent: Intellens-Sites
+Crawl-delay: 10
+
+User-agent: *
+Allow: /

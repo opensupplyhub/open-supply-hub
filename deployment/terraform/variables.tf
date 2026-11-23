@@ -1171,6 +1171,26 @@ variable "waf_api_anon_rate_limit_per_ip" {
   }
 }
 
+variable "waf_logging_enabled" {
+  type        = bool
+  default     = false
+  description = "Send AWS WAF logs (only counted or blocked requests) to a CloudWatch Logs log group in us-east-1 (requires waf_enabled)"
+}
+
+variable "waf_log_retention_days" {
+  type        = number
+  default     = 365
+  description = "Retention, in days, of the AWS WAF log group. 365 like the other CloudWatch log groups, for the Vanta SOC 2 log retention test"
+
+  validation {
+    condition = contains(
+      [0, 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653],
+      var.waf_log_retention_days
+    )
+    error_message = "waf_log_retention_days must be a retention period CloudWatch Logs accepts (0 for never expire, or 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653)."
+  }
+}
+
 variable "waf_rate_limit_exempt_ips" {
   type        = list(string)
   default     = []

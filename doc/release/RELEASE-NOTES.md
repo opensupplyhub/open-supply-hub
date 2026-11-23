@@ -3,6 +3,28 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.34.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: *Provide release date*
+
+### Architecture/Environment changes
+* [OSDEV-3614](https://opensupplyhub.atlassian.net/browse/OSDEV-3614) - The WAF API rate-based rules added in OSDEV-2138 (`ApiRateLimitPerIp` and `ApiRateLimitAnonPerIp`) switch from Count to Block on Production and Staging after a three-week Count review in Production found only automated clients over the limits. An IP over a limit now gets `429` with `{"detail": "Request was throttled."}` from CloudFront instead of reaching Django, until its rate drops below the limit. Development, Test, Preprod and Rba stay in Count (`waf_rate_limit_action`).
+* [OSDEV-3614](https://opensupplyhub.atlassian.net/browse/OSDEV-3614) - `ApiRateLimitAnonPerIp` no longer counts requests that carry a Django session cookie (`sessionid`). The review showed logged-in website users hitting the anonymous limit, because WAF can't see a login; they are now limited per user by Django and still count toward `ApiRateLimitPerIp`.
+* [OSDEV-3614](https://opensupplyhub.atlassian.net/browse/OSDEV-3614) - New `deployment/terraform/waf_logging.tf`: AWS WAF logging to the CloudWatch Logs group `aws-waf-logs-opensupplyhub-<environment>` in us-east-1 (CloudFront web ACLs can only log there), with a log delivery resource policy. Only requests a rule counted or blocked are kept, and the `Authorization`, `Cookie` and `X-OAR-CLIENT-KEY` header values are redacted. Enabled on Production and Staging with the new `waf_logging_enabled` and `waf_log_retention_days` variables. Logs are kept 365 days, like the other CloudWatch log groups, for the Vanta SOC 2 log retention test.
+* [OSDEV-3614](https://opensupplyhub.atlassian.net/browse/OSDEV-3614) - New runbook `doc/ops/waf_rate_limit_runbook.md` for updating the WAF IP denylist and for the quarterly rate-limit review (WAF logs, CloudFront logs in Athena, `api_requestlog`), with `scripts/waf_count_review_cli.sh` (daily blocked/counted requests per rule), `scripts/waf_rate_limit_test.py` (sends a burst of requests to test a rule) and the review queries in `doc/ops/waf_rate_limit/`.
+
+### Code/API Changes
+* [OSDEV-3614](https://opensupplyhub.atlassian.net/browse/OSDEV-3614) - New `src/react/public/robots.txt`, served at `/robots.txt`: asks the `ShapBot` (Parallel Web Systems) and `Intellens-Sites` crawlers for a 10-second crawl delay, so their page loads stop arriving in bursts over the WAF limit, and allows everything else.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+* [OSDEV-3614](https://opensupplyhub.atlassian.net/browse/OSDEV-3614) - Before the Production deploy, add the IPs listed in OSDEV-3614 to the `oshub/production/ip-denylist` secret (JSON list of CIDRs, `/32` for single IPv4 addresses) without removing the existing entries. The Terraform apply updates the WAF denylist IP set.
+* [OSDEV-3614](https://opensupplyhub.atlassian.net/browse/OSDEV-3614) - If legitimate users are blocked after the release, the fastest rollback is to set the action of the affected rate rule to Count in the WAF console, then set `waf_rate_limit_action = "count"` in the environment's tfvars so the next apply does not undo it.
+
+
 ## Release 2.33.0
 
 ## Introduction
