@@ -21,7 +21,7 @@ echo "Deleting Lambda function: $LAMBDA_NAME"
 
 DISTRIBUTION_ID=""
 for id in $(aws cloudfront list-distributions --query "DistributionList.Items[*].Id" --output text); do
-  domains=$(aws cloudfront get-distribution-config --id $id --query "DistributionConfig.Aliases.Items" --output text)
+  domains=$(aws cloudfront get-distribution-config --id "$id" --query "DistributionConfig.Aliases.Items" --output text)
   if [[ "$domains" == "$CLOUDFRONT_DOMAIN" ]]; then
     if [ -n "$DISTRIBUTION_ID" ]; then
       echo "Error: Multiple CloudFront distributions found for domain: $CLOUDFRONT_DOMAIN"
@@ -38,7 +38,7 @@ if [ -z "$DISTRIBUTION_ID" ]; then
 fi
 
 echo "Fetching current distribution config..."
-aws cloudfront get-distribution-config --id $DISTRIBUTION_ID > full-config.json
+aws cloudfront get-distribution-config --id "$DISTRIBUTION_ID" > full-config.json
 
 ETAG=$(cat full-config.json | jq -r '.ETag')
 echo "ETag: $ETAG"
@@ -55,9 +55,9 @@ cat dist-config.json | jq --arg NAME "$LAMBDA_NAME" '
 
 echo "Updating CloudFront distribution to detach Lambda@Edge..."
 aws cloudfront update-distribution \
-  --id $DISTRIBUTION_ID \
+  --id "$DISTRIBUTION_ID" \
   --distribution-config file://new-config.json \
-  --if-match $ETAG 2>&1
+  --if-match "$ETAG" 2>&1
 
 echo "Waiting for CloudFront distribution deployment..."
 aws cloudfront wait distribution-deployed --id "$DISTRIBUTION_ID"
