@@ -23,3 +23,41 @@ def filter(event)
   # Return the modified event with the added coordinates field.
   return [event]
 end
+
+test 'coordinates filter with both latitude and longitude' do
+  in_event {
+    {
+      'latitude' => 48.8566,
+      'longitude' => 2.3522
+    }
+  }
+
+  expect('sets coordinates with lat and lon keys') do |events|
+    events.size == 1 &&
+    events[0].get('coordinates') == { 'lat' => 48.8566, 'lon' => 2.3522 }
+  end
+end
+
+test 'coordinates filter with missing longitude' do
+  in_event {
+    {
+      'latitude' => 48.8566
+    }
+  }
+
+  expect('does not set coordinates') do |events|
+    events.size == 1 &&
+    !events[0].to_hash.key?('coordinates')
+  end
+end
+
+test 'coordinates filter with neither latitude nor longitude' do
+  in_event {
+    {}
+  }
+
+  expect('does not set coordinates') do |events|
+    events.size == 1 &&
+    !events[0].to_hash.key?('coordinates')
+  end
+end
