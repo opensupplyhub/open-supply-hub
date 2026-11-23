@@ -36,7 +36,8 @@ class ListsRepository:
 
         name = table_name or os.environ["CONTRIBOT_STATE_TABLE_NAME"]
         resource = dynamodb_resource or boto3.resource("dynamodb")
-        self._table = resource.Table(name)
+        # boto3 builds service resources dynamically; its types carry no Table.
+        self._table = resource.Table(name)  # pyright: ignore[reportAttributeAccessIssue]
 
     def _last_list_id_from_env(self) -> int:
         """Return ``LAST_LIST_ID`` from the environment."""

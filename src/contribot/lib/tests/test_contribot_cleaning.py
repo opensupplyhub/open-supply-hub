@@ -436,7 +436,7 @@ class TestCleaningSheet:
         ws = wb["Cleaning"]
         first = osh.cleaning_table_row + 1
 
-        def link(cell):
+        def link(cell: str):
             h = ws[cell].hyperlink
             return (h.location or h.target or "").lstrip("#")
 

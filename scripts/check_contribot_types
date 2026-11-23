@@ -2,17 +2,16 @@
 # Run pyright over ContriBot (src/contribot/pyrightconfig.json) and fail
 # when the error count grows past the recorded ceiling.
 #
-# The codebase currently carries pre-existing pyright errors, so the
-# check ratchets instead of blocking outright: new errors fail, the
-# recorded ones are tolerated until burned down. When errors are fixed,
-# lower MAX_ERRORS to the new count; never raise it.
+# The pre-existing error backlog has been cleared, so the ceiling is 0
+# and must stay there: any pyright error is a new one and fails the
+# check. Never raise MAX_ERRORS.
 #
 # Requires pyright and ContriBot's requirements-dev to be installed for
 # the active Python (CI uses 3.13 to match the Lambda runtime).
 
 set -euo pipefail
 
-MAX_ERRORS=109
+MAX_ERRORS=0
 
 cd "$(dirname "$0")/../src/contribot"
 
