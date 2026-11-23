@@ -11,14 +11,14 @@ staging.opensupplyhub.org, rba.opensupplyhub.org, opensupplyhub.org (production)
 Examples
 --------
   # 700 anonymous requests to staging, 10 at a time (anon rule, limit 500/5 min)
-  python scripts/waf_rate_limit_test.py --url https://staging.opensupplyhub.org/api/countries/ --count 700
+  python scripts/waf_rate_limit_test/waf_rate_limit_test.py --url https://staging.opensupplyhub.org/api/countries/ --count 700
 
   # Same, but as an API token user (only the 2,000/5 min rule applies)
-  OSH_API_TOKEN=xxxx python scripts/waf_rate_limit_test.py \
+  OSH_API_TOKEN=xxxx python scripts/waf_rate_limit_test/waf_rate_limit_test.py \
       --url https://staging.opensupplyhub.org/api/countries/ --count 2500 --token-env OSH_API_TOKEN
 
   # Limit the request rate to 20 per second
-  python scripts/waf_rate_limit_test.py --url https://test.os-hub.net/api/countries/ --count 600 --rps 20
+  python scripts/waf_rate_limit_test/waf_rate_limit_test.py --url https://test.os-hub.net/api/countries/ --count 600 --rps 20
 
 How to read the results
 -----------------------

@@ -24,7 +24,7 @@ Background and decisions: [OSDEV-2138](https://opensupplyhub.atlassian.net/brows
 | Per-customer API usage | Django table `api_requestlog`, via the SSM tunnel to the production database (`deployment/ssm/ssm_tunnel.sh`) |
 | Denylist secret | `oshub/production/ip-denylist` |
 | Exemption secret | name set in `waf_rate_limit_exempt_ips_secret_name` (not set until the first exemption is needed) |
-| Tools | `scripts/waf_count_review_cli.sh`, `doc/ops/waf_rate_limit/athena_waf_review.sql`, `doc/ops/waf_rate_limit/requestlog_rate_analysis.sql`, `scripts/waf_rate_limit_test.py` |
+| Tools | `scripts/waf_count_review_cli.sh`, `doc/ops/waf_rate_limit/athena_waf_review.sql`, `doc/ops/waf_rate_limit/requestlog_rate_analysis.sql`, `scripts/waf_rate_limit_test/waf_rate_limit_test.py` |
 
 ## Update the IP denylist
 
@@ -168,7 +168,7 @@ Then:
 
 ## Testing a rule
 
-`scripts/waf_rate_limit_test.py` sends a chosen number of requests to one URL and separates WAF 429s from Django 429s. Use a non-production environment, ideally Development with a temporarily low limit.
+`scripts/waf_rate_limit_test/waf_rate_limit_test.py` sends a chosen number of requests to one URL and separates WAF 429s from Django 429s. Use a non-production environment, ideally Development with a temporarily low limit.
 
 ## Rollback
 
