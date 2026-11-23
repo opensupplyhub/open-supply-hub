@@ -12,7 +12,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 ### Bugfix
 * [OSDEV-3894](https://opensupplyhub.atlassian.net/browse/OSDEV-3894) - The frontend deploy now uploads the React build with explicit Cache-Control headers: hashed assets under `/assets/` are cached for a year as immutable, while `index.html` and the other non-hashed files are `no-cache`, so browsers revalidate on every load and pick up each release without a hard refresh.
 * [OSDEV-3895](https://opensupplyhub.atlassian.net/browse/OSDEV-3895) - The frontend deploy no longer deletes the previous release's hashed assets, so a tab open across a release keeps loading its lazy chunks instead of failing with ChunkLoadError. Each deploy instead identifies retired assets by membership (not part of the build just uploaded and retired for 14+ days, so the live site's files can never qualify however long between deploys) and for now only logs what it would delete; deletion is enabled in a follow-up once the logs have been reviewed.
-* [OSDEV-3896](https://opensupplyhub.atlassian.net/browse/OSDEV-3896) - The CloudFront behavior for the React app no longer forwards cookies or query strings to S3 (they fragmented the cache key per user) and its TTLs now follow the origin's Cache-Control headers, and the deploy invalidates only `/index.html` and `/` instead of `/*`, so the long-lived `tile/*` and `api/*` caches survive each release instead of going cold.
 
 ### Release instructions
 * Ensure that the following commands are included in the `post_deployment` command:
