@@ -334,11 +334,15 @@ jobs:
           # index.html and the other non-hashed files must revalidate on every load
           # so each release is picked up without a hard refresh (OSDEV-3894).
           # Assets go up first so index.html never references missing chunks.
-          # No --delete: the previous release's assets must stay available for
-          # open tabs until the bucket lifecycle rule expires them (OSDEV-3895).
+          # Pass 1 drops --delete: the previous release's hashed assets must
+          # stay available to open tabs, and the prune below retires them by
+          # membership instead (OSDEV-3895). Pass 2 keeps --delete: the
+          # non-hashed files are overwritten in place and nothing references
+          # an older copy of them, so a file dropped from the build should
+          # stop being served immediately, as it did before.
           aws s3 sync src/react/build/assets/ "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/assets/" \
             --cache-control "public, max-age=31536000, immutable"
-          aws s3 sync src/react/build/ "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/" --exclude "assets/*" \
+          aws s3 sync src/react/build/ "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/" --delete --exclude "assets/*" \
             --cache-control "no-cache"
           aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
           # Prune retired hashed assets: an assets/ object qualifies only when
