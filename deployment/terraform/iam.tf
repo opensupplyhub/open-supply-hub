@@ -290,6 +290,29 @@ resource "aws_iam_role_policy" "list_cleaning_state_machine_batch" {
   policy = data.aws_iam_policy_document.list_cleaning_state_machine[0].json
 }
 
+# OSDEV-3913: lets the Django app task ask the claims automation pipeline
+# to review one claim for the live claim check (OSDEV-3804). Scoped to
+# the one function and created only when the environment names it, so an
+# environment without the feature grants nothing. The function is in
+# another account, so this is half of the grant: the auto-claims stack
+# must also name this task role in the function's own policy.
+data "aws_iam_policy_document" "claims_live_review_invoke" {
+  count = var.claims_live_review_function != "" ? 1 : 0
+
+  statement {
+    effect    = "Allow"
+    resources = [var.claims_live_review_function]
+    actions   = ["lambda:InvokeFunction"]
+  }
+}
+
+resource "aws_iam_role_policy" "claims_live_review_invoke" {
+  count  = var.claims_live_review_function != "" ? 1 : 0
+  name   = "ClaimsLiveReviewInvoke"
+  role   = aws_iam_role.app_task_role.name
+  policy = data.aws_iam_policy_document.claims_live_review_invoke[0].json
+}
+
 #
 # ALB IAM resources
 #

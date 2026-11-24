@@ -43,6 +43,8 @@
         { "name": "LIST_CLEANING_RESULTS_BUCKET_OWNER", "value": "${list_cleaning_results_bucket_owner}" },
         { "name": "LIST_CLEANING_AWS_REGION", "value": "${list_cleaning_aws_region}" },
         { "name": "LIST_CLEANING_ROLE_ARN", "value": "${list_cleaning_role_arn}" },
+        { "name": "CLAIMS_LIVE_REVIEW_FUNCTION", "value": "${claims_live_review_function}" },
+        { "name": "CLAIMS_LIVE_REVIEW_REGION", "value": "${claims_live_review_region}" },
         { "name": "CLAIM_ATTACHMENTS_SIGNING_ROLE_ARN", "value": "${claim_attachments_signing_role_arn}" },
         { "name": "KAFKA_BOOTSTRAP_SERVERS", "value": "${kafka_bootstrap_servers}" },
         { "name": "KAFKA_TOPIC_DEDUPE_BASIC_NAME", "value": "${kafka_topic_basic_name}" },

@@ -188,6 +188,14 @@ list_cleaning_results_bucket = "auto-lists-results-343975343274-us-east-1"
 list_cleaning_results_bucket_owner = "343975343274"
 list_cleaning_role_arn = "arn:aws:iam::343975343274:role/auto-lists-caller"
 
+# OSDEV-3913: the claims automation pipeline's review function, which the
+# live claim check (OSDEV-3804) invokes. Production only: the pipeline
+# reads production claims whichever environment calls it. The auto-claims
+# stack's LiveCheckCallerRoleArn parameter must name this environment's
+# app task role. The feature itself stays behind the claim_live_check
+# switch.
+claims_live_review_function = "arn:aws:lambda:us-east-1:343975343274:function:auto-claims-moderate-claim"
+
 earth_genome_contributor_id_secret_name = "oshub/production/earth-genome-contributor-id"
 earth_index_api_key_secret_name = "oshub/production/earth-index-api-key"
 earth_index_project_id_secret_name = "oshub/production/earth-index-project-id"
