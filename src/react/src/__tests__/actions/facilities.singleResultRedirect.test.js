@@ -86,3 +86,34 @@ describe('single-result search redirect', () => {
         expect({ pushNewRoute: push }.pushNewRoute).toBe(push);
     });
 });
+
+describe('the details-route mount guard that prevents a redirect loop', () => {
+    // A single-result search navigates to /facilities/<os id>. If the
+    // query-string sync fetched on that mount, the fetch could redirect
+    // again, looping. OSDEV-3810's acceptance criteria pin this.
+    const {
+        shouldFetchFacilitiesOnMount,
+    } = require('../../util/withQueryStringSync');
+
+    it('fetches when mounting on the facilities search route', () => {
+        expect(shouldFetchFacilitiesOnMount('/facilities', '/facilities')).toBe(
+            true,
+        );
+        expect(
+            shouldFetchFacilitiesOnMount('/facilities', '/facilities/'),
+        ).toBe(true);
+    });
+
+    it('does not fetch when mounting on a facility details route', () => {
+        expect(
+            shouldFetchFacilitiesOnMount(
+                '/facilities',
+                '/facilities/US2021250D1DTN7',
+            ),
+        ).toBe(false);
+    });
+
+    it('does not fetch on routes outside facilities', () => {
+        expect(shouldFetchFacilitiesOnMount('/', '/')).toBe(false);
+    });
+});

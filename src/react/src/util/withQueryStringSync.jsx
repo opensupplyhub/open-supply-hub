@@ -22,6 +22,14 @@ const getCleanPathname = pathname => {
     return pathname;
 };
 
+// Mounting on a facility details route (path `/facilities`, pathname
+// `/facilities/<os id>`) must not fetch: fetching there would supersede
+// the single facility, and since a single-result search navigates to the
+// details route (OSDEV-3810), a fetch-and-redirect on that mount would
+// loop. Exported so the guard is pinned by tests.
+export const shouldFetchFacilitiesOnMount = (path, pathname) =>
+    getCleanPathname(pathname) === path && path.includes(facilitiesRoute);
+
 export default function withQueryStringSync(WrappedComponent) {
     const componentWithWrapper = class extends Component {
         state = { finishedInitialHydrate: false };
@@ -53,12 +61,7 @@ export default function withQueryStringSync(WrappedComponent) {
                 // will match.
                 //
                 // Furthermore, limits fetching facilities to the facilities route.
-                const cleanPathname = getCleanPathname(pathname);
-                const isFacilitiesRoute = path.includes(facilitiesRoute);
-                const fetchFacilitiesOnMount =
-                    cleanPathname === path && isFacilitiesRoute;
-
-                if (fetchFacilitiesOnMount) {
+                if (shouldFetchFacilitiesOnMount(path, pathname)) {
                     fetchFacilitiesForCurrentSearch();
                 }
 
