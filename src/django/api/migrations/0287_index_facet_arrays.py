@@ -7,7 +7,12 @@ helper = MigrationHelper(connection)
 
 # The three remaining array facets of the search filter, served the same
 # way sector is by 0286: the ORM emits `column && ARRAY[...]` and a plain
-# GIN answers the overlap directly, with values passed through unmodified.
+# GIN answers the overlap directly on the untransformed column. The GIN
+# serves whatever equality the pipeline produces; note the pipeline is
+# not uniform — product_type is stored lowered and dequoted
+# (0130_index_product_type.sql) while the query side over-cleans it,
+# which makes punctuated values unfilterable with or without this index
+# (OSDEV-3920, pre-existing and independent).
 #
 # Measured on a 2,537,087-row anonymized restore, counting the most common
 # value of each column:
