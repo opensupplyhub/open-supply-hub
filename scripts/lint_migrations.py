@@ -92,10 +92,25 @@ def altering_operations(source):
     return found
 
 
+def migration_path(raw):
+    """Resolve one argument to a migration file inside the repository.
+
+    Arguments come from the command line (CI passes a git diff listing),
+    so anything outside the working tree or not shaped like a Django
+    migration module is rejected rather than read.
+    """
+    resolved = Path(raw).resolve()
+    if not resolved.is_relative_to(Path.cwd().resolve()):
+        raise SystemExit(f'{raw}: outside the working tree, refusing to read')
+    if resolved.suffix != '.py' or 'migrations' not in resolved.parts:
+        raise SystemExit(f'{raw}: not a migration file, refusing to read')
+    return resolved
+
+
 def main(paths):
     failures = []
     for raw in paths:
-        path = Path(raw)
+        path = migration_path(raw)
         if not path.exists():
             continue
         source = path.read_text()
