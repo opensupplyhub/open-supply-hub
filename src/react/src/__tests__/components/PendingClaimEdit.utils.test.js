@@ -3,6 +3,7 @@ import {
     pendingClaimApiToFormData,
     buildPendingClaimPatchPayload,
 } from '../../components/PendingClaimEdit/utils';
+import { findSelectOptionObjects } from '../../util/testUtils/payloadShapeAssertions';
 
 const APPAREL_ENTRY = Object.freeze({
     section: 'C - Manufacturing',
@@ -73,6 +74,151 @@ describe('pending claim edit ISIC mapping', () => {
 
         expect(payload.isic_4).toEqual(['class:1410']);
         expect(payload.isic_5).toEqual([]);
+    });
+});
+
+/*
+ * Pins the whole PATCH body a fully filled edit form produces — the
+ * OSDEV-3740 class was a reused step whose payload carried option
+ * objects the serializer rejected, so these sweep every field, not just
+ * the ISIC ones the fix already covers above.
+ */
+describe('pending claim edit PATCH payload shape', () => {
+    // Labels and values deliberately diverge so the test fails if a
+    // field switches between sending one and the other.
+    const option = (value, label) => ({ value, label });
+
+    const FULL_FORM_DATA = Object.freeze({
+        // Client-only fields the API must never receive back.
+        id: 7,
+        osId: 'BD2019083CDP49S',
+        status: 'PENDING',
+        facilityName: 'Azteca Apparel Ltd.',
+        createdAt: '2026-11-01T00:00:00Z',
+        updatedAt: '2026-11-02T00:00:00Z',
+        claimantUpdatedAt: '2026-11-02T00:00:00Z',
+        attachments: [{ id: 1, file_name: 'doc.pdf' }],
+        employmentVerificationDocuments: [{ name: 'new-upload.pdf' }],
+        companyAddressVerificationDocuments: [],
+        // The claim fields.
+        yourName: 'Jane Smith',
+        sectors: [option('Apparel', 'Apparel')],
+        facilityType: [
+            option('Final Product Assembly', 'Final Product Assembly'),
+            option('Office / HQ', 'Office / HQ'),
+        ],
+        facilityProductTypes: [option('Shirts', 'Shirts')],
+        facilityProductionTypes: [option('Assembly', 'Assembly')],
+        facilityAffiliations: [],
+        facilityCertifications: [option('iso_9001', 'ISO 9001')],
+        isic4: [
+            option(
+                'class:1410',
+                'Manufacture of wearing apparel, except fur apparel',
+            ),
+        ],
+        isic5: [],
+        numberOfWorkers: '',
+        facilityFemaleWorkersPercentage: '40',
+        openingDate: '',
+        estimatedAnnualThroughput: '12000',
+        energyCoal: '12.5',
+        energyCoalEnabled: true,
+        energyDiesel: '7',
+        energyDieselEnabled: false,
+        energyNaturalGas: '',
+        energyNaturalGasEnabled: false,
+    });
+
+    const payload = buildPendingClaimPatchPayload(FULL_FORM_DATA);
+
+    it('unwraps every select to the plain strings the API stores', () => {
+        expect(payload.sectors).toEqual(['Apparel']);
+        expect(payload.facility_product_types).toEqual(['Shirts']);
+        expect(payload.facility_production_types).toEqual(['Assembly']);
+        expect(payload.facility_affiliations).toEqual([]);
+        // Labels, exactly as the create flow sends them.
+        expect(payload.facility_certifications).toEqual(['ISO 9001']);
+    });
+
+    it('pipe-joins the facility type the way the API stores it', () => {
+        expect(payload.facility_type).toBe(
+            'Final Product Assembly|Office / HQ',
+        );
+    });
+
+    it('never sends a {value, label} option object anywhere', () => {
+        expect(findSelectOptionObjects(payload)).toEqual([]);
+    });
+
+    it('strips client-only and document fields from the payload', () => {
+        [
+            'id',
+            'os_id',
+            'status',
+            'facility_name',
+            'created_at',
+            'updated_at',
+            'claimant_updated_at',
+            'attachments',
+            'employment_verification_documents',
+            'company_address_verification_documents',
+        ].forEach(field => expect(payload).not.toHaveProperty(field));
+        // The UI-only checkbox flags stay client side too.
+        Object.keys(payload).forEach(key =>
+            expect(key.endsWith('_enabled')).toBe(false),
+        );
+    });
+
+    it('sends null to clear emptied numbers and unchecked energy sections', () => {
+        expect(payload.number_of_workers).toBeNull();
+        expect(payload.opening_date).toBeNull();
+        // Unchecked sections clear their stored value even when the
+        // hidden input still holds one.
+        expect(payload.energy_diesel).toBeNull();
+        expect(payload.energy_natural_gas).toBeNull();
+        // Checked sections send theirs.
+        expect(payload.energy_coal).toBe('12.5');
+        expect(payload.estimated_annual_throughput).toBe('12000');
+    });
+});
+
+describe('pending claim edit load/save round trip', () => {
+    it('sends back exactly the values it loaded', () => {
+        const formData = pendingClaimApiToFormData({
+            id: 7,
+            your_name: 'Jane Smith',
+            sectors: ['Apparel', 'Textiles'],
+            facility_type: 'Final Product Assembly|Office / HQ',
+            facility_product_types: ['Shirts'],
+            facility_certifications: [],
+            isic_4: [APPAREL_ENTRY],
+            isic_5: null,
+            number_of_workers: 250,
+            facility_female_workers_percentage: 40,
+            opening_date: null,
+            energy_coal: 12.5,
+            energy_diesel: null,
+            attachments: [{ id: 1, file_name: 'doc.pdf' }],
+        });
+
+        const payload = buildPendingClaimPatchPayload(formData);
+
+        expect(payload.your_name).toBe('Jane Smith');
+        expect(payload.sectors).toEqual(['Apparel', 'Textiles']);
+        expect(payload.facility_type).toBe(
+            'Final Product Assembly|Office / HQ',
+        );
+        expect(payload.facility_product_types).toEqual(['Shirts']);
+        expect(payload.facility_certifications).toEqual([]);
+        expect(payload.isic_4).toEqual(['class:1410']);
+        expect(payload.isic_5).toEqual([]);
+        expect(payload.number_of_workers).toBe(250);
+        expect(payload.facility_female_workers_percentage).toBe('40');
+        expect(payload.opening_date).toBeNull();
+        expect(payload.energy_coal).toBe('12.5');
+        expect(payload.energy_diesel).toBeNull();
+        expect(findSelectOptionObjects(payload)).toEqual([]);
     });
 });
 
