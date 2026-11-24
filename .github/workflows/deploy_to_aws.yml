@@ -297,6 +297,10 @@ jobs:
 
       - name: Install dependencies
         working-directory: src/react
+        # A lockfile that has drifted from package.json is otherwise
+        # resolved silently here, so the build that ships can carry
+        # different dependency versions than the one CI tested. Fail the
+        # deploy instead.
         run: yarn install --frozen-lockfile
 
       - name: Build static assets
