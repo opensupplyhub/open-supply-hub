@@ -156,6 +156,23 @@ class FacilitySearchMultiWordTest(TestCase):
         # score, so a purely short query never takes the fallback.
         self.assert_search("Il", [])
 
+    def test_many_token_query_never_falls_back(self):
+        # Each fuzzy token costs one trigram index scan on an endpoint
+        # needing no authentication, so a query with more fuzzy-eligible
+        # tokens than FUZZY_MAX_TOKENS stays at zero results instead of
+        # paying an unbounded AND of index scans.
+        self.assert_search(
+            "Interlop alpha bravo charlie delta echoes foxtrot", []
+        )
+
+    def test_a_typo_with_a_few_words_still_falls_back(self):
+        # The cap must not catch real queries: a handful of words with one
+        # misspelling keeps the fallback.
+        self.assert_search(
+            "Interlop Limited Apparel",
+            ["Interloop Limited Apparel Park"],
+        )
+
     def test_deprecated_name_param_matches_per_word_too(self):
         # `name` is deprecated in favor of `q`, but both are public, so the
         # same query must not find results under one and nothing under the
@@ -260,6 +277,16 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
         # "Texsport" matches a name exactly, so no fuzzy neighbors are
         # added: the user who typed a real name gets exactly that name.
         self.assert_search("Texsport", ["Texsport B.V."])
+
+    def test_a_typo_with_a_few_words_still_falls_back(self):
+        self.assert_search(
+            "Texoport Industries",
+            [
+                "Texport Industries Private Limited [Unit - 6]",
+                "Texport Industries Pvt. Ltd. (Unit 16)",
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+            ],
+        )
 
     def test_roman_unit_number_finds_the_arabic_spelling(self):
         # "IV" as typed still matches by substring ("Private" contains

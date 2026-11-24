@@ -113,6 +113,13 @@ def build_name_token_filter(text):
 # tokens stay exact, so a typo in them is not rescued.
 FUZZY_MIN_TOKEN_LENGTH = 4
 
+# Each fuzzy token costs one trigram index scan (~150 ms over 2.5M rows)
+# on an endpoint that needs no authentication, and only zero-result
+# queries get here. A person correcting a typo types a handful of words;
+# a query with more fuzzy-eligible tokens than this stays at zero results
+# rather than paying an unbounded AND of index scans.
+FUZZY_MAX_TOKENS = 6
+
 
 def build_fuzzy_name_filter(text):
     """
@@ -121,11 +128,16 @@ def build_fuzzy_name_filter(text):
     Each token long enough to carry trigrams must be strictly word-similar
     to the name (the indexed ``<<%`` operator at the database default
     threshold); shorter tokens keep their exact substring match. Returns
-    None when no token is long enough to match approximately, so a purely
-    short query never takes the fallback. See OSDEV-3906.
+    None when no token is long enough to match approximately — so a purely
+    short query never takes the fallback — or when more than
+    ``FUZZY_MAX_TOKENS`` are eligible, which bounds the cost of a
+    deliberately long no-match query. See OSDEV-3906.
     """
     tokens = text.split()
-    if not any(len(token) >= FUZZY_MIN_TOKEN_LENGTH for token in tokens):
+    fuzzy_eligible = sum(
+        1 for token in tokens if len(token) >= FUZZY_MIN_TOKEN_LENGTH
+    )
+    if fuzzy_eligible == 0 or fuzzy_eligible > FUZZY_MAX_TOKENS:
         return None
 
     name_filter = Q()
