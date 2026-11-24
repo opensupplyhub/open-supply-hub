@@ -22,6 +22,15 @@ fi
 # Run from the repository root so the runner's relative paths resolve.
 cd "$(dirname "$0")/.."
 
-# Keep the image tag in sync with the run-logstash-filter-tests CI job.
-docker run --rm -v "$PWD:/mnt" -w /mnt ruby:3.3-alpine \
+# The runner is deliberately stdlib-only, so a system Ruby can execute
+# it directly (this is also what the CI runner does). It needs Ruby 3.1+
+# for load(path, module): on older rubies (e.g. macOS system ruby 2.6)
+# that form silently degrades and no tests run, so anything older falls
+# back to docker. The runner itself also refuses to run on older rubies.
+if command -v ruby > /dev/null 2>&1 \
+    && ruby -e 'exit(Gem::Version.new(RUBY_VERSION) >= Gem::Version.new("3.1") ? 0 : 1)'; then
     ruby src/logstash/tests/run_filter_tests.rb
+else
+    docker run --rm -v "$PWD:/mnt" -w /mnt ruby:3.3-alpine \
+        ruby src/logstash/tests/run_filter_tests.rb
+fi

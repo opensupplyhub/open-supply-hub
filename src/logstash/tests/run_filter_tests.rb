@@ -21,6 +21,14 @@
 # not exceed this ceiling. Lower it as tests are added; never raise it.
 NO_TEST_CEILING = 15
 
+# load(path, module) - the isolation mechanism below - only exists from
+# Ruby 3.1; on older rubies it degrades to load(path, true) and every
+# script lands in a throwaway module, so no tests would run at all.
+if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('3.1')
+  abort "run_filter_tests.rb needs Ruby 3.1+ (found #{RUBY_VERSION}); " \
+        'use scripts/run_logstash_filter_tests, which falls back to docker.'
+end
+
 require 'json'
 # The scripts rely on Time.parse without requiring 'time' themselves
 # (logstash's JRuby runtime preloads it), so load it here.
@@ -207,6 +215,16 @@ if untested_scripts.size > NO_TEST_CEILING
   puts "FAIL: #{untested_scripts.size} scripts without tests exceeds the " \
        "ceiling of #{NO_TEST_CEILING}. Add inline tests to new scripts " \
        '(see location_type.rb for the style); never raise the ceiling.'
+  exit 1
+end
+
+# The scripts directory always carries tested filter scripts, so running
+# zero tests means the harness itself broke (bad glob, load semantics,
+# misclassification as helpers) - never a clean pass.
+if total_tests.zero?
+  puts
+  puts 'FAIL: no tests were executed; the harness found no runnable ' \
+       'filter tests, which indicates a harness defect, not a clean tree.'
   exit 1
 end
 

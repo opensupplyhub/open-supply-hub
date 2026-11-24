@@ -93,6 +93,7 @@ jobs:
               - 'scripts/**'
             logstash:
               - 'src/logstash/**'
+              - 'scripts/run_logstash_filter_tests'
             terraform:
               - 'deployment/**/*.tf'
               - 'deployment/**/*.tfvars'
@@ -621,12 +622,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Run the inline logstash filter tests
         # Executes the test/in_event/expect blocks embedded in the filter
-        # scripts, which logstash itself never runs in CI. Keep the image
-        # tag in sync with scripts/run_logstash_filter_tests, the local
-        # wrapper for the same check.
-        run: |
-          docker run --rm -v "$PWD:/mnt" -w /mnt ruby:3.3-alpine \
-              ruby src/logstash/tests/run_filter_tests.rb
+        # scripts, which logstash itself never runs in CI. The wrapper is
+        # the single source of truth for the invocation: it uses the
+        # runner's preinstalled Ruby (the test runner is stdlib-only) and
+        # falls back to docker only where Ruby is absent.
+        run: scripts/run_logstash_filter_tests
 
   # code quality integration test
   run-integration-test-code-quality:
