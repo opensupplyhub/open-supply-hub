@@ -740,12 +740,15 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          mapfile -t added < <(git diff --name-only --diff-filter=A \
-              "origin/${BASE_REF}...HEAD" -- 'src/django/*/migrations/*.py')
-          if [ "${#added[@]}" -eq 0 ]; then
+          # Plain assignment rather than process substitution so a git
+          # failure fails the step instead of silently yielding no files.
+          added_list="$(git diff --name-only --diff-filter=A \
+              "origin/${BASE_REF}...HEAD" -- 'src/django/*/migrations/*.py')"
+          if [ -z "$added_list" ]; then
             echo "No new migration files."
             exit 0
           fi
+          mapfile -t added <<< "$added_list"
           scripts/lint_migrations.py "${added[@]}"
 
   check-migration-drift:
