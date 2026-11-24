@@ -2,6 +2,7 @@ import configureStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 
 import { fetchFacilities } from '../../actions/facilities';
+import { shouldFetchFacilitiesOnMount } from '../../util/withQueryStringSync';
 import apiRequest from '../../util/apiRequest';
 
 jest.mock('../../util/apiRequest', () => ({
@@ -91,10 +92,6 @@ describe('the details-route mount guard that prevents a redirect loop', () => {
     // A single-result search navigates to /facilities/<os id>. If the
     // query-string sync fetched on that mount, the fetch could redirect
     // again, looping. OSDEV-3810's acceptance criteria pin this.
-    const {
-        shouldFetchFacilitiesOnMount,
-    } = require('../../util/withQueryStringSync');
-
     it('fetches when mounting on the facilities search route', () => {
         expect(shouldFetchFacilitiesOnMount('/facilities', '/facilities')).toBe(
             true,
