@@ -124,6 +124,15 @@ class FacilityClaimAIDecisions:
     HELD = 'HELD'
 
 
+class FacilityClaimLiveCheckStatuses:
+    # Where a live check of a just-submitted claim stands (OSDEV-3804).
+    # Explained in api/services/claim_live_check_service.py.
+    CHECKING = 'CHECKING'
+    PASSED = 'PASSED'
+    NOT_PASSED = 'NOT_PASSED'
+    UNAVAILABLE = 'UNAVAILABLE'
+
+
 class FacilityClaimReviewNoteTypes:
     # Direction of the note:
     #   INTERNAL         moderator -> moderator

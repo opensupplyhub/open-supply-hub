@@ -16,6 +16,7 @@ from api.constants import (
     FacilityClaimReviewNoteTypes,
     FacilityClaimStatuses,
 )
+from api.services.claim_live_check_fixes import FIX_TEXTS
 from api.services.facility_claim_review_note_service import (
     create_review_note,
 )
@@ -208,6 +209,49 @@ def send_claim_facility_approval_email(request, facility_claim):
         settings.CLAIM_FROM_EMAIL,
         [facility_claim.contributor.admin.email],
         html_message=html_template.render(approval_dictionary)
+    )
+
+
+def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
+                                           check_again):
+    '''
+    Tell a claimant that the live check of their claim did not pass
+    (OSDEV-3804), with the same preset lines the claim form shows and a
+    link to the pending claim edit page (OSDEV-3805), which reads the
+    check's result itself: `fix` in the link only says which field to
+    scroll to first, and `check` to check again on save. `fixes` are
+    keys from claim_live_check_fixes; only their preset texts are ever
+    sent.
+    '''
+    subj_template = get_template(
+        'mail/claim_live_check_not_passed_subject.txt'
+    )
+    text_template = get_template('mail/claim_live_check_not_passed_body.txt')
+    html_template = get_template('mail/claim_live_check_not_passed_body.html')
+
+    facility = facility_claim.facility
+    fix_url = '{}/claimed/pending/{}'.format(
+        make_oshub_url(request), facility_claim.id
+    )
+    if fixes:
+        fix_url += '?fix={}'.format(fixes[0])
+        if check_again:
+            fix_url += '&check=1'
+    dictionary = {
+        'production_location_name': facility.name,
+        'production_location_address': facility.address,
+        'production_location_country': COUNTRY_NAMES[facility.country_code],
+        'production_location_url': make_facility_url(request, facility),
+        'fixes': [FIX_TEXTS[fix] for fix in fixes],
+        'fix_url': fix_url,
+    }
+
+    send_mail(
+        subj_template.render().rstrip(),
+        text_template.render(dictionary),
+        settings.CLAIM_FROM_EMAIL,
+        [facility_claim.contributor.admin.email],
+        html_message=html_template.render(dictionary)
     )
 
 
