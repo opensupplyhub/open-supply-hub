@@ -7,9 +7,10 @@ from ...serializers import MergeQueryParamsSerializer
 
 
 def retrieve_merge_events(query: str,
-                          fetcher: Callable[[object], list]) -> list:
+                          fetcher: Callable[[object], list],
+                          query_params: list = None) -> list:
     with connection.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, query_params)
         events = fetcher(cursor)
 
     return events
@@ -38,7 +39,7 @@ def build_query_string(params: MergeQueryParamsSerializer) -> str:
         "ahf.history_date AS merge_date"
         "{detail_fields}"
         "{source_data_sql}"
-        "WHERE ahf.history_change_reason LIKE 'Merged with%'"
+        "WHERE ahf.history_change_reason LIKE 'Merged with%%'"
         "{date_range}")
 
     date_gte = params.validated_data['date_greater_than_or_equal']
@@ -50,8 +51,12 @@ def build_query_string(params: MergeQueryParamsSerializer) -> str:
     source_data_sql = generate_source_data_sql(contributors)
     date_range = generate_date_range(date_gte, date_lt)
 
+    query_params = list(contributors or [])
+    query_params += [d.isoformat() for d in (date_gte, date_lt) if d]
+
     return query.format(detail_fields=detail_fields,
-                        source_data_sql=source_data_sql, date_range=date_range)
+                        source_data_sql=source_data_sql,
+                        date_range=date_range), query_params
 
 
 def generate_detail_fields(detail: bool) -> str:
@@ -64,7 +69,7 @@ def generate_source_data_sql(contributors: list) -> str:
         return (" FROM api_historicalfacility ahf "
                 "JOIN api_facilityalias afa ON afa.os_id = ahf.id ")
 
-    return (f" FROM UNNEST(ARRAY[{', '.join(map(str, contributors))}]) "
+    return (f" FROM UNNEST(ARRAY[{', '.join(['%s'] * len(contributors))}]) "
             "as cid JOIN api_source asrc ON asrc.contributor_id = cid "
             "JOIN api_facilitylistitem afli ON afli.source_id = asrc.id "
             "JOIN api_historicalfacility ahf "
@@ -74,13 +79,13 @@ def generate_source_data_sql(contributors: list) -> str:
 
 def generate_date_range(date_gte: date, date_lt: date) -> str:
     if date_gte and date_lt:
-        return (f" AND ahf.history_date >= '{date_gte.isoformat()}' "
-                f"AND ahf.history_date < '{date_lt.isoformat()}'")
+        return (" AND ahf.history_date >= %s "
+                "AND ahf.history_date < %s")
 
     if date_gte:
-        return f" AND ahf.history_date >= '{date_gte.isoformat()}'"
+        return " AND ahf.history_date >= %s"
 
     if date_lt:
-        return f" AND ahf.history_date < '{date_lt.isoformat()}'"
+        return " AND ahf.history_date < %s"
 
     return ""
