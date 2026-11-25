@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 * Product name: Open Supply Hub
 * Release date: November 19, 2026
 
+### Architecture/Environment changes
+* [OSDEV-3921](https://opensupplyhub.atlassian.net/browse/OSDEV-3921) - Production's default AWS Batch compute environment now keeps one instance running: `batch_default_ce_min_vcpus` and `batch_default_ce_desired_vcpus` go from 0 to 4 in `terraform-production.tfvars`. Every list upload runs its parse as a job in that environment, and with the floor at 0 each parse waited 3–4 minutes for a spot instance to launch and pull the image before its 18 seconds of work; with an instance already up the wait is about 6 seconds (measured on staging, 2026-11-18 and 2026-11-24). The contributor now sits through that wait on the list-cleaning review screen (OSDEV-3726), which is what made it visible. The floor is 4 vCPUs, not 2, because the default job definition asks for 8192 MiB and the environment allows only the c5 and m5 families, so the smallest instance that can run the parse is an m5.xlarge (4 vCPUs, 15,711 MiB registered); a 2-vCPU floor would keep an m5.large up that the job cannot use. One m5.xlarge spot instance running continuously is roughly USD 60–80 a month at eu-west-1 spot prices and also serves the geocode and match jobs on the same queue. Staging stays at 0. The same values were applied by hand to the production compute environment on 2026-11-25 as a stopgap; this change stops the next Terraform apply from resetting them to 0. A dedicated parse queue, so uploads never wait behind bulk jobs, is the follow-up on the same ticket.
+
 ### Bugfix
 * [Hotfix][OSDEV-3884](https://opensupplyhub.atlassian.net/browse/OSDEV-3884) - Fixed ContriBot's `process_list` Lambda crashing on start, which left every uploaded list without a ContriBot report. The deployed zip was missing `lib/os_hub_api.py`, which the handler imports since OSDEV-3398. The file is now packaged, and the zip build fails instead of shipping a zip with a listed file missing.
 
@@ -17,6 +20,7 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
     * `migrate`
 * No manual zip rebuild is needed: the deploy rebuilds the ContriBot Lambda zips during the Terraform plan, so the Makefile change is picked up automatically. No migration or environment variable changes are required.
 * After the deploy, re-run the lists that failed with `No module named 'lib.os_hub_api'` (for example list 9809). They are at the retry cap, so reset their `attempt_count` to 0 in the ContriBot state table and let `contribot_retry_failed_lists` pick them up, or start the ContriBot state machine directly with `{"lists": [{"list_id": "9809"}]}`.
+* [OSDEV-3921](https://opensupplyhub.atlassian.net/browse/OSDEV-3921) - The Terraform plan for Production updates the default Batch compute environment in place (`min_vcpus` and `desired_vcpus` 0 → 4). The same values were already set by hand on 2026-11-25, so the apply changes nothing live, and a plan that shows no change for the compute environment is expected. Nothing to do on Staging.
 
 
 ## Release 2.33.0
