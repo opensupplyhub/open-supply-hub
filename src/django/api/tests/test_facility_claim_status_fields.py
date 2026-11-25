@@ -515,6 +515,48 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
         self.assertEqual(FacilityClaimStatuses.APPROVED, self.claim.status)
         self.assertIsNone(self.claim.waiting_on)
 
+    def test_claimant_edit_during_the_message_keeps_the_claim_with_os_hub(
+        self,
+    ):
+        # The claimant saved an edit after the message was started and
+        # before it was recorded. They have the last move.
+        self.login(self.moderator)
+        send = views.send_message_to_claimant_email
+
+        def claimant_edits_while_sending(*args, **kwargs):
+            FacilityClaim.objects.filter(pk=self.claim.pk).update(
+                claimant_updated_at=timezone.now(),
+                waiting_on=FacilityClaimWaitingOn.OS_HUB,
+            )
+            return send(*args, **kwargs)
+
+        with patch.object(
+            views,
+            'send_message_to_claimant_email',
+            claimant_edits_while_sending,
+        ):
+            response = self.post('message-claimant', {'message': 'Hi'})
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(
+            FacilityClaimWaitingOn.OS_HUB, response.data['waiting_on']
+        )
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
+
+    def test_message_after_an_earlier_claimant_edit_waits_on_claimant(self):
+        FacilityClaim.objects.filter(pk=self.claim.pk).update(
+            claimant_updated_at=timezone.now() - timedelta(minutes=5)
+        )
+        self.login(self.moderator)
+
+        response = self.post('message-claimant', {'message': 'Hi'})
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(
+            FacilityClaimWaitingOn.CLAIMANT, response.data['waiting_on']
+        )
+
     def test_status_cannot_be_edited_in_the_django_admin(self):
         # The admin cannot flip a status, so the save guard is the only
         # path it needs; this fails if that ever changes.
