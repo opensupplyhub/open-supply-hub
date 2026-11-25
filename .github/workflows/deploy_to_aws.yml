@@ -297,7 +297,16 @@ jobs:
 
       - name: Install dependencies
         working-directory: src/react
-        run: yarn install
+        # --frozen-lockfile: a lockfile that has drifted from package.json
+        # is otherwise resolved silently here, so the build that ships can
+        # carry different dependency versions than the one CI tested. Fail
+        # the deploy instead.
+        # --ignore-scripts: dependency lifecycle scripts are arbitrary code
+        # running with the deploy's credentials. Nothing in this tree needs
+        # them -- Vite 8 builds with rolldown, whose native binaries ship as
+        # optional platform packages -- and a full build was verified
+        # without them.
+        run: yarn install --frozen-lockfile --ignore-scripts
 
       - name: Build static assets
         working-directory: src/react
@@ -321,8 +330,42 @@ jobs:
             echo "Error: No CloudFront distribution found for domain: $CLOUDFRONT_DOMAIN"
             exit 1
           fi
-          aws s3 sync src/react/build/ s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/ --delete
-          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/*"
+          # Hashed assets are content-addressed, so browsers may cache them forever;
+          # index.html and the other non-hashed files must revalidate on every load
+          # so each release is picked up without a hard refresh (OSDEV-3894).
+          # Assets go up first so index.html never references missing chunks.
+          # Pass 1 drops --delete: the previous release's hashed assets must
+          # stay available to open tabs, and the prune below retires them by
+          # membership instead (OSDEV-3895). Pass 2 keeps --delete: the
+          # non-hashed files are overwritten in place and nothing references
+          # an older copy of them, so a file dropped from the build should
+          # stop being served immediately, as it did before.
+          aws s3 sync src/react/build/assets/ "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/assets/" \
+            --cache-control "public, max-age=31536000, immutable"
+          aws s3 sync src/react/build/ "s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/" --delete --exclude "assets/*" \
+            --cache-control "no-cache"
+          # Only the HTML entry needs invalidating: hashed assets are immutable,
+          # the other no-cache files revalidate on their own, and the
+          # viewer-request Lambda rewrites every SPA route to /index.html before
+          # the cache lookup. Invalidating /* also wiped the long-lived tile/*
+          # and api/* caches on every deploy (OSDEV-3896).
+          aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_DISTRIBUTION_ID" --paths "/index.html" "/"
+          # Prune retired hashed assets: an assets/ object qualifies only when
+          # it is NOT part of the build just uploaded (membership — the live
+          # site's files can never be deleted, however long since the last
+          # deploy) AND it has been retired for 14+ days (grace for open
+          # tabs, independent of deploy cadence). Log-only for now: review
+          # these lines in the Actions output for a few deploys, then swap
+          # the echo for `aws s3 rm` to enable deletion. OSDEV-3895.
+          CUTOFF=$(date -u -d '14 days ago' +%Y-%m-%dT%H:%M:%S)
+          aws s3api list-objects-v2 --bucket "$FRONTEND_BUCKET-$AWS_DEFAULT_REGION" --prefix assets/ \
+            --query 'Contents' --output json |
+            jq -r --arg cutoff "$CUTOFF" '(. // [])[] | select(.LastModified < $cutoff) | .Key' |
+            while read -r key; do
+              if [ ! -f "src/react/build/$key" ]; then
+                echo "prune (log-only): would delete s3://$FRONTEND_BUCKET-$AWS_DEFAULT_REGION/$key"
+              fi
+            done
 
   build_and_push_docker_image:
     needs: apply
