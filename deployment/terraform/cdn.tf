@@ -84,6 +84,24 @@ resource "aws_s3_bucket_versioning" "react" {
   }
 }
 
+# No age-based expiration here: retired hashed assets are pruned by the
+# deploy itself, by membership against the build it just uploaded, so a gap
+# between deploys can never delete files the live site uses (OSDEV-3895).
+resource "aws_s3_bucket_lifecycle_configuration" "react" {
+  bucket = aws_s3_bucket.react.id
+
+  rule {
+    id     = "abort-incomplete-uploads"
+    status = "Enabled"
+
+    filter {}
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
+  }
+}
+
 resource "aws_s3_bucket_ownership_controls" "react" {
   bucket = aws_s3_bucket.react.id
 
@@ -261,12 +279,17 @@ resource "aws_cloudfront_distribution" "cdn" {
     cached_methods   = ["GET", "HEAD"]
     target_origin_id = "originS3"
 
+    # Static files vary on neither cookies nor query strings; forwarding them
+    # put both in the cache key and fragmented the cache per user. TTLs follow
+    # the origin's Cache-Control headers (immutable hashed assets, no-cache
+    # index.html — OSDEV-3894); the default applies only to responses without
+    # one (OSDEV-3896).
     forwarded_values {
-      query_string = true
+      query_string = false
       headers      = []
 
       cookies {
-        forward = "all"
+        forward = "none"
       }
     }
 
@@ -284,8 +307,8 @@ resource "aws_cloudfront_distribution" "cdn" {
     compress               = false
     viewer_protocol_policy = "redirect-to-https"
     min_ttl                = 0
-    default_ttl            = 0
-    max_ttl                = 300
+    default_ttl            = 86400
+    max_ttl                = 31536000
   }
 
   # Homepage proxy — serves Craft CMS at / when enable_homepage_proxy = true.

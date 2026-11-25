@@ -165,29 +165,31 @@ class ContriBot:
         self.wb = openpyxl.load_workbook(filename)
 
         self.sourcesheet = self.wb.sheetnames[0]
-        if len(self.wb._sheets) > 1:
+        # openpyxl's stubs omit the private ``_sheets`` list this sheet
+        # reordering relies on, so each access needs a targeted ignore.
+        if len(self.wb._sheets) > 1:  # pyright: ignore[reportAttributeAccessIssue]
             existing_tables = [s for s in self.wb.sheetnames]
-            residual = list(range(len(self.wb._sheets)))
+            residual = list(range(len(self.wb._sheets)))  # pyright: ignore[reportAttributeAccessIssue]
         else:
             existing_tables = [s for s in self.wb.sheetnames]
             residual = []
         self.wb.create_sheet("Summary")
-        summary_sheet_no = len(self.wb._sheets) - 1
+        summary_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
         self.wb.create_sheet("Findings")
-        findings_sheet_no = len(self.wb._sheets) - 1
+        findings_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
         self.wb.create_sheet("Similarities")
-        similarities_sheet_no = len(self.wb._sheets) - 1
+        similarities_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
         self.fixessheet = f"{self.sourcesheet:.25s}~Fixes"
         self.wb.create_sheet(self.fixessheet)
-        fixes_sheet_no = len(self.wb._sheets) - 1
+        fixes_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
 
-        self.wb._sheets = [
-            self.wb._sheets[summary_sheet_no],
-            self.wb._sheets[findings_sheet_no],
-            self.wb._sheets[similarities_sheet_no],
-            self.wb._sheets[0],
-            self.wb._sheets[fixes_sheet_no],
-        ] + [self.wb._sheets[r] for r in residual[1:]]
+        self.wb._sheets = [  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[summary_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[findings_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[similarities_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[0],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[fixes_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+        ] + [self.wb._sheets[r] for r in residual[1:]]  # pyright: ignore[reportAttributeAccessIssue]
 
         self.df = pd.read_excel(filename)
         if len(self.df) > MAX_ROWS:
@@ -397,7 +399,10 @@ class ContriBot:
                     "corrective_action": [],
                 }
             )
-        df = pd.concat(
+        # pandas ships no stubs and its inline types make mask selections
+        # ambiguous (DataFrame | Series), so the frame plumbing below needs
+        # targeted ignores; the frames are DataFrames at runtime.
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[df_diagnostics_table.severity >= 100],
                 df_diagnostics_column[df_diagnostics_column.severity >= 100],
@@ -435,7 +440,7 @@ class ContriBot:
                         ws[f"{column}{row}"] = False
                     elif c == "Value":
                         if str(r["cell"]).lower() != "nan":
-                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][
+                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][  # pyright: ignore[reportCallIssue, reportArgumentType]
                                 r["cell"]
                             ].value
                     else:
@@ -443,7 +448,7 @@ class ContriBot:
                             ws[
                                 f"{column}{row}"
                             ].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                        ws[f"{column}{row}"] = r[c]
+                        ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                     cnt += 1
                 row += 1
         else:
@@ -457,7 +462,7 @@ class ContriBot:
         for c in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
             ws[f"{c}{row}"].style = "Note"
 
-        df = pd.concat(
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[
                     (df_diagnostics_table.severity >= 20)
@@ -491,7 +496,7 @@ class ContriBot:
                         ws[f"{column}{row}"] = False
                     elif c == "Value":
                         if str(r["cell"]).lower() != "nan":
-                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][
+                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][  # pyright: ignore[reportCallIssue, reportArgumentType]
                                 r["cell"]
                             ].value
                     else:
@@ -499,7 +504,7 @@ class ContriBot:
                             ws[
                                 f"{column}{row}"
                             ].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                        ws[f"{column}{row}"] = r[c]
+                        ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                     cnt += 1
                 row += 1
         else:
@@ -522,13 +527,13 @@ class ContriBot:
             cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for c in ["level", "metric", "value"]:
                 column = cols[cnt]
-                ws[f"{column}{row}"] = r[c]
+                ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                 cnt += 1
             row += 1
         df = pd.DataFrame(self.statistics)
         df = df[df.level == "column"]
         df = df[df.metric == "distinct_ratio_values"]
-        df = df[df.name.isin(["country", "name", "address"])]
+        df = df[df.name.isin(["country", "name", "address"])]  # pyright: ignore[reportAttributeAccessIssue]
         first = FormatObject(type="min")
         mid = FormatObject(type="percentile", val=0.5)
         last = FormatObject(type="max")
@@ -536,12 +541,12 @@ class ContriBot:
         cs3 = ColorScale(cfvo=[first, mid, last], color=colors)
         rule = Rule(type="colorScale", colorScale=cs3)
         rowfrom = row
-        for i, r in df.iterrows():
+        for i, r in df.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
             cnt = 0
             cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for c in ["level", "metric", "name", "value"]:
                 column = cols[cnt]
-                ws[f"{column}{row}"] = r[c]
+                ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                 ws[f"{column}{row}"].style = "Percent"
                 cnt += 1
             row += 1
@@ -554,7 +559,7 @@ class ContriBot:
         for c in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
             ws[f"{c}{row}"].style = "Note"
 
-        df = pd.concat(
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[
                     (df_diagnostics_table.severity > 1)
@@ -588,7 +593,7 @@ class ContriBot:
                         ws[f"{column}{row}"] = False
                     elif c == "Value":
                         if str(r["cell"]).lower() != "nan":
-                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][
+                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][  # pyright: ignore[reportCallIssue, reportArgumentType]
                                 r["cell"]
                             ].value
                     else:
@@ -596,7 +601,7 @@ class ContriBot:
                             ws[
                                 f"{column}{row}"
                             ].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                        ws[f"{column}{row}"] = r[c]
+                        ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                     cnt += 1
                 row += 1
         else:
@@ -610,7 +615,7 @@ class ContriBot:
         for c in ["A", "B", "C", "D", "E", "F", "G"]:
             ws[f"{c}{row}"].style = "Note"
 
-        df = pd.concat(
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[(df_diagnostics_table.severity < 1)],
                 df_diagnostics_column[(df_diagnostics_column.severity < 1)],
@@ -635,7 +640,7 @@ class ContriBot:
                 column = cols[cnt]
                 if c == "cell" and str(r[c]).lower() != "nan":
                     ws[f"{column}{row}"].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                ws[f"{column}{row}"] = r[c]
+                ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                 cnt += 1
             row += 1
 
@@ -754,7 +759,8 @@ class ContriBot:
             minutes = round((submitted - created).total_seconds() / 60, 1)
         counts = self.cleaning_counts()
         total = sum(
-            len(r.get("suggestions") or []) for r in self.cleaning.get("rows") or []
+            len(r.get("suggestions") or [])
+            for r in (self.cleaning or {}).get("rows") or []
         )
         return [
             ("Cleaning run", run.get("id")),
@@ -972,13 +978,13 @@ class ContriBot:
             rename[column] = column.lower()
         return df.rename(columns=rename)
 
-    def _add_stats(self, level="", name="", metric="", value=0):
+    def _add_stats(self, level="", name="", metric="", value: int | float | str = 0):
         """Record a summary statistic for the Summary sheet."""
         self.statistics.append(
             {"level": level, "name": name, "metric": metric, "value": value}
         )
 
-    def _add_metrics(self, level="", name="", metric="", value=0):
+    def _add_metrics(self, level="", name="", metric="", value: int | float | str = 0):
         """Record a column- or table-level metric during validation."""
         self.metrics.append(
             {"level": level, "name": name, "metric": metric, "value": value}
@@ -1018,7 +1024,7 @@ class ContriBot:
 
     def _get_highest_severity_style_fixed(self, codes):
         """Return the fixed-cell style for the highest-severity code in ``codes``."""
-        ddf = self.df_config[self.df_config.code.isin(codes)].sort_values(
+        ddf = self.df_config[self.df_config.code.isin(codes)].sort_values(  # pyright: ignore[reportCallIssue]
             "severity", ascending=False
         )
         if len(ddf) > 0:
@@ -1035,7 +1041,7 @@ class ContriBot:
             severity = -1
         return severity
 
-    def _add_diagnosis(self, code="", column_name="", row="", **kwparams):
+    def _add_diagnosis(self, code="", column_name="", row: int | str = "", **kwparams):
         """Record a table- or column-level finding and render its message.
 
         Message templates come from the config workbook and are rendered with
@@ -1060,11 +1066,12 @@ class ContriBot:
                     for k, v in kwparams.items():
                         kwparams[k] = str(v)
                     have_data = False
-                    string = ddf[field].values[0]
+                    string = ddf[field].values[0]  # pyright: ignore[reportAttributeAccessIssue]
                     if not isinstance(string, str):
                         string = ""
+                    # jinja2's Node base type carries no ``nodes`` attribute.
                     for entry in env.parse(string).body:
-                        for node in entry.nodes:
+                        for node in entry.nodes:  # pyright: ignore[reportAttributeAccessIssue]
                             if not isinstance(node, TemplateData):
                                 if node.name in kwparams.keys():
                                     have_data = True
@@ -1082,8 +1089,8 @@ class ContriBot:
                         result = env.from_string(string)
                 else:
                     string = (
-                        ddf[field].values[0]
-                        if isinstance(ddf[field].values[0], str)
+                        ddf[field].values[0]  # pyright: ignore[reportAttributeAccessIssue]
+                        if isinstance(ddf[field].values[0], str)  # pyright: ignore[reportAttributeAccessIssue]
                         else ""
                     )
                     result = env.from_string(string)
@@ -1289,13 +1296,15 @@ class ContriBot:
             for cell in df.cell.unique():
                 ddf = df[df.cell == cell]
 
+                # ``cell`` comes out of pandas untyped, so openpyxl's stubs
+                # read these single-cell lookups as possible ranges.
                 findings_style = self._get_style_findings(ddf.code.values[0])
                 if findings_style != "":
-                    self.wb["Findings"][cell].style = findings_style
+                    self.wb["Findings"][cell].style = findings_style  # pyright: ignore[reportAttributeAccessIssue]
 
                 fixes_style = self._get_style_fixed(ddf.code.values[0])
                 if fixes_style != "":
-                    self.wb[self.fixessheet][cell].style = fixes_style
+                    self.wb[self.fixessheet][cell].style = fixes_style  # pyright: ignore[reportAttributeAccessIssue]
 
                 if len(ddf) > 1:
                     num_comments = f"{len(ddf)} Comments:\n"
@@ -1306,11 +1315,14 @@ class ContriBot:
                 )
                 comment.height = 300
                 comment.width = 400
-                self.wb["Findings"][cell].comment = comment
-                self.wb[self.fixessheet][cell].comment = comment
+                self.wb["Findings"][cell].comment = comment  # pyright: ignore[reportAttributeAccessIssue]
+                self.wb[self.fixessheet][cell].comment = comment  # pyright: ignore[reportAttributeAccessIssue]
 
+        # keeps the isinstance guard below defined on its first pass; a
+        # Comment and None both fail it, so the outcome is unchanged
+        comment = None
         for fix in self.fixes:
-            comment_text = self.wb[self.fixessheet][fix["coordinates"]].comment.text
+            comment_text = self.wb[self.fixessheet][fix["coordinates"]].comment.text  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
             if isinstance(comment, str):
                 comment_text += "\nFix: " + fix["fix"]
             else:
@@ -1318,7 +1330,7 @@ class ContriBot:
             comment = Comment(comment_text, "Data Quality Bot")
             comment.height = 300
             comment.width = 400
-            self.wb[self.fixessheet][fix["coordinates"]].comment = comment
+            self.wb[self.fixessheet][fix["coordinates"]].comment = comment  # pyright: ignore[reportAttributeAccessIssue]
 
         wrap_alignment = Alignment(wrap_text=True, vertical="top")
         font = Font(size=10)
@@ -1763,6 +1775,8 @@ class ContriBot:
             if not isinstance(values[row], str):
                 continue
             found = False
+            # every branch that sets ``found`` also sets ``coordinates``
+            coordinates = ""
             if values[row].startswith(" "):
                 found = True
                 self._add_diagnosis(code="C0010", column_name=column, row=row + 2)
@@ -2291,15 +2305,16 @@ class ContriBot:
                     & ~self.df_similarity.j.isin(self.removed_rows)
                 ]
 
-            df_duplicates = self.df_similarity[self.df_similarity.ratio >= 1.0]
+            df_duplicates = self.df_similarity[self.df_similarity.ratio >= 1.0]  # pyright: ignore[reportAttributeAccessIssue]
             num_identical = len(df_duplicates)
         else:
             self.df_similarity = pd.DataFrame({"ratio": []})
+            df_duplicates = self.df_similarity
             num_identical = 0
         #
         # Do not apply +2 offset, we already did that on computing the similarity
         if num_identical > 0:
-            for i, row in df_duplicates.iterrows():
+            for i, row in df_duplicates.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
                 self._add_diagnosis(
                     code="T0010",
                     column_name="duplicates",
@@ -2309,11 +2324,11 @@ class ContriBot:
                 )
 
         df_duplicates = self.df_similarity[
-            (self.df_similarity.ratio >= 0.9) & (self.df_similarity.ratio < 1.0)
+            (self.df_similarity.ratio >= 0.9) & (self.df_similarity.ratio < 1.0)  # pyright: ignore[reportAttributeAccessIssue]
         ]
         num_very_similar = len(df_duplicates)
         if num_very_similar > 0:
-            for i, row in df_duplicates.iterrows():
+            for i, row in df_duplicates.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
                 if (
                     len(row.unit_no_in_name_1) > 0 or len(row.unit_no_in_name_2)
                 ) and row.unit_no_in_name_1 != row.unit_no_in_name_2:
@@ -2329,10 +2344,10 @@ class ContriBot:
                         code="T0011", column_name="duplicates", row_1=row.i, row_2=row.j
                     )
 
-        df_duplicates = self.df_similarity[(self.df_similarity.ratio < 0.9)]
+        df_duplicates = self.df_similarity[(self.df_similarity.ratio < 0.9)]  # pyright: ignore[reportAttributeAccessIssue]
         num_similar = len(df_duplicates)
         if num_similar > 0:
-            for i, row in df_duplicates.iterrows():
+            for i, row in df_duplicates.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
                 self._add_diagnosis(
                     code="T0012", column_name="duplicates", row_1=row.i, row_2=row.j
                 )
@@ -2351,7 +2366,7 @@ class ContriBot:
             ws[f"{column}1"].alignment = Alignment(wrap_text=True, horizontal="center")
 
         row = 2
-        for i, r in self.df_similarity.iterrows():
+        for i, r in self.df_similarity.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
             for column in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]:
                 ws[f"{column}{row}"].alignment = Alignment(
                     wrap_text=True, vertical="top"

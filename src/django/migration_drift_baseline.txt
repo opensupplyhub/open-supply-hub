@@ -1,0 +1,279 @@
+Migrations for 'api':
+    ~ Alter unique_together for facilityfield (0 constraint(s))
+    - Remove field facility from facilityfield
+    ~ Alter unique_together for facilitylistitemfield (0 constraint(s))
+    - Remove field facility_list_item from facilitylistitemfield
+    ~ Change Meta options on partnerfield
+    ~ Change Meta options on wageindicatorlinktextconfig
+    ~ Rename index api_facilit_contrib_aa2da9_gin on facilityindex to api_facilit_contrib_8924ea_gin
+    ~ Alter field period_limit on apilimit
+    ~ Alter field field_name on extendedfield
+    ~ Alter field energy_animal_waste on facilityclaim
+    ~ Alter field energy_biomass on facilityclaim
+    ~ Alter field energy_charcoal on facilityclaim
+    ~ Alter field energy_coal on facilityclaim
+    ~ Alter field energy_diesel on facilityclaim
+    ~ Alter field energy_electricity on facilityclaim
+    ~ Alter field energy_kerosene on facilityclaim
+    ~ Alter field energy_natural_gas on facilityclaim
+    ~ Alter field energy_other on facilityclaim
+    ~ Alter field estimated_annual_throughput on facilityclaim
+    ~ Alter field opening_date on facilityclaim
+    ~ Alter field recipient_email on facilityclaiminvite
+    ~ Alter field custom_text_search on facilityindex
+    ~ Alter field facility_id on facilitylistitemtemp
+    ~ Alter field id on facilitylistitemtemp
+    ~ Alter field facility_id on facilitymatchtemp
+    ~ Alter field id on facilitymatchtemp
+    ~ Alter field period_limit on historicalapilimit
+    ~ Alter field field_name on historicalextendedfield
+    ~ Alter field energy_animal_waste on historicalfacilityclaim
+    ~ Alter field energy_biomass on historicalfacilityclaim
+    ~ Alter field energy_charcoal on historicalfacilityclaim
+    ~ Alter field energy_coal on historicalfacilityclaim
+    ~ Alter field energy_diesel on historicalfacilityclaim
+    ~ Alter field energy_electricity on historicalfacilityclaim
+    ~ Alter field energy_kerosene on historicalfacilityclaim
+    ~ Alter field energy_natural_gas on historicalfacilityclaim
+    ~ Alter field energy_other on historicalfacilityclaim
+    ~ Alter field estimated_annual_throughput on historicalfacilityclaim
+    ~ Alter field opening_date on historicalfacilityclaim
+    ~ Alter field facility_id on historicalfacilitymatchtemp
+    ~ Alter field available_in_api on partnerfield
+    ~ Alter field name on partnerfield
+    ~ Alter field uuid on partnerfield
+    ~ Alter field geoid on uscountytigerline
+    - Delete model FacilityField
+    - Delete model FacilityListItemField
+
+import uuid
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+    ]
+
+    operations = [
+        migrations.AlterUniqueTogether(
+            name='facilityfield',
+            unique_together=None,
+        ),
+        migrations.RemoveField(
+            model_name='facilityfield',
+            name='facility',
+        ),
+        migrations.AlterUniqueTogether(
+            name='facilitylistitemfield',
+            unique_together=None,
+        ),
+        migrations.RemoveField(
+            model_name='facilitylistitemfield',
+            name='facility_list_item',
+        ),
+        migrations.AlterModelOptions(
+            name='partnerfield',
+            options={'verbose_name_plural': 'Partner fields'},
+        ),
+        migrations.AlterModelOptions(
+            name='wageindicatorlinktextconfig',
+            options={'verbose_name': 'WageIndicator link label', 'verbose_name_plural': 'WageIndicator link labels'},
+        ),
+        migrations.RenameIndex(
+            model_name='facilityindex',
+            new_name='api_facilit_contrib_8924ea_gin',
+            old_name='api_facilit_contrib_aa2da9_gin',
+        ),
+        migrations.AlterField(
+            model_name='apilimit',
+            name='period_limit',
+            field=models.PositiveIntegerField(help_text='The number of requests a contributor can make per month/year.'),
+        ),
+        migrations.AlterField(
+            model_name='extendedfield',
+            name='field_name',
+            field=models.CharField(choices=[('name', 'name'), ('address', 'address'), ('number_of_workers', 'number_of_workers'), ('native_language_name', 'native_language_name'), ('facility_type', 'facility_type'), ('processing_type', 'processing_type'), ('product_type', 'product_type'), ('parent_company', 'parent_company'), ('parent_company_os_id', 'parent_company_os_id'), ('duns_id', 'duns_id'), ('lei_id', 'lei_id'), ('rba_id', 'rba_id'), ('isic_4', 'isic_4'), ('isic_5', 'isic_5'), ('name_unspecified', 'name_unspecified'), ('name_site_other', 'name_site_other'), ('name_owner', 'name_owner'), ('name_property_manager', 'name_property_manager'), ('name_operator', 'name_operator'), ('name_permit_holder', 'name_permit_holder'), ('name_building_owner', 'name_building_owner'), ('name_tenant', 'name_tenant'), ('capacity', 'capacity'), ('capacity_units', 'capacity_units'), ('it_capacity', 'it_capacity'), ('it_capacity_units', 'it_capacity_units'), ('utility_capacity', 'utility_capacity'), ('utility_capacity_units', 'utility_capacity_units'), ('ups_capacity', 'ups_capacity'), ('ups_capacity_units', 'ups_capacity_units'), ('backup_generator_capacity', 'backup_generator_capacity'), ('backup_generator_capacity_units', 'backup_generator_capacity_units'), ('pue', 'pue'), ('power_providers', 'power_providers'), ('power_sources', 'power_sources'), ('power_density', 'power_density'), ('power_density_units', 'power_density_units'), ('water_usage', 'water_usage'), ('water_usage_units', 'water_usage_units'), ('wue', 'wue'), ('wue_units', 'wue_units'), ('onsite_power_generation', 'onsite_power_generation'), ('cooling_mechanism', 'cooling_mechanism'), ('operational_status', 'operational_status'), ('is_data_center', 'is_data_center'), ('certifications_compliance', 'certifications_compliance'), ('time_zones', 'time_zones'), ('date_operational', 'date_operational'), ('area', 'area'), ('area_units', 'area_units'), ('data_area', 'data_area'), ('data_area_units', 'data_area_units'), ('non_data_area', 'non_data_area'), ('non_data_area_units', 'non_data_area_units'), ('floor_space', 'floor_space'), ('floor_space_units', 'floor_space_units'), ('number_of_floors', 'number_of_floors'), ('footprint', 'footprint'), ('footprint_units', 'footprint_units'), ('building_area', 'building_area'), ('building_area_units', 'building_area_units'), ('land_area', 'land_area'), ('land_area_units', 'land_area_units'), ('other_area', 'other_area'), ('other_area_notes', 'other_area_notes'), ('other_area_units', 'other_area_units'), ('number_of_servers', 'number_of_servers'), ('number_of_racks', 'number_of_racks'), ('number_of_buildings', 'number_of_buildings'), ('is_group', 'is_group'), ('data_center_group_id', 'data_center_group_id')], help_text='The name of the field, chosen from a strict list.', max_length=200),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_animal_waste',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual animal waste energy consumption in Joules.', null=True, verbose_name='energy animal waste consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_biomass',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual biomass energy consumption in Joules.', null=True, verbose_name='energy biomass consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_charcoal',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual charcoal energy consumption in Joules.', null=True, verbose_name='energy charcoal consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_coal',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual coal energy consumption in Joules.', null=True, verbose_name='energy coal consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_diesel',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual diesel energy consumption in Joules.', null=True, verbose_name='energy diesel consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_electricity',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual electricity consumption in MWh.', null=True, verbose_name='energy electricity consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_kerosene',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual kerosene energy consumption in Joules.', null=True, verbose_name='energy kerosene consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_natural_gas',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual natural gas energy consumption in Joules.', null=True, verbose_name='energy natural gas consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='energy_other',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual other energy source consumption in Joules.', null=True, verbose_name='energy other consumption'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='estimated_annual_throughput',
+            field=models.PositiveBigIntegerField(blank=True, help_text='The estimated annual throughput in kg/year.', null=True, verbose_name='estimated annual throughput'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaim',
+            name='opening_date',
+            field=models.DateField(blank=True, help_text='The opening date of the location for emissions estimation.', null=True, verbose_name='opening date'),
+        ),
+        migrations.AlterField(
+            model_name='facilityclaiminvite',
+            name='recipient_email',
+            field=models.EmailField(help_text='The email address the invite was sent to.', max_length=254),
+        ),
+        migrations.AlterField(
+            model_name='facilityindex',
+            name='custom_text_search',
+            field=models.TextField(default='', help_text='A concatenated string of custom values for searchingthe facility in accent-insensitive and accent-sensitivelookup modes.'),
+        ),
+        migrations.AlterField(
+            model_name='facilitylistitemtemp',
+            name='facility_id',
+            field=models.CharField(help_text='The facility created from this list item or the previously existing facility to which this list item was matched.', max_length=200, null=True),
+        ),
+        migrations.AlterField(
+            model_name='facilitylistitemtemp',
+            name='id',
+            field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+        ),
+        migrations.AlterField(
+            model_name='facilitymatchtemp',
+            name='facility_id',
+            field=models.CharField(help_text='The existing facility that may match an uploaded list item.', max_length=200, null=True),
+        ),
+        migrations.AlterField(
+            model_name='facilitymatchtemp',
+            name='id',
+            field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+        ),
+        migrations.AlterField(
+            model_name='historicalapilimit',
+            name='period_limit',
+            field=models.PositiveIntegerField(help_text='The number of requests a contributor can make per month/year.'),
+        ),
+        migrations.AlterField(
+            model_name='historicalextendedfield',
+            name='field_name',
+            field=models.CharField(choices=[('name', 'name'), ('address', 'address'), ('number_of_workers', 'number_of_workers'), ('native_language_name', 'native_language_name'), ('facility_type', 'facility_type'), ('processing_type', 'processing_type'), ('product_type', 'product_type'), ('parent_company', 'parent_company'), ('parent_company_os_id', 'parent_company_os_id'), ('duns_id', 'duns_id'), ('lei_id', 'lei_id'), ('rba_id', 'rba_id'), ('isic_4', 'isic_4'), ('isic_5', 'isic_5'), ('name_unspecified', 'name_unspecified'), ('name_site_other', 'name_site_other'), ('name_owner', 'name_owner'), ('name_property_manager', 'name_property_manager'), ('name_operator', 'name_operator'), ('name_permit_holder', 'name_permit_holder'), ('name_building_owner', 'name_building_owner'), ('name_tenant', 'name_tenant'), ('capacity', 'capacity'), ('capacity_units', 'capacity_units'), ('it_capacity', 'it_capacity'), ('it_capacity_units', 'it_capacity_units'), ('utility_capacity', 'utility_capacity'), ('utility_capacity_units', 'utility_capacity_units'), ('ups_capacity', 'ups_capacity'), ('ups_capacity_units', 'ups_capacity_units'), ('backup_generator_capacity', 'backup_generator_capacity'), ('backup_generator_capacity_units', 'backup_generator_capacity_units'), ('pue', 'pue'), ('power_providers', 'power_providers'), ('power_sources', 'power_sources'), ('power_density', 'power_density'), ('power_density_units', 'power_density_units'), ('water_usage', 'water_usage'), ('water_usage_units', 'water_usage_units'), ('wue', 'wue'), ('wue_units', 'wue_units'), ('onsite_power_generation', 'onsite_power_generation'), ('cooling_mechanism', 'cooling_mechanism'), ('operational_status', 'operational_status'), ('is_data_center', 'is_data_center'), ('certifications_compliance', 'certifications_compliance'), ('time_zones', 'time_zones'), ('date_operational', 'date_operational'), ('area', 'area'), ('area_units', 'area_units'), ('data_area', 'data_area'), ('data_area_units', 'data_area_units'), ('non_data_area', 'non_data_area'), ('non_data_area_units', 'non_data_area_units'), ('floor_space', 'floor_space'), ('floor_space_units', 'floor_space_units'), ('number_of_floors', 'number_of_floors'), ('footprint', 'footprint'), ('footprint_units', 'footprint_units'), ('building_area', 'building_area'), ('building_area_units', 'building_area_units'), ('land_area', 'land_area'), ('land_area_units', 'land_area_units'), ('other_area', 'other_area'), ('other_area_notes', 'other_area_notes'), ('other_area_units', 'other_area_units'), ('number_of_servers', 'number_of_servers'), ('number_of_racks', 'number_of_racks'), ('number_of_buildings', 'number_of_buildings'), ('is_group', 'is_group'), ('data_center_group_id', 'data_center_group_id')], help_text='The name of the field, chosen from a strict list.', max_length=200),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_animal_waste',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual animal waste energy consumption in Joules.', null=True, verbose_name='energy animal waste consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_biomass',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual biomass energy consumption in Joules.', null=True, verbose_name='energy biomass consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_charcoal',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual charcoal energy consumption in Joules.', null=True, verbose_name='energy charcoal consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_coal',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual coal energy consumption in Joules.', null=True, verbose_name='energy coal consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_diesel',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual diesel energy consumption in Joules.', null=True, verbose_name='energy diesel consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_electricity',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual electricity consumption in MWh.', null=True, verbose_name='energy electricity consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_kerosene',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual kerosene energy consumption in Joules.', null=True, verbose_name='energy kerosene consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_natural_gas',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual natural gas energy consumption in Joules.', null=True, verbose_name='energy natural gas consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='energy_other',
+            field=models.PositiveBigIntegerField(blank=True, help_text='Annual other energy source consumption in Joules.', null=True, verbose_name='energy other consumption'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='estimated_annual_throughput',
+            field=models.PositiveBigIntegerField(blank=True, help_text='The estimated annual throughput in kg/year.', null=True, verbose_name='estimated annual throughput'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilityclaim',
+            name='opening_date',
+            field=models.DateField(blank=True, help_text='The opening date of the location for emissions estimation.', null=True, verbose_name='opening date'),
+        ),
+        migrations.AlterField(
+            model_name='historicalfacilitymatchtemp',
+            name='facility_id',
+            field=models.CharField(help_text='The existing facility that may match an uploaded list item.', max_length=200, null=True),
+        ),
+        migrations.AlterField(
+            model_name='partnerfield',
+            name='available_in_api',
+            field=models.BooleanField(default=True, help_text='Indicates if this partner field is available in the API.', verbose_name='Available in API'),
+        ),
+        migrations.AlterField(
+            model_name='partnerfield',
+            name='name',
+            field=models.CharField(help_text='The partner field name.', max_length=200, unique=True),
+        ),
+        migrations.AlterField(
+            model_name='partnerfield',
+            name='uuid',
+            field=models.UUIDField(default=uuid.uuid4, editable=False, help_text='Unique identifier for the partner field.', primary_key=True, serialize=False),
+        ),
+        migrations.AlterField(
+            model_name='uscountytigerline',
+            name='geoid',
+            field=models.CharField(help_text='The Geo ID of the county (US)', max_length=50, primary_key=True, serialize=False),
+        ),
+        migrations.DeleteModel(
+            name='FacilityField',
+        ),
+        migrations.DeleteModel(
+            name='FacilityListItemField',
+        ),
+    ]
