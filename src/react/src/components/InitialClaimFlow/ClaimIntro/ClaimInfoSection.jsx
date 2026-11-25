@@ -101,7 +101,7 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Company website showing your name and role
+                                Job contract or business card
                             </Typography>
                         </li>
                         <li>
@@ -117,23 +117,24 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Job contract or business card
-                            </Typography>
-                        </li>
-                        <li>
-                            <Typography
-                                variant="body2"
-                                className={classes.boxDescription}
-                            >
-                                Link to your LinkedIn profile
-                            </Typography>
-                        </li>
-                        <li>
-                            <Typography
-                                variant="body2"
-                                className={classes.boxDescription}
-                            >
                                 Audit reports
+                            </Typography>
+                        </li>
+                        <li>
+                            <Typography
+                                variant="body2"
+                                className={classes.boxDescription}
+                            >
+                                Company website showing your name and role (can
+                                delay review)
+                            </Typography>
+                        </li>
+                        <li>
+                            <Typography
+                                variant="body2"
+                                className={classes.boxDescription}
+                            >
+                                Link to your LinkedIn profile (can delay review)
                             </Typography>
                         </li>
                     </ul>
@@ -177,14 +178,6 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Business registration or business license
-                            </Typography>
-                        </li>
-                        <li>
-                            <Typography
-                                variant="body2"
-                                className={classes.boxDescription}
-                            >
                                 Utility bill
                             </Typography>
                         </li>
@@ -193,7 +186,24 @@ const ClaimInfoSection = ({ classes, children, isRelaxedEligibility }) => (
                                 variant="body2"
                                 className={classes.boxDescription}
                             >
-                                Link to company website or LinkedIn page
+                                Business registration, business license or tax
+                                document
+                            </Typography>
+                        </li>
+                        <li>
+                            <Typography
+                                variant="body2"
+                                className={classes.boxDescription}
+                            >
+                                Link to company website (can delay review)
+                            </Typography>
+                        </li>
+                        <li>
+                            <Typography
+                                variant="body2"
+                                className={classes.boxDescription}
+                            >
+                                Link to company LinkedIn page (can delay review)
                             </Typography>
                         </li>
                     </ul>

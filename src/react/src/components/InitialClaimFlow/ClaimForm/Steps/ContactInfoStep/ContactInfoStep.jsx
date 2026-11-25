@@ -30,6 +30,7 @@ import DialogTooltip from '../../../../Contribute/DialogTooltip';
 import FormFieldTitle from '../../../Shared/FormFieldTitle/FormFieldTitle';
 import ImportantNote from '../../../Shared/ImportantNote/ImportantNote';
 import findSelectedOption from '../utils';
+import { formatVerificationOptionLabel } from '../../../Shared/VerificationOptionLabel/VerificationOptionLabel';
 import InputErrorText from '../../../../Contribute/InputErrorText';
 import { selectStyles } from '../../styles';
 import { CLAIM_PII_WARNING_TEXT } from '../../../../../util/constants';
@@ -111,7 +112,7 @@ const ContactInfoStep = ({
             <Grid item>
                 <div className={classes.fieldContainer}>
                     <FormFieldTitle
-                        label="Your Email"
+                        label="Your Work Email"
                         classes={{ title: classes.formLabelRoot }}
                         required
                     />
@@ -131,6 +132,13 @@ const ContactInfoStep = ({
                         className={classes.textField}
                         placeholder="opensupplyhubuser@company.com"
                     />
+                    <Typography
+                        variant="body1"
+                        className={classes.fieldHelperText}
+                    >
+                        Use your work email. A personal email may not be
+                        accepted and can significantly delay approval.
+                    </Typography>
                 </div>
                 <div className={classes.fieldContainer}>
                     <FormFieldTitle
@@ -205,8 +213,8 @@ const ContactInfoStep = ({
                         variant="body1"
                         className={classes.sectionDescription}
                     >
-                        You need to select and provide one of the below items
-                        for employment verification.
+                        Select one item below. Documents are reviewed fastest.
+                        Links can take longer.
                     </Typography>
                     <StyledSelect
                         id="claimantEmploymentVerificationMethod"
@@ -214,6 +222,7 @@ const ContactInfoStep = ({
                         aria-label="Select employment verification option"
                         label={null}
                         options={EMPLOYMENT_VERIFICATION_OPTIONS}
+                        formatOptionLabel={formatVerificationOptionLabel}
                         onBlur={() =>
                             handleBlur('claimantEmploymentVerificationMethod')
                         }

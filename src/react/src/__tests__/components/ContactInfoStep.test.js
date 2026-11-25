@@ -20,7 +20,7 @@ jest.mock('../../components/Filters/StyledSelect', () => {
         >
             <option value="">{placeholder}</option>
             {options.map(opt => (
-                <option key={opt.value} value={opt.value}>
+                <option key={opt.value} value={opt.value} data-tag={opt.tag}>
                     {opt.label}
                 </option>
             ))}
@@ -162,6 +162,64 @@ describe('ContactInfoStep component', () => {
         expect(mockHandleChange).toHaveBeenCalledWith(
             'pointOfContactEmail',
             'test@example.com',
+        );
+    });
+
+    test('asks for a work email and warns about personal emails', () => {
+        renderComponent();
+
+        expect(screen.getByText('Your Work Email')).toBeInTheDocument();
+        expect(
+            screen.getByText(
+                'Use your work email. A personal email may not be accepted and can significantly delay approval.',
+            ),
+        ).toBeInTheDocument();
+    });
+
+    test('tells the claimant that documents are reviewed fastest', () => {
+        renderComponent();
+
+        expect(
+            screen.getByText(
+                'Select one item below. Documents are reviewed fastest. Links can take longer.',
+            ),
+        ).toBeInTheDocument();
+    });
+
+    test('lists documents first as preferred, then the website and LinkedIn options as can delay', () => {
+        renderComponent();
+
+        const options = Array.from(
+            screen.getByTestId('employment-verification-select').querySelectorAll('option'),
+        )
+            .slice(1)
+            .map(option => [option.textContent, option.dataset.tag]);
+
+        expect(options).toEqual([
+            ['Employment letter or contract showing your name, title, and company', 'Preferred'],
+            [
+                'Signed and/or stamped letter on company letterhead that confirms your name, your title with the company, and your email address',
+                'Preferred',
+            ],
+            ['Company ID badge or access card (photo showing name and title)', 'Preferred'],
+            ['Official organizational chart showing your position', 'Preferred'],
+            ['Business card showing your name, title and company', 'Preferred'],
+            ['An official company document showing your name and title', 'Preferred'],
+            ['Audit reports showing your name and role at the facility', 'Preferred'],
+            ['Company website showing your name and title (e.g., About Us, Team page)', 'Can delay review'],
+            ['Your LinkedIn page showing your name, title and company', 'Can delay review'],
+        ]);
+    });
+
+    test('stores the LinkedIn option label without its tag', () => {
+        renderComponent();
+
+        const select = screen.getByTestId('employment-verification-select');
+        fireEvent.change(select, { target: { value: 'linkedin-page' } });
+
+        expect(mockHandleChange).toHaveBeenCalledWith(
+            'claimantEmploymentVerificationMethod',
+            'Your LinkedIn page showing your name, title and company',
         );
     });
 

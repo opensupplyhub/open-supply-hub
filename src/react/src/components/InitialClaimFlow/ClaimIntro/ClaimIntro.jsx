@@ -181,6 +181,13 @@ const ClaimIntro = ({
                             Review the steps below to confirm your eligibility
                             and gather required documentation before you begin.
                         </Typography>
+                        <Typography
+                            variant="subheading"
+                            className={classes.approvalTip}
+                        >
+                            Claims with a work email and an official document
+                            are approved fastest.
+                        </Typography>
                     </div>
                     <ClaimInfoSection>
                         <div className={classes.actionsInner}>

@@ -26,6 +26,7 @@ import {
 import useVerificationMethodChange from './hooks';
 import { getSelectStyles } from '../../../../../util/util';
 import findSelectedOption from '../utils';
+import { formatVerificationOptionLabel } from '../../../Shared/VerificationOptionLabel/VerificationOptionLabel';
 import {
     facilityDetailsRoute,
     contributeProductionLocationRoute,
@@ -244,14 +245,15 @@ const BusinessStep = ({
                     variant="body1"
                     className={classes.sectionDescription}
                 >
-                    You need to select and provide one of the below items for
-                    company address verification.
+                    Select one item below. Documents are reviewed fastest. Links
+                    can take longer.
                 </Typography>
                 <StyledSelect
                     id="locationAddressVerificationMethod"
                     name="locationAddressVerificationMethod"
                     aria-label="Company Address Verification"
                     options={COMPANY_ADDRESS_VERIFICATION_OPTIONS}
+                    formatOptionLabel={formatVerificationOptionLabel}
                     value={selectedVerificationMethod}
                     onChange={valueObject => {
                         handleChange(
