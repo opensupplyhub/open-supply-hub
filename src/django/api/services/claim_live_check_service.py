@@ -449,19 +449,21 @@ def read_live_check_status(note: str) -> Optional[Dict]:
     '''
     The pipeline's "this live check has no result" block from its note
     (OSDEV-3911), as {check_id, reason}, or None when the note is not
-    one or is not in the shape we understand. Text after the block is
-    ignored. Never raises.
+    one or is not in the shape we understand. The block must be the
+    last thing in the note, with only whitespace after it: the same
+    rule as the review block (_read_review_block). Never raises.
     '''
     if not isinstance(note, str) or LIVE_CHECK_STATUS_MARKER not in note:
         return None
     json_start = note.find('{', note.find(LIVE_CHECK_STATUS_MARKER))
     if json_start == -1:
         return None
+    text = note[json_start:]
     try:
-        block, _ = json.JSONDecoder().raw_decode(note[json_start:])
+        block, end = json.JSONDecoder().raw_decode(text)
     except ValueError:
         return None
-    if not isinstance(block, dict):
+    if text[end:].strip() or not isinstance(block, dict):
         return None
     check_id = block.get('check_id')
     reason = block.get('reason')

@@ -1466,10 +1466,15 @@ class ClaimLiveCheckStatusNoteTest(SimpleTestCase):
             read_live_check_status(status_note(7, 'failed')),
         )
 
-    def test_text_after_the_block_is_ignored(self):
+    def test_only_whitespace_may_follow_the_block(self):
+        # The same rule as the review block: the block is the last
+        # thing in the note.
         self.assertEqual(
             {'check_id': 7, 'reason': 'failed'},
-            read_live_check_status(status_note(7, 'failed') + '\n\nMore.'),
+            read_live_check_status(status_note(7, 'failed') + '\n \n'),
+        )
+        self.assertIsNone(
+            read_live_check_status(status_note(7, 'failed') + '\n\nMore.')
         )
 
     def test_anything_else_is_not_a_status_note(self):
