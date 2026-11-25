@@ -1120,17 +1120,55 @@ class ClaimWaitingOnBackfillTest(ClaimStatusFieldsTestBase):
                 self.assertIsNone(claim.denial_type)
                 self.assertIsNone(claim.ai_decision)
 
-    def test_migration_starts_by_setting_a_lock_timeout(self):
-        # So a migration that cannot get its lock on api_facilityclaim
-        # fails fast instead of holding up every read of the table.
+    def test_backfill_does_not_run_under_the_schema_lock(self):
+        # Adding the columns takes an exclusive lock on
+        # api_facilityclaim, which location pages read. The migration is
+        # non-atomic so that lock ends with the ALTER, and the backfill
+        # runs afterwards in a transaction of its own.
         migration = import_module(
             'api.migrations.0285_add_claim_status_detail_fields'
         ).Migration
+        add_columns, backfill = migration.operations[:2]
+        schema_sql = add_columns.database_operations[0].sql
 
-        first = migration.operations[0]
+        self.assertFalse(migration.atomic)
+        self.assertEqual("SET lock_timeout = '5s';", schema_sql[0])
+        self.assertEqual('RESET lock_timeout;', schema_sql[-1])
+        for statement in schema_sql[1:-1]:
+            self.assertEqual(4, statement.count('ADD COLUMN IF NOT EXISTS'))
+        self.assertIsInstance(backfill, migrations.RunPython)
+        self.assertTrue(backfill.atomic)
 
-        self.assertIsInstance(first, migrations.RunSQL)
-        self.assertEqual("SET LOCAL lock_timeout = '5s';", first.sql)
+    def test_migration_columns_match_the_model(self):
+        # The columns are added with SQL written by hand, so check what
+        # the database has against what the model expects.
+        expected = {
+            'waiting_on': ('character varying', 200),
+            'denial_type': ('character varying', 200),
+            'ai_decision': ('character varying', 200),
+            'ai_decision_reason': ('text', None),
+        }
+        for table in ('api_facilityclaim', 'api_historicalfacilityclaim'):
+            with self.subTest(table=table), connection.cursor() as cursor:
+                cursor.execute(
+                    'SELECT column_name, data_type, '
+                    'character_maximum_length, is_nullable, column_default '
+                    'FROM information_schema.columns '
+                    'WHERE table_name = %s AND column_name = ANY(%s)',
+                    [table, list(expected)],
+                )
+                found = {
+                    name: (data_type, length, nullable, default)
+                    for name, data_type, length, nullable, default
+                    in cursor.fetchall()
+                }
+                self.assertEqual(
+                    {
+                        name: (data_type, length, 'YES', None)
+                        for name, (data_type, length) in expected.items()
+                    },
+                    found,
+                )
 
     def test_backfill_runs_two_queries_whatever_the_claim_count(self):
         with self.assertNumQueries(2):

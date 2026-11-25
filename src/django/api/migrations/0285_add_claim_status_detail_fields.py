@@ -37,6 +37,42 @@ AI_DECISION_REASON_HELP_TEXT = (
 )
 
 CLAIM_MODELS = ('facilityclaim', 'historicalfacilityclaim')
+CLAIM_TABLES = ('api_facilityclaim', 'api_historicalfacilityclaim')
+
+# The columns as Django's AddField would create them: nullable, no
+# default, no index.
+COLUMNS = (
+    ('waiting_on', 'varchar(200)'),
+    ('denial_type', 'varchar(200)'),
+    ('ai_decision', 'varchar(200)'),
+    ('ai_decision_reason', 'text'),
+)
+
+
+def add_columns_sql():
+    return [
+        'ALTER TABLE {} {};'.format(
+            table,
+            ', '.join(
+                'ADD COLUMN IF NOT EXISTS {} {} NULL'.format(name, db_type)
+                for name, db_type in COLUMNS
+            ),
+        )
+        for table in CLAIM_TABLES
+    ]
+
+
+def drop_columns_sql():
+    return [
+        'ALTER TABLE {} {};'.format(
+            table,
+            ', '.join(
+                'DROP COLUMN IF EXISTS {}'.format(name)
+                for name, _ in COLUMNS
+            ),
+        )
+        for table in reversed(CLAIM_TABLES)
+    ]
 
 
 def waiting_on_field(**kwargs):
@@ -91,77 +127,105 @@ class Migration(migrations.Migration):
     waiting_on is added without a default so existing rows start empty,
     then backfilled for pending claims, then given its default for new
     claims. The default lives in Django, so that last step emits no SQL.
-
-    Runs under a 5 s `lock_timeout`, as 0284 does. Adding a column
-    needs a brief exclusive lock on api_facilityclaim, which every
-    location page reads. If that lock has to queue behind a long query,
-    every later read queues behind the migration; with the timeout the
-    migration fails fast instead and can be run again.
     '''
+
+    # Adding a nullable column only updates the catalog, but it takes an
+    # ACCESS EXCLUSIVE lock on api_facilityclaim, which every location
+    # page reads. Non-atomic (like 0265) so that lock is released as soon
+    # as the ALTER commits: in one transaction it would be held until the
+    # backfill had finished, and the backfill fires the claim indexing
+    # trigger for every pending claim. The lock_timeout makes an ALTER
+    # fail fast instead of queueing behind a long-running query (and
+    # every later read queueing behind it). The backfill then runs in
+    # its own transaction and takes row locks only, so it blocks no
+    # reads. Every step can be repeated (ADD COLUMN IF NOT EXISTS, and
+    # the backfill rewrites the same values), so after a timeout the
+    # recovery is rerunning migrate.
+    atomic = False
 
     dependencies = [
         ('api', '0284_zone_set_last_upload_sha256'),
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql="SET LOCAL lock_timeout = '5s';",
-            reverse_sql=migrations.RunSQL.noop,
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql=[
+                        "SET lock_timeout = '5s';",
+                        *add_columns_sql(),
+                        'RESET lock_timeout;',
+                    ],
+                    reverse_sql=[
+                        "SET lock_timeout = '5s';",
+                        *drop_columns_sql(),
+                        'RESET lock_timeout;',
+                    ],
+                ),
+            ],
+            state_operations=[
+                *[
+                    migrations.AddField(
+                        model_name=model_name,
+                        name='waiting_on',
+                        field=waiting_on_field(),
+                    )
+                    for model_name in CLAIM_MODELS
+                ],
+                *[
+                    migrations.AddField(
+                        model_name=model_name,
+                        name='denial_type',
+                        field=models.CharField(
+                            blank=True,
+                            choices=DENIAL_TYPE_CHOICES,
+                            help_text=DENIAL_TYPE_HELP_TEXT,
+                            max_length=200,
+                            null=True,
+                            verbose_name='denial type',
+                        ),
+                    )
+                    for model_name in CLAIM_MODELS
+                ],
+                *[
+                    migrations.AddField(
+                        model_name=model_name,
+                        name='ai_decision',
+                        field=models.CharField(
+                            blank=True,
+                            choices=AI_DECISION_CHOICES,
+                            help_text=AI_DECISION_HELP_TEXT,
+                            max_length=200,
+                            null=True,
+                            verbose_name='AI decision',
+                        ),
+                    )
+                    for model_name in CLAIM_MODELS
+                ],
+                *[
+                    migrations.AddField(
+                        model_name=model_name,
+                        name='ai_decision_reason',
+                        field=models.TextField(
+                            blank=True,
+                            help_text=AI_DECISION_REASON_HELP_TEXT,
+                            null=True,
+                            verbose_name='AI decision reason',
+                        ),
+                    )
+                    for model_name in CLAIM_MODELS
+                ],
+            ],
         ),
-        *[
-            migrations.AddField(
-                model_name=model_name,
-                name='waiting_on',
-                field=waiting_on_field(),
-            )
-            for model_name in CLAIM_MODELS
-        ],
-        *[
-            migrations.AddField(
-                model_name=model_name,
-                name='denial_type',
-                field=models.CharField(
-                    blank=True,
-                    choices=DENIAL_TYPE_CHOICES,
-                    help_text=DENIAL_TYPE_HELP_TEXT,
-                    max_length=200,
-                    null=True,
-                    verbose_name='denial type',
-                ),
-            )
-            for model_name in CLAIM_MODELS
-        ],
-        *[
-            migrations.AddField(
-                model_name=model_name,
-                name='ai_decision',
-                field=models.CharField(
-                    blank=True,
-                    choices=AI_DECISION_CHOICES,
-                    help_text=AI_DECISION_HELP_TEXT,
-                    max_length=200,
-                    null=True,
-                    verbose_name='AI decision',
-                ),
-            )
-            for model_name in CLAIM_MODELS
-        ],
-        *[
-            migrations.AddField(
-                model_name=model_name,
-                name='ai_decision_reason',
-                field=models.TextField(
-                    blank=True,
-                    help_text=AI_DECISION_REASON_HELP_TEXT,
-                    null=True,
-                    verbose_name='AI decision reason',
-                ),
-            )
-            for model_name in CLAIM_MODELS
-        ],
         # Nothing to undo: reversing the migration drops the column the
         # backfill wrote to.
-        migrations.RunPython(backfill_waiting_on, migrations.RunPython.noop),
+        # One transaction for both UPDATEs, separate from the ALTERs
+        # above, so the backfill is all or nothing.
+        migrations.RunPython(
+            backfill_waiting_on,
+            migrations.RunPython.noop,
+            atomic=True,
+        ),
         *[
             migrations.AlterField(
                 model_name=model_name,
