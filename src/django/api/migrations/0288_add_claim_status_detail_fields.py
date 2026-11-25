@@ -144,7 +144,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('api', '0284_zone_set_last_upload_sha256'),
+        ('api', '0287_index_facet_arrays'),
     ]
 
     operations = [
