@@ -143,3 +143,16 @@ class FacilityNameSearchIndexTest(TestCase):
             ["OZEN AYBA TEKSTIL", "ÖZEN DÜĞME SAN VE TURZ.TİC LTD ŞT"],
             self.search("ze"),
         )
+
+    def test_fuzzy_lookup_emits_the_indexed_operator(self):
+        # The fallback's strict_word_similar lookup must emit `<<%` on
+        # UPPER(immutable_unaccent(...)), the exact expression the index
+        # is built on; anything else returns fuzzy probes to a table
+        # read. See OSDEV-3906.
+        sql = str(
+            FacilityIndex.objects.filter(
+                name__immutable_unaccent__strict_word_similar="TEXOPORT"
+            ).values("id").query
+        )
+        self.assertIn("<<%", sql)
+        self.assertIn("public.immutable_unaccent", sql)

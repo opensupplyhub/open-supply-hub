@@ -109,6 +109,48 @@ def build_name_token_filter(text):
     return name_filter
 
 
+# strict_word_similarity needs enough trigrams to score a word; shorter
+# tokens stay exact, so a typo in them is not rescued.
+FUZZY_MIN_TOKEN_LENGTH = 4
+
+# Each fuzzy token costs one trigram index scan (~150 ms over 2.5M rows)
+# on an endpoint that needs no authentication, and only zero-result
+# queries get here. A person correcting a typo types a handful of words;
+# a query with more fuzzy-eligible tokens than this stays at zero results
+# rather than paying an unbounded AND of index scans.
+FUZZY_MAX_TOKENS = 6
+
+
+def build_fuzzy_name_filter(text):
+    """
+    The zero-result fallback: match each word approximately.
+
+    Each token long enough to carry trigrams must be strictly word-similar
+    to the name (the indexed ``<<%`` operator at the database default
+    threshold); shorter tokens keep their exact substring match. Returns
+    None when no token is long enough to match approximately — so a purely
+    short query never takes the fallback — or when more than
+    ``FUZZY_MAX_TOKENS`` are eligible, which bounds the cost of a
+    deliberately long no-match query. See OSDEV-3906.
+    """
+    tokens = text.split()
+    fuzzy_eligible = sum(
+        1 for token in tokens if len(token) >= FUZZY_MIN_TOKEN_LENGTH
+    )
+    if fuzzy_eligible == 0 or fuzzy_eligible > FUZZY_MAX_TOKENS:
+        return None
+
+    name_filter = Q()
+    for token in tokens:
+        if len(token) >= FUZZY_MIN_TOKEN_LENGTH:
+            name_filter &= Q(
+                name__immutable_unaccent__strict_word_similar=token
+            )
+        else:
+            name_filter &= Q(name__immutable_unaccent__icontains=token)
+    return name_filter
+
+
 class FacilityIndexNewManager(models.Manager):
     def without_candidates(self):
         """
@@ -252,8 +294,19 @@ class FacilityIndexNewManager(models.Manager):
                             custom_text_search_filter
                             )
             else:
-                facilities_qs = facilities_qs \
+                exact_qs = facilities_qs \
                     .filter(name_filter | Q(id=free_text_query))
+                # Only when the typed words match no name at all does the
+                # search retry approximately, so established queries gain
+                # no fuzzy noise. The probe is answered by the trigram
+                # index; later filters (country, sector, ...) cannot
+                # rescue a name that matches nothing, so probing before
+                # they apply is sound. See OSDEV-3906.
+                if not exact_qs.exists():
+                    fuzzy_filter = build_fuzzy_name_filter(free_text_query)
+                    if fuzzy_filter is not None:
+                        exact_qs = facilities_qs.filter(fuzzy_filter)
+                facilities_qs = exact_qs
 
         # `name` is deprecated in favor of `q`. We keep `name` available for
         # backward compatibility, matching per word as `q` does: both are
