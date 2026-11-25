@@ -16,11 +16,20 @@ write path completes, the facility's index row must equal what a full
 recompute of that facility produces. assertIndexMatchesFullRebuild
 snapshots the row, runs `CALL index_facilities_by(ARRAY[id])` (the same
 procedure the full rebuild and the facility trigger use), and fails
-with the per-column diff if anything moved. The comparison iterates the
-model's concrete fields, so a future column is covered the day it is
-added, with no test change.
+with the per-column diff if anything moved.
+
+Scope honesty: the comparison iterates the model's concrete fields,
+but a column is only exercised when the fixture makes it sensitive to
+the mutated table - coverage grows with the fixtures, not by itself.
+Two known blind spots: isic_mapped_* is written by a trigger on
+api_facilityindex itself (index_facilities_by never writes it), so for
+those four columns the rebuild reproduces the write path's own value;
+and api_facility_processing_value is a separate derived table this
+suite never reads. The expectedFailure tests at the bottom pin a REAL
+recompute gap the suite surfaced (see their comments).
 """
 import json
+from unittest import expectedFailure
 
 from django.db import connection
 from waffle.testutils import override_switch
@@ -41,16 +50,25 @@ class FacilityIndexInvariantMixin:
     # incremental write and a rebuild.
     REBUILD_EXCLUDED_FIELDS = {"uuid", "created_at", "updated_at"}
 
-    @staticmethod
-    def _canonical(value):
-        # Arrays are compared as multisets: both sides run the same
-        # index_* SQL functions, but array_agg order is not guaranteed
-        # between two executions and is not part of the contract.
+    # extended_fields is aggregated ORDER BY (extended_field->>'id') in
+    # every procedure as a deliberate determinism contract (the first
+    # comment in sqls/0254_isic_dependent_triggers.sql), so its order is
+    # compared, not multiset-normalized.
+    ORDER_SENSITIVE_FIELDS = {"extended_fields"}
+
+    @classmethod
+    def _canonical(cls, field_name, value):
+        # Other arrays are compared as multisets: both sides run the
+        # same index_* SQL functions, but array_agg order without an
+        # ORDER BY is not part of the contract.
         if isinstance(value, list):
-            return sorted(
+            dumped = [
                 json.dumps(item, sort_keys=True, default=str)
                 for item in value
-            )
+            ]
+            if field_name in cls.ORDER_SENSITIVE_FIELDS:
+                return dumped
+            return sorted(dumped)
         if isinstance(value, dict):
             return json.dumps(value, sort_keys=True, default=str)
         if value is not None and hasattr(value, "ewkt"):
@@ -60,7 +78,9 @@ class FacilityIndexInvariantMixin:
     def _index_snapshot(self, facility_id):
         row = FacilityIndex.objects.get(id=facility_id)
         return {
-            field.name: self._canonical(getattr(row, field.attname))
+            field.name: self._canonical(
+                field.name, getattr(row, field.attname)
+            )
             for field in FacilityIndex._meta.concrete_fields
             if field.name not in self.REBUILD_EXCLUDED_FIELDS
         }
@@ -205,8 +225,18 @@ class ClaimWritePathInvariantsTest(
         self.assertEqual([], row.facility_type)
 
     def test_claim_denial_via_model(self):
+        # Denied from APPROVED, not from PENDING: a pending claim is
+        # already invisible to the index functions, so a
+        # PENDING -> DENIED flip compares empty against empty and would
+        # hold even if the claim trigger were dropped entirely.
+        self.set_claim_status(FacilityClaimStatuses.APPROVED)
+        self.assertNotEqual(
+            [], FacilityIndex.objects.get(id=self.facility.id).facility_type
+        )
         self.set_claim_status(FacilityClaimStatuses.DENIED)
         self.assertIndexMatchesFullRebuild(self.facility.id)
+        row = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual([], row.facility_type)
 
     @override_switch("claim_a_facility", active=True)
     def test_claim_approval_via_endpoint(self):
@@ -235,6 +265,11 @@ class ClaimWritePathInvariantsTest(
         )
         self.assertEqual(200, response.status_code, response.content)
         self.assertIndexMatchesFullRebuild(self.facility.id)
+        # Without this the test would hold if /revoke/ became a 200
+        # no-op, since the invariant alone passes on an unchanged row.
+        row = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual([], row.facility_type)
+        self.assertEqual([], row.approved_claim_ids)
 
 
 class ListStatusInvariantsTest(
@@ -256,6 +291,14 @@ class ListStatusInvariantsTest(
         )
 
     def test_list_approval(self):
+        # Approval writes only FacilityList.status and its status_change
+        # fields, none of which any index function reads, so the
+        # invariant leg here is deliberately inert: it pins that
+        # approval does NOT disturb the index, and would catch a future
+        # approval path that starts touching indexed data without
+        # recomputing. The status assertion is what keeps the test
+        # honest in the meantime - without it this passes against a
+        # stub that returns 200.
         response = self.client.post(
             f"/api/facility-lists/{self.list.id}/approve/",
             {"reason": "looks good"},
@@ -263,6 +306,10 @@ class ListStatusInvariantsTest(
         )
         self.assertEqual(200, response.status_code, response.content)
         self.assertIndexMatchesFullRebuild(self.facility.id)
+        self.list.refresh_from_db()
+        self.assertEqual(FacilityList.APPROVED, self.list.status)
+        row = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertIn("Final Product Assembly", row.facility_type)
 
     def test_list_rejection(self):
         response = self.client.post(
@@ -273,9 +320,15 @@ class ListStatusInvariantsTest(
         self.assertEqual(200, response.status_code, response.content)
         self.assertIndexMatchesFullRebuild(self.facility.id)
         # Rejection deactivates the source, so the source-visibility
-        # dependent columns must empty out, not just hold the invariant.
+        # dependent columns must empty out, not just hold the invariant:
+        # both sides staying full would mean the deactivation never
+        # reached the index.
         self.list.refresh_from_db()
         self.assertEqual(FacilityList.REJECTED, self.list.status)
+        self.source.refresh_from_db()
+        self.assertFalse(self.source.is_active)
+        row = FacilityIndex.objects.get(id=self.facility.id)
+        self.assertEqual([], row.facility_type)
 
 
 class UpdateLocationInvariantTest(
@@ -327,3 +380,43 @@ class ModerationEventApprovalInvariantTest(
         self.assertIndexMatchesFullRebuild(os_id)
         row = FacilityIndex.objects.get(id=os_id)
         self.assertNotEqual([], row.facility_type)
+
+
+class KnownRecomputeGapTest(
+    FacilityIndexInvariantMixin, FacilityAPITestCaseBase
+):
+    """A real gap the invariant surfaced, recorded as an executable fact.
+
+    The per-table procedures in sqls/0254_isic_dependent_triggers.sql
+    recompute the taxonomy columns but not number_of_workers,
+    product_type, parent_company_name, parent_company_id,
+    native_language_name or sector - grep that file for any of them and
+    it returns nothing. Those columns are still derived from extended
+    fields whose visibility depends on match.is_active and
+    source.is_active, so deactivating a source leaves them holding
+    values that a full rebuild clears.
+
+    No user-visible bug exists today: the end-to-end paths fire several
+    triggers per action and cover for each other. This test pins the
+    gap at the one place it is reachable, so it cannot widen unnoticed.
+
+    expectedFailure, not skip, is deliberate: Django's runner reports an
+    unexpected success as a failure, so whoever fixes the procedures is
+    told to delete this test rather than leaving a stale marker behind.
+    """
+
+    def setUp(self):
+        super().setUp()
+        ExtendedField.objects.create(
+            contributor=self.contributor,
+            facility=self.facility,
+            facility_list_item=self.list_item,
+            field_name=ExtendedField.NUMBER_OF_WORKERS,
+            value={"min": 100, "max": 100},
+        )
+
+    @expectedFailure
+    def test_source_deactivation_leaves_number_of_workers_stale(self):
+        self.source.is_active = False
+        self.source.save()
+        self.assertIndexMatchesFullRebuild(self.facility.id)
