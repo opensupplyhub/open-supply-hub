@@ -23,7 +23,8 @@ from api.services.facility_processing_query import FacilityProcessingQuery
 # Unit numbers are written both ways in facility names, so a numeral
 # token matches either spelling. 1/I is deliberately absent: a '%I%'
 # substring matches nearly every name. See OSDEV-3907.
-# TODO: If/when we move to open-search, consider converting to synonym token filter
+# TODO: If/when we move to OpenSearch, consider converting this to a
+# synonym token filter.
 ARABIC_TO_ROMAN = {
     '2': 'II', '3': 'III', '4': 'IV', '5': 'V', '6': 'VI', '7': 'VII',
     '8': 'VIII', '9': 'IX', '10': 'X', '11': 'XI', '12': 'XII',
