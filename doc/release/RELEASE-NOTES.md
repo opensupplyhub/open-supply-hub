@@ -3,6 +3,26 @@ All notable changes to this project will be documented in this file.
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html). The format is based on the `RELEASE-NOTES-TEMPLATE.md` file.
 
+## Release 2.34.0
+
+## Introduction
+* Product name: Open Supply Hub
+* Release date: _Provide release date_
+
+### Database changes
+
+#### Migrations
+* `0285_split_composite_sectors.py` - Splits stored sector values that hold several sectors in one array element ("Apparel,Manufacturing,Textiles"), and rewrites a value that differs from a taxonomy sector only by case. A value is split only when every comma-separated part is already a sector, which leaves contributor phrases that merely contain a comma ("Professional, scientific and technical activities") and composites truncated mid-word by the 50-character field limit exactly as they are. Touches `updated_at` on the affected locations so the index trigger and the OpenSearch sync pick the change up. Not reversible: a split row is afterwards indistinguishable from one that was always correct. See [OSDEV-3923](https://opensupplyhub.atlassian.net/browse/OSDEV-3923).
+
+### Bugfix
+* [OSDEV-3923](https://opensupplyhub.atlassian.net/browse/OSDEV-3923) - Production locations whose sectors were stored as one combined value are now found by the sector filter. Around 850 locations, all from uploads before 2025, listed several sectors in a single entry, so filtering by any one of them missed the location; the ingest path has split them correctly since then. Values that cannot be split safely are left unchanged.
+
+### Release instructions
+* Ensure that the following commands are included in the `post_deployment` command:
+    * `migrate`
+    * `reindex_database`
+
+
 ## Release 2.33.0
 
 ## Introduction
