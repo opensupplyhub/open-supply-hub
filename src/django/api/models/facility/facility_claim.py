@@ -575,13 +575,14 @@ class FacilityClaim(models.Model):
         caller has to remember it. A save limited by `update_fields`
         of a claim that is not PENDING always writes `waiting_on` too,
         even when the caller had already emptied it on the instance:
-        the stored value may still be set. `QuerySet.update()` does not
-        call save and is not covered.
+        the stored value may still be set. An empty `update_fields`
+        stays what Django makes of it, a save that writes nothing.
+        `QuerySet.update()` does not call save and is not covered.
         """
         if self.status != FacilityClaimStatuses.PENDING:
             self.waiting_on = None
             update_fields = kwargs.get('update_fields')
-            if update_fields is not None:
+            if update_fields:
                 kwargs['update_fields'] = {*update_fields, 'waiting_on'}
         super().save(*args, **kwargs)
 

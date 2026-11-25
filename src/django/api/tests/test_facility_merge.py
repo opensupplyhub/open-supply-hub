@@ -2,6 +2,8 @@ import json
 
 from rest_framework.test import APITestCase
 from django.contrib.gis.geos import Point
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 from django.db.models.signals import post_delete
 
@@ -291,6 +293,25 @@ class FacilityMergeTest(APITestCase):
         # the merge is neither kind of denial (OSDEV-3795).
         self.assertIsNone(self.facility_2_claim.waiting_on)
         self.assertIsNone(self.facility_2_claim.denial_type)
+
+    def test_merge_locks_the_claims_it_moves(self):
+        # The merge saves each claim in full, so it reads them under a
+        # row lock: a review recorded on a claim in between must not be
+        # written over with what the merge read earlier (OSDEV-3795).
+        self.client.login(
+            email=self.superuser_email, password=self.superuser_password
+        )
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.post(self.merge_url)
+
+        self.assertEqual(200, response.status_code)
+        locking_reads = [
+            query['sql'] for query in queries
+            if 'FOR UPDATE' in query['sql']
+            and 'FROM "api_facilityclaim"' in query['sql']
+        ]
+        self.assertEqual(1, len(locking_reads))
 
     def test_merge_with_extended_fields(self):
         self.client.login(

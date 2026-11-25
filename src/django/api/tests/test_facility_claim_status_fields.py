@@ -395,6 +395,21 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
         self.assertEqual(FacilityClaimStatuses.DENIED, self.claim.status)
         self.assertIsNone(self.claim.waiting_on)
 
+    def test_save_with_no_fields_writes_nothing_on_a_decided_claim(self):
+        # Django treats an empty update_fields as "save nothing". The
+        # guard must not turn that into a write of waiting_on.
+        FacilityClaim.objects.filter(pk=self.claim.pk).update(
+            status=FacilityClaimStatuses.DENIED
+        )
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
+
+        with self.assertNumQueries(0):
+            self.claim.save(update_fields=[])
+
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
+
     def test_partial_save_of_a_pending_claim_writes_only_its_fields(self):
         self.claim.contact_person = 'New Name'
         self.claim.waiting_on = FacilityClaimWaitingOn.CLAIMANT
