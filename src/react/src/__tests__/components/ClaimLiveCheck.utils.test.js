@@ -139,6 +139,7 @@ describe('claimLiveCheck reducer', () => {
             status: 'NOT_PASSED',
             fixes: ['upload_document'],
             checksLeft: 1,
+            noResult: false,
         });
     });
 
@@ -170,6 +171,44 @@ describe('claimLiveCheck reducer', () => {
     test('not passed with nothing to show reads as not available', () => {
         const data = { status: 'NOT_PASSED', fixes: ['made_up'] };
         expect(readAnswer(data).status).toBe('UNAVAILABLE');
+    });
+
+    test('no result is read only from an unavailable answer that says so', () => {
+        expect(
+            readAnswer({ status: 'UNAVAILABLE', no_result: true }).noResult,
+        ).toBe(true);
+        expect(readAnswer({ status: 'UNAVAILABLE' }).noResult).toBe(false);
+        expect(
+            readAnswer({ status: 'UNAVAILABLE', no_result: 'true' }).noResult,
+        ).toBe(false);
+        expect(
+            readAnswer({ status: 'CHECKING', no_result: true }).noResult,
+        ).toBe(false);
+        expect(
+            readAnswer({
+                status: 'NOT_PASSED',
+                fixes: ['made_up'],
+                no_result: true,
+            }).noResult,
+        ).toBe(false);
+    });
+
+    test('a new check forgets an earlier no result', () => {
+        const ended = claimLiveCheckReducer(
+            started,
+            completeClaimLiveCheck({
+                claimID: 5,
+                data: { status: 'UNAVAILABLE', no_result: true },
+            }),
+        );
+        expect(ended.noResult).toBe(true);
+
+        const again = claimLiveCheckReducer(
+            ended,
+            startClaimLiveCheck({ claimID: 5 }),
+        );
+
+        expect(again.noResult).toBe(false);
     });
 
     test('an unknown status reads as not available', () => {

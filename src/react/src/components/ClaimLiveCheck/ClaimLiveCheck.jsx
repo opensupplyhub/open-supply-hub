@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
     arrayOf,
+    bool,
     func,
     number,
     object,
@@ -37,6 +38,8 @@ import {
     LEAVE_BUTTON_TEXT,
     LEFT_FOR_REVIEW_TITLE,
     makeFixLabel,
+    NO_RESULT_TEXT,
+    NO_RESULT_TITLE,
     NOT_PASSED_TITLE,
     PANEL_SCROLL_MARGIN_PX,
     PASSED_TITLE,
@@ -65,6 +68,7 @@ const ClaimLiveCheck = ({
     status,
     fixes,
     checksLeft,
+    noResult,
     locationName,
     contributorCount,
     runCheck,
@@ -272,6 +276,24 @@ const ClaimLiveCheck = ({
         );
     }
 
+    if (noResult) {
+        return (
+            <div
+                className={classes.panelUnavailable}
+                ref={panelRef}
+                role="status"
+            >
+                <Typography component="h2" className={classes.title}>
+                    {NO_RESULT_TITLE}
+                </Typography>
+                <Typography className={classes.text}>
+                    {NO_RESULT_TEXT}
+                </Typography>
+                {exits}
+            </div>
+        );
+    }
+
     return (
         <div className={classes.panelUnavailable} ref={panelRef} role="status">
             <Typography component="h2" className={classes.title}>
@@ -288,6 +310,7 @@ const ClaimLiveCheck = ({
 
 ClaimLiveCheck.defaultProps = {
     status: null,
+    noResult: false,
     locationName: '',
     contributorCount: null,
 };
@@ -299,6 +322,7 @@ ClaimLiveCheck.propTypes = {
     status: oneOf([CHECKING, PASSED, NOT_PASSED, UNAVAILABLE]),
     fixes: arrayOf(oneOf(Object.keys(CLAIM_LIVE_CHECK_FIXES))).isRequired,
     checksLeft: number.isRequired,
+    noResult: bool,
     locationName: string,
     contributorCount: number,
     runCheck: func.isRequired,
@@ -309,7 +333,7 @@ ClaimLiveCheck.propTypes = {
 };
 
 const mapStateToProps = ({
-    claimLiveCheck: { status, fixes, checksLeft },
+    claimLiveCheck: { status, fixes, checksLeft, noResult },
     contributeProductionLocation: {
         singleProductionLocation: { data: location },
     },
@@ -317,6 +341,7 @@ const mapStateToProps = ({
     status,
     fixes,
     checksLeft,
+    noResult,
     locationName: location?.name || '',
     contributorCount: getContributorCount(location),
 });

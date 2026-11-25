@@ -25,7 +25,7 @@
             </li>
         </ul>
         <p>
-            The claim did not pass the automatic check.
+            {% if no_result %}We could not finish the automatic check of your claim.{% else %}The claim did not pass the automatic check.{% endif %}
         </p>
         {% if fixes %}
         <p>

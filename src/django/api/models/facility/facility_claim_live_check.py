@@ -56,6 +56,15 @@ class FacilityClaimLiveCheck(models.Model):
         help_text=('When the result of this check was emailed to the '
                    'claimant. Empty when there was nothing to send.'))
 
+    no_result_reason = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        help_text=('Why the pipeline ended this check without a result, '
+                   'as it reported it (for example review_in_progress or '
+                   'failed). Empty when it gave a result or reported '
+                   'nothing.'))
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

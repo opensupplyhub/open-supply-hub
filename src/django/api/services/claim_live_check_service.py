@@ -12,7 +12,8 @@ the claim:
   NOT_PASSED   the pipeline posted its review note and left the claim
                for a moderator; the note's machine-readable block is
                turned into preset fixes (claim_live_check_fixes)
-  UNAVAILABLE  no answer in time, the live check is not configured, or
+  UNAVAILABLE  no answer in time, the live check is not configured,
+               the pipeline said no result is coming (OSDEV-3911), or
                anything went wrong
   CHECKING     none of the above yet
 
@@ -24,6 +25,7 @@ A claimant only ever receives the status, the fix keys and how many
 checks are left: never a score, the model's words or a moderator's
 note.
 '''
+import json
 import logging
 from datetime import timedelta
 from typing import Dict, List, Optional, Tuple
@@ -84,6 +86,32 @@ REVIEW_DECISION_VALIDATED = 'VALIDATED'
 # ordinary moderation and its usual emails apply.
 LATE_RESULT_WINDOW = timedelta(hours=24)
 
+# OSDEV-3911: the note the pipeline posts when a live check ends
+# without a result (it skipped the claim, the review failed, or it
+# validated the claim but did not approve it). It has its own marker
+# line, so it is never read as a review. The writer is
+# build_live_check_status_note in the pipeline's app_moderate_claim.py;
+# change the two together.
+LIVE_CHECK_STATUS_MARKER = '--- live check status, do not edit ---'
+LIVE_CHECK_STATUS_KIND = 'live_check_status'
+LIVE_CHECK_STATUS_VERSION = 1
+LIVE_CHECK_NO_RESULT = 'no_result'
+
+# The reasons that mean the pipeline never reviewed the claim. A check
+# that ended for one of these does not use up one of the claimant's
+# checks. Any other reason (a review that failed, a validated claim
+# that was not approved) does: the review ran.
+NOT_REVIEWED_REASONS = frozenset({
+    'review_in_progress',
+    'already_reviewed',
+    'status_unknown',
+    'moderator_notes',
+})
+
+# The most checks a claim can ever have, counted or not, so checks that
+# do not count cannot be started without end.
+MAX_LIVE_CHECK_ATTEMPTS = 2 * MAX_LIVE_CHECKS_PER_CLAIM
+
 # How long the local development stub pretends the pipeline takes.
 STUB_DELAY_SECONDS = 5
 
@@ -113,7 +141,14 @@ def _latest_check(
 def _checks_left(claim: FacilityClaim) -> int:
     if claim.status != FacilityClaimStatuses.PENDING:
         return 0
-    used = FacilityClaimLiveCheck.objects.filter(claim=claim).count()
+    reasons = list(
+        FacilityClaimLiveCheck.objects
+        .filter(claim=claim)
+        .values_list('no_result_reason', flat=True)
+    )
+    if len(reasons) >= MAX_LIVE_CHECK_ATTEMPTS:
+        return 0
+    used = sum(1 for reason in reasons if reason not in NOT_REVIEWED_REASONS)
     return max(0, MAX_LIVE_CHECKS_PER_CLAIM - used)
 
 
@@ -156,11 +191,17 @@ def _state(
     )
     if check is None or stale:
         return unavailable_state(checks_left)
-    return {
+    state = {
         'status': check.status,
         'fixes': list(check.fixes),
         'checks_left': checks_left,
     }
+    # Only present when true, so every other answer keeps its shape:
+    # the pipeline said no result is coming, so the page must not
+    # promise one by email.
+    if check.no_result_reason:
+        state['no_result'] = True
+    return state
 
 
 def _finish(
@@ -185,6 +226,7 @@ def _email_result(
     claim: FacilityClaim,
     check: FacilityClaimLiveCheck,
     fixes: List[str],
+    no_result: bool = False,
 ) -> None:
     '''
     Record that the check's result is being emailed and send the email
@@ -201,7 +243,7 @@ def _email_result(
     def send():
         try:
             send_claim_live_check_not_passed_email(
-                request, claim, fixes, check_again
+                request, claim, fixes, check_again, no_result=no_result
             )
         except Exception:
             logger.exception(
@@ -403,6 +445,92 @@ def get_live_check_state(request, claim: FacilityClaim) -> Dict:
     return _state(claim, _resolved_check(request, claim))
 
 
+def read_live_check_status(note: str) -> Optional[Dict]:
+    '''
+    The pipeline's "this live check has no result" block from its note
+    (OSDEV-3911), as {check_id, reason}, or None when the note is not
+    one or is not in the shape we understand. The block must be the
+    last thing in the note, with only whitespace after it: the same
+    rule as the review block (_read_review_block). Never raises.
+    '''
+    if not isinstance(note, str) or LIVE_CHECK_STATUS_MARKER not in note:
+        return None
+    json_start = note.find('{', note.find(LIVE_CHECK_STATUS_MARKER))
+    if json_start == -1:
+        return None
+    text = note[json_start:]
+    try:
+        block, end = json.JSONDecoder().raw_decode(text)
+    except ValueError:
+        return None
+    if text[end:].strip() or not isinstance(block, dict):
+        return None
+    check_id = block.get('check_id')
+    reason = block.get('reason')
+    if (block.get('v') != LIVE_CHECK_STATUS_VERSION
+            or block.get('kind') != LIVE_CHECK_STATUS_KIND
+            or block.get('outcome') != LIVE_CHECK_NO_RESULT
+            or isinstance(check_id, bool)
+            or not isinstance(check_id, int)
+            or not isinstance(reason, str)
+            or not reason.strip()):
+        return None
+    return {'check_id': check_id, 'reason': reason.strip()[:200]}
+
+
+def _record_no_result(
+    request,
+    claim: FacilityClaim,
+    status_block: Dict,
+) -> None:
+    '''
+    The pipeline said the check it names ended without a result. The
+    check stops waiting at once and remembers why.
+
+    A check the page is still waiting on is simply settled: the page
+    reads the answer on its next poll and tells the claimant a person
+    will review the claim. A check the page had already given up on was
+    answered "we will email you the result", so that claimant is
+    emailed that a person will review the claim.
+
+    Left alone: a check that is not the claim's newest (the claimant
+    has moved on), one that already has a result, a reason or an email,
+    one whose review was never requested, and one older than
+    LATE_RESULT_WINDOW. The row is locked for the decision.
+    '''
+    with transaction.atomic():
+        check = _latest_check(claim, lock=True)
+        if check is None or check.id != status_block['check_id']:
+            return
+        if check.no_result_reason or check.emailed_at is not None:
+            return
+        waiting = check.status == FacilityClaimLiveCheckStatuses.CHECKING
+        gave_up = (
+            check.status == FacilityClaimLiveCheckStatuses.UNAVAILABLE
+            and check.review_requested
+        )
+        if not waiting and not gave_up:
+            return
+        if timezone.now() - check.created_at > LATE_RESULT_WINDOW:
+            return
+
+        check.status = FacilityClaimLiveCheckStatuses.UNAVAILABLE
+        check.fixes = []
+        check.no_result_reason = status_block['reason']
+        check.save(update_fields=[
+            'status', 'fixes', 'no_result_reason', 'updated_at',
+        ])
+        logger.info(
+            'Live claim check ended without a result: claim=%s check=%s '
+            'reason=%s',
+            claim.id,
+            check.id,
+            check.no_result_reason,
+        )
+        if gave_up:
+            _email_result(request, claim, check, [], no_result=True)
+
+
 def record_live_check_review(
     request,
     claim: FacilityClaim,
@@ -433,6 +561,9 @@ def record_live_check_review(
     A pass sends nothing from here, because the approval that follows
     sends the usual approval email.
 
+    The pipeline's other note, "this live check has no result"
+    (OSDEV-3911), is handled here too: see _record_no_result.
+
     Never raises and never undoes the note: a failure in here is logged
     and the check is left for the next poll or the timeout.
     '''
@@ -442,6 +573,10 @@ def record_live_check_review(
         if claim.status != FacilityClaimStatuses.PENDING:
             return
         if not is_claims_automation_account(user):
+            return
+        status_block = read_live_check_status(note)
+        if status_block is not None:
+            _record_no_result(request, claim, status_block)
             return
         review = read_automated_review(note)
         if (review is None

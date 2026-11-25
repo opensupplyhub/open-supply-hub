@@ -24,6 +24,9 @@ const initialState = Object.freeze({
     // Keys of the preset fixes to show when the claim did not pass.
     fixes: Object.freeze([]),
     checksLeft: 0,
+    // True when the check ended without a result and none is coming,
+    // so the claimant must not be told to expect one by email.
+    noResult: false,
 });
 
 const knownStatuses = Object.values(CLAIM_LIVE_CHECK_STATUSES);
@@ -42,15 +45,20 @@ export const readAnswer = data => {
     const checksLeft = Number.isInteger(data?.checks_left)
         ? data.checks_left
         : 0;
+    // Only an unavailable check can be one that ended without a result.
+    const noResult =
+        status === CLAIM_LIVE_CHECK_STATUSES.UNAVAILABLE &&
+        data?.no_result === true;
 
     if (status === CLAIM_LIVE_CHECK_STATUSES.NOT_PASSED && fixes.length === 0) {
         return {
             status: CLAIM_LIVE_CHECK_STATUSES.UNAVAILABLE,
             fixes,
             checksLeft,
+            noResult: false,
         };
     }
-    return { status, fixes, checksLeft };
+    return { status, fixes, checksLeft, noResult };
 };
 
 const makeLiveCheckReducer = (start, fail, complete, reset) =>
@@ -62,16 +70,20 @@ const makeLiveCheckReducer = (start, fail, complete, reset) =>
                     status: { $set: null },
                     fixes: { $set: [] },
                     checksLeft: { $set: 0 },
+                    noResult: { $set: false },
                 }),
             [complete]: (state, { claimID, data }) => {
                 if (claimID !== state.claimID) {
                     return state;
                 }
-                const { status, fixes, checksLeft } = readAnswer(data);
+                const { status, fixes, checksLeft, noResult } = readAnswer(
+                    data,
+                );
                 return update(state, {
                     status: { $set: status },
                     fixes: { $set: fixes },
                     checksLeft: { $set: checksLeft },
+                    noResult: { $set: noResult },
                 });
             },
             [fail]: (state, { claimID }) => {
@@ -81,6 +93,7 @@ const makeLiveCheckReducer = (start, fail, complete, reset) =>
                 return update(state, {
                     status: { $set: CLAIM_LIVE_CHECK_STATUSES.UNAVAILABLE },
                     fixes: { $set: [] },
+                    noResult: { $set: false },
                 });
             },
             [reset]: () => initialState,
