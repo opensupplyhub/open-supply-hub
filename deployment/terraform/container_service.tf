@@ -185,6 +185,8 @@ data "template_file" "app" {
     list_cleaning_results_bucket_owner            = var.list_cleaning_results_bucket_owner
     list_cleaning_aws_region                      = var.list_cleaning_aws_region
     list_cleaning_role_arn                        = var.list_cleaning_role_arn
+    claims_live_review_function                   = var.claims_live_review_function
+    claims_live_review_region                     = var.claims_live_review_function != "" ? split(":", var.claims_live_review_function)[3] : ""
     claim_attachments_signing_role_arn            = aws_iam_role.claim_attachments_signer.arn
     kafka_bootstrap_servers                       = join(",", module.msk_cluster.bootstrap_brokers)
     kafka_topic_basic_name                        = var.topic_dedup_basic_name

@@ -1798,3 +1798,27 @@ variable "list_cleaning_role_arn" {
   type    = string
   default = ""
 }
+
+# OSDEV-3913: the claims automation pipeline's review function (the
+# auto-claims stack in the automated-claims repo), which the live claim
+# check (OSDEV-3804) asks to review a claim as soon as it is submitted.
+# The full function ARN, not its name: the function is in another
+# account, and a bare name would be looked up in this one. The ARN does
+# not pick the region the app calls: the client's region is set
+# separately, so the app task also gets CLAIMS_LIVE_REVIEW_REGION, taken
+# from this ARN in container_service.tf. One unqualified function only:
+# a wildcard would grant every function in that account, and the stack's
+# permission does not cover a version or alias. Empty by
+# default: the app then calls nothing and has no permission to. The stack
+# must also allow this environment's app task role to invoke the function
+# (its LiveCheckCallerRoleArn parameter). Set for production only: the
+# stack reads production claims whichever environment calls it.
+variable "claims_live_review_function" {
+  type    = string
+  default = ""
+
+  validation {
+    condition     = var.claims_live_review_function == "" || can(regex("^arn:aws:lambda:[a-z0-9-]+:[0-9]{12}:function:[A-Za-z0-9_-]+$", var.claims_live_review_function))
+    error_message = "claims_live_review_function must be empty or the ARN of one Lambda function, with no wildcard, version or alias."
+  }
+}
