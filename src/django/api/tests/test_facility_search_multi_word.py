@@ -135,10 +135,43 @@ class FacilitySearchMultiWordTest(TestCase):
     def test_blank_query_does_not_error(self):
         self.assertEqual([], self.search("   "))
 
-    def test_misspelling_still_returns_nothing(self):
-        # Tokenization is not fuzziness. Typo tolerance needs OpenSearch or
-        # a trigram index; this records the current boundary.
-        self.assert_search("Interlop", [])
+    def test_misspelling_falls_back_to_close_matches(self):
+        # When the typed words match nothing exactly, the search retries
+        # with strict word similarity on the trigram index (OSDEV-3906).
+        self.assert_search(
+            "Interlop",
+            [
+                "Interloop Limited (Hosiery Division I)",
+                "Interloop Limited Apparel Park",
+            ],
+        )
+
+    def test_gibberish_still_returns_nothing(self):
+        # The fallback is similarity, not surrender: a query resembling
+        # no name finds nothing.
+        self.assert_search("zzxqwv", [])
+
+    def test_short_misspelling_is_not_rescued(self):
+        # Tokens below FUZZY_MIN_TOKEN_LENGTH carry too few trigrams to
+        # score, so a purely short query never takes the fallback.
+        self.assert_search("Il", [])
+
+    def test_many_token_query_never_falls_back(self):
+        # Each fuzzy token costs one trigram index scan on an endpoint
+        # needing no authentication, so a query with more fuzzy-eligible
+        # tokens than FUZZY_MAX_TOKENS stays at zero results instead of
+        # paying an unbounded AND of index scans.
+        self.assert_search(
+            "Interlop alpha bravo charlie delta echoes foxtrot", []
+        )
+
+    def test_a_typo_with_a_few_words_still_falls_back(self):
+        # The cap must not catch real queries: a handful of words with one
+        # misspelling keeps the fallback.
+        self.assert_search(
+            "Interlop Limited Apparel",
+            ["Interloop Limited Apparel Park"],
+        )
 
     def test_deprecated_name_param_matches_per_word_too(self):
         # `name` is deprecated in favor of `q`, but both are public, so the
@@ -163,8 +196,11 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
         "Texport Industries Pvt. Ltd. (Unit 16)",
         "Texport Industries Pvt. Ltd. (Unit 4)",
         "Texport Industries Private Limited [Unit - 6]",
+        "Texport Overseas Pvt Ltd - IV",
         "DIR TEXPORT SYNDICATEB3F INDIA",
         "Texsport B.V.",
+        "Brandix Apparel India (Pvt) Ltd - Unit I",
+        "Texport Syndicate (I) Ltd., Unit-2",
     )
 
     # The inherited tests assert against the Interloop/Shahi fixtures, so
@@ -204,6 +240,8 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
                 "Texport Industries Private Limited [Unit - 6]",
                 "Texport Industries Pvt. Ltd. (Unit 16)",
                 "Texport Industries Pvt. Ltd. (Unit 4)",
+                "Texport Overseas Pvt Ltd - IV",
+                "Texport Syndicate (I) Ltd., Unit-2",
             ],
         )
 
@@ -216,20 +254,80 @@ class FacilitySearchTexportCasesTest(FacilitySearchMultiWordTest):
     def test_every_word_must_match(self):
         self.assert_search("Texport Syndicate 16", [])
 
-    def test_misspelling_still_returns_nothing(self):
-        # The reported "Texoport" typo. Records the current boundary:
-        # typo tolerance needs similarity() on the OSDEV-3793 index or the
-        # OpenSearch endpoint (OSDEV-1575).
-        self.assert_search("Texoport", [])
+    def test_misspelling_falls_back_to_close_matches(self):
+        # The programs team's reported "Texoport" typo now finds the
+        # Texport facilities (strict_word_similarity 0.545 at the 0.5
+        # default threshold). "Texsport B.V." sits exactly at 0.5 and is
+        # included: it is one letter from the typo too, and the fallback
+        # cannot know which real name the user meant. See OSDEV-3906.
+        self.assert_search(
+            "Texoport",
+            [
+                "DIR TEXPORT SYNDICATEB3F INDIA",
+                "Texport Industries Private Limited [Unit - 6]",
+                "Texport Industries Pvt. Ltd. (Unit 16)",
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+                "Texport Overseas Pvt Ltd - IV",
+                "Texport Syndicate (I) Ltd., Unit-2",
+                "Texsport B.V.",
+            ],
+        )
 
-    def test_roman_numerals_match_only_by_substring_accident(self):
-        # "Texport Unit IV" finds the [Unit - 6] name because "Private"
-        # contains "iv" — not because IV is read as 4. Records the current
-        # boundary: numeral equivalence is not implemented, so the user
-        # still sees some Texport facilities rather than none.
+    def test_exact_match_suppresses_the_fallback(self):
+        # "Texsport" matches a name exactly, so no fuzzy neighbors are
+        # added: the user who typed a real name gets exactly that name.
+        self.assert_search("Texsport", ["Texsport B.V."])
+
+    def test_a_typo_with_a_few_words_still_falls_back(self):
+        self.assert_search(
+            "Texoport Industries",
+            [
+                "Texport Industries Private Limited [Unit - 6]",
+                "Texport Industries Pvt. Ltd. (Unit 16)",
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+            ],
+        )
+
+    def test_roman_unit_number_finds_the_arabic_spelling(self):
+        # "IV" as typed still matches by substring ("Private" contains
+        # "iv"); the expansion adds the arabic counterpart, so the Unit 4
+        # facility the user is after is now in the results (OSDEV-3907).
         self.assert_search(
             "Texport Unit IV",
-            ["Texport Industries Private Limited [Unit - 6]"],
+            [
+                "Texport Industries Private Limited [Unit - 6]",
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+            ],
+        )
+
+    def test_arabic_unit_number_finds_the_roman_spelling(self):
+        # The added roman branch matches whole words only, so "4" reaches
+        # "- IV" without also matching the "iv" inside "Private".
+        self.assert_search(
+            "Texport 4",
+            [
+                "Texport Industries Pvt. Ltd. (Unit 4)",
+                "Texport Overseas Pvt Ltd - IV",
+            ],
+        )
+
+    def test_unit_one_as_roman_is_found_by_a_digit_query(self):
+        # 62 production names write unit one as "Unit I". When the query
+        # says "unit 1", the carve-out matches an I directly after "unit"
+        # in the name — and nothing else.
+        self.assert_search(
+            "Brandix Unit 1",
+            ["Brandix Apparel India (Pvt) Ltd - Unit I"],
+        )
+
+    def test_the_india_marker_is_not_a_unit_number(self):
+        # 1/I has no general expansion: standalone "I" is the India marker
+        # in thousands of names. "Texport Syndicate (I) Ltd., Unit-2" must
+        # not match a unit-1 query — its I follows "Syndicate", not
+        # "unit". '%1%' matches only Unit 16 here.
+        self.assert_search(
+            "Texport Unit 1",
+            ["Texport Industries Pvt. Ltd. (Unit 16)"],
         )
 
     def test_deprecated_name_param_matches_per_word_too(self):
