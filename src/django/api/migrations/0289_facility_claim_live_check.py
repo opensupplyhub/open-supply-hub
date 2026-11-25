@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('api', '0285_add_claim_status_detail_fields'),
+        ('api', '0288_add_claim_status_detail_fields'),
     ]
 
     operations = [
