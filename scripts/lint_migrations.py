@@ -42,6 +42,12 @@ ALTERING_OPERATIONS = {
     'AlterModelTable',
 }
 
+# The timeout itself, recognised only in SQL a RunSQL operation
+# actually executes - never in a comment or docstring.
+TIMEOUT_PATTERN = re.compile(
+    r'SET\s+LOCAL\s+lock_timeout', re.IGNORECASE
+)
+
 # DDL in raw SQL that takes the same locks.
 DDL_PATTERN = re.compile(
     r'\b(ALTER\s+TABLE|CREATE\s+(UNIQUE\s+)?INDEX|DROP\s+INDEX|'
@@ -62,34 +68,109 @@ def call_name(node):
     return None
 
 
-def sql_strings(node):
-    """String literals passed to a RunSQL call (positional or sql=)."""
-    values = list(node.args)
-    values.extend(kw.value for kw in node.keywords if kw.arg == 'sql')
-    out = []
-    for value in values:
-        for sub in ast.walk(value):
-            if isinstance(sub, ast.Constant) and isinstance(sub.value, str):
-                out.append(sub.value)
+def module_strings(tree):
+    """Module-level NAME = "..." assignments, so RunSQL(sql=SQL) resolves.
+
+    Without this, SQL held in a constant is invisible and its DDL is
+    never matched.
+    """
+    out = {}
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if not (isinstance(node.value, ast.Constant)
+                and isinstance(node.value.value, str)):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                out[target.id] = node.value.value
     return out
 
 
-def altering_operations(source):
-    """Names of schema-altering operations found in the file."""
-    tree = ast.parse(source)
-    found = []
+def sql_arguments(node):
+    """The `sql` arguments of a RunSQL call: positional first, or sql=.
+
+    reverse_sql is deliberately excluded: it runs on the way back, so
+    its DDL is not what the forward migration takes a lock for.
+    """
+    values = []
+    if node.args:
+        values.append(node.args[0])
+    values.extend(kw.value for kw in node.keywords if kw.arg == 'sql')
+    return values
+
+
+def resolve_sql(values, constants):
+    """(literal SQL strings, True if any argument could not be resolved)."""
+    texts = []
+    unresolved = False
+    for value in values:
+        if isinstance(value, ast.Constant) and isinstance(value.value, str):
+            texts.append(value.value)
+        elif isinstance(value, ast.Name) and value.id in constants:
+            texts.append(constants[value.id])
+        elif isinstance(value, (ast.List, ast.Tuple)):
+            for element in value.elts:
+                if (isinstance(element, ast.Constant)
+                        and isinstance(element.value, str)):
+                    texts.append(element.value)
+                else:
+                    unresolved = True
+        else:
+            unresolved = True
+    return texts, unresolved
+
+
+def operations_list(tree):
+    """The elements of the Migration class's `operations = [...]`."""
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Call):
+        if not isinstance(node, ast.ClassDef):
             continue
-        name = call_name(node)
+        for statement in node.body:
+            if not isinstance(statement, ast.Assign):
+                continue
+            targets = [
+                t.id for t in statement.targets if isinstance(t, ast.Name)
+            ]
+            if 'operations' in targets and isinstance(statement.value,
+                                                      ast.List):
+                return statement.value.elts
+    return None
+
+
+def classify_operations(source):
+    """Classify the migration's operations, in declaration order.
+
+    Returns (sequence, unresolved) where sequence is a list of
+    ('timeout' | 'altering', label) pairs in the order the operations
+    run, and unresolved lists RunSQL calls whose SQL could not be read
+    as literal text.
+    """
+    tree = ast.parse(source)
+    constants = module_strings(tree)
+    elements = operations_list(tree)
+    if elements is None:
+        return None, []
+
+    sequence = []
+    unresolved = []
+    for element in elements:
+        if not isinstance(element, ast.Call):
+            continue
+        name = call_name(element)
         if name in ALTERING_OPERATIONS:
-            found.append(name)
+            sequence.append(('altering', name))
         elif name == 'RunSQL':
-            for sql in sql_strings(node):
-                if DDL_PATTERN.search(sql):
-                    found.append('RunSQL (DDL)')
-                    break
-    return found
+            texts, could_not_read = resolve_sql(
+                sql_arguments(element), constants
+            )
+            if could_not_read:
+                unresolved.append(f'RunSQL at line {element.lineno}')
+            if any(TIMEOUT_PATTERN.search(sql) for sql in texts):
+                sequence.append(('timeout', 'SET LOCAL lock_timeout'))
+            elif any(DDL_PATTERN.search(sql) for sql in texts):
+                sequence.append(('altering', 'RunSQL (DDL)'))
+    return sequence, unresolved
 
 
 def migration_path(raw):
@@ -107,6 +188,36 @@ def migration_path(raw):
     return resolved
 
 
+def check(source):
+    """Reasons the migration fails the lock-timeout convention."""
+    sequence, unresolved = classify_operations(source)
+    problems = []
+    if sequence is None:
+        return problems, unresolved
+
+    altering = [label for kind, label in sequence if kind == 'altering']
+    if not altering:
+        return problems, unresolved
+
+    # The timeout only protects operations that run after it, so the
+    # test is positional: a SET LOCAL lock_timeout must come before the
+    # first schema-altering operation. A mention in a docstring or
+    # comment is not an operation and never satisfies this.
+    first_altering = next(
+        i for i, (kind, _) in enumerate(sequence) if kind == 'altering'
+    )
+    has_timeout_first = any(
+        kind == 'timeout' for kind, _ in sequence[:first_altering]
+    )
+    if not has_timeout_first:
+        problems.append(
+            'schema-altering operations ('
+            + ', '.join(sorted(set(altering)))
+            + ') with no SET LOCAL lock_timeout before the first one'
+        )
+    return problems, unresolved
+
+
 def main(paths):
     failures = []
     for raw in paths:
@@ -116,19 +227,26 @@ def main(paths):
         source = path.read_text()
         if OPT_OUT in source:
             continue
-        operations = altering_operations(source)
-        if operations and 'lock_timeout' not in source:
-            failures.append((path, sorted(set(operations))))
-    for path, operations in failures:
+        problems, unresolved = check(source)
+        if unresolved:
+            problems.append(
+                'SQL that could not be read as literal text, so its DDL '
+                'was not checked: ' + ', '.join(unresolved)
+            )
+        if problems:
+            failures.append((path, problems))
+    for path, problems in failures:
+        print(f'{path}:')
+        for problem in problems:
+            print(f'  - {problem}')
         print(
-            f'{path}: schema-altering operations '
-            f'({", ".join(operations)}) without a lock timeout.\n'
-            f'  Open the migration with\n'
-            f"    migrations.RunSQL(\n"
-            f"        sql=\"SET LOCAL lock_timeout = '5s';\",\n"
-            f'        reverse_sql=migrations.RunSQL.noop,\n'
-            f'    )\n'
-            f'  (see 0284_zone_set_last_upload_sha256.py), or justify an\n'
+            '  Open the migration with\n'
+            "    migrations.RunSQL(\n"
+            "        sql=\"SET LOCAL lock_timeout = '5s';\",\n"
+            '        reverse_sql=migrations.RunSQL.noop,\n'
+            '    )\n'
+            '  as its FIRST operation (see '
+            '0284_zone_set_last_upload_sha256.py), or justify an\n'
             f'  opt-out with a comment containing "{OPT_OUT}".'
         )
     if failures:
