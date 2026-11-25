@@ -33,10 +33,10 @@ import {
     CHOOSE_ONE_LABEL,
     CLAIM_LIVE_CHECK_FIXES,
     CLAIM_LIVE_CHECK_STATUSES,
+    GO_BACK_BUTTON_TEXT,
     LEAVE_BUTTON_TEXT,
     LEFT_FOR_REVIEW_TITLE,
     makeFixLabel,
-    makeGoBackButtonText,
     NOT_PASSED_TITLE,
     PANEL_SCROLL_MARGIN_PX,
     PASSED_TITLE,
@@ -253,7 +253,7 @@ const ClaimLiveCheck = ({
                             )
                         }
                     >
-                        {makeGoBackButtonText(fixes.length)}
+                        {GO_BACK_BUTTON_TEXT}
                     </Button>
                     <Button
                         variant="contained"

@@ -406,11 +406,11 @@ describe('ClaimLiveCheck component', () => {
             getAllByRole('listitem').map(item => item.textContent),
         ).toEqual([UPLOAD, COMPANY_ADDRESS]);
         expect(getByText('Choose one:')).toBeInTheDocument();
-        expect(getByText('Go back and fix them')).toBeInTheDocument();
-        expect(getByText('Leave it for review')).toBeInTheDocument();
+        expect(getByText('Update my claim')).toBeInTheDocument();
+        expect(getByText('Skip this and wait for a person to review')).toBeInTheDocument();
         expect(
             getByText(
-                'Fixing opens each field that needs a change. Leaving it means a person reviews the claim, which can take much longer.',
+                'Updating opens each field that needs a change. Skipping means a person reviews the claim, which can take much longer.',
             ),
         ).toBeInTheDocument();
     });
@@ -423,9 +423,7 @@ describe('ClaimLiveCheck component', () => {
         await settle();
 
         expect(getByText('Fix this:')).toBeInTheDocument();
-        expect(getByText('Go back and fix it')).toBeInTheDocument();
         expect(queryByText(/Fix these/)).toBeNull();
-        expect(queryByText('Go back and fix them')).toBeNull();
     });
 
     test('going back opens the edit page at the first fix', async () => {
@@ -435,7 +433,7 @@ describe('ClaimLiveCheck component', () => {
         const { getByText } = renderCheck();
         await settle();
 
-        fireEvent.click(getByText('Go back and fix them'));
+        fireEvent.click(getByText('Update my claim'));
 
         expect(history.push).toHaveBeenCalledWith(
             `/claimed/pending/${CLAIM_ID}?fix=upload_document&check=1`,
@@ -451,25 +449,25 @@ describe('ClaimLiveCheck component', () => {
 
         expect(
             getByText(
-                'Fixing opens each field that needs a change. A person reviews the claim either way, which can take much longer.',
+                'Updating opens each field that needs a change. A person reviews the claim either way, which can take much longer.',
             ),
         ).toBeInTheDocument();
-        expect(queryByText(/Leaving it means/)).toBeNull();
+        expect(queryByText(/Skipping means/)).toBeNull();
 
-        fireEvent.click(getByText('Go back and fix it'));
+        fireEvent.click(getByText('Update my claim'));
         expect(history.push).toHaveBeenCalledWith(
             `/claimed/pending/${CLAIM_ID}?fix=upload_document`,
         );
     });
 
-    test('"Leave it for review" confirms the claim waits for a person', async () => {
+    test('"Skip this and wait for a person to review" confirms the claim waits for a person', async () => {
         apiRequest.post.mockResolvedValue(
             answer('NOT_PASSED', ['upload_document']),
         );
         const { getByText, queryByText } = renderCheck();
         await settle();
 
-        fireEvent.click(getByText('Leave it for review'));
+        fireEvent.click(getByText('Skip this and wait for a person to review'));
 
         expect(
             getByText('Your claim is waiting for a person to review it.'),

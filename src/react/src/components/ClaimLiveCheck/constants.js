@@ -109,14 +109,13 @@ export const NOT_PASSED_TITLE =
     'Your claim is submitted, but it did not pass the check.';
 export const makeFixLabel = count =>
     count === 1 ? 'Fix this:' : `Fix these ${count} things:`;
-export const makeGoBackButtonText = count =>
-    count === 1 ? 'Go back and fix it' : 'Go back and fix them';
+export const GO_BACK_BUTTON_TEXT = 'Update my claim';
 export const CHOOSE_ONE_LABEL = 'Choose one:';
 export const CHOICES_HELPER_TEXT =
-    'Fixing opens each field that needs a change. Leaving it means a person reviews the claim, which can take much longer.';
+    'Updating opens each field that needs a change. Skipping means a person reviews the claim, which can take much longer.';
 export const CHOICES_NO_CHECKS_HELPER_TEXT =
-    'Fixing opens each field that needs a change. A person reviews the claim either way, which can take much longer.';
-export const LEAVE_BUTTON_TEXT = 'Leave it for review';
+    'Updating opens each field that needs a change. A person reviews the claim either way, which can take much longer.';
+export const LEAVE_BUTTON_TEXT = 'Skip this and wait for a person to review';
 
 export const UNAVAILABLE_TITLE = 'This is taking longer than usual.';
 export const UNAVAILABLE_TEXT =

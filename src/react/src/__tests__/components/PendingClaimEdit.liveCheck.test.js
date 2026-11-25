@@ -112,7 +112,7 @@ const renderEditPage = (search, flags = { claim_live_check: true }) => {
     );
 };
 
-describe('PendingClaimEdit after "Go back and fix it"', () => {
+describe('PendingClaimEdit after "Update my claim"', () => {
     // The test environment is node with a JSDOM window (setupTests.js).
     // Formik's handleSubmit looks for this global.
     beforeAll(() => {
@@ -370,7 +370,7 @@ describe('PendingClaimEdit marks every field the latest check flagged', () => {
 
         fireEvent.click(await findByText(SAVE_AND_CHECK));
         liveCheck = second;
-        fireEvent.click(await findByText('Go back and fix it'));
+        fireEvent.click(await findByText('Update my claim'));
 
         const banner = await findByRole('status');
         expect(banner).toHaveTextContent('1 thing to fix');
