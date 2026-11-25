@@ -29,8 +29,16 @@ jest.mock('../../util/apiRequest', () => ({
 const mockStore = configureStore([thunk]);
 const OS_ID = 'BD2019083CDP49S';
 
-// Labels and values deliberately diverge so the test fails if a field
-// switches between sending one and the other.
+// In production every one of these option lists is built with
+// value === label (mockedSectors and the facility/processing type
+// tuples in util/constants.jsx, and useClaimProfileOptions, which maps
+// each name to {value: name, label: name}), so for most fields the two
+// are indistinguishable over the wire. Only facilityAffiliations and
+// facilityCertifications diverge here, and they are the pair that pins
+// the real contract: the API allowlists the human NAMES, so these must
+// send the label. For the rest this is a refactor lock, not an API
+// contract - it fails if extractSelectValue stops preferring the
+// label, which today no backend could observe.
 const option = (value, label) => ({ value, label });
 
 const FULL_FORM_DATA = Object.freeze({
@@ -62,11 +70,20 @@ const FULL_FORM_DATA = Object.freeze({
     numberOfWorkers: '250',
     openingDate: '',
     estimatedAnnualThroughput: '12000',
-    energyCoal: '12.5',
+    energyCoal: '12500',
     energyCoalEnabled: true,
     energyDiesel: '7',
     energyDieselEnabled: false,
 });
+
+// The fields FacilityCreateClaimSerializer requires. Tests about the
+// invite code still need a body the API would accept, or they document
+// a success the backend would never return.
+const MINIMAL_FORM_DATA = {
+    yourName: 'Jane Smith',
+    yourTitle: 'Plant Manager',
+    businessLinkedinProfile: 'https://www.linkedin.com/company/example',
+};
 
 const submitForm = (formData = FULL_FORM_DATA) => {
     const store = mockStore({ claimForm: { formData } });
@@ -120,7 +137,7 @@ describe('submitClaimFormData payload shape', () => {
             // Emissions fields: enabled values go out, the checkbox
             // flags, disabled values and the empty date do not.
             estimated_annual_throughput: ['12000'],
-            energy_coal: ['12.5'],
+            energy_coal: ['12500'],
         });
     });
 
@@ -137,7 +154,7 @@ describe('submitClaimFormData payload shape', () => {
             JSON.stringify({ code: 'INVITE-X7K2QP', savedAt: Date.now() }),
         );
 
-        const { submission } = submitForm({});
+        const { submission } = submitForm(MINIMAL_FORM_DATA);
         expect(sentPayload().getAll('claim_invite')).toEqual(['INVITE-X7K2QP']);
 
         await submission;
@@ -154,7 +171,7 @@ describe('submitClaimFormData payload shape', () => {
             JSON.stringify({ code: 'INVITE-X7K2QP', savedAt: Date.now() }),
         );
 
-        const { store, submission } = submitForm({});
+        const { store, submission } = submitForm(MINIMAL_FORM_DATA);
         await submission;
 
         expect(store.getActions().map(action => action.type)).toEqual([

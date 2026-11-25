@@ -49,7 +49,10 @@ describe.each([
     });
 
     test('a retried submission after a failure completes normally', () => {
-        const moderationEvent = { moderation_id: 'abc123', status: 'PENDING' };
+        const moderationEvent = {
+            moderation_id: 'abc123',
+            moderation_status: 'PENDING',
+        };
         const finished = [
             fail(V1_ERROR),
             start({ name: 'Azteca Apparel' }),

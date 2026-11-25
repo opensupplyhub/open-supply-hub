@@ -122,7 +122,7 @@ describe('pending claim edit PATCH payload shape', () => {
         facilityFemaleWorkersPercentage: '40',
         openingDate: '',
         estimatedAnnualThroughput: '12000',
-        energyCoal: '12.5',
+        energyCoal: '12500',
         energyCoalEnabled: true,
         energyDiesel: '7',
         energyDieselEnabled: false,
@@ -178,7 +178,7 @@ describe('pending claim edit PATCH payload shape', () => {
         expect(payload.energy_diesel).toBeNull();
         expect(payload.energy_natural_gas).toBeNull();
         // Checked sections send theirs.
-        expect(payload.energy_coal).toBe('12.5');
+        expect(payload.energy_coal).toBe('12500');
         expect(payload.estimated_annual_throughput).toBe('12000');
     });
 });
@@ -194,10 +194,10 @@ describe('pending claim edit load/save round trip', () => {
             facility_certifications: [],
             isic_4: [APPAREL_ENTRY],
             isic_5: null,
-            number_of_workers: 250,
+            number_of_workers: '250',
             facility_female_workers_percentage: 40,
             opening_date: null,
-            energy_coal: 12.5,
+            energy_coal: 12500,
             energy_diesel: null,
             attachments: [{ id: 1, file_name: 'doc.pdf' }],
         });
@@ -213,10 +213,10 @@ describe('pending claim edit load/save round trip', () => {
         expect(payload.facility_certifications).toEqual([]);
         expect(payload.isic_4).toEqual(['class:1410']);
         expect(payload.isic_5).toEqual([]);
-        expect(payload.number_of_workers).toBe(250);
+        expect(payload.number_of_workers).toBe('250');
         expect(payload.facility_female_workers_percentage).toBe('40');
         expect(payload.opening_date).toBeNull();
-        expect(payload.energy_coal).toBe('12.5');
+        expect(payload.energy_coal).toBe('12500');
         expect(payload.energy_diesel).toBeNull();
         expect(findSelectOptionObjects(payload)).toEqual([]);
     });

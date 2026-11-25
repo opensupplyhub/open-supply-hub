@@ -6,6 +6,13 @@
  * surfaces that did not (OSDEV-3737, OSDEV-3740) shipped payloads the
  * API rejected, so payload tests use these to sweep a whole request body
  * for leaked option objects rather than checking fields one by one.
+ *
+ * Scope: these sweep a payload a test has already built from a fixture.
+ * They do NOT watch the form components, so a select added to a step
+ * and left out of the fixtures is not covered by anything here - the
+ * payload tests only see fields their fixture supplies. Catching that
+ * automatically needs a test that mounts the step and fills every
+ * select it renders.
  */
 
 /**
@@ -14,6 +21,22 @@
  * means no react-select option object leaked into the request body.
  */
 export const findSelectOptionObjects = (payload, path = '') => {
+    // FormData, Map and Set expose their contents through entries(),
+    // not own enumerable properties, so the object branch below would
+    // walk nothing and report a clean sweep over a payload it never
+    // read. Fail loudly instead: multipart bodies have their own
+    // helper, findObjectCoercions.
+    if (
+        payload !== null &&
+        typeof payload === 'object' &&
+        !Array.isArray(payload) &&
+        typeof payload.entries === 'function'
+    ) {
+        throw new TypeError(
+            'findSelectOptionObjects cannot traverse FormData/Map/Set; ' +
+                'use findObjectCoercions for a multipart body.',
+        );
+    }
     if (Array.isArray(payload)) {
         return payload.reduce(
             (found, item, index) =>

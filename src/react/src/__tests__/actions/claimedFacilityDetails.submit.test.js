@@ -45,11 +45,11 @@ const CLAIMED_DATA = Object.freeze({
     facility_phone_number: '+880123456789',
     facility_parent_company: { id: 3, name: 'Azteca Group' },
     parent_company_name: '  Azteca Group  ',
-    facility_workers_count: 250,
+    facility_workers_count: '250',
     facility_female_workers_percentage: '40',
     opening_date: '',
     estimated_annual_throughput: '',
-    energy_coal: '12.5',
+    energy_coal: '12500',
     energy_coal_enabled: true,
     energy_diesel: '',
     energy_diesel_enabled: true,
@@ -103,14 +103,14 @@ describe('submitClaimedFacilityDetailsUpdate payload shape', () => {
             facility_phone_number: '+880123456789',
             facility_parent_company: { id: 3, name: 'Azteca Group' },
             parent_company_name: 'Azteca Group',
-            facility_workers_count: 250,
+            facility_workers_count: '250',
             facility_female_workers_percentage: '40',
             opening_date: null,
             estimated_annual_throughput: null,
             // Enabled sections send their value (null when emptied).
             // A disabled section's cleared '' rides along in the bulk
             // copy; the API reads both '' and null as "cleared".
-            energy_coal: '12.5',
+            energy_coal: '12500',
             energy_diesel: null,
             energy_natural_gas: '',
         });
