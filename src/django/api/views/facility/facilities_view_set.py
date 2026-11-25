@@ -2949,7 +2949,12 @@ class FacilitiesViewSet(ListModelMixin,
 
         target_has_approved_claim = FacilityClaim.objects.filter(
             facility=target, status=FacilityClaimStatuses.APPROVED).exists()
-        merge_claims = FacilityClaim.objects.filter(facility=merge)
+        # Locked because each claim is saved in full below: without the
+        # lock a review the claims automation account records between
+        # this read and that save would be written over (OSDEV-3795).
+        merge_claims = FacilityClaim.objects.select_for_update().filter(
+            facility=merge
+        )
         for claim in merge_claims:
             claim.facility = target
             should_change_status = (

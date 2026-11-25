@@ -355,6 +355,18 @@ class FacilityClaimViewSet(ModelViewSet):
         except FacilityClaim.DoesNotExist as exc:
             raise NotFound() from exc
 
+    @staticmethod
+    def _get_claim_for_update(pk):
+        """
+        The claim, with its row locked until the request's transaction
+        ends. The endpoints that decide a claim, message its claimant or
+        record the automation account's review all read the claim and
+        write it back later; without the lock two of them overlapping
+        can write from a copy the other has already changed (OSDEV-3795).
+        Must be called inside a transaction.
+        """
+        return FacilityClaim.objects.select_for_update().get(pk=pk)
+
     @transaction.atomic
     @action(detail=True,
             methods=['post'],
@@ -364,7 +376,7 @@ class FacilityClaimViewSet(ModelViewSet):
             raise PermissionDenied()
 
         try:
-            claim = FacilityClaim.objects.get(pk=pk)
+            claim = self._get_claim_for_update(pk)
             message = request.data.get('message', '')
 
             if not message:
@@ -393,7 +405,7 @@ class FacilityClaimViewSet(ModelViewSet):
             raise PermissionDenied()
 
         try:
-            claim = FacilityClaim.objects.get(pk=pk)
+            claim = self._get_claim_for_update(pk)
 
             if claim.status != FacilityClaimStatuses.PENDING:
                 raise BadRequestException(
@@ -462,7 +474,7 @@ class FacilityClaimViewSet(ModelViewSet):
             raise PermissionDenied()
 
         try:
-            claim = FacilityClaim.objects.get(pk=pk)
+            claim = self._get_claim_for_update(pk)
 
             if claim.status != FacilityClaimStatuses.PENDING:
                 raise BadRequestException(
@@ -550,7 +562,7 @@ class FacilityClaimViewSet(ModelViewSet):
             raise PermissionDenied()
 
         try:
-            claim = FacilityClaim.objects.get(pk=pk)
+            claim = self._get_claim_for_update(pk)
 
             note = request.data.get('note')
             create_review_note(
