@@ -387,6 +387,7 @@ class FacilityClaimViewSet(ModelViewSet):
             # Creates the CLAIMANT_MESSAGE review note and sends the
             # email as one unit (see mail.py) — @transaction.atomic
             # rolls the note back if the send fails.
+            asked_at = timezone.now()
             send_message_to_claimant_email(request, claim, message)
             # The row is locked only now, after the email has gone, so a
             # slow mail service never holds the lock that the claimant's
@@ -395,7 +396,7 @@ class FacilityClaimViewSet(ModelViewSet):
             # that overlaps an approval from marking a decided claim as
             # waiting on the claimant.
             claim = self._get_claim_for_update(pk)
-            mark_waiting_on_claimant(claim)
+            mark_waiting_on_claimant(claim, asked_at=asked_at)
 
             response_data = FacilityClaimDetailsSerializer(claim).data
             return Response(response_data)
