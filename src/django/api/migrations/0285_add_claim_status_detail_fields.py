@@ -91,6 +91,12 @@ class Migration(migrations.Migration):
     waiting_on is added without a default so existing rows start empty,
     then backfilled for pending claims, then given its default for new
     claims. The default lives in Django, so that last step emits no SQL.
+
+    Runs under a 5 s `lock_timeout`, as 0284 does. Adding a column
+    needs a brief exclusive lock on api_facilityclaim, which every
+    location page reads. If that lock has to queue behind a long query,
+    every later read queues behind the migration; with the timeout the
+    migration fails fast instead and can be run again.
     '''
 
     dependencies = [
@@ -98,6 +104,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL(
+            sql="SET LOCAL lock_timeout = '5s';",
+            reverse_sql=migrations.RunSQL.noop,
+        ),
         *[
             migrations.AddField(
                 model_name=model_name,

@@ -103,8 +103,12 @@ def resolve_denial_type(
     automation account is NO_RESPONSE: the pipeline only denies claims
     whose claimant never answered. A moderator's denial without a type
     stays unclassified rather than being guessed.
+
+    Only a missing value and the empty string count as "no type sent".
+    Anything else, including false, 0 or an empty list, is checked
+    against the known types and refused.
     '''
-    if requested:
+    if requested is not None and requested != '':
         if requested not in DENIAL_TYPES:
             raise BadRequestException(
                 'denial_type must be one of: {}.'.format(

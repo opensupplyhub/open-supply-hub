@@ -12,7 +12,9 @@ from django.apps import apps as django_apps
 from django.contrib.gis.geos import Point
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection, migrations
 from django.test import SimpleTestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from api.constants import (
@@ -381,6 +383,18 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
         self.assertEqual(FacilityClaimStatuses.DENIED, self.claim.status)
         self.assertIsNone(self.claim.waiting_on)
 
+    def test_partial_save_empties_a_value_the_caller_already_cleared(self):
+        # The instance says None but the row still says OS_HUB. A save
+        # limited to `status` must write the emptied value as well.
+        self.claim.status = FacilityClaimStatuses.DENIED
+        self.claim.waiting_on = None
+
+        self.claim.save(update_fields=['status'])
+
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimStatuses.DENIED, self.claim.status)
+        self.assertIsNone(self.claim.waiting_on)
+
     def test_partial_save_of_a_pending_claim_writes_only_its_fields(self):
         self.claim.contact_person = 'New Name'
         self.claim.waiting_on = FacilityClaimWaitingOn.CLAIMANT
@@ -399,6 +413,36 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
 
         claim.refresh_from_db()
         self.assertIsNone(claim.waiting_on)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_endpoints_that_write_the_claim_lock_its_row(self):
+        # Each of these reads the claim and writes it back later in the
+        # same request. Without the row lock, two of them overlapping
+        # can write from a copy the other has already changed: a
+        # message during an approval left an approved claim waiting on
+        # the claimant, and an approval during the automation account's
+        # review dropped the recorded AI decision.
+        self.login(self.moderator)
+        requests = (
+            ('message-claimant', {'message': 'Hello'}),
+            ('note', {'note': 'A note'}),
+            ('deny', {'reason': 'No'}),
+            ('approve', {'reason': 'Yes'}),
+        )
+        for action, data in requests:
+            with self.subTest(action=action):
+                claim = self.create_claim(self.create_facility(action))
+
+                with CaptureQueriesContext(connection) as queries:
+                    response = self.post(action, data, claim=claim)
+
+                self.assertEqual(status.HTTP_200_OK, response.status_code)
+                locking_reads = [
+                    query['sql'] for query in queries
+                    if 'FOR UPDATE' in query['sql']
+                    and '"api_facilityclaim"' in query['sql']
+                ]
+                self.assertEqual(1, len(locking_reads))
 
     def test_status_cannot_be_edited_in_the_django_admin(self):
         # The admin cannot flip a status, so the save guard is the only
@@ -507,6 +551,29 @@ class ClaimDenialTypeTest(ClaimStatusFieldsTestBase):
         self.assertEqual(FacilityClaimStatuses.PENDING, self.claim.status)
         self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
         self.assertIsNone(self.claim.denial_type)
+        self.assertEqual(0, len(mail.outbox))
+
+    @override_switch('claim_a_facility', active=True)
+    def test_falsey_denial_type_that_is_not_empty_text_is_rejected(self):
+        # Only a missing value and '' mean "no type sent". These are
+        # values, and none of them is a denial type.
+        self.login(self.moderator)
+
+        for value in (False, 0, [], {}):
+            with self.subTest(denial_type=value):
+                response = self.post('deny', {
+                    'reason': 'No',
+                    'denial_type': value,
+                })
+
+                self.assertEqual(
+                    status.HTTP_400_BAD_REQUEST, response.status_code
+                )
+                self.claim.refresh_from_db()
+                self.assertEqual(
+                    FacilityClaimStatuses.PENDING, self.claim.status
+                )
+                self.assertIsNone(self.claim.denial_type)
         self.assertEqual(0, len(mail.outbox))
 
     @override_switch('claim_a_facility', active=True)
@@ -1052,6 +1119,18 @@ class ClaimWaitingOnBackfillTest(ClaimStatusFieldsTestBase):
                 self.assertEqual(decided_status, claim.status)
                 self.assertIsNone(claim.denial_type)
                 self.assertIsNone(claim.ai_decision)
+
+    def test_migration_starts_by_setting_a_lock_timeout(self):
+        # So a migration that cannot get its lock on api_facilityclaim
+        # fails fast instead of holding up every read of the table.
+        migration = import_module(
+            'api.migrations.0285_add_claim_status_detail_fields'
+        ).Migration
+
+        first = migration.operations[0]
+
+        self.assertIsInstance(first, migrations.RunSQL)
+        self.assertEqual("SET LOCAL lock_timeout = '5s';", first.sql)
 
     def test_backfill_runs_two_queries_whatever_the_claim_count(self):
         with self.assertNumQueries(2):

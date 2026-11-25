@@ -573,11 +573,12 @@ class FacilityClaim(models.Model):
         Only a PENDING claim waits on anyone (OSDEV-3795). Clearing
         `waiting_on` here covers every path that decides a claim, so no
         caller has to remember it. A save limited by `update_fields`
-        gets `waiting_on` added to the write when it is cleared.
-        `QuerySet.update()` does not call save and is not covered.
+        of a claim that is not PENDING always writes `waiting_on` too,
+        even when the caller had already emptied it on the instance:
+        the stored value may still be set. `QuerySet.update()` does not
+        call save and is not covered.
         """
-        if (self.status != FacilityClaimStatuses.PENDING
-                and self.waiting_on is not None):
+        if self.status != FacilityClaimStatuses.PENDING:
             self.waiting_on = None
             update_fields = kwargs.get('update_fields')
             if update_fields is not None:
