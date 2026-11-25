@@ -9,6 +9,7 @@ next to it, and the label staff see is built from both.
 '''
 import json
 import logging
+from datetime import datetime
 from typing import Optional
 
 from django.conf import settings
@@ -79,10 +80,19 @@ def get_status_label(claim: FacilityClaim) -> str:
     return DECIDED_LABELS.get(claim.status, claim.status)
 
 
-def mark_waiting_on_claimant(claim: FacilityClaim) -> None:
+def mark_waiting_on_claimant(
+    claim: FacilityClaim,
+    asked_at: Optional[datetime] = None,
+) -> None:
     '''
     The claimant was asked for something. Only a PENDING claim waits on
     anyone, so a message sent after the decision changes nothing.
+
+    `asked_at` is when the message was started. A claimant who updated
+    the claim after that has the last move, so the claim stays waiting
+    on OS Hub. It is the rule the 0288 backfill applies to old claims:
+    a claim waits on the claimant only when they have not updated it
+    since the message.
 
     Saves `waiting_on` alone: messaging a claimant has never bumped the
     claim's `updated_at`, and still does not.
@@ -90,6 +100,10 @@ def mark_waiting_on_claimant(claim: FacilityClaim) -> None:
     if claim.status != FacilityClaimStatuses.PENDING:
         return
     if claim.waiting_on == FacilityClaimWaitingOn.CLAIMANT:
+        return
+    if (asked_at is not None
+            and claim.claimant_updated_at is not None
+            and claim.claimant_updated_at > asked_at):
         return
     claim.waiting_on = FacilityClaimWaitingOn.CLAIMANT
     claim.save(update_fields=['waiting_on'])
