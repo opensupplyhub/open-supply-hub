@@ -297,11 +297,16 @@ jobs:
 
       - name: Install dependencies
         working-directory: src/react
-        # A lockfile that has drifted from package.json is otherwise
-        # resolved silently here, so the build that ships can carry
-        # different dependency versions than the one CI tested. Fail the
-        # deploy instead.
-        run: yarn install --frozen-lockfile
+        # --frozen-lockfile: a lockfile that has drifted from package.json
+        # is otherwise resolved silently here, so the build that ships can
+        # carry different dependency versions than the one CI tested. Fail
+        # the deploy instead.
+        # --ignore-scripts: dependency lifecycle scripts are arbitrary code
+        # running with the deploy's credentials. Nothing in this tree needs
+        # them -- Vite 8 builds with rolldown, whose native binaries ship as
+        # optional platform packages -- and a full build was verified
+        # without them.
+        run: yarn install --frozen-lockfile --ignore-scripts
 
       - name: Build static assets
         working-directory: src/react
