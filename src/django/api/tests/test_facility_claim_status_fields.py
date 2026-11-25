@@ -12,7 +12,9 @@ from django.apps import apps as django_apps
 from django.contrib.gis.geos import Point
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connection, migrations
 from django.test import SimpleTestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from api.constants import (
@@ -381,6 +383,33 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
         self.assertEqual(FacilityClaimStatuses.DENIED, self.claim.status)
         self.assertIsNone(self.claim.waiting_on)
 
+    def test_partial_save_empties_a_value_the_caller_already_cleared(self):
+        # The instance says None but the row still says OS_HUB. A save
+        # limited to `status` must write the emptied value as well.
+        self.claim.status = FacilityClaimStatuses.DENIED
+        self.claim.waiting_on = None
+
+        self.claim.save(update_fields=['status'])
+
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimStatuses.DENIED, self.claim.status)
+        self.assertIsNone(self.claim.waiting_on)
+
+    def test_save_with_no_fields_writes_nothing_on_a_decided_claim(self):
+        # Django treats an empty update_fields as "save nothing". The
+        # guard must not turn that into a write of waiting_on.
+        FacilityClaim.objects.filter(pk=self.claim.pk).update(
+            status=FacilityClaimStatuses.DENIED
+        )
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
+
+        with self.assertNumQueries(0):
+            self.claim.save(update_fields=[])
+
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
+
     def test_partial_save_of_a_pending_claim_writes_only_its_fields(self):
         self.claim.contact_person = 'New Name'
         self.claim.waiting_on = FacilityClaimWaitingOn.CLAIMANT
@@ -399,6 +428,36 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
 
         claim.refresh_from_db()
         self.assertIsNone(claim.waiting_on)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_endpoints_that_write_the_claim_lock_its_row(self):
+        # Each of these reads the claim and writes it back later in the
+        # same request. Without the row lock, two of them overlapping
+        # can write from a copy the other has already changed: a
+        # message during an approval left an approved claim waiting on
+        # the claimant, and an approval during the automation account's
+        # review dropped the recorded AI decision.
+        self.login(self.moderator)
+        requests = (
+            ('message-claimant', {'message': 'Hello'}),
+            ('note', {'note': 'A note'}),
+            ('deny', {'reason': 'No'}),
+            ('approve', {'reason': 'Yes'}),
+        )
+        for action, data in requests:
+            with self.subTest(action=action):
+                claim = self.create_claim(self.create_facility(action))
+
+                with CaptureQueriesContext(connection) as queries:
+                    response = self.post(action, data, claim=claim)
+
+                self.assertEqual(status.HTTP_200_OK, response.status_code)
+                locking_reads = [
+                    query['sql'] for query in queries
+                    if 'FOR UPDATE' in query['sql']
+                    and '"api_facilityclaim"' in query['sql']
+                ]
+                self.assertEqual(1, len(locking_reads))
 
     def test_status_cannot_be_edited_in_the_django_admin(self):
         # The admin cannot flip a status, so the save guard is the only
@@ -507,6 +566,29 @@ class ClaimDenialTypeTest(ClaimStatusFieldsTestBase):
         self.assertEqual(FacilityClaimStatuses.PENDING, self.claim.status)
         self.assertEqual(FacilityClaimWaitingOn.OS_HUB, self.claim.waiting_on)
         self.assertIsNone(self.claim.denial_type)
+        self.assertEqual(0, len(mail.outbox))
+
+    @override_switch('claim_a_facility', active=True)
+    def test_falsey_denial_type_that_is_not_empty_text_is_rejected(self):
+        # Only a missing value and '' mean "no type sent". These are
+        # values, and none of them is a denial type.
+        self.login(self.moderator)
+
+        for value in (False, 0, [], {}):
+            with self.subTest(denial_type=value):
+                response = self.post('deny', {
+                    'reason': 'No',
+                    'denial_type': value,
+                })
+
+                self.assertEqual(
+                    status.HTTP_400_BAD_REQUEST, response.status_code
+                )
+                self.claim.refresh_from_db()
+                self.assertEqual(
+                    FacilityClaimStatuses.PENDING, self.claim.status
+                )
+                self.assertIsNone(self.claim.denial_type)
         self.assertEqual(0, len(mail.outbox))
 
     @override_switch('claim_a_facility', active=True)
@@ -960,7 +1042,7 @@ class ClaimsAutomationAccountTest(SimpleTestCase):
 
 class ClaimWaitingOnBackfillTest(ClaimStatusFieldsTestBase):
     '''
-    The data step of migration 0285. The schema steps run when the test
+    The data step of migration 0288. The schema steps run when the test
     database is built; this runs the backfill against rows in the state
     the migration finds them in: waiting_on empty on every claim.
     '''
@@ -1014,7 +1096,7 @@ class ClaimWaitingOnBackfillTest(ClaimStatusFieldsTestBase):
 
     def run_backfill(self):
         migration = import_module(
-            'api.migrations.0285_add_claim_status_detail_fields'
+            'api.migrations.0288_add_claim_status_detail_fields'
         )
         migration.backfill_waiting_on(django_apps, None)
 
@@ -1052,6 +1134,56 @@ class ClaimWaitingOnBackfillTest(ClaimStatusFieldsTestBase):
                 self.assertEqual(decided_status, claim.status)
                 self.assertIsNone(claim.denial_type)
                 self.assertIsNone(claim.ai_decision)
+
+    def test_backfill_does_not_run_under_the_schema_lock(self):
+        # Adding the columns takes an exclusive lock on
+        # api_facilityclaim, which location pages read. The migration is
+        # non-atomic so that lock ends with the ALTER, and the backfill
+        # runs afterwards in a transaction of its own.
+        migration = import_module(
+            'api.migrations.0288_add_claim_status_detail_fields'
+        ).Migration
+        add_columns, backfill = migration.operations[:2]
+        schema_sql = add_columns.database_operations[0].sql
+
+        self.assertFalse(migration.atomic)
+        self.assertEqual("SET lock_timeout = '5s';", schema_sql[0])
+        self.assertEqual('RESET lock_timeout;', schema_sql[-1])
+        for statement in schema_sql[1:-1]:
+            self.assertEqual(4, statement.count('ADD COLUMN IF NOT EXISTS'))
+        self.assertIsInstance(backfill, migrations.RunPython)
+        self.assertTrue(backfill.atomic)
+
+    def test_migration_columns_match_the_model(self):
+        # The columns are added with SQL written by hand, so check what
+        # the database has against what the model expects.
+        expected = {
+            'waiting_on': ('character varying', 200),
+            'denial_type': ('character varying', 200),
+            'ai_decision': ('character varying', 200),
+            'ai_decision_reason': ('text', None),
+        }
+        for table in ('api_facilityclaim', 'api_historicalfacilityclaim'):
+            with self.subTest(table=table), connection.cursor() as cursor:
+                cursor.execute(
+                    'SELECT column_name, data_type, '
+                    'character_maximum_length, is_nullable, column_default '
+                    'FROM information_schema.columns '
+                    'WHERE table_name = %s AND column_name = ANY(%s)',
+                    [table, list(expected)],
+                )
+                found = {
+                    name: (data_type, length, nullable, default)
+                    for name, data_type, length, nullable, default
+                    in cursor.fetchall()
+                }
+                self.assertEqual(
+                    {
+                        name: (data_type, length, 'YES', None)
+                        for name, (data_type, length) in expected.items()
+                    },
+                    found,
+                )
 
     def test_backfill_runs_two_queries_whatever_the_claim_count(self):
         with self.assertNumQueries(2):
