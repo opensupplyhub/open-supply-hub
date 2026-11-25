@@ -24,6 +24,9 @@ from api.tests.claim_fixtures import make_claim
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
 
+# The list action is not switch-gated today (that asymmetry is tracked
+# on the ticket); the override is here so these tests keep passing when
+# the gate is added.
 @override_switch("claim_a_facility", active=True)
 class ClaimsListLegacyShapeTest(FacilityAPITestCaseBase):
     def setUp(self):

@@ -21,7 +21,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 from api.constants import FacilityClaimStatuses
-from api.models import FacilityClaim
+from api.models import FacilityClaim, FacilityList
 from api.tests.claim_fixtures import make_claim
 from api.tests.facility_api_test_case_base import FacilityAPITestCaseBase
 
@@ -71,6 +71,12 @@ class ClaimSwitchOffContractTest(FacilityAPITestCaseBase):
         self.assertEqual(FacilityClaimStatuses.APPROVED, self.claim.status)
 
     def test_claim_submission_is_not_found_and_creates_nothing(self):
+        # Submit as the contributor-backed user, not the superuser: the
+        # superuser has no Contributor, and the missing-contributor
+        # lookup returns its own 404 before the claim is written, which
+        # would keep this test green even with the switch gate deleted.
+        self.client.logout()
+        self.client.login(email=self.user_email, password=self.user_password)
         previous_count = FacilityClaim.objects.count()
         response = self.client.post(
             f"/api/facilities/{self.facility.id}/claim/",
@@ -96,6 +102,7 @@ class ListUploadSwitchOffContractTest(FacilityAPITestCaseBase):
             b"US,Somewhere,999 Park St,Apparel\n",
             content_type="text/csv",
         )
+        previous_count = FacilityList.objects.count()
         response = self.client.post(
             reverse("facility-list-list"),
             {"file": csv_file},
@@ -103,3 +110,6 @@ class ListUploadSwitchOffContractTest(FacilityAPITestCaseBase):
         )
         self.assertEqual(status.HTTP_200_OK, response.status_code,
                          response.content)
+        # 200 alone could survive a refactor that stops creating the
+        # list; pin the write too.
+        self.assertEqual(previous_count + 1, FacilityList.objects.count())
