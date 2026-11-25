@@ -50,9 +50,12 @@ from api.services.claim_live_check_fixes import (
 from api.services.claim_live_check_service import (
     CLAIM_LIVE_CHECK_SWITCH,
     LATE_RESULT_WINDOW,
+    LIVE_CHECK_STATUS_MARKER,
+    MAX_LIVE_CHECK_ATTEMPTS,
     LIVE_CHECK_TIMEOUT_SECONDS,
     MAX_LIVE_CHECKS_PER_CLAIM,
     STUB_DELAY_SECONDS,
+    read_live_check_status,
 )
 from api.services.claim_live_review_trigger import trigger_live_review
 from api.services.facility_claim_status_service import (
@@ -1432,3 +1435,285 @@ class ClaimLiveCheckEmailTest(ClaimLiveCheckTestBase):
         self.assertNotIn(NOT_PASSED_SUBJECT, subjects)
         self.assertEqual(self.poll()['status'], PASSED)
         self.assertIsNone(self.checks().get().emailed_at)
+
+
+NO_RESULT_SUBJECT = 'Your claim on Open Supply Hub is waiting for review'
+
+
+def status_note(check_id, reason='review_in_progress', **overrides):
+    '''The pipeline's "this live check has no result" note (OSDEV-3911).'''
+    block = {
+        'v': 1,
+        'kind': 'live_check_status',
+        'check_id': check_id,
+        'outcome': 'no_result',
+        'reason': reason,
+    }
+    block.update(overrides)
+    return (
+        'Automated review: the live check the claimant asked for ended '
+        'without a result (another run is reviewing this claim right '
+        'now). The claim is unchanged.\n\n{}\n{}'.format(
+            LIVE_CHECK_STATUS_MARKER, json.dumps(block)
+        )
+    )
+
+
+class ClaimLiveCheckStatusNoteTest(SimpleTestCase):
+    def test_reads_the_check_and_the_reason(self):
+        self.assertEqual(
+            {'check_id': 7, 'reason': 'failed'},
+            read_live_check_status(status_note(7, 'failed')),
+        )
+
+    def test_text_after_the_block_is_ignored(self):
+        self.assertEqual(
+            {'check_id': 7, 'reason': 'failed'},
+            read_live_check_status(status_note(7, 'failed') + '\n\nMore.'),
+        )
+
+    def test_anything_else_is_not_a_status_note(self):
+        not_status_notes = (
+            None,
+            'An ordinary note.',
+            review_note(review_block([CHECK_ADDRESS])),
+            LIVE_CHECK_STATUS_MARKER,
+            LIVE_CHECK_STATUS_MARKER + '\n{not json',
+            LIVE_CHECK_STATUS_MARKER + '\n[1, 2]',
+            status_note(7, v=2),
+            status_note(7, kind='automated_review'),
+            status_note(7, outcome='passed'),
+            status_note('7'),
+            status_note(True),
+            status_note(7.0),
+            status_note(None),
+            status_note(7, reason=''),
+            status_note(7, reason=None),
+        )
+        for note in not_status_notes:
+            with self.subTest(note=note):
+                self.assertIsNone(read_live_check_status(note))
+
+
+class ClaimLiveCheckNoResultTest(ClaimLiveCheckTestBase):
+    '''
+    The pipeline says a live check ended without a result (OSDEV-3911):
+    it skipped the claim, the review failed, or it validated the claim
+    without approving it.
+    '''
+
+    def setUp(self):
+        super().setUp()
+        self.note_url = f'/api/facility-claims/{self.claim.id}/note/'
+        mail.outbox = []
+
+    def pipeline_posts(self, note, user=None):
+        self.login(user or self.bot)
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(self.note_url, {'note': note})
+        self.login(self.claimant)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        return response
+
+    def check(self):
+        return self.checks().order_by('-id').first()
+
+    def test_waiting_page_is_told_at_once_and_nothing_is_emailed(self):
+        self.start()
+
+        self.pipeline_posts(status_note(self.check().id))
+
+        self.assertEqual(
+            {
+                'status': UNAVAILABLE,
+                'fixes': [],
+                'checks_left': MAX_LIVE_CHECKS_PER_CLAIM,
+                'no_result': True,
+            },
+            self.poll(),
+        )
+        check = self.check()
+        self.assertEqual('review_in_progress', check.no_result_reason)
+        self.assertIsNone(check.emailed_at)
+        self.assertEqual(0, len(mail.outbox))
+
+    def test_other_answers_do_not_carry_the_no_result_flag(self):
+        state = self.start()
+        self.assertNotIn('no_result', state)
+
+        self.post_review(review_block([CHECK_ADDRESS]))
+        self.assertNotIn('no_result', self.poll())
+
+    def test_page_that_gave_up_is_emailed_that_a_person_will_review(self):
+        self.start()
+        self.client.post(self.url, {'timed_out': True}, format='json')
+
+        self.pipeline_posts(status_note(self.check().id, 'failed'))
+
+        self.assertEqual(1, len(mail.outbox))
+        email = mail.outbox[0]
+        html = email.alternatives[0][0]
+        self.assertEqual([WORK_EMAIL], email.to)
+        self.assertEqual(NO_RESULT_SUBJECT, email.subject)
+        for content in (email.body, html):
+            self.assertIn(
+                'We could not finish the automatic check of your claim.',
+                content,
+            )
+            self.assertIn('A person will review your claim', content)
+            self.assertNotIn('did not pass', content)
+            self.assertNotIn('Fix this', content)
+        check = self.check()
+        self.assertEqual('failed', check.no_result_reason)
+        self.assertIsNotNone(check.emailed_at)
+
+    def test_second_status_note_sends_no_second_email(self):
+        self.start()
+        self.client.post(self.url, {'timed_out': True}, format='json')
+        check_id = self.check().id
+
+        self.pipeline_posts(status_note(check_id, 'failed'))
+        self.pipeline_posts(status_note(check_id, 'review_in_progress'))
+
+        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual('failed', self.check().no_result_reason)
+
+    def test_skipped_check_does_not_use_up_a_check(self):
+        for reason in (
+            'review_in_progress',
+            'already_reviewed',
+            'status_unknown',
+            'moderator_notes',
+        ):
+            with self.subTest(reason=reason):
+                self.checks().delete()
+                self.start()
+                self.pipeline_posts(status_note(self.check().id, reason))
+
+                self.assertEqual(
+                    MAX_LIVE_CHECKS_PER_CLAIM, self.poll()['checks_left']
+                )
+
+    def test_review_that_ran_and_gave_no_result_uses_up_a_check(self):
+        for reason in ('failed', 'not_approved', 'something_new'):
+            with self.subTest(reason=reason):
+                self.checks().delete()
+                self.start()
+                self.pipeline_posts(status_note(self.check().id, reason))
+
+                state = self.poll()
+                self.assertTrue(state['no_result'])
+                self.assertEqual(
+                    MAX_LIVE_CHECKS_PER_CLAIM - 1, state['checks_left']
+                )
+
+    def test_claimant_can_check_again_after_a_skip_without_editing(self):
+        self.start()
+        self.pipeline_posts(status_note(self.check().id))
+
+        state = self.start()
+
+        self.assertEqual(CHECKING, state['status'])
+        self.assertNotIn('no_result', state)
+        self.assertEqual(2, self.checks().count())
+        self.assertEqual(2, self.trigger.call_count)
+
+    def test_skipped_checks_cannot_be_repeated_without_end(self):
+        for _ in range(MAX_LIVE_CHECK_ATTEMPTS):
+            self.assertEqual(CHECKING, self.start()['status'])
+            self.pipeline_posts(status_note(self.check().id))
+
+        state = self.start()
+
+        self.assertEqual(0, state['checks_left'])
+        self.assertEqual(MAX_LIVE_CHECK_ATTEMPTS, self.checks().count())
+        self.assertEqual(MAX_LIVE_CHECK_ATTEMPTS, self.trigger.call_count)
+
+    def test_status_note_for_another_check_is_ignored(self):
+        self.start()
+
+        self.pipeline_posts(status_note(self.check().id + 1))
+
+        self.assertEqual(CHECKING, self.poll()['status'])
+        self.assertEqual('', self.check().no_result_reason)
+
+    def test_status_note_for_an_older_check_is_ignored(self):
+        self.start()
+        first = self.check().id
+        self.client.post(self.url, {'timed_out': True}, format='json')
+        self.start()
+        self.assertNotEqual(first, self.check().id)
+
+        self.pipeline_posts(status_note(first, 'failed'))
+
+        self.assertEqual(CHECKING, self.poll()['status'])
+        self.assertEqual(0, len(mail.outbox))
+        self.assertEqual(
+            ['', ''],
+            list(self.checks().values_list('no_result_reason', flat=True)),
+        )
+
+    def test_status_note_from_anyone_else_is_ignored(self):
+        self.start()
+
+        self.pipeline_posts(
+            status_note(self.check().id), user=self.moderator
+        )
+
+        self.assertEqual(CHECKING, self.poll()['status'])
+        self.assertEqual('', self.check().no_result_reason)
+
+    def test_status_note_does_not_change_a_check_that_has_its_answer(self):
+        self.start()
+        self.post_review(review_block([CHECK_ADDRESS]))
+        self.assertEqual(NOT_PASSED, self.poll()['status'])
+
+        self.pipeline_posts(status_note(self.check().id, 'failed'))
+
+        state = self.poll()
+        self.assertEqual(NOT_PASSED, state['status'])
+        self.assertNotIn('no_result', state)
+        self.assertEqual('', self.check().no_result_reason)
+
+    def test_status_note_long_after_the_check_is_ignored(self):
+        self.start()
+        self.client.post(self.url, {'timed_out': True}, format='json')
+        self.age_checks(LATE_RESULT_WINDOW.total_seconds() + 60)
+
+        self.pipeline_posts(status_note(self.check().id, 'failed'))
+
+        self.assertEqual(0, len(mail.outbox))
+        self.assertEqual('', self.check().no_result_reason)
+
+    def test_review_that_arrives_after_a_no_result_is_still_emailed(self):
+        # The nightly run reviews a claim whose live check was skipped.
+        # The page told the claimant a person would review it; the
+        # fixes still reach them by email.
+        self.start()
+        self.pipeline_posts(status_note(self.check().id))
+        self.assertEqual(0, len(mail.outbox))
+
+        self.pipeline_posts(review_note(review_block([CHECK_ADDRESS])))
+
+        self.assertEqual(1, len(mail.outbox))
+        self.assertEqual(NOT_PASSED_SUBJECT, mail.outbox[0].subject)
+
+    def test_status_note_is_not_recorded_as_an_ai_decision(self):
+        self.start()
+
+        with self.assertNoLogs(
+            'api.services.facility_claim_status_service', level='WARNING'
+        ):
+            self.pipeline_posts(status_note(self.check().id))
+
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.ai_decision)
+
+    def test_switch_off_ignores_the_status_note(self):
+        self.start()
+        check_id = self.check().id
+
+        with override_switch(CLAIM_LIVE_CHECK_SWITCH, active=False):
+            self.pipeline_posts(status_note(check_id))
+
+        self.assertEqual('', self.check().no_result_reason)

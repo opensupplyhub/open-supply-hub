@@ -213,7 +213,7 @@ def send_claim_facility_approval_email(request, facility_claim):
 
 
 def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
-                                           check_again):
+                                           check_again, no_result=False):
     '''
     Tell a claimant that the live check of their claim did not pass
     (OSDEV-3804), with the same preset lines the claim form shows and a
@@ -222,9 +222,14 @@ def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
     scroll to first, and `check` to check again on save. `fixes` are
     keys from claim_live_check_fixes; only their preset texts are ever
     sent.
+
+    `no_result` (OSDEV-3911) is for a check the pipeline ended without
+    reviewing the claim: the email then says the check could not be
+    finished, not that the claim did not pass, and names no fixes.
     '''
     subj_template = get_template(
-        'mail/claim_live_check_not_passed_subject.txt'
+        'mail/claim_live_check_no_result_subject.txt' if no_result
+        else 'mail/claim_live_check_not_passed_subject.txt'
     )
     text_template = get_template('mail/claim_live_check_not_passed_body.txt')
     html_template = get_template('mail/claim_live_check_not_passed_body.html')
@@ -244,6 +249,7 @@ def send_claim_live_check_not_passed_email(request, facility_claim, fixes,
         'production_location_url': make_facility_url(request, facility),
         'fixes': [FIX_TEXTS[fix] for fix in fixes],
         'fix_url': fix_url,
+        'no_result': no_result,
     }
 
     send_mail(

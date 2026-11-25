@@ -123,6 +123,12 @@ export const UNAVAILABLE_TEXT =
 export const UNAVAILABLE_EMAIL_TEXT =
     'We will email you the result. If the check cannot finish, a person will review your claim.';
 
+// The check ended without a result and none is coming, so nothing is
+// promised by email.
+export const NO_RESULT_TITLE = 'We could not check your claim right now.';
+export const NO_RESULT_TEXT =
+    'Your claim is submitted. A person will review it. You do not need to do anything.';
+
 export const makeFixBannerTitle = count =>
     count === 1 ? '1 thing to fix' : `${count} things to fix`;
 

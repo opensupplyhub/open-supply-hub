@@ -7,7 +7,7 @@ You submitted a request to claim this production location on Open Supply Hub (OS
 - Address of Production Location: {{ production_location_address }}, {{ production_location_country }}
 - OS Hub Profile: {{ production_location_url }}
 
-The claim did not pass the automatic check.
+{% if no_result %}We could not finish the automatic check of your claim.{% else %}The claim did not pass the automatic check.{% endif %}
 
 {% if fixes %}{% if fixes|length == 1 %}Fix this:{% else %}Fix these {{ fixes|length }} things:{% endif %}
 {% for fix in fixes %}

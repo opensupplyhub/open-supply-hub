@@ -316,6 +316,36 @@ describe('ClaimLiveCheck component', () => {
         expect(queryByRole('progressbar')).toBeNull();
     });
 
+    test('a check the pipeline ended without a result promises no email', async () => {
+        apiRequest.get.mockResolvedValue({
+            data: {
+                status: 'UNAVAILABLE',
+                fixes: [],
+                checks_left: 3,
+                no_result: true,
+            },
+        });
+        const { getByRole, getByText, queryByText } = renderCheck();
+        await flush();
+
+        await advance(POLL_INTERVAL_MS);
+
+        expect(
+            getByRole('heading', {
+                name: 'We could not check your claim right now.',
+            }),
+        ).toBeInTheDocument();
+        expect(
+            getByText(
+                'Your claim is submitted. A person will review it. You do not need to do anything.',
+            ),
+        ).toBeInTheDocument();
+        expect(queryByText(EMAIL_FOLLOWS)).not.toBeInTheDocument();
+        expect(queryByText(UNAVAILABLE)).not.toBeInTheDocument();
+        expect(onNotStarted).not.toHaveBeenCalled();
+        expect(getByRole('button', { name: 'To My Claims' })).toBeInTheDocument();
+    });
+
     test('gives up after one minute, tells the API once and stops asking', async () => {
         const { getByText, queryByText } = renderCheck();
         await settle();
