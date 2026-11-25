@@ -100,6 +100,30 @@ class FacilityClaimStatuses:
     REVOKED = 'REVOKED'
 
 
+class FacilityClaimWaitingOn:
+    # Who has the next move on a PENDING claim (OSDEV-3795). Empty on
+    # claims that are not pending.
+    OS_HUB = 'OS_HUB'
+    CLAIMANT = 'CLAIMANT'
+
+
+class FacilityClaimDenialTypes:
+    # Why a DENIED claim was closed (OSDEV-3795). Empty means the denial
+    # has not been classified.
+    #   NO_RESPONSE  the claimant never answered; not a strike
+    #   NOT_ELIGIBLE a moderator reviewed the claim and ruled it out
+    NO_RESPONSE = 'NO_RESPONSE'
+    NOT_ELIGIBLE = 'NOT_ELIGIBLE'
+
+
+class FacilityClaimAIDecisions:
+    # What the claims automation pipeline did with a claim (OSDEV-3795).
+    #   APPROVED it approved the claim itself
+    #   HELD     it reviewed the claim and left it for a moderator
+    APPROVED = 'APPROVED'
+    HELD = 'HELD'
+
+
 class FacilityClaimReviewNoteTypes:
     # Direction of the note:
     #   INTERNAL         moderator -> moderator
