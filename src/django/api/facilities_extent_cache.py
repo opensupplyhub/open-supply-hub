@@ -7,10 +7,19 @@ from typing import Tuple
 from django.conf import settings
 from django.contrib.gis.db.models import Extent
 from django.core.cache import caches
+from django.db import connection, transaction
 from django.db.models import QuerySet
 from django.http import QueryDict
 
 ExtentTuple = Tuple[float, float, float, float]
+
+# A broad free-text search (~600k rows) overflows the default 4MB work_mem
+# while building the TID bitmap for the trigram index, and a lossy bitmap
+# rechecks whole heap blocks through immutable_unaccent(), which is slower
+# than the sequential scan it replaced. 32MB keeps the bitmap exact at the
+# scale of the widest real queries. Transaction-local, so nothing else is
+# affected. See OSDEV-3793.
+EXTENT_WORK_MEM = '32MB'
 
 FACILITIES_EXTENT_CACHE_KEY_PREFIX = 'facilities_extent'
 FACILITIES_EXTENT_CACHE_NON_FILTER_PARAMS = frozenset([
@@ -58,6 +67,14 @@ class FacilitiesExtentCache:
         if extent is not cache_miss:
             return extent
 
-        extent = queryset.aggregate(Extent('location'))['location__extent']
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT set_config('work_mem', %s, true)",
+                    [EXTENT_WORK_MEM],
+                )
+            extent = (
+                queryset.aggregate(Extent('location'))['location__extent']
+            )
         self.cache.set(cache_key, extent, self.cache_timeout)
         return extent
