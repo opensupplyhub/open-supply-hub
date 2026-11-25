@@ -114,6 +114,8 @@ def handler(event, context):
         api = os_hub_api()
         cleaning = cleaning_state(api, list_id) if api is not None else None
         if cleaning is not None:
+            # cleaning_state only returns a payload when the API client exists.
+            assert api is not None
             # The list as the contributor left it, every row where it was
             # uploaded, removed rows tagged rather than dropped.
             source_path = work_dir / f"{list_id}-cleaned.csv"

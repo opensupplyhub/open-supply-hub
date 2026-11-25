@@ -181,11 +181,13 @@ def test_transform_csv_equals_prefixed_value_is_string_cell(tmp_path):
     ).transform()
 
     wb = openpyxl.load_workbook(dest, data_only=False)
-    cell = wb.active["B2"]
+    ws = wb.active
+    assert ws is not None
+    cell = ws["B2"]
     assert cell.data_type == "s"
     assert cell.value == "'=1+1"
-    assert wb.active["A2"].value == "Bangladesh"
-    assert wb.active["C2"].value == "1 Main St"
+    assert ws["A2"].value == "Bangladesh"
+    assert ws["C2"].value == "1 Main St"
 
 
 def test_transform_csv_strips_illegal_control_characters(tmp_path):
@@ -203,7 +205,9 @@ def test_transform_csv_strips_illegal_control_characters(tmp_path):
     ).transform()
 
     wb = openpyxl.load_workbook(dest)
-    assert wb.active["C2"].value == "JALAN RAYA SEMARANG-KENDAL KM 12, Semarang"
+    ws = wb.active
+    assert ws is not None
+    assert ws["C2"].value == "JALAN RAYA SEMARANG-KENDAL KM 12, Semarang"
 
 
 def test_transform_csv_strips_control_character_before_formula_escape(tmp_path):
@@ -220,7 +224,9 @@ def test_transform_csv_strips_control_character_before_formula_escape(tmp_path):
     ).transform()
 
     wb = openpyxl.load_workbook(dest, data_only=False)
-    cell = wb.active["B2"]
+    ws = wb.active
+    assert ws is not None
+    cell = ws["B2"]
     assert cell.data_type == "s"
     assert cell.value == "'=1+1"
 

@@ -23,6 +23,7 @@ from message import NotifyMessage  # noqa: E402
 _SPEC = importlib.util.spec_from_file_location(
     "notify_handler", CONTRIBOT_DIR / "notify" / "handler.py"
 )
+assert _SPEC is not None and _SPEC.loader is not None
 handler = importlib.util.module_from_spec(_SPEC)
 sys.modules["notify_handler"] = handler
 _SPEC.loader.exec_module(handler)

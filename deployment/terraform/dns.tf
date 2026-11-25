@@ -44,7 +44,7 @@ data "aws_route53_zone" "external" {
   name = var.r53_public_hosted_zone
 }
 locals {
-  domain_name= var.environment == "Development" ? "dev.${var.r53_public_hosted_zone}" : var.environment == "Staging" ? "${var.r53_public_hosted_zone}" : var.environment == "Production" ? "${var.r53_public_hosted_zone}" : "${lower(var.environment)}.${var.r53_public_hosted_zone}"
+  domain_name = var.environment == "Development" ? "dev.${var.r53_public_hosted_zone}" : var.environment == "Staging" ? "${var.r53_public_hosted_zone}" : var.environment == "Production" ? "${var.r53_public_hosted_zone}" : "${lower(var.environment)}.${var.r53_public_hosted_zone}"
 }
 resource "aws_route53_record" "bastion" {
   zone_id = data.aws_route53_zone.external.zone_id
@@ -194,7 +194,7 @@ resource "aws_service_discovery_service" "app" {
 
   # Remove after https://github.com/terraform-providers/terraform-provider-aws/issues/4853 is resolved
   provisioner "local-exec" {
-    when = destroy
+    when    = destroy
     command = "${path.module}/servicediscovery-drain.sh ${self.id}"
   }
 }

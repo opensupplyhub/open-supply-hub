@@ -126,7 +126,8 @@ def test_http_get_json_raises_on_http_error(monkeypatch):
         url="https://example.com/api/admin-facility-lists/",
         code=401,
         msg="Unauthorized",
-        hdrs=None,
+        # urllib's stubs want a Message, but the runtime takes None fine
+        hdrs=None,  # pyright: ignore[reportArgumentType]
         fp=BytesIO(b'{"detail":"auth"}'),
     )
 

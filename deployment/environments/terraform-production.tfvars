@@ -101,49 +101,49 @@ aws_chatbot_manage_channel_configuration = true
 # default of false).
 manage_bedrock_cost_budget = true
 
-waf_enabled = true
-waf_rate_limit_enabled = true
-waf_rate_limit_action = "count"
+waf_enabled                          = true
+waf_rate_limit_enabled               = true
+waf_rate_limit_action                = "count"
 memcached_view_cache_timeout_seconds = 360
-stripe_price_id = "price_1TPjKeAnUgyIppdhAECREwYL"
-hubspot_subscription_id = "12847627"
-dromo_schema_id = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
-google_drive_shared_directory_id = "12ZhHCXHJD25NbfrqGnp5AT39odskr1Si"
-aws_key_name = "osh-prd"
-database_anonymizer_enabled = true
-anonymizer_db_identifier = "database-anonymizer"
-anonymizer_schedule_expression = "cron(0 1 ? * SAT *)"
-enable_legacy_info_site_redirect = true
+stripe_price_id                      = "price_1TPjKeAnUgyIppdhAECREwYL"
+hubspot_subscription_id              = "12847627"
+dromo_schema_id                      = "6f3e129c-d724-4b80-b2c9-8e54b47e8017"
+google_drive_shared_directory_id     = "12ZhHCXHJD25NbfrqGnp5AT39odskr1Si"
+aws_key_name                         = "osh-prd"
+database_anonymizer_enabled          = true
+anonymizer_db_identifier             = "database-anonymizer"
+anonymizer_schedule_expression       = "cron(0 1 ? * SAT *)"
+enable_legacy_info_site_redirect     = true
 
-rds_master_secret_name = "oshub/production/rds-master"
-django_secret_key_secret_name = "oshub/production/django-secret-key"
-cloudfront_auth_token_secret_name = "oshub/production/cloudfront-auth-token"
-default_from_email_secret_name = "oshub/production/default-from-email"
-data_from_email_secret_name = "oshub/production/data-from-email"
-notification_email_to_secret_name = "oshub/production/notification-email-to"
-claim_from_email_secret_name = "oshub/production/claim-from-email"
-google_server_side_api_key_secret_name = "oshub/production/google-server-side-api-key"
-google_client_side_api_key_secret_name = "oshub/production/google-client-side-api-key"
-google_analytics_key_secret_name = "oshub/production/google-analytics-key"
-google_service_account_creds_base64_secret_name = "oshub/production/google-service-account-creds-base64"
-rollbar_server_side_access_token_secret_name = "oshub/production/rollbar-server-side-access-token"
-rollbar_client_side_access_token_secret_name = "oshub/production/rollbar-client-side-access-token"
-oar_client_key_secret_name = "oshub/production/oar-client-key"
-hubspot_api_key_secret_name = "oshub/production/hubspot-api-key"
-stripe_secret_key_secret_name = "oshub/production/stripe-secret-key"
-stripe_webhook_secret_secret_name = "oshub/production/stripe-webhook-secret"
-dark_visitors_token_secret_name = "oshub/production/dark-visitors-token"
-dark_visitors_project_key_secret_name = "oshub/production/dark-visitors-project-key"
-dromo_license_key_secret_name = "oshub/production/dromo-license-key"
-external_access_cidr_blocks_secret_name = "oshub/production/external-access-cidr-blocks"
-ip_denylist_secret_name = "oshub/production/ip-denylist"
+rds_master_secret_name                            = "oshub/production/rds-master"
+django_secret_key_secret_name                     = "oshub/production/django-secret-key"
+cloudfront_auth_token_secret_name                 = "oshub/production/cloudfront-auth-token"
+default_from_email_secret_name                    = "oshub/production/default-from-email"
+data_from_email_secret_name                       = "oshub/production/data-from-email"
+notification_email_to_secret_name                 = "oshub/production/notification-email-to"
+claim_from_email_secret_name                      = "oshub/production/claim-from-email"
+google_server_side_api_key_secret_name            = "oshub/production/google-server-side-api-key"
+google_client_side_api_key_secret_name            = "oshub/production/google-client-side-api-key"
+google_analytics_key_secret_name                  = "oshub/production/google-analytics-key"
+google_service_account_creds_base64_secret_name   = "oshub/production/google-service-account-creds-base64"
+rollbar_server_side_access_token_secret_name      = "oshub/production/rollbar-server-side-access-token"
+rollbar_client_side_access_token_secret_name      = "oshub/production/rollbar-client-side-access-token"
+oar_client_key_secret_name                        = "oshub/production/oar-client-key"
+hubspot_api_key_secret_name                       = "oshub/production/hubspot-api-key"
+stripe_secret_key_secret_name                     = "oshub/production/stripe-secret-key"
+stripe_webhook_secret_secret_name                 = "oshub/production/stripe-webhook-secret"
+dark_visitors_token_secret_name                   = "oshub/production/dark-visitors-token"
+dark_visitors_project_key_secret_name             = "oshub/production/dark-visitors-project-key"
+dromo_license_key_secret_name                     = "oshub/production/dromo-license-key"
+external_access_cidr_blocks_secret_name           = "oshub/production/external-access-cidr-blocks"
+ip_denylist_secret_name                           = "oshub/production/ip-denylist"
 aws_chatbot_additional_sns_topic_arns_secret_name = "oshub/production/aws-chatbot-additional-sns-topic-arns"
-aws_chatbot_slack_config_secret_name = "oshub/production/aws-chatbot-slack-config"
-vanta_assumed_role_external_ids_secret_name = "oshub/production/vanta-assumed-role-external-ids"
-vanta_assumed_role_principals_secret_name = "oshub/production/vanta-assumed-role-principals"
-anonymizer_destination_aws_account_secret_name = "oshub/production/anonymizer-destination-aws-account"
-anonymizer_kms_key_admin_users_secret_name = "oshub/production/anonymizer-kms-key-admin-users"
-contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-token"
+aws_chatbot_slack_config_secret_name              = "oshub/production/aws-chatbot-slack-config"
+vanta_assumed_role_external_ids_secret_name       = "oshub/production/vanta-assumed-role-external-ids"
+vanta_assumed_role_principals_secret_name         = "oshub/production/vanta-assumed-role-principals"
+anonymizer_destination_aws_account_secret_name    = "oshub/production/anonymizer-destination-aws-account"
+anonymizer_kms_key_admin_users_secret_name        = "oshub/production/anonymizer-kms-key-admin-users"
+contribot_os_hub_api_token_secret_name            = "oshub/production/contribot-os-hub-api-token"
 # OSDEV-3545: re-enabled. The 9/18 activation's duplicate cards were
 # reconciled on 2026-09-21 (OSDEV-3540), and the board-target decision is
 # resolved: AWS keeps posting to the live approval queue alongside legacy
@@ -156,7 +156,7 @@ contribot_os_hub_api_token_secret_name = "oshub/production/contribot-os-hub-api-
 # __CURSOR__ is a deploy-day step that must happen immediately before the
 # apply; see OSDEV-3545.
 contribot_schedule_enabled = true
-contribot_monday_board_id = "3514246658"
+contribot_monday_board_id  = "3514246658"
 # OSDEV-3545: fallback only. Read by lists_repository.get_last_list_id() just
 # when the DynamoDB __CURSOR__ item is missing or unparseable, so it has no
 # effect while the cursor exists. Refreshed from 9684 to the highest list the
@@ -164,11 +164,11 @@ contribot_monday_board_id = "3514246658"
 # table is ever recreated the instance resumes near where production actually
 # is instead of re-carding every still-PENDING list above 9684. Replacing this
 # fallback with a loud failure on a missing cursor is deferred to OSDEV-2545.
-contribot_last_list_id = "9721"
-contribot_google_drive_shared_directory_id = "1eRc0dlAvlo467NfGZI0PoE1TX2J7xTg0"
-contribot_monday_api_key_secret_name = "oshub/production/contribot-monday-api-key"
-contribot_slack_api_url_secret_name = "oshub/production/contribot-slack-api-url"
-contribot_slack_failures_api_url_secret_name = "oshub/production/contribot-slack-failures-api-url"
+contribot_last_list_id                         = "9721"
+contribot_google_drive_shared_directory_id     = "1eRc0dlAvlo467NfGZI0PoE1TX2J7xTg0"
+contribot_monday_api_key_secret_name           = "oshub/production/contribot-monday-api-key"
+contribot_slack_api_url_secret_name            = "oshub/production/contribot-slack-api-url"
+contribot_slack_failures_api_url_secret_name   = "oshub/production/contribot-slack-failures-api-url"
 contribot_google_drive_service_key_secret_name = "oshub/production/contribot-google-drive-service-key"
 
 # OSDEV-3374: automated-claims pipeline Lambda execution role, allowed to
@@ -183,14 +183,14 @@ claim_attachments_reader_role_arns = ["arn:aws:iam::343975343274:role/auto-claim
 # Step Functions and S3 calls; the stack's ResultsReaderPrincipal parameter
 # must list this environment's app task role. The feature itself stays
 # behind the enable_list_cleaning_feedback switch.
-list_cleaning_state_machine_arn = "arn:aws:states:us-east-1:343975343274:stateMachine:auto-lists-cleaning"
-list_cleaning_results_bucket = "auto-lists-results-343975343274-us-east-1"
+list_cleaning_state_machine_arn    = "arn:aws:states:us-east-1:343975343274:stateMachine:auto-lists-cleaning"
+list_cleaning_results_bucket       = "auto-lists-results-343975343274-us-east-1"
 list_cleaning_results_bucket_owner = "343975343274"
-list_cleaning_role_arn = "arn:aws:iam::343975343274:role/auto-lists-caller"
+list_cleaning_role_arn             = "arn:aws:iam::343975343274:role/auto-lists-caller"
 
 earth_genome_contributor_id_secret_name = "oshub/production/earth-genome-contributor-id"
-earth_index_api_key_secret_name = "oshub/production/earth-index-api-key"
-earth_index_project_id_secret_name = "oshub/production/earth-index-project-id"
+earth_index_api_key_secret_name         = "oshub/production/earth-index-api-key"
+earth_index_project_id_secret_name      = "oshub/production/earth-index-project-id"
 
 # OSDEV-3747: the pilot's head-office locations. Registration goes live
 # unmoderated, so without this a token that can register one OS ID can

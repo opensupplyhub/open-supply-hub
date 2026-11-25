@@ -276,7 +276,10 @@ def test_created_at_accepts_offsets_and_naive_times():
     from datetime import timezone
 
     parsed = handler.created_at({"created_at": "2026-11-16T10:00:00.123456Z"})
-    assert parsed.tzinfo is not None and parsed.utcoffset().total_seconds() == 0
+    assert parsed is not None and parsed.tzinfo is not None
+    offset = parsed.utcoffset()
+    assert offset is not None and offset.total_seconds() == 0
     naive = handler.created_at({"created_at": "2026-11-16T10:00:00"})
+    assert naive is not None
     assert naive.tzinfo == timezone.utc
     assert handler.created_at({}) is None

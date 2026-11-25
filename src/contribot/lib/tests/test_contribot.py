@@ -489,6 +489,7 @@ class TestRowHeight:
     def _sheet(self, value):
         wb = openpyxl.Workbook()
         ws = wb.active
+        assert ws is not None
         ws.column_dimensions["A"].width = 10
         ws["A1"] = value
         return ws
