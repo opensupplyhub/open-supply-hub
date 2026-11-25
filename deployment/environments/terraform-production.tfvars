@@ -61,7 +61,7 @@ batch_default_ce_desired_vcpus = 4
 batch_default_ce_max_vcpus     = 128
 batch_default_job_memory       = 8192
 
-batch_default_ce_instance_types = ["c5", "m5"]
+batch_default_ce_instance_types = ["m5.xlarge"]
 
 gunicorn_worker_timeout = "360"
 gunicorn_workers        = "5"
