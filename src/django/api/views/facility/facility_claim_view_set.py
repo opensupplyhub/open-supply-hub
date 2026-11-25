@@ -359,11 +359,13 @@ class FacilityClaimViewSet(ModelViewSet):
     def _get_claim_for_update(pk):
         """
         The claim, with its row locked until the request's transaction
-        ends. The endpoints that decide a claim, message its claimant or
-        record the automation account's review all read the claim and
+        ends. The endpoints that decide a claim (approve, deny, revoke)
+        or record the automation account's review read the claim and
         write it back later; without the lock two of them overlapping
-        can write from a copy the other has already changed (OSDEV-3795).
-        Must be called inside a transaction.
+        can write from a copy the other has already changed
+        (OSDEV-3795). message_claimant takes it late, for its one write,
+        so the lock is never held while an email is sent. Must be called
+        inside a transaction.
         """
         return FacilityClaim.objects.select_for_update().get(pk=pk)
 
@@ -376,7 +378,7 @@ class FacilityClaimViewSet(ModelViewSet):
             raise PermissionDenied()
 
         try:
-            claim = self._get_claim_for_update(pk)
+            claim = FacilityClaim.objects.get(pk=pk)
             message = request.data.get('message', '')
 
             if not message:
@@ -386,6 +388,13 @@ class FacilityClaimViewSet(ModelViewSet):
             # email as one unit (see mail.py) — @transaction.atomic
             # rolls the note back if the send fails.
             send_message_to_claimant_email(request, claim, message)
+            # The row is locked only now, after the email has gone, so a
+            # slow mail service never holds the lock that the claimant's
+            # own edits and the other moderator actions wait on. Reading
+            # the claim again under the lock is what stops a message
+            # that overlaps an approval from marking a decided claim as
+            # waiting on the claimant.
+            claim = self._get_claim_for_update(pk)
             mark_waiting_on_claimant(claim)
 
             response_data = FacilityClaimDetailsSerializer(claim).data
@@ -519,7 +528,7 @@ class FacilityClaimViewSet(ModelViewSet):
             raise PermissionDenied()
 
         try:
-            claim = FacilityClaim.objects.get(pk=pk)
+            claim = self._get_claim_for_update(pk)
 
             if claim.status != FacilityClaimStatuses.APPROVED:
                 raise BadRequestException(

@@ -38,6 +38,7 @@ from api.models import (
     User,
 )
 from api.services import facility_claim_status_service
+from api.views.facility import facility_claim_view_set as views
 from api.services.facility_claim_status_service import (
     AUTOMATED_REVIEW_MARKER,
     get_status_label,
@@ -439,14 +440,21 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
         # review dropped the recorded AI decision.
         self.login(self.moderator)
         requests = (
-            ('message-claimant', {'message': 'Hello'}),
-            ('note', {'note': 'A note'}),
-            ('deny', {'reason': 'No'}),
-            ('approve', {'reason': 'Yes'}),
+            ('message-claimant', {'message': 'Hello'}, {}),
+            ('note', {'note': 'A note'}, {}),
+            ('deny', {'reason': 'No'}, {}),
+            ('approve', {'reason': 'Yes'}, {}),
+            (
+                'revoke',
+                {'reason': 'Left the company'},
+                {'status': FacilityClaimStatuses.APPROVED},
+            ),
         )
-        for action, data in requests:
+        for action, data, claim_fields in requests:
             with self.subTest(action=action):
-                claim = self.create_claim(self.create_facility(action))
+                claim = self.create_claim(
+                    self.create_facility(action), **claim_fields
+                )
 
                 with CaptureQueriesContext(connection) as queries:
                     response = self.post(action, data, claim=claim)
@@ -458,6 +466,54 @@ class ClaimWaitingOnTest(ClaimStatusFieldsTestBase):
                     and '"api_facilityclaim"' in query['sql']
                 ]
                 self.assertEqual(1, len(locking_reads))
+
+    def test_message_takes_the_row_lock_only_after_the_email_is_sent(self):
+        # A slow mail service must not hold the lock that the claimant's
+        # own edits and the other moderator actions wait on.
+        self.login(self.moderator)
+        send = views.send_message_to_claimant_email
+        locks_when_sending = []
+
+        with CaptureQueriesContext(connection) as queries:
+            def send_and_look(*args, **kwargs):
+                locks_when_sending.append(sum(
+                    1 for query in queries if 'FOR UPDATE' in query['sql']
+                ))
+                return send(*args, **kwargs)
+
+            with patch.object(
+                views, 'send_message_to_claimant_email', send_and_look
+            ):
+                response = self.post('message-claimant', {'message': 'Hi'})
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual([0], locks_when_sending)
+        self.assertEqual(
+            FacilityClaimWaitingOn.CLAIMANT, response.data['waiting_on']
+        )
+
+    def test_message_on_a_claim_decided_meanwhile_sets_nothing(self):
+        # The message request read the claim while it was pending. By
+        # the time its email has gone the claim is approved. Reading it
+        # again under the lock is what keeps waiting_on empty.
+        self.login(self.moderator)
+        send = views.send_message_to_claimant_email
+
+        def decided_while_sending(*args, **kwargs):
+            FacilityClaim.objects.filter(pk=self.claim.pk).update(
+                status=FacilityClaimStatuses.APPROVED, waiting_on=None
+            )
+            return send(*args, **kwargs)
+
+        with patch.object(
+            views, 'send_message_to_claimant_email', decided_while_sending
+        ):
+            response = self.post('message-claimant', {'message': 'Hi'})
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimStatuses.APPROVED, self.claim.status)
+        self.assertIsNone(self.claim.waiting_on)
 
     def test_status_cannot_be_edited_in_the_django_admin(self):
         # The admin cannot flip a status, so the save guard is the only
@@ -722,21 +778,34 @@ class ClaimAIDecisionTest(ClaimStatusFieldsTestBase):
         )
 
     @override_switch('claim_a_facility', active=True)
-    def test_text_after_the_review_block_is_ignored(self):
+    def test_text_after_the_review_block_makes_it_unreadable(self):
+        # The dashboard parses everything from the first brace to the
+        # end of the note, so it cannot read a block with text after
+        # it. The backend must not record a decision the dashboard
+        # cannot show.
+        self.login(self.bot)
+
+        with self.assertLogs(
+            facility_claim_status_service.log, level='WARNING'
+        ):
+            response = self.post('note', {
+                'note': automated_review_note() + '\n\nEnd of review.',
+            })
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assert_no_ai_decision()
+
+    @override_switch('claim_a_facility', active=True)
+    def test_whitespace_after_the_review_block_is_fine(self):
         self.login(self.bot)
 
         response = self.post('note', {
-            'note': automated_review_note() + '\n\nEnd of review. {draft}',
+            'note': automated_review_note() + '\n \n',
         })
 
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(
             FacilityClaimAIDecisions.HELD, response.data['ai_decision']
-        )
-        self.assertEqual(
-            'Automated review result: NOT_VALIDATED.\n'
-            'address_match: The documents show a different street.',
-            response.data['ai_decision_reason'],
         )
 
     @override_switch('claim_a_facility', active=True)
@@ -831,6 +900,40 @@ class ClaimAIDecisionTest(ClaimStatusFieldsTestBase):
         self.assertEqual(
             FacilityClaimAIDecisions.APPROVED, self.claim.ai_decision
         )
+
+    @override_switch('claim_a_facility', active=True)
+    def test_automation_approval_drops_the_reason_of_an_earlier_hold(self):
+        # The pipeline held the claim, and now approves it without a
+        # newer review on record (its note could not be read, or the
+        # approval was made by hand from this account). The approval
+        # must not be explained by the reason the claim was held for.
+        self.login(self.bot)
+        self.post('note', {'note': automated_review_note('NOT_VALIDATED')})
+        self.claim.refresh_from_db()
+        self.assertEqual(FacilityClaimAIDecisions.HELD, self.claim.ai_decision)
+        self.assertIn('NOT_VALIDATED', self.claim.ai_decision_reason)
+
+        response = self.post('approve')
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(
+            FacilityClaimAIDecisions.APPROVED, response.data['ai_decision']
+        )
+        self.assertIsNone(response.data['ai_decision_reason'])
+        self.claim.refresh_from_db()
+        self.assertIsNone(self.claim.ai_decision_reason)
+
+    @override_switch('claim_a_facility', active=True)
+    def test_automation_approval_with_no_review_has_no_reason(self):
+        self.login(self.bot)
+
+        response = self.post('approve')
+
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(
+            FacilityClaimAIDecisions.APPROVED, response.data['ai_decision']
+        )
+        self.assertIsNone(response.data['ai_decision_reason'])
 
     @override_switch('claim_a_facility', active=True)
     def test_automation_approval_reason_replaces_the_review_reason(self):

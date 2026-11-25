@@ -95,12 +95,16 @@ def backfill_waiting_on(apps, schema_editor):
     A pending claim waits on the claimant when a message was emailed to
     them and they have not updated the claim since. Every other pending
     claim waits on OS Hub. Two UPDATE statements, no per-claim queries.
+
+    Each row is written once: the claimant rows first, then OS Hub for
+    the pending rows still empty. Every write to api_facilityclaim
+    fires the claim indexing trigger, so setting every pending claim to
+    OS Hub and then correcting some would index those twice.
     '''
     FacilityClaim = apps.get_model('api', 'FacilityClaim')
     FacilityClaimReviewNote = apps.get_model('api', 'FacilityClaimReviewNote')
 
     pending = FacilityClaim.objects.filter(status=PENDING)
-    pending.update(waiting_on=OS_HUB)
 
     last_message_at = Subquery(
         FacilityClaimReviewNote.objects
@@ -115,6 +119,8 @@ def backfill_waiting_on(apps, schema_editor):
         | Q(claimant_updated_at__lte=F('last_message_at')),
         last_message_at__isnull=False,
     ).update(waiting_on=CLAIMANT)
+
+    pending.filter(waiting_on__isnull=True).update(waiting_on=OS_HUB)
 
 
 class Migration(migrations.Migration):

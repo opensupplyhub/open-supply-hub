@@ -26,7 +26,10 @@ from api.models.user import User
 log = logging.getLogger(__name__)
 
 # The marker the pipeline puts before the JSON block in its review note.
-# The claims dashboard reads the same block (automatedReviewUtils.js).
+# The claims dashboard reads the same block (parseBlock in
+# automatedReviewUtils.js), and the two readers accept the same notes:
+# the block is the last thing in the note, with only whitespace after
+# it. Change them together.
 AUTOMATED_REVIEW_MARKER = '--- machine-readable, do not edit ---'
 AUTOMATED_REVIEW_KIND = 'automated_review'
 AUTOMATED_REVIEW_VERSION = 1
@@ -124,14 +127,20 @@ def resolve_denial_type(
 def _read_review_block(note: str) -> Optional[dict]:
     '''
     The JSON object that follows the marker, or None when there is no
-    object we understand. Text after the object is ignored.
+    object we understand. The object must be the last thing in the
+    note: anything but whitespace after it makes the block unreadable,
+    as it does for the dashboard, which parses everything from the
+    first brace to the end of the note.
     '''
     json_start = note.find('{', note.find(AUTOMATED_REVIEW_MARKER))
     if json_start == -1:
         return None
+    text = note[json_start:]
     try:
-        review, _ = json.JSONDecoder().raw_decode(note[json_start:])
+        review, end = json.JSONDecoder().raw_decode(text)
     except ValueError:
+        return None
+    if text[end:].strip() or not isinstance(review, dict):
         return None
     if (review.get('v') != AUTOMATED_REVIEW_VERSION
             or review.get('kind') != AUTOMATED_REVIEW_KIND):
@@ -170,8 +179,30 @@ def _parse_automated_review(claim: FacilityClaim, note: str) -> Optional[dict]:
     return review
 
 
+# The decision in the pipeline's review block that means the claim
+# passed its review.
+REVIEW_DECISION_VALIDATED = 'VALIDATED'
+
+
+def _review_result_line(decision) -> str:
+    return 'Automated review result: {}.'.format(decision)
+
+
+def _is_reason_for_a_validated_review(reason: Optional[str]) -> bool:
+    '''
+    Whether a recorded AI decision reason came from a review that
+    validated the claim: its first line is the result line
+    _describe_automated_review writes for one.
+    '''
+    if not isinstance(reason, str):
+        return False
+    return reason.split('\n', 1)[0] == _review_result_line(
+        REVIEW_DECISION_VALIDATED
+    )
+
+
 def _describe_automated_review(review: dict) -> str:
-    lines = ['Automated review result: {}.'.format(review.get('decision'))]
+    lines = [_review_result_line(review.get('decision'))]
     reasoning = review.get('reasoning')
     if isinstance(reasoning, dict):
         lines.extend(
@@ -208,12 +239,19 @@ def record_ai_review(claim: FacilityClaim, user: User, note: str) -> None:
 def record_ai_approval(claim: FacilityClaim, user: User) -> None:
     '''
     Mark a claim the pipeline is approving. Sets the fields only; the
-    caller saves the claim with the rest of the approval. The reason
-    recorded with the pipeline's review is kept unless the approval
-    request gave its own.
+    caller saves the claim with the rest of the approval.
+
+    A reason sent with the approval wins. Without one, the reason
+    recorded with the pipeline's review is kept only when that review
+    validated the claim, which is the usual case: the pipeline posts
+    its review and then approves. A reason left by an earlier review
+    that held the claim is emptied, so an approval is never explained
+    by a reason for not approving.
     '''
     if not is_claims_automation_account(user):
         return
     claim.ai_decision = FacilityClaimAIDecisions.APPROVED
     if claim.status_change_reason:
         claim.ai_decision_reason = claim.status_change_reason
+    elif not _is_reason_for_a_validated_review(claim.ai_decision_reason):
+        claim.ai_decision_reason = None
