@@ -1,6 +1,6 @@
 import logging
 import copy
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Set
 
 from rest_framework import status
 
@@ -61,18 +61,20 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         # Backfilled values are copied from what is already stored for the
         # location (PATCH backfill above, or the claim contribution
         # service), not submitted. Stored values are cleaned and may exceed
-        # the 200-character submission limit (OSDEV-1085), so submission
-        # validation is not applied to them. ContriCleaner still cleans
-        # them, which leaves an already cleaned value unchanged.
+        # the 200-character submission limit (OSDEV-1085), so the length
+        # check is skipped for them, in the schema serializer and in
+        # ContriCleaner. They are still passed to the schema serializer:
+        # it does not declare partner fields, so without them a PATCH that
+        # carries only partner fields would reach it empty and be rejected
+        # with "No fields provided." (OSDEV-3878). ContriCleaner still
+        # cleans them, which leaves an already cleaned value unchanged.
         backfilled_fields = set(event_dto.backfilled_fields)
 
         # Choose serializer per request type (POST vs PATCH).
         serializer = self.__prepare_serializer(
-            {
-                field: value for field, value in cc_ready_data.items()
-                if field not in backfilled_fields
-            },
-            event_dto.request_type
+            cc_ready_data,
+            event_dto.request_type,
+            backfilled_fields
         )
 
         try:
@@ -140,12 +142,22 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         return super().process(event_dto)
 
     @staticmethod
-    def __prepare_serializer(cc_ready_data: Dict, request_type: str):
+    def __prepare_serializer(
+        cc_ready_data: Dict,
+        request_type: str,
+        skip_length_check_fields: Set[str]
+    ):
         if request_type == ModerationEvent.RequestType.CREATE.value:
-            return ProductionLocationPostSchemaSerializer(data=cc_ready_data)
+            return ProductionLocationPostSchemaSerializer(
+                data=cc_ready_data,
+                skip_length_check_fields=skip_length_check_fields
+            )
 
         # Handle v1 PATCH requests (backfill already happened earlier).
-        return ProductionLocationPatchSchemaSerializer(data=cc_ready_data)
+        return ProductionLocationPatchSchemaSerializer(
+            data=cc_ready_data,
+            skip_length_check_fields=skip_length_check_fields
+        )
 
     @staticmethod
     def __validate_and_backfill_patch_data(
