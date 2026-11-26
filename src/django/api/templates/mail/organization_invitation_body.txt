@@ -1,0 +1,15 @@
+{% autoescape off %}{% block content %}
+Hello,
+
+{{ sender_name }} invited you to join the organization "{{ organization_name }}" on Open Supply Hub (OS Hub) as {{ role_label }}.
+
+Joining changes nothing about your own account: you keep your login, your contributor profile and the way your data is shown publicly. The organization will be able to see the lists, contributions and claims you have submitted, including the ones you submitted before joining.
+
+Review the invitation here: {{ invitation_url }}
+
+The invitation expires on {{ expires_on }}. If you don't want to join, you can decline it on the same page or ignore this email.
+
+Best Regards,
+
+{% include "mail/signature_block.txt" %}
+{% endblock content %}{% endautoescape %}

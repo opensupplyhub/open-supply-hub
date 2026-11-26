@@ -1,5 +1,5 @@
 from rest_framework.request import Request
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
@@ -937,4 +937,96 @@ def send_ddl_reach_paid_limit_email(url, email):
         settings.DATA_FROM_EMAIL,
         [email],
         html_message=html_template.render(dictionary)
+    )
+
+
+def make_organization_url(request):
+    return '{}/organization'.format(make_oshub_url(request))
+
+
+def _organization_role_label(role):
+    return 'an Admin' if role == 'ADMIN' else 'a Member'
+
+
+def _organization_sender_name(user):
+    """The inviting Admin as the invitee knows them."""
+    if user is None:
+        return 'The Open Supply Hub Team'
+    try:
+        return '{} ({})'.format(user.contributor.name, user.email)
+    except ObjectDoesNotExist:
+        return user.email
+
+
+def send_organization_invitation_email(request, invitation):
+    subj_template = get_template('mail/organization_invitation_subject.txt')
+    text_template = get_template('mail/organization_invitation_body.txt')
+    html_template = get_template('mail/organization_invitation_body.html')
+
+    invitation_dictionary = {
+        'sender_name': _organization_sender_name(invitation.invited_by),
+        'organization_name': invitation.organization.name,
+        'role_label': _organization_role_label(invitation.role),
+        'invitation_url': make_organization_url(request),
+        'expires_on': invitation.expires_at.strftime('%B %d, %Y'),
+    }
+
+    send_mail(
+        subj_template.render(invitation_dictionary).rstrip(),
+        text_template.render(invitation_dictionary),
+        settings.DEFAULT_FROM_EMAIL,
+        [invitation.invited_user.email],
+        html_message=html_template.render(invitation_dictionary)
+    )
+
+
+def send_organization_invitation_response_email(request, invitation,
+                                                accepted):
+    """Tell the inviting Admin how their invitation was answered."""
+    if invitation.invited_by is None:
+        return
+
+    subj_template = get_template(
+        'mail/organization_invitation_response_subject.txt')
+    text_template = get_template(
+        'mail/organization_invitation_response_body.txt')
+    html_template = get_template(
+        'mail/organization_invitation_response_body.html')
+
+    response_dictionary = {
+        'invitee_email': invitation.invited_user.email,
+        'organization_name': invitation.organization.name,
+        'response_label': 'accepted' if accepted else 'declined',
+        'accepted': accepted,
+        'organization_url': make_organization_url(request),
+    }
+
+    send_mail(
+        subj_template.render(response_dictionary).rstrip(),
+        text_template.render(response_dictionary),
+        settings.DEFAULT_FROM_EMAIL,
+        [invitation.invited_by.email],
+        html_message=html_template.render(response_dictionary)
+    )
+
+
+def send_organization_member_added_email(request, membership):
+    """Tell a user that OS Hub staff added them to an organization."""
+    subj_template = get_template('mail/organization_member_added_subject.txt')
+    text_template = get_template('mail/organization_member_added_body.txt')
+    html_template = get_template('mail/organization_member_added_body.html')
+
+    member_dictionary = {
+        'organization_name': membership.organization.name,
+        'role_label': _organization_role_label(membership.role),
+        'is_admin': membership.is_admin,
+        'organization_url': make_organization_url(request),
+    }
+
+    send_mail(
+        subj_template.render(member_dictionary).rstrip(),
+        text_template.render(member_dictionary),
+        settings.DEFAULT_FROM_EMAIL,
+        [membership.user.email],
+        html_message=html_template.render(member_dictionary)
     )

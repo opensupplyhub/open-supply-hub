@@ -71,6 +71,34 @@ class FacilityCreateQueryParams:
     TEXT_ONLY_FALLBACK = 'textonlyfallback'
 
 
+class OrganizationSettings:
+    # Applied to a new organization until OS Hub staff set its own
+    # limit in the Django admin. Most teams that manage OS Hub are one
+    # to three people.
+    DEFAULT_SEAT_LIMIT = 3
+    INVITATION_LIFETIME_DAYS = 14
+    # Mail providers anyone can sign up with. Sharing one of these
+    # domains says nothing about working for the same organization, so
+    # accounts on them are never suggested to an Admin as colleagues.
+    PUBLIC_EMAIL_DOMAINS = frozenset({
+        'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk',
+        'yahoo.co.in', 'yahoo.fr', 'ymail.com', 'hotmail.com',
+        'hotmail.co.uk', 'hotmail.fr', 'outlook.com', 'live.com',
+        'msn.com', 'icloud.com', 'me.com', 'mac.com', 'aol.com',
+        'proton.me', 'protonmail.com', 'pm.me', 'gmx.com', 'gmx.de',
+        'gmx.net', 'web.de', 'mail.com', 'mail.ru', 'yandex.com',
+        'yandex.ru', 'zoho.com', 'qq.com', '163.com', '126.com',
+        'sina.com', 'naver.com', 'rediffmail.com', 'fastmail.com',
+        'hey.com', 'tutanota.com', 'duck.com',
+    })
+    # The most colleagues suggested to an Admin at once.
+    DOMAIN_ACCOUNTS_LIMIT = 50
+    # The most uploaded lists the dashboard's match report covers.
+    LIST_MATCH_REPORT_LIMIT = 50
+    # The recent period the dashboard's usage section reports on.
+    USAGE_PERIOD_DAYS = 30
+
+
 class FeatureGroups:
     CAN_GET_FACILITY_HISTORY = 'can_get_facility_history'
     CAN_SUBMIT_FACILITY = 'can_submit_facility'

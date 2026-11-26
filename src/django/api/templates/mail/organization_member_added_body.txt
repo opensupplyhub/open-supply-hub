@@ -1,0 +1,15 @@
+{% autoescape off %}{% block content %}
+Hello,
+
+The Open Supply Hub (OS Hub) team added you to the organization "{{ organization_name }}" as {{ role_label }}.
+{% if is_admin %}
+As an Admin you can invite other people who already have an OS Hub account, change their roles and remove members.
+{% endif %}
+Nothing about your own account changes: you keep your login, your contributor profile and the way your data is shown publicly. The organization can see the lists, contributions and claims you have submitted, including the ones you submitted before joining.
+
+Open your organization here: {{ organization_url }}
+
+Best Regards,
+
+{% include "mail/signature_block.txt" %}
+{% endblock content %}{% endautoescape %}

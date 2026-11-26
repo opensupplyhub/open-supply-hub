@@ -66,6 +66,15 @@ class ClaimInviteThrottle(UserRateThrottle):
         self.cache.set(key, history, self.duration)
 
 
+class OrganizationInviteThrottle(ClaimInviteThrottle):
+    """
+    Bounds how many organization invitations one Admin can send. Like
+    ClaimInviteThrottle, a request is only counted once the invitation
+    is actually sent, so refused attempts don't use the limit up.
+    """
+    scope = 'organization_invite'
+
+
 class DuplicateThrottle(BaseThrottle):
     cache = caches['api_throttling']
     MAX_REQUEST_SIZE = 1024 * 1024  # 1MB limit

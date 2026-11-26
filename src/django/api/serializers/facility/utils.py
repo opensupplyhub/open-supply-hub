@@ -21,6 +21,7 @@ from ...models import (
 )
 from ..utils import (
     get_embed_contributor_id,
+    is_attributed_to_organization,
     is_contribution_masked,
     prefer_contributor_name,
 )
@@ -147,6 +148,8 @@ def get_contributor_id_from_facilityindex(
         masked=None) -> Union[None, int]:
     if is_contribution_masked(contributor, masked):
         return None
+    if is_attributed_to_organization(contributor):
+        return None
     if contributor.get('id') is not None and user_can_see_detail:
         return contributor.get('admin_id')
     return None
@@ -157,6 +160,8 @@ def get_user_id_from_facilityindex(
         user_can_see_detail: bool,
         masked=None) -> Union[None, int]:
     if is_contribution_masked(contributor, masked):
+        return None
+    if is_attributed_to_organization(contributor):
         return None
     if contributor.get('id') is not None and user_can_see_detail:
         return contributor.get('user_id')

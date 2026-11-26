@@ -83,3 +83,45 @@ class IsSuperuser(IsRegisteredAndConfirmed):
     def has_permission(self, request, view):
         is_registered = super().has_permission(request, view)
         return is_registered and request.user.is_superuser
+
+
+def _get_organization_membership(request, view):
+    """
+    The requesting user's active membership of the organization named in
+    the URL, cached on the request so the view can reuse it.
+    """
+    # Imported lazily: the service imports models, and this module is
+    # imported while the views that the models' serializers pull in load.
+    from api.services.organization_service import get_active_membership
+
+    if not hasattr(request, 'organization_membership'):
+        membership = get_active_membership(request.user)
+        organization_uuid = str(view.kwargs.get('organization_uuid', ''))
+        if (
+            membership is not None
+            and str(membership.organization.uuid) != organization_uuid
+        ):
+            membership = None
+        request.organization_membership = membership
+
+    return request.organization_membership
+
+
+class IsOrganizationMember(IsRegisteredAndConfirmed):
+    message = 'You are not a member of this organization.'
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+
+        return _get_organization_membership(request, view) is not None
+
+
+class IsOrganizationAdmin(IsOrganizationMember):
+    message = 'Only an Admin of this organization can perform this action.'
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+
+        return _get_organization_membership(request, view).is_admin

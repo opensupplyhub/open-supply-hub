@@ -58,6 +58,17 @@ def is_contribution_masked(contributor, masked):
     return bool(masked) and masked.should_mask(contributor)
 
 
+def is_attributed_to_organization(contributor):
+    """
+    Whether a contributor blob of the FacilityIndex JSON stands for an
+    organization. The index functions then carry the organization's name
+    in place of the member's contributor name and mark the blob with
+    organization_id. The ids in it are still the member's, so they are
+    not published: the organization has no public profile to link to.
+    """
+    return bool(contributor) and contributor.get('organization_id') is not None
+
+
 def get_contributor_name(contributor, user_can_see_detail, masked=None):
     if (
         (contributor is None)
@@ -75,6 +86,8 @@ def get_contributor_name(contributor, user_can_see_detail, masked=None):
 
 def get_contributor_id(contributor, user_can_see_detail, masked=None):
     if is_contribution_masked(contributor, masked):
+        return None
+    if is_attributed_to_organization(contributor):
         return None
     if (
         contributor is not None
