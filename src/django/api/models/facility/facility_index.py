@@ -43,7 +43,6 @@ class FacilityIndex(models.Model):
         max_length=300,
         null=False,
         blank=False,
-        db_index=True,
         help_text='The full street address of the facility.')
     country_code = models.CharField(
         max_length=2,
