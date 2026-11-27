@@ -18,6 +18,7 @@ LIB_MODULES = \
 	known_countries.py \
 	utils.py \
 	lists_repository.py \
+	os_hub_api.py \
 	s3_storage.py \
 	google_drive.py \
 	0000.error_codes.xlsx
