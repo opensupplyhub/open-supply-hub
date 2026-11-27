@@ -65,6 +65,7 @@ def handler(event, context):
         num_lines=event.get("num_lines"),
         num_errors=event.get("num_errors"),
         error_ratio=event.get("error_ratio"),
+        cleaning=event.get("cleaning"),
         error=event.get("error"),
     )
     message = notify_message.generate()

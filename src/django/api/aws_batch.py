@@ -1,12 +1,26 @@
 import boto3
 import json
+import uuid
 
+from botocore.config import Config
 from django.conf import settings
 from django.db import connection
 from django.utils import timezone
 
 from api.constants import ProcessingAction
 from api.models import FacilityListItem
+
+# The reassignment job is submitted from a web request (the Django admin
+# save), so its Batch control plane calls must fail fast instead of
+# sitting on botocore's 60 second defaults: a slow or throttling control
+# plane would otherwise hold the request for minutes, which is the
+# failure this submission exists to avoid. Mirrors the client used for
+# partner data file uploads. See OSDEV-3758.
+REASSIGNMENT_CLIENT_CONFIG = Config(
+    connect_timeout=5,
+    read_timeout=15,
+    retries={'max_attempts': 2},
+)
 
 
 def fetch_batch_queue_arn(client):
@@ -218,3 +232,32 @@ def submit_jobs(facility_list):
     notify(job_data, facility_list, job_ids)
 
     return job_ids
+
+
+def submit_reassignment_job(facility_list_id):
+    """
+    Submit an AWS Batch job that re-attributes the extended fields of the
+    given facility list's source to the source's current contributor.
+
+    Reuses the standard list processing job definition, whose container
+    command is parameterized on `listid` and `action` (see
+    deployment/terraform/job-definitions/default.json), so no new
+    infrastructure is required. See OSDEV-3758.
+    """
+    client = boto3.client('batch', config=REASSIGNMENT_CLIENT_CONFIG)
+    job_name = 'source-reassign-{0}-{1}'.format(
+        facility_list_id, uuid.uuid4().hex[:8])
+    job = client.submit_job(
+        jobName=job_name,
+        jobQueue=fetch_batch_queue_arn(client),
+        jobDefinition=fetch_latest_active_batch_job_definition_arn(client),
+        parameters={
+            'listid': str(facility_list_id),
+            'action': ProcessingAction.REASSIGN_EXTENDED_FIELDS,
+        },
+    )
+    if 'jobId' in job:
+        return job['jobId']
+    else:
+        raise RuntimeError(
+            'Failed to submit job {0}. Response {1}'.format(job_name, job))

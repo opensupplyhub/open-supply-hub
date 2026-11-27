@@ -92,6 +92,38 @@ if ENVIRONMENT not in VALID_ENVIRONMENTS:
 # processing management commands.
 BATCH_MODE = os.getenv('BATCH_MODE', '')
 
+# OSDEV-3726: contributor-facing list-cleaning feedback. The feature itself is
+# gated by the `enable_list_cleaning_feedback` waffle switch; these only say
+# how a run is executed once the switch is on. `stub` runs deterministic
+# local rules (no AWS); `stepfunctions` starts the OSDEV-3724 state machine.
+LIST_CLEANING_RUNNER = os.getenv(
+    'LIST_CLEANING_RUNNER', 'stub' if DEBUG else 'stepfunctions')
+LIST_CLEANING_STATE_MACHINE_ARN = os.getenv(
+    'LIST_CLEANING_STATE_MACHINE_ARN', '')
+LIST_CLEANING_AWS_REGION = os.getenv('LIST_CLEANING_AWS_REGION', 'us-east-1')
+# The stack's results bucket (ResultsBucketName output) and the AWS
+# account id that owns it. Results are read from `lists/*` with that
+# owner checked, and a list too large for the 256 KB execution input is
+# uploaded to `inbox/*` there first.
+LIST_CLEANING_RESULTS_BUCKET = os.getenv('LIST_CLEANING_RESULTS_BUCKET', '')
+LIST_CLEANING_RESULTS_BUCKET_OWNER = os.getenv(
+    'LIST_CLEANING_RESULTS_BUCKET_OWNER', '')
+# Local development only: an AWS CLI profile (from the mounted ~/.aws) for
+# the Step Functions and S3 clients. docker-compose sets
+# AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY to the MinIO credentials, which
+# would otherwise be sent to AWS. Leave unset in deployed environments,
+# where the task role is used.
+LIST_CLEANING_AWS_PROFILE = os.getenv('LIST_CLEANING_AWS_PROFILE') or None
+# A role in the stack's account for an environment whose task role is in
+# another account: Step Functions cannot grant StartExecution across
+# accounts, so the app assumes this role for its Step Functions and S3
+# calls. Empty when the stack and the app share an account.
+LIST_CLEANING_ROLE_ARN = os.getenv('LIST_CLEANING_ROLE_ARN', '')
+# How long after upload a contributor may submit changes from the review
+# screen before the list goes through as uploaded.
+LIST_CLEANING_REVIEW_MINUTES = int(
+    os.getenv('LIST_CLEANING_REVIEW_MINUTES', '60'))
+
 BATCH_JOB_QUEUE_NAME = os.getenv('BATCH_JOB_QUEUE_NAME')
 if (
     not (BATCH_JOB_QUEUE_NAME or '').strip()
@@ -399,7 +431,30 @@ CACHES = {
         'LOCATION': MEMCACHED_LOCATION,
         'KEY_PREFIX': 'facility_downloads',
     },
+    'waffle': {
+        # Waffle switch and flag state must be visible to every Django
+        # process, so toggling a switch in admin takes effect everywhere
+        # without a restart (OSDEV-3742).
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'waffle',
+    },
+    'candidate_lists': {
+        # Ordered OS ID lists of the candidate list endpoint when it sorts
+        # or filters on nearby confirmed facilities (OSDEV-3754): the
+        # ordering query probes the location index once per candidate,
+        # so the result is shared across processes rather than recomputed
+        # on every page.
+        'BACKEND': CACHE_BACKEND,
+        'LOCATION': MEMCACHED_LOCATION,
+        'KEY_PREFIX': 'candidate_lists',
+    },
 }
+
+WAFFLE_CACHE_NAME = 'waffle'
+# Switches are runtime controls, so bound staleness well below the
+# django-waffle default of 30 days.
+WAFFLE_MAX_AGE = 300
 
 # Logging
 # https://docs.djangoproject.com/en/2.1/topics/logging/
@@ -693,6 +748,14 @@ if TESTING:
     CACHES["view_cache"] = {
         "BACKEND": "django.core.cache.backends.dummy.DummyCache",
     }
+    # Keep waffle state per process in tests so parallel runs can't leak
+    # switch overrides through a shared memcached.
+    CACHES["waffle"] = {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
+    CACHES["candidate_lists"] = {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+    }
 
 # Use filesystem for "default" when running tests (so tests never use S3/MinIO) or
 # when DEBUG and no S3 endpoint (local without MinIO). Use S3 when not DEBUG or
@@ -825,6 +888,14 @@ CANDIDATE_AUTO_RETIRE = (
 # api/services/candidate_matches.py; nothing is stored.
 CANDIDATE_SUGGESTION_RADIUS_M = _env_int('CANDIDATE_SUGGESTION_RADIUS_M', 500)
 CANDIDATE_SUGGESTION_LIMIT = _env_int('CANDIDATE_SUGGESTION_LIMIT', 5)
+# How long the candidate list endpoint keeps the ordered OS IDs of a
+# nearby-sorted or nearby-filtered request (OSDEV-3754). Within this window
+# a vote that changes a candidate's state can leave it on a state-filtered
+# nearby-sorted page it no longer belongs to; the row itself is always
+# served live. 0 disables the cache.
+CANDIDATE_LIST_ORDER_CACHE_SECONDS = _env_int(
+    'CANDIDATE_LIST_ORDER_CACHE_SECONDS', 600
+)
 
 # Earth Index API (OSDEV-3244): the service hosting Earth Genome's deep
 # searches. `ingest_satellite_detections --project` exports a project's

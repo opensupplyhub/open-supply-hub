@@ -20,6 +20,7 @@ const initialState = Object.freeze({
     formData: Object.freeze({
         // Eligibility step.
         claimantLocationRelationship: null,
+        campaign: '',
 
         // Contact step.
         pointOfContactEmail: '',
@@ -47,6 +48,11 @@ const initialState = Object.freeze({
         // Profile step - Production Location Overview.
         localLanguageName: '',
         facilityPhoneNumber: '',
+        // Whether the company phone and website are shown on the
+        // production location profile. Off until the claimant opts in
+        // (OSDEV-2680).
+        facilityPhoneNumberPubliclyVisible: false,
+        facilityWebsitePubliclyVisible: false,
         facilityDescription: '',
 
         // Profile step - Company Information.

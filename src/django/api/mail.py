@@ -1,4 +1,5 @@
 from rest_framework.request import Request
+from django.core.exceptions import FieldDoesNotExist
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
@@ -382,17 +383,46 @@ def send_approved_claim_notice_to_list_contributors(request, facility_claim):
 # location page displays, which the update notice calls out explicitly.
 CLAIM_NAME_ADDRESS_FIELDS = ('facility_name_english', 'facility_address')
 
-# Labels for the update notice where the model's verbose name reads badly.
+# Labels for the update notices where the model's verbose name reads badly.
 CLAIM_CHANGE_LABELS = {
     'facility_name_english': 'Facility name (English)',
+    'facility_phone_number_publicly_visible': 'Phone number shown on profile',
+    'facility_website_publicly_visible': 'Website shown on profile',
+    'point_of_contact_publicly_visible': 'Contact person shown on profile',
+    'office_info_publicly_visible': 'Office info shown on profile',
 }
 
 
-def _claim_change_label(change):
+def claim_change_label(change):
     if change['name'] in CLAIM_CHANGE_LABELS:
         return CLAIM_CHANGE_LABELS[change['name']]
-    verbose_name = change['verbose_name']
+    verbose_name = str(change['verbose_name'])
     return verbose_name[:1].upper() + verbose_name[1:]
+
+
+def describe_pending_claim_changes(claim, field_names):
+    '''
+    The lines of the Claims team notice for a claimant's pending-claim
+    edit, labelled like the contributor update notice. A visibility flag
+    (FacilityClaim.VISIBILITY_FLAGS) also shows its direction, since it
+    decides whether a value goes public: a changed boolean can only have
+    flipped, so the previous value is the opposite of the current one.
+    '''
+    descriptions = []
+    for name in sorted(field_names):
+        try:
+            verbose_name = FacilityClaim._meta.get_field(name).verbose_name
+        except FieldDoesNotExist:
+            verbose_name = name
+        label = claim_change_label(
+            {'name': name, 'verbose_name': verbose_name}
+        )
+        if name in FacilityClaim.VISIBILITY_FLAGS:
+            transition = 'No → Yes' if getattr(claim, name) else 'Yes → No'
+            descriptions.append('{}: {}'.format(label, transition))
+        else:
+            descriptions.append('Updated {}'.format(label))
+    return descriptions
 
 
 def send_claim_update_note_to_one_contributor(
@@ -415,7 +445,7 @@ def send_claim_update_note_to_one_contributor(
             c['name'] in CLAIM_NAME_ADDRESS_FIELDS for c in changes
         )
         changes = [
-            '{}: {}'.format(_claim_change_label(c), c['current'])
+            '{}: {}'.format(claim_change_label(c), c['current'])
             for c in changes
         ]
 

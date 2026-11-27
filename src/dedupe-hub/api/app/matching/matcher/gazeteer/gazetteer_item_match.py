@@ -84,7 +84,7 @@ class GazetteerItemMatch(BaseItemMatch):
         if automatic_match:
             self.matches.append(automatic_match)
 
-        self.item_save()
+        self.stage_item_update()
 
         return self.matches
 

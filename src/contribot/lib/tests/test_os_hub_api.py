@@ -126,7 +126,8 @@ def test_http_get_json_raises_on_http_error(monkeypatch):
         url="https://example.com/api/admin-facility-lists/",
         code=401,
         msg="Unauthorized",
-        hdrs=None,
+        # urllib's stubs want a Message, but the runtime takes None fine
+        hdrs=None,  # pyright: ignore[reportArgumentType]
         fp=BytesIO(b'{"detail":"auth"}'),
     )
 
@@ -147,3 +148,55 @@ def test_http_get_json_raises_on_http_error(monkeypatch):
     monkeypatch.setattr("os_hub_api.urlopen", lambda *a, **k: FakeOpener())
     with pytest.raises(RuntimeError, match="401"):
         api._http_get_json("https://example.com/api/admin-facility-lists/", "bad")
+
+
+def _api(monkeypatch=None):
+    secrets = MagicMock()
+    secrets.get_secret_value.return_value = {"SecretString": "tok"}
+    return OSHubAPI(
+        api_url="https://example.com/",
+        secret_arn=TEST_SECRET_ARN,
+        secrets_client=secrets,
+    )
+
+
+def test_fetch_cleaning_reads_the_superuser_view(monkeypatch):
+    api = _api()
+    calls = []
+
+    def fake_get(url, token):
+        calls.append((url, token))
+        return {"run": None, "rows": []}
+
+    monkeypatch.setattr(api, "_http_get_json", fake_get)
+    assert api.fetch_cleaning("42") == {"run": None, "rows": []}
+    assert calls == [("https://example.com/api/facility-lists/42/cleaning/", "tok")]
+
+
+def test_download_cleaned_list_writes_the_contribot_shape(monkeypatch, tmp_path):
+    api = _api()
+    calls = []
+
+    def fake_get_text(url, token, *, accept):
+        calls.append((url, token, accept))
+        return "country,name,os_hub_cleaning\r\nBD,Acme,\r\n"
+
+    monkeypatch.setattr(api, "_http_get_text", fake_get_text)
+    dest = tmp_path / "work" / "42-cleaned.csv"
+    assert api.download_cleaned_list(42, dest) == dest
+    assert dest.read_bytes() == b"country,name,os_hub_cleaning\r\nBD,Acme,\r\n"
+    assert calls == [
+        (
+            "https://example.com/api/facility-lists/42/cleaning/download/?shape=contribot",
+            "tok",
+            "text/csv",
+        )
+    ]
+
+
+def test_http_get_json_parses_the_body(monkeypatch):
+    api = _api()
+    monkeypatch.setattr(
+        api, "_http_get_text", lambda url, token, *, accept: '{"results": []}'
+    )
+    assert api._http_get_json("https://example.com/x", "tok") == {"results": []}

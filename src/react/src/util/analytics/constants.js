@@ -12,9 +12,12 @@ export const GA_EVENTS = Object.freeze({
         'LOCATION_PARTNER_EXTERNAL_LINK_CLICK',
     CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK:
         'CONTRIBUTOR_EXTERNAL_WEBSITE_LINK_CLICK',
+    LOCATION_PARTNER_BETA_FEEDBACK_LINK_CLICK:
+        'LOCATION_PARTNER_BETA_FEEDBACK_LINK_CLICK',
 });
 
 export const GA_LINK_PLACEMENT = Object.freeze({
     CONTRIBUTION_LINE: 'contribution_line',
     CONTRIBUTIONS_DRAWER: 'contributions_drawer',
+    WHY_BETA_CARD: 'why_beta_card',
 });

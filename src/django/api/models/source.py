@@ -106,6 +106,14 @@ class Source(models.Model):
         back, the callback is discarded along with the contributor
         change, so the two cannot diverge in that direction.
 
+        The callback dispatches through
+        SourceService.schedule_reassignment, which hands the work to an
+        AWS Batch job when one can be submitted and otherwise runs it
+        inline. Large lists take minutes of FacilityIndex rebuilding,
+        longer than the CDN allows a web request, so in deployed
+        environments the request must not carry the work itself. See
+        OSDEV-3758.
+
         The callback captures only the primary key, never this instance
         or its contributor: callbacks from concurrent reassignments of
         the same source can execute out of order, and a stale captured
@@ -139,6 +147,6 @@ class Source(models.Model):
         if previous_contributor_id != self.contributor_id:
             source_pk = self.pk
             transaction.on_commit(
-                lambda: SourceService.reassign_extended_fields(source_pk)
+                lambda: SourceService.schedule_reassignment(source_pk)
             )
         return result

@@ -29,6 +29,7 @@ class NotifyMessage:
         num_lines: Any = None,
         num_errors: Any = None,
         error_ratio: Any = None,
+        cleaning: Optional[dict] = None,
         error: Optional[dict] = None,
     ) -> None:
         self._list_id = list_id
@@ -43,6 +44,7 @@ class NotifyMessage:
         self._num_lines = num_lines
         self._num_errors = num_errors
         self._error_ratio = error_ratio
+        self._cleaning = cleaning
         self._error = error
 
     def generate(self) -> str:
@@ -64,6 +66,7 @@ class NotifyMessage:
             f"File {self._file_name}" if self._file_name else "",
             f"<{self._report_url}|Checked report>" if self._report_url else "",
             self._error_ratio_line(),
+            self._cleaning_line(),
             self._error_line(),
         ]
         return "\n".join(line for line in lines if line)
@@ -105,6 +108,21 @@ class NotifyMessage:
         return (
             f"({self._num_lines}/{self._num_errors}) "
             f"Error ratio: {error_ratio:.1%} {emoji}"
+        )
+
+    def _cleaning_line(self) -> str:
+        """What the contributor's list-cleaning review left for the
+        moderator (OSDEV-3398): flags still unresolved and suggested fixes
+        they turned down. Absent when the list did not go through it."""
+        if not self._cleaning:
+            return ""
+        unresolved = int(self._cleaning.get("must_fix_unresolved") or 0)
+        rejected = int(self._cleaning.get("corrections_rejected") or 0)
+        removed = int(self._cleaning.get("rows_removed") or 0)
+        return (
+            f"List cleaning: {unresolved} must-fix flag(s) unresolved, "
+            f"{rejected} suggested fix(es) rejected, "
+            f"{removed} row(s) removed in review"
         )
 
     def _error_line(self) -> str:

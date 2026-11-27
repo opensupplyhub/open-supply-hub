@@ -39,6 +39,7 @@ from ...services.facility_claim_review_note_service import (
     create_review_note,
 )
 from ...mail import (
+    describe_pending_claim_changes,
     send_approved_claim_notice_to_list_contributors,
     send_claim_facility_approval_email,
     send_claim_facility_denial_email,
@@ -269,7 +270,8 @@ class FacilityClaimViewSet(ModelViewSet):
         'facility',
         'contributor',
         'contributor__admin',
-        'status_change_by'
+        'status_change_by',
+        'campaign',
     ).all()
     serializer_class = FacilityClaimDashboardSerializer
     permission_classes = [IsSuperuser]
@@ -291,12 +293,14 @@ class FacilityClaimViewSet(ModelViewSet):
 
         statuses = params.validated_data.get('statuses')
         countries = params.validated_data.get('countries')
+        campaigns = params.validated_data.get('campaigns')
 
         queryset = FacilityClaim.objects.select_related(
             'facility',
             'contributor',
             'contributor__admin',
-            'status_change_by'
+            'status_change_by',
+            'campaign',
         ).prefetch_related(
             # select_related('author'): notes_meta reports is_automated
             # from note.author.email — without this it is an N+1 per note.
@@ -311,6 +315,8 @@ class FacilityClaimViewSet(ModelViewSet):
             queryset = queryset.filter(status__in=statuses)
         if countries:
             queryset = queryset.filter(facility__country_code__in=countries)
+        if campaigns:
+            queryset = queryset.filter(campaign__code__in=campaigns)
 
         response_data = FacilityClaimDashboardSerializer(
             queryset, many=True
@@ -912,8 +918,7 @@ class FacilityClaimViewSet(ModelViewSet):
             self.__notify_claims_team_of_update(
                 request,
                 claim,
-                ['Updated {}'.format(field)
-                 for field in sorted(changed_fields)],
+                describe_pending_claim_changes(claim, changed_fields),
             )
 
         return Response(PendingClaimSerializer(claim).data)

@@ -7,7 +7,7 @@
 REPLICATION_FACTOR="${REPLICATION_FACTOR:-2}"
 PARTITIONS="${PARTITIONS:-1}"
 
-topics_to_create=($(cat "list.txt"))
+mapfile -t topics_to_create < list.txt
 existing_topics=$(./bin/kafka-topics.sh --bootstrap-server "$BOOTSTRAP_SERVERS" --list)
 
 for topic in "${topics_to_create[@]}"; do

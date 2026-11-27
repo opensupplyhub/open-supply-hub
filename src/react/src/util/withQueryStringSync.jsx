@@ -22,6 +22,14 @@ const getCleanPathname = pathname => {
     return pathname;
 };
 
+// Mounting on a facility details route (path `/facilities`, pathname
+// `/facilities/<os id>`) must not fetch: fetching there would supersede
+// the single facility, and since a single-result search navigates to the
+// details route (OSDEV-3810), a fetch-and-redirect on that mount would
+// loop. Exported so the guard is pinned by tests.
+export const shouldFetchFacilitiesOnMount = (path, pathname) =>
+    getCleanPathname(pathname) === path && path.includes(facilitiesRoute);
+
 export default function withQueryStringSync(WrappedComponent) {
     const componentWithWrapper = class extends Component {
         state = { finishedInitialHydrate: false };
@@ -53,12 +61,7 @@ export default function withQueryStringSync(WrappedComponent) {
                 // will match.
                 //
                 // Furthermore, limits fetching facilities to the facilities route.
-                const cleanPathname = getCleanPathname(pathname);
-                const isFacilitiesRoute = path.includes(facilitiesRoute);
-                const fetchFacilitiesOnMount =
-                    cleanPathname === path && isFacilitiesRoute;
-
-                if (fetchFacilitiesOnMount) {
+                if (shouldFetchFacilitiesOnMount(path, pathname)) {
                     fetchFacilitiesForCurrentSearch();
                 }
 
@@ -175,10 +178,22 @@ export default function withQueryStringSync(WrappedComponent) {
             hydrateFiltersFromQueryString: qs => {
                 dispatch(setFiltersFromQueryString(qs));
             },
+            /*
+             * `...push` spread a function, which has no own enumerable
+             * properties, so `pushNewRoute` fell back to its noop default
+             * and a search restored from the URL never jumped to the
+             * location page the way a typed one does. The same query gave
+             * two different answers depending on whether you typed it or
+             * followed a link to it. See OSDEV-3810.
+             *
+             * Redirecting here cannot loop: mounting on /facilities/<os_id>
+             * leaves cleanPathname different from path, so
+             * componentDidMount does not fetch again.
+             */
             fetchFacilitiesForCurrentSearch: () =>
                 dispatch(
                     fetchFacilities({
-                        ...push,
+                        pushNewRoute: push,
                         activateFacilitiesTab: false,
                     }),
                 ),

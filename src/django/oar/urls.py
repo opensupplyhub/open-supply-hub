@@ -49,6 +49,8 @@ router.register('facility-lists', views.FacilityListViewSet, 'facility-list')
 router.register('facilities', views.FacilitiesViewSet, 'facility')
 router.register('facility-claims', views.FacilityClaimViewSet,
                 'facility-claim')
+router.register('claim-campaigns', views.ClaimCampaignViewSet,
+                'claim-campaign')
 router.register('facility-matches', views.FacilityMatchViewSet,
                 'facility-match')
 router.register('api-blocks', views.ApiBlockViewSet, 'api-block')
@@ -282,6 +284,8 @@ internal_apis = [
          name='user-api-info'),
     path('api-feature-flags/', views.api_feature_flags,
          name='api_feature_flags'),
+    path('api-announcement-banner/', views.announcement_banner,
+         name='announcement_banner'),
     path('tile/<layer>/<cachekey>/<int:z>/<int:x>/<int:y>.<ext>',
          views.get_tile, name='tile'),
     path('api/current_tile_cache_key/', views.current_tile_cache_key),

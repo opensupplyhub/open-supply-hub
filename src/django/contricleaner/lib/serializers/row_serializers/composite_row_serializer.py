@@ -78,7 +78,10 @@ class CompositeRowSerializer(RowSerializer):
         cleaned_row = CompositeRowSerializer.clean_row(copied_row)
 
         for serializer in self.__serializers:
-            res = serializer.validate(cleaned_row, res)
+            source_row = (
+                copied_row if serializer.validates_raw_row else cleaned_row
+            )
+            res = serializer.validate(source_row, res)
 
         dict_res = {
             "fields": {},

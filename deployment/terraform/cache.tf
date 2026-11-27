@@ -46,7 +46,7 @@ resource "aws_elasticache_cluster" "memcached" {
     "%.16s-%.4s",
     lower(var.ec_memcached_identifier),
     md5(var.ec_memcached_instance_type),
-    )
+  )
   engine                 = "memcached"
   engine_version         = var.ec_memcached_engine_version
   node_type              = var.ec_memcached_instance_type

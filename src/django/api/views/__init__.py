@@ -1,5 +1,6 @@
 # flake8: noqa: F401
 
+from .api.announcement_banner import announcement_banner
 from .api.api_block_view_set import ApiBlockViewSet
 from .api.api_feature_flags import api_feature_flags
 
@@ -30,6 +31,7 @@ from .country.all_countries import all_countries
 from .facility.facility_activity_report_view_set import (
     FacilityActivityReportViewSet
 )
+from .facility.claim_campaign_view_set import ClaimCampaignViewSet
 from .facility.facility_claim_view_set import FacilityClaimViewSet
 from .facility.facilities_view_set import FacilitiesViewSet
 from .facility.facility_list_view_set import FacilityListViewSet

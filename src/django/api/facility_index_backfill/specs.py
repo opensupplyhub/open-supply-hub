@@ -56,6 +56,14 @@ ISIC_4_MAPPED_FILTER = (
 
 ISIC_5_FILTER = ISIC_4_FILTER.replace("'isic_4'", "'isic_5'")
 
+# Only rows whose zone membership actually differs are written: after a
+# set's zones are replaced that is usually a small share of the table,
+# and on the one-off backfill it is the rows inside some zone. The
+# function sorts the ids, so equal membership compares equal.
+ZONE_SET_IDS_FILTER = (
+    "afi.zone_set_ids IS DISTINCT FROM index_zone_set_ids(afi.location)"
+)
+
 # Only facilities where a single contributor has more than one matched list
 # item can change when index_sector() is recomputed (the OSDEV-992 change
 # keeps one item per contributor instead of all of them); this skips the
@@ -200,6 +208,12 @@ FACILITY_INDEX_FIELD_SPECS: dict[str, FacilityIndexFieldSpec] = {
             for level in ('section', 'division', 'group', 'class')
         },
         'filter_sql': ISIC_5_FILTER,
+    },
+    'zone_set_ids': {
+        'columns': {
+            'zone_set_ids': 'index_zone_set_ids(afi.location)',
+        },
+        'filter_sql': ZONE_SET_IDS_FILTER,
     },
     'sector': {
         'columns': {

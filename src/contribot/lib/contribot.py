@@ -2,7 +2,9 @@
 
 ContriBot reads a contributor Excel workbook, runs table- and column-level quality
 checks, applies optional auto-fixes, and writes an annotated output workbook with
-Summary, Findings, Similarities, and Fixes sheets.
+Summary, Findings, Similarities, and Fixes sheets. A list that went through the
+contributor's list-cleaning review (OSDEV-3726) also gets a Cleaning sheet
+listing every suggestion and what was done with it (OSDEV-3398).
 
 Error codes and severities come from an external configuration workbook
 (``0000.error_codes.xlsx`` by default). Codes starting with ``T`` are table-level;
@@ -28,6 +30,7 @@ import rapidfuzz
 import rapidfuzz.process
 from jinja2.nativetypes import NativeEnvironment
 from jinja2.nodes import TemplateData
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from openpyxl.comments import Comment
 from openpyxl.formatting.rule import ColorScale, FormatObject, Rule
 from openpyxl.styles import Alignment, Color, Font
@@ -44,6 +47,82 @@ from .utils import map_n_dataframe_cols_to_excel_cols
 # square of the row count; 10,000 rows is already ~50M comparisons. Files above
 # this are rejected rather than trimmed - see the check in __init__.
 MAX_ROWS = 10000
+
+# OSDEV-3398: the column the platform adds to the post-review list. A row the
+# contributor's list-cleaning review removed carries "removed: <why>"; one the
+# parser could not read carries "not read: ...". Removed rows stay in the file
+# so row numbers match the review screen and the Cleaning sheet, but nothing
+# is reported on them and they are struck through.
+CLEANING_TAG_COLUMN = "os_hub_cleaning"
+REMOVED_TAG_PREFIX = "removed:"
+CLEANING_SHEET = "Cleaning"
+
+# What the contributor did with the run, as the platform counts it when the
+# review closes, in the order the Cleaning sheet lists them.
+CLEANING_BREAKDOWN = [
+    ("Automatic fixes applied", "auto_applied"),
+    ("Automatic fixes turned off", "auto_turned_off"),
+    ("Fixes offered", "fixes_offered"),
+    ("Fixes accepted", "fixes_accepted"),
+    ("Fixes kept as uploaded", "fixes_kept_original"),
+    ("Values typed by the contributor", "values_typed"),
+    ("Rows removed in review", "rows_removed_by_review"),
+    ("Flags offered", "flags_offered"),
+    ("Flags resolved", "flags_resolved"),
+    ("Flags left as uploaded", "flags_left_as_uploaded"),
+]
+# Outcome by closed_reason, and by whether the run ever applied anything
+# (``applied_at``): a submission as uploaded and a window that lapsed with
+# the review never opened both leave the list exactly as uploaded.
+CLEANING_OUTCOMES = {
+    ("submitted", True): "Submitted by the contributor",
+    ("submitted", False): "Submitted as uploaded by the contributor",
+    ("lapsed", True): "Review window lapsed; decisions made so far applied",
+    ("lapsed", False): "Review window lapsed; review never opened, list as uploaded",
+    ("clean", True): "Nothing to review; list as uploaded",
+    ("clean", False): "Nothing to review; list as uploaded",
+    ("failed", True): "Cleaning run failed; list as uploaded",
+    ("failed", False): "Cleaning run failed; list as uploaded",
+}
+NOT_APPLIED = " (not applied)"
+CLEANING_COLUMNS = [
+    "Row",
+    "Field",
+    "Kind",
+    "Code",
+    "Source",
+    "Severity",
+    "Original value",
+    "Suggested value",
+    "Decision",
+    "Final value",
+    "Decided by",
+    "Note",
+]
+ROW_REMOVED = "(row removed)"
+ROW_KEPT = "(row kept)"
+
+
+def _safe_cell(value):
+    """A value a worksheet will take: control characters openpyxl rejects are
+    dropped, and a leading ``=`` is escaped so nothing runs as a formula."""
+    if value is None:
+        return ""
+    if not isinstance(value, str):
+        return value
+    value = ILLEGAL_CHARACTERS_RE.sub("", value)
+    if value.startswith("="):
+        value = "'" + value
+    return value
+
+
+def _parse_time(value):
+    if not value:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 class ContriBot:
@@ -86,29 +165,31 @@ class ContriBot:
         self.wb = openpyxl.load_workbook(filename)
 
         self.sourcesheet = self.wb.sheetnames[0]
-        if len(self.wb._sheets) > 1:
+        # openpyxl's stubs omit the private ``_sheets`` list this sheet
+        # reordering relies on, so each access needs a targeted ignore.
+        if len(self.wb._sheets) > 1:  # pyright: ignore[reportAttributeAccessIssue]
             existing_tables = [s for s in self.wb.sheetnames]
-            residual = list(range(len(self.wb._sheets)))
+            residual = list(range(len(self.wb._sheets)))  # pyright: ignore[reportAttributeAccessIssue]
         else:
             existing_tables = [s for s in self.wb.sheetnames]
             residual = []
         self.wb.create_sheet("Summary")
-        summary_sheet_no = len(self.wb._sheets) - 1
+        summary_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
         self.wb.create_sheet("Findings")
-        findings_sheet_no = len(self.wb._sheets) - 1
+        findings_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
         self.wb.create_sheet("Similarities")
-        similarities_sheet_no = len(self.wb._sheets) - 1
+        similarities_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
         self.fixessheet = f"{self.sourcesheet:.25s}~Fixes"
         self.wb.create_sheet(self.fixessheet)
-        fixes_sheet_no = len(self.wb._sheets) - 1
+        fixes_sheet_no = len(self.wb._sheets) - 1  # pyright: ignore[reportAttributeAccessIssue]
 
-        self.wb._sheets = [
-            self.wb._sheets[summary_sheet_no],
-            self.wb._sheets[findings_sheet_no],
-            self.wb._sheets[similarities_sheet_no],
-            self.wb._sheets[0],
-            self.wb._sheets[fixes_sheet_no],
-        ] + [self.wb._sheets[r] for r in residual[1:]]
+        self.wb._sheets = [  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[summary_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[findings_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[similarities_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[0],  # pyright: ignore[reportAttributeAccessIssue]
+            self.wb._sheets[fixes_sheet_no],  # pyright: ignore[reportAttributeAccessIssue]
+        ] + [self.wb._sheets[r] for r in residual[1:]]  # pyright: ignore[reportAttributeAccessIssue]
 
         self.df = pd.read_excel(filename)
         if len(self.df) > MAX_ROWS:
@@ -127,6 +208,8 @@ class ContriBot:
 
         self.df.index = self.df.index + 2
         self.df = self.normalise_column_names(self.df)
+        self.removed_rows = self._rows_removed_by_review()
+        self.cleaning = None
 
         # Create a column mapping for excel, the earlier version could not handle files with more than 26 cols (len(en-alphabet))
         self.mapping = dict(
@@ -225,6 +308,10 @@ class ContriBot:
         Path(targetfolder).mkdir(exist_ok=True, parents=True)
         self.populate_summary()
         self.fixes_sheet_fontsize()
+        self._mark_removed_rows()
+        self._add_cleaning_sheet()
+        if self.cleaning is not None:
+            self.summary["cleaning"] = self.cleaning_counts()
         filepath = f"{targetfolder}/{self.targetfilename}".replace("//", "/")
         print(
             f"save targetfolder {targetfolder} self.targetfilename {self.targetfilename}"
@@ -312,7 +399,10 @@ class ContriBot:
                     "corrective_action": [],
                 }
             )
-        df = pd.concat(
+        # pandas ships no stubs and its inline types make mask selections
+        # ambiguous (DataFrame | Series), so the frame plumbing below needs
+        # targeted ignores; the frames are DataFrames at runtime.
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[df_diagnostics_table.severity >= 100],
                 df_diagnostics_column[df_diagnostics_column.severity >= 100],
@@ -321,15 +411,13 @@ class ContriBot:
             ["level", "name", "row", "severity", "cell", "error", "corrective_action"]
         ]
 
-        if len(self.df) > 0:
-            error_ratio = len(df) / len(self.df)
-        else:
-            error_ratio = 1
+        num_lines = len(self.df) - len(self.removed_rows)
+        error_ratio = len(df) / num_lines if num_lines > 0 else 1
         self.summary = {
             "sourcefilename": self.sourcefilename,
             "targetfilename": self.targetfilename,
             "error_ratio": error_ratio,
-            "num_lines": len(self.df),
+            "num_lines": num_lines,
             "num_errors": len(df),
         }
         row += 1
@@ -352,7 +440,7 @@ class ContriBot:
                         ws[f"{column}{row}"] = False
                     elif c == "Value":
                         if str(r["cell"]).lower() != "nan":
-                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][
+                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][  # pyright: ignore[reportCallIssue, reportArgumentType]
                                 r["cell"]
                             ].value
                     else:
@@ -360,7 +448,7 @@ class ContriBot:
                             ws[
                                 f"{column}{row}"
                             ].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                        ws[f"{column}{row}"] = r[c]
+                        ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                     cnt += 1
                 row += 1
         else:
@@ -374,7 +462,7 @@ class ContriBot:
         for c in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
             ws[f"{c}{row}"].style = "Note"
 
-        df = pd.concat(
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[
                     (df_diagnostics_table.severity >= 20)
@@ -408,7 +496,7 @@ class ContriBot:
                         ws[f"{column}{row}"] = False
                     elif c == "Value":
                         if str(r["cell"]).lower() != "nan":
-                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][
+                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][  # pyright: ignore[reportCallIssue, reportArgumentType]
                                 r["cell"]
                             ].value
                     else:
@@ -416,7 +504,7 @@ class ContriBot:
                             ws[
                                 f"{column}{row}"
                             ].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                        ws[f"{column}{row}"] = r[c]
+                        ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                     cnt += 1
                 row += 1
         else:
@@ -439,13 +527,13 @@ class ContriBot:
             cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for c in ["level", "metric", "value"]:
                 column = cols[cnt]
-                ws[f"{column}{row}"] = r[c]
+                ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                 cnt += 1
             row += 1
         df = pd.DataFrame(self.statistics)
         df = df[df.level == "column"]
         df = df[df.metric == "distinct_ratio_values"]
-        df = df[df.name.isin(["country", "name", "address"])]
+        df = df[df.name.isin(["country", "name", "address"])]  # pyright: ignore[reportAttributeAccessIssue]
         first = FormatObject(type="min")
         mid = FormatObject(type="percentile", val=0.5)
         last = FormatObject(type="max")
@@ -453,12 +541,12 @@ class ContriBot:
         cs3 = ColorScale(cfvo=[first, mid, last], color=colors)
         rule = Rule(type="colorScale", colorScale=cs3)
         rowfrom = row
-        for i, r in df.iterrows():
+        for i, r in df.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
             cnt = 0
             cols = map_n_dataframe_cols_to_excel_cols(ws.max_column)
             for c in ["level", "metric", "name", "value"]:
                 column = cols[cnt]
-                ws[f"{column}{row}"] = r[c]
+                ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                 ws[f"{column}{row}"].style = "Percent"
                 cnt += 1
             row += 1
@@ -471,7 +559,7 @@ class ContriBot:
         for c in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
             ws[f"{c}{row}"].style = "Note"
 
-        df = pd.concat(
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[
                     (df_diagnostics_table.severity > 1)
@@ -505,7 +593,7 @@ class ContriBot:
                         ws[f"{column}{row}"] = False
                     elif c == "Value":
                         if str(r["cell"]).lower() != "nan":
-                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][
+                            ws[f"{column}{row}"] = self.wb[self.sourcesheet][  # pyright: ignore[reportCallIssue, reportArgumentType]
                                 r["cell"]
                             ].value
                     else:
@@ -513,7 +601,7 @@ class ContriBot:
                             ws[
                                 f"{column}{row}"
                             ].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                        ws[f"{column}{row}"] = r[c]
+                        ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                     cnt += 1
                 row += 1
         else:
@@ -527,7 +615,7 @@ class ContriBot:
         for c in ["A", "B", "C", "D", "E", "F", "G"]:
             ws[f"{c}{row}"].style = "Note"
 
-        df = pd.concat(
+        df = pd.concat(  # pyright: ignore[reportCallIssue]
             [
                 df_diagnostics_table[(df_diagnostics_table.severity < 1)],
                 df_diagnostics_column[(df_diagnostics_column.severity < 1)],
@@ -552,7 +640,7 @@ class ContriBot:
                 column = cols[cnt]
                 if c == "cell" and str(r[c]).lower() != "nan":
                     ws[f"{column}{row}"].hyperlink = f"#'{self.fixessheet}'!{r[c]}"
-                ws[f"{column}{row}"] = r[c]
+                ws[f"{column}{row}"] = r[c]  # pyright: ignore[reportArgumentType]
                 cnt += 1
             row += 1
 
@@ -585,6 +673,248 @@ class ContriBot:
             )
 
         return self.summary
+
+    # ------------------------------------------------------------------
+    # OSDEV-3398: the contributor's list-cleaning review in the report
+    # ------------------------------------------------------------------
+
+    def attach_cleaning(self, payload):
+        """Keep the platform's list-cleaning payload for the report.
+
+        ``payload`` is the superuser view of ``/api/facility-lists/{id}/cleaning/``
+        (OSDEV-3726 v3): the run, its summary, a ``breakdown`` of what the
+        contributor did, and every suggestion by row, ``internal_note`` ones
+        included. Call before :meth:`process`.
+        """
+        self.cleaning = payload or None
+
+    def cleaning_counts(self):
+        """The two numbers the Summary sheet and the Slack message carry."""
+        summary = (self.cleaning or {}).get("summary") or {}
+        run = (self.cleaning or {}).get("run") or {}
+        return {
+            "must_fix_unresolved": int(summary.get("rows_flagged_unresolved") or 0),
+            "corrections_rejected": int(summary.get("corrections_rejected") or 0),
+            "rows_removed": len(self.removed_rows),
+            "outcome": run.get("closed_reason") or "",
+        }
+
+    def _rows_removed_by_review(self):
+        """Excel row numbers the contributor's review removed."""
+        if CLEANING_TAG_COLUMN not in self.df.columns:
+            return set()
+        tags = self.df[CLEANING_TAG_COLUMN].fillna("").astype(str).str.strip()
+        return {int(r) for r in self.df.index[tags.str.startswith(REMOVED_TAG_PREFIX)]}
+
+    def _on_removed_row(self, row, kwparams):
+        """Whether a finding is about a row the review removed.
+
+        Such findings are dropped: the moderator reads those rows as gone, and
+        the Cleaning sheet says why. ``row`` is one number or a ``"i j"`` pair;
+        the duplicate checks pass the pair as ``row_1`` / ``row_2`` instead.
+        """
+        if not self.removed_rows:
+            return False
+        for value in (row, kwparams.get("row_1"), kwparams.get("row_2")):
+            text = "" if value is None else str(value)
+            for token in text.replace(",", " ").split():
+                try:
+                    number = int(float(token))
+                except ValueError:
+                    continue
+                if number in self.removed_rows:
+                    return True
+        return False
+
+    def _mark_removed_rows(self):
+        """Strike through removed rows on the data, Findings and Fixes sheets.
+
+        The column checks fix cells on the Fixes sheet as they go, before a
+        row is known to be gone, so a removed row gets its uploaded values
+        back and loses the "fixed" styling: nothing is reported on it.
+        """
+        if not self.removed_rows:
+            return
+        source = self.wb[self.sourcesheet]
+        fixes = self.wb[self.fixessheet]
+        wrap_alignment = Alignment(wrap_text=True, vertical="top")
+        for r in sorted(self.removed_rows):
+            for col in self.populated_columns:
+                cell = fixes[f"{col}{r}"]
+                cell.value = source[f"{col}{r}"].value
+                cell.style = "Normal"
+                cell.alignment = wrap_alignment
+        removed_font = Font(size=10, italic=True, strike=True, color="808080")
+        for sheet in (self.sourcesheet, "Findings", self.fixessheet):
+            ws = self.wb[sheet]
+            for r in sorted(self.removed_rows):
+                for col in self.populated_columns:
+                    ws[f"{col}{r}"].font = removed_font
+
+    def _cleaning_header_lines(self, run, summary):
+        created = _parse_time(run.get("created_at"))
+        submitted = _parse_time(run.get("submitted_at"))
+        minutes = ""
+        if created is not None and submitted is not None:
+            minutes = round((submitted - created).total_seconds() / 60, 1)
+        counts = self.cleaning_counts()
+        total = sum(
+            len(r.get("suggestions") or [])
+            for r in (self.cleaning or {}).get("rows") or []
+        )
+        return [
+            ("Cleaning run", run.get("id")),
+            ("Prompt version", run.get("prompt_version") or ""),
+            ("Runner", run.get("runner") or ""),
+            (
+                "Outcome",
+                CLEANING_OUTCOMES.get(
+                    (run.get("closed_reason") or "", bool(run.get("applied_at"))),
+                    "Review still open",
+                ),
+            ),
+            ("Run started", run.get("created_at") or ""),
+            ("Submitted", run.get("submitted_at") or ""),
+            ("Minutes from run to submission", minutes),
+            ("Rows in the list", summary.get("rows_total")),
+            ("Rows removed", counts["rows_removed"]),
+            ("Suggestions", total),
+            ("Must-fix flags unresolved", counts["must_fix_unresolved"]),
+            ("Suggested fixes rejected", counts["corrections_rejected"]),
+        ]
+
+    def _suggestion_cell(self, s):
+        """The data-sheet cell a suggestion is about, for the Row hyperlink."""
+        column = self.mapping.get(str(s.get("field") or "").lower(), "A")
+        return f"{column}{s.get('row_number')}"
+
+    def _suggestion_cells(self, s):
+        """One Cleaning-sheet row for a suggestion, in CLEANING_COLUMNS order.
+
+        The final value is what reached the list, not what was decided: a
+        submission as uploaded, or a window that lapsed with the review never
+        opened, leaves every pre-accepted fix with its decision but nothing
+        applied, and the sheet says so rather than showing the suggested
+        value as final.
+        """
+        kind = str(s.get("kind") or "").upper()
+        decision = str(s.get("decision") or "PENDING").upper()
+        extra = s.get("extra") or {}
+        original = s.get("original_value") or ""
+        suggested = s.get("corrected_value") or ""
+        applied = bool(s.get("applied"))
+        try:
+            row_removed = int(s.get("row_number")) in self.removed_rows
+        except (TypeError, ValueError):
+            row_removed = False
+        not_applied = False
+
+        if kind == "REMOVAL" or decision == "REMOVED":
+            if decision == "PENDING":
+                final = ""
+            elif decision == "REJECTED":
+                final = ROW_KEPT
+            else:
+                removed = row_removed or applied or bool(extra.get("removal_applied"))
+                final = ROW_REMOVED if removed else ROW_KEPT
+                not_applied = not removed
+        elif decision == "EDITED":
+            final = (s.get("decided_value") or "") if applied else original
+            not_applied = not applied
+        elif kind == "CORRECTION" and decision == "ACCEPTED":
+            final = suggested if applied else original
+            not_applied = not applied
+        else:
+            final = original
+
+        if decision == "PENDING":
+            decided_by = "nobody"
+        elif extra.get("auto") and decision == "ACCEPTED":
+            decided_by = "automatic"
+        else:
+            decided_by = "contributor"
+
+        return [
+            _safe_cell(value)
+            for value in (
+                s.get("row_number"),
+                s.get("field") or "",
+                kind.lower(),
+                s.get("code") or "",
+                s.get("source") or "",
+                s.get("severity") or "",
+                original,
+                suggested,
+                decision.lower() + (NOT_APPLIED if not_applied else ""),
+                final,
+                decided_by,
+                s.get("note") or "",
+            )
+        ]
+
+    def _add_cleaning_sheet(self):
+        """Write the Cleaning sheet: the run's outcome, what the contributor
+        did with it, then every suggestion row by row with the decision taken.
+        Findings the contributor never saw (``internal_note``, the silent
+        automatic fixes) are listed exactly like the rest."""
+        if self.cleaning is None:
+            return
+        ws = self.wb.create_sheet(CLEANING_SHEET, index=1)
+        run = self.cleaning.get("run") or {}
+        summary = self.cleaning.get("summary") or {}
+        breakdown = self.cleaning.get("breakdown") or {}
+        columns = map_n_dataframe_cols_to_excel_cols(len(CLEANING_COLUMNS))
+        wrap_alignment = Alignment(wrap_text=True, vertical="top")
+        font = Font(size=10)
+
+        def heading(at, text):
+            ws[f"A{at}"] = text
+            for col in columns:
+                ws[f"{col}{at}"].style = "Note"
+
+        row = 1
+        heading(row, "List cleaning")
+        for label, value in self._cleaning_header_lines(run, summary):
+            row += 1
+            ws[f"A{row}"] = label
+            ws[f"B{row}"] = _safe_cell(value)
+        row += 2
+        heading(row, "What the contributor did")
+        for label, key in CLEANING_BREAKDOWN:
+            row += 1
+            ws[f"A{row}"] = label
+            ws[f"B{row}"] = int(breakdown.get(key) or 0)
+        row += 2
+        heading(row, "Suggestions, row by row")
+        row += 1
+        for col, name in zip(columns, CLEANING_COLUMNS):
+            ws[f"{col}{row}"] = name
+            ws[f"{col}{row}"].font = Font(size=10, bold=True)
+        self.cleaning_table_row = row
+
+        rows = sorted(
+            self.cleaning.get("rows") or [],
+            key=lambda r: int(r.get("row_number") or 0),
+        )
+        for entry in rows:
+            for s in entry.get("suggestions") or []:
+                row += 1
+                for col, value in zip(columns, self._suggestion_cells(s)):
+                    cell = ws[f"{col}{row}"]
+                    cell.value = value
+                    cell.font = font
+                    cell.alignment = wrap_alignment
+                ws[f"A{row}"].hyperlink = (
+                    f"#'{self.fixessheet}'!{self._suggestion_cell(s)}"
+                )
+                if s.get("severity") == "must_fix":
+                    ws[f"F{row}"].style = "Bad"
+                if str(s.get("decision") or "").upper() == "REJECTED":
+                    ws[f"I{row}"].style = "Neutral"
+
+        widths = [30, 16, 10, 22, 11, 13, 40, 40, 22, 40, 12, 50]
+        for col, width in zip(columns, widths):
+            ws.column_dimensions[col].width = width
 
     def copy_values_and_layout(self, wb, df, source, target):
         """Copy data and cell styling from one sheet to another.
@@ -648,13 +978,13 @@ class ContriBot:
             rename[column] = column.lower()
         return df.rename(columns=rename)
 
-    def _add_stats(self, level="", name="", metric="", value=0):
+    def _add_stats(self, level="", name="", metric="", value: int | float | str = 0):
         """Record a summary statistic for the Summary sheet."""
         self.statistics.append(
             {"level": level, "name": name, "metric": metric, "value": value}
         )
 
-    def _add_metrics(self, level="", name="", metric="", value=0):
+    def _add_metrics(self, level="", name="", metric="", value: int | float | str = 0):
         """Record a column- or table-level metric during validation."""
         self.metrics.append(
             {"level": level, "name": name, "metric": metric, "value": value}
@@ -694,7 +1024,7 @@ class ContriBot:
 
     def _get_highest_severity_style_fixed(self, codes):
         """Return the fixed-cell style for the highest-severity code in ``codes``."""
-        ddf = self.df_config[self.df_config.code.isin(codes)].sort_values(
+        ddf = self.df_config[self.df_config.code.isin(codes)].sort_values(  # pyright: ignore[reportCallIssue]
             "severity", ascending=False
         )
         if len(ddf) > 0:
@@ -711,7 +1041,7 @@ class ContriBot:
             severity = -1
         return severity
 
-    def _add_diagnosis(self, code="", column_name="", row="", **kwparams):
+    def _add_diagnosis(self, code="", column_name="", row: int | str = "", **kwparams):
         """Record a table- or column-level finding and render its message.
 
         Message templates come from the config workbook and are rendered with
@@ -724,6 +1054,8 @@ class ContriBot:
             row: Excel row number or row pair for duplicate findings.
             **kwparams: Template variables for the error message.
         """
+        if self._on_removed_row(row, kwparams):
+            return
         env = NativeEnvironment()
         diagnostic_text = {"error": "", "corrective_action": "", "fixes_comment": ""}
         if code in self.df_config.code.values:
@@ -734,11 +1066,12 @@ class ContriBot:
                     for k, v in kwparams.items():
                         kwparams[k] = str(v)
                     have_data = False
-                    string = ddf[field].values[0]
+                    string = ddf[field].values[0]  # pyright: ignore[reportAttributeAccessIssue]
                     if not isinstance(string, str):
                         string = ""
+                    # jinja2's Node base type carries no ``nodes`` attribute.
                     for entry in env.parse(string).body:
-                        for node in entry.nodes:
+                        for node in entry.nodes:  # pyright: ignore[reportAttributeAccessIssue]
                             if not isinstance(node, TemplateData):
                                 if node.name in kwparams.keys():
                                     have_data = True
@@ -756,8 +1089,8 @@ class ContriBot:
                         result = env.from_string(string)
                 else:
                     string = (
-                        ddf[field].values[0]
-                        if isinstance(ddf[field].values[0], str)
+                        ddf[field].values[0]  # pyright: ignore[reportAttributeAccessIssue]
+                        if isinstance(ddf[field].values[0], str)  # pyright: ignore[reportAttributeAccessIssue]
                         else ""
                     )
                     result = env.from_string(string)
@@ -808,6 +1141,8 @@ class ContriBot:
 
     def _add_fix_comment(self, coordinates, code):
         """Queue a fix comment for a cell when auto-fix is enabled for ``code``."""
+        if self._on_removed_row(re.sub(r"[A-Za-z$]", "", str(coordinates)), {}):
+            return
         if self._decide_autofix(code):
             self.fixes.append(
                 {
@@ -833,6 +1168,27 @@ class ContriBot:
             metric="num_columns",
             value=len(self.df.columns),
         )
+        if self.removed_rows:
+            self._add_stats(
+                level="table",
+                name=self.sourcesheet,
+                metric="num_rows_removed_in_review",
+                value=len(self.removed_rows),
+            )
+        if self.cleaning is not None:
+            counts = self.cleaning_counts()
+            self._add_stats(
+                level="table",
+                name="list cleaning",
+                metric="cleaning_must_fix_unresolved",
+                value=counts["must_fix_unresolved"],
+            )
+            self._add_stats(
+                level="table",
+                name="list cleaning",
+                metric="cleaning_corrections_rejected",
+                value=counts["corrections_rejected"],
+            )
 
         for c in [
             "country",
@@ -907,6 +1263,8 @@ class ContriBot:
             self._add_diagnosis(code="T0007")
 
         for column in self.df.columns:
+            if column == CLEANING_TAG_COLUMN:
+                continue
             if column not in [
                 "country",
                 "name",
@@ -938,13 +1296,15 @@ class ContriBot:
             for cell in df.cell.unique():
                 ddf = df[df.cell == cell]
 
+                # ``cell`` comes out of pandas untyped, so openpyxl's stubs
+                # read these single-cell lookups as possible ranges.
                 findings_style = self._get_style_findings(ddf.code.values[0])
                 if findings_style != "":
-                    self.wb["Findings"][cell].style = findings_style
+                    self.wb["Findings"][cell].style = findings_style  # pyright: ignore[reportAttributeAccessIssue]
 
                 fixes_style = self._get_style_fixed(ddf.code.values[0])
                 if fixes_style != "":
-                    self.wb[self.fixessheet][cell].style = fixes_style
+                    self.wb[self.fixessheet][cell].style = fixes_style  # pyright: ignore[reportAttributeAccessIssue]
 
                 if len(ddf) > 1:
                     num_comments = f"{len(ddf)} Comments:\n"
@@ -955,11 +1315,14 @@ class ContriBot:
                 )
                 comment.height = 300
                 comment.width = 400
-                self.wb["Findings"][cell].comment = comment
-                self.wb[self.fixessheet][cell].comment = comment
+                self.wb["Findings"][cell].comment = comment  # pyright: ignore[reportAttributeAccessIssue]
+                self.wb[self.fixessheet][cell].comment = comment  # pyright: ignore[reportAttributeAccessIssue]
 
+        # keeps the isinstance guard below defined on its first pass; a
+        # Comment and None both fail it, so the outcome is unchanged
+        comment = None
         for fix in self.fixes:
-            comment_text = self.wb[self.fixessheet][fix["coordinates"]].comment.text
+            comment_text = self.wb[self.fixessheet][fix["coordinates"]].comment.text  # pyright: ignore[reportAttributeAccessIssue, reportOptionalMemberAccess]
             if isinstance(comment, str):
                 comment_text += "\nFix: " + fix["fix"]
             else:
@@ -967,7 +1330,7 @@ class ContriBot:
             comment = Comment(comment_text, "Data Quality Bot")
             comment.height = 300
             comment.width = 400
-            self.wb[self.fixessheet][fix["coordinates"]].comment = comment
+            self.wb[self.fixessheet][fix["coordinates"]].comment = comment  # pyright: ignore[reportAttributeAccessIssue]
 
         wrap_alignment = Alignment(wrap_text=True, vertical="top")
         font = Font(size=10)
@@ -1412,6 +1775,8 @@ class ContriBot:
             if not isinstance(values[row], str):
                 continue
             found = False
+            # every branch that sets ``found`` also sets ``coordinates``
+            coordinates = ""
             if values[row].startswith(" "):
                 found = True
                 self._add_diagnosis(code="C0010", column_name=column, row=row + 2)
@@ -1931,16 +2296,25 @@ class ContriBot:
                 )
                 & (self.df_similarity.ratio > 0.75)
             ]
+            # A pair with a row the review removed is resolved already:
+            # the moderator reads that row as gone, so it is neither
+            # diagnosed nor listed on the Similarities sheet.
+            if self.removed_rows:
+                self.df_similarity = self.df_similarity[
+                    ~self.df_similarity.i.isin(self.removed_rows)
+                    & ~self.df_similarity.j.isin(self.removed_rows)
+                ]
 
-            df_duplicates = self.df_similarity[self.df_similarity.ratio >= 1.0]
+            df_duplicates = self.df_similarity[self.df_similarity.ratio >= 1.0]  # pyright: ignore[reportAttributeAccessIssue]
             num_identical = len(df_duplicates)
         else:
             self.df_similarity = pd.DataFrame({"ratio": []})
+            df_duplicates = self.df_similarity
             num_identical = 0
         #
         # Do not apply +2 offset, we already did that on computing the similarity
         if num_identical > 0:
-            for i, row in df_duplicates.iterrows():
+            for i, row in df_duplicates.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
                 self._add_diagnosis(
                     code="T0010",
                     column_name="duplicates",
@@ -1950,11 +2324,11 @@ class ContriBot:
                 )
 
         df_duplicates = self.df_similarity[
-            (self.df_similarity.ratio >= 0.9) & (self.df_similarity.ratio < 1.0)
+            (self.df_similarity.ratio >= 0.9) & (self.df_similarity.ratio < 1.0)  # pyright: ignore[reportAttributeAccessIssue]
         ]
         num_very_similar = len(df_duplicates)
         if num_very_similar > 0:
-            for i, row in df_duplicates.iterrows():
+            for i, row in df_duplicates.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
                 if (
                     len(row.unit_no_in_name_1) > 0 or len(row.unit_no_in_name_2)
                 ) and row.unit_no_in_name_1 != row.unit_no_in_name_2:
@@ -1970,10 +2344,10 @@ class ContriBot:
                         code="T0011", column_name="duplicates", row_1=row.i, row_2=row.j
                     )
 
-        df_duplicates = self.df_similarity[(self.df_similarity.ratio < 0.9)]
+        df_duplicates = self.df_similarity[(self.df_similarity.ratio < 0.9)]  # pyright: ignore[reportAttributeAccessIssue]
         num_similar = len(df_duplicates)
         if num_similar > 0:
-            for i, row in df_duplicates.iterrows():
+            for i, row in df_duplicates.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
                 self._add_diagnosis(
                     code="T0012", column_name="duplicates", row_1=row.i, row_2=row.j
                 )
@@ -1992,7 +2366,7 @@ class ContriBot:
             ws[f"{column}1"].alignment = Alignment(wrap_text=True, horizontal="center")
 
         row = 2
-        for i, r in self.df_similarity.iterrows():
+        for i, r in self.df_similarity.iterrows():  # pyright: ignore[reportAttributeAccessIssue]
             for column in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"]:
                 ws[f"{column}{row}"].alignment = Alignment(
                     wrap_text=True, vertical="top"

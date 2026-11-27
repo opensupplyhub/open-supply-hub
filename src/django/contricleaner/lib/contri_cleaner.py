@@ -1,5 +1,5 @@
 import os
-from typing import Union, List, Dict
+from typing import Iterable, Union, List, Dict
 
 from django.core.files.base import File
 
@@ -40,7 +40,13 @@ class ContriCleaner:
     def __init__(self,
                  data: Union[File, Dict],
                  sector_cache: CacheInterface,
-                 os_id_lookup: LookupInterface) -> None:
+                 os_id_lookup: LookupInterface,
+                 skip_length_check_fields: Iterable[str] = ()) -> None:
+        '''
+        skip_length_check_fields names fields whose value was copied from
+        what is already stored for the location rather than submitted, so
+        the submission length limit does not apply to them.
+        '''
         unsupported_data_value_type_message = ('The data value type should be '
                                                'either dict or File.')
         unsupported_sector_cache_value_type_message = (
@@ -56,6 +62,7 @@ class ContriCleaner:
         self.__data = data
         self.__sector_cache = sector_cache
         self.__os_id_lookup = os_id_lookup
+        self.__skip_length_check_fields = skip_length_check_fields
 
     def process_data(self) -> ListDTO:
         try:
@@ -101,7 +108,8 @@ class ContriCleaner:
             PreValidationHandler(),
             SerializationHandler(
                 self.__sector_cache,
-                self.__os_id_lookup
+                self.__os_id_lookup,
+                self.__skip_length_check_fields
             )
         )
         for index in range(len(handlers) - 1):

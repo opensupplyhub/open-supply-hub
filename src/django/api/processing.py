@@ -175,6 +175,19 @@ def process_matches(f_l_item, matches, context, should_create, result):
     automatic_matches = [
         m for m in matches if m.status == FacilityMatch.AUTOMATIC
     ]
+    if len(automatic_matches) > 1:
+        # Only one automatic match is ever written per item, so several
+        # mean the item was matched more than once. Answer with the one
+        # the item points at rather than MATCHED without an os_id
+        # (OSDEV-3149).
+        matches_for_facility = [
+            m for m in automatic_matches
+            if m.facility_id == getattr(f_l_item, 'facility_id', None)
+        ][:1]
+        if len(matches_for_facility) == 0:
+            # Fall back to the first automatic match if the item
+            # doesn't point at any of them
+            automatic_matches = automatic_matches[:1]
     if len(automatic_matches) == 1:
         return handle_new_facility_or_automatic_match(
             f_l_item, automatic_matches[0], context, result

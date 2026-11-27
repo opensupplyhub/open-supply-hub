@@ -1,14 +1,12 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from app.utils.constants import ProcessingAction
-from app.database.models.facility_list_item import FacilityListItem
 from app.database.models.facility_list_item_temp import FacilityListItemTemp
-from app.database.models.source import Source
 from app.database.models.facility_match_temp import FacilityMatchTemp
 from app.matching.DTOs.facility_match_dto import FacilityMatchDTO
+from app.matching.DTOs.item_update_dto import ItemUpdateDTO
 from app.matching.DTOs.results_dto import ResultsDTO
 from app.database.sqlalchemy import get_session
-from app.config import settings
 
 facility_match_data = Dict[str, str or int or Any]
 
@@ -20,6 +18,7 @@ class BaseItemMatch:
     started: str
     finished: str
     results: ResultsDTO
+    pending_item_update: Optional[ItemUpdateDTO]
 
     def __init__(
         self,
@@ -37,6 +36,7 @@ class BaseItemMatch:
         self.finished = finished
         self.results = results
         self.automatic_threshold= automatic_threshold
+        self.pending_item_update = None
 
     def process(self) -> List[FacilityMatchDTO]:
         pass
@@ -56,20 +56,14 @@ class BaseItemMatch:
             "results": kwargs
         }
     
-    def item_update(self, session, list_item_type, processing_results_data):
-        facility_list_item = session.query(list_item_type).filter(list_item_type.id==self.item.id).one()
-        facility_list_item.status = self.item.status
-        # Update the JSON column data
-        session.query(list_item_type).\
-            filter(list_item_type.id == facility_list_item.id).update({"processing_results": processing_results_data})
-        facility_list_item.facility_id = self.item.facility_id
-        if list_item_type == FacilityListItemTemp:
-            facility_list_item.version = settings.dedupe_hub_version
-        session.commit()
-
-        session.close()
-
-    def item_save(self, **kwargs):
+    def stage_item_update(self, **kwargs) -> None:
+        """
+        Record the item's final status and processing results without
+        writing them. The Writer applies the staged update together with
+        the item's match rows in one transaction: committing the status
+        here, before the matches were written, let a caller polling on the
+        status read a partial set of matches (OSDEV-3149).
+        """
         json_data = {
             'action': ProcessingAction.MATCH,
             'error': False,
@@ -78,14 +72,14 @@ class BaseItemMatch:
             **kwargs,
         }
 
-        processing_results_data = self.item.processing_results
+        processing_results_data = list(self.item.processing_results or [])
         processing_results_data.append(json_data)
 
-        with get_session() as session:
-            self.item_update(session, FacilityListItemTemp, processing_results_data)
-
-        with get_session() as session_two:
-            if session_two.query(Source.create).filter(Source.id==self.item.source_id).scalar():
-                if settings.dedupe_hub_live:
-                    self.item_update(session_two, FacilityListItem, processing_results_data)
-
+        self.pending_item_update = {
+            'facility_list_item_id': self.item.id,
+            'source_id': self.item.source_id,
+            'status': self.item.status,
+            'facility_id': self.item.facility_id,
+            'processing_results': processing_results_data,
+            'new_facility': None,
+        }

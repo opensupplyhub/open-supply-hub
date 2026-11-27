@@ -143,7 +143,7 @@ class MondayBoard:
 
         by_title = {
             (column.get("title") or "").strip().lower(): column
-            for column in self._columns
+            for column in self._columns or []
         }
         mapped: dict[str, dict[str, Any]] = {}
         for key, titles in COLUMN_TITLES.items():

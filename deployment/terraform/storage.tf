@@ -5,7 +5,7 @@ data "aws_canonical_user_id" "current" {
 # S3 resources
 #
 resource "aws_s3_bucket" "logs" {
-  bucket = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-logs-${var.aws_region}"
+  bucket        = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-logs-${var.aws_region}"
   force_destroy = true
   tags = {
     Name        = "${lower(replace(var.project, " ", ""))}-${lower(var.environment)}-logs-${var.aws_region}"
@@ -15,8 +15,8 @@ resource "aws_s3_bucket" "logs" {
 }
 
 resource "aws_s3_bucket_acl" "logs" {
-  bucket = aws_s3_bucket.logs.id
-  acl    = "log-delivery-write"
+  bucket     = aws_s3_bucket.logs.id
+  acl        = "log-delivery-write"
   depends_on = [aws_s3_bucket_ownership_controls.logs]
   # access_control_policy {
 
@@ -61,7 +61,7 @@ resource "aws_s3_bucket_public_access_block" "logs" {
 }
 
 resource "aws_s3_bucket" "files" {
-  bucket = local.files_bucket_name
+  bucket        = local.files_bucket_name
   force_destroy = true
   # acl    = "private"
 
@@ -77,7 +77,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "files" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm     = "AES256"
+      sse_algorithm = "AES256"
     }
   }
 }

@@ -79,7 +79,7 @@ describe('IsicSearch', () => {
     });
 
     test('a title only one revision has carries one tag', () => {
-        const { type } = renderSearch();
+        const { type } = renderSearch({ counts: { '5:631': 12 } });
 
         type('computing');
         const option = screen.getByRole('option');
@@ -114,6 +114,36 @@ describe('IsicSearch', () => {
         expect(onChange).toHaveBeenCalledWith({ 4: [], 5: [] });
     });
 
+    test('a category with no locations is not suggested', () => {
+        const { type } = renderSearch({ counts: { '4:13': 1240, '4:14': 0 } });
+
+        type('manufacture');
+
+        expect(
+            screen.getAllByRole('option').map(option => option.textContent),
+        ).toEqual([expect.stringContaining('textiles')]);
+    });
+
+    test('says when the only matching categories have no locations', () => {
+        const { type } = renderSearch();
+
+        type('apparel');
+
+        expect(screen.queryByRole('option')).toBeNull();
+        expect(screen.getByRole('listbox').textContent).toContain(
+            'No locations are classified under a category matching \u201Capparel\u201D',
+        );
+    });
+
+    test('until the counts load, every category is suggested and can be picked', () => {
+        const { type, onChange } = renderSearch({ counts: null });
+
+        type('apparel');
+        fireEvent.click(screen.getByRole('option'));
+
+        expect(onChange).toHaveBeenCalled();
+    });
+
     test('says when nothing matches', () => {
         const { type } = renderSearch();
 
@@ -136,6 +166,14 @@ describe('IsicSearch utils', () => {
             ),
         ).toEqual(['4:14']);
         expect(searchEntries(ENTRIES, '  ', new Set())).toEqual([]);
+    });
+
+    test('with counts, leaves out entries without locations', () => {
+        expect(
+            searchEntries(ENTRIES, 'manufacture', new Set(), {
+                '4:14': 3,
+            }).map(e => e.id),
+        ).toEqual(['4:14']);
     });
 
     test('reads picked entries back from either revision', () => {

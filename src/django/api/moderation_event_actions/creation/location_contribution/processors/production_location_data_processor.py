@@ -58,9 +58,20 @@ class ProductionLocationDataProcessor(ContributionProcessor):
                 event_dto.status_code = e.status_code
                 return event_dto
 
+        # Backfilled values are copied from what is already stored for the
+        # location (PATCH backfill above, or the claim contribution
+        # service), not submitted. Stored values are cleaned and may exceed
+        # the 200-character submission limit (OSDEV-1085), so submission
+        # validation is not applied to them. ContriCleaner still cleans
+        # them, which leaves an already cleaned value unchanged.
+        backfilled_fields = set(event_dto.backfilled_fields)
+
         # Choose serializer per request type (POST vs PATCH).
         serializer = self.__prepare_serializer(
-            cc_ready_data,
+            {
+                field: value for field, value in cc_ready_data.items()
+                if field not in backfilled_fields
+            },
             event_dto.request_type
         )
 
@@ -83,7 +94,8 @@ class ProductionLocationDataProcessor(ContributionProcessor):
         contri_cleaner = ContriCleaner(
             mapped_data,
             SectorCache(),
-            OSIDLookup()
+            OSIDLookup(),
+            skip_length_check_fields=backfilled_fields
         )
         try:
             cc_processed_data = contri_cleaner.process_data()

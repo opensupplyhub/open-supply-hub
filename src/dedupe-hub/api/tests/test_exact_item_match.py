@@ -66,6 +66,7 @@ class TestExactItemMatch(unittest.TestCase):
         result = exact_match.process()
 
         self.assertEqual(result, [])
+        self.assertIsNone(exact_match.pending_item_update)
 
     def test_process_with_single_match(self):
         exact_match = self.create_exact_match(self.matches_single)
@@ -74,6 +75,7 @@ class TestExactItemMatch(unittest.TestCase):
 
         self.assertListEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
+        self.assert_staged_matched_update(exact_match)
 
     def test_process_with_multiple_matches(self):
         exact_match = self.create_exact_match(self.matches_multiple)
@@ -82,6 +84,20 @@ class TestExactItemMatch(unittest.TestCase):
 
         self.assertListEqual(result, expected_result)
         self.assertEqual(exact_match.item.status, FacilityListItemTemp.MATCHED)
+        self.assert_staged_matched_update(exact_match)
+
+    def assert_staged_matched_update(self, exact_match):
+        """
+        The final status is staged for the Writer, which commits it with
+        the match rows; it is not written here (OSDEV-3149).
+        """
+        update = exact_match.pending_item_update
+        self.assertEqual(update['facility_list_item_id'], self.item_id)
+        self.assertEqual(update['status'], FacilityListItemTemp.MATCHED)
+        self.assertEqual(update['facility_id'], 'CN20241096SFEBA')
+        self.assertTrue(update['processing_results'][-1]['exact_match'])
+        self.mock_session.return_value.__enter__.return_value \
+            .commit.assert_not_called()
 
 
 if __name__ == "__main__":

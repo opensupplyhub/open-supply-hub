@@ -105,6 +105,9 @@ describe('DashboardClaimsDetails component', () => {
                 sector: ['Agriculture', 'Food & Beverage'],
                 linkedin_profile: 'www.linkedin.com',
                 facility_website: 'www.facility-web.com',
+                facility_website_publicly_visible: true,
+                facility_phone_number: '+1-555-1234',
+                facility_phone_number_publicly_visible: false,
                 facility_description: 'A detailed description here.',
                 facility_workers_count: '100-250',
                 facility_name_native_language: 'Local Name',
@@ -125,5 +128,8 @@ describe('DashboardClaimsDetails component', () => {
         expect(screen.getByText('Agriculture, Food & Beverage')).toBeInTheDocument();
         expect(screen.getByText('100-250')).toBeInTheDocument();
         expect(screen.getByText('Local Name')).toBeInTheDocument();
+        expect(screen.getByText('+1-555-1234')).toBeInTheDocument();
+        expect(screen.getByText('Shown on profile')).toBeInTheDocument();
+        expect(screen.getByText('Not shown on profile')).toBeInTheDocument();
     });
 });

@@ -32,6 +32,7 @@ import Settings from './components/Settings/Settings';
 import ExternalRedirect from './components/ExternalRedirect';
 import Facilities from './components/Facilities';
 import IdentityRecord from './components/IdentityRecord/IdentityRecord';
+import CandidateReviewPage from './components/Candidate/CandidateReviewPage';
 import ProductionLocationDetailsContainer from './components/ProductionLocation/ProductionLocationDetailsContainer/ProductionLocationDetailsContainer';
 import ContributeProductionLocation from './components/Contribute/ContributeProductionLocation';
 import SearchByOsIdResult from './components/Contribute/SearchByOsIdResult';
@@ -39,9 +40,15 @@ import SearchByNameAndAddressResult from './components/Contribute/SearchByNameAn
 import ProductionLocationInfo from './components/Contribute/ProductionLocationInfo';
 import withProductionLocationSubmit from './components/Contribute/HOC/withProductionLocationSubmit';
 import ClaimIntro from './components/InitialClaimFlow/ClaimIntro/ClaimIntro';
+import ClaimCampaigns from './components/ClaimCampaigns/ClaimCampaigns';
+import NewClaimCampaign from './components/ClaimCampaigns/NewClaimCampaign';
 
 import { sessionLogin } from './actions/auth';
 import { fetchFeatureFlags, refreshFeatureFlags } from './actions/featureFlags';
+import {
+    fetchAnnouncementBanner,
+    refreshAnnouncementBanner,
+} from './actions/announcementBanner';
 import { reportWindowResize } from './actions/ui';
 
 import { setFacilityGridRamp } from './actions/vectorTileLayer';
@@ -59,13 +66,18 @@ import {
     facilityListItemsRoute,
     facilitiesRoute,
     identityRecordRoute,
+    candidatesRoute,
     productionLocationDetailsRoute,
     dashboardRoute,
     claimFacilityRoute,
     claimIntroRoute,
     claimDetailsRoute,
+    claimCampaignsRoute,
+    claimCampaignRoute,
+    newClaimCampaignRoute,
     claimedFacilitiesRoute,
     CLAIM_A_FACILITY,
+    CLAIM_CAMPAIGNS,
     settingsRoute,
     InfoLink,
     InfoPaths,
@@ -76,6 +88,7 @@ import {
     productionLocationInfoRouteUpdate,
     ENABLE_PRODUCTION_LOCATION_PAGE,
     ENABLE_IDENTITY_RESOLVER,
+    EARTH_GENOME_CANDIDATES,
 } from './util/constants';
 
 // Pre-wrapping components outside of Routes to prevent redundant re-renders on component mount
@@ -97,9 +110,16 @@ class Routes extends Component {
 
         window.setGridColorRamp = this.props.setRamp;
         this.props.getFeatureFlags();
-        this.unlistenHistory = history.listen(() =>
-            this.props.refreshFeatureFlags(),
-        );
+        // The banner only renders inside the Navbar, which embeds omit.
+        if (!this.props.embed) {
+            this.props.getAnnouncementBanner();
+        }
+        this.unlistenHistory = history.listen(() => {
+            this.props.refreshFeatureFlags();
+            if (!this.props.embed) {
+                this.props.refreshAnnouncementBanner();
+            }
+        });
 
         return this.props.logIn();
     }
@@ -160,6 +180,44 @@ class Routes extends Component {
                                 />
                                 <Route
                                     exact
+                                    path={newClaimCampaignRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route
+                                                component={NewClaimCampaign}
+                                            />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={claimCampaignRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route component={ClaimCampaigns} />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
+                                    path={claimCampaignsRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={CLAIM_CAMPAIGNS}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <Route component={ClaimCampaigns} />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                <Route
+                                    exact
                                     path={claimDetailsRoute}
                                     component={ClaimForm}
                                 />
@@ -177,6 +235,23 @@ class Routes extends Component {
                                             alternative={<RouteNotFound />}
                                         >
                                             <IdentityRecord />
+                                        </FeatureFlag>
+                                    )}
+                                />
+                                {/*
+                                 * OSDEV-3755: the candidate review page
+                                 * exists only while the Earth Genome pilot
+                                 * switch is on; off, the route is not there.
+                                 */}
+                                <Route
+                                    exact
+                                    path={candidatesRoute}
+                                    render={() => (
+                                        <FeatureFlag
+                                            flag={EARTH_GENOME_CANDIDATES}
+                                            alternative={<RouteNotFound />}
+                                        >
+                                            <CandidateReviewPage />
                                         </FeatureFlag>
                                     )}
                                 />
@@ -356,6 +431,8 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch) {
     return {
         getFeatureFlags: () => dispatch(fetchFeatureFlags()),
+        getAnnouncementBanner: () => dispatch(fetchAnnouncementBanner()),
+        refreshAnnouncementBanner: () => dispatch(refreshAnnouncementBanner()),
         refreshFeatureFlags: () => dispatch(refreshFeatureFlags()),
         logIn: () => dispatch(sessionLogin()),
         handleWindowResize: data => dispatch(reportWindowResize(data)),

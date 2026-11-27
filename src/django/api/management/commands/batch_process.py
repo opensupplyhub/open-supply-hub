@@ -15,6 +15,7 @@ from api.processing import (parse_production_location_list,
                             ItemRemovedException)
 from api.mail import notify_facility_list_complete
 from api.kafka_producer import produce_message_match_process
+from api.services.source_service import SourceService
 
 LINE_ITEM_ACTIONS = {
     ProcessingAction.GEOCODE: geocode_facility_list_item
@@ -23,7 +24,8 @@ LINE_ITEM_ACTIONS = {
 LIST_ACTIONS = set([
     ProcessingAction.PARSE,
     ProcessingAction.MATCH,
-    ProcessingAction.NOTIFY_COMPLETE])
+    ProcessingAction.NOTIFY_COMPLETE,
+    ProcessingAction.REASSIGN_EXTENDED_FIELDS])
 
 VALID_ACTIONS = list(LINE_ITEM_ACTIONS.keys()) + list(LIST_ACTIONS)
 
@@ -43,7 +45,8 @@ class Command(BaseCommand):
         group.add_argument('-a', '--action',
                            required=True,
                            help='The processing action to perform. '
-                                'One of "parse", "geocode", "match"')
+                                'One of {}.'.format(
+                                    ', '.join(sorted(VALID_ACTIONS))))
         group.add_argument('-l', '--list-id',
                            required=True,
                            help='The id of the facility list to process.')
@@ -88,6 +91,19 @@ class Command(BaseCommand):
             logger.info('[List Upload] Notify Complete!')
             logger.info(f'[List Upload] FacilityList Id: {list_id}')
             notify_facility_list_complete(list_id)
+        elif action == ProcessingAction.REASSIGN_EXTENDED_FIELDS:
+            source = Source.objects.get(facility_list=list_id)
+            logger.info(
+                'Reassigning extended fields of source %s to its '
+                'current contributor.',
+                source.id,
+            )
+            updated = SourceService.reassign_extended_fields(source.id)
+            logger.info(
+                'Reassigned %s extended field(s) of source %s.',
+                updated,
+                source.id,
+            )
 
     def process_items(self, facility_list, action, process):
         row_index = os.environ.get('AWS_BATCH_JOB_ARRAY_INDEX')

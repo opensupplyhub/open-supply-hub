@@ -9,6 +9,7 @@ import {
     sendLocationPartnerProfileLinkClick,
     sendLocationPartnerExternalLinkClick,
     sendContributorExternalWebsiteLinkClick,
+    sendLocationPartnerBetaFeedbackLinkClick,
 } from '../../util/analytics/gaCustomEvents';
 
 jest.mock('../../util/analytics/consent', () => ({
@@ -234,6 +235,54 @@ describe('sendContributorExternalWebsiteLinkClick', () => {
                 viewer_user_id: '500',
             },
         );
+    });
+});
+
+describe('sendLocationPartnerBetaFeedbackLinkClick', () => {
+    beforeEach(() => {
+        userHasAcceptedGATracking.mockReturnValue(true);
+        global.window.gtag = jest.fn();
+        global.window.location = new URL('https://app.example/pl/x');
+    });
+
+    it('sends LOCATION_PARTNER_BETA_FEEDBACK_LINK_CLICK with expected payload', () => {
+        sendLocationPartnerBetaFeedbackLinkClick({
+            partnerGroup: 'Environment & Climate',
+            linkPlacement: GA_LINK_PLACEMENT.WHY_BETA_CARD,
+            destinationUrl: 'mailto:support@example.org?subject=Beta',
+            osId: 'os-1',
+            partnerFieldName: 'Temperature & humidity',
+            viewerUserId: '500',
+        });
+
+        expect(global.window.gtag).toHaveBeenCalledWith(
+            'event',
+            GA_EVENTS.LOCATION_PARTNER_BETA_FEEDBACK_LINK_CLICK,
+            {
+                partner_group: 'Environment & Climate',
+                link_placement: 'why_beta_card',
+                destination_url: 'mailto:support@example.org?subject=Beta',
+                destination_domain: '',
+                os_id: 'os-1',
+                partner_field_name: 'TEMPERATURE & HUMIDITY',
+                viewer_user_id: '500',
+            },
+        );
+    });
+
+    it('does nothing without tracking consent', () => {
+        userHasAcceptedGATracking.mockReturnValue(false);
+
+        sendLocationPartnerBetaFeedbackLinkClick({
+            partnerGroup: 'PG',
+            linkPlacement: GA_LINK_PLACEMENT.WHY_BETA_CARD,
+            destinationUrl: 'mailto:support@example.org',
+            osId: 'os-1',
+            partnerFieldName: 'x',
+            viewerUserId: null,
+        });
+
+        expect(global.window.gtag).not.toHaveBeenCalled();
     });
 });
 

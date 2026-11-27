@@ -10,6 +10,7 @@ import DashboardClaimDetailsControls from './DashboardClaimDetailsControls';
 import DashboardClaimsDetailsNote from './DashboardClaimsDetailsNote';
 import DashboardClaimsDetailsAddNote from './DashboardClaimsDetailsAddNote';
 import DashboardClaimsDetailsAttachments from './DashboardClaimsDetailsAttachments';
+import ProfileVisibilityNote from './Shared/ProfileVisibilityNote/ProfileVisibilityNote';
 
 import {
     fetchSingleFacilityClaim,
@@ -111,6 +112,11 @@ function DashboardClaimsDetails({
         return null;
     }
 
+    const {
+        facility_website_publicly_visible: websiteIsPublic,
+        facility_phone_number_publicly_visible: phoneIsPublic,
+    } = data;
+
     return (
         <>
             <DashboardClaimDetailsControls data={data} />
@@ -152,8 +158,27 @@ function DashboardClaimsDetails({
                 <InfoSection
                     label="Production Location's Website"
                     value={
-                        data.facility_website &&
-                        createExternalLink(data.facility_website)
+                        data.facility_website && (
+                            <>
+                                {createExternalLink(data.facility_website)}
+                                <ProfileVisibilityNote
+                                    isPubliclyVisible={websiteIsPublic}
+                                />
+                            </>
+                        )
+                    }
+                />
+                <InfoSection
+                    label="Production Location's Phone"
+                    value={
+                        data.facility_phone_number && (
+                            <>
+                                {data.facility_phone_number}
+                                <ProfileVisibilityNote
+                                    isPubliclyVisible={phoneIsPublic}
+                                />
+                            </>
+                        )
                     }
                 />
                 <InfoSection

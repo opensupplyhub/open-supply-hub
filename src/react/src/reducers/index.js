@@ -11,12 +11,14 @@ import ProfileReducer from './ProfileReducer';
 import UploadReducer from './UploadReducer';
 import FacilityListsReducer from './FacilityListsReducer';
 import FacilityListDetailsReducer from './FacilityListDetailsReducer';
+import FacilityListCleaningReducer from './FacilityListCleaningReducer';
 import FilterOptionsReducer from './FilterOptionsReducer';
 import FiltersReducer from './FiltersReducer';
 import UIReducer from './UIReducer';
 import FacilitiesReducer from './FacilitiesReducer';
 import FacilityCountReducer from './FacilityCountReducer';
 import FeatureFlagsReducer from './FeatureFlagsReducer';
+import AnnouncementBannerReducer from './AnnouncementBannerReducer';
 import ClaimFacilityReducer from './ClaimFacilityReducer';
 import ClaimFacilityDashboardReducer from './ClaimFacilityDashboardReducer';
 import ClaimedFacilityDetailsReducer from './ClaimedFacilityDetailsReducer';
@@ -39,6 +41,7 @@ import ContributeProductionLocationReducer from './ContributeProductionLocationR
 import DashboardModerationQueueReducer from './DashboardModerationQueueReducer';
 import DashboardContributionRecordReducer from './DashboardContributionRecordReducer';
 import ClaimFormReducer from './ClaimFormReducer';
+import ClaimCampaignsReducer from './ClaimCampaignsReducer';
 import PartnerFieldGroupsReducer from './PartnerFieldGroupsReducer';
 import PartnerGroupContributorsReducer from './PartnerGroupContributorsReducer';
 import SectionNavigationReducer from './SectionNavigationReducer';
@@ -49,12 +52,14 @@ export default combineReducers({
     upload: UploadReducer,
     facilityLists: FacilityListsReducer,
     facilityListDetails: FacilityListDetailsReducer,
+    facilityListCleaning: FacilityListCleaningReducer,
     filterOptions: FilterOptionsReducer,
     filters: FiltersReducer,
     ui: UIReducer,
     facilities: FacilitiesReducer,
     facilityCount: FacilityCountReducer,
     featureFlags: FeatureFlagsReducer,
+    announcementBanner: AnnouncementBannerReducer,
     claimFacility: ClaimFacilityReducer,
     claimFacilityDashboard: ClaimFacilityDashboardReducer,
     claimedFacilityDetails: ClaimedFacilityDetailsReducer,
@@ -77,6 +82,7 @@ export default combineReducers({
     dashboardModerationQueue: DashboardModerationQueueReducer,
     dashboardContributionRecord: DashboardContributionRecordReducer,
     claimForm: ClaimFormReducer,
+    claimCampaigns: ClaimCampaignsReducer,
     partnerFieldGroups: PartnerFieldGroupsReducer,
     partnerGroupContributors: PartnerGroupContributorsReducer,
     sectionNavigation: SectionNavigationReducer,

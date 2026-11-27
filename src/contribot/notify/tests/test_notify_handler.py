@@ -23,6 +23,7 @@ from message import NotifyMessage  # noqa: E402
 _SPEC = importlib.util.spec_from_file_location(
     "notify_handler", CONTRIBOT_DIR / "notify" / "handler.py"
 )
+assert _SPEC is not None and _SPEC.loader is not None
 handler = importlib.util.module_from_spec(_SPEC)
 sys.modules["notify_handler"] = handler
 _SPEC.loader.exec_module(handler)
@@ -286,3 +287,33 @@ def test_handler_survives_slack_failure(repo_slack_monday):
 
     assert result == {"list_id": "101", "notified": False}
     repo.update_list.assert_called_once_with("101", status=STATUS_PROCESSED)
+
+
+def test_handler_includes_the_cleaning_line_when_present(repo_slack_monday):
+    repo, slack, monday = repo_slack_monday
+    event = {
+        "list_id": "101",
+        "num_lines": 200,
+        "num_errors": 20,
+        "error_ratio": 0.1,
+        "report_url": "https://docs.google.com/spreadsheets/d/abc",
+        "cleaning": {
+            "must_fix_unresolved": 3,
+            "corrections_rejected": 1,
+            "rows_removed": 2,
+            "outcome": "submitted",
+        },
+    }
+    handler.handler(event, None)
+    message = slack.post.call_args[0][0]
+    assert (
+        "List cleaning: 3 must-fix flag(s) unresolved, 1 suggested fix(es) "
+        "rejected, 2 row(s) removed in review"
+    ) in message
+
+
+def test_handler_omits_the_cleaning_line_without_a_run(repo_slack_monday):
+    repo, slack, monday = repo_slack_monday
+    event = {"list_id": "101", "report_url": "https://x", "cleaning": None}
+    handler.handler(event, None)
+    assert "List cleaning" not in slack.post.call_args[0][0]

@@ -41,7 +41,10 @@ class FacilityClaimDetailsSerializer(ModelSerializer):
                   'contributor', 'facility', 'status_change', 'notes',
                   'facility_parent_company', 'job_title', 'linkedin_profile',
                   'claimant_linkedin_profile_url',
-                  'attachments', 'facility_website', 'sector',
+                  'attachments', 'facility_website',
+                  'facility_website_publicly_visible',
+                  'facility_phone_number',
+                  'facility_phone_number_publicly_visible', 'sector',
                   'facility_workers_count', 'facility_name_native_language',
                   'facility_name_english', 'facility_address',
                   'claim_invite')

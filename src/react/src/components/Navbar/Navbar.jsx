@@ -7,6 +7,7 @@ import Logo from './Logo';
 import BurgerButton from './BurgerButton';
 import NavbarQ42022Banner from './NavbarQ42022Banner';
 import MaintenanceBanner from './MaintenanceBanner';
+import AnnouncementBanner from './AnnouncementBanner';
 import MenuClickHandlerContext from './MenuClickHandlerContext';
 
 const breakpoint = '(max-width: 75rem)';
@@ -161,6 +162,7 @@ export default function Navbar() {
     return (
         <>
             <NavbarQ42022Banner />
+            <AnnouncementBanner />
             <MaintenanceBanner />
             <MenuClickHandlerContext.Provider value={createMenuClickHandler}>
                 {Header}

@@ -32,6 +32,7 @@ import {
     SHOW_ADDITIONAL_IDENTIFIERS,
     PRIVATE_INSTANCE,
     ENABLE_DROMO_UPLOADING,
+    ENABLE_LIST_CLEANING_FEEDBACK,
     ENABLE_V1_CLAIMS_FLOW,
     ENABLE_PRODUCTION_LOCATION_PAGE,
     ENABLE_MODERATION_PAUSE_INFO,
@@ -71,6 +72,10 @@ export const userPropType = shape({
     is_staff: bool.isRequired,
     is_moderation_mode: bool.isRequired,
     allowed_records_number: number.isRequired,
+    claim_campaigns: shape({
+        access: bool.isRequired,
+        self_serve: bool.isRequired,
+    }),
 });
 
 export const profileFormValuesPropType = shape(
@@ -377,6 +382,7 @@ export const featureFlagPropType = oneOf([
     SHOW_ADDITIONAL_IDENTIFIERS,
     PRIVATE_INSTANCE,
     ENABLE_DROMO_UPLOADING,
+    ENABLE_LIST_CLEANING_FEEDBACK,
     ENABLE_V1_CLAIMS_FLOW,
     ENABLE_PRODUCTION_LOCATION_PAGE,
     ENABLE_MODERATION_PAUSE_INFO,
@@ -433,6 +439,9 @@ export const facilityClaimPropType = shape({
     contributor: shape({}).isRequired,
     facility: facilityPropType.isRequired,
     facility_website: string.isRequired,
+    facility_website_publicly_visible: bool,
+    facility_phone_number: oneOfType([string, oneOf([null])]),
+    facility_phone_number_publicly_visible: bool,
     sector: oneOfType([arrayOf(string), oneOf([null])]),
     facility_workers_count: oneOfType([string, oneOf([null])]),
     facility_name_native_language: string.isRequired,

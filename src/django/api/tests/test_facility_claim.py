@@ -477,3 +477,61 @@ class FacilityClaimTest(APITestCase):
             claim.point_of_contact_publicly_visible,
             True,
         )
+
+    def _post_minimal_claim(self, **extra_fields):
+        self.client.post(
+            "/user-login/",
+            {"email": self.email, "password": self.password},
+            format="json",
+        )
+        claim_data = {
+            "your_name": "Jane Smith",
+            "your_title": "Operations Manager",
+            "your_business_website": "https://example.com",
+            "business_website": "https://facility.com",
+            "business_linkedin_profile": (
+                "https://linkedin.com/company/facility"
+            ),
+            "facility_phone_number": "+1-555-1234",
+        }
+        claim_data.update(extra_fields)
+        # Multipart, like the claim form, which sends booleans as the
+        # strings "true"/"false".
+        return self.client.post(
+            f"/api/facilities/{self.facility.id}/claim/", claim_data
+        )
+
+    @override_switch("claim_a_facility", active=True)
+    def test_create_claim_saves_profile_visibility_choices(self):
+        response = self._post_minimal_claim(
+            facility_website_publicly_visible="true",
+            facility_phone_number_publicly_visible="true",
+        )
+        self.assertEqual(200, response.status_code, response.content)
+
+        claim = FacilityClaim.objects.get(facility=self.facility)
+        self.assertEqual("https://facility.com", claim.facility_website)
+        self.assertTrue(claim.facility_website_publicly_visible)
+        self.assertEqual("+1-555-1234", claim.facility_phone_number)
+        self.assertTrue(claim.facility_phone_number_publicly_visible)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_create_claim_keeps_website_and_phone_private_by_default(self):
+        response = self._post_minimal_claim()
+        self.assertEqual(200, response.status_code, response.content)
+
+        claim = FacilityClaim.objects.get(facility=self.facility)
+        self.assertFalse(claim.facility_website_publicly_visible)
+        self.assertFalse(claim.facility_phone_number_publicly_visible)
+
+    @override_switch("claim_a_facility", active=True)
+    def test_create_claim_saves_explicit_private_choices(self):
+        response = self._post_minimal_claim(
+            facility_website_publicly_visible="false",
+            facility_phone_number_publicly_visible="false",
+        )
+        self.assertEqual(200, response.status_code, response.content)
+
+        claim = FacilityClaim.objects.get(facility=self.facility)
+        self.assertFalse(claim.facility_website_publicly_visible)
+        self.assertFalse(claim.facility_phone_number_publicly_visible)

@@ -288,6 +288,28 @@ class ApprovalRecordsContributionTest(ClaimContributionTestBase):
         geocode.assert_not_called()
 
     @patch(GEOCODE_PATH)
+    def test_approval_backfills_a_stored_value_over_the_submission_limit(
+        self, geocode
+    ):
+        # Stored values are cleaned and may run past the 200-character
+        # submission limit (OSDEV-1085). Backfilling one is not a new
+        # submission, so it must not fail the approval.
+        stored_address = '1 Original Street, ' + 'a' * 183
+        self.assertEqual(202, len(stored_address))
+        Facility.objects.filter(id=self.facility.id).update(
+            address=stored_address
+        )
+        claim = self.make_claim(facility_name_english='Claimed Name')
+
+        self.approve(claim)
+
+        event = self.claim_events(claim).get()
+        self.assertEqual(['address'], event.backfilled_fields)
+        item = FacilityListItem.objects.get(moderation_event=event)
+        self.assertEqual('Claimed Name', item.name)
+        self.assertEqual(stored_address, item.address)
+
+    @patch(GEOCODE_PATH)
     def test_unknown_claim_sectors_are_not_passed_as_product_types(
         self, geocode
     ):
